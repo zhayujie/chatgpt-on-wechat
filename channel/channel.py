@@ -27,5 +27,5 @@ class Channel(object):
         """
         raise NotImplementedError
 
-    def build_reply_content(self, query):
-        return Bridge().fetch_reply_content(query)
+    def build_reply_content(self, query, context=None):
+        return Bridge().fetch_reply_content(query, context)
