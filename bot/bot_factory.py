@@ -3,6 +3,7 @@ channel factory
 """
 
 from bot.baidu.baidu_unit_bot import BaiduUnitBot
+from bot.chatgpt.chat_gpt_bot import ChatGPTBot
 
 
 def create_bot(bot_type):
@@ -13,4 +14,6 @@ def create_bot(bot_type):
     """
     if bot_type == 'baidu':
         return BaiduUnitBot()
+    elif bot_type == 'chatGPT':
+        return ChatGPTBot()
     raise RuntimeError

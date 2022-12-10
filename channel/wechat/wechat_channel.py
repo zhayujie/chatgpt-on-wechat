@@ -2,8 +2,6 @@
 wechat channel
 """
 import itchat
-import time
-import random
 import json
 from itchat.content import *
 from channel.channel import Channel
@@ -34,6 +32,6 @@ class WechatChannel(Channel):
             self.send(super().build_reply_content(msg['Text']), from_user_id)
 
     def send(self, msg, receiver):
-        time.sleep(random.randint(1, 3))
+        # time.sleep(random.randint(1, 3))
         print(msg, receiver)
         itchat.send(msg + " [bot]", toUserName=receiver)

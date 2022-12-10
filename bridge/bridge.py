@@ -6,4 +6,4 @@ class Bridge(object):
         pass
 
     def fetch_reply_content(self, query):
-        return bot_factory.BaiduUnitBot().reply(query)
+        return bot_factory.create_bot("chatGPT").reply(query)
