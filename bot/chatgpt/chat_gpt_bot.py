@@ -1,6 +1,7 @@
 import time
 from bot.bot import Bot
 from revChatGPT.revChatGPT import Chatbot
+from common.log import logger
 
 config = {
     "Authorization": "<Your Bearer Token Here>",  # This is optional
@@ -15,12 +16,12 @@ class ChatGPTBot(Bot):
     def reply(self, query, context=None):
 
         from_user_id = context['from_user_id']
-        print("[GPT]query={}, user_id={}, session={}".format(query, from_user_id, user_session))
+        logger.info("[GPT]query={}, user_id={}, session={}".format(query, from_user_id, user_session))
 
         now = time.time()
         global last_session_refresh
         if now - last_session_refresh > 60 * 8:
-            print('[GPT]session refresh, now={}, last={}'.format(now, last_session_refresh))
+            logger.info('[GPT]session refresh, now={}, last={}'.format(now, last_session_refresh))
             chatbot.refresh_session()
         last_session_refresh = now
 
@@ -33,13 +34,11 @@ class ChatGPTBot(Bot):
         else:
             chatbot.reset_chat()
 
-        print("[GPT]convId={}, parentId={}".format(chatbot.conversation_id, chatbot.parent_id))
-
-
+        logger.info("[GPT]convId={}, parentId={}".format(chatbot.conversation_id, chatbot.parent_id))
 
         try:
             res = chatbot.get_chat_response(query, output="text")
-            print("[GPT]userId={}, res={}".format(from_user_id, res))
+            logger.info("[GPT]userId={}, res={}".format(from_user_id, res))
 
             user_cache = dict()
             user_cache['last_reply_time'] = time.time()
@@ -48,5 +47,5 @@ class ChatGPTBot(Bot):
             user_session[from_user_id] = user_cache
             return res['message']
         except Exception as e:
-            print(e)
+            logger.error(e)
             return None

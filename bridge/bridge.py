@@ -7,4 +7,3 @@ class Bridge(object):
 
     def fetch_reply_content(self, query, context):
         return bot_factory.create_bot("chatGPT").reply(query, context)
-        # return bot_factory.create_bot("baidu").reply(query, context)

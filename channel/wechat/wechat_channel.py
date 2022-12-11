@@ -6,6 +6,7 @@ import json
 from itchat.content import *
 from channel.channel import Channel
 from concurrent.futures import ThreadPoolExecutor
+from common.log import logger
 
 thead_pool = ThreadPoolExecutor(max_workers=8)
 
@@ -20,6 +21,10 @@ def handler_group_msg(msg):
     WechatChannel().handle_group(msg)
 
 
+group_white_list = ['学就完事了', '小宝群', '全天乱斗模式', '戒赌吧', '命苦还要快乐', '攒钱让姐妹当小三的组织',
+                    '快乐家人', '技术沙龙', '流动性混子', '计算机学习交流', '如何评价']
+
+
 class WechatChannel(Channel):
     def __init__(self):
         pass
@@ -32,7 +37,7 @@ class WechatChannel(Channel):
         itchat.run()
 
     def handle(self, msg):
-        print("[WX]receive msg: " + json.dumps(msg, ensure_ascii=False))
+        logger.info("[WX]receive msg: " + json.dumps(msg, ensure_ascii=False))
         from_user_id = msg['FromUserName']
         other_user_id = msg['User']['UserName']
         content = msg['Text']
@@ -43,8 +48,7 @@ class WechatChannel(Channel):
             thead_pool.submit(self._do_send, content, from_user_id)
 
     def handle_group(self, msg):
-        group_white_list = ['学就完事了', '小宝群', '全天乱斗模式', '戒赌吧', '命苦还要快乐','攒钱让姐妹当小三的组织']
-        print("[WX]receive group msg: " + json.dumps(msg, ensure_ascii=False))
+        logger.info("[WX]receive group msg: " + json.dumps(msg, ensure_ascii=False))
         group_id = msg['User']['UserName']
         group_name = msg['User'].get('NickName', None)
         if not group_name:
@@ -63,7 +67,7 @@ class WechatChannel(Channel):
 
     def send(self, msg, receiver):
         # time.sleep(random.randint(1, 3))
-        print('[WX] sendMsg={}, receiver={}'.format(msg, receiver))
+        logger.info('[WX] sendMsg={}, receiver={}'.format(msg, receiver))
         itchat.send(msg, toUserName=receiver)
 
     def _do_send(self, send_msg, reply_user_id):
