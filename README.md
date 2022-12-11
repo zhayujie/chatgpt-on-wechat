@@ -38,11 +38,11 @@ pip3 install itchat
 
 ## 配置
 
-配置文件在根目录的 `config.json` 中，示例文件及各配置项解析如下：
+配置文件在根目录的 `config.json` 中，示例文件及各配置项解析如下： (TODO)
 
 ```json
 {
-	// TODO
+
 }
 ```
 
