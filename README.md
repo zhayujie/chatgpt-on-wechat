@@ -52,7 +52,7 @@ pip3 install itchat
 - F12 进入开发者控制台
 - 选择Application -> Cookies，将 session-token 中的值填入配置中
 
-![](https://blog.cos.zhayujie.com/bot/chatgpt-token.png)
+![](docs/images/chatgpt-token.png)
 
 
 ## 运行
