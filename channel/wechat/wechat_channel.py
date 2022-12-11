@@ -21,8 +21,7 @@ def handler_group_msg(msg):
     WechatChannel().handle_group(msg)
 
 
-group_white_list = ['学就完事了', '小宝群', '全天乱斗模式', '戒赌吧', '命苦还要快乐', '攒钱让姐妹当小三的组织',
-                    '快乐家人', '技术沙龙', '流动性混子', '计算机学习交流', '如何评价']
+group_white_list = ['测试群1', '测试群2']
 
 
 class WechatChannel(Channel):
