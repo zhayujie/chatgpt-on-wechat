@@ -40,13 +40,16 @@ pip3 install itchat
 
 配置文件在根目录的 `config.json` 中，示例文件及各配置项解析如下： (TODO)
 
-```json
-{
-
+```bash
+{ 
+  "session_token": "YOUR SESSION TOKEN",           # 从页面获取的token
+  "single_chat_prefix": ["bot", "@bot"],           # 私聊触发自动回复的前缀
+  "group_chat_prefix": ["@bot"],                   # 群聊触发自动回复的前缀
+  "group_name_white_list": ["群名称1", "群名称2"]    # 开启自动回复的群名称
 }
 ```
 
-其中 token的设置需要在openAI网页端获取：
+其中 session_token 需要在openAI网页端获取：
 
 - 打开 <https://chat.openai.com/chat> 并登录，可使用测试账号 (lgfo353p@linshiyouxiang.net, 密码yy123123)，账号来源为该[文章](https://www.bilibili.com/read/cv20257021)
 - F12 进入开发者控制台

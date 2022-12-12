@@ -7,6 +7,7 @@ from itchat.content import *
 from channel.channel import Channel
 from concurrent.futures import ThreadPoolExecutor
 from common.log import logger
+from config import conf
 
 thead_pool = ThreadPoolExecutor(max_workers=8)
 
@@ -19,9 +20,6 @@ def handler_single_msg(msg):
 @itchat.msg_register(TEXT, isGroupChat=True)
 def handler_group_msg(msg):
     WechatChannel().handle_group(msg)
-
-
-group_white_list = ['测试群1', '测试群2']
 
 
 class WechatChannel(Channel):
@@ -40,11 +38,14 @@ class WechatChannel(Channel):
         from_user_id = msg['FromUserName']
         other_user_id = msg['User']['UserName']
         content = msg['Text']
-        if from_user_id == other_user_id and (content.lower().startswith('bot') or content.lower().startswith('@bot')):
+        if from_user_id == other_user_id and \
+                self.check_prefix(content, conf().get('group_chat_prefix')):
             str_list = content.split('bot', 1)
             if len(str_list) == 2:
                 content = str_list[1].strip()
             thead_pool.submit(self._do_send, content, from_user_id)
+
+
 
     def handle_group(self, msg):
         logger.info("[WX]receive group msg: " + json.dumps(msg, ensure_ascii=False))
@@ -52,7 +53,7 @@ class WechatChannel(Channel):
         group_name = msg['User'].get('NickName', None)
         if not group_name:
             return ""
-        origin_content =  msg['Content']
+        origin_content = msg['Content']
         content = msg['Content']
         content_list = content.split(' ', 1)
         context_special_list = content.split('\u2005', 1)
@@ -61,7 +62,9 @@ class WechatChannel(Channel):
         elif len(content_list) == 2:
             content = content_list[1]
 
-        if group_name in group_white_list and (msg['IsAt'] or origin_content.lower().startswith('@bot')):
+        config = conf()
+        if group_name in config.get('group_name_white_list') \
+                and (msg['IsAt'] or self.check_prefix(origin_content, config.get('group_chat_prefix'))):
             thead_pool.submit(self._do_send_group, content, msg)
 
     def send(self, msg, receiver):
@@ -83,3 +86,10 @@ class WechatChannel(Channel):
         reply_text = '@' + msg['ActualNickName'] + ' ' + reply_text
         if reply_text:
             self.send(reply_text, msg['User']['UserName'])
+
+    def check_prefix(self, content, prefix_list):
+        for prefix in prefix_list:
+            if content.lower().startswith(prefix):
+                return True
+        return False
+
