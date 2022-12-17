@@ -1,6 +1,8 @@
 # 简介
 
-本项目是基于ChatGPT模型实现的微信聊天机器人，通过 [OpenAI](https://github.com/acheong08/ChatGPT) 访提供的API，使用 [itchat](https://github.com/littlecodersh/ItChat) 实现微信消息的接收和发送。已实现的功能如下：
+基于ChatGPT的微信聊天机器人，通过 [OpenAI](https://github.com/acheong08/ChatGPT) 接口生成对话内容，使用 [itchat](https://github.com/littlecodersh/ItChat) 实现微信消息的接收和自动回复。
+
+已实现的特性如下：
 
 - [x] **基础功能：** 接收私聊及群组中的微信消息，使用ChatGPT生成回复内容，完成自动回复
 - [x] **规则定制化：** 支持私聊中按指定规则触发自动回复，支持对群组设置自动回复白名单
@@ -71,7 +73,8 @@ python3 app.py
 2.如果是服务器部署，则使用nohup在后台运行：
 
 ```
-nohup python3 app.py & tail -f nohup.out
+touch nohup.out                                   # 首次运行需要新建日志文件                     
+nohup python3 app.py & tail -f nohup.out          # 后台运行程序并输出日志
 ```
 同样在扫码后程序即可运行于后台。
 
