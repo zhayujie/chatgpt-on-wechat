@@ -36,20 +36,25 @@ class WechatChannel(Channel):
     def handle(self, msg):
         logger.info("[WX]receive msg: " + json.dumps(msg, ensure_ascii=False))
         from_user_id = msg['FromUserName']
+        to_user_id = msg['ToUserName']
         other_user_id = msg['User']['UserName']
         content = msg['Text']
         if from_user_id == other_user_id and \
-                self.check_prefix(content, conf().get('group_chat_prefix')):
+                self.check_prefix(content, conf().get('single_chat_prefix')):
             str_list = content.split('bot', 1)
             if len(str_list) == 2:
                 content = str_list[1].strip()
             thead_pool.submit(self._do_send, content, from_user_id)
-
+        elif to_user_id == other_user_id and \
+                self.check_prefix(content, conf().get('single_chat_prefix')):
+            str_list = content.split('bot', 1)
+            if len(str_list) == 2:
+                content = str_list[1].strip()
+            thead_pool.submit(self._do_send, content, to_user_id)
 
 
     def handle_group(self, msg):
         logger.info("[WX]receive group msg: " + json.dumps(msg, ensure_ascii=False))
-        group_id = msg['User']['UserName']
         group_name = msg['User'].get('NickName', None)
         if not group_name:
             return ""
@@ -72,18 +77,22 @@ class WechatChannel(Channel):
         logger.info('[WX] sendMsg={}, receiver={}'.format(msg, receiver))
         itchat.send(msg, toUserName=receiver)
 
-    def _do_send(self, send_msg, reply_user_id):
+    def _do_send(self, query, reply_user_id):
+        if not query:
+            return
         context = dict()
         context['from_user_id'] = reply_user_id
-        content = super().build_reply_content(send_msg, context)
-        if content:
-            self.send("[bot] " + content, reply_user_id)
+        reply_text = super().build_reply_content(query, context).strip()
+        if reply_text:
+            self.send(conf().get("single_chat_reply_prefix") + reply_text, reply_user_id)
 
-    def _do_send_group(self, content, msg):
+    def _do_send_group(self, query, msg):
+        if not query:
+            return
         context = dict()
         context['from_user_id'] = msg['ActualUserName']
-        reply_text = super().build_reply_content(content, context)
-        reply_text = '@' + msg['ActualNickName'] + ' ' + reply_text
+        reply_text = super().build_reply_content(query, context)
+        reply_text = '@' + msg['ActualNickName'] + ' ' + reply_text.strip()
         if reply_text:
             self.send(reply_text, msg['User']['UserName'])
 

@@ -7,6 +7,8 @@ from config import conf
 user_session = dict()
 last_session_refresh = time.time()
 
+
+# ChatGPT web接口 (暂时不可用)
 class ChatGPTBot(Bot):
     def __init__(self):
         config = {

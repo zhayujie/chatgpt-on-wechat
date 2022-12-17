@@ -4,6 +4,7 @@ import requests
 from bot.bot import Bot
 
 
+# Baidu Unit对话接口 (可用, 但能力较弱)
 class BaiduUnitBot(Bot):
     def reply(self, query, context=None):
         token = self.get_token()
