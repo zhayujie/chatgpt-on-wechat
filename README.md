@@ -1,8 +1,9 @@
 # 简介
 
-基于ChatGPT的微信聊天机器人，通过 [OpenAI](https://github.com/acheong08/ChatGPT) 接口生成对话内容，使用 [itchat](https://github.com/littlecodersh/ItChat) 实现微信消息的接收和自动回复。
+> ChatGPT近期以他强大的对话和信息整合能力风靡全网，他可以写代码、改论文、讲故事，几乎无所不能，这让人不禁有个大胆的想法，能否用他的对话模型来把我们的微信打造成一个智能机器人，可以在与好友对话中给出意想不到的回应，而且再也不用担心女朋友影响我们 ~~打游戏~~ 工作了。
 
-已实现的特性如下：
+ 
+本项目是基于ChatGPT的微信聊天机器人，通过 [OpenAI](https://github.com/openai/openai-quickstart-python) 接口生成对话内容，使用 [itchat](https://github.com/littlecodersh/ItChat) 实现微信消息的接收和自动回复。已实现的特性如下：
 
 - [x] **基础功能：** 接收私聊及群组中的微信消息，使用ChatGPT生成回复内容，完成自动回复
 - [x] **规则定制化：** 支持私聊中按指定规则触发自动回复，支持对群组设置自动回复白名单
@@ -12,6 +13,15 @@
 # 更新
 > **2022.12.17：**  原来的方案是从 [ChatGPT页面](https://chat.openai.com/chat) 获取session_token，使用 [revChatGPT](https://github.com/acheong08/ChatGPT) 直接访问web接口，但随着ChatGPT接入Cloudflare人机验证，这一方案难以在服务器顺利运行。 所以目前使用的方案是调用 OpenAI 官方提供的 [API](https://beta.openai.com/docs/api-reference/introduction)，劣势是暂不支持有上下文记忆的对话、且回复内容的智能性上相比ChatGPT稍差一些，优势是稳定性和响应速度较好。
 
+# 使用效果
+
+### 个人聊天
+
+![single-chat-sample.jpg](docs/images/single-chat-sample.jpg)
+
+### 群组聊天
+
+![group-chat-sample.jpg](docs/images/group-chat-sample.jpg)
 
 # 快速开始
 
@@ -50,14 +60,18 @@ pip3 install openai
 
 ```bash
 { 
-  "open_ai_api_key": "${YOUR API KEY}$"                      # 上面在创建的 API KEY
+  "open_ai_api_key": "${YOUR API KEY}$"                      # 上面创建的 OpenAI API KEY
   "single_chat_prefix": ["bot", "@bot"],                     # 私聊时文本需要包含该前缀才能触发机器人回复
   "single_chat_reply_prefix": "[bot] ",                      # 私聊时自动回复的前缀，用于区分真人
   "group_chat_prefix": ["@bot"],                             # 群聊时包含该前缀则会触发机器人回复
   "group_name_white_list": ["ChatGPT测试群", "ChatGPT测试群2"] # 开启自动回复的群名称列表
 }
 ```
-关于OpenAI对话接口的参数配置，可以参考 [接口文档](https://beta.openai.com/docs/api-reference/completions) 直接在代码 `bot\openai\open_ai_bot.py` 中进行调整。
+**配置说明：**
+
++ 个人聊天中，会以 "bot" 或 "@bot" 为开头的内容触发机器人，对应配置中的 `single_chat_prefix`；机器人回复的内容会以 "[bot]" 作为前缀， 以区分真人，对应的配置为 `single_chat_reply_prefix`
++ 群组聊天中，群名称需配置在 `group_name_white_list ` 中才能开启群聊自动回复，默认只要被@就会触发机器人自动回复，另外群聊天中只要检测到以 "@bot" 开头的内容，同样会自动回复，这对应配置 `group_chat_prefix`
++ 关于OpenAI对话接口的参数配置，可以参考 [接口文档](https://beta.openai.com/docs/api-reference/completions) 直接在代码 `bot\openai\open_ai_bot.py` 中进行调整
 
 
 ## 运行
@@ -70,26 +84,10 @@ python3 app.py
 终端输出二维码后，使用微信进行扫码，当输出 "Start auto replying" 时表示自动回复程序已经成功运行了。
 
 
-2.如果是服务器部署，则使用nohup在后台运行：
+2.如果是服务器部署，则使用nohup命令在后台运行：
 
 ```
 touch nohup.out                                   # 首次运行需要新建日志文件                     
 nohup python3 app.py & tail -f nohup.out          # 后台运行程序并输出日志
 ```
-同样在扫码后程序即可运行于后台。
-
-
-## 使用
-
-### 个人聊天
-
-![single-chat-sample.jpg](docs/images/single-chat-sample.jpg)
-
-默认配置中，个人聊天会以 "bot" 或 "@bot" 为开头的内容触发机器人，对应配置中的 `single_chat_prefix`；机器人回复的内容会以 "[bot]" 作为前缀， 以区分真人，对应的配置为 `single_chat_reply_prefix`。
-
-
-### 群组聊天
-
-![group-chat-sample.jpg](docs/images/group-chat-sample.jpg)
-
-群名称需要配置在 `group_name_white_list ` 中才能开启群聊自动回复，默认只要被@就会触发机器人自动回复，另外群聊天中只要检测到以 "@bot" 开头的内容，同样会自动回复，这对应配置 `group_chat_prefix`。
+同样在扫码后程序即可成功运行于服务器后台。
