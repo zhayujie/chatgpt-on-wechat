@@ -10,6 +10,8 @@ from channel.channel import Channel
 from concurrent.futures import ThreadPoolExecutor
 from common.log import logger
 from config import conf
+import requests
+import io
 
 thead_pool = ThreadPoolExecutor(max_workers=8)
 
@@ -17,11 +19,13 @@ thead_pool = ThreadPoolExecutor(max_workers=8)
 @itchat.msg_register(TEXT)
 def handler_single_msg(msg):
     WechatChannel().handle(msg)
+    return None
 
 
 @itchat.msg_register(TEXT, isGroupChat=True)
 def handler_group_msg(msg):
     WechatChannel().handle_group(msg)
+    return None
 
 
 class WechatChannel(Channel):
@@ -38,26 +42,40 @@ class WechatChannel(Channel):
     def handle(self, msg):
         logger.info("[WX]receive msg: " + json.dumps(msg, ensure_ascii=False))
         from_user_id = msg['FromUserName']
-        to_user_id = msg['ToUserName']
-        other_user_id = msg['User']['UserName']
+        to_user_id = msg['ToUserName']              # 接收人id
+        other_user_id = msg['User']['UserName']     # 对手方id
         content = msg['Text']
-        if from_user_id == other_user_id and \
-                self.check_prefix(content, conf().get('single_chat_prefix')):
-            str_list = content.split('bot', 1)
+        match_prefix = self.check_prefix(content, conf().get('single_chat_prefix'))
+        if from_user_id == other_user_id and match_prefix:
+            # 好友向自己发送消息
+            str_list = content.split(match_prefix, 1)
             if len(str_list) == 2:
                 content = str_list[1].strip()
-            thead_pool.submit(self._do_send, content, from_user_id)
-        elif to_user_id == other_user_id and \
-                self.check_prefix(content, conf().get('single_chat_prefix')):
-            str_list = content.split('bot', 1)
+
+            img_match_prefix = self.check_prefix(content, ["画图"])
+            if img_match_prefix:
+                content = content.split(img_match_prefix, 1)[1].strip()
+                thead_pool.submit(self._do_send_img, content, from_user_id)
+            else:
+                thead_pool.submit(self._do_send, content, from_user_id)
+
+        elif to_user_id == other_user_id and match_prefix:
+            # 自己给好友发送消息
+            str_list = content.split(match_prefix, 1)
             if len(str_list) == 2:
                 content = str_list[1].strip()
-            thead_pool.submit(self._do_send, content, to_user_id)
+            img_match_prefix = self.check_prefix(content, conf().get('image_create_prefix'))
+            if img_match_prefix:
+                content = content.split(img_match_prefix, 1)[1].strip()
+                thead_pool.submit(self._do_send_img, content, to_user_id)
+            else:
+                thead_pool.submit(self._do_send, content, to_user_id)
 
 
     def handle_group(self, msg):
         logger.info("[WX]receive group msg: " + json.dumps(msg, ensure_ascii=False))
         group_name = msg['User'].get('NickName', None)
+        group_id = msg['User'].get('UserName', None)
         if not group_name:
             return ""
         origin_content = msg['Content']
@@ -70,23 +88,53 @@ class WechatChannel(Channel):
             content = content_list[1]
 
         config = conf()
-        if group_name in config.get('group_name_white_list') \
-                and (msg['IsAt'] or self.check_prefix(origin_content, config.get('group_chat_prefix'))):
-            thead_pool.submit(self._do_send_group, content, msg)
+        match_prefix = msg['IsAt'] or self.check_prefix(origin_content, config.get('group_chat_prefix'))
+        if group_name in config.get('group_name_white_list') and match_prefix:
+            img_match_prefix = self.check_prefix(content, conf().get('image_create_prefix'))
+            if img_match_prefix:
+                content = content.split(img_match_prefix, 1)[1].strip()
+                thead_pool.submit(self._do_send_img, content, group_id)
+            else:
+                thead_pool.submit(self._do_send_group, content, msg)
 
     def send(self, msg, receiver):
-        # time.sleep(random.randint(1, 3))
         logger.info('[WX] sendMsg={}, receiver={}'.format(msg, receiver))
         itchat.send(msg, toUserName=receiver)
 
     def _do_send(self, query, reply_user_id):
-        if not query:
-            return
-        context = dict()
-        context['from_user_id'] = reply_user_id
-        reply_text = super().build_reply_content(query, context).strip()
-        if reply_text:
-            self.send(conf().get("single_chat_reply_prefix") + reply_text, reply_user_id)
+        try:
+            if not query:
+                return
+            context = dict()
+            context['from_user_id'] = reply_user_id
+            reply_text = super().build_reply_content(query, context).strip()
+            if reply_text:
+                self.send(conf().get("single_chat_reply_prefix") + reply_text, reply_user_id)
+        except Exception as e:
+            logger.exception(e)
+
+    def _do_send_img(self, query, reply_user_id):
+        try:
+            if not query:
+                return
+            context = dict()
+            context['type'] = 'IMAGE_CREATE'
+            img_url = super().build_reply_content(query, context)
+            if not img_url:
+                return
+
+            # 图片下载
+            pic_res = requests.get(img_url, stream=True)
+            image_storage = io.BytesIO()
+            for block in pic_res.iter_content(1024):
+                image_storage.write(block)
+            image_storage.seek(0)
+
+            # 图片发送
+            logger.info('[WX] sendImage, receiver={}'.format(reply_user_id))
+            itchat.send_image(image_storage, reply_user_id)
+        except Exception as e:
+            logger.exception(e)
 
     def _do_send_group(self, query, msg):
         if not query:
@@ -98,9 +146,9 @@ class WechatChannel(Channel):
         if reply_text:
             self.send(reply_text, msg['User']['UserName'])
 
+
     def check_prefix(self, content, prefix_list):
         for prefix in prefix_list:
             if content.lower().startswith(prefix):
-                return True
-        return False
-
+                return prefix
+        return None

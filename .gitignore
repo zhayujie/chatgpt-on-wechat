@@ -1,5 +1,6 @@
 .DS_Store
 .idea
 __pycache__/
-venv
+venv*
 *.pyc
+config.json

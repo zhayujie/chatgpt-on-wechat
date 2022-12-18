@@ -51,5 +51,5 @@ class ChatGPTBot(Bot):
             user_session[from_user_id] = user_cache
             return res['message']
         except Exception as e:
-            logger.error(e)
+            logger.exception(e)
             return None
