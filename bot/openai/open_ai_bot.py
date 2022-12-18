@@ -53,7 +53,6 @@ class OpenAIBot(Bot):
         return image_url
 
     def edit_img(self, query, src_img):
-        openai.api_key = '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'
         try:
             response = openai.Image.create_edit(
                 image=open(src_img, 'rb'),
@@ -70,7 +69,6 @@ class OpenAIBot(Bot):
         return image_url
 
     def migration_img(self, query, src_img):
-        openai.api_key = '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'
 
         try:
             response = openai.Image.create_variation(

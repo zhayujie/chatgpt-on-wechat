@@ -52,7 +52,7 @@ class WechatChannel(Channel):
             if len(str_list) == 2:
                 content = str_list[1].strip()
 
-            img_match_prefix = self.check_prefix(content, ["画图"])
+            img_match_prefix = self.check_prefix(content, conf().get('image_create_prefix'))
             if img_match_prefix:
                 content = content.split(img_match_prefix, 1)[1].strip()
                 thead_pool.submit(self._do_send_img, content, from_user_id)
