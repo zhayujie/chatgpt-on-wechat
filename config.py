@@ -1,3 +1,5 @@
+# encoding:utf-8
+
 import json
 import os
 from common.log import logger
@@ -25,7 +27,7 @@ def get_root():
 
 
 def read_file(path):
-    with open(path, 'r') as f:
+    with open(path, mode='r', encoding='utf-8') as f:
         return f.read()
 
 

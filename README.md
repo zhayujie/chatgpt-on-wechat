@@ -39,7 +39,7 @@
 
 ### 3.运行环境
 
-支持运行在 Linux、MacOS、Windows 操作系统上，需安装 `Python3.6` 及以上版本。推荐使用Linux服务器，可以托管在后台长期运行。
+支持运行在 Linux、MacOS、Windows 系统上，需安装有 `Python`(版本在3.7.1 ~ 3.8.16 之间)，推荐使用Linux服务器，可以托管在后台长期运行。
 
 克隆项目代码：
 
@@ -78,7 +78,7 @@ pip3 install openai
 
 1.如果是开发机本地调试，直接在项目根目录下执行：
 
-```
+```bash
 python3 app.py
 ```
 终端输出二维码后，使用微信进行扫码，当输出 "Start auto replying" 时表示自动回复程序已经成功运行了。
@@ -86,7 +86,7 @@ python3 app.py
 
 2.如果是服务器部署，则使用nohup命令在后台运行：
 
-```
+```bash
 touch nohup.out                                   # 首次运行需要新建日志文件                     
 nohup python3 app.py & tail -f nohup.out          # 后台运行程序并输出日志
 ```
