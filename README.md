@@ -47,7 +47,9 @@
 
 ### 2.运行环境
 
-支持 Linux、MacOS、Windows 系统（可在Linux服务器上长期运行)，同时要求安装有 `Python`（版本需在 3.7.1~3.9.X 之间，Linux环境建议使用3.7.X）。
+支持 Linux、MacOS、Windows 系统（可在Linux服务器上长期运行)，同时需安装 `Python`。 
+> 建议Python版本在 3.7.1~3.9.X 之间，3.10及以上版本在 MacOS 可用，其他系统上不确定能否正常运行。
+
 
 1.克隆项目代码：
 
@@ -111,9 +113,13 @@ nohup python3 app.py & tail -f nohup.out          # 后台运行程序并输出�
 ```
 同样在扫码后程序即可成功运行于服务器后台。
 
+## 常见问题
+
+FAQs： <https://github.com/zhayujie/chatgpt-on-wechat/wiki/FAQs>
+
 
 ## 联系
 
-欢迎提交 PR、Issues。遇到程序运行问题可先在 [Issues](https://github.com/zhayujie/chatgpt-on-wechat/issues) 中搜索，未找到相似问题可以创建Issue，若无回复可加微信 zhayujie_com 交流。
+欢迎提交 PR、Issues。程序运行遇到问题优先查看 [常见问题列表](https://github.com/zhayujie/chatgpt-on-wechat/wiki/FAQs) ，其次前往 [Issues](https://github.com/zhayujie/chatgpt-on-wechat/issues) 中搜索，没有相似问题则创建Issue，一段时间内无回复可加微信 zhayujie_com 交流。
 
  
