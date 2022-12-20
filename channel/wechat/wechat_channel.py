@@ -40,7 +40,7 @@ class WechatChannel(Channel):
         itchat.run()
 
     def handle(self, msg):
-        logger.info("[WX]receive msg: " + json.dumps(msg, ensure_ascii=False))
+        logger.debug("[WX]receive msg: " + json.dumps(msg, ensure_ascii=False))
         from_user_id = msg['FromUserName']
         to_user_id = msg['ToUserName']              # 接收人id
         other_user_id = msg['User']['UserName']     # 对手方id
@@ -73,7 +73,7 @@ class WechatChannel(Channel):
 
 
     def handle_group(self, msg):
-        logger.info("[WX]receive group msg: " + json.dumps(msg, ensure_ascii=False))
+        logger.debug("[WX]receive group msg: " + json.dumps(msg, ensure_ascii=False))
         group_name = msg['User'].get('NickName', None)
         group_id = msg['User'].get('UserName', None)
         if not group_name:

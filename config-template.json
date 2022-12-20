@@ -1,8 +1,8 @@
 {
   "open_ai_api_key": "YOUR API KEY",
-  "single_chat_prefix": ["bt", "@bt"],
+  "single_chat_prefix": ["bot", "@bot"],
   "single_chat_reply_prefix": "[bot] ",
-  "group_chat_prefix": ["@bt"],
+  "group_chat_prefix": ["@bot"],
   "group_name_white_list": ["ChatGPT测试群", "ChatGPT测试群2"],
   "image_create_prefix": ["画", "看", "找"]
 }
