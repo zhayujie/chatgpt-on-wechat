@@ -149,6 +149,6 @@ class WechatChannel(Channel):
 
     def check_prefix(self, content, prefix_list):
         for prefix in prefix_list:
-            if content.lower().startswith(prefix):
+            if content.lower().startswith(prefix.lower()):
                 return prefix
         return None

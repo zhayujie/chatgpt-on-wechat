@@ -1,5 +1,5 @@
 {
-  "open_ai_api_key": "${YOUR API KEY}$",
+  "open_ai_api_key": "YOUR API KEY",
   "single_chat_prefix": ["bt", "@bt"],
   "single_chat_reply_prefix": "[bot] ",
   "group_chat_prefix": ["@bt"],
