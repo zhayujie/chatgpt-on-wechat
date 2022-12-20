@@ -40,14 +40,14 @@
 
 ### 1. OpenAI账号注册
 
-前往 [OpenAI注册页面](https://beta.openai.com/signup) 创建账号，参考这篇 [博客](https://www.cnblogs.com/damugua/p/16969508.html) 可以通过虚拟手机号来接收验证码。创建完账号则前往 [API管理页面](https://beta.openai.com/account/api-keys) 创建一个 API Key 并保存下来，后面需要在项目中配置这个key。 
+前往 [OpenAI注册页面](https://beta.openai.com/signup) 创建账号，参考这篇 [教程](https://www.cnblogs.com/damugua/p/16969508.html) 可以通过虚拟手机号来接收验证码。创建完账号则前往 [API管理页面](https://beta.openai.com/account/api-keys) 创建一个 API Key 并保存下来，后面需要在项目中配置这个key。
 
 > 项目中使用的对话模型是 davinci，计费方式是每1k字 (包含请求和回复) 消耗 $0.02，图片生成是每张消耗 $0.016，账号创建有免费的 $18 额度，使用完可以更换邮箱重新注册。
 
 
 ### 2.运行环境
 
-支持运行在 Linux、MacOS、Windows 系统上，且安装有 `Python`(版本在 3.7.1 ~ 3.9.X 之间)，推荐使用Linux服务器，可托管于后台长期运行。
+支持 Linux、MacOS、Windows 系统（可在Linux服务器上长期运行)，同时要求安装有 `Python`（版本需在 3.7.1~3.9.X 之间，Linux环境建议使用3.7.X）。
 
 1.克隆项目代码：
 
@@ -100,7 +100,7 @@ cp config-template.json config.json
 ```bash
 python3 app.py
 ```
-终端输出二维码后，使用微信进行扫码，当输出 "Start auto replying" 时表示自动回复程序已经成功运行了。
+终端输出二维码后，使用微信进行扫码，当输出 "Start auto replying" 时表示自动回复程序已经成功运行了（注意：用于登录的微信需要在支付处已完成实名认证）。
 
 
 2.如果是服务器部署，则使用nohup命令在后台运行：
@@ -111,6 +111,9 @@ nohup python3 app.py & tail -f nohup.out          # 后台运行程序并输出�
 ```
 同样在扫码后程序即可成功运行于服务器后台。
 
+
 ## 联系
 
-程序运行出现问题可先提 [Issues](https://github.com/zhayujie/chatgpt-on-wechat/issues)，若无回应可加微信 zhayujie_com 交流。
+欢迎提交 PR、Issues。遇到程序运行问题可先在 [Issues](https://github.com/zhayujie/chatgpt-on-wechat/issues) 中搜索，未找到相似问题可以创建Issue，若无回复可加微信 zhayujie_com 交流。
+
+ 
