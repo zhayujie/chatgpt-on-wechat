@@ -146,9 +146,8 @@ class WechatChannel(Channel):
         if reply_text:
             self.send(reply_text, msg['User']['UserName'])
 
-
     def check_prefix(self, content, prefix_list):
         for prefix in prefix_list:
-            if content.lower().startswith(prefix.lower()):
+            if content.startswith(prefix):
                 return prefix
         return None
