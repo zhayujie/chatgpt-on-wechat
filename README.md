@@ -74,7 +74,7 @@ pip3 install openai==0.25.0
 cp config-template.json config.json
 ```
 
-然后在`config.json`中填入自定义配置，各配置项含义如下：
+然后在`config.json`中填入配置，以下是对默认配置的说明，可根据需要进行自定义修改：
 
 ```bash
 # config.json文件内容示例
@@ -90,9 +90,9 @@ cp config-template.json config.json
 **配置说明：**
 
 + 个人聊天中，需要以 "bot" 或 "@bot" 为开头的内容触发机器人，对应配置中的 `single_chat_prefix`；机器人回复的内容会以 "[bot]" 作为前缀， 以区分真人，对应的配置为 `single_chat_reply_prefix`
-+ 群组聊天中，群名称需配置在 `group_name_white_list ` 中才能开启群聊自动回复，默认只要被@就会触发机器人自动回复，另外群聊天中只要检测到以 "@bot" 开头的内容，同样会自动回复，这对应配置 `group_chat_prefix`
++ 群组聊天中，群名称需配置在 `group_name_white_list ` 中才能开启群聊自动回复，默认只要被@就会触发机器人自动回复；另外群聊天中只要检测到以 "@bot" 开头的内容，同样会自动回复（方便自己触发），这对应配置 `group_chat_prefix`
 + 对于图像生成，在满足个人或群组触发条件外，还需要额外的关键词，对应配置 `image_create_prefix `
-+ 关于OpenAI对话及图片接口的参数配置（内容自由度、回复字数限制、图片大小等），可以参考 [对话接口](https://beta.openai.com/docs/api-reference/completions) 和 [图像接口](https://beta.openai.com/docs/api-reference/completions)  文档直接在 [代码](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/bot/openai/open_ai_bot.py) `bot\openai\open_ai_bot.py` 中进行调整。
++ 关于OpenAI对话及图片接口的参数配置（内容自由度、回复字数限制、图片大小等），可以参考 [对话接口](https://beta.openai.com/docs/api-reference/completions) 和 [图像接口](https://beta.openai.com/docs/api-reference/completions)  文档直接在 [代码](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/bot/openai/open_ai_bot.py) `bot/openai/open_ai_bot.py` 中进行调整。
 
 
 ## 运行
