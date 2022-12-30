@@ -46,11 +46,12 @@ class WechatChannel(Channel):
         other_user_id = msg['User']['UserName']     # 对手方id
         content = msg['Text']
         match_prefix = self.check_prefix(content, conf().get('single_chat_prefix'))
-        if from_user_id == other_user_id and match_prefix:
+        if from_user_id == other_user_id and match_prefix is not None:
             # 好友向自己发送消息
-            str_list = content.split(match_prefix, 1)
-            if len(str_list) == 2:
-                content = str_list[1].strip()
+            if match_prefix is not '':
+                str_list = content.split(match_prefix, 1)
+                if len(str_list) == 2:
+                    content = str_list[1].strip()
 
             img_match_prefix = self.check_prefix(content, conf().get('image_create_prefix'))
             if img_match_prefix:
@@ -89,7 +90,7 @@ class WechatChannel(Channel):
 
         config = conf()
         match_prefix = msg['IsAt'] or self.check_prefix(origin_content, config.get('group_chat_prefix'))
-        if group_name in config.get('group_name_white_list') and match_prefix:
+        if (group_name in config.get('group_name_white_list') or 'ALL_GROUP' in config.get('group_name_white_list')) and match_prefix:
             img_match_prefix = self.check_prefix(content, conf().get('image_create_prefix'))
             if img_match_prefix:
                 content = content.split(img_match_prefix, 1)[1].strip()
