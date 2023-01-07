@@ -4,3 +4,4 @@ __pycache__/
 venv*
 *.pyc
 config.json
+QR.png
