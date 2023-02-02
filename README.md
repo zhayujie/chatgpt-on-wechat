@@ -84,7 +84,9 @@ cp config-template.json config.json
   "single_chat_prefix": ["bot", "@bot"],                      # 私聊时文本需要包含该前缀才能触发机器人回复
   "single_chat_reply_prefix": "[bot] ",                       # 私聊时自动回复的前缀，用于区分真人
   "group_chat_prefix": ["@bot"],                              # 群聊时包含该前缀则会触发机器人回复
+  "group_chat_keyword": ["为什么", "why", "Why", "?", "请教"], # 群聊内容包含其中任意字符串，将会触发机器人回复
   "group_name_white_list": ["ChatGPT测试群", "ChatGPT测试群2"], # 开启自动回复的群名称列表
+  "group_name_keyword_white_list": ["相亲相爱", "瞎侃"],       # 开启自动回复的群名称关键字列表（群名称含关键字即可匹配上）
   "image_create_prefix": ["画", "看", "找"]                    # 开启图片回复的前缀
 }
 ```
@@ -99,6 +101,7 @@ cp config-template.json config.json
 
 + 群组聊天中，群名称需配置在 `group_name_white_list ` 中才能开启群聊自动回复。如果想对所有群聊生效，可以直接填写 `"group_name_white_list": "ALL_GROUP"`
 + 默认只要被人 @ 就会触发机器人自动回复；另外群聊天中只要检测到以 "@bot" 开头的内容，同样会自动回复（方便自己触发），这对应配置项 `group_chat_prefix`
++ 新增group_name_keyword_white_list以应对某些群名称中包含非主流或常常变动，只匹配部分关键字将使配置简单。+ 新增group_chat_keyword以更灵活的触发群内的聊天自动回复，增加趣味。
 
 **3.其他配置**
 
