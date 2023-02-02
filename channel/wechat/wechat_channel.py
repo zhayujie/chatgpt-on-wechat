@@ -89,8 +89,8 @@ class WechatChannel(Channel):
             content = content_list[1]
 
         config = conf()
-        match_prefix = msg['IsAt'] or self.check_prefix(origin_content, config.get('group_chat_prefix'))
-        if (group_name in config.get('group_name_white_list') or 'ALL_GROUP' in config.get('group_name_white_list')) and match_prefix:
+        match_prefix = msg['IsAt'] or self.check_prefix(origin_content, config.get('group_chat_prefix')) or self.check_contain(origin_content, config.get('group_chat_keyword'))
+        if (group_name in config.get('group_name_white_list') or 'ALL_GROUP' in config.get('group_name_white_list') or self.fuzzy_match_group_name(group_name, config.get('group_name_keyword_white_list'))) and match_prefix:
             img_match_prefix = self.check_prefix(content, conf().get('image_create_prefix'))
             if img_match_prefix:
                 content = content.split(img_match_prefix, 1)[1].strip()
@@ -152,3 +152,15 @@ class WechatChannel(Channel):
             if content.startswith(prefix):
                 return prefix
         return None
+
+    def check_contain(self, content, keyword_list):
+        for ky in keyword_list:
+            if content.find(ky) != -1:
+                return ky
+        return None
+
+    def fuzzy_match_group_name(self, group_name, keyword_list):
+        for ky in keyword_list:
+            if group_name.find(ky) != -1:
+                return True
+        return False
