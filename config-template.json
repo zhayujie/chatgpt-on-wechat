@@ -3,8 +3,6 @@
   "single_chat_prefix": ["bot", "@bot"],
   "single_chat_reply_prefix": "[bot] ",
   "group_chat_prefix": ["@bot"],
-  "group_chat_keyword": ["为什么", "why", "Why", "?", "请教"],
   "group_name_white_list": ["ChatGPT测试群", "ChatGPT测试群2"],
-  "group_name_keyword_white_list": ["相亲相爱", "瞎侃"],
   "image_create_prefix": ["画", "看", "找"]
 }
