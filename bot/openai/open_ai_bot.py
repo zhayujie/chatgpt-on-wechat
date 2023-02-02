@@ -12,6 +12,10 @@ class OpenAIBot(Bot):
         openai.api_key = conf().get('open_ai_api_key')
 
     def reply(self, query, context=None):
+        # auto append question mark
+        query = self.append_question_mark(query)
+
+        # acquire reply content
         if not context or not context.get('type') or context.get('type') == 'TEXT':
             return self.reply_text(query)
         elif context.get('type', None) == 'IMAGE_CREATE':
@@ -82,3 +86,10 @@ class OpenAIBot(Bot):
             logger.exception(e)
             return None
         return image_url
+
+    def append_question_mark(self, query):
+        end_symbols = [".", "。", "?", "？", "!", "！"]
+        for symbol in end_symbols:
+            if query.endswith(symbol):
+                return query
+        return query + "?"
