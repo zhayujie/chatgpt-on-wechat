@@ -84,9 +84,7 @@ cp config-template.json config.json
   "single_chat_prefix": ["bot", "@bot"],                      # 私聊时文本需要包含该前缀才能触发机器人回复
   "single_chat_reply_prefix": "[bot] ",                       # 私聊时自动回复的前缀，用于区分真人
   "group_chat_prefix": ["@bot"],                              # 群聊时包含该前缀则会触发机器人回复
-  "group_chat_keyword": ["为什么", "why", "Why", "?", "请教"], # 群聊内容包含其中任意字符串，将会触发机器人回复
   "group_name_white_list": ["ChatGPT测试群", "ChatGPT测试群2"], # 开启自动回复的群名称列表
-  "group_name_keyword_white_list": ["相亲相爱", "瞎侃"],       # 开启自动回复的群名称关键字列表（群名称含关键字即可匹配上）
   "image_create_prefix": ["画", "看", "找"]                    # 开启图片回复的前缀
 }
 ```
