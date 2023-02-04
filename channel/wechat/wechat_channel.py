@@ -89,7 +89,8 @@ class WechatChannel(Channel):
             content = content_list[1]
 
         config = conf()
-        match_prefix = msg['IsAt'] or self.check_prefix(origin_content, config.get('group_chat_prefix')) or self.check_contain(origin_content, config.get('group_chat_keyword'))
+        match_prefix = (msg['IsAt'] and not config.get("group_at_off", False)) or self.check_prefix(origin_content, config.get('group_chat_prefix')) \
+                       or self.check_contain(origin_content, config.get('group_chat_keyword'))
         if (group_name in config.get('group_name_white_list') or 'ALL_GROUP' in config.get('group_name_white_list') or self.check_contain(group_name, config.get('group_name_keyword_white_list'))) and match_prefix:
             img_match_prefix = self.check_prefix(content, conf().get('image_create_prefix'))
             if img_match_prefix:
@@ -145,13 +146,15 @@ class WechatChannel(Channel):
         reply_text = super().build_reply_content(query, context)
         reply_text = '@' + msg['ActualNickName'] + ' ' + reply_text.strip()
         if reply_text:
-            self.send(reply_text, msg['User']['UserName'])
+            self.send(conf().get("group_chat_reply_prefix", "") + reply_text, msg['User']['UserName'])
+
 
     def check_prefix(self, content, prefix_list):
         for prefix in prefix_list:
             if content.startswith(prefix):
                 return prefix
         return None
+
 
     def check_contain(self, content, keyword_list):
         if not keyword_list:
@@ -160,4 +163,3 @@ class WechatChannel(Channel):
             if content.find(ky) != -1:
                 return True
         return None
-
