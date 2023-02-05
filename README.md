@@ -88,7 +88,8 @@ cp config-template.json config.json
   "group_chat_prefix": ["@bot"],                              # 群聊时包含该前缀则会触发机器人回复
   "group_name_white_list": ["ChatGPT测试群", "ChatGPT测试群2"], # 开启自动回复的群名称列表
   "image_create_prefix": ["画", "看", "找"],                   # 开启图片回复的前缀
-  "conversation_max_tokens": 1000                             # 支持上下文记忆的最多字符数
+  "conversation_max_tokens": 1000,                            # 支持上下文记忆的最多字符数
+  "character_desc": "你是ChatGPT, 一个由OpenAI训练的大型语言模型, 你乐于回答人们的各种问题。"  # 人格描述
 }
 ```
 **配置说明：**
@@ -109,6 +110,7 @@ cp config-template.json config.json
 + 对于图像生成，在满足个人或群组触发条件外，还需要额外的关键词前缀来触发，对应配置 `image_create_prefix `
 + 关于OpenAI对话及图片接口的参数配置（内容自由度、回复字数限制、图片大小等），可以参考 [对话接口](https://beta.openai.com/docs/api-reference/completions) 和 [图像接口](https://beta.openai.com/docs/api-reference/completions)  文档直接在 [代码](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/bot/openai/open_ai_bot.py) `bot/openai/open_ai_bot.py` 中进行调整。
 + `conversation_max_tokens`：表示能够记忆的上下文最大字数（一问一答为一组对话，如果累积的对话字数超出限制，就会优先移除最早的一组对话）
++ `character_desc` 配置中保存着你对机器人说的一段话，他会记住这段话并作为他的人格设定，你可以为他塑造任何形象
 
 
 ## 运行
