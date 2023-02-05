@@ -88,7 +88,7 @@ cp config-template.json config.json
   "group_chat_prefix": ["@bot"],                              # 群聊时包含该前缀则会触发机器人回复
   "group_name_white_list": ["ChatGPT测试群", "ChatGPT测试群2"], # 开启自动回复的群名称列表
   "image_create_prefix": ["画", "看", "找"],                   # 开启图片回复的前缀
-  "conversation_max_tokens": 3000                                                               # 支持上下文记忆的最多字符数
+  "conversation_max_tokens": 1000                             # 支持上下文记忆的最多字符数
 }
 ```
 **配置说明：**

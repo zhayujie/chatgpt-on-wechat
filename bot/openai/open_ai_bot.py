@@ -117,22 +117,24 @@ class Session(object):
         :param user_id: from user id
         :return: query content with conversaction
         '''
-        new_query = ""
+        prompt = conf().get("character_desc", "")
+        if prompt:
+            prompt += "\n\n"
         session = user_session.get(user_id, None)
         if session:
             for conversation in session:
-                new_query += "Q: " + conversation["question"] + "\n\n\nA: " + conversation["answer"] + "<|im_end|>\n"
-            new_query += "Q: " + query + "\nA: "
-            return new_query
+                prompt += "Q: " + conversation["question"] + "\n\n\nA: " + conversation["answer"] + "<|im_end|>\n"
+                prompt += "Q: " + query + "\nA: "
+            return prompt
         else:
-            return "Q: " + query + "\nA: "
+            return prompt + "Q: " + query + "\nA: "
 
     @staticmethod
     def save_session(query, answer, user_id):
         max_tokens = conf().get("conversation_max_tokens")
         if not max_tokens:
             # default 3000
-            max_tokens = 3000
+            max_tokens = 1000
         conversation = dict()
         conversation["question"] = query
         conversation["answer"] = answer
