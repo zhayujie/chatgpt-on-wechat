@@ -5,6 +5,7 @@ from config import conf
 from common.log import logger
 import openai
 
+user_session = dict()
 
 # OpenAI对话模型API (可用)
 class OpenAIBot(Bot):
@@ -12,17 +13,26 @@ class OpenAIBot(Bot):
         openai.api_key = conf().get('open_ai_api_key')
 
     def reply(self, query, context=None):
-        # auto append question mark
-        query = self.append_question_mark(query)
 
         # acquire reply content
         if not context or not context.get('type') or context.get('type') == 'TEXT':
-            return self.reply_text(query)
+            logger.info("[OPEN_AI] query={}".format(query))
+            from_user_id = context['from_user_id']
+            if query == '#清除记忆':
+                Session.clear_session(from_user_id)
+                return '记忆已清除'
+
+            new_query = Session.build_session_query(query, from_user_id)
+            logger.debug("[OPEN_AI] session query={}".format(new_query))
+
+            reply_content = self.reply_text(new_query, query)
+            Session.save_session(query, reply_content, from_user_id)
+            return reply_content
+
         elif context.get('type', None) == 'IMAGE_CREATE':
             return self.create_img(query)
 
-    def reply_text(self, query):
-        logger.info("[OPEN_AI] query={}".format(query))
+    def reply_text(self, query, origin_query):
         try:
             response = openai.Completion.create(
                 model="text-davinci-003",  # 对话模型的名称
@@ -34,7 +44,7 @@ class OpenAIBot(Bot):
                 presence_penalty=0.0,  # [-2,2]之间，该值越大则更倾向于产生不同的内容
                 stop=["#"]
             )
-            res_content = response.choices[0]["text"].strip()
+            res_content = response.choices[0]["text"].strip().rstrip("<|im_end|>")
         except Exception as e:
             logger.exception(e)
             return None
@@ -93,3 +103,68 @@ class OpenAIBot(Bot):
             if query.endswith(symbol):
                 return query
         return query + "?"
+
+
+class Session(object):
+    @staticmethod
+    def build_session_query(query, user_id):
+        '''
+        build query with conversation history
+        e.g.  Q: xxx
+              A: xxx
+              Q: xxx
+        :param query: query content
+        :param user_id: from user id
+        :return: query content with conversaction
+        '''
+        new_query = ""
+        session = user_session.get(user_id, None)
+        if session:
+            for conversation in session:
+                new_query += "Q: " + conversation["question"] + "\n\n\nA: " + conversation["answer"] + "<|im_end|>\n"
+            new_query += "Q: " + query + "\nA: "
+            return new_query
+        else:
+            return "Q: " + query + "\nA: "
+
+    @staticmethod
+    def save_session(query, answer, user_id):
+        max_tokens = conf().get("conversation_max_tokens")
+        if not max_tokens:
+            # default 3000
+            max_tokens = 3000
+        conversation = dict()
+        conversation["question"] = query
+        conversation["answer"] = answer
+        session = user_session.get(user_id)
+        if session:
+            # append conversation
+            session.append(conversation)
+        else:
+            # create session
+            queue = list()
+            queue.append(conversation)
+            user_session[user_id] = queue
+
+        # discard exceed limit conversation
+        Session.discard_exceed_conversation(user_session[user_id], max_tokens)
+
+
+    @staticmethod
+    def discard_exceed_conversation(session, max_tokens):
+        count = 0
+        count_list = list()
+        for i in range(len(session)-1, -1, -1):
+            # count tokens of conversation list
+            history_conv = session[i]
+            count += len(history_conv["question"]) + len(history_conv["answer"])
+            count_list.append(count)
+
+        for c in count_list:
+            if c > max_tokens:
+                # pop first conversation
+                session.pop(0)
+
+    @staticmethod
+    def clear_session(user_id):
+        user_session[user_id] = []

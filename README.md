@@ -9,9 +9,11 @@
 - [x] **规则定制化：** 支持私聊中按指定规则触发自动回复，支持对群组设置自动回复白名单
 - [x] **多账号：** 支持多微信账号同时运行
 - [x] **图片生成：** 支持根据描述生成图片，并自动发送至个人聊天或群聊
+- [x] **上下文记忆**：支持多轮对话记忆，且为每个好友维护独立的上下会话
 
 
 # 更新日志
+>**2022.02.05：** 在openai官方接口方案中 (GPT-3模型) 实现上下文对话
 
 >**2022.12.19：** 引入 [itchat-uos](https://github.com/why2lyj/ItChat-UOS) 替换 itchat，解决由于不能登录网页微信而无法使用的问题，且解决Python3.9的兼容问题
 
@@ -85,7 +87,8 @@ cp config-template.json config.json
   "single_chat_reply_prefix": "[bot] ",                       # 私聊时自动回复的前缀，用于区分真人
   "group_chat_prefix": ["@bot"],                              # 群聊时包含该前缀则会触发机器人回复
   "group_name_white_list": ["ChatGPT测试群", "ChatGPT测试群2"], # 开启自动回复的群名称列表
-  "image_create_prefix": ["画", "看", "找"]                    # 开启图片回复的前缀
+  "image_create_prefix": ["画", "看", "找"],                   # 开启图片回复的前缀
+  "conversation_max_tokens": 3000                                                               # 支持上下文记忆的最多字符数
 }
 ```
 **配置说明：**
@@ -105,6 +108,7 @@ cp config-template.json config.json
 
 + 对于图像生成，在满足个人或群组触发条件外，还需要额外的关键词前缀来触发，对应配置 `image_create_prefix `
 + 关于OpenAI对话及图片接口的参数配置（内容自由度、回复字数限制、图片大小等），可以参考 [对话接口](https://beta.openai.com/docs/api-reference/completions) 和 [图像接口](https://beta.openai.com/docs/api-reference/completions)  文档直接在 [代码](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/bot/openai/open_ai_bot.py) `bot/openai/open_ai_bot.py` 中进行调整。
++ `conversation_max_tokens`：表示能够记忆的上下文最大字数（一问一答为一组对话，如果累积的对话字数超出限制，就会优先移除最早的一组对话）
 
 
 ## 运行
