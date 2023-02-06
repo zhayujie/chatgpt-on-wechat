@@ -28,7 +28,8 @@ class OpenAIBot(Bot):
 
             reply_content = self.reply_text(new_query, from_user_id)
             logger.debug("[OPEN_AI] new_query={}, user={}".format(new_query, from_user_id))
-            Session.save_session(query, reply_content, from_user_id)
+            if reply_content and query:
+                Session.save_session(query, reply_content, from_user_id)
             return reply_content
 
         elif context.get('type', None) == 'IMAGE_CREATE':
