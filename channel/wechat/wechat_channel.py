@@ -109,7 +109,7 @@ class WechatChannel(Channel):
                 return
             context = dict()
             context['from_user_id'] = reply_user_id
-            reply_text = super().build_reply_content(query, context).strip()
+            reply_text = super().build_reply_content(query, context)
             if reply_text:
                 self.send(conf().get("single_chat_reply_prefix") + reply_text, reply_user_id)
         except Exception as e:
@@ -144,8 +144,8 @@ class WechatChannel(Channel):
         context = dict()
         context['from_user_id'] = msg['ActualUserName']
         reply_text = super().build_reply_content(query, context)
-        reply_text = '@' + msg['ActualNickName'] + ' ' + reply_text.strip()
         if reply_text:
+            reply_text = '@' + msg['ActualNickName'] + ' ' + reply_text.strip()
             self.send(conf().get("group_chat_reply_prefix", "") + reply_text, msg['User']['UserName'])
 
 
