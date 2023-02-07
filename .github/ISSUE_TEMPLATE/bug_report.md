@@ -1,38 +1,26 @@
----
-name: Bug report
-about: Create a report to help us improve
-title: ''
-labels: ''
-assignees: ''
+### 前置确认
 
----
+1. 运行于国内网络环境，未开代理
+2.  python 已安装：版本在 3.7 ~ 3.10 之间，依赖已安装
+3. 在已有 issue 中未搜索到类似问题
+4. [FAQS](https://github.com/zhayujie/chatgpt-on-wechat/wiki/FAQs) 中无类似问题
 
-**Describe the bug**
-A clear and concise description of what the bug is.
 
-**To Reproduce**
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+### 问题描述
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
+> 简要描述、截图等
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
 
-**Desktop (please complete the following information):**
- - OS: [e.g. iOS]
- - Browser [e.g. chrome, safari]
- - Version [e.g. 22]
 
-**Smartphone (please complete the following information):**
- - Device: [e.g. iPhone6]
- - OS: [e.g. iOS8.1]
- - Browser [e.g. stock browser, safari]
- - Version [e.g. 22]
+### 终端日志 (如有报错)
 
-**Additional context**
-Add any other context about the problem here.
+```
+[在此处粘贴终端日志]
+```
+
+
+### 环境
+
+ - 操作系统类型  (Mac/Windows/Linux)：
+ - Python版本  ( 执行 `python3 -V` )：                      
+ - pip版本  ( 依赖问题此项必填，执行 `pip3 -V`)：
