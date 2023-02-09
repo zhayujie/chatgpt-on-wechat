@@ -17,8 +17,8 @@ class BaiduUnitBot(Bot):
             return response.json()['result']['context']['SYS_PRESUMED_HIST'][1]
 
     def get_token(self):
-        access_key = 'wdNwpvzh4fBr8xzTuPePOWhU'
-        secret_key = 'EUtLXyrogfTQV8nnjncnqNEfeyoHDUqS'
+        access_key = 'YOUR_ACCESS_KEY'
+        secret_key = 'YOUR_SECRET_KEY'
         host = 'https://aip.baidubce.com/oauth/2.0/token?grant_type=client_credentials&client_id=' + access_key + '&client_secret=' + secret_key
         response = requests.get(host)
         if response:
