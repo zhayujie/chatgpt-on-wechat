@@ -13,8 +13,8 @@ class OpenAIBot(Bot):
     def __init__(self):
         openai.api_key = conf().get('open_ai_api_key')
 
-    def reply(self, query, context=None):
 
+    def reply(self, query, context=None):
         # acquire reply content
         if not context or not context.get('type') or context.get('type') == 'TEXT':
             logger.info("[OPEN_AI] query={}".format(query))
@@ -45,9 +45,9 @@ class OpenAIBot(Bot):
                 top_p=1,
                 frequency_penalty=0.0,  # [-2,2]之间，该值越大则更倾向于产生不同的内容
                 presence_penalty=0.0,  # [-2,2]之间，该值越大则更倾向于产生不同的内容
-                stop=["#"]
+                stop=["\n\n\n"]
             )
-            res_content = response.choices[0]["text"].strip().rstrip("<|im_end|>")
+            res_content = response.choices[0]['text'].strip().replace('<|endoftext|>', '')
             logger.info("[OPEN_AI] reply={}".format(res_content))
             return res_content
         except openai.error.RateLimitError as e:
@@ -104,11 +104,11 @@ class Session(object):
         '''
         prompt = conf().get("character_desc", "")
         if prompt:
-            prompt += "\n\n"
+            prompt += "<|endoftext|>\n\n\n"
         session = user_session.get(user_id, None)
         if session:
             for conversation in session:
-                prompt += "Q: " + conversation["question"] + "\n\n\nA: " + conversation["answer"] + "<|im_end|>\n"
+                prompt += "Q: " + conversation["question"] + "\n\n\nA: " + conversation["answer"] + "<|endoftext|>\n"
             prompt += "Q: " + query + "\nA: "
             return prompt
         else:

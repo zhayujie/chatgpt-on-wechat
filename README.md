@@ -91,7 +91,7 @@ cp config-template.json config.json
   "group_name_white_list": ["ChatGPT测试群", "ChatGPT测试群2"], # 开启自动回复的群名称列表
   "image_create_prefix": ["画", "看", "找"],                   # 开启图片回复的前缀
   "conversation_max_tokens": 1000,                            # 支持上下文记忆的最多字符数
-  "character_desc": "你是ChatGPT, 一个由OpenAI训练的大型语言模型, 你乐于回答人们的各种问题。"  # 人格描述
+  "character_desc": "你是ChatGPT, 一个由OpenAI训练的大型语言模型, 你旨在回答并解决人们的任何问题，并且可以使用多种语言与人交流。"  # 人格描述
 }
 ```
 **配置说明：**
@@ -143,6 +143,6 @@ FAQs： <https://github.com/zhayujie/chatgpt-on-wechat/wiki/FAQs>
 
 ## 联系
 
-欢迎提交PR、Issues，以及Star支持一下。程序运行遇到问题优先查看 [常见问题列表](https://github.com/zhayujie/chatgpt-on-wechat/wiki/FAQs) ，其次前往 [Issues](https://github.com/zhayujie/chatgpt-on-wechat/issues) 中搜索，没有相似问题则创建Issue，一段时间内无回复可加微信 eijuyahz 交流。
+欢迎提交PR、Issues，以及Star支持一下。程序运行遇到问题优先查看 [常见问题列表](https://github.com/zhayujie/chatgpt-on-wechat/wiki/FAQs) ，其次前往 [Issues](https://github.com/zhayujie/chatgpt-on-wechat/issues) 中搜索，若无相似问题可创建Issue，或加微信 eijuyahz 交流。
 
  
