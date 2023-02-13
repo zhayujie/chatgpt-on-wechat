@@ -135,7 +135,7 @@ nohup python3 app.py & tail -f nohup.out          # 在后台运行程序并通�
 
 > 注：如果 扫码后手机提示登录验证需要等待5s，而终端的二维码再次刷新并提示 `Log in time out, reloading QR code`，此时需参考此 [issue](https://github.com/zhayujie/chatgpt-on-wechat/issues/8) 修改一行代码即可解决。
 
-> **多账号支持：**将 项目复制多份，分别启动程序，用不同账号扫码登录即可实现同时运行。
+> **多账号支持：** 将 项目复制多份，分别启动程序，用不同账号扫码登录即可实现同时运行。
 
 > **特殊指令：** 用户向机器人发送 **#清除记忆** 即可清空该用户的上下文记忆。
 
