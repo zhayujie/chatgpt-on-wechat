@@ -84,7 +84,7 @@ cp config-template.json config.json
 ```bash
 # config.json文件内容示例
 { 
-  "open_ai_api_key": "YOUR API KEY"                           # 填入上面创建的 OpenAI API KEY
+  "open_ai_api_key": "YOUR API KEY",                          # 填入上面创建的 OpenAI API KEY
   "single_chat_prefix": ["bot", "@bot"],                      # 私聊时文本需要包含该前缀才能触发机器人回复
   "single_chat_reply_prefix": "[bot] ",                       # 私聊时自动回复的前缀，用于区分真人
   "group_chat_prefix": ["@bot"],                              # 群聊时包含该前缀则会触发机器人回复
