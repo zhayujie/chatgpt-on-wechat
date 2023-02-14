@@ -1,0 +1,8 @@
+version: '2.0'
+services:
+  chatgpt-on-wechat:
+    build:
+      context: ./
+      dockerfile: Dockerfile.alpine
+    image: zhayujie/chatgpt-on-wechat:1.0.0-alpine
+    container_name: sample-chatgpt-on-wechat
