@@ -139,6 +139,34 @@ nohup python3 app.py & tail -f nohup.out          # 在后台运行程序并通�
 
 > **特殊指令：** 用户向机器人发送 **#清除记忆** 即可清空该用户的上下文记忆。
 
+
+3.如果是在docker **容器运行**，可以在`根\docker`目录下：
+
+首先，修改Dockerfile.alpine文件里第9行，关于openapi key的配置
+```bash
+BUILD_OPEN_AI_API_KEY='YOUR OPEN AI KEY HERE'               
+```
+然后，使用docker-compose启动容器运行：
+```bash
+docker-compose up                  
+```
+
+如果您的环境里没有安装docker-compose，可以使用docker build方式构建Image，使用以下命令：
+```bash
+chmod +x build.alpine.sh           #构建脚本添加执行权限
+./build.alpine.sh                  #构建容器，基于alpine
+```
+然后，通过已构建完成的Image启动容器，使用以下命令：
+```bash
+docker run -it --name sample-chatgpt-on-wechat zhayujie/chatgpt-on-wechat:1.0.0-alpine        
+```
+
+同时，我们在`根\docker\sample-chatgpt-on-wechat`下提供了Makefile脚本，方便使用
+```bash
+cd sample-chatgpt-on-wechat          #进入sample-chatgpt-on-wechat目录
+make run_i                           #使用交互式方式启动容器
+```
+
 ## 常见问题
 
 FAQs： <https://github.com/zhayujie/chatgpt-on-wechat/wiki/FAQs>
