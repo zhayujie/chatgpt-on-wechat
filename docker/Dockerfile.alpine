@@ -9,6 +9,7 @@ ENV BUILD_PREFIX=/app \
     BUILD_OPEN_AI_API_KEY='YOUR OPEN AI KEY HERE'
 
 RUN apk add --no-cache \
+        bash \
         curl \
         wget \
         openssh
@@ -23,16 +24,19 @@ WORKDIR ${BUILD_PREFIX}
 
 RUN cd ${BUILD_PREFIX} \
     && cp config-template.json ${BUILD_PREFIX}/config.json \
-    && sed -i "2s/YOUR API KEY/${BUILD_OPEN_AI_API_KEY}/" ${BUILD_PREFIX}/config.json \
-    && cat ${BUILD_PREFIX}/config.json
+    && sed -i "2s/YOUR API KEY/${BUILD_OPEN_AI_API_KEY}/" ${BUILD_PREFIX}/config.json
 
 RUN /usr/local/bin/python -m pip install --upgrade pip \
     && pip install itchat-uos==1.5.0.dev0  \
     && pip install --upgrade openai
+
+ADD ./entrypoint.sh /entrypoint.sh
+
+RUN chmod +x /entrypoint.sh
 
 RUN adduser -D -h /home/noroot -u 1000 -s /bin/bash noroot \
     && chown noroot:noroot ${BUILD_PREFIX}
 
 USER noroot
 
-CMD ["python","app.py"]
+ENTRYPOINT ["/entrypoint.sh"]
