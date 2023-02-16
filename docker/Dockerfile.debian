@@ -24,17 +24,20 @@ WORKDIR ${BUILD_PREFIX}
 
 RUN cd ${BUILD_PREFIX} \
     && cp config-template.json ${BUILD_PREFIX}/config.json \
-    && sed -i "2s/YOUR API KEY/${BUILD_OPEN_AI_API_KEY}/" ${BUILD_PREFIX}/config.json \
-    && cat ${BUILD_PREFIX}/config.json
+    && sed -i "2s/YOUR API KEY/${BUILD_OPEN_AI_API_KEY}/" ${BUILD_PREFIX}/config.json 
 
 RUN /usr/local/bin/python -m pip install --upgrade pip \
     && pip install itchat-uos==1.5.0.dev0  \
     && pip install --upgrade openai
 
+ADD ./entrypoint.sh /entrypoint.sh
+
+RUN chmod +x /entrypoint.sh
+
 RUN groupadd -r noroot \
-   && useradd -r -g noroot noroot \
+   && useradd -r -g noroot -s /bin/bash -d /home/noroot noroot \
    && chown -R noroot:noroot ${BUILD_PREFIX} 
 
 USER noroot
 
-CMD ["python","app.py"]
+ENTRYPOINT ["/entrypoint.sh"]

@@ -1,5 +1,5 @@
 IMG:=`cat Name`
-MOUNT:=-v `pwd`/config.json:/app/config.json
+MOUNT:=
 PORT_MAP:=
 DOTENV:=.env
 CONTAINER_NAME:=sample-chatgpt-on-wechat
