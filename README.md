@@ -13,6 +13,8 @@
 
 
 # 更新日志
+>**2023.02.20：** 支持 [python-wechaty](https://github.com/wechaty/python-wechaty) Pad协议相对稳定，不易封号，但Token收费，可申请七天体验Token
+
 >**2023.02.09：** 扫码登录存在封号风险，请谨慎使用，参考[#58](https://github.com/AutumnWhj/ChatGPT-wechat-bot/issues/158)
 
 >**2023.02.05：** 在openai官方接口方案中 (GPT-3模型) 实现上下文对话
