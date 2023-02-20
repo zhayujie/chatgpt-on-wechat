@@ -13,7 +13,7 @@
 
 
 # 更新日志
->**2023.02.20：** 支持 [python-wechaty](https://github.com/wechaty/python-wechaty) Pad协议相对稳定，不易封号，但Token收费，可申请七天体验Token
+>**2023.02.20：** 增加 [python-wechaty](https://github.com/wechaty/python-wechaty) 支持，Pad协议相对稳定，不易封号，但Token收费，可申请七天体验Token (使用参考[#244](https://github.com/zhayujie/chatgpt-on-wechat/pull/244)，contributed by [ZQ7](https://github.com/ZQ7))
 
 >**2023.02.09：** 扫码登录存在封号风险，请谨慎使用，参考[#58](https://github.com/AutumnWhj/ChatGPT-wechat-bot/issues/158)
 
