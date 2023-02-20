@@ -3,6 +3,8 @@ channel factory
 """
 
 from channel.wechat.wechat_channel import WechatChannel
+from channel.wechat.wechaty_channel import WechatyChannel
+
 
 def create_channel(channel_type):
     """
@@ -12,4 +14,6 @@ def create_channel(channel_type):
     """
     if channel_type == 'wx':
         return WechatChannel()
+    elif channel_type == 'wxy':
+        return WechatyChannel()
     raise RuntimeError
