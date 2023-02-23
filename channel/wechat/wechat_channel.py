@@ -61,19 +61,6 @@ class WechatChannel(Channel):
             else:
                 thread_pool.submit(self._do_send, content, from_user_id)
 
-        elif to_user_id == other_user_id and match_prefix:
-            # 自己给好友发送消息
-            str_list = content.split(match_prefix, 1)
-            if len(str_list) == 2:
-                content = str_list[1].strip()
-            img_match_prefix = self.check_prefix(content, conf().get('image_create_prefix'))
-            if img_match_prefix:
-                content = content.split(img_match_prefix, 1)[1].strip()
-                thread_pool.submit(self._do_send_img, content, to_user_id)
-            else:
-                thread_pool.submit(self._do_send, content, to_user_id)
-
-
     def handle_group(self, msg):
         logger.debug("[WX]receive group msg: " + json.dumps(msg, ensure_ascii=False))
         group_name = msg['User'].get('NickName', None)
