@@ -49,6 +49,7 @@ class WechatChannel(Channel):
         if from_user_id == other_user_id and match_prefix is not None:
             # 好友向自己发送消息
             if match_prefix != '':
+                # 去掉前缀内容
                 str_list = content.split(match_prefix, 1)
                 if len(str_list) == 2:
                     content = str_list[1].strip()
@@ -77,21 +78,25 @@ class WechatChannel(Channel):
         logger.debug("[WX]receive group msg: " + json.dumps(msg, ensure_ascii=False))
         group_name = msg['User'].get('NickName', None)
         group_id = msg['User'].get('UserName', None)
+        my_display_name = msg['Self'].get('DisplayName', None)
         if not group_name:
             return ""
-        origin_content = msg['Content']
-        content = msg['Content']
-        content_list = content.split(' ', 1)
-        context_special_list = content.split('\u2005', 1)
-        if len(context_special_list) == 2:
-            content = context_special_list[1]
-        elif len(content_list) == 2:
-            content = content_list[1]
-
+        content = msg['Text']
+        at_me_str = "@{}\u2005".format(my_display_name)
+        # 如果没有@我，直接跳过
+        if msg['IsAt'] is False or at_me_str not in content:
+            return ""
+        
         config = conf()
-        match_prefix = (msg['IsAt'] and not config.get("group_at_off", False)) or self.check_prefix(origin_content, config.get('group_chat_prefix')) \
-                       or self.check_contain(origin_content, config.get('group_chat_keyword'))
-        if ('ALL_GROUP' in config.get('group_name_white_list') or group_name in config.get('group_name_white_list') or self.check_contain(group_name, config.get('group_name_keyword_white_list'))) and match_prefix:
+
+        # 如果@不止我一个人
+        if len(content.split('\u2005')) >= 2:
+            no_more_at_msg = "请只@我一个账号"
+            self.send(conf().get("single_chat_reply_prefix") + no_more_at_msg, group_id)
+            return ""
+        content = "".join(content.split(at_me_str))
+
+        if ('ALL_GROUP' in config.get('group_name_white_list') or group_name in config.get('group_name_white_list') or self.check_contain(group_name, config.get('group_name_keyword_white_list'))):
             img_match_prefix = self.check_prefix(content, conf().get('image_create_prefix'))
             if img_match_prefix:
                 content = content.split(img_match_prefix, 1)[1].strip()
