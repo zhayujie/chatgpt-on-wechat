@@ -22,6 +22,9 @@ class OpenAIBot(Bot):
             if query == '#清除记忆':
                 Session.clear_session(from_user_id)
                 return '记忆已清除'
+            elif query == '#清除所有':
+                Session.clear_all_session()
+                return '所有人记忆已清除'
 
             new_query = Session.build_session_query(query, from_user_id)
             logger.debug("[OPEN_AI] session query={}".format(new_query))
@@ -157,3 +160,7 @@ class Session(object):
     @staticmethod
     def clear_session(user_id):
         user_session[user_id] = []
+
+    @staticmethod
+    def clear_all_session():
+        user_session.clear()
