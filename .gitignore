@@ -5,3 +5,4 @@ venv*
 *.pyc
 config.json
 QR.png
+nohub.out
