@@ -40,7 +40,7 @@ class ChatGPTBot(Bot):
 
     def reply_text(self, query, user_id, retry_count=0):
         try:
-            response = openai.ChatCompletion.create(
+            response = openai.Completion.create(
                 model="gpt-3.5-turbo",  # 对话模型的名称
                 messages=query,
                 temperature=0.9,  # 值在[0,1]之间，越大表示回复越具有不确定性
