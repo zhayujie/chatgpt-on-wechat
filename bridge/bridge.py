@@ -6,4 +6,4 @@ class Bridge(object):
         pass
 
     def fetch_reply_content(self, query, context):
-        return bot_factory.create_bot("openAI").reply(query, context)
+        return bot_factory.create_bot("chatGPT").reply(query, context)
