@@ -3,7 +3,7 @@
 > ChatGPT近期以强大的对话和信息整合能力风靡全网，可以写代码、改论文、讲故事，几乎无所不能，这让人不禁有个大胆的想法，能否用他的对话模型把我们的微信打造成一个智能机器人，可以在与好友对话中给出意想不到的回应，而且再也不用担心女朋友影响我们 ~~打游戏~~ 工作了。
 
  
-基于ChatGPT的微信聊天机器人，通过 [OpenAI](https://github.com/openai/openai-quickstart-python) 接口生成对话内容，使用 [itchat](https://github.com/littlecodersh/ItChat) 实现微信消息的接收和自动回复。已实现的特性如下：
+基于ChatGPT的微信聊天机器人，通过 [ChatGPT](https://github.com/openai/openai-python) 接口生成对话内容，使用 [itchat](https://github.com/littlecodersh/ItChat) 实现微信消息的接收和自动回复。已实现的特性如下：
 
 - [x] **文本对话：** 接收私聊及群组中的微信消息，使用ChatGPT生成回复内容，完成自动回复
 - [x] **规则定制化：** 支持私聊中按指定规则触发自动回复，支持对群组设置自动回复白名单
@@ -13,6 +13,8 @@
 
 
 # 更新日志
+>**2023.03.02：** 接入[ChatGPT API](https://platform.openai.com/docs/guides/chat) (gpt-3.5-turbo)，默认使用该模型进行对话，需升级openai依赖 (`pip3 install --upgrade openai`)
+
 >**2023.02.20：** 增加 [python-wechaty](https://github.com/wechaty/python-wechaty) 支持，Pad协议相对稳定，不易封号，但Token收费，可申请七天体验Token (使用参考[#244](https://github.com/zhayujie/chatgpt-on-wechat/pull/244)，contributed by [ZQ7](https://github.com/ZQ7))
 
 >**2023.02.09：** 扫码登录存在封号风险，请谨慎使用，参考[#58](https://github.com/AutumnWhj/ChatGPT-wechat-bot/issues/158)
@@ -70,7 +72,7 @@ cd chatgpt-on-wechat/
 pip3 install itchat-uos==1.5.0.dev0
 pip3 install --upgrade openai
 ```
-注：`itchat-uos`使用指定版本1.5.0.dev0，`openai`使用最新版本，需高于0.25.0。
+注：`itchat-uos`使用指定版本1.5.0.dev0，`openai`使用最新版本，需高于0.27.0。
 
 
 ## 配置
