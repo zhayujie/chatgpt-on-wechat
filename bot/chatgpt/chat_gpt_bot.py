@@ -12,6 +12,7 @@ user_session = dict()
 class ChatGPTBot(Bot):
     def __init__(self):
         openai.api_key = conf().get('open_ai_api_key')
+        openai.proxy = conf().get('proxy')
 
     def reply(self, query, context=None):
         # acquire reply content
