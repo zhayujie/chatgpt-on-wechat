@@ -63,6 +63,15 @@ class ChatGPTBot(Bot):
                 return self.reply_text(query, user_id, retry_count+1)
             else:
                 return "提问太快啦，请休息一下再问我吧"
+        except openai.error.APIConnectionError as e:
+            # api connection exception
+            logger.warn(e)
+            logger.warn("[OPEN_AI] APIConnection failed")
+            return "我连接不到你的网络"
+        except openai.error.Timeout as e:
+            logger.warn(e)
+            logger.warn("[OPEN_AI] Timeout")
+            return "我没有收到你的消息"
         except Exception as e:
             # unknown exception
             logger.exception(e)
