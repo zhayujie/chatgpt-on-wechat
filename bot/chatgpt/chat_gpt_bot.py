@@ -3,10 +3,14 @@
 from bot.bot import Bot
 from config import conf
 from common.log import logger
+from common.expired_dict import ExpiredDict
 import openai
 import time
 
-user_session = dict()
+if conf().get('expires_in_seconds'):
+    user_session = ExpiredDict(conf().get('expires_in_seconds'))
+else:
+    user_session = dict()
 
 # OpenAI对话模型API (可用)
 class ChatGPTBot(Bot):

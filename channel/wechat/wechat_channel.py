@@ -46,6 +46,9 @@ class WechatChannel(Channel):
         other_user_id = msg['User']['UserName']     # 对手方id
         content = msg['Text']
         match_prefix = self.check_prefix(content, conf().get('single_chat_prefix'))
+        if "」\n- - - - - - - - - - - - - - -" in content:
+            logger.debug("[WX]reference query skipped")
+            return
         if from_user_id == other_user_id and match_prefix is not None:
             # 好友向自己发送消息
             if match_prefix != '':
@@ -87,7 +90,9 @@ class WechatChannel(Channel):
             content = context_special_list[1]
         elif len(content_list) == 2:
             content = content_list[1]
-
+        if "」\n- - - - - - - - - - - - - - -" in content:
+            logger.debug("[WX]reference query skipped")
+            return ""
         config = conf()
         match_prefix = (msg['IsAt'] and not config.get("group_at_off", False)) or self.check_prefix(origin_content, config.get('group_chat_prefix')) \
                        or self.check_contain(origin_content, config.get('group_chat_keyword'))
