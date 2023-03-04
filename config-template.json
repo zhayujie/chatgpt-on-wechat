@@ -1,5 +1,6 @@
 {
   "open_ai_api_key": "YOUR API KEY",
+  "proxy": "http://127.0.0.1:10801",
   "wechaty_puppet_service_token": "WECHATY PUPPET SERVICE TOKEN",
   "single_chat_prefix": ["bot", "@bot"],
   "single_chat_reply_prefix": "[bot] ",
