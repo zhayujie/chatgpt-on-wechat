@@ -6,6 +6,7 @@ from common.log import logger
 from common.expired_dict import ExpiredDict
 import openai
 import time
+import json
 
 if conf().get('expires_in_seconds'):
     user_session = ExpiredDict(conf().get('expires_in_seconds'))
@@ -139,7 +140,7 @@ class Session(object):
         if not max_tokens:
             # default 3000
             max_tokens = 1000
-            
+
         session = user_session.get(user_id)
         if session:
             # append conversation
@@ -156,7 +157,7 @@ class Session(object):
         for i in range(len(session)-1, -1, -1):
         # count tokens of conversation list
             history_conv = session[i]
-            tokens=history_conv.split()
+            tokens=json.dumps(history_conv).split()
             count += len(tokens)
             count_list.append(count)
 
