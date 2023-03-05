@@ -1,7 +1,7 @@
 ### 前置确认
 
-1. 运行于国内网络环境，未开代理
-2.  python 已安装：版本在 3.7 ~ 3.10 之间，依赖已安装
+1. 网络能够访问openai接口 [#351](https://github.com/zhayujie/chatgpt-on-wechat/issues/351)
+2. python 已安装：版本在 3.7 ~ 3.10 之间，依赖已安装
 3. 在已有 issue 中未搜索到类似问题
 4. [FAQS](https://github.com/zhayujie/chatgpt-on-wechat/wiki/FAQs) 中无类似问题
 
