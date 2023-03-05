@@ -66,8 +66,7 @@ class ChatGPTBot(Bot):
                 frequency_penalty=0.0,  # [-2,2]之间，该值越大则更倾向于产生不同的内容
                 presence_penalty=0.0,  # [-2,2]之间，该值越大则更倾向于产生不同的内容
             )
-            # res_content = response.choices[0]['text'].strip().replace('<|endoftext|>', '')
-            logger.info(response.choices[0]['message']['content'])
+            logger.info("[ChatGPT] reply={}, total_tokens={}".format(response.choices[0]['message']['content'], response["usage"]["total_tokens"]))
             return {"total_tokens": response["usage"]["total_tokens"], 
                     "completion_tokens": response["usage"]["completion_tokens"], 
                     "content": response.choices[0]['message']['content']}
@@ -159,18 +158,20 @@ class Session(object):
 
         # discard exceed limit conversation
         Session.discard_exceed_conversation(session, max_tokens, total_tokens)
+    
 
     @staticmethod
     def discard_exceed_conversation(session, max_tokens, total_tokens):
-        dec_tokens=int(total_tokens)
+        dec_tokens = int(total_tokens)
         # logger.info("prompt tokens used={},max_tokens={}".format(used_tokens,max_tokens))
         while dec_tokens > max_tokens:
             # pop first conversation
-            if len(session) > 0:
-                session.pop(0) 
+            if len(session) > 3:
+                session.pop(1)
+                session.pop(1)
             else:
                 break    
-            dec_tokens=dec_tokens-max_tokens
+            dec_tokens = dec_tokens - max_tokens
 
     @staticmethod
     def clear_session(user_id):
