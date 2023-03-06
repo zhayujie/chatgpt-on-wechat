@@ -128,7 +128,7 @@ class WechatyChannel(Channel):
             if not query:
                 return
             context = dict()
-            context['from_user_id'] = reply_user_id
+            context['session_id'] = reply_user_id
             reply_text = super().build_reply_content(query, context)
             if reply_text:
                 await self.send(conf().get("single_chat_reply_prefix") + reply_text, reply_user_id)
@@ -163,7 +163,10 @@ class WechatyChannel(Channel):
         if not query:
             return
         context = dict()
-        context['from_user_id'] = str(group_id) + '-' + str(group_user_id)
+        if conf().get("group_chat_in_one_session", False):
+            context['session_id'] = str(group_id)
+        else:
+            context['session_id'] = str(group_id) + '-' + str(group_user_id)
         reply_text = super().build_reply_content(query, context)
         if reply_text:
             reply_text = '@' + group_user_name + ' ' + reply_text.strip()
