@@ -3,6 +3,8 @@
 """
 wechat channel
 """
+
+import os
 import itchat
 import json
 from itchat.content import *
@@ -18,7 +20,7 @@ thread_pool = ThreadPoolExecutor(max_workers=8)
 
 @itchat.msg_register(TEXT)
 def handler_single_msg(msg):
-    WechatChannel().handle(msg)
+    WechatChannel().handle_text(msg)
     return None
 
 
@@ -28,9 +30,19 @@ def handler_group_msg(msg):
     return None
 
 
+@itchat.msg_register(VOICE)
+def handler_single_voice(msg):
+    WechatChannel().handle_voice(msg)
+    return None
+
+
 class WechatChannel(Channel):
+    tmpFilePath = './tmp/'
+
     def __init__(self):
-        pass
+        isExists = os.path.exists(self.tmpFilePath)
+        if not isExists: 
+            os.makedirs(self.tmpFilePath)
 
     def startup(self):
         # login by scan QRCode
@@ -39,12 +51,24 @@ class WechatChannel(Channel):
         # start message listener
         itchat.run()
 
-    def handle(self, msg):
-        logger.debug("[WX]receive msg: " + json.dumps(msg, ensure_ascii=False))
+    def handle_voice(self, msg):
+        if conf().get('speech_recognition') != True :
+            return
+        logger.debug("[WX]receive voice msg: ", msg['FileName'])
+        fileName = msg['FileName']
+        msg.download(self.tmpFilePath+fileName)
+        content = super().build_void_text(self.tmpFilePath+fileName)
+        self._handle_single_msg(msg, content)
+
+    def handle_text(self, msg):
+        logger.debug("[WX]receive text msg: " + json.dumps(msg, ensure_ascii=False))
+        content = msg['Text']
+        self._handle_single_msg(msg, content)
+
+    def _handle_single_msg(self, msg, content):
         from_user_id = msg['FromUserName']
         to_user_id = msg['ToUserName']              # 接收人id
         other_user_id = msg['User']['UserName']     # 对手方id
-        content = msg['Text']
         match_prefix = self.check_prefix(content, conf().get('single_chat_prefix'))
         if "」\n- - - - - - - - - - - - - - -" in content:
             logger.debug("[WX]reference query skipped")

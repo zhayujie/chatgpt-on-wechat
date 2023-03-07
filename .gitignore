@@ -6,3 +6,4 @@ venv*
 config.json
 QR.png
 nohup.out
+tmp

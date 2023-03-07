@@ -1,4 +1,5 @@
 from bot import bot_factory
+from voice import voice_factory
 
 
 class Bridge(object):
@@ -7,3 +8,6 @@ class Bridge(object):
 
     def fetch_reply_content(self, query, context):
         return bot_factory.create_bot("chatGPT").reply(query, context)
+
+    def fetch_voice_to_text(self, voiceFile):
+        return voice_factory.create_voice("google").voiceToText(voiceFile)
