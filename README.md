@@ -73,7 +73,7 @@ pip3 install itchat-uos==1.5.0.dev0
 pip3 install --upgrade openai
 
 如果使用google的语音识别，需要安装speech_recognition和依赖的ffmpeg
-pip3 install speech_recognition
+pip3 install SpeechRecognition
 --在MacOS中安装ffmpeg，brew install ffmpeg
 --在Windows中安装ffmpeg，下载ffmpeg.exe
 --在Linux中安装ffmpeg，apt-get install ffmpeg
