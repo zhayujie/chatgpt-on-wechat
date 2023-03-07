@@ -9,6 +9,7 @@ CHATGPT_ON_WECHAT_CONFIG_PATH=${CHATGPT_ON_WECHAT_CONFIG_PATH:-""}
 CHATGPT_ON_WECHAT_EXEC=${CHATGPT_ON_WECHAT_EXEC:-""}
 
 OPEN_AI_API_KEY=${OPEN_AI_API_KEY:-""}
+OPEN_AI_PROXY=${OPEN_AI_PROXY:-""}
 SINGLE_CHAT_PREFIX=${SINGLE_CHAT_PREFIX:-""}
 SINGLE_CHAT_REPLY_PREFIX=${SINGLE_CHAT_REPLY_PREFIX:-""}
 GROUP_CHAT_PREFIX=${GROUP_CHAT_PREFIX:-""}
@@ -16,6 +17,7 @@ GROUP_NAME_WHITE_LIST=${GROUP_NAME_WHITE_LIST:-""}
 IMAGE_CREATE_PREFIX=${IMAGE_CREATE_PREFIX:-""}
 CONVERSATION_MAX_TOKENS=${CONVERSATION_MAX_TOKENS:-""}
 CHARACTER_DESC=${CHARACTER_DESC:-""}
+EXPIRES_IN_SECONDS=${EXPIRES_IN_SECONDS:-""}
 
 # CHATGPT_ON_WECHAT_PREFIX is empty, use /app
 if [ "$CHATGPT_ON_WECHAT_PREFIX" == "" ] ; then
@@ -39,10 +41,13 @@ else
     echo -e "\033[31m[Warning] You need to set OPEN_AI_API_KEY before running!\033[0m"
 fi
 
-if [ "$WECHATY_PUPPET_SERVICE_TOKEN" != "" ] ; then
-    sed -i "3c   \"wechaty_puppet_service_token\": \"$WECHATY_PUPPET_SERVICE_TOKEN\"," $CHATGPT_ON_WECHAT_CONFIG_PATH
-else
-    echo -e "\033[31m[Info] You need to set WECHATY_PUPPET_SERVICE_TOKEN if you use wechaty!\033[0m"
+# use http_proxy as default
+if [ "$HTTP_PROXY" != "" ] ; then
+    sed -i "3c   \"proxy\": \"$HTTP_PROXY\"," $CHATGPT_ON_WECHAT_CONFIG_PATH
+fi
+
+if [ "$OPEN_AI_PROXY" != "" ] ; then
+    sed -i "3c   \"proxy\": \"$OPEN_AI_PROXY\"," $CHATGPT_ON_WECHAT_CONFIG_PATH
 fi
 
 if [ "$SINGLE_CHAT_PREFIX" != "" ] ; then
@@ -70,7 +75,11 @@ if [ "$CONVERSATION_MAX_TOKENS" != "" ] ; then
 fi
 
 if [ "$CHARACTER_DESC" != "" ] ; then
-    sed -i "10c   \"character_desc\": \"$CHARACTER_DESC\"" $CHATGPT_ON_WECHAT_CONFIG_PATH
+    sed -i "10c   \"character_desc\": \"$CHARACTER_DESC\"," $CHATGPT_ON_WECHAT_CONFIG_PATH
+fi
+
+if [ "$EXPIRES_IN_SECONDS" != "" ] ; then
+    sed -i "11c   \"expires_in_seconds\": $EXPIRES_IN_SECONDS" $CHATGPT_ON_WECHAT_CONFIG_PATH
 fi
 
 # go to prefix dir
