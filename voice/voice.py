@@ -8,3 +8,9 @@ class Voice(object):
         Send voice to voice service and get text
         """
         raise NotImplementedError
+
+    def textToVoice(self, text):
+        """
+        Send text to voice service and get voice
+        """
+        raise NotImplementedError

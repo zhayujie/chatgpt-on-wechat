@@ -40,6 +40,7 @@ class WechatChannel(Channel):
     tmpFilePath = './tmp/'
 
     def __init__(self):
+        voices = self.engine.getProperty('voices')
         isExists = os.path.exists(self.tmpFilePath)
         if not isExists: 
             os.makedirs(self.tmpFilePath)
@@ -55,17 +56,20 @@ class WechatChannel(Channel):
         if conf().get('speech_recognition') != True :
             return
         logger.debug("[WX]receive voice msg: ", msg['FileName'])
-        fileName = msg['FileName']
-        msg.download(self.tmpFilePath+fileName)
-        content = super().build_void_text(self.tmpFilePath+fileName)
-        self._handle_single_msg(msg, content)
+        thread_pool.submit(self._do_handle_voice, msg)
+
+    def _do_handle_voice(self, msg):
+        fileName = self.tmpFilePath+msg['FileName']
+        msg.download(fileName)
+        content = super().build_voice_to_text(fileName)
+        self._handle_single_msg(msg, content, True)
 
     def handle_text(self, msg):
         logger.debug("[WX]receive text msg: " + json.dumps(msg, ensure_ascii=False))
         content = msg['Text']
-        self._handle_single_msg(msg, content)
+        self._handle_single_msg(msg, content, False)
 
-    def _handle_single_msg(self, msg, content):
+    def _handle_single_msg(self, msg, content, is_voice):
         from_user_id = msg['FromUserName']
         to_user_id = msg['ToUserName']              # 接收人id
         other_user_id = msg['User']['UserName']     # 对手方id
@@ -84,9 +88,10 @@ class WechatChannel(Channel):
             if img_match_prefix:
                 content = content.split(img_match_prefix, 1)[1].strip()
                 thread_pool.submit(self._do_send_img, content, from_user_id)
-            else:
-                thread_pool.submit(self._do_send, content, from_user_id)
-
+            elif is_voice:
+                thread_pool.submit(self._do_send_voice, content, from_user_id)
+            else :
+                thread_pool.submit(self._do_send_text, content, from_user_id)
         elif to_user_id == other_user_id and match_prefix:
             # 自己给好友发送消息
             str_list = content.split(match_prefix, 1)
@@ -96,8 +101,10 @@ class WechatChannel(Channel):
             if img_match_prefix:
                 content = content.split(img_match_prefix, 1)[1].strip()
                 thread_pool.submit(self._do_send_img, content, to_user_id)
+            elif is_voice:
+                thread_pool.submit(self._do_send_voice, content, to_user_id)
             else:
-                thread_pool.submit(self._do_send, content, to_user_id)
+                thread_pool.submit(self._do_send_text, content, to_user_id)
 
 
     def handle_group(self, msg):
@@ -129,10 +136,24 @@ class WechatChannel(Channel):
                 thread_pool.submit(self._do_send_group, content, msg)
 
     def send(self, msg, receiver):
-        logger.info('[WX] sendMsg={}, receiver={}'.format(msg, receiver))
         itchat.send(msg, toUserName=receiver)
+        logger.info('[WX] sendMsg={}, receiver={}'.format(msg, receiver))
 
-    def _do_send(self, query, reply_user_id):
+    def _do_send_voice(self, query, reply_user_id):
+        try:
+            if not query:
+                return
+            context = dict()
+            context['from_user_id'] = reply_user_id
+            reply_text = super().build_reply_content(query, context)
+            if reply_text:
+                replyFile = super().build_text_to_voice(reply_text)
+                itchat.send_file(replyFile, toUserName=reply_user_id)
+                logger.info('[WX] sendFile={}, receiver={}'.format(replyFile, reply_user_id))
+        except Exception as e:
+            logger.exception(e)
+
+    def _do_send_text(self, query, reply_user_id):
         try:
             if not query:
                 return
@@ -162,8 +183,8 @@ class WechatChannel(Channel):
             image_storage.seek(0)
 
             # 图片发送
-            logger.info('[WX] sendImage, receiver={}'.format(reply_user_id))
             itchat.send_image(image_storage, reply_user_id)
+            logger.info('[WX] sendImage, receiver={}'.format(reply_user_id))
         except Exception as e:
             logger.exception(e)
 

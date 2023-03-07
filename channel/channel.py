@@ -30,5 +30,8 @@ class Channel(object):
     def build_reply_content(self, query, context=None):
         return Bridge().fetch_reply_content(query, context)
 
-    def build_void_text(self, voice_file):
+    def build_voice_to_text(self, voice_file):
         return Bridge().fetch_voice_to_text(voice_file)
+    
+    def build_text_to_voice(self, text):
+        return Bridge().fetch_text_to_voice(text)

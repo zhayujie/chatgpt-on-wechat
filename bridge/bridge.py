@@ -11,3 +11,6 @@ class Bridge(object):
 
     def fetch_voice_to_text(self, voiceFile):
         return voice_factory.create_voice("google").voiceToText(voiceFile)
+
+    def fetch_text_to_voice(self, text):
+        return voice_factory.create_voice("google").textToVoice(text)
