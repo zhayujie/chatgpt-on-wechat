@@ -72,11 +72,11 @@ cd chatgpt-on-wechat/
 pip3 install itchat-uos==1.5.0.dev0
 pip3 install --upgrade openai
 
-如果使用google的语音识别，需要安装speech_recognition和依赖的ffmpeg
+如果使用google的语音识别，需要安装speech_recognition和依赖的ffmpeg和espeak
 pip3 install SpeechRecognition
---在MacOS中安装ffmpeg，brew install ffmpeg
+--在MacOS中安装ffmpeg，brew install ffmpeg espeak
 --在Windows中安装ffmpeg，下载ffmpeg.exe
---在Linux中安装ffmpeg，apt-get install ffmpeg
+--在Linux中安装ffmpeg，apt-get install ffmpeg espeak
 ```
 注：`itchat-uos`使用指定版本1.5.0.dev0，`openai`使用最新版本，需高于0.27.0。
 

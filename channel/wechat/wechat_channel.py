@@ -40,7 +40,6 @@ class WechatChannel(Channel):
     tmpFilePath = './tmp/'
 
     def __init__(self):
-        voices = self.engine.getProperty('voices')
         isExists = os.path.exists(self.tmpFilePath)
         if not isExists: 
             os.makedirs(self.tmpFilePath)
