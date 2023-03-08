@@ -147,14 +147,18 @@ class WechatChannel(Channel):
         if not query:
             return
         context = dict()
-        if conf().get("group_chat_in_one_session", False):
-            context['session_id'] = msg['User']['UserName']
+        group_name = msg['User']['NickName']
+        group_id = msg['User']['UserName']
+        if ('ALL_GROUP' in conf().get('group_chat_in_one_session') or \
+                group_name in conf().get('group_chat_in_one_session')) or \
+                self.check_contain(group_name, conf().get('group_chat_in_one_session')):
+            context['session_id'] = group_id
         else:
             context['session_id'] = msg['ActualUserName']
         reply_text = super().build_reply_content(query, context)
         if reply_text:
             reply_text = '@' + msg['ActualNickName'] + ' ' + reply_text.strip()
-            self.send(conf().get("group_chat_reply_prefix", "") + reply_text, msg['User']['UserName'])
+            self.send(conf().get("group_chat_reply_prefix", "") + reply_text, group_id)
 
 
     def check_prefix(self, content, prefix_list):

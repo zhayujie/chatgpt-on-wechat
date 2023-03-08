@@ -109,7 +109,7 @@ class WechatyChannel(Channel):
                     content = content.split(img_match_prefix, 1)[1].strip()
                     await self._do_send_group_img(content, room_id)
                 else:
-                    await self._do_send_group(content, room_id, from_user_id, from_user_name)
+                    await self._do_send_group(content, room_id, room_name, from_user_id, from_user_name)
 
     async def send(self, message: Union[str, Message, FileBox, Contact, UrlLink, MiniProgram], receiver):
         logger.info('[WX] sendMsg={}, receiver={}'.format(message, receiver))
@@ -159,11 +159,13 @@ class WechatyChannel(Channel):
         except Exception as e:
             logger.exception(e)
 
-    async def _do_send_group(self, query, group_id, group_user_id, group_user_name):
+    async def _do_send_group(self, query, group_id, group_name, group_user_id, group_user_name):
         if not query:
             return
         context = dict()
-        if conf().get("group_chat_in_one_session", False):
+        if ('ALL_GROUP' in conf().get('group_chat_in_one_session') or \
+                group_name in conf().get('group_chat_in_one_session') or \
+                self.check_contain(group_name, conf().get('group_chat_in_one_session'))):
             context['session_id'] = str(group_id)
         else:
             context['session_id'] = str(group_id) + '-' + str(group_user_id)
