@@ -110,7 +110,7 @@ class ChatGPTBot(Bot):
             if retry_count < 1:
                 time.sleep(5)
                 logger.warn("[OPEN_AI] ImgCreate RateLimit exceed, 第{}次重试".format(retry_count+1))
-                return self.reply_text(query, retry_count+1)
+                return self.create_img(query, retry_count+1)
             else:
                 return "提问太快啦，请休息一下再问我吧"
         except Exception as e:
