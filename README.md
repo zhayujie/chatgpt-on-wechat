@@ -71,6 +71,14 @@ cd chatgpt-on-wechat/
 ```bash
 pip3 install itchat-uos==1.5.0.dev0
 pip3 install --upgrade openai
+
+如果使用百度的语音识别，需要安装百度的pythonSDK
+pip3 install baidu-aip chardet
+如果使用google的语音识别，需要安装speech_recognition和依赖的ffmpeg和espeak
+pip3 install SpeechRecognition
+--在MacOS中安装ffmpeg，brew install ffmpeg espeak
+--在Windows中安装ffmpeg，下载ffmpeg.exe
+--在Linux中安装ffmpeg，apt-get install ffmpeg espeak
 ```
 注：`itchat-uos`使用指定版本1.5.0.dev0，`openai`使用最新版本，需高于0.27.0。
 
@@ -112,7 +120,11 @@ cp config-template.json config.json
 + 默认只要被人 @ 就会触发机器人自动回复；另外群聊天中只要检测到以 "@bot" 开头的内容，同样会自动回复（方便自己触发），这对应配置项 `group_chat_prefix`
 + 可选配置: `group_name_keyword_white_list`配置项支持模糊匹配群名称，`group_chat_keyword`配置项则支持模糊匹配群消息内容，用法与上述两个配置项相同。（Contributed by [evolay](https://github.com/evolay))
 
-**3.其他配置**
+**3.语音识别**
++ 配置`speech_recognition=true`开启语音识别，默认使用openai的whisper模型
++ 配置`voice_reply_voice=true`语音回复语音，但是需要配置对应语音合成平台的key，由于itchat协议的限制，只能发送语音mp3文件。使用wechaty则回复的是微信语音。
+
+**4.其他配置**
 
 + `proxy`：由于目前 `openai` 接口国内无法访问，需配置代理客户端的地址，详情参考  [#351](https://github.com/zhayujie/chatgpt-on-wechat/issues/351)
 + 对于图像生成，在满足个人或群组触发条件外，还需要额外的关键词前缀来触发，对应配置 `image_create_prefix `
