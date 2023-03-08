@@ -54,17 +54,23 @@ class WechatChannel(Channel):
         thread_pool.submit(self._do_handle_voice, msg)
 
     def _do_handle_voice(self, msg):
-        fileName = TmpDir().path() + msg['FileName']
-        msg.download(fileName)
-        content = super().build_voice_to_text(fileName)
-        self._handle_single_msg(msg, content, conf().get('voice_reply_voice'))
+        from_user_id = msg['FromUserName']
+        other_user_id = msg['User']['UserName']
+        if from_user_id == other_user_id:
+            file_name = TmpDir().path() + msg['FileName']
+            msg.download(file_name)
+            query = super().build_voice_to_text(file_name)
+            if conf().get('voice_reply_voice'):
+                self._do_send_voice(query, from_user_id)
+            else:
+                self._do_send_text(query, from_user_id)
 
     def handle_text(self, msg):
         logger.debug("[WX]receive text msg: " + json.dumps(msg, ensure_ascii=False))
         content = msg['Text']
-        self._handle_single_msg(msg, content, False)
+        self._handle_single_msg(msg, content)
 
-    def _handle_single_msg(self, msg, content, reply_voice=False):
+    def _handle_single_msg(self, msg, content):
         from_user_id = msg['FromUserName']
         to_user_id = msg['ToUserName']              # 接收人id
         other_user_id = msg['User']['UserName']     # 对手方id
@@ -83,8 +89,6 @@ class WechatChannel(Channel):
             if img_match_prefix:
                 content = content.split(img_match_prefix, 1)[1].strip()
                 thread_pool.submit(self._do_send_img, content, from_user_id)
-            elif reply_voice:
-                thread_pool.submit(self._do_send_voice, content, from_user_id)
             else :
                 thread_pool.submit(self._do_send_text, content, from_user_id)
         elif to_user_id == other_user_id and match_prefix:
@@ -96,8 +100,6 @@ class WechatChannel(Channel):
             if img_match_prefix:
                 content = content.split(img_match_prefix, 1)[1].strip()
                 thread_pool.submit(self._do_send_img, content, to_user_id)
-            elif reply_voice:
-                thread_pool.submit(self._do_send_voice, content, to_user_id)
             else:
                 thread_pool.submit(self._do_send_text, content, to_user_id)
 
@@ -208,3 +210,4 @@ class WechatChannel(Channel):
             if content.find(ky) != -1:
                 return True
         return None
+
