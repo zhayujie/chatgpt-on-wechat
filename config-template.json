@@ -8,6 +8,7 @@
   "image_create_prefix": ["画", "看", "找"],
   "conversation_max_tokens": 1000,
   "speech_recognition": false,
+  "voice_reply_voice": false,
   "baidu_app_id": "YOUR BAIDU APP ID",
   "baidu_api_key": "YOUR BAIDU API KEY",
   "baidu_secret_key": "YOUR BAIDU SERVICE KEY",

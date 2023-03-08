@@ -72,9 +72,8 @@ cd chatgpt-on-wechat/
 pip3 install itchat-uos==1.5.0.dev0
 pip3 install --upgrade openai
 
-默认使用openai的whisper-1模型
 如果使用百度的语音识别，需要安装百度的pythonSDK
-pip3 install baidu-aip
+pip3 install baidu-aip chardet
 如果使用google的语音识别，需要安装speech_recognition和依赖的ffmpeg和espeak
 pip3 install SpeechRecognition
 --在MacOS中安装ffmpeg，brew install ffmpeg espeak
@@ -122,7 +121,8 @@ cp config-template.json config.json
 + 可选配置: `group_name_keyword_white_list`配置项支持模糊匹配群名称，`group_chat_keyword`配置项则支持模糊匹配群消息内容，用法与上述两个配置项相同。（Contributed by [evolay](https://github.com/evolay))
 
 **3.语音识别**
-+ 配置`speech_recognition=true`开启语音识别
++ 配置`speech_recognition=true`开启语音识别，默认使用openai的whisper模型
++ 配置`voice_reply_voice=true`语音回复语音，但是需要配置对应语音合成平台的key
 
 **4.其他配置**
 

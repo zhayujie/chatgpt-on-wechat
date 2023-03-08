@@ -4,14 +4,13 @@
 wechat channel
 """
 
-import os
-import pathlib
 import itchat
 import json
 from itchat.content import *
 from channel.channel import Channel
 from concurrent.futures import ThreadPoolExecutor
 from common.log import logger
+from common.tmp_dir import TmpDir
 from config import conf
 import requests
 import io
@@ -38,12 +37,8 @@ def handler_single_voice(msg):
 
 
 class WechatChannel(Channel):
-    tmpFilePath = pathlib.Path('./tmp/')
-
     def __init__(self):
-        pathExists = os.path.exists(self.tmpFilePath)
-        if not pathExists and conf().get('speech_recognition') == True: 
-            os.makedirs(self.tmpFilePath)
+        pass
 
     def startup(self):
         # login by scan QRCode
@@ -59,17 +54,17 @@ class WechatChannel(Channel):
         thread_pool.submit(self._do_handle_voice, msg)
 
     def _do_handle_voice(self, msg):
-        fileName = self.tmpFilePath+msg['FileName']
+        fileName = TmpDir().path() + msg['FileName']
         msg.download(fileName)
         content = super().build_voice_to_text(fileName)
-        self._handle_single_msg(msg, content, False)
+        self._handle_single_msg(msg, content, conf().get('voice_reply_voice'))
 
     def handle_text(self, msg):
         logger.debug("[WX]receive text msg: " + json.dumps(msg, ensure_ascii=False))
         content = msg['Text']
         self._handle_single_msg(msg, content, False)
 
-    def _handle_single_msg(self, msg, content, is_voice):
+    def _handle_single_msg(self, msg, content, reply_voice=False):
         from_user_id = msg['FromUserName']
         to_user_id = msg['ToUserName']              # 接收人id
         other_user_id = msg['User']['UserName']     # 对手方id
@@ -88,7 +83,7 @@ class WechatChannel(Channel):
             if img_match_prefix:
                 content = content.split(img_match_prefix, 1)[1].strip()
                 thread_pool.submit(self._do_send_img, content, from_user_id)
-            elif is_voice:
+            elif reply_voice:
                 thread_pool.submit(self._do_send_voice, content, from_user_id)
             else :
                 thread_pool.submit(self._do_send_text, content, from_user_id)
@@ -101,7 +96,7 @@ class WechatChannel(Channel):
             if img_match_prefix:
                 content = content.split(img_match_prefix, 1)[1].strip()
                 thread_pool.submit(self._do_send_img, content, to_user_id)
-            elif is_voice:
+            elif reply_voice:
                 thread_pool.submit(self._do_send_voice, content, to_user_id)
             else:
                 thread_pool.submit(self._do_send_text, content, to_user_id)

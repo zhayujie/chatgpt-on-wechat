@@ -2,7 +2,10 @@
 """
 baidu voice service
 """
+import time
 from aip import AipSpeech
+from common.log import logger
+from common.tmp_dir import TmpDir
 from voice.voice import Voice
 from config import conf
 
@@ -19,4 +22,15 @@ class BaiduVoice(Voice):
         pass
 
     def textToVoice(self, text):
-        pass
+        result = self.client.synthesis(text, 'zh', 1, {
+            'spd': 5, 'pit': 5, 'vol': 5, 'per': 111
+        })
+        if not isinstance(result, dict):
+            fileName = TmpDir().path() + '语音回复_' + str(int(time.time())) + '.mp3'
+            with open(fileName, 'wb') as f:
+                f.write(result)
+            logger.info('[Baidu] textToVoice text={} voice file name={}'.format(text, fileName))
+            return fileName
+        else:
+            logger.error('[Baidu] textToVoice error={}'.format(result))
+            return None
