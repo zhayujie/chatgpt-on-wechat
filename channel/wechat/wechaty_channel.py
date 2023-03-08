@@ -163,9 +163,10 @@ class WechatyChannel(Channel):
         if not query:
             return
         context = dict()
-        if ('ALL_GROUP' in conf().get('group_chat_in_one_session') or \
-                group_name in conf().get('group_chat_in_one_session') or \
-                self.check_contain(group_name, conf().get('group_chat_in_one_session'))):
+        group_chat_in_one_session = conf().get('group_chat_in_one_session', [])
+        if ('ALL_GROUP' in group_chat_in_one_session or \
+                group_name in group_chat_in_one_session or \
+                self.check_contain(group_name, group_chat_in_one_session)):
             context['session_id'] = str(group_id)
         else:
             context['session_id'] = str(group_id) + '-' + str(group_user_id)

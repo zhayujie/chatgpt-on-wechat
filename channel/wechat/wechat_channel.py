@@ -149,9 +149,10 @@ class WechatChannel(Channel):
         context = dict()
         group_name = msg['User']['NickName']
         group_id = msg['User']['UserName']
-        if ('ALL_GROUP' in conf().get('group_chat_in_one_session') or \
-                group_name in conf().get('group_chat_in_one_session')) or \
-                self.check_contain(group_name, conf().get('group_chat_in_one_session')):
+        group_chat_in_one_session = conf().get('group_chat_in_one_session', [])
+        if ('ALL_GROUP' in group_chat_in_one_session or \
+                group_name in group_chat_in_one_session or \
+                self.check_contain(group_name, group_chat_in_one_session)):
             context['session_id'] = group_id
         else:
             context['session_id'] = msg['ActualUserName']
