@@ -10,9 +10,13 @@
 - [x] **多账号：** 支持多微信账号同时运行
 - [x] **图片生成：** 支持根据描述生成图片，并自动发送至个人聊天或群聊
 - [x] **上下文记忆**：支持多轮对话记忆，且为每个好友维护独立的上下会话
+- [x] **语音识别：** 支持接收和处理语音消息，通过文字或语音回复
 
 
 # 更新日志
+
+>**2023.03.09：** 基于 `whisper API` 实现对微信语音消息的解析和回复，添加配置项 `"speech_recognition":true` 即可启用。(contributed by [wanggang1987](https://github.com/wanggang1987) in [#385](https://github.com/zhayujie/chatgpt-on-wechat/pull/385))
+
 >**2023.03.02：** 接入[ChatGPT API](https://platform.openai.com/docs/guides/chat) (gpt-3.5-turbo)，默认使用该模型进行对话，需升级openai依赖 (`pip3 install --upgrade openai`)。网络问题参考 [#351](https://github.com/zhayujie/chatgpt-on-wechat/issues/351)
 
 >**2023.02.20：** 增加 [python-wechaty](https://github.com/wechaty/python-wechaty) 作为可选渠道，使用Pad协议相对稳定，但Token收费 (使用参考[#244](https://github.com/zhayujie/chatgpt-on-wechat/pull/244)，contributed by [ZQ7](https://github.com/ZQ7))
@@ -71,14 +75,6 @@ cd chatgpt-on-wechat/
 ```bash
 pip3 install itchat-uos==1.5.0.dev0
 pip3 install --upgrade openai
-
-如果使用百度的语音识别，需要安装百度的pythonSDK
-pip3 install baidu-aip chardet
-如果使用google的语音识别，需要安装speech_recognition和依赖的ffmpeg和espeak
-pip3 install SpeechRecognition
---在MacOS中安装ffmpeg，brew install ffmpeg espeak
---在Windows中安装ffmpeg，下载ffmpeg.exe
---在Linux中安装ffmpeg，apt-get install ffmpeg espeak
 ```
 注：`itchat-uos`使用指定版本1.5.0.dev0，`openai`使用最新版本，需高于0.27.0。
 
@@ -121,8 +117,8 @@ cp config-template.json config.json
 + 可选配置: `group_name_keyword_white_list`配置项支持模糊匹配群名称，`group_chat_keyword`配置项则支持模糊匹配群消息内容，用法与上述两个配置项相同。（Contributed by [evolay](https://github.com/evolay))
 
 **3.语音识别**
-+ 配置`speech_recognition=true`开启语音识别，默认使用openai的whisper模型
-+ 配置`voice_reply_voice=true`语音回复语音，但是需要配置对应语音合成平台的key，由于itchat协议的限制，只能发送语音mp3文件。使用wechaty则回复的是微信语音。
++ 添加 `"speech_recognition": true` 将开启语音识别，默认使用openai的whisper模型识别为文字，同时以文字回复，目前只支持私聊 (注意由于语音消息无法匹配前缀，一旦开启将对所有语音自动回复)；
++ 添加 `"voice_reply_voice": true` 将开启语音回复语音，但是需要配置对应语音合成平台的key，由于itchat协议的限制，只能发送语音mp3文件，若使用wechaty则回复的是微信语音。
 
 **4.其他配置**
 
