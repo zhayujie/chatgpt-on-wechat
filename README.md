@@ -72,6 +72,9 @@ cd chatgpt-on-wechat/
 pip3 install itchat-uos==1.5.0.dev0
 pip3 install --upgrade openai
 
+默认使用openai的whisper-1模型
+如果使用百度的语音识别，需要安装百度的pythonSDK
+pip3 install baidu-aip
 如果使用google的语音识别，需要安装speech_recognition和依赖的ffmpeg和espeak
 pip3 install SpeechRecognition
 --在MacOS中安装ffmpeg，brew install ffmpeg espeak

@@ -3,6 +3,7 @@
 google voice service
 """
 
+import pathlib
 import subprocess
 import time
 import speech_recognition
@@ -12,7 +13,6 @@ from voice.voice import Voice
 
 
 class GoogleVoice(Voice):
-    tmpFilePath = './tmp/'
     recognizer = speech_recognition.Recognizer()
     engine = pyttsx3.init()
 

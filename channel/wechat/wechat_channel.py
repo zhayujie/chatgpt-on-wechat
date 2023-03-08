@@ -5,6 +5,7 @@ wechat channel
 """
 
 import os
+import pathlib
 import itchat
 import json
 from itchat.content import *
@@ -37,11 +38,11 @@ def handler_single_voice(msg):
 
 
 class WechatChannel(Channel):
-    tmpFilePath = './tmp/'
+    tmpFilePath = pathlib.Path('./tmp/')
 
     def __init__(self):
-        isExists = os.path.exists(self.tmpFilePath)
-        if not isExists: 
+        pathExists = os.path.exists(self.tmpFilePath)
+        if not pathExists and conf().get('speech_recognition') == True: 
             os.makedirs(self.tmpFilePath)
 
     def startup(self):
