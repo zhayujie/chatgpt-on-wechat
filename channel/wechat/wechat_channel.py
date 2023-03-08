@@ -54,14 +54,14 @@ class WechatChannel(Channel):
     def handle_voice(self, msg):
         if conf().get('speech_recognition') != True :
             return
-        logger.debug("[WX]receive voice msg: ", msg['FileName'])
+        logger.debug("[WX]receive voice msg: " + msg['FileName'])
         thread_pool.submit(self._do_handle_voice, msg)
 
     def _do_handle_voice(self, msg):
         fileName = self.tmpFilePath+msg['FileName']
         msg.download(fileName)
         content = super().build_voice_to_text(fileName)
-        self._handle_single_msg(msg, content, True)
+        self._handle_single_msg(msg, content, False)
 
     def handle_text(self, msg):
         logger.debug("[WX]receive text msg: " + json.dumps(msg, ensure_ascii=False))
