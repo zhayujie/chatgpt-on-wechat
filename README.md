@@ -122,7 +122,7 @@ cp config-template.json config.json
 
 **3.语音识别**
 + 配置`speech_recognition=true`开启语音识别，默认使用openai的whisper模型
-+ 配置`voice_reply_voice=true`语音回复语音，但是需要配置对应语音合成平台的key
++ 配置`voice_reply_voice=true`语音回复语音，但是需要配置对应语音合成平台的key，由于itchat协议的限制，只能发送语音mp3文件。使用wechaty则回复的是微信语音。
 
 **4.其他配置**
 
