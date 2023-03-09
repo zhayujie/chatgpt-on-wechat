@@ -15,7 +15,7 @@
 
 # 更新日志
 
->**2023.03.09：** 基于 `whisper API` 实现对微信语音消息的解析和回复，添加配置项 `"speech_recognition":true` 即可启用。(contributed by [wanggang1987](https://github.com/wanggang1987) in [#385](https://github.com/zhayujie/chatgpt-on-wechat/pull/385))
+>**2023.03.09：** 基于 `whisper API` 实现对微信语音消息的解析和回复，添加配置项 `"speech_recognition":true` 即可启用，使用参考 [#415](https://github.com/zhayujie/chatgpt-on-wechat/issues/415)。(contributed by [wanggang1987](https://github.com/wanggang1987) in [#385](https://github.com/zhayujie/chatgpt-on-wechat/pull/385))
 
 >**2023.03.02：** 接入[ChatGPT API](https://platform.openai.com/docs/guides/chat) (gpt-3.5-turbo)，默认使用该模型进行对话，需升级openai依赖 (`pip3 install --upgrade openai`)。网络问题参考 [#351](https://github.com/zhayujie/chatgpt-on-wechat/issues/351)
 
