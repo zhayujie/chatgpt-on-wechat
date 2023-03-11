@@ -46,7 +46,7 @@ class WechatChannel(Channel):
 
         # start message listener
         itchat.run()
-    
+
     # handle_* 系列函数处理收到的消息后构造context，然后调用handle函数处理context
     # context是一个字典，包含了消息的所有信息，包括以下key
     #   type: 消息类型，包括TEXT、VOICE、CMD_IMAGE_CREATE
@@ -57,17 +57,16 @@ class WechatChannel(Channel):
     #   receiver: 需要回复的对象
 
     def handle_voice(self, msg):
-        if conf().get('speech_recognition') != True :
+        if conf().get('speech_recognition') != True:
             return
         logger.debug("[WX]receive voice msg: " + msg['FileName'])
         from_user_id = msg['FromUserName']
         other_user_id = msg['User']['UserName']
         if from_user_id == other_user_id:
-            context = { 'isgroup': False, 'msg': msg, 'receiver': other_user_id}
-            context['type']='VOICE'
-            context['session_id']=other_user_id
+            context = {'isgroup': False, 'msg': msg, 'receiver': other_user_id}
+            context['type'] = 'VOICE'
+            context['session_id'] = other_user_id
             thread_pool.submit(self.handle, context)
-
 
     def handle_text(self, msg):
         logger.debug("[WX]receive text msg: " + json.dumps(msg, ensure_ascii=False))
@@ -80,22 +79,21 @@ class WechatChannel(Channel):
             logger.debug("[WX]reference query skipped")
             return
         if match_prefix:
-            content=content.replace(match_prefix,'',1).strip()
+            content = content.replace(match_prefix, '', 1).strip()
         else:
             return
-        context = { 'isgroup': False, 'msg': msg, 'receiver': other_user_id}
-        context['session_id']=other_user_id
-        
+        context = {'isgroup': False, 'msg': msg, 'receiver': other_user_id}
+        context['session_id'] = other_user_id
+
         img_match_prefix = check_prefix(content, conf().get('image_create_prefix'))
         if img_match_prefix:
-            content=content.replace(img_match_prefix,'',1).strip()
-            context['type']='CMD_IMAGE_CREATE'
+            content = content.replace(img_match_prefix, '', 1).strip()
+            context['type'] = 'CMD_IMAGE_CREATE'
         else:
-            context['type']='TEXT'
-        
-        context['content']=content
-        thread_pool.submit(self.handle, context)
+            context['type'] = 'TEXT'
 
+        context['content'] = content
+        thread_pool.submit(self.handle, context)
 
     def handle_group(self, msg):
         logger.debug("[WX]receive group msg: " + json.dumps(msg, ensure_ascii=False))
@@ -122,32 +120,32 @@ class WechatChannel(Channel):
             
             img_match_prefix = check_prefix(content, conf().get('image_create_prefix'))
             if img_match_prefix:
-                content=content.replace(img_match_prefix,'',1).strip()
-                context['type']='CMD_IMAGE_CREATE'
+                content = content.replace(img_match_prefix, '', 1).strip()
+                context['type'] = 'CMD_IMAGE_CREATE'
             else:
-                context['type']='TEXT'
-            context['content']=content
+                context['type'] = 'TEXT'
+            context['content'] = content
 
             group_chat_in_one_session = conf().get('group_chat_in_one_session', [])
-            if ('ALL_GROUP' in group_chat_in_one_session or \
-                    group_name in group_chat_in_one_session or \
+            if ('ALL_GROUP' in group_chat_in_one_session or
+                    group_name in group_chat_in_one_session or
                     check_contain(group_name, group_chat_in_one_session)):
                 context['session_id'] = group_id
             else:
                 context['session_id'] = msg['ActualUserName']
-            
+
             thread_pool.submit(self.handle, context)
-    
+
     # 统一的发送函数，根据reply的type字段发送不同类型的消息
 
     def send(self, reply, receiver):
-        if reply['type']=='TEXT':
+        if reply['type'] == 'TEXT':
             itchat.send(reply['content'], toUserName=receiver)
             logger.info('[WX] sendMsg={}, receiver={}'.format(reply, receiver))
-        elif reply['type']=='ERROR' or reply['type']=='INFO':
+        elif reply['type'] == 'ERROR' or reply['type'] == 'INFO':
             itchat.send(reply['content'], toUserName=receiver)
             logger.info('[WX] sendMsg={}, receiver={}'.format(reply, receiver))
-        elif reply['type']=='VOICE':
+        elif reply['type'] == 'VOICE':
             itchat.send_file(reply['content'], toUserName=receiver)
             logger.info('[WX] sendFile={}, receiver={}'.format(reply['content'], receiver))
         elif reply['type']=='IMAGE_URL': # 从网络下载图片
@@ -164,52 +162,56 @@ class WechatChannel(Channel):
             image_storage.seek(0)
             itchat.send_image(image_storage, toUserName=receiver)
             logger.info('[WX] sendImage, receiver={}'.format(receiver))
-        
+
     # 处理消息
     def handle(self, context):
-        content=context['content']
-        reply=None
+        content = context['content']
+        reply = None
 
         logger.debug('[WX] ready to handle context: {}'.format(context))
         # reply的构建步骤
-        if context['type']=='TEXT' or context['type']=='CMD_IMAGE_CREATE':
-            reply = super().build_reply_content(content,context)
-        elif context['type']=='VOICE':
-            msg=context['msg']
+        if context['type'] == 'TEXT' or context['type'] == 'CMD_IMAGE_CREATE':
+            reply = super().build_reply_content(content, context)
+        elif context['type'] == 'VOICE':
+            msg = context['msg']
             file_name = TmpDir().path() + msg['FileName']
             msg.download(file_name)
             reply = super().build_voice_to_text(file_name)
             if reply['type'] != 'ERROR' and reply['type'] != 'INFO':
-                reply = super().build_reply_content(reply['content'],context)
-                if reply['type']=='TEXT': 
+                reply = super().build_reply_content(reply['content'], context)
+                if reply['type'] == 'TEXT':
                     if conf().get('voice_reply_voice'):
                         reply = super().build_text_to_voice(reply['content'])
         else:
             logger.error('[WX] unknown context type: {}'.format(context['type']))
             return
-        
+
         logger.debug('[WX] ready to decorate reply: {}'.format(reply))
         # reply的包装步骤
         if reply:
-            if reply['type']=='TEXT':
-                reply_text=reply['content']
+            if reply['type'] == 'TEXT':
+                reply_text = reply['content']
                 if context['isgroup']:
-                    reply_text = '@' + context['msg']['ActualNickName'] + ' ' + reply_text.strip()
-                    reply_text=conf().get("group_chat_reply_prefix","")+reply_text
+                    reply_text = '@' + \
+                        context['msg']['ActualNickName'] + \
+                        ' ' + reply_text.strip()
+                    reply_text = conf().get("group_chat_reply_prefix", "")+reply_text
                 else:
-                    reply_text=conf().get("single_chat_reply_prefix","")+reply_text
-                reply['content']=reply_text
-            elif reply['type']=='ERROR' or reply['type']=='INFO':
-                reply['content']=reply['type']+": "+ reply['content']
-            elif reply['type']=='IMAGE_URL' or reply['type']=='VOICE':
+                    reply_text = conf().get("single_chat_reply_prefix", "")+reply_text
+                reply['content'] = reply_text
+            elif reply['type'] == 'ERROR' or reply['type'] == 'INFO':
+                reply['content'] = reply['type']+": " + reply['content']
+            elif reply['type'] == 'IMAGE_URL' or reply['type'] == 'VOICE':
                 pass
             else:
-                logger.error('[WX] unknown reply type: {}'.format(reply['type']))
+                logger.error(
+                    '[WX] unknown reply type: {}'.format(reply['type']))
                 return
         if reply:
-            logger.debug('[WX] ready to send reply: {} to {}'.format(reply,context['receiver']))
+            logger.debug('[WX] ready to send reply: {} to {}'.format(
+                reply, context['receiver']))
             self.send(reply, context['receiver'])
-        
+
 
 def check_prefix(content, prefix_list):
     for prefix in prefix_list:
@@ -225,4 +227,3 @@ def check_contain(content, keyword_list):
         if content.find(ky) != -1:
             return True
     return None
-

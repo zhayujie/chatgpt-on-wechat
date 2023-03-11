@@ -2,6 +2,7 @@ from bot import bot_factory
 from common.singleton import singleton
 from voice import voice_factory
 
+
 @singleton
 class Bridge(object):
     def __init__(self):
@@ -14,7 +15,6 @@ class Bridge(object):
             self.bots["text_to_voice"] = voice_factory.create_voice("baidu")
         except ModuleNotFoundError as e:
             print(e)
-
 
     # 以下所有函数需要得到一个reply字典，格式如下：
     # reply["type"] = "ERROR" / "TEXT" / "VOICE" / ...
