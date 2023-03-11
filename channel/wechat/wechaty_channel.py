@@ -129,7 +129,9 @@ class WechatyChannel(Channel):
                 return
             context = dict()
             context['session_id'] = reply_user_id
-            reply_text = super().build_reply_content(query, context)
+            context['type'] = 'TEXT'
+            context['content'] = query 
+            reply_text = super().build_reply_content(query, context)['content']
             if reply_text:
                 await self.send(conf().get("single_chat_reply_prefix") + reply_text, reply_user_id)
         except Exception as e:
@@ -141,7 +143,8 @@ class WechatyChannel(Channel):
                 return
             context = dict()
             context['type'] = 'IMAGE_CREATE'
-            img_url = super().build_reply_content(query, context)
+            context['content'] = query
+            img_url = super().build_reply_content(query, context)['content']
             if not img_url:
                 return
             # 图片下载
@@ -170,7 +173,9 @@ class WechatyChannel(Channel):
             context['session_id'] = str(group_id)
         else:
             context['session_id'] = str(group_id) + '-' + str(group_user_id)
-        reply_text = super().build_reply_content(query, context)
+        context['type'] = 'TEXT'
+        context['content'] = query
+        reply_text = super().build_reply_content(query, context)['content']
         if reply_text:
             reply_text = '@' + group_user_name + ' ' + reply_text.strip()
             await self.send_group(conf().get("group_chat_reply_prefix", "") + reply_text, group_id)
@@ -181,7 +186,8 @@ class WechatyChannel(Channel):
                 return
             context = dict()
             context['type'] = 'IMAGE_CREATE'
-            img_url = super().build_reply_content(query, context)
+            context['content'] = query
+            img_url = super().build_reply_content(query, context)['content']
             if not img_url:
                 return
             # 图片发送
