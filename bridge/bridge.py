@@ -15,6 +15,11 @@ class Bridge(object):
         except ModuleNotFoundError as e:
             print(e)
 
+
+    # 以下所有函数需要得到一个reply字典，格式如下：
+    # reply["type"] = "ERROR" / "TEXT" / "VOICE" / ...
+    # reply["content"] = reply的内容
+
     def fetch_reply_content(self, query, context):
         return self.bots["chat"].reply(query, context)
 
