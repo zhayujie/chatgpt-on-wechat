@@ -60,12 +60,13 @@ class ChatGPTBot(Bot):
             ok, retstring = self.create_img(query, 0)
             reply = None
             if ok:
-                reply = {'type': 'IMAGE', 'content': retstring}
+                reply = {'type': 'IMAGE_URL', 'content': retstring}
             else:
                 reply = {'type': 'ERROR', 'content': retstring}
             return reply
         else:
             reply= {'type':'ERROR', 'content':'Bot不支持处理{}类型的消息'.format(context['type'])}
+            return reply
 
     def reply_text(self, session, session_id, retry_count=0) -> dict:
         '''
@@ -139,7 +140,11 @@ class ChatGPTBot(Bot):
 
 class SessionManager(object):
     def __init__(self):
-        self.sessions = {}
+        if conf().get('expires_in_seconds'):
+            sessions = ExpiredDict(conf().get('expires_in_seconds'))
+        else:
+            sessions = dict()
+        self.sessions = sessions
 
     def build_session_query(self, query, session_id):
         '''
