@@ -100,11 +100,15 @@ class Godcmd(Plugin):
 
     
     def on_handle_context(self, e_context: EventContext):
-        content = e_context['context']['content']
         context_type = e_context['context']['type']
-        logger.debug("[Godcmd] on_handle_context. content: %s" % content)
+        if context_type != "TEXT":
+            if not self.isrunning:
+                e_context.action = EventAction.BREAK_PASS
+            return
         
-        if content.startswith("#") and context_type == "TEXT":
+        content = e_context['context']['content']
+        logger.debug("[Godcmd] on_handle_context. content: %s" % content)
+        if content.startswith("#"):
             # msg = e_context['context']['msg']
             user = e_context['context']['receiver']
             session_id = e_context['context']['session_id']
@@ -176,8 +180,6 @@ class Godcmd(Plugin):
             e_context.action = EventAction.BREAK_PASS # 事件结束，并跳过处理context的默认逻辑
         elif not self.isrunning:
             e_context.action = EventAction.BREAK_PASS
-        else:
-            e_context.action = EventAction.CONTINUE # 事件继续，交付给下个插件或默认逻辑
     
     def authenticate(self, userid, args, isadmin, isgroup) -> Tuple[bool,str] : 
         if isgroup:

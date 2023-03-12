@@ -16,12 +16,18 @@ class OpenaiVoice(Voice):
     def voiceToText(self, voice_file):
         logger.debug(
             '[Openai] voice file name={}'.format(voice_file))
-        file = open(voice_file, "rb")
-        reply = openai.Audio.transcribe("whisper-1", file)
-        text = reply["text"]
-        logger.info(
-            '[Openai] voiceToText text={} voice file name={}'.format(text, voice_file))
-        return text
+        reply={}
+        try:
+            file = open(voice_file, "rb")
+            result = openai.Audio.transcribe("whisper-1", file)
+            text = result["text"]
+            reply = {"type": "TEXT", "content": text}
+            logger.info(
+                '[Openai] voiceToText text={} voice file name={}'.format(text, voice_file))
+        except Exception as e:
+            reply = {"type": "ERROR", "content": str(e)}
+        finally:
+            return reply
 
     def textToVoice(self, text):
         pass

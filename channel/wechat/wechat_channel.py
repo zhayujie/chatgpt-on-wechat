@@ -71,6 +71,7 @@ class WechatChannel(Channel):
         if from_user_id == other_user_id:
             context = {'isgroup': False, 'msg': msg, 'receiver': other_user_id}
             context['type'] = 'VOICE'
+            context['content'] = msg['FileName']
             context['session_id'] = other_user_id
             thread_pool.submit(self.handle, context).add_done_callback(thread_pool_callback)
 
@@ -183,11 +184,13 @@ class WechatChannel(Channel):
                 reply = super().build_reply_content(context['content'], context)
             elif context['type'] == 'VOICE':
                 msg = context['msg']
-                file_name = TmpDir().path() + msg['FileName']
+                file_name = TmpDir().path() + context['content']
                 msg.download(file_name)
                 reply = super().build_voice_to_text(file_name)
                 if reply['type'] != 'ERROR' and reply['type'] != 'INFO':
-                    reply = super().build_reply_content(reply['content'], context)
+                    context['content'] = reply['content'] # 语音转文字后，将文字内容作为新的context
+                    context['type'] = reply['type']
+                    reply = super().build_reply_content(context['content'], context)
                     if reply['type'] == 'TEXT':
                         if conf().get('voice_reply_voice'):
                             reply = super().build_text_to_voice(reply['content'])

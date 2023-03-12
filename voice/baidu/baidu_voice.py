@@ -30,7 +30,8 @@ class BaiduVoice(Voice):
             with open(fileName, 'wb') as f:
                 f.write(result)
             logger.info('[Baidu] textToVoice text={} voice file name={}'.format(text, fileName))
-            return fileName
+            reply = {"type": "VOICE", "content": fileName}
         else:
             logger.error('[Baidu] textToVoice error={}'.format(result))
-            return None
+            reply = {"type": "ERROR", "content": "抱歉，语音合成失败"}
+        return reply
