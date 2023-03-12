@@ -14,7 +14,7 @@ class Bridge(object):
         }
         self.bots={}
 
-    def getbot(self,typename):
+    def get_bot(self,typename):
         if self.bots.get(typename) is None:
             logger.info("create bot {} for {}".format(self.btype[typename],typename))
             if typename == "text_to_voice":
@@ -25,16 +25,19 @@ class Bridge(object):
                 self.bots[typename] = bot_factory.create_bot(self.btype[typename])
         return self.bots[typename]
     
+    def get_bot_type(self,typename):
+        return self.btype[typename]
+
     # 以下所有函数需要得到一个reply字典，格式如下：
     # reply["type"] = "ERROR" / "TEXT" / "VOICE" / ...
     # reply["content"] = reply的内容
 
     def fetch_reply_content(self, query, context):
-        return self.bots["chat"].reply(query, context)
+        return self.get_bot("chat").reply(query, context)
 
     def fetch_voice_to_text(self, voiceFile):
-        return self.bots["voice_to_text"].voiceToText(voiceFile)
+        return self.get_bot("voice_to_text").voiceToText(voiceFile)
 
     def fetch_text_to_voice(self, text):
-        return self.bots["text_to_voice"].textToVoice(text)
+        return self.get_bot("text_to_voice").textToVoice(text)
 

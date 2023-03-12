@@ -19,7 +19,10 @@ import io
 
 
 thread_pool = ThreadPoolExecutor(max_workers=8)
-
+def thread_pool_callback(worker):
+    worker_exception = worker.exception()
+    if worker_exception:
+        logger.exception("Worker return exception: {}".format(worker_exception))
 
 @itchat.msg_register(TEXT)
 def handler_single_msg(msg):
@@ -69,7 +72,7 @@ class WechatChannel(Channel):
             context = {'isgroup': False, 'msg': msg, 'receiver': other_user_id}
             context['type'] = 'VOICE'
             context['session_id'] = other_user_id
-            thread_pool.submit(self.handle, context)
+            thread_pool.submit(self.handle, context).add_done_callback(thread_pool_callback)
 
     def handle_text(self, msg):
         logger.debug("[WX]receive text msg: " + json.dumps(msg, ensure_ascii=False))
@@ -96,7 +99,7 @@ class WechatChannel(Channel):
             context['type'] = 'TEXT'
 
         context['content'] = content
-        thread_pool.submit(self.handle, context)
+        thread_pool.submit(self.handle, context).add_done_callback(thread_pool_callback)
 
     def handle_group(self, msg):
         logger.debug("[WX]receive group msg: " + json.dumps(msg, ensure_ascii=False))
@@ -137,7 +140,7 @@ class WechatChannel(Channel):
             else:
                 context['session_id'] = msg['ActualUserName']
 
-            thread_pool.submit(self.handle, context)
+            thread_pool.submit(self.handle, context).add_done_callback(thread_pool_callback)
 
     # 统一的发送函数，每个Channel自行实现，根据reply的type字段发送不同类型的消息
     def send(self, reply, receiver):
@@ -208,7 +211,7 @@ class WechatChannel(Channel):
                         reply_text = conf().get("single_chat_reply_prefix", "")+reply_text
                     reply['content'] = reply_text
                 elif reply['type'] == 'ERROR' or reply['type'] == 'INFO':
-                    reply['content'] = reply['type']+": " + reply['content']
+                    reply['content'] = reply['type']+":\n" + reply['content']
                 elif reply['type'] == 'IMAGE_URL' or reply['type'] == 'VOICE' or reply['type'] == 'IMAGE':
                     pass
                 else:

@@ -24,7 +24,7 @@ class PluginManager:
             plugincls.version = version
             plugincls.author = author
             plugincls.enabled = True
-            logger.info("Plugin %s registered" % name)
+            logger.info("Plugin %s_v%s registered" % (name, version))
             return plugincls
         return wrapper
 
