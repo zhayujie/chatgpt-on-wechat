@@ -48,6 +48,24 @@ ADMIN_COMMANDS = {
         "alias": ["resetall", "重置所有会话"],
         "desc": "重置所有会话",
     },
+    "scanp": {
+        "alias": ["scanp", "扫描插件"],
+        "desc": "扫描插件目录是否有新插件",
+    },
+    "plist": {
+        "alias": ["plist", "插件"],
+        "desc": "打印当前插件列表",
+    },
+    "enablep": {
+        "alias": ["enablep", "启用插件"],
+        "args": ["插件名"],
+        "desc": "启用指定插件",
+    },
+    "disablep": {
+        "alias": ["disablep", "禁用插件"],
+        "args": ["插件名"],
+        "desc": "禁用指定插件",
+    },
     "debug": {
         "alias": ["debug", "调试模式", "DEBUG"],
         "desc": "开启机器调试日志",
@@ -163,6 +181,44 @@ class Godcmd(Plugin):
                         elif cmd == "debug":
                             logger.setLevel('DEBUG')
                             ok, result = True, "DEBUG模式已开启"
+                        elif cmd == "plist":
+                            plugins = PluginManager().list_plugins()
+                            ok = True
+                            result = "插件列表：\n"
+                            for name,plugincls in plugins.items():
+                                result += f"{name}_v{plugincls.version} - "
+                                if plugincls.enabled:
+                                    result += "已启用\n"
+                                else:
+                                    result += "未启用\n"
+                        elif cmd == "scanp":
+                            new_plugins = PluginManager().scan_plugins()
+                            ok, result = True, "插件扫描完成"
+                            if len(new_plugins) >0 :
+                                PluginManager().activate_plugins()
+                                result += "\n发现新插件：\n"
+                                result += "\n".join([f"{p.name}_v{p.version}" for p in new_plugins])
+                            else :
+                                result +=", 未发现新插件"
+                        elif cmd == "enablep":
+                            if len(args) != 1:
+                                ok, result = False, "请提供插件名"
+                            else:
+                                ok = PluginManager().enable_plugin(args[0])
+                                if ok:
+                                    result = "插件已启用"
+                                else:
+                                    result = "插件不存在"
+                        elif cmd == "disablep":
+                            if len(args) != 1:
+                                ok, result = False, "请提供插件名"
+                            else:
+                                ok = PluginManager().disable_plugin(args[0])
+                                if ok:
+                                    result = "插件已禁用"
+                                else:
+                                    result = "插件不存在"
+
                         logger.debug("[Godcmd] admin command: %s by %s" % (cmd, user))
                 else:
                     ok, result = False, "需要管理员权限才能执行该指令"
