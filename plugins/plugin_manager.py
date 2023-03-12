@@ -38,11 +38,11 @@ class PluginManager:
         for plugin_name in os.listdir(plugins_dir):
             plugin_path = os.path.join(plugins_dir, plugin_name)
             if os.path.isdir(plugin_path):
-                # 判断插件是否包含main.py文件
-                main_module_path = os.path.join(plugin_path, "main.py")
+                # 判断插件是否包含同名.py文件
+                main_module_path = os.path.join(plugin_path, plugin_name+".py")
                 if os.path.isfile(main_module_path):
-                    # 导入插件的main
-                    import_path = "{}.{}.main".format(plugins_dir, plugin_name)
+                    # 导入插件
+                    import_path = "{}.{}.{}".format(plugins_dir, plugin_name, plugin_name)
                     main_module = importlib.import_module(import_path)
 
         modified = False
@@ -63,7 +63,7 @@ class PluginManager:
 
     def load_plugins(self):
         pconf = self.load_config()
-
+        logger.debug("plugins.json config={}" % pconf)
         for plugin in pconf["plugins"]:
             name = plugin["name"]
             enabled = plugin["enabled"]

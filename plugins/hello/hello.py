@@ -11,11 +11,11 @@ class Hello(Plugin):
         super().__init__()
         self.handlers[Event.ON_HANDLE_CONTEXT] = self.on_handle_context
         # self.handlers[Event.ON_HANDLE_CONTEXT] = self.on_handle_context
-        logger.info("[hello] inited")
+        logger.info("[Hello] inited")
 
     def on_handle_context(self, e_context: EventContext):
 
-        logger.debug("on_handle_context. content: %s" % e_context['context']['content'])
+        logger.debug("[Hello] on_handle_context. content: %s" % e_context['context']['content'])
 
         if e_context['context']['content'] == "Hello":
             e_context['reply']['type'] = "TEXT"
