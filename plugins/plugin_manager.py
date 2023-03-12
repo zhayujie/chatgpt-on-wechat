@@ -63,7 +63,7 @@ class PluginManager:
 
     def load_plugins(self):
         pconf = self.load_config()
-        logger.debug("plugins.json config={}" % pconf)
+        logger.debug("plugins.json config={}".format(pconf))
         for plugin in pconf["plugins"]:
             name = plugin["name"]
             enabled = plugin["enabled"]
