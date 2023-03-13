@@ -56,6 +56,11 @@ ADMIN_COMMANDS = {
         "alias": ["plist", "插件"],
         "desc": "打印当前插件列表",
     },
+    "setpri": {
+        "alias": ["setpri", "设置插件优先级"],
+        "args": ["插件名", "优先级"],
+        "desc": "设置指定插件的优先级，越大越优先",
+    },
     "enablep": {
         "alias": ["enablep", "启用插件"],
         "args": ["插件名"],
@@ -92,7 +97,7 @@ def get_help_text(isadmin, isgroup):
             help_text += f": {info['desc']}\n"
     return help_text
 
-@plugins.register(name="Godcmd", desc="为你的机器人添加指令集，有用户和管理员两种角色，加载顺序请放在首位，初次运行后插件目录会生成配置文件, 填充管理员密码后即可认证", version="1.0", author="lanvent")
+@plugins.register(name="Godcmd", desc="为你的机器人添加指令集，有用户和管理员两种角色，加载顺序请放在首位，初次运行后插件目录会生成配置文件, 填充管理员密码后即可认证", version="1.0", author="lanvent", desire_priority= 999)
 class Godcmd(Plugin):
 
     def __init__(self):
@@ -186,7 +191,7 @@ class Godcmd(Plugin):
                             ok = True
                             result = "插件列表：\n"
                             for name,plugincls in plugins.items():
-                                result += f"{name}_v{plugincls.version} - "
+                                result += f"{name}_v{plugincls.version} {plugincls.priority} - "
                                 if plugincls.enabled:
                                     result += "已启用\n"
                                 else:
@@ -194,12 +199,21 @@ class Godcmd(Plugin):
                         elif cmd == "scanp":
                             new_plugins = PluginManager().scan_plugins()
                             ok, result = True, "插件扫描完成"
+                            PluginManager().activate_plugins()
                             if len(new_plugins) >0 :
-                                PluginManager().activate_plugins()
                                 result += "\n发现新插件：\n"
                                 result += "\n".join([f"{p.name}_v{p.version}" for p in new_plugins])
                             else :
                                 result +=", 未发现新插件"
+                        elif cmd == "setpri":
+                            if len(args) != 2:
+                                ok, result = False, "请提供插件名和优先级"
+                            else:
+                                ok = PluginManager().set_plugin_priority(args[0], int(args[1]))
+                                if ok:
+                                    result = "插件" + args[0] + "优先级已设置为" + args[1]
+                                else:
+                                    result = "插件不存在"
                         elif cmd == "enablep":
                             if len(args) != 1:
                                 ok, result = False, "请提供插件名"

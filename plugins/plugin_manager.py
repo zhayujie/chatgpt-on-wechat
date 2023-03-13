@@ -4,6 +4,7 @@ import importlib
 import json
 import os
 from common.singleton import singleton
+from common.sorted_dict import SortedDict
 from .event import *
 from .plugin import *
 from common.log import logger
@@ -12,19 +13,20 @@ from common.log import logger
 @singleton
 class PluginManager:
     def __init__(self):
-        self.plugins = {}
+        self.plugins = SortedDict(lambda k,v: v.priority,reverse=True)
         self.listening_plugins = {}
         self.instances = {}
         self.pconf = {}
 
-    def register(self, name: str, desc: str, version: str, author: str):
+    def register(self, name: str, desc: str, version: str, author: str, desire_priority: int = 0):
         def wrapper(plugincls):
-            self.plugins[name] = plugincls
             plugincls.name = name
             plugincls.desc = desc
             plugincls.version = version
             plugincls.author = author
+            plugincls.priority = desire_priority
             plugincls.enabled = True
+            self.plugins[name] = plugincls
             logger.info("Plugin %s_v%s registered" % (name, version))
             return plugincls
         return wrapper
@@ -40,9 +42,10 @@ class PluginManager:
         if os.path.exists("plugins/plugins.json"):
             with open("plugins/plugins.json", "r", encoding="utf-8") as f:
                 pconf = json.load(f)
+                pconf['plugins'] = SortedDict(lambda k,v: v["priority"],pconf['plugins'],reverse=True)
         else:
             modified = True
-            pconf = {"plugins": []}
+            pconf = {"plugins": SortedDict(lambda k,v: v["priority"],reverse=True)}
         self.pconf = pconf
         if modified:
             self.save_config()
@@ -64,16 +67,24 @@ class PluginManager:
         new_plugins = []
         modified = False
         for name, plugincls in self.plugins.items():
-            if name not in [plugin["name"] for plugin in pconf["plugins"]]:
+            if name not in pconf["plugins"]:
                 new_plugins.append(plugincls)
                 modified = True
                 logger.info("Plugin %s not found in pconfig, adding to pconfig..." % name)
-                pconf["plugins"].append({"name": name, "enabled": True})
+                pconf["plugins"][name] = {"enabled": plugincls.enabled, "priority": plugincls.priority}
+            else:
+                self.plugins[name].enabled = pconf["plugins"][name]["enabled"]
+                self.plugins[name].priority = pconf["plugins"][name]["priority"]
+                self.plugins._update_heap(name) # 更新下plugins中的顺序
         if modified:
             self.save_config()
         return new_plugins
 
-    def activate_plugins(self):
+    def refresh_order(self):
+        for event in self.listening_plugins.keys():
+            self.listening_plugins[event].sort(key=lambda name: self.plugins[name].priority, reverse=True)
+
+    def activate_plugins(self): # 生成新开启的插件实例
         for name, plugincls in self.plugins.items():
             if plugincls.enabled:
                 if name not in self.instances:
@@ -83,16 +94,16 @@ class PluginManager:
                         if event not in self.listening_plugins:
                             self.listening_plugins[event] = []
                         self.listening_plugins[event].append(name)
+        self.refresh_order()
 
     def load_plugins(self):
         self.load_config()
         self.scan_plugins()
         pconf = self.pconf
         logger.debug("plugins.json config={}".format(pconf))
-        for plugin in pconf["plugins"]:
-            name = plugin["name"]
-            enabled = plugin["enabled"]
-            self.plugins[name].enabled = enabled
+        for name,plugin in pconf["plugins"].items():
+            if name not in self.plugins:
+                logger.error("Plugin %s not found, but found in plugins.json" % name)
         self.activate_plugins()
 
     def emit_event(self, e_context: EventContext, *args, **kwargs):
@@ -104,13 +115,25 @@ class PluginManager:
                     instance.handlers[e_context.event](e_context, *args, **kwargs)
         return e_context
 
+    def set_plugin_priority(self,name,priority):
+        if name not in self.plugins:
+            return False
+        if self.plugins[name].priority == priority:
+            return True
+        self.plugins[name].priority = priority
+        self.plugins._update_heap(name)
+        self.pconf["plugins"][name]["priority"] = priority
+        self.pconf["plugins"]._update_heap(name)
+        self.save_config()
+        self.refresh_order()
+        return True
+
     def enable_plugin(self,name):
         if name not in self.plugins:
             return False
         if not self.plugins[name].enabled :
             self.plugins[name].enabled = True
-            idx = next(i for i in range(len(self.pconf['plugins'])) if self.pconf["plugins"][i]['name'] == name)
-            self.pconf["plugins"][idx]["enabled"] = True
+            self.pconf["plugins"][name]["enabled"] = True
             self.save_config()
             self.activate_plugins()
             return True
@@ -121,8 +144,7 @@ class PluginManager:
             return False
         if self.plugins[name].enabled :
             self.plugins[name].enabled = False
-            idx = next(i for i in range(len(self.pconf['plugins'])) if self.pconf["plugins"][i]['name'] == name)
-            self.pconf["plugins"][idx]["enabled"] = False
+            self.pconf["plugins"][name]["enabled"] = False
             self.save_config()
             return True
         return True

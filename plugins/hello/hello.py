@@ -5,7 +5,7 @@ from plugins import *
 from common.log import logger
 
 
-@plugins.register(name="Hello", desc="A simple plugin that says hello", version="0.1", author="lanvent")
+@plugins.register(name="Hello", desc="A simple plugin that says hello", version="0.1", author="lanvent", desire_priority= -1)
 class Hello(Plugin):
     def __init__(self):
         super().__init__()
