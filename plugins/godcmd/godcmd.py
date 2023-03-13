@@ -162,7 +162,7 @@ class Godcmd(Plugin):
                         bot.sessions.clear_session(session_id)
                         ok, result = True, "会话已重置"
                     else:
-                        ok, result = False, "当前机器人不支持重置会话"
+                        ok, result = False, "当前对话机器人不支持重置会话"
                 logger.debug("[Godcmd] command: %s by %s" % (cmd, user))
             elif any(cmd in info['alias'] for info in ADMIN_COMMANDS.values()):
                 if isadmin:
@@ -184,7 +184,7 @@ class Godcmd(Plugin):
                                 bot.sessions.clear_all_session()
                                 ok, result = True, "重置所有会话成功"
                             else:
-                                ok, result = False, "当前机器人不支持重置会话"
+                                ok, result = False, "当前对话机器人不支持重置会话"
                         elif cmd == "debug":
                             logger.setLevel('DEBUG')
                             ok, result = True, "DEBUG模式已开启"
