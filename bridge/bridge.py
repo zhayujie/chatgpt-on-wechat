@@ -1,3 +1,5 @@
+from bridge.context import Context
+from bridge.reply import Reply
 from common.log import logger
 from bot import bot_factory
 from common.singleton import singleton
@@ -28,16 +30,13 @@ class Bridge(object):
     def get_bot_type(self,typename):
         return self.btype[typename]
 
-    # 以下所有函数需要得到一个reply字典，格式如下：
-    # reply["type"] = "ERROR" / "TEXT" / "VOICE" / ...
-    # reply["content"] = reply的内容
 
-    def fetch_reply_content(self, query, context):
+    def fetch_reply_content(self, query, context : Context) -> Reply:
         return self.get_bot("chat").reply(query, context)
 
-    def fetch_voice_to_text(self, voiceFile):
+    def fetch_voice_to_text(self, voiceFile) -> Reply:
         return self.get_bot("voice_to_text").voiceToText(voiceFile)
 
-    def fetch_text_to_voice(self, text):
+    def fetch_text_to_voice(self, text) -> Reply:
         return self.get_bot("text_to_voice").textToVoice(text)
 

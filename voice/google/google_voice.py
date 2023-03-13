@@ -6,6 +6,7 @@ google voice service
 import pathlib
 import subprocess
 import time
+from bridge.reply import Reply, ReplyType
 import speech_recognition
 import pyttsx3
 from common.log import logger
@@ -32,16 +33,15 @@ class GoogleVoice(Voice):
                         ' -acodec pcm_s16le -ac 1 -ar 16000 ' + new_file, shell=True)
         with speech_recognition.AudioFile(new_file) as source:
             audio = self.recognizer.record(source)
-        reply = {}
         try:
             text = self.recognizer.recognize_google(audio, language='zh-CN')
             logger.info(
                 '[Google] voiceToText text={} voice file name={}'.format(text, voice_file))
-            reply = {"type": "TEXT", "content": text}
+            reply = Reply(ReplyType.TEXT, text)
         except speech_recognition.UnknownValueError:
-            reply = {"type": "ERROR", "content": "抱歉，我听不懂"}
+            reply = Reply(ReplyType.ERROR, "抱歉，我听不懂")
         except speech_recognition.RequestError as e:
-            reply = {"type": "ERROR", "content": "抱歉，无法连接到 Google 语音识别服务；{0}".format(e)}
+            reply = Reply(ReplyType.ERROR, "抱歉，无法连接到 Google 语音识别服务；{0}".format(e))
         finally:
             return reply
     def textToVoice(self, text):
@@ -51,8 +51,8 @@ class GoogleVoice(Voice):
             self.engine.runAndWait()
             logger.info(
                 '[Google] textToVoice text={} voice file name={}'.format(text, textFile))
-            reply = {"type": "VOICE", "content": textFile}
+            reply = Reply(ReplyType.VOICE, textFile)
         except Exception as e:
-            reply = {"type": "ERROR", "content": str(e)}
+            reply = Reply(ReplyType.ERROR, str(e))
         finally:
             return reply

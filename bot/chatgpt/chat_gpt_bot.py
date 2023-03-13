@@ -1,6 +1,8 @@
 # encoding:utf-8
 
 from bot.bot import Bot
+from bridge.context import ContextType
+from bridge.reply import Reply, ReplyType
 from config import conf, load_config
 from common.log import logger
 from common.expired_dict import ExpiredDict
@@ -19,22 +21,19 @@ class ChatGPTBot(Bot):
 
     def reply(self, query, context=None):
         # acquire reply content
-        if context['type'] == 'TEXT':
+        if context.type == ContextType.TEXT:
             logger.info("[OPEN_AI] query={}".format(query))
             session_id = context['session_id']
             reply = None
             if query == '#清除记忆':
                 self.sessions.clear_session(session_id)
-                reply = {'type': 'INFO', 'content': '记忆已清除'}
+                reply = Reply(ReplyType.INFO, '记忆已清除')
             elif query == '#清除所有':
                 self.sessions.clear_all_session()
-                reply = {'type': 'INFO', 'content': '所有人记忆已清除'}
+                reply = Reply(ReplyType.INFO, '所有人记忆已清除')
             elif query == '#更新配置':
                 load_config()
-                reply = {'type': 'INFO', 'content': '配置已更新'}
-            elif query == '#DEBUG':
-                logger.setLevel('DEBUG')
-                reply = {'type': 'INFO', 'content': 'DEBUG模式已开启'}
+                reply = Reply(ReplyType.INFO, '配置已更新')
             if reply:
                 return reply
             session = self.sessions.build_session_query(query, session_id)
@@ -47,25 +46,25 @@ class ChatGPTBot(Bot):
             reply_content = self.reply_text(session, session_id, 0)
             logger.debug("[OPEN_AI] new_query={}, session_id={}, reply_cont={}".format(session, session_id, reply_content["content"]))
             if reply_content['completion_tokens'] == 0 and len(reply_content['content']) > 0:
-                reply = {'type': 'ERROR', 'content': reply_content['content']}
+                reply = Reply(ReplyType.ERROR, reply_content['content'])
             elif reply_content["completion_tokens"] > 0:
                 self.sessions.save_session(reply_content["content"], session_id, reply_content["total_tokens"])
-                reply={'type':'TEXT', 'content':reply_content["content"]}
+                reply = Reply(ReplyType.TEXT, reply_content["content"])
             else:
-                reply = {'type': 'ERROR', 'content': reply_content['content']}
+                reply = Reply(ReplyType.ERROR, reply_content['content'])
                 logger.debug("[OPEN_AI] reply {} used 0 tokens.".format(reply_content))
             return reply
 
-        elif context['type'] == 'IMAGE_CREATE':
+        elif context.type == ContextType.IMAGE_CREATE:
             ok, retstring = self.create_img(query, 0)
             reply = None
             if ok:
-                reply = {'type': 'IMAGE_URL', 'content': retstring}
+                reply = Reply(ReplyType.IMAGE_URL, retstring)
             else:
-                reply = {'type': 'ERROR', 'content': retstring}
+                reply = Reply(ReplyType.ERROR, retstring)
             return reply
         else:
-            reply= {'type':'ERROR', 'content':'Bot不支持处理{}类型的消息'.format(context['type'])}
+            reply = Reply(ReplyType.ERROR, 'Bot不支持处理{}类型的消息'.format(context.type))
             return reply
 
     def reply_text(self, session, session_id, retry_count=0) -> dict:

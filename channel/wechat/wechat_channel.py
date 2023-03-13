@@ -7,6 +7,8 @@ wechat channel
 import itchat
 import json
 from itchat.content import *
+from bridge.reply import *
+from bridge.context import *
 from channel.channel import Channel
 from concurrent.futures import ThreadPoolExecutor
 from common.log import logger
@@ -69,10 +71,8 @@ class WechatChannel(Channel):
         from_user_id = msg['FromUserName']
         other_user_id = msg['User']['UserName']
         if from_user_id == other_user_id:
-            context = {'isgroup': False, 'msg': msg, 'receiver': other_user_id}
-            context['type'] = 'VOICE'
-            context['content'] = msg['FileName']
-            context['session_id'] = other_user_id
+            context = Context(ContextType.VOICE,msg['FileName'])
+            context.kwargs = {'isgroup': False, 'msg': msg, 'receiver': other_user_id, 'session_id': other_user_id}
             thread_pool.submit(self.handle, context).add_done_callback(thread_pool_callback)
 
     def handle_text(self, msg):
@@ -89,17 +89,17 @@ class WechatChannel(Channel):
             content = content.replace(match_prefix, '', 1).strip()
         else:
             return
-        context = {'isgroup': False, 'msg': msg, 'receiver': other_user_id}
-        context['session_id'] = other_user_id
+        context = Context()
+        context.kwargs = {'isgroup': False, 'msg': msg, 'receiver': other_user_id, 'session_id': other_user_id}
 
         img_match_prefix = check_prefix(content, conf().get('image_create_prefix'))
         if img_match_prefix:
             content = content.replace(img_match_prefix, '', 1).strip()
-            context['type'] = 'IMAGE_CREATE'
+            context.type = ContextType.IMAGE_CREATE
         else:
-            context['type'] = 'TEXT'
+            context.type = ContextType.TEXT
 
-        context['content'] = content
+        context.content = content
         thread_pool.submit(self.handle, context).add_done_callback(thread_pool_callback)
 
     def handle_group(self, msg):
@@ -123,15 +123,16 @@ class WechatChannel(Channel):
         match_prefix = (msg['IsAt'] and not config.get("group_at_off", False)) or check_prefix(origin_content, config.get('group_chat_prefix')) \
                        or check_contain(origin_content, config.get('group_chat_keyword'))
         if ('ALL_GROUP' in config.get('group_name_white_list') or group_name in config.get('group_name_white_list') or check_contain(group_name, config.get('group_name_keyword_white_list'))) and match_prefix:
-            context = { 'isgroup': True, 'msg': msg, 'receiver': group_id}
+            context = Context()
+            context.kwargs = { 'isgroup': True, 'msg': msg, 'receiver': group_id}
             
             img_match_prefix = check_prefix(content, conf().get('image_create_prefix'))
             if img_match_prefix:
                 content = content.replace(img_match_prefix, '', 1).strip()
-                context['type'] = 'IMAGE_CREATE'
+                context.type = ContextType.IMAGE_CREATE
             else:
-                context['type'] = 'TEXT'
-            context['content'] = content
+                context.type = ContextType.TEXT
+            context.content = content
 
             group_chat_in_one_session = conf().get('group_chat_in_one_session', [])
             if ('ALL_GROUP' in group_chat_in_one_session or
@@ -144,18 +145,18 @@ class WechatChannel(Channel):
             thread_pool.submit(self.handle, context).add_done_callback(thread_pool_callback)
 
     # 统一的发送函数，每个Channel自行实现，根据reply的type字段发送不同类型的消息
-    def send(self, reply, receiver):
-        if reply['type'] == 'TEXT':
-            itchat.send(reply['content'], toUserName=receiver)
+    def send(self, reply : Reply, receiver):
+        if reply.type == ReplyType.TEXT:
+            itchat.send(reply.content, toUserName=receiver)
             logger.info('[WX] sendMsg={}, receiver={}'.format(reply, receiver))
-        elif reply['type'] == 'ERROR' or reply['type'] == 'INFO':
-            itchat.send(reply['content'], toUserName=receiver)
+        elif reply.type == ReplyType.ERROR or reply.type == ReplyType.INFO:
+            itchat.send(reply.content, toUserName=receiver)
             logger.info('[WX] sendMsg={}, receiver={}'.format(reply, receiver))
-        elif reply['type'] == 'VOICE':
-            itchat.send_file(reply['content'], toUserName=receiver)
-            logger.info('[WX] sendFile={}, receiver={}'.format(reply['content'], receiver))
-        elif reply['type']=='IMAGE_URL': # 从网络下载图片
-            img_url = reply['content']
+        elif reply.type == ReplyType.VOICE:
+            itchat.send_file(reply.content, toUserName=receiver)
+            logger.info('[WX] sendFile={}, receiver={}'.format(reply.content, receiver))
+        elif reply.type == ReplyType.IMAGE_URL: # 从网络下载图片
+            img_url = reply.content
             pic_res = requests.get(img_url, stream=True)
             image_storage = io.BytesIO()
             for block in pic_res.iter_content(1024):
@@ -163,69 +164,69 @@ class WechatChannel(Channel):
             image_storage.seek(0)
             itchat.send_image(image_storage, toUserName=receiver)
             logger.info('[WX] sendImage url=, receiver={}'.format(img_url,receiver))
-        elif reply['type']=='IMAGE': # 从文件读取图片
-            image_storage = reply['content']
+        elif reply.type == ReplyType.IMAGE: # 从文件读取图片
+            image_storage = reply.content
             image_storage.seek(0)
             itchat.send_image(image_storage, toUserName=receiver)
             logger.info('[WX] sendImage, receiver={}'.format(receiver))
 
     # 处理消息 TODO: 如果wechaty解耦，此处逻辑可以放置到父类
     def handle(self, context):
-        reply = {}
+        reply = Reply()
 
         logger.debug('[WX] ready to handle context: {}'.format(context))
         
         # reply的构建步骤
         e_context = PluginManager().emit_event(EventContext(Event.ON_HANDLE_CONTEXT, {'channel' : self, 'context': context, 'reply': reply}))
-        reply=e_context['reply']
+        reply = e_context['reply']
         if not e_context.is_pass():
-            logger.debug('[WX] ready to handle context: type={}, content={}'.format(context['type'], context['content']))
-            if context['type'] == 'TEXT' or context['type'] == 'IMAGE_CREATE':
-                reply = super().build_reply_content(context['content'], context)
-            elif context['type'] == 'VOICE':
+            logger.debug('[WX] ready to handle context: type={}, content={}'.format(context.type, context.content))
+            if context.type == ContextType.TEXT or context.type == ContextType.IMAGE_CREATE:
+                reply = super().build_reply_content(context.content, context)
+            elif context.type == ContextType.VOICE:
                 msg = context['msg']
-                file_name = TmpDir().path() + context['content']
+                file_name = TmpDir().path() + context.content
                 msg.download(file_name)
                 reply = super().build_voice_to_text(file_name)
-                if reply['type'] != 'ERROR' and reply['type'] != 'INFO':
-                    context['content'] = reply['content'] # 语音转文字后，将文字内容作为新的context
-                    context['type'] = reply['type']
-                    reply = super().build_reply_content(context['content'], context)
-                    if reply['type'] == 'TEXT':
+                if reply.type != ReplyType.ERROR and reply.type != ReplyType.INFO:
+                    context.content = reply.content # 语音转文字后，将文字内容作为新的context
+                    context.type = ContextType.TEXT
+                    reply = super().build_reply_content(context.content, context)
+                    if reply.type == ReplyType.TEXT:
                         if conf().get('voice_reply_voice'):
-                            reply = super().build_text_to_voice(reply['content'])
+                            reply = super().build_text_to_voice(reply.content)
             else:
-                logger.error('[WX] unknown context type: {}'.format(context['type']))
+                logger.error('[WX] unknown context type: {}'.format(context.type))
                 return
 
         logger.debug('[WX] ready to decorate reply: {}'.format(reply))
         
         # reply的包装步骤
-        if reply and reply['type']:
+        if reply and reply.type:
             e_context = PluginManager().emit_event(EventContext(Event.ON_DECORATE_REPLY, {'channel' : self, 'context': context, 'reply': reply}))
             reply=e_context['reply']
-            if not e_context.is_pass() and reply and reply['type']:
-                if reply['type'] == 'TEXT':
-                    reply_text = reply['content']
+            if not e_context.is_pass() and reply and reply.type:
+                if reply.type == ReplyType.TEXT:
+                    reply_text = reply.content
                     if context['isgroup']:
                         reply_text = '@' +  context['msg']['ActualNickName'] + ' ' + reply_text.strip()
                         reply_text = conf().get("group_chat_reply_prefix", "")+reply_text
                     else:
                         reply_text = conf().get("single_chat_reply_prefix", "")+reply_text
-                    reply['content'] = reply_text
-                elif reply['type'] == 'ERROR' or reply['type'] == 'INFO':
-                    reply['content'] = reply['type']+":\n" + reply['content']
-                elif reply['type'] == 'IMAGE_URL' or reply['type'] == 'VOICE' or reply['type'] == 'IMAGE':
+                    reply.content = reply_text
+                elif reply.type == ReplyType.ERROR or reply.type == ReplyType.INFO:
+                    reply.content = str(reply.type)+":\n" + reply.content
+                elif reply.type == ReplyType.IMAGE_URL or reply.type == ReplyType.VOICE or reply.type == ReplyType.IMAGE:
                     pass
                 else:
-                    logger.error('[WX] unknown reply type: {}'.format(reply['type']))
+                    logger.error('[WX] unknown reply type: {}'.format(reply.type))
                     return
 
         # reply的发送步骤   
-        if reply and reply['type']:
+        if reply and reply.type:
             e_context = PluginManager().emit_event(EventContext(Event.ON_SEND_REPLY, {'channel' : self, 'context': context, 'reply': reply}))
             reply=e_context['reply']
-            if not e_context.is_pass() and reply and reply['type']:
+            if not e_context.is_pass() and reply and reply.type:
                 logger.debug('[WX] ready to send reply: {} to {}'.format(reply, context['receiver']))
                 self.send(reply, context['receiver'])
 

@@ -5,6 +5,8 @@ import os
 import traceback
 from typing import Tuple
 from bridge.bridge import Bridge
+from bridge.context import ContextType
+from bridge.reply import Reply, ReplyType
 from config import load_config
 import plugins
 from plugins import *
@@ -123,13 +125,13 @@ class Godcmd(Plugin):
 
     
     def on_handle_context(self, e_context: EventContext):
-        context_type = e_context['context']['type']
-        if context_type != "TEXT":
+        context_type = e_context['context'].type
+        if context_type != ContextType.TEXT:
             if not self.isrunning:
                 e_context.action = EventAction.BREAK_PASS
             return
         
-        content = e_context['context']['content']
+        content = e_context['context'].content
         logger.debug("[Godcmd] on_handle_context. content: %s" % content)
         if content.startswith("#"):
             # msg = e_context['context']['msg']
@@ -239,12 +241,12 @@ class Godcmd(Plugin):
             else:
                 ok, result = False, f"未知指令：{cmd}\n查看指令列表请输入#help \n"
             
-            reply = {}
+            reply = Reply()
             if ok:
-                reply["type"] = "INFO"
+                reply.type = ReplyType.INFO
             else:
-                reply["type"] = "ERROR"
-            reply["content"] = result
+                reply.type = ReplyType.ERROR
+            reply.content = result
             e_context['reply'] = reply
 
             e_context.action = EventAction.BREAK_PASS # 事件结束，并跳过处理context的默认逻辑
