@@ -26,7 +26,7 @@ class PluginManager:
             plugincls.author = author
             plugincls.priority = desire_priority
             plugincls.enabled = True
-            self.plugins[name] = plugincls
+            self.plugins[name.upper()] = plugincls
             logger.info("Plugin %s_v%s registered" % (name, version))
             return plugincls
         return wrapper
@@ -67,14 +67,15 @@ class PluginManager:
         new_plugins = []
         modified = False
         for name, plugincls in self.plugins.items():
-            if name not in pconf["plugins"]:
+            rawname = plugincls.name
+            if rawname not in pconf["plugins"]:
                 new_plugins.append(plugincls)
                 modified = True
                 logger.info("Plugin %s not found in pconfig, adding to pconfig..." % name)
-                pconf["plugins"][name] = {"enabled": plugincls.enabled, "priority": plugincls.priority}
+                pconf["plugins"][rawname] = {"enabled": plugincls.enabled, "priority": plugincls.priority}
             else:
-                self.plugins[name].enabled = pconf["plugins"][name]["enabled"]
-                self.plugins[name].priority = pconf["plugins"][name]["priority"]
+                self.plugins[name].enabled = pconf["plugins"][rawname]["enabled"]
+                self.plugins[name].priority = pconf["plugins"][rawname]["priority"]
                 self.plugins._update_heap(name) # 更新下plugins中的顺序
         if modified:
             self.save_config()
@@ -96,7 +97,8 @@ class PluginManager:
                         self.listening_plugins[event].append(name)
         self.refresh_order()
 
-    def reload_plugin(self, name):
+    def reload_plugin(self, name:str):
+        name = name.upper()
         if name in self.instances:
             for event in self.listening_plugins:
                 if name in self.listening_plugins[event]:
@@ -112,7 +114,7 @@ class PluginManager:
         pconf = self.pconf
         logger.debug("plugins.json config={}".format(pconf))
         for name,plugin in pconf["plugins"].items():
-            if name not in self.plugins:
+            if name.upper() not in self.plugins:
                 logger.error("Plugin %s not found, but found in plugins.json" % name)
         self.activate_plugins()
 
@@ -125,36 +127,42 @@ class PluginManager:
                     instance.handlers[e_context.event](e_context, *args, **kwargs)
         return e_context
 
-    def set_plugin_priority(self,name,priority):
+    def set_plugin_priority(self, name:str, priority:int):
+        name = name.upper()
         if name not in self.plugins:
             return False
         if self.plugins[name].priority == priority:
             return True
         self.plugins[name].priority = priority
         self.plugins._update_heap(name)
-        self.pconf["plugins"][name]["priority"] = priority
-        self.pconf["plugins"]._update_heap(name)
+        rawname = self.plugins[name].name
+        self.pconf["plugins"][rawname]["priority"] = priority
+        self.pconf["plugins"]._update_heap(rawname)
         self.save_config()
         self.refresh_order()
         return True
 
-    def enable_plugin(self,name):
+    def enable_plugin(self, name:str):
+        name = name.upper()
         if name not in self.plugins:
             return False
         if not self.plugins[name].enabled :
             self.plugins[name].enabled = True
-            self.pconf["plugins"][name]["enabled"] = True
+            rawname = self.plugins[name].name
+            self.pconf["plugins"][rawname]["enabled"] = True
             self.save_config()
             self.activate_plugins()
             return True
         return True
     
-    def disable_plugin(self,name):
+    def disable_plugin(self, name:str):
+        name = name.upper()
         if name not in self.plugins:
             return False
         if self.plugins[name].enabled :
             self.plugins[name].enabled = False
-            self.pconf["plugins"][name]["enabled"] = False
+            rawname = self.plugins[name].name
+            self.pconf["plugins"][rawname]["enabled"] = False
             self.save_config()
             return True
         return True

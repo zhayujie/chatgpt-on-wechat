@@ -198,7 +198,7 @@ class Godcmd(Plugin):
                             ok = True
                             result = "插件列表：\n"
                             for name,plugincls in plugins.items():
-                                result += f"{name}_v{plugincls.version} {plugincls.priority} - "
+                                result += f"{plugincls.name}_v{plugincls.version} {plugincls.priority} - "
                                 if plugincls.enabled:
                                     result += "已启用\n"
                                 else:
