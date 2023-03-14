@@ -96,6 +96,16 @@ class PluginManager:
                         self.listening_plugins[event].append(name)
         self.refresh_order()
 
+    def reload_plugin(self, name):
+        if name in self.instances:
+            for event in self.listening_plugins:
+                if name in self.listening_plugins[event]:
+                    self.listening_plugins[event].remove(name)
+            del self.instances[name]
+            self.activate_plugins()
+            return True
+        return False
+    
     def load_plugins(self):
         self.load_config()
         self.scan_plugins()

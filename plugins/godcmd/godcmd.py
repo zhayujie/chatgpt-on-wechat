@@ -63,6 +63,11 @@ ADMIN_COMMANDS = {
         "args": ["插件名", "优先级"],
         "desc": "设置指定插件的优先级，越大越优先",
     },
+    "reloadp": {
+        "alias": ["reloadp", "重载插件"],
+        "args": ["插件名"],
+        "desc": "重载指定插件配置",
+    },
     "enablep": {
         "alias": ["enablep", "启用插件"],
         "args": ["插件名"],
@@ -214,6 +219,15 @@ class Godcmd(Plugin):
                                 ok = PluginManager().set_plugin_priority(args[0], int(args[1]))
                                 if ok:
                                     result = "插件" + args[0] + "优先级已设置为" + args[1]
+                                else:
+                                    result = "插件不存在"
+                        elif cmd == "reloadp":
+                            if len(args) != 1:
+                                ok, result = False, "请提供插件名"
+                            else:
+                                ok = PluginManager().reload_plugin(args[0])
+                                if ok:
+                                    result = "插件配置已重载"
                                 else:
                                     result = "插件不存在"
                         elif cmd == "enablep":
