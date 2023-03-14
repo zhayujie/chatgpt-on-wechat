@@ -11,5 +11,6 @@ docker build -f Dockerfile.alpine \
              -t zhayujie/chatgpt-on-wechat .
 
 # tag image
-docker tag zhayujie/chatgpt-on-wechat zhayujie/chatgpt-on-wechat:$CHATGPT_ON_WECHAT_TAG-alpine 
+docker tag zhayujie/chatgpt-on-wechat zhayujie/chatgpt-on-wechat:alpine 
+docker tag zhayujie/chatgpt-on-wechat zhayujie/chatgpt-on-wechat:$CHATGPT_ON_WECHAT_TAG-alpine
            

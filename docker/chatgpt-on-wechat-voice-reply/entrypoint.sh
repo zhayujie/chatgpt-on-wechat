@@ -20,6 +20,11 @@ SPEECH_RECOGNITION=${SPEECH_RECOGNITION:-""}
 CHARACTER_DESC=${CHARACTER_DESC:-""}
 EXPIRES_IN_SECONDS=${EXPIRES_IN_SECONDS:-""}
 
+VOICE_REPLY_VOICE=${VOICE_REPLY_VOICE:-""}
+BAIDU_APP_ID=${BAIDU_APP_ID:-""}
+BAIDU_API_KEY=${BAIDU_API_KEY:-""}
+BAIDU_SECRET_KEY=${BAIDU_SECRET_KEY:-""}
+
 # CHATGPT_ON_WECHAT_PREFIX is empty, use /app
 if [ "$CHATGPT_ON_WECHAT_PREFIX" == "" ] ; then
     CHATGPT_ON_WECHAT_PREFIX=/app
@@ -85,6 +90,23 @@ fi
 
 if [ "$EXPIRES_IN_SECONDS" != "" ] ; then
     sed -i "s/\"expires_in_seconds\".*$/\"expires_in_seconds\": $EXPIRES_IN_SECONDS/" $CHATGPT_ON_WECHAT_CONFIG_PATH
+fi
+
+# append
+if [ "$BAIDU_SECRET_KEY" != "" ] ; then
+    sed -i "1a \ \ \"baidu_secret_key\": \"$BAIDU_SECRET_KEY\"," $CHATGPT_ON_WECHAT_CONFIG_PATH
+fi
+
+if [ "$BAIDU_API_KEY" != "" ] ; then
+    sed -i "1a \ \ \"baidu_api_key\": \"$BAIDU_API_KEY\"," $CHATGPT_ON_WECHAT_CONFIG_PATH
+fi
+
+if [ "$BAIDU_APP_ID" != "" ] ; then
+    sed -i "1a \ \ \"baidu_app_id\": \"$BAIDU_APP_ID\"," $CHATGPT_ON_WECHAT_CONFIG_PATH
+fi
+
+if [ "$VOICE_REPLY_VOICE" != "" ] ; then
+    sed -i "1a \ \ \"voice_reply_voice\": $VOICE_REPLY_VOICE," $CHATGPT_ON_WECHAT_CONFIG_PATH
 fi
 
 # go to prefix dir
