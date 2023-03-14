@@ -1,5 +1,7 @@
 .DS_Store
 .idea
+.wechaty/
+logs/
 __pycache__/
 venv*
 *.pyc
