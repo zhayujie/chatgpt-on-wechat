@@ -31,7 +31,8 @@
       "params": {
         "width": 640,
         "height": 384
-      }
+      },
+      "desc": "分辨率会变成640x384"
     },
     {
       "keywords": [
@@ -49,7 +50,8 @@
       "params": {
         "enable_hr": true,
         "hr_scale": 1.6
-      }
+      },
+      "desc": "出图分辨率长宽都会提高1.6倍"
     },
     {
       "keywords": [
@@ -61,7 +63,8 @@
       },
       "options": {
         "sd_model_checkpoint": "meinamix_meinaV8"
-      }
+      },
+      "desc": "使用二次元风格模型出图"
     }
   ]
 }
