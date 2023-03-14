@@ -62,15 +62,14 @@
 支持 Linux、MacOS、Windows 系统（可在Linux服务器上长期运行)，同时需安装 `Python`。 
 > 建议Python版本在 3.7.1~3.9.X 之间，3.10及以上版本在 MacOS 可用，其他系统上不确定能否正常运行。
 
-
-1.克隆项目代码：
+**1.克隆项目代码：**
 
 ```bash
 git clone https://github.com/zhayujie/chatgpt-on-wechat
 cd chatgpt-on-wechat/
 ```
 
-2.安装所需核心依赖：
+**2.安装所需核心依赖：**
 
 ```bash
 pip3 install itchat-uos==1.5.0.dev0
@@ -78,6 +77,37 @@ pip3 install --upgrade openai
 ```
 注：`itchat-uos`使用指定版本1.5.0.dev0，`openai`使用最新版本，需高于0.27.0。
 
+**3.安装所需拓展依赖（接收语音，回复语音）：**
+### wechaty 处理语音所需
+
+```bash
+pip3 install pysilk
+pip3 install pydub
+```
+
+### 百度
+
+```bash
+pip3 install baidu-aip chardet
+```
+### Google
+
+(1) 安装 SpeechRecognition
+```bash
+  pip3 install SpeechRecognition
+```
+(2) 安装 ffmpeg 和 espeak
+
+  MacOS: 
+  ```bash
+    brew install ffmpeg espeak
+  ```
+  Windows:下载ffmpeg.exe
+
+  Linux: 
+  ```bash
+    apt-get install ffmpeg espeak
+  ```
 
 ## 配置
 
@@ -100,7 +130,13 @@ cp config-template.json config.json
   "group_name_white_list": ["ChatGPT测试群", "ChatGPT测试群2"], # 开启自动回复的群名称列表
   "image_create_prefix": ["画", "看", "找"],                   # 开启图片回复的前缀
   "conversation_max_tokens": 1000,                            # 支持上下文记忆的最多字符数
-  "character_desc": "你是ChatGPT, 一个由OpenAI训练的大型语言模型, 你旨在回答并解决人们的任何问题，并且可以使用多种语言与人交流。"  # 人格描述
+  "character_desc": "你是ChatGPT, 一个由OpenAI训练的大型语言模型, 你旨在回答并解决人们的任何问题，并且可以使用多种语言与人交流。",  # 人格描述
+  "speech_recognition": false,                                # 是否开启语音识别
+  "voice_reply_voice": false,                                 # 是否开启语音回复
+  "wechaty_puppet_service_token":"",                          # wechaty服务token
+  "baidu_app_id": "",                                         # 百度AI的App Id
+  "baidu_api_key": "",                                        # 百度AI的API KEY
+  "baidu_secret_key": "",                                     # 百度AI的Secret KEY
 }
 ```
 **配置说明：**

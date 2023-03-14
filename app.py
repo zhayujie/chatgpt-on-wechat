@@ -11,7 +11,7 @@ if __name__ == '__main__':
         config.load_config()
 
         # create channel
-        channel = channel_factory.create_channel("wx")
+        channel = channel_factory.create_channel("wxy")
 
         # startup channel
         channel.startup()
