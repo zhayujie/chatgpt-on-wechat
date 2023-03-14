@@ -273,9 +273,13 @@ class Godcmd(Plugin):
         
         if isadmin:
             return False,"管理员账号无需认证"
-
+        
+        if len(self.password) == 0:
+            return False,"未设置口令，无法认证"
+        
         if len(args) != 1:
             return False,"请提供口令"
+        
         password = args[0]
         if password == self.password:
             self.admin_users.append(userid)
