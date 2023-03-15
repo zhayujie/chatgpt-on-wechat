@@ -16,7 +16,8 @@ else:
 class ChatGPTBot(Bot):
     def __init__(self):
         openai.api_key = conf().get('open_ai_api_key')
-        openai.api_base = conf().get('open_ai_api_base')
+        if conf().get('open_ai_api_base'):
+            openai.api_base = conf().get('open_ai_api_base')
         proxy = conf().get('proxy')
         if proxy:
             openai.proxy = proxy
