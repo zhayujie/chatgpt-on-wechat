@@ -41,6 +41,6 @@ class Hello(Plugin):
 
         if content == "End":
             # 如果是文本消息"End"，将请求转换成"IMAGE_CREATE"，并将content设置为"The World"
-            e_context['context'].type = "IMAGE_CREATE"
+            e_context['context'].type = ContextType.IMAGE_CREATE
             content = "The World"
             e_context.action = EventAction.CONTINUE  # 事件继续，交付给下个插件或默认逻辑
