@@ -19,7 +19,7 @@
 
 >**2023.03.02：** 接入[ChatGPT API](https://platform.openai.com/docs/guides/chat) (gpt-3.5-turbo)，默认使用该模型进行对话，需升级openai依赖 (`pip3 install --upgrade openai`)。网络问题参考 [#351](https://github.com/zhayujie/chatgpt-on-wechat/issues/351)
 
->**2023.02.20：** 增加 [python-wechaty](https://github.com/wechaty/python-wechaty) 作为可选渠道，使用Pad协议相对稳定，但Token收费 (使用参考[#244](https://github.com/zhayujie/chatgpt-on-wechat/pull/244)，contributed by [ZQ7](https://github.com/ZQ7))
+>**2023.02.20：** 增加 [python-wechaty](https://github.com/wechaty/python-wechaty) 作为可选渠道，使用Pad协议，但Token收费 (使用参考[#244](https://github.com/zhayujie/chatgpt-on-wechat/pull/244)，contributed by [ZQ7](https://github.com/ZQ7))
 
 >**2023.02.09：** 扫码登录存在封号风险，请谨慎使用，参考[#58](https://github.com/AutumnWhj/ChatGPT-wechat-bot/issues/158)
 
@@ -62,14 +62,14 @@
 支持 Linux、MacOS、Windows 系统（可在Linux服务器上长期运行)，同时需安装 `Python`。 
 > 建议Python版本在 3.7.1~3.9.X 之间，3.10及以上版本在 MacOS 可用，其他系统上不确定能否正常运行。
 
-**1.克隆项目代码：**
+**(1) 克隆项目代码：**
 
 ```bash
 git clone https://github.com/zhayujie/chatgpt-on-wechat
 cd chatgpt-on-wechat/
 ```
 
-**2.安装所需核心依赖：**
+**(2) 安装核心依赖 (必选)：**
 
 ```bash
 pip3 install itchat-uos==1.5.0.dev0
@@ -77,38 +77,10 @@ pip3 install --upgrade openai
 ```
 注：`itchat-uos`使用指定版本1.5.0.dev0，`openai`使用最新版本，需高于0.27.0。
 
-**3.安装所需拓展依赖（接收语音，回复语音）：**
-### wechaty 处理语音所需
+**(3) 拓展依赖 (可选)：**
 
-```bash
-pip3 install pysilk
-pip3 install pysilk-mod
-pip3 install pydub
-```
+语音识别及语音回复相关依赖：[#415](https://github.com/zhayujie/chatgpt-on-wechat/issues/415)。
 
-### 百度
-
-```bash
-  pip3 install baidu-aip chardet
-```
-### Google
-
-(1) 安装 SpeechRecognition
-```bash
-  pip3 install SpeechRecognition
-```
-(2) 安装 ffmpeg 和 espeak
-
-  MacOS: 
-  ```bash
-    brew install ffmpeg espeak
-  ```
-  Windows:下载ffmpeg.exe
-
-  Linux: 
-  ```bash
-    apt-get install ffmpeg espeak
-  ```
 
 ## 配置
 
@@ -155,6 +127,7 @@ pip3 install pydub
 + 可选配置: `group_name_keyword_white_list`配置项支持模糊匹配群名称，`group_chat_keyword`配置项则支持模糊匹配群消息内容，用法与上述两个配置项相同。（Contributed by [evolay](https://github.com/evolay))
 
 **3.语音识别**
+
 + 添加 `"speech_recognition": true` 将开启语音识别，默认使用openai的whisper模型识别为文字，同时以文字回复，目前只支持私聊 (注意由于语音消息无法匹配前缀，一旦开启将对所有语音自动回复)；
 + 添加 `"voice_reply_voice": true` 将开启语音回复语音，但是需要配置对应语音合成平台的key，由于itchat协议的限制，只能发送语音mp3文件，若使用wechaty则回复的是微信语音。
 
@@ -187,8 +160,7 @@ python3 app.py
 touch nohup.out                                   # 首次运行需要新建日志文件                     
 nohup python3 app.py & tail -f nohup.out          # 在后台运行程序并通过日志输出二维码
 ```
-扫码登录后程序即可运行于服务器后台，此时可通过 `ctrl+c` 关闭日志，不会影响后台程序的运行。使用 `ps -ef | grep app.py | grep -v grep` 命令可查看运行于后台的进程，如果想要重新启动程序可以先 `kill` 掉对应的进程。日志关闭后如果想要再次打开只需输入 `tail -f nohup.out`。
-scripts/目录有相应的脚本可以调用
+扫码登录后程序即可运行于服务器后台，此时可通过 `ctrl+c` 关闭日志，不会影响后台程序的运行。使用 `ps -ef | grep app.py | grep -v grep` 命令可查看运行于后台的进程，如果想要重新启动程序可以先 `kill` 掉对应的进程。日志关闭后如果想要再次打开只需输入 `tail -f nohup.out`。此外，`scripts` 目录下有一键运行、关闭程序的脚本供使用。
 
 > **注意：** 如果 扫码后手机提示登录验证需要等待5s，而终端的二维码再次刷新并提示 `Log in time out, reloading QR code`，此时需参考此 [issue](https://github.com/zhayujie/chatgpt-on-wechat/issues/8) 修改一行代码即可解决。
 
