@@ -96,12 +96,8 @@ pip3 install --upgrade openai
 # config.json文件内容示例
 { 
   "open_ai_api_key": "YOUR API KEY",                          # 填入上面创建的 OpenAI API KEY
-  "open_ai_api_base": "https://api.openai.com/v1",            # 自定义 OpenAI API 地址
+  "model": "gpt-3.5-turbo",                                   # 模型名称
   "proxy": "127.0.0.1:7890",                                  # 代理客户端的ip和端口
-  "baidu_app_id": "",                                         # 百度AI的App Id
-  "baidu_api_key": "",                                        # 百度AI的API KEY
-  "baidu_secret_key": "",                                     # 百度AI的Secret KEY
-  "wechaty_puppet_service_token":"",                          # wechaty服务token
   "single_chat_prefix": ["bot", "@bot"],                      # 私聊时文本需要包含该前缀才能触发机器人回复
   "single_chat_reply_prefix": "[bot] ",                       # 私聊时自动回复的前缀，用于区分真人
   "group_chat_prefix": ["@bot"],                              # 群聊时包含该前缀则会触发机器人回复
@@ -109,7 +105,6 @@ pip3 install --upgrade openai
   "image_create_prefix": ["画", "看", "找"],                   # 开启图片回复的前缀
   "conversation_max_tokens": 1000,                            # 支持上下文记忆的最多字符数
   "speech_recognition": false,                                # 是否开启语音识别
-  "voice_reply_voice": false,                                 # 是否开启语音回复
   "character_desc": "你是ChatGPT, 一个由OpenAI训练的大型语言模型, 你旨在回答并解决人们的任何问题，并且可以使用多种语言与人交流。",  # 人格描述
 }
 ```
@@ -133,6 +128,7 @@ pip3 install --upgrade openai
 
 **4.其他配置**
 
++ `model`: 模型名称，目前支持 `gpt-3.5-turbo`, `text-davinci-003`, `gpt-4`, `gpt-4-32k`  (其中gpt-4 api暂未开放)
 + `proxy`：由于目前 `openai` 接口国内无法访问，需配置代理客户端的地址，详情参考  [#351](https://github.com/zhayujie/chatgpt-on-wechat/issues/351)
 + 对于图像生成，在满足个人或群组触发条件外，还需要额外的关键词前缀来触发，对应配置 `image_create_prefix `
 + 关于OpenAI对话及图片接口的参数配置（内容自由度、回复字数限制、图片大小等），可以参考 [对话接口](https://beta.openai.com/docs/api-reference/completions) 和 [图像接口](https://beta.openai.com/docs/api-reference/completions)  文档直接在 [代码](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/bot/openai/open_ai_bot.py) `bot/openai/open_ai_bot.py` 中进行调整。
