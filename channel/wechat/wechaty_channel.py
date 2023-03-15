@@ -12,6 +12,7 @@ import asyncio
 import requests
 import subprocess
 import pysilk
+import wave
 from pydub import AudioSegment
 from typing import Optional, Union
 from wechaty_puppet import MessageType, FileBox, ScanStatus  # type: ignore
@@ -97,19 +98,27 @@ class WechatyChannel(Channel):
             if not msg.is_self(): # 接收语音消息
                 # 下载语音文件
                 voice_file = await msg.to_file_box()
-                file_name = TmpDir().path() + voice_file.name
-                await voice_file.to_file(file_name)
-                logger.info("[WX]receive voice file: " + file_name)
-                # 将文件转成mp3格式音频
-                mp3_file = file_name.replace(".slk", ".mp3")
-                converter_log = subprocess.check_output('sh converter.sh ' + file_name + ' mp3', shell=True)
-                if os.path.exists(mp3_file): 
-                    converter_state = "true" # 转换mp3成功
+                silk_file = TmpDir().path() + voice_file.name
+                await voice_file.to_file(silk_file)
+                logger.info("[WX]receive voice file: " + silk_file)
+                # 将文件转成wav格式音频
+                wav_file = silk_file.replace(".slk", ".wav")
+                with open(silk_file, 'rb') as f:
+                    silk_data = f.read()
+                pcm_data = pysilk.decode(silk_data)
+
+                with wave.open(wav_file, 'wb') as wav_data:
+                    wav_data.setnchannels(1)
+                    wav_data.setsampwidth(2)
+                    wav_data.setframerate(24000)
+                    wav_data.writeframes(pcm_data)
+                if os.path.exists(wav_file): 
+                    converter_state = "true" # 转换wav成功
                 else:
-                    converter_state = "false" # 转换mp3失败
+                    converter_state = "false" # 转换wav失败
                 logger.info("[WX]receive voice converter: " + converter_state)
                 # 语音识别为文本
-                query = super().build_voice_to_text(mp3_file)
+                query = super().build_voice_to_text(wav_file)
                 # 交验关键字
                 match_prefix = self.check_prefix(query, conf().get('single_chat_prefix'))
                 if match_prefix is not None:
@@ -125,8 +134,8 @@ class WechatyChannel(Channel):
                 else:
                     logger.info("[WX]receive voice check prefix: " + 'False')
                 # 清除缓存文件
-                os.remove(mp3_file)
-                os.remove(file_name)
+                os.remove(wav_file)
+                os.remove(silk_file)
         elif room and msg.type() == MessageType.MESSAGE_TYPE_TEXT:
             # 群组&文本消息
             room_id = room.room_id
