@@ -10,7 +10,6 @@ import json
 import time
 import asyncio
 import requests
-import subprocess
 import pysilk
 import wave
 from pydub import AudioSegment
