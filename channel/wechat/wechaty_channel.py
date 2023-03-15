@@ -10,12 +10,16 @@ import json
 import time
 import asyncio
 import requests
+import pysilk
+import wave
+from pydub import AudioSegment
 from typing import Optional, Union
 from wechaty_puppet import MessageType, FileBox, ScanStatus  # type: ignore
 from wechaty import Wechaty, Contact
 from wechaty.user import Message, Room, MiniProgram, UrlLink
 from channel.channel import Channel
 from common.log import logger
+from common.tmp_dir import TmpDir
 from config import conf
 
 
@@ -89,6 +93,48 @@ class WechatyChannel(Channel):
                     await self._do_send_img(content, to_user_id)
                 else:
                     await self._do_send(content, to_user_id)
+        elif room is None and msg.type() == MessageType.MESSAGE_TYPE_AUDIO:
+            if not msg.is_self(): # 接收语音消息
+                # 下载语音文件
+                voice_file = await msg.to_file_box()
+                silk_file = TmpDir().path() + voice_file.name
+                await voice_file.to_file(silk_file)
+                logger.info("[WX]receive voice file: " + silk_file)
+                # 将文件转成wav格式音频
+                wav_file = silk_file.replace(".slk", ".wav")
+                with open(silk_file, 'rb') as f:
+                    silk_data = f.read()
+                pcm_data = pysilk.decode(silk_data)
+
+                with wave.open(wav_file, 'wb') as wav_data:
+                    wav_data.setnchannels(1)
+                    wav_data.setsampwidth(2)
+                    wav_data.setframerate(24000)
+                    wav_data.writeframes(pcm_data)
+                if os.path.exists(wav_file): 
+                    converter_state = "true" # 转换wav成功
+                else:
+                    converter_state = "false" # 转换wav失败
+                logger.info("[WX]receive voice converter: " + converter_state)
+                # 语音识别为文本
+                query = super().build_voice_to_text(wav_file)
+                # 交验关键字
+                match_prefix = self.check_prefix(query, conf().get('single_chat_prefix'))
+                if match_prefix is not None:
+                    if match_prefix != '':
+                        str_list = query.split(match_prefix, 1)
+                        if len(str_list) == 2:
+                            query = str_list[1].strip()
+                    # 返回消息
+                    if conf().get('voice_reply_voice'):
+                        await self._do_send_voice(query, from_user_id)
+                    else:
+                        await self._do_send(query, from_user_id)
+                else:
+                    logger.info("[WX]receive voice check prefix: " + 'False')
+                # 清除缓存文件
+                os.remove(wav_file)
+                os.remove(silk_file)
         elif room and msg.type() == MessageType.MESSAGE_TYPE_TEXT:
             # 群组&文本消息
             room_id = room.room_id
@@ -135,6 +181,39 @@ class WechatyChannel(Channel):
         except Exception as e:
             logger.exception(e)
 
+
+    async def _do_send_voice(self, query, reply_user_id):
+        try:
+            if not query:
+                return
+            context = dict()
+            context['session_id'] = reply_user_id
+            reply_text = super().build_reply_content(query, context)
+            if reply_text:
+                # 转换 mp3 文件为 silk 格式
+                mp3_file = super().build_text_to_voice(reply_text)
+                silk_file = mp3_file.replace(".mp3", ".silk")
+                # Load the MP3 file
+                audio = AudioSegment.from_file(mp3_file, format="mp3")
+                # Convert to WAV format
+                audio = audio.set_frame_rate(24000).set_channels(1)
+                wav_data = audio.raw_data
+                sample_width = audio.sample_width
+                # Encode to SILK format
+                silk_data = pysilk.encode(wav_data, 24000)
+                # Save the silk file
+                with open(silk_file, "wb") as f:
+                    f.write(silk_data)
+                # 发送语音
+                t = int(time.time())
+                file_box = FileBox.from_file(silk_file, name=str(t) + '.silk')
+                await self.send(file_box, reply_user_id)
+                # 清除缓存文件
+                os.remove(mp3_file)
+                os.remove(silk_file)
+        except Exception as e:
+            logger.exception(e)
+            
     async def _do_send_img(self, query, reply_user_id):
         try:
             if not query:
