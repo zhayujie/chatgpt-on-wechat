@@ -1,9 +1,5 @@
 {
   "open_ai_api_key": "YOUR API KEY",
-<<<<<<< HEAD
-  "open_ai_api_base":"https://api.openai.com/v1",
-=======
->>>>>>> 224ee6bd892633cd822837a21850f8fbccec50e3
   "proxy": "",
   "wechaty_puppet_service_token":"",
   "baidu_app_id": "",
