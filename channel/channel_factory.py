@@ -14,4 +14,7 @@ def create_channel(channel_type):
     elif channel_type == 'wxy':
         from channel.wechat.wechaty_channel import WechatyChannel
         return WechatyChannel()
+    elif channel_type == 'terminal':
+        from channel.terminal.terminal_channel import TerminalChannel
+        return TerminalChannel()
     raise RuntimeError

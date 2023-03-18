@@ -16,6 +16,8 @@ else:
 class ChatGPTBot(Bot):
     def __init__(self):
         openai.api_key = conf().get('open_ai_api_key')
+        if conf().get('open_ai_api_base'):
+            openai.api_base = conf().get('open_ai_api_base')
         proxy = conf().get('proxy')
         if proxy:
             openai.proxy = proxy
@@ -61,7 +63,7 @@ class ChatGPTBot(Bot):
         '''
         try:
             response = openai.ChatCompletion.create(
-                model="gpt-4",  # 对话模型的名称
+                model= conf().get("model") or "gpt-3.5-turbo",  # 对话模型的名称
                 messages=session,
                 temperature=0.9,  # 值在[0,1]之间，越大表示回复越具有不确定性
                 #max_tokens=4096,  # 回复最大的字符数
