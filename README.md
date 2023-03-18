@@ -19,7 +19,7 @@
 
 >**2023.03.02：** 接入[ChatGPT API](https://platform.openai.com/docs/guides/chat) (gpt-3.5-turbo)，默认使用该模型进行对话，需升级openai依赖 (`pip3 install --upgrade openai`)。网络问题参考 [#351](https://github.com/zhayujie/chatgpt-on-wechat/issues/351)
 
->**2023.02.20：** 增加 [python-wechaty](https://github.com/wechaty/python-wechaty) 作为可选渠道，使用Pad协议相对稳定，但Token收费 (使用参考[#244](https://github.com/zhayujie/chatgpt-on-wechat/pull/244)，contributed by [ZQ7](https://github.com/ZQ7))
+>**2023.02.20：** 增加 [python-wechaty](https://github.com/wechaty/python-wechaty) 作为可选渠道，使用Pad协议，但Token收费 (使用参考[#244](https://github.com/zhayujie/chatgpt-on-wechat/pull/244)，contributed by [ZQ7](https://github.com/ZQ7))
 
 >**2023.02.09：** 扫码登录存在封号风险，请谨慎使用，参考[#58](https://github.com/AutumnWhj/ChatGPT-wechat-bot/issues/158)
 
@@ -62,15 +62,14 @@
 支持 Linux、MacOS、Windows 系统（可在Linux服务器上长期运行)，同时需安装 `Python`。 
 > 建议Python版本在 3.7.1~3.9.X 之间，3.10及以上版本在 MacOS 可用，其他系统上不确定能否正常运行。
 
-
-1.克隆项目代码：
+**(1) 克隆项目代码：**
 
 ```bash
 git clone https://github.com/zhayujie/chatgpt-on-wechat
 cd chatgpt-on-wechat/
 ```
 
-2.安装所需核心依赖：
+**(2) 安装核心依赖 (必选)：**
 
 ```bash
 pip3 install itchat-uos==1.5.0.dev0
@@ -78,13 +77,17 @@ pip3 install --upgrade openai
 ```
 注：`itchat-uos`使用指定版本1.5.0.dev0，`openai`使用最新版本，需高于0.27.0。
 
+**(3) 拓展依赖 (可选)：**
+
+语音识别及语音回复相关依赖：[#415](https://github.com/zhayujie/chatgpt-on-wechat/issues/415)。
+
 
 ## 配置
 
 配置文件的模板在根目录的`config-template.json`中，需复制该模板创建最终生效的 `config.json` 文件：
 
 ```bash
-cp config-template.json config.json
+  cp config-template.json config.json
 ```
 
 然后在`config.json`中填入配置，以下是对默认配置的说明，可根据需要进行自定义修改：
@@ -93,6 +96,7 @@ cp config-template.json config.json
 # config.json文件内容示例
 { 
   "open_ai_api_key": "YOUR API KEY",                          # 填入上面创建的 OpenAI API KEY
+  "model": "gpt-3.5-turbo",                                   # 模型名称
   "proxy": "127.0.0.1:7890",                                  # 代理客户端的ip和端口
   "single_chat_prefix": ["bot", "@bot"],                      # 私聊时文本需要包含该前缀才能触发机器人回复
   "single_chat_reply_prefix": "[bot] ",                       # 私聊时自动回复的前缀，用于区分真人
@@ -100,7 +104,8 @@ cp config-template.json config.json
   "group_name_white_list": ["ChatGPT测试群", "ChatGPT测试群2"], # 开启自动回复的群名称列表
   "image_create_prefix": ["画", "看", "找"],                   # 开启图片回复的前缀
   "conversation_max_tokens": 1000,                            # 支持上下文记忆的最多字符数
-  "character_desc": "你是ChatGPT, 一个由OpenAI训练的大型语言模型, 你旨在回答并解决人们的任何问题，并且可以使用多种语言与人交流。"  # 人格描述
+  "speech_recognition": false,                                # 是否开启语音识别
+  "character_desc": "你是ChatGPT, 一个由OpenAI训练的大型语言模型, 你旨在回答并解决人们的任何问题，并且可以使用多种语言与人交流。",  # 人格描述
 }
 ```
 **配置说明：**
@@ -117,11 +122,13 @@ cp config-template.json config.json
 + 可选配置: `group_name_keyword_white_list`配置项支持模糊匹配群名称，`group_chat_keyword`配置项则支持模糊匹配群消息内容，用法与上述两个配置项相同。（Contributed by [evolay](https://github.com/evolay))
 
 **3.语音识别**
+
 + 添加 `"speech_recognition": true` 将开启语音识别，默认使用openai的whisper模型识别为文字，同时以文字回复，目前只支持私聊 (注意由于语音消息无法匹配前缀，一旦开启将对所有语音自动回复)；
 + 添加 `"voice_reply_voice": true` 将开启语音回复语音，但是需要配置对应语音合成平台的key，由于itchat协议的限制，只能发送语音mp3文件，若使用wechaty则回复的是微信语音。
 
 **4.其他配置**
 
++ `model`: 模型名称，目前支持 `gpt-3.5-turbo`, `text-davinci-003`, `gpt-4`, `gpt-4-32k`  (其中gpt-4 api暂未开放)
 + `proxy`：由于目前 `openai` 接口国内无法访问，需配置代理客户端的地址，详情参考  [#351](https://github.com/zhayujie/chatgpt-on-wechat/issues/351)
 + 对于图像生成，在满足个人或群组触发条件外，还需要额外的关键词前缀来触发，对应配置 `image_create_prefix `
 + 关于OpenAI对话及图片接口的参数配置（内容自由度、回复字数限制、图片大小等），可以参考 [对话接口](https://beta.openai.com/docs/api-reference/completions) 和 [图像接口](https://beta.openai.com/docs/api-reference/completions)  文档直接在 [代码](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/bot/openai/open_ai_bot.py) `bot/openai/open_ai_bot.py` 中进行调整。
@@ -149,8 +156,7 @@ python3 app.py
 touch nohup.out                                   # 首次运行需要新建日志文件                     
 nohup python3 app.py & tail -f nohup.out          # 在后台运行程序并通过日志输出二维码
 ```
-扫码登录后程序即可运行于服务器后台，此时可通过 `ctrl+c` 关闭日志，不会影响后台程序的运行。使用 `ps -ef | grep app.py | grep -v grep` 命令可查看运行于后台的进程，如果想要重新启动程序可以先 `kill` 掉对应的进程。日志关闭后如果想要再次打开只需输入 `tail -f nohup.out`。
-scripts/目录有相应的脚本可以调用
+扫码登录后程序即可运行于服务器后台，此时可通过 `ctrl+c` 关闭日志，不会影响后台程序的运行。使用 `ps -ef | grep app.py | grep -v grep` 命令可查看运行于后台的进程，如果想要重新启动程序可以先 `kill` 掉对应的进程。日志关闭后如果想要再次打开只需输入 `tail -f nohup.out`。此外，`scripts` 目录下有一键运行、关闭程序的脚本供使用。
 
 > **注意：** 如果 扫码后手机提示登录验证需要等待5s，而终端的二维码再次刷新并提示 `Log in time out, reloading QR code`，此时需参考此 [issue](https://github.com/zhayujie/chatgpt-on-wechat/issues/8) 修改一行代码即可解决。
 
