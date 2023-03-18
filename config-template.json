@@ -1,6 +1,9 @@
 {
   "open_ai_api_key": "YOUR API KEY",
   "model": "gpt-3.5-turbo",
+  "temperature": 0.9,
+  "frequency_penalty": 0.0,
+  "presence_penalty": 0.0,
   "proxy": "",
   "single_chat_prefix": ["bot", "@bot"],
   "single_chat_reply_prefix": "[bot] ",
@@ -9,6 +12,7 @@
   "image_create_prefix": ["画", "看", "找"],
   "speech_recognition": false,
   "voice_reply_voice": false,
+  "clear_memory_command": ["#清空记忆", "new"],
   "conversation_max_tokens": 1000,
   "expires_in_seconds": 3600,
   "character_desc": "你是ChatGPT, 一个由OpenAI训练的大型语言模型, 你旨在回答并解决人们的任何问题，并且可以使用多种语言与人交流。"
