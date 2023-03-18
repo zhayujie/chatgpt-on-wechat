@@ -61,7 +61,7 @@ class ChatGPTBot(Bot):
         '''
         try:
             response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",  # 对话模型的名称
+                model="gpt-4",  # 对话模型的名称
                 messages=session,
                 temperature=0.9,  # 值在[0,1]之间，越大表示回复越具有不确定性
                 #max_tokens=4096,  # 回复最大的字符数
@@ -103,7 +103,7 @@ class ChatGPTBot(Bot):
             response = openai.Image.create(
                 prompt=query,    #图片描述
                 n=1,             #每次生成图片的数量
-                size="256x256"   #图片大小,可选有 256x256, 512x512, 1024x1024
+                size="1024x1024"   #图片大小,可选有 256x256, 512x512, 1024x1024
             )
             image_url = response['data'][0]['url']
             logger.info("[OPEN_AI] image_url={}".format(image_url))
@@ -150,7 +150,7 @@ class Session(object):
         max_tokens = conf().get("conversation_max_tokens")
         if not max_tokens:
             # default 3000
-            max_tokens = 1000
+            max_tokens = 8000
         max_tokens=int(max_tokens)
 
         session = all_sessions.get(session_id)
