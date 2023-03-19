@@ -45,7 +45,7 @@ class OpenAIBot(Bot):
     def reply_text(self, query, user_id, retry_count=0):
         try:
             response = openai.Completion.create(
-                model= conf().get("model") or "text-davinci-003",  # 对话模型的名称
+                model= conf().get("model") or "gpt-3.5-turbo",  # 对话模型的名称
                 prompt=query,
                 temperature=0.9,  # 值在[0,1]之间，越大表示回复越具有不确定性
                 max_tokens=1200,  # 回复最大的字符数
