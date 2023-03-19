@@ -94,11 +94,31 @@ class ChatGPTBot(Bot):
             logger.warn(e)
             logger.warn("[OPEN_AI] Timeout")
             return {"completion_tokens": 0, "content":"我没有收到你的消息"}
+        except openai.error.APIError as e:
+            logger.warn(e)
+            logger.warn("[OPEN_AI] API error")
+            return {"completion_tokens": 0, "content":"您请求的openai API出现错误"}
+        except openai.error.TryAgain as e:
+            logger.warn(e)
+            logger.warn("[OPEN_AI] Try again")
+            return {"completion_tokens": 0, "content":"请您再试一次吧"}
+        except openai.error.AuthenticationError as e:
+            logger.warn(e)
+            logger.warn("[OPEN_AI] Authentication Error")
+            return {"completion_tokens": 0, "content":"对不起，openai鉴权失败，请您检查api key是否正确配置"}
+        except openai.error.PermissionError as e:
+            logger.warn(e)
+            logger.warn("[OPEN_AI] Permission error")
+            return {"completion_tokens": 0, "content":"对不起，您的权限有误"}
+        except openai.error.ServiceUnavailableError as e:
+            logger.warn(e)
+            logger.warn("[OPEN_AI] Service unavailable")
+            return {"completion_tokens": 0, "content":"对不起，目前openai服务不可用，请您稍后再试"}
         except Exception as e:
             # unknown exception
             logger.exception(e)
             Session.clear_session(session_id)
-            return {"completion_tokens": 0, "content": "请再问我一次吧"}
+            return {"completion_tokens": 0, "content": "未知错误，请再问我一次吧"}
 
     def create_img(self, query, retry_count=0):
         try:
