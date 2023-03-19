@@ -27,7 +27,8 @@ class ChatGPTBot(Bot):
         if not context or not context.get('type') or context.get('type') == 'TEXT':
             logger.info("[OPEN_AI] query={}".format(query))
             session_id = context.get('session_id') or context.get('from_user_id')
-            if query == '#清除记忆':
+            clear_memory_commands = conf().get('clear_memory_commands', ['#清除记忆'])
+            if query in clear_memory_commands:
                 Session.clear_session(session_id)
                 return '记忆已清除'
             elif query == '#清除所有':
@@ -65,11 +66,11 @@ class ChatGPTBot(Bot):
             response = openai.ChatCompletion.create(
                 model= conf().get("model") or "gpt-3.5-turbo",  # 对话模型的名称
                 messages=session,
-                temperature=0.9,  # 值在[0,1]之间，越大表示回复越具有不确定性
+                temperature=conf().get('temperature', 0.9),  # 值在[0,1]之间，越大表示回复越具有不确定性
                 #max_tokens=4096,  # 回复最大的字符数
                 top_p=1,
-                frequency_penalty=0.0,  # [-2,2]之间，该值越大则更倾向于产生不同的内容
-                presence_penalty=0.0,  # [-2,2]之间，该值越大则更倾向于产生不同的内容
+                frequency_penalty=conf().get('frequency_penalty', 0.0),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
+                presence_penalty=conf().get('presence_penalty', 0.0),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
             )
             # logger.info("[ChatGPT] reply={}, total_tokens={}".format(response.choices[0]['message']['content'], response["usage"]["total_tokens"]))
             return {"total_tokens": response["usage"]["total_tokens"], 
