@@ -145,6 +145,16 @@ class SessionManager(object):
             sessions = dict()
         self.sessions = sessions
 
+    def build_session(self, session_id, system_prompt=None):
+        session = self.sessions.get(session_id, [])
+        if len(session) == 0:
+            if system_prompt is None:
+                system_prompt = conf().get("character_desc", "")
+            system_item = {'role': 'system', 'content': system_prompt}
+            session.append(system_item)
+            self.sessions[session_id] = session
+        return session
+
     def build_session_query(self, query, session_id):
         '''
         build query with conversation history
@@ -158,12 +168,7 @@ class SessionManager(object):
         :param session_id: session id
         :return: query content with conversaction
         '''
-        session = self.sessions.get(session_id, [])
-        if len(session) == 0:
-            system_prompt = conf().get("character_desc", "")
-            system_item = {'role': 'system', 'content': system_prompt}
-            session.append(system_item)
-            self.sessions[session_id] = session
+        session = self.build_session(session_id)
         user_item = {'role': 'user', 'content': query}
         session.append(user_item)
         return session
