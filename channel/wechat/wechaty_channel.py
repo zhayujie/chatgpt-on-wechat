@@ -147,6 +147,13 @@ class WechatyChannel(Channel):
             match_prefix = (is_at and not config.get("group_at_off", False)) \
                            or self.check_prefix(content, config.get('group_chat_prefix')) \
                            or self.check_contain(content, config.get('group_chat_keyword'))
+            # Wechaty判断is_at为True，返回的内容是过滤掉@之后的内容；而is_at为False，则会返回完整的内容
+            # 故判断如果匹配到自定义前缀，则返回过滤掉前缀+空格后的内容，用于实现类似自定义+前缀触发生成AI图片的功能
+            prefixes = config.get('group_chat_prefix')
+            for prefix in prefixes:
+                if content.startswith(prefix):
+                    content = content.replace(prefix, '', 1).strip()
+                    break
             if ('ALL_GROUP' in config.get('group_name_white_list') or room_name in config.get(
                     'group_name_white_list') or self.check_contain(room_name, config.get(
                 'group_name_keyword_white_list'))) and match_prefix:
