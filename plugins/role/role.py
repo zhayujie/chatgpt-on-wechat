@@ -14,14 +14,17 @@ class RolePlay():
     def __init__(self, bot, sessionid, desc, wrapper=None):
         self.bot = bot
         self.sessionid = sessionid
-        bot.sessions.clear_session(sessionid)
-        bot.sessions.build_session(sessionid, desc)
         self.wrapper = wrapper or "%s"  # 用于包装用户输入
+        self.desc = desc
 
     def reset(self):
         self.bot.sessions.clear_session(self.sessionid)
 
     def action(self, user_action):
+        session = self.bot.sessions.build_session(self.sessionid, self.desc)
+        if session[0]['role'] == 'system' and session[0]['content'] != self.desc: # 目前没有触发session过期事件，这里先简单判断，然后重置
+            self.reset()
+            self.bot.sessions.build_session(self.sessionid, self.desc)
         prompt = self.wrapper % user_action
         return prompt
 
@@ -105,7 +108,7 @@ class Role(Plugin):
                 e_context.action = EventAction.BREAK_PASS
                 return
             else:
-                self.roleplays[sessionid] = RolePlay(bot, sessionid, self.roles[role][desckey],self.roles[role].get("wrapper","%s"))
+                self.roleplays[sessionid] = RolePlay(bot, sessionid, self.roles[role][desckey], self.roles[role].get("wrapper","%s"))
                 reply = Reply(ReplyType.INFO, f"角色设定为 {role} :\n"+self.roles[role][desckey])
                 e_context['reply'] = reply
                 e_context.action = EventAction.BREAK_PASS

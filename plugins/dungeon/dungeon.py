@@ -3,6 +3,8 @@
 from bridge.bridge import Bridge
 from bridge.context import ContextType
 from bridge.reply import Reply, ReplyType
+from common.expired_dict import ExpiredDict
+from config import conf
 import plugins
 from plugins import *
 from common.log import logger
@@ -38,7 +40,11 @@ class Dungeon(Plugin):
         super().__init__()
         self.handlers[Event.ON_HANDLE_CONTEXT] = self.on_handle_context
         logger.info("[Dungeon] inited")
-        self.games = {}
+        # 目前没有设计session过期事件，这里先暂时使用过期字典
+        if conf().get('expires_in_seconds'):
+            self.games = ExpiredDict(conf().get('expires_in_seconds'))
+        else:
+            self.games = dict()
 
     def on_handle_context(self, e_context: EventContext):
 
