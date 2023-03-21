@@ -14,6 +14,7 @@ from common.tmp_dir import TmpDir
 from config import conf
 import requests
 import io
+import time
 
 thread_pool = ThreadPoolExecutor(max_workers=8)
 
@@ -74,7 +75,11 @@ class WechatChannel(Channel):
         from_user_id = msg['FromUserName']
         to_user_id = msg['ToUserName']              # 接收人id
         other_user_id = msg['User']['UserName']     # 对手方id
+        create_time = msg['CreateTime']             # 消息时间
         match_prefix = self.check_prefix(content, conf().get('single_chat_prefix'))
+        if conf().get('hot_reload') == True and int(create_time) < int(time.time()) - 60:    #跳过1分钟前的历史消息
+            logger.debug("[WX]history message skipped")
+            return
         if "」\n- - - - - - - - - - - - - - -" in content:
             logger.debug("[WX]reference query skipped")
             return
@@ -108,6 +113,10 @@ class WechatChannel(Channel):
         logger.debug("[WX]receive group msg: " + json.dumps(msg, ensure_ascii=False))
         group_name = msg['User'].get('NickName', None)
         group_id = msg['User'].get('UserName', None)
+        create_time = msg['CreateTime']             # 消息时间
+        if conf().get('hot_reload') == True and int(create_time) < int(time.time()) - 60:    #跳过1分钟前的历史消息
+            logger.debug("[WX]history group message skipped")
+            return
         if not group_name:
             return ""
         origin_content = msg['Content']
