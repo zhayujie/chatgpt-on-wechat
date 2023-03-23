@@ -2,6 +2,7 @@
 # filename: main.py
 import web
 import time
+import math
 import hashlib
 import textwrap
 from channel.channel import Channel
@@ -64,9 +65,10 @@ class WechatMPChannel(Channel):
         context['session_id'] = fromUser
         reply_text = super().build_reply_content(message, context)
         # The query is done, record the cache
-        logger.info("[threaded] Get reply_text for {}".format(message))
+        logger.info("[threaded] Get reply for {}: {} \nA: {}".format(fromUser, message, reply_text))
+        reply_cnt = math.ceil(len(reply_text) / 600)
         global cache_dict
-        cache_dict[cache_key] = (1, reply_text)
+        cache_dict[cache_key] = (reply_cnt, reply_text)
 
 
     def POST(self):
@@ -82,8 +84,7 @@ class WechatMPChannel(Channel):
                 message = recMsg.Content.decode("utf-8")
                 message_id = recMsg.MsgId
 
-                logger.info("{}:{} [wechatmp] Receive post query {} {}: {}".format(web.ctx.env.get('REMOTE_ADDR'), web.ctx.env.get('REMOTE_PORT'), fromUser, message_id, message))
-
+                logger.info("[wechatmp] {}:{} Receive post query {} {}: {}".format(web.ctx.env.get('REMOTE_ADDR'), web.ctx.env.get('REMOTE_PORT'), fromUser, message_id, message))
 
                 global cache_dict
                 global query1
@@ -104,11 +105,11 @@ class WechatMPChannel(Channel):
                     query3[cache_key] = False
                 # Request again
                 elif cache[0] == 0 and query1.get(cache_key) == True and query2.get(cache_key) == True and query3.get(cache_key) == True:
-                    query1[cache_key] = False
-                    query2[cache_key] = False
+                    query1[cache_key] = False  #To improve waiting experience, this can be set to True.
+                    query2[cache_key] = False  #To improve waiting experience, this can be set to True.
                     query3[cache_key] = False
-                elif cache[0] == 1:
-                    reply_text = cache[1]
+                elif cache[0] >= 1:
+                    # Skip the waiting phase
                     query1[cache_key] = True
                     query2[cache_key] = True
                     query3[cache_key] = True
@@ -130,7 +131,7 @@ class WechatMPChannel(Channel):
                         # and do nothing
                         return
                     else:
-                        reply_text = cache[1]
+                        pass
                 elif query2.get(cache_key) == False:
                     # The second query from wechat official server
                     logger.debug("[wechatmp] query2 {}".format(cache_key))
@@ -146,7 +147,7 @@ class WechatMPChannel(Channel):
                         # and do nothing
                         return
                     else:
-                        reply_text = cache[1]
+                        pass
                 elif query3.get(cache_key) == False:
                     # The third query from wechat official server
                     logger.debug("[wechatmp] query3 {}".format(cache_key))
@@ -159,19 +160,25 @@ class WechatMPChannel(Channel):
                     if cnt == 45:
                         # Have waiting for 3x5 seconds
                         # return timeout message
-                        reply_text = "服务器有点忙，回复任意文字再次尝试。"
+                        reply_text = "【服务器有点忙，回复任意文字再次尝试】"
                         logger.info("[wechatmp] Three queries has finished For {}: {}".format(fromUser, message_id))
                         replyPost = reply.TextMsg(fromUser, toUser, reply_text).send()
                         return replyPost
                     else:
-                        reply_text = cache[1]
+                        pass
 
                 if float(time.time()) - float(queryTime) > 4.8:
                     logger.info("[wechatmp] Timeout for {} {}".format(fromUser, message_id))
                     return
 
-                cache_dict.pop(cache_key)
-                logger.info("{}:{} [wechatmp] Do send {}".format(web.ctx.env.get('REMOTE_ADDR'), web.ctx.env.get('REMOTE_PORT'), reply_text))
+
+                if cache[0] > 1:
+                    reply_text = cache[1][:600] + " 【未完待续，回复任意文字以继续】" #wechatmp auto_reply length limit
+                    cache_dict[cache_key] = (cache[0] - 1, cache[1][600:])
+                elif cache[0] == 1:
+                    reply_text = cache[1]
+                    cache_dict.pop(cache_key)
+                logger.info("[wechatmp] {}:{} Do send {}".format(web.ctx.env.get('REMOTE_ADDR'), web.ctx.env.get('REMOTE_PORT'), reply_text))
                 replyPost = reply.TextMsg(fromUser, toUser, reply_text).send()
                 return replyPost
 
@@ -180,9 +187,9 @@ class WechatMPChannel(Channel):
                 fromUser = recMsg.ToUserName
                 content = textwrap.dedent("""\
                     感谢您的关注！
-                    这里是ChatGPT。
+                    这里是ChatGPT，可以自由对话。
                     资源有限，回复较慢，请不要着急。
-                    """)
+                    暂时不支持图片输入输出，但是支持通用表情输入。""")
                 replyMsg = reply.TextMsg(toUser, fromUser, content)
                 return replyMsg.send()
             else:
