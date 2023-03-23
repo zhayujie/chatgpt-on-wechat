@@ -6,8 +6,8 @@ import os
 from common.singleton import singleton
 from common.sorted_dict import SortedDict
 from .event import *
-from .plugin import *
 from common.log import logger
+from config import conf
 
 
 @singleton
@@ -59,7 +59,7 @@ class PluginManager:
             if os.path.isdir(plugin_path):
                 # 判断插件是否包含同名.py文件
                 main_module_path = os.path.join(plugin_path, plugin_name+".py")
-                if os.path.isfile(main_module_path):
+                if os.path.isfile(main_module_path) and conf().get("plugins") and plugin_name in conf().get("plugins"):
                     # 导入插件
                     import_path = "{}.{}.{}".format(plugins_dir, plugin_name, plugin_name)
                     main_module = importlib.import_module(import_path)
