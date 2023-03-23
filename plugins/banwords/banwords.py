@@ -38,7 +38,7 @@ class Banwords(Plugin):
             self.handlers[Event.ON_HANDLE_CONTEXT] = self.on_handle_context
             logger.info("[Banwords] inited")
         except Exception as e:
-            logger.error("Banwords init failed: %s" % e)
+            logger.warn("Banwords init failed: %s" % e)
         
 
 

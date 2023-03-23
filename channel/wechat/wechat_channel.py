@@ -57,8 +57,8 @@ class WechatChannel(Channel):
 
     # handle_* 系列函数处理收到的消息后构造context，然后调用handle函数处理context
     # context是一个字典，包含了消息的所有信息，包括以下key
-    #   type: 消息类型，包括TEXT、VOICE、IMAGE_CREATE
-    #   content: 消息内容，如果是TEXT类型，content就是文本内容，如果是VOICE类型，content就是语音文件名，如果是IMAGE_CREATE类型，content就是图片生成命令
+    #   type 消息类型, 包括TEXT、VOICE、IMAGE_CREATE
+    #   content 消息内容，如果是TEXT类型，content就是文本内容，如果是VOICE类型，content就是语音文件名，如果是IMAGE_CREATE类型，content就是图片生成命令
     #   session_id: 会话id
     #   isgroup: 是否是群聊
     #   msg: 原始消息对象

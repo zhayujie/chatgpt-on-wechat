@@ -6,8 +6,8 @@ import os
 from common.singleton import singleton
 from common.sorted_dict import SortedDict
 from .event import *
-from .plugin import *
 from common.log import logger
+from config import conf
 
 
 @singleton
@@ -62,7 +62,11 @@ class PluginManager:
                 if os.path.isfile(main_module_path):
                     # 导入插件
                     import_path = "{}.{}.{}".format(plugins_dir, plugin_name, plugin_name)
-                    main_module = importlib.import_module(import_path)
+                    try:
+                        main_module = importlib.import_module(import_path)
+                    except Exception as e:
+                        logger.warn("Failed to import plugin %s: %s" % (plugin_name, e))
+                        continue
         pconf = self.pconf
         new_plugins = []
         modified = False
