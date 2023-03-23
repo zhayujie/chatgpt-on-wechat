@@ -116,7 +116,7 @@ class Role(Plugin):
             e_context.action = EventAction.CONTINUE
 
     def get_help_text(self):
-        help_text = "输入\"$角色 (角色名)\"或\"$role (角色名)\"为我设定角色吧，#reset 可以清除设定的角色。\n目前可用角色列表：\n"
+        help_text = "输入\"$角色 (角色名)\"或\"$role (角色名)\"为我设定角色吧，#reset 可以清除设定的角色。\n\n目前可用角色列表：\n"
         for role in self.roles:
             help_text += f"[{role}]: {self.roles[role]['remark']}\n"
         return help_text
