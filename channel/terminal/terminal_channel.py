@@ -1,6 +1,7 @@
 from channel.channel import Channel
 import sys
 
+
 class TerminalChannel(Channel):
     def startup(self):
         context = {"from_user_id": "User"}
@@ -18,7 +19,6 @@ class TerminalChannel(Channel):
                 print(res, end="")
                 sys.stdout.flush()
             print("\n")
-
 
     def get_input(self, prompt):
         """

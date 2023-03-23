@@ -13,15 +13,18 @@ def create_bot(bot_type):
     if bot_type == const.BAIDU:
         # Baidu Unit对话接口
         from bot.baidu.baidu_unit_bot import BaiduUnitBot
+
         return BaiduUnitBot()
 
     elif bot_type == const.CHATGPT:
         # ChatGPT 网页端web接口
         from bot.chatgpt.chat_gpt_bot import ChatGPTBot
+
         return ChatGPTBot()
 
     elif bot_type == const.OPEN_AI:
         # OpenAI 官方对话模型API
         from bot.openai.open_ai_bot import OpenAIBot
+
         return OpenAIBot()
     raise RuntimeError

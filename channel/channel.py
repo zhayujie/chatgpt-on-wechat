@@ -4,6 +4,7 @@ Message sending channel abstract class
 
 from bridge.bridge import Bridge
 
+
 class Channel(object):
     def startup(self):
         """
@@ -23,7 +24,7 @@ class Channel(object):
         send message to user
         :param msg: message content
         :param receiver: receiver channel account
-        :return: 
+        :return:
         """
         raise NotImplementedError
 
@@ -32,6 +33,6 @@ class Channel(object):
 
     def build_voice_to_text(self, voice_file):
         return Bridge().fetch_voice_to_text(voice_file)
-    
+
     def build_text_to_voice(self, text):
         return Bridge().fetch_text_to_voice(text)

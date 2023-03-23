@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 
+
 class ExpiredDict(dict):
     def __init__(self, expires_in_seconds):
         super().__init__()
@@ -16,6 +17,7 @@ class ExpiredDict(dict):
     def __setitem__(self, key, value):
         expiry_time = datetime.now() + timedelta(seconds=self.expires_in_seconds)
         super().__setitem__(key, (value, expiry_time))
+
     def get(self, key, default=None):
         try:
             return self[key]

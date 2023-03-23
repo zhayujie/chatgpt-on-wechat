@@ -5,7 +5,7 @@ from channel import channel_factory
 from common.log import logger
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     try:
         # load config
         config.load_config()
