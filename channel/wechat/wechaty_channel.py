@@ -14,6 +14,7 @@ import pysilk
 import wave
 from pydub import AudioSegment
 from typing import Optional, Union
+from bridge.context import Context, ContextType
 from wechaty_puppet import MessageType, FileBox, ScanStatus  # type: ignore
 from wechaty import Wechaty, Contact
 from wechaty.user import Message, Room, MiniProgram, UrlLink
@@ -180,9 +181,9 @@ class WechatyChannel(Channel):
         try:
             if not query:
                 return
-            context = dict()
+            context = Context(ContextType.TEXT, query)
             context['session_id'] = reply_user_id
-            reply_text = super().build_reply_content(query, context)
+            reply_text = super().build_reply_content(query, context).content
             if reply_text:
                 await self.send(conf().get("single_chat_reply_prefix") + reply_text, reply_user_id)
         except Exception as e:
@@ -225,9 +226,8 @@ class WechatyChannel(Channel):
         try:
             if not query:
                 return
-            context = dict()
-            context['type'] = 'IMAGE_CREATE'
-            img_url = super().build_reply_content(query, context)
+            context = Context(ContextType.IMAGE_CREATE, query)
+            img_url = super().build_reply_content(query, context).content
             if not img_url:
                 return
             # 图片下载
@@ -248,7 +248,7 @@ class WechatyChannel(Channel):
     async def _do_send_group(self, query, group_id, group_name, group_user_id, group_user_name):
         if not query:
             return
-        context = dict()
+        context = Context(ContextType.TEXT, query)
         group_chat_in_one_session = conf().get('group_chat_in_one_session', [])
         if ('ALL_GROUP' in group_chat_in_one_session or \
                 group_name in group_chat_in_one_session or \
@@ -256,7 +256,7 @@ class WechatyChannel(Channel):
             context['session_id'] = str(group_id)
         else:
             context['session_id'] = str(group_id) + '-' + str(group_user_id)
-        reply_text = super().build_reply_content(query, context)
+        reply_text = super().build_reply_content(query, context).content
         if reply_text:
             reply_text = '@' + group_user_name + ' ' + reply_text.strip()
             await self.send_group(conf().get("group_chat_reply_prefix", "") + reply_text, group_id)
@@ -265,9 +265,8 @@ class WechatyChannel(Channel):
         try:
             if not query:
                 return
-            context = dict()
-            context['type'] = 'IMAGE_CREATE'
-            img_url = super().build_reply_content(query, context)
+            context = Context(ContextType.IMAGE_CREATE, query)
+            img_url = super().build_reply_content(query, context).content
             if not img_url:
                 return
             # 图片发送
