@@ -5,7 +5,7 @@ import os
 from common.log import logger
 
 config = {}
-
+md5 = None
 
 def load_config():
     global config
@@ -17,6 +17,7 @@ def load_config():
     # 将json字符串反序列化为dict类型
     config = json.loads(config_str)
     logger.info("[INIT] load config: {}".format(config))
+    return config
 
 
 
