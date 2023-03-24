@@ -14,8 +14,8 @@ from concurrent.futures import ThreadPoolExecutor
 from common.log import logger
 from common.tmp_dir import TmpDir
 from config import conf
+from common.time_check import time_checker
 from plugins import *
-
 import requests
 import io
 import time
@@ -77,6 +77,8 @@ class WechatChannel(Channel):
             context.kwargs = {'isgroup': False, 'msg': msg, 'receiver': other_user_id, 'session_id': other_user_id}
             thread_pool.submit(self.handle, context).add_done_callback(thread_pool_callback)
 
+
+    @time_checker
     def handle_text(self, msg):
         logger.debug("[WX]receive text msg: " + json.dumps(msg, ensure_ascii=False))
         content = msg['Text']
@@ -108,6 +110,7 @@ class WechatChannel(Channel):
         context.content = content
         thread_pool.submit(self.handle, context).add_done_callback(thread_pool_callback)
 
+    @time_checker
     def handle_group(self, msg):
         logger.debug("[WX]receive group msg: " + json.dumps(msg, ensure_ascii=False))
         group_name = msg['User'].get('NickName', None)

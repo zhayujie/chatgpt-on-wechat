@@ -6,7 +6,6 @@ from common.log import logger
 
 config = {}
 
-
 def load_config():
     global config
     config_path = "./config.json"
