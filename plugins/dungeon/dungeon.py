@@ -8,6 +8,7 @@ from config import conf
 import plugins
 from plugins import *
 from common.log import logger
+from common import const
 
 # https://github.com/bupticybee/ChineseAiDungeonChatGPT
 class StoryTeller():
@@ -51,7 +52,7 @@ class Dungeon(Plugin):
         if e_context['context'].type != ContextType.TEXT:
             return
         bottype = Bridge().get_bot_type("chat")
-        if bottype != "chatGPT":
+        if bottype != const.CHATGPT:
             return
         bot = Bridge().get_bot("chat")
         content = e_context['context'].content[:]

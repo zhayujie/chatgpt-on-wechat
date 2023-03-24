@@ -10,6 +10,7 @@ from bridge.reply import Reply, ReplyType
 from config import load_config
 import plugins
 from plugins import *
+from common import const
 from common.log import logger
 
 # 定义指令集
@@ -163,7 +164,7 @@ class Godcmd(Plugin):
                 elif cmd == "id":
                     ok, result = True, f"用户id=\n{user}"
                 elif cmd == "reset":
-                    if bottype == "chatGPT":
+                    if bottype == const.CHATGPT:
                         bot.sessions.clear_session(session_id)
                         ok, result = True, "会话已重置"
                     else:
@@ -185,7 +186,7 @@ class Godcmd(Plugin):
                             load_config()
                             ok, result = True, "配置已重载"
                         elif cmd == "resetall":
-                            if bottype == "chatGPT":
+                            if bottype == const.CHATGPT:
                                 bot.sessions.clear_all_session()
                                 ok, result = True, "重置所有会话成功"
                             else:

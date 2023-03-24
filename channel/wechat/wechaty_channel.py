@@ -194,12 +194,12 @@ class WechatyChannel(Channel):
         try:
             if not query:
                 return
-            context = dict()
+            context = Context(ContextType.TEXT, query)
             context['session_id'] = reply_user_id
-            reply_text = super().build_reply_content(query, context)
+            reply_text = super().build_reply_content(query, context).content
             if reply_text:
                 # 转换 mp3 文件为 silk 格式
-                mp3_file = super().build_text_to_voice(reply_text)
+                mp3_file = super().build_text_to_voice(reply_text).content
                 silk_file = mp3_file.replace(".mp3", ".silk")
                 # Load the MP3 file
                 audio = AudioSegment.from_file(mp3_file, format="mp3")
