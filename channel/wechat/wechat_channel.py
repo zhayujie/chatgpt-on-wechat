@@ -11,7 +11,7 @@ from channel.channel import Channel
 from concurrent.futures import ThreadPoolExecutor
 from common.log import logger
 from common.tmp_dir import TmpDir
-from config import load_config, save_config, load_modes, save_modes
+from config import conf, save_config, load_modes, save_modes
 import requests
 import io
 import time
@@ -89,13 +89,13 @@ class WechatChannel(Channel):
 
     def startup(self):
         # login by scan QRCode
-        itchat.auto_login(enableCmdQR=2, hotReload=load_config().get('hot_reload', False))
+        itchat.auto_login(enableCmdQR=2, hotReload=conf().get('hot_reload', False))
 
         # start message listener
         itchat.run()
 
     def handle_voice(self, msg):
-        if not load_config().get('speech_recognition'):
+        if not conf().get('speech_recognition'):
             return
         logger.debug("[WX]receive voice msg: " + msg['FileName'])
         thread_pool.submit(self._do_handle_voice, msg)
@@ -107,7 +107,7 @@ class WechatChannel(Channel):
             file_name = TmpDir().path() + msg['FileName']
             msg.download(file_name)
             query = super().build_voice_to_text(file_name)
-            if load_config().get('voice_reply_voice'):
+            if conf().get('voice_reply_voice'):
                 self._do_send_voice(query, from_user_id)
             else:
                 self._do_send_text(query, from_user_id)
@@ -122,8 +122,8 @@ class WechatChannel(Channel):
         to_user_id = msg['ToUserName']              # 接收人id
         other_user_id = msg['User']['UserName']     # 对手方id
         create_time = msg['CreateTime']             # 消息时间
-        match_prefix = self.check_prefix(content, load_config().get('single_chat_prefix'))
-        if load_config().get('hot_reload') and int(create_time) < int(time.time()) - 60:    #跳过1分钟前的历史消息
+        match_prefix = self.check_prefix(content, conf().get('single_chat_prefix'))
+        if conf().get('hot_reload') and int(create_time) < int(time.time()) - 60:    #跳过1分钟前的历史消息
             logger.debug("[WX]history message skipped")
             return
         if "」\n- - - - - - - - - - - - - - -" in content:
@@ -136,7 +136,7 @@ class WechatChannel(Channel):
                 if len(str_list) == 2:
                     content = str_list[1].strip()
 
-            img_match_prefix = self.check_prefix(content, load_config().get('image_create_prefix'))
+            img_match_prefix = self.check_prefix(content, conf().get('image_create_prefix'))
             if img_match_prefix:
                 content = content.split(img_match_prefix, 1)[1].strip()
                 thread_pool.submit(self._do_send_img, content, from_user_id)
@@ -147,7 +147,7 @@ class WechatChannel(Channel):
             str_list = content.split(match_prefix, 1)
             if len(str_list) == 2:
                 content = str_list[1].strip()
-            img_match_prefix = self.check_prefix(content, load_config().get('image_create_prefix'))
+            img_match_prefix = self.check_prefix(content, conf().get('image_create_prefix'))
             if img_match_prefix:
                 content = content.split(img_match_prefix, 1)[1].strip()
                 thread_pool.submit(self._do_send_img, content, to_user_id)
@@ -160,7 +160,7 @@ class WechatChannel(Channel):
         group_id = msg['User'].get('UserName', None)
         create_time = msg['CreateTime']             # 消息时间
         # 跳过1分钟前的历史消息
-        if load_config().get('hot_reload') and int(create_time) < int(time.time()) - 60:
+        if conf().get('hot_reload') and int(create_time) < int(time.time()) - 60:
             logger.debug("[WX]history group message skipped")
             return
         if not group_name:
@@ -177,16 +177,16 @@ class WechatChannel(Channel):
             logger.debug("[WX]reference query skipped")
             return ""
 
-        config = load_config()
+        config = conf()
         # 检查是否为超级用户发送的命令
         change_setting = check_super_user_command(content, config, msg)
         if change_setting:
-            config = load_config()
+            config = conf()
 
         match_prefix = (msg['IsAt'] and not config.get("group_at_off", False)) or self.check_prefix(origin_content, config.get('group_chat_prefix')) \
                        or self.check_contain(origin_content, config.get('group_chat_keyword'))
         if ('ALL_GROUP' in config.get('group_name_white_list') or group_name in config.get('group_name_white_list') or self.check_contain(group_name, config.get('group_name_keyword_white_list'))) and match_prefix:
-            img_match_prefix = self.check_prefix(content, load_config().get('image_create_prefix'))
+            img_match_prefix = self.check_prefix(content, conf().get('image_create_prefix'))
             if img_match_prefix:
                 content = content.split(img_match_prefix, 1)[1].strip()
                 thread_pool.submit(self._do_send_img, content, group_id)
@@ -219,7 +219,7 @@ class WechatChannel(Channel):
             context['session_id'] = reply_user_id
             reply_text = super().build_reply_content(query, context)
             if reply_text:
-                self.send(load_config().get("single_chat_reply_prefix") + reply_text, reply_user_id)
+                self.send(conf().get("single_chat_reply_prefix") + reply_text, reply_user_id)
         except Exception as e:
             logger.exception(e)
 
@@ -252,7 +252,7 @@ class WechatChannel(Channel):
         context = dict()
         group_name = msg['User']['NickName']
         group_id = msg['User']['UserName']
-        group_chat_in_one_session = load_config().get('group_chat_in_one_session', [])
+        group_chat_in_one_session = conf().get('group_chat_in_one_session', [])
         if ('ALL_GROUP' in group_chat_in_one_session or \
                 group_name in group_chat_in_one_session or \
                 self.check_contain(group_name, group_chat_in_one_session)):
@@ -266,7 +266,7 @@ class WechatChannel(Channel):
             reply_text = "设置成功"
         if reply_text:
             reply_text = '@' + msg['ActualNickName'] + ' ' + reply_text.strip()
-            self.send(load_config().get("group_chat_reply_prefix", "") + reply_text, group_id)
+            self.send(conf().get("group_chat_reply_prefix", "") + reply_text, group_id)
 
     def check_prefix(self, content, prefix_list):
         for prefix in prefix_list:
