@@ -127,7 +127,7 @@ class ChatGPTBot(Bot):
     def create_img(self, query, retry_count=0):
         try:
             if conf().get('rate_limit_dalle') and not self.tb4dalle.get_token():
-                return "请求太快了，请休息一下再问我吧"
+                return False, "请求太快了，请休息一下再问我吧"
             logger.info("[OPEN_AI] image_query={}".format(query))
             response = openai.Image.create(
                 prompt=query,    #图片描述
