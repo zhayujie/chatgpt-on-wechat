@@ -61,3 +61,6 @@ class Banwords(Plugin):
                 e_context['reply'] = reply
                 e_context.action = EventAction.BREAK_PASS
                 return
+            
+    def get_help_text(self, **kwargs):
+        return Banwords.desc

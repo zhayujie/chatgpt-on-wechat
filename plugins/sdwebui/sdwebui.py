@@ -97,7 +97,7 @@ class SDWebUI(Plugin):
         finally:
             e_context['reply'] = reply
 
-    def get_help_text(self):
+    def get_help_text(self, **kwargs):
         if not conf().get('image_create_prefix'):
             return "画图功能未启用"
         else:

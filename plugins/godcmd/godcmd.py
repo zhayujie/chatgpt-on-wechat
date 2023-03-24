@@ -19,6 +19,11 @@ COMMANDS = {
         "alias": ["help", "帮助"],
         "desc": "打印指令集合",
     },
+    "helpp": {
+        "alias": ["helpp", "插件帮助"],
+        "args": ["插件名"],
+        "desc": "打印插件的帮助信息",
+    },
     "auth": {
         "alias": ["auth", "认证"],
         "args": ["口令"],
@@ -161,6 +166,16 @@ class Godcmd(Plugin):
                     ok, result = self.authenticate(user, args, isadmin, isgroup)
                 elif cmd == "help":
                     ok, result = True, get_help_text(isadmin, isgroup)
+                elif cmd == "helpp":
+                    if len(args) != 1:
+                        ok, result = False, "请提供插件名"
+                    else:
+                        plugins = PluginManager().list_plugins()
+                        name = args[0].upper()
+                        if name in plugins and plugins[name].enabled:
+                            ok, result = True, PluginManager().instances[name].get_help_text(isgroup=isgroup, isadmin=isadmin)
+                        else:
+                            ok, result= False, "插件不存在或未启用"
                 elif cmd == "id":
                     ok, result = True, f"用户id=\n{user}"
                 elif cmd == "reset":
@@ -288,3 +303,5 @@ class Godcmd(Plugin):
         else:
             return False,"认证失败"
 
+    def get_help_text(self, isadmin = False, isgroup = False, **kwargs):
+        return get_help_text(isadmin, isgroup)

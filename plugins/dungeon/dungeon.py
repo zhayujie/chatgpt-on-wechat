@@ -80,4 +80,7 @@ class Dungeon(Plugin):
                 prompt = self.games[sessionid].action(content)
                 e_context['context'].type = ContextType.TEXT
                 e_context['context'].content = prompt
-                e_context.action = EventAction.CONTINUE
+                e_context.action = EventAction.BREAK # 事件结束，不跳过处理context的默认逻辑
+    def get_help_text(self, **kwargs):
+        help_text = "输入\"$开始冒险 {背景故事}\"来以{背景故事}开始一个地牢游戏，之后你的所有消息会帮助我来完善这个故事。输入\"$停止冒险 \"可以结束游戏。"
+        return help_text
