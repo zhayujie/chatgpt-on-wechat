@@ -150,6 +150,61 @@ class ChatGPTBot(Bot):
             return False, str(e)
 
 
+class AzureChatGPTBot(ChatGPTBot):
+    def __init__(self):
+        super().__init__()
+        openai.api_type = "azure"
+        openai.api_version = "2023-03-15-preview"
+
+    def reply_text(self, session, session_id, retry_count=0) ->dict:
+        '''
+        call openai's ChatCompletion to get the answer
+        :param session: a conversation session
+        :param session_id: session id
+        :param retry_count: retry count
+        :return: {}
+        '''
+        try:
+            if conf().get('rate_limit_chatgpt') and not self.tb4chatgpt.get_token():
+                return {"completion_tokens": 0, "content": "提问太快啦，请休息一下再问我吧"}
+            response = openai.ChatCompletion.create(
+                engine=conf().get("model") or "gpt-3.5-turbo",  # the model deployment name on Azure
+                messages=session,
+                temperature=conf().get('temperature', 0.9),  # 值在[0,1]之间，越大表示回复越具有不确定性
+                #max_tokens=4096,  # 回复最大的字符数
+                top_p=1,
+                frequency_penalty=conf().get('frequency_penalty', 0.0),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
+                presence_penalty=conf().get('presence_penalty', 0.0),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
+            )
+            # logger.info("[ChatGPT] reply={}, total_tokens={}".format(response.choices[0]['message']['content'], response["usage"]["total_tokens"]))
+            return {"total_tokens": response["usage"]["total_tokens"], 
+                    "completion_tokens": response["usage"]["completion_tokens"], 
+                    "content": response.choices[0]['message']['content']}
+        except openai.error.RateLimitError as e:
+            # rate limit exception
+            logger.warn(e)
+            if retry_count < 1:
+                time.sleep(5)
+                logger.warn("[OPEN_AI] RateLimit exceed, 第{}次重试".format(retry_count+1))
+                return self.reply_text(session, session_id, retry_count+1)
+            else:
+                return {"completion_tokens": 0, "content": "提问太快啦，请休息一下再问我吧"}
+        except openai.error.APIConnectionError as e:
+            # api connection exception
+            logger.warn(e)
+            logger.warn("[OPEN_AI] APIConnection failed")
+            return {"completion_tokens": 0, "content":"我连接不到你的网络"}
+        except openai.error.Timeout as e:
+            logger.warn(e)
+            logger.warn("[OPEN_AI] Timeout")
+            return {"completion_tokens": 0, "content":"我没有收到你的消息"}
+        except Exception as e:
+            # unknown exception
+            logger.exception(e)
+            Session.clear_session(session_id)
+            return {"completion_tokens": 0, "content": "请再问我一次吧"}
+
+
 class SessionManager(object):
     def __init__(self):
         if conf().get('expires_in_seconds'):
