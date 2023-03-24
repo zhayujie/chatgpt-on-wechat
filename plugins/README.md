@@ -31,7 +31,7 @@
         context.kwargs = {'isgroup': False, 'msg': msg, 'receiver': other_user_id, 'session_id': other_user_id}
     ```
 2. 产生回复
-    本过程用于处理消息。目前默认处理逻辑是根据`Context`的类型交付给对应的bot:
+    本过程用于处理消息。目前默认处理逻辑如下，它根据`Context`的类型交付给对应的bot。如果本过程未产生任何回复，则会跳过之后的处理阶段。
     ```python
     if context.type == ContextType.TEXT or context.type == ContextType.IMAGE_CREATE:
         reply = super().build_reply_content(context.content, context) #文字跟画图交付给chatgpt
@@ -133,9 +133,9 @@ class Hello(Plugin):
 - `EventAction.BREAK`: 事件结束，不再给下个插件处理，交付给默认的处理逻辑。
 - `EventAction.BREAK_PASS`: 事件结束，不再给下个插件处理，跳过默认的处理逻辑。
 
-以`Hello`插件为例，它处理`Context`类型为`TEXT`的消息。
+以`Hello`插件为例，它处理`Context`类型为`TEXT`的消息：
 - 如果内容是`Hello`，直接将回复设置为`Hello+用户昵称`，并跳过之后的插件和默认逻辑。
-- 如果内容是`End`，它会将`Context`的类型更改为`IMAGE_CREATE`，并让事件继续，如果最终交付到默认逻辑，会调用默认的画图Bot。
+- 如果内容是`End`，它会将`Context`的类型更改为`IMAGE_CREATE`，并让事件继续，如果最终交付到默认逻辑，会调用默认的画图Bot来画画。
 ```python
     def on_handle_context(self, e_context: EventContext):
         if e_context['context'].type != ContextType.TEXT:

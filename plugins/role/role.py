@@ -5,6 +5,7 @@ import os
 from bridge.bridge import Bridge
 from bridge.context import ContextType
 from bridge.reply import Reply, ReplyType
+from common import const
 import plugins
 from plugins import *
 from common.log import logger
@@ -73,7 +74,7 @@ class Role(Plugin):
         if e_context['context'].type != ContextType.TEXT:
             return
         bottype = Bridge().get_bot_type("chat")
-        if bottype != "chatGPT":
+        if bottype != const.CHATGPT:
             return
         bot = Bridge().get_bot("chat")
         content = e_context['context'].content[:]
@@ -119,7 +120,7 @@ class Role(Plugin):
             e_context.action = EventAction.CONTINUE
 
     def get_help_text(self):
-        help_text = "输入\"$角色 (角色名)\"或\"$role (角色名)\"为我设定角色吧，#reset 可以清除设定的角色。\n\n目前可用角色列表：\n"
+        help_text = "输入\"$角色 (角色名)\"或\"$role (角色名)\"为我设定角色吧，\"$停止扮演 \" 可以清除设定的角色。\n\n目前可用角色列表：\n"
         for role in self.roles:
             help_text += f"[{role}]: {self.roles[role]['remark']}\n"
         return help_text
