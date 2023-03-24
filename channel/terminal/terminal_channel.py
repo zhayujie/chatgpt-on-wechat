@@ -1,9 +1,10 @@
+from bridge.context import *
 from channel.channel import Channel
 import sys
 
 class TerminalChannel(Channel):
     def startup(self):
-        context = {"from_user_id": "User"}
+        context = Context()
         print("\nPlease input your question")
         while True:
             try:
@@ -12,12 +13,13 @@ class TerminalChannel(Channel):
                 print("\nExiting...")
                 sys.exit()
 
+            context.type = ContextType.TEXT
+            context['session_id'] = "User"
+            context.content = prompt
             print("Bot:")
             sys.stdout.flush()
-            for res in super().build_reply_content(prompt, context):
-                print(res, end="")
-                sys.stdout.flush()
-            print("\n")
+            res = super().build_reply_content(prompt, context).content
+            print(res)
 
 
     def get_input(self, prompt):
