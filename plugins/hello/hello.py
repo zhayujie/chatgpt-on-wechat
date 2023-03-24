@@ -44,3 +44,7 @@ class Hello(Plugin):
             e_context['context'].type = ContextType.IMAGE_CREATE
             content = "The World"
             e_context.action = EventAction.CONTINUE  # 事件继续，交付给下个插件或默认逻辑
+
+    def get_help_text(self, **kwargs):
+        help_text = "输入Hello，我会回复你的名字\n输入End，我会回复你世界的图片\n"
+        return help_text

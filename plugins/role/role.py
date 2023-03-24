@@ -117,10 +117,10 @@ class Role(Plugin):
             prompt = self.roleplays[sessionid].action(content)
             e_context['context'].type = ContextType.TEXT
             e_context['context'].content = prompt
-            e_context.action = EventAction.CONTINUE
+            e_context.action = EventAction.BREAK
 
-    def get_help_text(self):
-        help_text = "输入\"$角色 (角色名)\"或\"$role (角色名)\"为我设定角色吧，\"$停止扮演 \" 可以清除设定的角色。\n\n目前可用角色列表：\n"
+    def get_help_text(self, **kwargs):
+        help_text = "输入\"$角色 {角色名}\"或\"$role {角色名}\"为我设定角色吧，\"$停止扮演 \" 可以清除设定的角色。\n\n目前可用角色列表：\n"
         for role in self.roles:
             help_text += f"[{role}]: {self.roles[role]['remark']}\n"
         return help_text
