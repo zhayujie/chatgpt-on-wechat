@@ -5,11 +5,10 @@ from common.log import logger
 def time_checker(f):
     def _time_checker(self, *args, **kwargs):
         _config = config.conf()
-        chat_time_module = _config["chat_time_module"]
-        chat_start_time = _config["chat_start_time"]
-        chat_stopt_time = _config["chat_stop_time"]
-
+        chat_time_module = _config.get("chat_time_module", False)
         if chat_time_module:
+            chat_start_time = _config.get("chat_start_time", "00:00")
+            chat_stopt_time = _config.get("chat_stop_time", "24:00")
             time_regex = re.compile(r'^([01]?[0-9]|2[0-4])(:)([0-5][0-9])$')  #时间匹配，包含24:00
 
             starttime_format_check = time_regex.match(chat_start_time)  # 检查停止时间格式
