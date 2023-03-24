@@ -95,7 +95,7 @@ class WechatChannel(Channel):
             return
         if match_prefix:
             content = content.replace(match_prefix, '', 1).strip()
-        else:
+        elif match_prefix is None:
             return
         context = Context()
         context.kwargs = {'isgroup': False, 'msg': msg, 'receiver': other_user_id, 'session_id': other_user_id}
