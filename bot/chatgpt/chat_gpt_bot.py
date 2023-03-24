@@ -1,39 +1,61 @@
 # encoding:utf-8
 
 from bot.bot import Bot
-from config import conf, load_config
+from config import load_config, load_modes
 from common.log import logger
 from common.token_bucket import TokenBucket
 from common.expired_dict import ExpiredDict
 import openai
 import time
 
-if conf().get('expires_in_seconds'):
-    all_sessions = ExpiredDict(conf().get('expires_in_seconds'))
+if load_config().get('expires_in_seconds'):
+    all_sessions = ExpiredDict(load_config().get('expires_in_seconds'))
 else:
     all_sessions = dict()
+user_mode = dict()
+USAGE = \
+    "\n用法:\n" \
+    "每个人与AI的对话都是单独记忆的, 最多记忆15条问答, 所以不同人之间的对话是独立的\n" \
+    "发送 #清除记忆: 清除之前对话记忆\n" \
+    "发送 #模式:xx: 切换AI模式, xx为想要的模式, 默认为'chat', 即正常的chatgpt, 'catgirl'为傲娇猫娘, 其他模式正在开发中...\n"
+
 
 # OpenAI对话模型API (可用)
 class ChatGPTBot(Bot):
     def __init__(self):
-        openai.api_key = conf().get('open_ai_api_key')
-        if conf().get('open_ai_api_base'):
-            openai.api_base = conf().get('open_ai_api_base')
-        proxy = conf().get('proxy')
+        openai.api_key = load_config().get('open_ai_api_key')
+        if load_config().get('open_ai_api_base'):
+            openai.api_base = load_config().get('open_ai_api_base')
+        proxy = load_config().get('proxy')
         if proxy:
             openai.proxy = proxy
-        if conf().get('rate_limit_chatgpt'):
-            self.tb4chatgpt = TokenBucket(conf().get('rate_limit_chatgpt', 20))
-        if conf().get('rate_limit_dalle'):
-            self.tb4dalle = TokenBucket(conf().get('rate_limit_dalle', 50))
+        if load_config().get('rate_limit_chatgpt'):
+            self.tb4chatgpt = TokenBucket(load_config().get('rate_limit_chatgpt', 20))
+        if load_config().get('rate_limit_dalle'):
+            self.tb4dalle = TokenBucket(load_config().get('rate_limit_dalle', 50))
 
-    def reply(self, query, context=None):
+    def reply(self, query, context=None, user_name=''):
         # acquire reply content
+        print(query, context, user_name)
         if not context or not context.get('type') or context.get('type') == 'TEXT':
             logger.info("[OPEN_AI] query={}".format(query))
             session_id = context.get('session_id') or context.get('from_user_id')
-            clear_memory_commands = conf().get('clear_memory_commands', ['#清除记忆'])
-            if query in clear_memory_commands:
+            clear_memory_commands = load_config().get('clear_memory_commands', ['#清除记忆'])
+            if query.startswith('#模式'):
+                quote = ':'
+                if '：' in query:
+                    quote = '：'
+                mode = query.split(quote)[-1]
+                modes = load_modes()
+                if mode not in modes:
+                    return '模式暂不支持'
+                if mode == user_mode.get(session_id, None):
+                    return f'已经是模式: {mode}'
+                else:
+                    user_mode[session_id] = mode
+                    all_sessions[session_id] = []
+                    return f'已经切换到模式: {mode}, 并且清除记忆'
+            elif query in clear_memory_commands:
                 Session.clear_session(session_id)
                 return '记忆已清除'
             elif query == '#清除所有':
@@ -42,8 +64,11 @@ class ChatGPTBot(Bot):
             elif query == '#更新配置':
                 load_config()
                 return '配置已更新'
+            elif query == '#用法':
+                return USAGE
 
-            session = Session.build_session_query(query, session_id)
+            print('here')
+            session = Session.build_session_query(query, session_id, user_name)
             logger.debug("[OPEN_AI] session query={}".format(session))
 
             # if context.get('stream'):
@@ -59,7 +84,7 @@ class ChatGPTBot(Bot):
         elif context.get('type', None) == 'IMAGE_CREATE':
             return self.create_img(query, 0)
 
-    def reply_text(self, session, session_id, retry_count=0) ->dict:
+    def reply_text(self, session, session_id, retry_count=0) -> dict:
         '''
         call openai's ChatCompletion to get the answer
         :param session: a conversation session
@@ -67,17 +92,18 @@ class ChatGPTBot(Bot):
         :param retry_count: retry count
         :return: {}
         '''
+        config = load_config()
         try:
-            if conf().get('rate_limit_chatgpt') and not self.tb4chatgpt.get_token():
+            if config.get('rate_limit_chatgpt') and not self.tb4chatgpt.get_token():
                 return {"completion_tokens": 0, "content": "提问太快啦，请休息一下再问我吧"}
             response = openai.ChatCompletion.create(
-                model= conf().get("model") or "gpt-3.5-turbo",  # 对话模型的名称
+                model= config.get("model") or "gpt-3.5-turbo",  # 对话模型的名称
                 messages=session,
-                temperature=conf().get('temperature', 0.9),  # 值在[0,1]之间，越大表示回复越具有不确定性
+                temperature=load_config().get('temperature', 0.9),  # 值在[0,1]之间，越大表示回复越具有不确定性
                 #max_tokens=4096,  # 回复最大的字符数
                 top_p=1,
-                frequency_penalty=conf().get('frequency_penalty', 0.0),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
-                presence_penalty=conf().get('presence_penalty', 0.0),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
+                frequency_penalty=config.get('frequency_penalty', 0.0),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
+                presence_penalty=config.get('presence_penalty', 0.0),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
             )
             # logger.info("[ChatGPT] reply={}, total_tokens={}".format(response.choices[0]['message']['content'], response["usage"]["total_tokens"]))
             return {"total_tokens": response["usage"]["total_tokens"], 
@@ -105,11 +131,11 @@ class ChatGPTBot(Bot):
             # unknown exception
             logger.exception(e)
             Session.clear_session(session_id)
-            return {"completion_tokens": 0, "content": "请再问我一次吧"}
+            return {"completion_tokens": 0, "content": "请再问我一次吧. 有疑问输入#用法 查看帮助"}
 
     def create_img(self, query, retry_count=0):
         try:
-            if conf().get('rate_limit_dalle') and not self.tb4dalle.get_token():
+            if load_config().get('rate_limit_dalle') and not self.tb4dalle.get_token():
                 return "请求太快了，请休息一下再问我吧"
             logger.info("[OPEN_AI] image_query={}".format(query))
             response = openai.Image.create(
@@ -134,7 +160,7 @@ class ChatGPTBot(Bot):
 
 class Session(object):
     @staticmethod
-    def build_session_query(query, session_id):
+    def build_session_query(query, session_id, user_name=''):
         '''
         build query with conversation history
         e.g.  [
@@ -145,25 +171,30 @@ class Session(object):
         ]
         :param query: query content
         :param session_id: session id
+        :param user_name: username
         :return: query content with conversaction
         '''
         session = all_sessions.get(session_id, [])
+        mode = user_mode.get(session_id, 'chat')
         if len(session) == 0:
-            system_prompt = conf().get("character_desc", "")
+            system_prompt = load_modes().get("character_desc", "")
             system_item = {'role': 'system', 'content': system_prompt}
             session.append(system_item)
             all_sessions[session_id] = session
-        user_item = {'role': 'user', 'content': query}
+        pre_text = load_modes()[mode]['pre_text']
+        if '{}' in pre_text:
+            pre_text = pre_text.format(user_name)
+        user_item = {'role': 'user', 'content': pre_text + ' ' + query}
         session.append(user_item)
         return session
 
     @staticmethod
     def save_session(answer, session_id, total_tokens):
-        max_tokens = conf().get("conversation_max_tokens")
+        max_tokens = load_config().get("conversation_max_tokens")
         if not max_tokens:
             # default 3000
             max_tokens = 1000
-        max_tokens=int(max_tokens)
+        max_tokens = int(max_tokens)
 
         session = all_sessions.get(session_id)
         if session:
@@ -174,7 +205,6 @@ class Session(object):
         # discard exceed limit conversation
         Session.discard_exceed_conversation(session, max_tokens, total_tokens)
     
-
     @staticmethod
     def discard_exceed_conversation(session, max_tokens, total_tokens):
         dec_tokens = int(total_tokens)
