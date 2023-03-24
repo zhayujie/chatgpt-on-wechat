@@ -1,4 +1,5 @@
-from datetime import datetime, timedelta
+import time
+
 
 class ExpiredDict(dict):
     def __init__(self, expires_in_seconds):
@@ -7,7 +8,8 @@ class ExpiredDict(dict):
 
     def __getitem__(self, key):
         value, expiry_time = super().__getitem__(key)
-        if datetime.now() > expiry_time:
+        # 如果元素已过期，则从字典中删除该元素并抛出 KeyError 异常
+        if time.monotonic() > expiry_time:
             del self[key]
             raise KeyError("expired {}".format(key))
         self.__setitem__(key, value)
