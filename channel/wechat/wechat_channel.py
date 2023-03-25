@@ -4,6 +4,7 @@
 wechat channel
 """
 
+import os
 import itchat
 import json
 from itchat.content import *
@@ -50,9 +51,20 @@ class WechatChannel(Channel):
         pass
 
     def startup(self):
-        # login by scan QRCode
-        itchat.auto_login(enableCmdQR=2, hotReload=conf().get('hot_reload', False))
 
+        itchat.instance.receivingRetryCount = 600 # 修改断线超时时间
+        # login by scan QRCode
+        hotReload = conf().get('hot_reload', False)
+        try:
+            itchat.auto_login(enableCmdQR=2, hotReload=hotReload)
+        except Exception as e:
+            if hotReload:
+                logger.error("Hot reload failed, try to login without hot reload")
+                itchat.logout()
+                os.remove("itchat.pkl")
+                itchat.auto_login(enableCmdQR=2, hotReload=hotReload)
+            else:
+                raise e
         # start message listener
         itchat.run()
 
@@ -95,7 +107,7 @@ class WechatChannel(Channel):
             return
         if match_prefix:
             content = content.replace(match_prefix, '', 1).strip()
-        else:
+        elif match_prefix is None:
             return
         context = Context()
         context.kwargs = {'isgroup': False, 'msg': msg, 'receiver': other_user_id, 'session_id': other_user_id}
@@ -176,7 +188,7 @@ class WechatChannel(Channel):
                 image_storage.write(block)
             image_storage.seek(0)
             itchat.send_image(image_storage, toUserName=receiver)
-            logger.info('[WX] sendImage url=, receiver={}'.format(img_url,receiver))
+            logger.info('[WX] sendImage url={}, receiver={}'.format(img_url,receiver))
         elif reply.type == ReplyType.IMAGE: # 从文件读取图片
             image_storage = reply.content
             image_storage.seek(0)
