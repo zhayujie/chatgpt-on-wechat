@@ -19,6 +19,8 @@ class Bridge(object):
         model_type = conf().get("model")
         if model_type in ["text-davinci-003"]:
             self.btype['chat'] = const.OPEN_AI
+        if conf().get("use_azure_chatgpt"):
+            self.btype['chat'] = const.CHATGPTONAZURE
         self.bots={}
 
     def get_bot(self,typename):
