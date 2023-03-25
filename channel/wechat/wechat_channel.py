@@ -4,6 +4,7 @@
 wechat channel
 """
 
+import os
 import itchat
 import json
 from itchat.content import *
@@ -51,8 +52,17 @@ class WechatChannel(Channel):
 
     def startup(self):
         # login by scan QRCode
-        itchat.auto_login(enableCmdQR=2, hotReload=conf().get('hot_reload', False))
-
+        hotReload = conf().get('hot_reload', False)
+        try:
+            itchat.auto_login(enableCmdQR=2, hotReload=hotReload)
+        except Exception as e:
+            if hotReload:
+                logger.error("Hot reload failed, try to login without hot reload")
+                itchat.logout()
+                os.remove("itchat.pkl")
+                itchat.auto_login(enableCmdQR=2, hotReload=hotReload)
+            else:
+                raise e
         # start message listener
         itchat.run()
 
