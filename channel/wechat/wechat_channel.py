@@ -51,6 +51,8 @@ class WechatChannel(Channel):
         pass
 
     def startup(self):
+
+        itchat.instance.receivingRetryCount = 600 # 修改断线超时时间
         # login by scan QRCode
         hotReload = conf().get('hot_reload', False)
         try:
