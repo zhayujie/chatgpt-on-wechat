@@ -5,7 +5,8 @@ from channel import channel_factory
 from common.log import logger
 
 from plugins import *
-if __name__ == '__main__':
+
+def run():
     try:
         # load config
         config.load_config()
@@ -21,3 +22,6 @@ if __name__ == '__main__':
     except Exception as e:
         logger.error("App startup failed!")
         logger.exception(e)
+
+if __name__ == '__main__':
+    run()

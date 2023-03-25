@@ -177,6 +177,14 @@ nohup python3 app.py & tail -f nohup.out          # 在后台运行程序并通�
 
 参考文档 [Docker部署](https://github.com/limccn/chatgpt-on-wechat/wiki/Docker%E9%83%A8%E7%BD%B2)   (Contributed by [limccn](https://github.com/limccn))。
 
+### 4. Railway部署
+[Use with Railway](#use-with-railway)(PaaS, Free, Stable, ✅Recommended)
+> Railway offers $5 (500 hours) of runtime per month
+1. Click the [Railway](https://railway.app/) button to go to the Railway homepage
+2. Click the `Start New Project` button.
+3. Click the `Deploy from Github repo` button.
+4. Choose your repo (you can fork this repo firstly)
+5. Set environment variable to override settings in config-template.json, such as: model, open_ai_api_base, open_ai_api_key, use_azure_chatgpt etc.
 
 ## 常见问题
 
