@@ -6,10 +6,9 @@ from common.log import logger
 
 config = {}
 
-
 def load_config():
     global config
-    config_path = "config.json"
+    config_path = "./config.json"
     if not os.path.exists(config_path):
         raise Exception('配置文件不存在，请根据config-template.json模板创建config.json文件')
 

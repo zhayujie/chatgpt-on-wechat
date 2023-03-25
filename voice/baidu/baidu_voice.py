@@ -4,6 +4,7 @@ baidu voice service
 """
 import time
 from aip import AipSpeech
+from bridge.reply import Reply, ReplyType
 from common.log import logger
 from common.tmp_dir import TmpDir
 from voice.voice import Voice
@@ -30,7 +31,8 @@ class BaiduVoice(Voice):
             with open(fileName, 'wb') as f:
                 f.write(result)
             logger.info('[Baidu] textToVoice text={} voice file name={}'.format(text, fileName))
-            return fileName
+            reply = Reply(ReplyType.VOICE, fileName)
         else:
             logger.error('[Baidu] textToVoice error={}'.format(result))
-            return None
+            reply = Reply(ReplyType.ERROR, "抱歉，语音合成失败")
+        return reply

@@ -14,6 +14,7 @@ import pysilk
 import wave
 from pydub import AudioSegment
 from typing import Optional, Union
+from bridge.context import Context, ContextType
 from wechaty_puppet import MessageType, FileBox, ScanStatus  # type: ignore
 from wechaty import Wechaty, Contact
 from wechaty.user import Message, Room, MiniProgram, UrlLink
@@ -147,6 +148,13 @@ class WechatyChannel(Channel):
             match_prefix = (is_at and not config.get("group_at_off", False)) \
                            or self.check_prefix(content, config.get('group_chat_prefix')) \
                            or self.check_contain(content, config.get('group_chat_keyword'))
+            # Wechaty判断is_at为True，返回的内容是过滤掉@之后的内容；而is_at为False，则会返回完整的内容
+            # 故判断如果匹配到自定义前缀，则返回过滤掉前缀+空格后的内容，用于实现类似自定义+前缀触发生成AI图片的功能
+            prefixes = config.get('group_chat_prefix')
+            for prefix in prefixes:
+                if content.startswith(prefix):
+                    content = content.replace(prefix, '', 1).strip()
+                    break
             if ('ALL_GROUP' in config.get('group_name_white_list') or room_name in config.get(
                     'group_name_white_list') or self.check_contain(room_name, config.get(
                 'group_name_keyword_white_list'))) and match_prefix:
@@ -173,9 +181,9 @@ class WechatyChannel(Channel):
         try:
             if not query:
                 return
-            context = dict()
+            context = Context(ContextType.TEXT, query)
             context['session_id'] = reply_user_id
-            reply_text = super().build_reply_content(query, context)
+            reply_text = super().build_reply_content(query, context).content
             if reply_text:
                 await self.send(conf().get("single_chat_reply_prefix") + reply_text, reply_user_id)
         except Exception as e:
@@ -186,12 +194,12 @@ class WechatyChannel(Channel):
         try:
             if not query:
                 return
-            context = dict()
+            context = Context(ContextType.TEXT, query)
             context['session_id'] = reply_user_id
-            reply_text = super().build_reply_content(query, context)
+            reply_text = super().build_reply_content(query, context).content
             if reply_text:
                 # 转换 mp3 文件为 silk 格式
-                mp3_file = super().build_text_to_voice(reply_text)
+                mp3_file = super().build_text_to_voice(reply_text).content
                 silk_file = mp3_file.replace(".mp3", ".silk")
                 # Load the MP3 file
                 audio = AudioSegment.from_file(mp3_file, format="mp3")
@@ -218,9 +226,8 @@ class WechatyChannel(Channel):
         try:
             if not query:
                 return
-            context = dict()
-            context['type'] = 'IMAGE_CREATE'
-            img_url = super().build_reply_content(query, context)
+            context = Context(ContextType.IMAGE_CREATE, query)
+            img_url = super().build_reply_content(query, context).content
             if not img_url:
                 return
             # 图片下载
@@ -241,7 +248,7 @@ class WechatyChannel(Channel):
     async def _do_send_group(self, query, group_id, group_name, group_user_id, group_user_name):
         if not query:
             return
-        context = dict()
+        context = Context(ContextType.TEXT, query)
         group_chat_in_one_session = conf().get('group_chat_in_one_session', [])
         if ('ALL_GROUP' in group_chat_in_one_session or \
                 group_name in group_chat_in_one_session or \
@@ -249,7 +256,7 @@ class WechatyChannel(Channel):
             context['session_id'] = str(group_id)
         else:
             context['session_id'] = str(group_id) + '-' + str(group_user_id)
-        reply_text = super().build_reply_content(query, context)
+        reply_text = super().build_reply_content(query, context).content
         if reply_text:
             reply_text = '@' + group_user_name + ' ' + reply_text.strip()
             await self.send_group(conf().get("group_chat_reply_prefix", "") + reply_text, group_id)
@@ -258,9 +265,8 @@ class WechatyChannel(Channel):
         try:
             if not query:
                 return
-            context = dict()
-            context['type'] = 'IMAGE_CREATE'
-            img_url = super().build_reply_content(query, context)
+            context = Context(ContextType.IMAGE_CREATE, query)
+            img_url = super().build_reply_content(query, context).content
             if not img_url:
                 return
             # 图片发送

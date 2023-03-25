@@ -4,6 +4,7 @@ google voice service
 """
 import json
 import openai
+from bridge.reply import Reply, ReplyType
 from config import conf
 from common.log import logger
 from voice.voice import Voice
@@ -16,12 +17,17 @@ class OpenaiVoice(Voice):
     def voiceToText(self, voice_file):
         logger.debug(
             '[Openai] voice file name={}'.format(voice_file))
-        file = open(voice_file, "rb")
-        reply = openai.Audio.transcribe("whisper-1", file)
-        text = reply["text"]
-        logger.info(
-            '[Openai] voiceToText text={} voice file name={}'.format(text, voice_file))
-        return text
+        try:
+            file = open(voice_file, "rb")
+            result = openai.Audio.transcribe("whisper-1", file)
+            text = result["text"]
+            reply = Reply(ReplyType.TEXT, text)
+            logger.info(
+                '[Openai] voiceToText text={} voice file name={}'.format(text, voice_file))
+        except Exception as e:
+            reply = Reply(ReplyType.ERROR, str(e))
+        finally:
+            return reply
 
     def textToVoice(self, text):
         pass
