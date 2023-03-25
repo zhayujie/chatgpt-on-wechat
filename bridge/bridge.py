@@ -13,8 +13,8 @@ class Bridge(object):
     def __init__(self):
         self.btype={
             "chat": const.CHATGPT,
-            "voice_to_text": "openai",
-            "text_to_voice": "baidu"
+            "voice_to_text": conf().get("voice_to_text", "openai"),
+            "text_to_voice": conf().get("text_to_voice", "baidu")
         }
         model_type = conf().get("model")
         if model_type in ["text-davinci-003"]:
