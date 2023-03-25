@@ -98,7 +98,7 @@ def load_config():
         config_path = "./config-template.json"
 
     config_str = read_file(config_path)
-    logger.info("[INIT] config str: {}".format(config_str))
+    logger.debug("[INIT] config str: {}".format(config_str))
 
     # 将json字符串反序列化为dict类型
     config = Config(json.loads(config_str))

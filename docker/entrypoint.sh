@@ -84,7 +84,7 @@ if [ "$CHARACTER_DESC" != "" ] ; then
 fi
 
 if [ "$EXPIRES_IN_SECONDS" != "" ] ; then
-    sed -i "s/\"expires_in_seconds\".*$/\"expires_in_seconds\": $EXPIRES_IN_SECONDS/" $CHATGPT_ON_WECHAT_CONFIG_PATH
+    sed -i "s/\"expires_in_seconds\".*$/\"expires_in_seconds\": $EXPIRES_IN_SECONDS,/" $CHATGPT_ON_WECHAT_CONFIG_PATH
 fi
 
 # go to prefix dir
