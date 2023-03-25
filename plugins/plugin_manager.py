@@ -32,15 +32,15 @@ class PluginManager:
         return wrapper
 
     def save_config(self):
-        with open("plugins/plugins.json", "w", encoding="utf-8") as f:
+        with open("./plugins/plugins.json", "w", encoding="utf-8") as f:
             json.dump(self.pconf, f, indent=4, ensure_ascii=False)
 
     def load_config(self):
         logger.info("Loading plugins config...")
 
         modified = False
-        if os.path.exists("plugins/plugins.json"):
-            with open("plugins/plugins.json", "r", encoding="utf-8") as f:
+        if os.path.exists("./plugins/plugins.json"):
+            with open("./plugins/plugins.json", "r", encoding="utf-8") as f:
                 pconf = json.load(f)
                 pconf['plugins'] = SortedDict(lambda k,v: v["priority"],pconf['plugins'],reverse=True)
         else:
@@ -53,7 +53,7 @@ class PluginManager:
 
     def scan_plugins(self):
         logger.info("Scaning plugins ...")
-        plugins_dir = "plugins"
+        plugins_dir = "./plugins"
         for plugin_name in os.listdir(plugins_dir):
             plugin_path = os.path.join(plugins_dir, plugin_name)
             if os.path.isdir(plugin_path):
@@ -61,7 +61,7 @@ class PluginManager:
                 main_module_path = os.path.join(plugin_path, plugin_name+".py")
                 if os.path.isfile(main_module_path):
                     # 导入插件
-                    import_path = "{}.{}.{}".format(plugins_dir, plugin_name, plugin_name)
+                    import_path = "plugins.{}.{}".format(plugin_name, plugin_name)
                     try:
                         main_module = importlib.import_module(import_path)
                     except Exception as e:
