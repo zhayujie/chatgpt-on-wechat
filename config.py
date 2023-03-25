@@ -17,6 +17,8 @@ available_setting ={
     "single_chat_prefix": ["bot", "@bot"], # 私聊时文本需要包含该前缀才能触发机器人回复
     "single_chat_reply_prefix": "[bot] ", # 私聊时自动回复的前缀，用于区分真人
     "group_chat_prefix": ["@bot"], # 群聊时包含该前缀则会触发机器人回复
+    "group_chat_keyword": [], # 群聊时包含该关键词则会触发机器人回复
+    "group_at_off": False, # 是否关闭群聊时@bot的触发
     "group_name_white_list": ["ChatGPT测试群", "ChatGPT测试群2"], # 开启自动回复的群名称列表
     "group_chat_in_one_session": ["ChatGPT测试群"], # 支持会话上下文共享的群名称
     "image_create_prefix": ["画", "看", "找"], # 开启图片回复的前缀
