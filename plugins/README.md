@@ -1,4 +1,5 @@
 ## 插件化初衷
+
 之前未插件化的代码耦合程度高，如果要定制一些个性化功能（如流量控制、接入`NovelAI`画图平台等），需要了解代码主体，避免影响到其他的功能。在实现多个功能后，不但无法调整功能的优先级顺序，功能的配置项也会变得非常混乱。
 
 此时插件化应声而出。
@@ -160,11 +161,15 @@ plugins/
 
 ### 2. 编写插件类
 
-在`hello.py`文件中，创建插件类，它继承自`Plugin`类。
+在`hello.py`文件中，创建插件类，它继承自`Plugin`。
 
 在类定义之前需要使用`@plugins.register`装饰器注册插件，并填写插件的相关信息，其中`desire_priority`表示插件默认的优先级，越大优先级越高。初次加载插件后可在`plugins/plugins.json`中修改插件优先级。
 
 并在`__init__`中绑定你编写的事件处理函数。
+
+`Hello`插件为事件`ON_HANDLE_CONTEXT`绑定了一个处理函数`on_handle_context`，它表示之后每次生成回复前，都会由`on_handle_context`先处理。
+
+PS: `ON_HANDLE_CONTEXT`是最常用的事件，如果要根据不同的消息来生成回复，就用它。
 
 ```python
 @plugins.register(name="Hello", desc="A simple plugin that says hello", version="0.1", author="lanvent", desire_priority= -1)
@@ -193,10 +198,12 @@ class Hello(Plugin):
 - `EventAction.BREAK`: 事件结束，不再给下个插件处理，交付给默认的处理逻辑。
 - `EventAction.BREAK_PASS`: 事件结束，不再给下个插件处理，跳过默认的处理逻辑。
 
-以`Hello`插件为例，它处理`Context`类型为`TEXT`的消息：
+#### 示例处理函数
 
-- 如果内容是`Hello`，直接将回复设置为`Hello+用户昵称`，并跳过之后的插件和默认逻辑。
-- 如果内容是`End`，它会将`Context`的类型更改为`IMAGE_CREATE`，并让事件继续，如果最终交付到默认逻辑，会调用默认的画图Bot来画画。
+`Hello`插件处理`Context`类型为`TEXT`的消息：
+
+- 如果内容是`Hello`，就将回复设置为`Hello+用户昵称`，并跳过之后的插件和默认逻辑。
+- 如果内容是`End`，就将`Context`的类型更改为`IMAGE_CREATE`，并让事件继续，如果最终交付到默认逻辑，会调用默认的画图Bot来画画。
 
 ```python
     def on_handle_context(self, e_context: EventContext):
