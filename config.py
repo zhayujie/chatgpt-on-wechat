@@ -20,6 +20,7 @@ available_setting ={
     "group_chat_keyword": [], # 群聊时包含该关键词则会触发机器人回复
     "group_at_off": False, # 是否关闭群聊时@bot的触发
     "group_name_white_list": ["ChatGPT测试群", "ChatGPT测试群2"], # 开启自动回复的群名称列表
+    "group_name_keyword_white_list": [], # 开启自动回复的群名称关键词列表
     "group_chat_in_one_session": ["ChatGPT测试群"], # 支持会话上下文共享的群名称
     "image_create_prefix": ["画", "看", "找"], # 开启图片回复的前缀
     
@@ -57,6 +58,9 @@ available_setting ={
 
     # itchat的配置
     "hot_reload": False, # 是否开启热重载
+
+    # wechaty的配置
+    "wechaty_puppet_service_token": "", # wechaty的token
 
     # chatgpt指令自定义触发词
     "clear_memory_commands": ['#清除记忆'], # 重置会话指令
