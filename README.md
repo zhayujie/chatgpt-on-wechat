@@ -81,7 +81,9 @@ pip3 install --upgrade openai
 **(3) 拓展依赖 (可选)：**
 
 语音识别及语音回复相关依赖：[#415](https://github.com/zhayujie/chatgpt-on-wechat/issues/415)。
+
 让会话token数量的计算更加精准:
+
 ```bash
 pip3 install --upgrade tiktoken
 ```
