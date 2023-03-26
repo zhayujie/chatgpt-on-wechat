@@ -17,15 +17,15 @@ class RolePlay():
         self.sessionid = sessionid
         self.wrapper = wrapper or "%s"  # 用于包装用户输入
         self.desc = desc
+        self.bot.sessions.build_session(self.sessionid, system_prompt=self.desc)
 
     def reset(self):
         self.bot.sessions.clear_session(self.sessionid)
 
     def action(self, user_action):
-        session = self.bot.sessions.build_session(self.sessionid, self.desc)
-        if session[0]['role'] == 'system' and session[0]['content'] != self.desc: # 目前没有触发session过期事件，这里先简单判断，然后重置
-            self.reset()
-            self.bot.sessions.build_session(self.sessionid, self.desc)
+        session = self.bot.sessions.build_session(self.sessionid)
+        if session.system_prompt != self.desc: # 目前没有触发session过期事件，这里先简单判断，然后重置
+            session.set_system_prompt(self.desc)
         prompt = self.wrapper % user_action
         return prompt
 
@@ -74,7 +74,7 @@ class Role(Plugin):
         if e_context['context'].type != ContextType.TEXT:
             return
         bottype = Bridge().get_bot_type("chat")
-        if bottype != const.CHATGPT:
+        if bottype not in (const.CHATGPT, const.OPEN_AI):
             return
         bot = Bridge().get_bot("chat")
         content = e_context['context'].content[:]
