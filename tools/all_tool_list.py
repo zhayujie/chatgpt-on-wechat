@@ -1,8 +1,8 @@
 from typing import Any, List
 
-from base_tools import BASE_TOOLS
-from bot_tools import BOT_TOOLS
-from custom_tools import CUSTOM_TOOL
+from tools.base_tools import BASE_TOOLS
+from tools.bot_tools import BOT_TOOLS
+from tools.custom_tools import CUSTOM_TOOL
 from lib.langchain_lite.chains.api import news_docs, tmdb_docs, podcast_docs
 from lib.langchain_lite.chains.api.base import APIChain
 from lib.langchain_lite.llms.base import BaseLLM

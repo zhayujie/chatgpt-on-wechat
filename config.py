@@ -66,7 +66,7 @@ available_setting ={
     # chatgpt指令自定义触发词
     "clear_memory_commands": ['#清除记忆'], # 重置会话指令
 
-
+    "app": {}, # 工具配置
 }
 
 class Config(dict):
@@ -92,10 +92,12 @@ config = Config()
 
 def load_config():
     global config
-    config_path = "./config.json"
+
+    config_path = str(__file__).replace(".py", ".json")
+
     if not os.path.exists(config_path):
         logger.info('配置文件不存在，将使用config-template.json模板')
-        config_path = "./config-template.json"
+        config_path = str(__file__).replace(".py", "-template.json")
 
     config_str = read_file(config_path)
     logger.debug("[INIT] config str: {}".format(config_str))
