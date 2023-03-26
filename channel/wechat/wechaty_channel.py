@@ -118,7 +118,7 @@ class WechatyChannel(Channel):
                     converter_state = "false" # 转换wav失败
                 logger.info("[WX]receive voice converter: " + converter_state)
                 # 语音识别为文本
-                query = super().build_voice_to_text(wav_file)
+                query = super().build_voice_to_text(wav_file).content
                 # 交验关键字
                 match_prefix = self.check_prefix(query, conf().get('single_chat_prefix'))
                 if match_prefix is not None:
