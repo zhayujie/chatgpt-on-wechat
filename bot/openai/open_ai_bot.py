@@ -91,5 +91,5 @@ class OpenAIBot(Bot, OpenAIImage):
         except Exception as e:
             # unknown exception
             logger.exception(e)
-            Session.clear_session(user_id)
+            self.sessions.clear_session(user_id)
             return 0,0, "请再问我一次吧"
