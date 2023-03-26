@@ -232,8 +232,12 @@ class SessionManager(object):
                 session.pop(1)
             elif len(session) == 2 and session[1]["role"] == "assistant":
                 session.pop(1)
+                break
             elif len(session) == 2 and session[1]["role"] == "user":
                 logger.warn("user message exceed max_tokens. total_tokens={}".format(dec_tokens))
+                break
+            else:
+                logger.debug("max_tokens={}, total_tokens={}, len(sessions)={}".format(max_tokens, dec_tokens, len(session)))
                 break
             try:
                 cur_tokens = num_tokens_from_messages(session, self.model)
