@@ -5,9 +5,9 @@ wechat channel
 """
 
 import os
-import itchat
+from lib import itchat
 import json
-from itchat.content import *
+from lib.itchat.content import *
 from bridge.reply import *
 from bridge.context import *
 from channel.channel import Channel
