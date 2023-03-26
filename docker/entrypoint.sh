@@ -9,7 +9,7 @@ CHATGPT_ON_WECHAT_CONFIG_PATH=${CHATGPT_ON_WECHAT_CONFIG_PATH:-""}
 CHATGPT_ON_WECHAT_EXEC=${CHATGPT_ON_WECHAT_EXEC:-""}
 
 # use environment variables to pass parameters
-# if you have not defined environment variables, set them bwlow
+# if you have not defined environment variables, set them below
 export OPEN_AI_API_KEY=${OPEN_AI_API_KEY:-'YOUR API KEY'}
 export OPEN_AI_PROXY=${OPEN_AI_PROXY:-""}
 export SINGLE_CHAT_PREFIX=${SINGLE_CHAT_PREFIX:-'["bot", "@bot"]'}

@@ -5,8 +5,7 @@ ARG TZ='Asia/Shanghai'
 
 ARG CHATGPT_ON_WECHAT_VER
 
-ENV BUILD_PREFIX=/app \
-    BUILD_OPEN_AI_API_KEY='YOUR OPEN AI KEY HERE'
+ENV BUILD_PREFIX=/app
 
 RUN apt-get update  \
     && apt-get install -y --no-install-recommends \
@@ -23,7 +22,6 @@ RUN apt-get update  \
     && rm chatgpt-on-wechat-${BUILD_GITHUB_TAG}.tar.gz \
     && cd ${BUILD_PREFIX} \
     && cp config-template.json ${BUILD_PREFIX}/config.json \
-    && sed -i "2s/YOUR API KEY/${BUILD_OPEN_AI_API_KEY}/" ${BUILD_PREFIX}/config.json \
     && /usr/local/bin/python -m pip install --no-cache --upgrade pip \
     && pip install --no-cache \
         itchat-uos==1.5.0.dev0  \
