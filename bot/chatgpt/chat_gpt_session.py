@@ -1,5 +1,13 @@
 from bot.session_manager import Session
 from common.log import logger
+'''
+    e.g.  [
+        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "user", "content": "Who won the world series in 2020?"},
+        {"role": "assistant", "content": "The Los Angeles Dodgers won the World Series in 2020."},
+        {"role": "user", "content": "Where was it played?"}
+    ]
+'''
 class ChatGPTSession(Session):
     def __init__(self, session_id, system_prompt=None, model= "gpt-3.5-turbo"):
         super().__init__(session_id, system_prompt)
@@ -20,14 +28,23 @@ class ChatGPTSession(Session):
         self.messages.append(assistant_item)
     
     def discard_exceeding(self, max_tokens, cur_tokens= None):
-        if cur_tokens is None:
+        precise = True
+        try:
             cur_tokens = num_tokens_from_messages(self.messages, self.model)
+        except Exception as e:
+            precise = False
+            if cur_tokens is None:
+                raise e
+            logger.debug("Exception when counting tokens precisely for query: {}".format(e))
         while cur_tokens > max_tokens:
             if len(self.messages) > 2:
                 self.messages.pop(1)
             elif len(self.messages) == 2 and self.messages[1]["role"] == "assistant":
                 self.messages.pop(1)
-                cur_tokens = num_tokens_from_messages(self.messages, self.model)
+                if precise:
+                    cur_tokens = num_tokens_from_messages(self.messages, self.model)
+                else:
+                    cur_tokens = cur_tokens - max_tokens
                 break
             elif len(self.messages) == 2 and self.messages[1]["role"] == "user":
                 logger.warn("user message exceed max_tokens. total_tokens={}".format(cur_tokens))
@@ -35,10 +52,9 @@ class ChatGPTSession(Session):
             else:
                 logger.debug("max_tokens={}, total_tokens={}, len(messages)={}".format(max_tokens, cur_tokens, len(self.messages)))
                 break
-            try:
+            if precise:
                 cur_tokens = num_tokens_from_messages(self.messages, self.model)
-            except Exception as e:
-                logger.debug("Exception when counting tokens precisely for query: {}".format(e))
+            else:
                 cur_tokens = cur_tokens - max_tokens
         return cur_tokens
     

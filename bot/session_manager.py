@@ -50,7 +50,6 @@ class SessionManager(object):
     def session_query(self, query, session_id):
         session = self.build_session(session_id)
         session.add_query(query)
-        print(session.messages)
         try:
             max_tokens = conf().get("conversation_max_tokens", 1000)
             total_tokens = session.discard_exceeding(max_tokens, None)
@@ -67,7 +66,7 @@ class SessionManager(object):
             tokens_cnt = session.discard_exceeding(max_tokens, total_tokens)
             logger.debug("raw total_tokens={}, savesession tokens={}".format(total_tokens, tokens_cnt))
         except Exception as e:
-            logger.debug("Exception when counting tokens precisely for prompt: {}".format(str(e)))
+            logger.debug("Exception when counting tokens precisely for session: {}".format(str(e)))
         return session
 
     def clear_session(self, session_id):

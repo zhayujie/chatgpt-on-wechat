@@ -21,11 +21,12 @@ class ChatGPTBot(Bot,OpenAIImage):
         if conf().get('open_ai_api_base'):
             openai.api_base = conf().get('open_ai_api_base')
         proxy = conf().get('proxy')
-        self.sessions = SessionManager(ChatGPTSession, model= conf().get("model") or "gpt-3.5-turbo")
         if proxy:
             openai.proxy = proxy
         if conf().get('rate_limit_chatgpt'):
             self.tb4chatgpt = TokenBucket(conf().get('rate_limit_chatgpt', 20))
+        
+        self.sessions = SessionManager(ChatGPTSession, model= conf().get("model") or "gpt-3.5-turbo")
 
     def reply(self, query, context=None):
         # acquire reply content
