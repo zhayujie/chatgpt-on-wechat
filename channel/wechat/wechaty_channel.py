@@ -164,6 +164,67 @@ class WechatyChannel(Channel):
                     await self._do_send_group_img(content, room_id)
                 else:
                     await self._do_send_group(content, room_id, room_name, from_user_id, from_user_name)
+        elif room and msg.type() == MessageType.MESSAGE_TYPE_AUDIO:
+            # 群组&语音消息
+            room_id = room.room_id
+            room_name = await room.topic()
+            from_user_id = from_contact.contact_id
+            from_user_name = from_contact.name
+            is_at = await msg.mention_self()
+            config = conf()
+            # 是否开启语音识别、群消息响应功能、群名白名单符合等条件
+            if config.get('group_speech_recognition') and (
+                'ALL_GROUP' in config.get('group_name_white_list') or room_name in config.get(
+                    'group_name_white_list') or self.check_contain(room_name, config.get(
+                'group_name_keyword_white_list'))):
+                # 下载语音文件
+                voice_file = await msg.to_file_box()
+                silk_file = TmpDir().path() + voice_file.name
+                await voice_file.to_file(silk_file)
+                logger.info("[WX]receive voice file: " + silk_file)
+                # 将文件转成wav格式音频
+                wav_file = silk_file.replace(".slk", ".wav")
+                with open(silk_file, 'rb') as f:
+                    silk_data = f.read()
+                pcm_data = pysilk.decode(silk_data)
+
+                with wave.open(wav_file, 'wb') as wav_data:
+                    wav_data.setnchannels(1)
+                    wav_data.setsampwidth(2)
+                    wav_data.setframerate(24000)
+                    wav_data.writeframes(pcm_data)
+                if os.path.exists(wav_file): 
+                    converter_state = "true" # 转换wav成功
+                else:
+                    converter_state = "false" # 转换wav失败
+                logger.info("[WX]receive voice converter: " + converter_state)
+                # 语音识别为文本
+                query = super().build_voice_to_text(wav_file).content
+                # 校验关键字
+                match_prefix = self.check_prefix(query, config.get('group_chat_prefix')) \
+                            or self.check_contain(query, config.get('group_chat_keyword'))
+                # Wechaty判断is_at为True，返回的内容是过滤掉@之后的内容；而is_at为False，则会返回完整的内容
+                if match_prefix is not None:
+                    # 故判断如果匹配到自定义前缀，则返回过滤掉前缀+空格后的内容，用于实现类似自定义+前缀触发生成AI图片的功能
+                    prefixes = config.get('group_chat_prefix')
+                    for prefix in prefixes:
+                        if query.startswith(prefix):
+                            query = query.replace(prefix, '', 1).strip()
+                            break
+                    # 返回消息
+                    img_match_prefix = self.check_prefix(query, conf().get('image_create_prefix'))
+                    if img_match_prefix:
+                        query = query.split(img_match_prefix, 1)[1].strip()
+                        await self._do_send_group_img(query, room_id)
+                    elif config.get('voice_reply_voice'):
+                        await self._do_send_group_voice(query, room_id, room_name, from_user_id, from_user_name)
+                    else:
+                        await self._do_send_group(query, room_id, room_name, from_user_id, from_user_name)
+                else:
+                    logger.info("[WX]receive voice check prefix: " + 'False')
+                # 清除缓存文件
+                os.remove(wav_file)
+                os.remove(silk_file)
 
     async def send(self, message: Union[str, Message, FileBox, Contact, UrlLink, MiniProgram], receiver):
         logger.info('[WX] sendMsg={}, receiver={}'.format(message, receiver))
@@ -188,7 +249,6 @@ class WechatyChannel(Channel):
                 await self.send(conf().get("single_chat_reply_prefix") + reply_text, reply_user_id)
         except Exception as e:
             logger.exception(e)
-
 
     async def _do_send_voice(self, query, reply_user_id):
         try:
@@ -260,6 +320,42 @@ class WechatyChannel(Channel):
         if reply_text:
             reply_text = '@' + group_user_name + ' ' + reply_text.strip()
             await self.send_group(conf().get("group_chat_reply_prefix", "") + reply_text, group_id)
+
+    async def _do_send_group_voice(self, query, group_id, group_name, group_user_id, group_user_name):
+        if not query:
+            return
+        context = Context(ContextType.TEXT, query)
+        group_chat_in_one_session = conf().get('group_chat_in_one_session', [])
+        if ('ALL_GROUP' in group_chat_in_one_session or \
+                group_name in group_chat_in_one_session or \
+                self.check_contain(group_name, group_chat_in_one_session)):
+            context['session_id'] = str(group_id)
+        else:
+            context['session_id'] = str(group_id) + '-' + str(group_user_id)
+        reply_text = super().build_reply_content(query, context).content
+        if reply_text:
+            reply_text = '@' + group_user_name + ' ' + reply_text.strip()
+            # 转换 mp3 文件为 silk 格式
+            mp3_file = super().build_text_to_voice(reply_text).content
+            silk_file = mp3_file.replace(".mp3", ".silk")
+            # Load the MP3 file
+            audio = AudioSegment.from_file(mp3_file, format="mp3")
+            # Convert to WAV format
+            audio = audio.set_frame_rate(24000).set_channels(1)
+            wav_data = audio.raw_data
+            sample_width = audio.sample_width
+            # Encode to SILK format
+            silk_data = pysilk.encode(wav_data, 24000)
+            # Save the silk file
+            with open(silk_file, "wb") as f:
+                f.write(silk_data)
+            # 发送语音
+            t = int(time.time())
+            file_box = FileBox.from_file(silk_file, name=str(t) + '.silk')
+            await self.send_group(file_box, group_id)
+            # 清除缓存文件
+            os.remove(mp3_file)
+            os.remove(silk_file)
 
     async def _do_send_group_img(self, query, reply_room_id):
         try:

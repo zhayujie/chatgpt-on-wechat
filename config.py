@@ -43,6 +43,7 @@ available_setting ={
 
     #语音设置
     "speech_recognition": False, # 是否开启语音识别
+    "group_speech_recognition": False, # 是否开启群组语音识别
     "voice_reply_voice": False, # 是否使用语音回复语音，需要设置对应语音合成引擎的api key
     "voice_to_text": "openai", # 语音识别引擎，支持openai和google
     "text_to_voice": "baidu", # 语音合成引擎，支持baidu和google
