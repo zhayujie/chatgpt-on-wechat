@@ -10,6 +10,7 @@
   "group_chat_in_one_session": ["ChatGPT测试群"],
   "image_create_prefix": ["画", "看", "找"],
   "speech_recognition": false,
+  "group_speech_recognition": false,
   "voice_reply_voice": false,
   "conversation_max_tokens": 1000,
   "expires_in_seconds": 3600,
