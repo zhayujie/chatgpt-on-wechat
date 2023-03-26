@@ -36,7 +36,6 @@ class WechatyChannel(Channel):
         config = conf()
         # 使用PadLocal协议 比较稳定(免费web协议 os.environ['WECHATY_PUPPET_SERVICE_ENDPOINT'] = '127.0.0.1:8080')
         token = config.get('wechaty_puppet_service_token')
-        token = "chiaki2024"
         os.environ['WECHATY_PUPPET_SERVICE_TOKEN'] = token
         global bot
         bot = Wechaty()
