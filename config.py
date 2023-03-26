@@ -4,7 +4,7 @@ import json
 import os
 from common.log import logger
 
-# 将所有可用的配置项写在字典里
+# 将所有可用的配置项写在字典里, 请使用小写字母
 available_setting ={
     #openai api配置
     "open_ai_api_key": "", # openai api key
@@ -106,9 +106,13 @@ def load_config():
     # override config with environment variables.
     # Some online deployment platforms (e.g. Railway) deploy project from github directly. So you shouldn't put your secrets like api key in a config file, instead use environment variables to override the default config.
     for name, value in os.environ.items():
+        name = name.lower()
         if name in available_setting:
             logger.info("[INIT] override config by environ args: {}={}".format(name, value))
-            config[name] = value
+            try:
+                config[name] = eval(value)
+            except:
+                config[name] = value
 
     logger.info("[INIT] load config: {}".format(config))
 
