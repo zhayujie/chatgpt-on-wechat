@@ -18,7 +18,7 @@ class ChatGPTBot(Bot):
         if conf().get('open_ai_api_base'):
             openai.api_base = conf().get('open_ai_api_base')
         proxy = conf().get('proxy')
-        self.sessions = SessionManager()
+        self.sessions = SessionManager(model= conf().get("model") or "gpt-3.5-turbo")
         if proxy:
             openai.proxy = proxy
         if conf().get('rate_limit_chatgpt'):
@@ -53,7 +53,7 @@ class ChatGPTBot(Bot):
             #     return self.reply_text_stream(query, new_query, session_id)
 
             reply_content = self.reply_text(session, session_id, 0)
-            logger.debug("[OPEN_AI] new_query={}, session_id={}, reply_cont={}".format(session, session_id, reply_content["content"]))
+            logger.debug("[OPEN_AI] new_query={}, session_id={}, reply_cont={}, completion_tokens={}".format(session, session_id, reply_content["content"], reply_content["completion_tokens"]))
             if reply_content['completion_tokens'] == 0 and len(reply_content['content']) > 0:
                 reply = Reply(ReplyType.ERROR, reply_content['content'])
             elif reply_content["completion_tokens"] > 0:
@@ -166,14 +166,14 @@ class AzureChatGPTBot(ChatGPTBot):
         del(args["model"])
         return args
 
-
 class SessionManager(object):
-    def __init__(self):
+    def __init__(self, model = "gpt-3.5-turbo-0301"):
         if conf().get('expires_in_seconds'):
             sessions = ExpiredDict(conf().get('expires_in_seconds'))
         else:
             sessions = dict()
         self.sessions = sessions
+        self.model = model
 
     def build_session(self, session_id, system_prompt=None):
         session = self.sessions.get(session_id, [])
@@ -201,15 +201,18 @@ class SessionManager(object):
         session = self.build_session(session_id)
         user_item = {'role': 'user', 'content': query}
         session.append(user_item)
+        try:
+            total_tokens = num_tokens_from_messages(session, self.model)
+            max_tokens = conf().get("conversation_max_tokens", 1000)
+            total_tokens = self.discard_exceed_conversation(session, max_tokens, total_tokens)
+            logger.debug("prompt tokens used={}".format(total_tokens))
+        except Exception as e:
+            logger.debug("Exception when counting tokens precisely for prompt: {}".format(str(e)))
+
         return session
 
     def save_session(self, answer, session_id, total_tokens):
-        max_tokens = conf().get("conversation_max_tokens")
-        if not max_tokens:
-            # default 3000
-            max_tokens = 1000
-        max_tokens = int(max_tokens)
-
+        max_tokens = conf().get("conversation_max_tokens", 1000)
         session = self.sessions.get(session_id)
         if session:
             # append conversation
@@ -217,22 +220,67 @@ class SessionManager(object):
             session.append(gpt_item)
 
         # discard exceed limit conversation
-        self.discard_exceed_conversation(session, max_tokens, total_tokens)
+        tokens_cnt = self.discard_exceed_conversation(session, max_tokens, total_tokens)
+        logger.debug("raw total_tokens={}, savesession tokens={}".format(total_tokens, tokens_cnt))
 
     def discard_exceed_conversation(self, session, max_tokens, total_tokens):
         dec_tokens = int(total_tokens)
         # logger.info("prompt tokens used={},max_tokens={}".format(used_tokens,max_tokens))
         while dec_tokens > max_tokens:
             # pop first conversation
-            if len(session) > 3:
+            if len(session) > 2:
                 session.pop(1)
+            elif len(session) == 2 and session[1]["role"] == "assistant":
                 session.pop(1)
-            else:
                 break
-            dec_tokens = dec_tokens - max_tokens
+            elif len(session) == 2 and session[1]["role"] == "user":
+                logger.warn("user message exceed max_tokens. total_tokens={}".format(dec_tokens))
+                break
+            else:
+                logger.debug("max_tokens={}, total_tokens={}, len(sessions)={}".format(max_tokens, dec_tokens, len(session)))
+                break
+            try:
+                cur_tokens = num_tokens_from_messages(session, self.model)
+                dec_tokens = cur_tokens
+            except Exception as e:
+                logger.debug("Exception when counting tokens precisely for query: {}".format(e))
+                dec_tokens = dec_tokens - max_tokens
+        return dec_tokens
 
     def clear_session(self, session_id):
         self.sessions[session_id] = []
 
     def clear_all_session(self):
         self.sessions.clear()
+
+# refer to https://github.com/openai/openai-cookbook/blob/main/examples/How_to_count_tokens_with_tiktoken.ipynb
+def num_tokens_from_messages(messages, model):
+    """Returns the number of tokens used by a list of messages."""
+    import tiktoken
+    try:
+        encoding = tiktoken.encoding_for_model(model)
+    except KeyError:
+        logger.debug("Warning: model not found. Using cl100k_base encoding.")
+        encoding = tiktoken.get_encoding("cl100k_base")
+    if model == "gpt-3.5-turbo":
+        return num_tokens_from_messages(messages, model="gpt-3.5-turbo-0301")
+    elif model == "gpt-4":
+        return num_tokens_from_messages(messages, model="gpt-4-0314")
+    elif model == "gpt-3.5-turbo-0301":
+        tokens_per_message = 4  # every message follows <|start|>{role/name}\n{content}<|end|>\n
+        tokens_per_name = -1  # if there's a name, the role is omitted
+    elif model == "gpt-4-0314":
+        tokens_per_message = 3
+        tokens_per_name = 1
+    else:
+        logger.warn(f"num_tokens_from_messages() is not implemented for model {model}. Returning num tokens assuming gpt-3.5-turbo-0301.")
+        return num_tokens_from_messages(messages, model="gpt-3.5-turbo-0301")
+    num_tokens = 0
+    for message in messages:
+        num_tokens += tokens_per_message
+        for key, value in message.items():
+            num_tokens += len(encoding.encode(value))
+            if key == "name":
+                num_tokens += tokens_per_name
+    num_tokens += 3  # every reply is primed with <|start|>assistant<|message|>
+    return num_tokens
