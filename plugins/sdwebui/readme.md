@@ -8,6 +8,8 @@
 
 具体信息，请参考[文章](https://github.com/AUTOMATIC1111/stable-diffusion-webui/wiki/API)。
 
+部署运行后，保证主机能够成功访问http://127.0.0.1:7860/docs 
+
 请**安装**本插件的依赖包```webuiapi```
 
 ```
@@ -16,7 +18,7 @@ pip install webuiapi
 
 ## 使用说明
 
-请将`config.json.template`复制为`config.json`，并修改其中的参数和规则。
+请将`config.json.template`复制为`config.json`，并修改其中的参数和规则。(如果修改了webui的`host`和`port`，也需要在配置文件中更改)
 
 ### 画图请求格式
 
@@ -85,4 +87,4 @@ pip install webuiapi
 PS: 实际参数分为两部分:
 
 - 一部分是`params`，为画画的参数;参数名**必须**与webuiapi包中[txt2img api](https://github.com/mix1009/sdwebuiapi/blob/fb2054e149c0a4e25125c0cd7e7dca06bda839d4/webuiapi/webuiapi.py#L163)的参数名一致
-- 另一部分是`options`，指sdwebui的设置，使用的模型和vae需写在里面。它和(http://127.0.0.1:7860/sdapi/v1/options)所返回的键一致。
+- 另一部分是`options`，指sdwebui的设置，使用的模型和vae需写在里面。它和(http://127.0.0.1:7860/sdapi/v1/options )所返回的键一致。
