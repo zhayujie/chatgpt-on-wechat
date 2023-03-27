@@ -58,7 +58,8 @@ def handler_group_voice(msg):
 
 class WechatChannel(Channel):
     def __init__(self):
-        pass
+        self.userName = None
+        self.nickName = None
 
     def startup(self):
 
@@ -76,6 +77,9 @@ class WechatChannel(Channel):
                 itchat.auto_login(enableCmdQR=2, hotReload=hotReload)
             else:
                 raise e
+        self.userName = itchat.instance.storageClass.userName
+        self.nickName = itchat.instance.storageClass.nickName
+        logger.info("Wechat login success, username: {}, nickname: {}".format(self.userName, self.nickName))
         # start message listener
         itchat.run()
 
@@ -93,8 +97,16 @@ class WechatChannel(Channel):
         if conf().get('speech_recognition') != True:
             return
         logger.debug("[WX]receive voice msg: " + msg['FileName'])
+        to_user_id = msg['ToUserName']
         from_user_id = msg['FromUserName']
-        other_user_id = msg['User']['UserName']
+        try:
+            other_user_id = msg['User']['UserName']     # 对手方id
+        except Exception as e:
+            logger.warn("[WX]get other_user_id failed: " + str(e))
+            if from_user_id == self.userName:
+                other_user_id = to_user_id
+            else:
+                other_user_id = from_user_id
         if from_user_id == other_user_id:
             context = Context(ContextType.VOICE, msg['FileName'])
             context.kwargs = {'isgroup': False, 'msg': msg,
@@ -109,7 +121,14 @@ class WechatChannel(Channel):
         content = msg['Text']
         from_user_id = msg['FromUserName']
         to_user_id = msg['ToUserName']              # 接收人id
-        other_user_id = msg['User']['UserName']     # 对手方id
+        try:
+            other_user_id = msg['User']['UserName']     # 对手方id
+        except Exception as e:
+            logger.warn("[WX]get other_user_id failed: " + str(e))
+            if from_user_id == self.userName:
+                other_user_id = to_user_id
+            else:
+                other_user_id = from_user_id
         create_time = msg['CreateTime']             # 消息时间
         match_prefix = check_prefix(content, conf().get('single_chat_prefix'))
         if conf().get('hot_reload') == True and int(create_time) < int(time.time()) - 60:  # 跳过1分钟前的历史消息
