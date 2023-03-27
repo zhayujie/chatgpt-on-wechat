@@ -4,25 +4,19 @@
 wechaty channel
 Python Wechaty - https://github.com/wechaty/python-wechaty
 """
-import io
 import os
-import json
 import time
 import asyncio
-import requests
-import pysilk
-import wave
-from pydub import AudioSegment
 from typing import Optional, Union
 from bridge.context import Context, ContextType
 from wechaty_puppet import MessageType, FileBox, ScanStatus  # type: ignore
 from wechaty import Wechaty, Contact
-from wechaty.user import Message, Room, MiniProgram, UrlLink
+from wechaty.user import Message, MiniProgram, UrlLink
 from channel.channel import Channel
 from common.log import logger
 from common.tmp_dir import TmpDir
 from config import conf
-
+from voice.audio_convert import sil_to_wav, mp3_to_sil
 
 class WechatyChannel(Channel):
 
@@ -50,8 +44,9 @@ class WechatyChannel(Channel):
 
     async def on_scan(self, status: ScanStatus, qr_code: Optional[str] = None,
                       data: Optional[str] = None):
-        contact = self.Contact.load(self.contact_id)
-        logger.info('[WX] scan user={}, scan status={}, scan qr_code={}'.format(contact, status.name, qr_code))
+        pass
+        # contact = self.Contact.load(self.contact_id)
+        # logger.info('[WX] scan user={}, scan status={}, scan qr_code={}'.format(contact, status.name, qr_code))
         # print(f'user <{contact}> scan status: {status.name} , 'f'qr_code: {qr_code}')
 
     async def on_message(self, msg: Message):
@@ -67,7 +62,7 @@ class WechatyChannel(Channel):
         content = msg.text()
         mention_content = await msg.mention_text()  # 返回过滤掉@name后的消息
         match_prefix = self.check_prefix(content, conf().get('single_chat_prefix'))
-        conversation: Union[Room, Contact] = from_contact if room is None else room
+        # conversation: Union[Room, Contact] = from_contact if room is None else room
 
         if room is None and msg.type() == MessageType.MESSAGE_TYPE_TEXT:
             if not msg.is_self() and match_prefix is not None:
@@ -102,21 +97,8 @@ class WechatyChannel(Channel):
                 await voice_file.to_file(silk_file)
                 logger.info("[WX]receive voice file: " + silk_file)
                 # 将文件转成wav格式音频
-                wav_file = silk_file.replace(".slk", ".wav")
-                with open(silk_file, 'rb') as f:
-                    silk_data = f.read()
-                pcm_data = pysilk.decode(silk_data)
-
-                with wave.open(wav_file, 'wb') as wav_data:
-                    wav_data.setnchannels(1)
-                    wav_data.setsampwidth(2)
-                    wav_data.setframerate(24000)
-                    wav_data.writeframes(pcm_data)
-                if os.path.exists(wav_file): 
-                    converter_state = "true" # 转换wav成功
-                else:
-                    converter_state = "false" # 转换wav失败
-                logger.info("[WX]receive voice converter: " + converter_state)
+                wav_file = os.path.splitext(silk_file)[0] + '.wav'
+                sil_to_wav(silk_file, wav_file)
                 # 语音识别为文本
                 query = super().build_voice_to_text(wav_file).content
                 # 交验关键字
@@ -183,21 +165,8 @@ class WechatyChannel(Channel):
                 await voice_file.to_file(silk_file)
                 logger.info("[WX]receive voice file: " + silk_file)
                 # 将文件转成wav格式音频
-                wav_file = silk_file.replace(".slk", ".wav")
-                with open(silk_file, 'rb') as f:
-                    silk_data = f.read()
-                pcm_data = pysilk.decode(silk_data)
-
-                with wave.open(wav_file, 'wb') as wav_data:
-                    wav_data.setnchannels(1)
-                    wav_data.setsampwidth(2)
-                    wav_data.setframerate(24000)
-                    wav_data.writeframes(pcm_data)
-                if os.path.exists(wav_file): 
-                    converter_state = "true" # 转换wav成功
-                else:
-                    converter_state = "false" # 转换wav失败
-                logger.info("[WX]receive voice converter: " + converter_state)
+                wav_file = os.path.splitext(silk_file)[0] + '.wav'
+                sil_to_wav(silk_file, wav_file)
                 # 语音识别为文本
                 query = super().build_voice_to_text(wav_file).content
                 # 校验关键字
@@ -260,21 +229,12 @@ class WechatyChannel(Channel):
             if reply_text:
                 # 转换 mp3 文件为 silk 格式
                 mp3_file = super().build_text_to_voice(reply_text).content
-                silk_file = mp3_file.replace(".mp3", ".silk")
-                # Load the MP3 file
-                audio = AudioSegment.from_file(mp3_file, format="mp3")
-                # Convert to WAV format
-                audio = audio.set_frame_rate(24000).set_channels(1)
-                wav_data = audio.raw_data
-                sample_width = audio.sample_width
-                # Encode to SILK format
-                silk_data = pysilk.encode(wav_data, 24000)
-                # Save the silk file
-                with open(silk_file, "wb") as f:
-                    f.write(silk_data)
+                silk_file = os.path.splitext(mp3_file)[0] + '.sil'
+                voiceLength = mp3_to_sil(mp3_file, silk_file)
                 # 发送语音
                 t = int(time.time())
-                file_box = FileBox.from_file(silk_file, name=str(t) + '.silk')
+                file_box = FileBox.from_file(silk_file, name=str(t) + '.sil')
+                file_box.metadata = {'voiceLength': voiceLength}                
                 await self.send(file_box, reply_user_id)
                 # 清除缓存文件
                 os.remove(mp3_file)
@@ -337,21 +297,12 @@ class WechatyChannel(Channel):
             reply_text = '@' + group_user_name + ' ' + reply_text.strip()
             # 转换 mp3 文件为 silk 格式
             mp3_file = super().build_text_to_voice(reply_text).content
-            silk_file = mp3_file.replace(".mp3", ".silk")
-            # Load the MP3 file
-            audio = AudioSegment.from_file(mp3_file, format="mp3")
-            # Convert to WAV format
-            audio = audio.set_frame_rate(24000).set_channels(1)
-            wav_data = audio.raw_data
-            sample_width = audio.sample_width
-            # Encode to SILK format
-            silk_data = pysilk.encode(wav_data, 24000)
-            # Save the silk file
-            with open(silk_file, "wb") as f:
-                f.write(silk_data)
+            silk_file = os.path.splitext(mp3_file)[0] + '.sil'
+            voiceLength = mp3_to_sil(mp3_file, silk_file)
             # 发送语音
             t = int(time.time())
             file_box = FileBox.from_file(silk_file, name=str(t) + '.silk')
+            file_box.metadata = {'voiceLength': voiceLength}            
             await self.send_group(file_box, group_id)
             # 清除缓存文件
             os.remove(mp3_file)

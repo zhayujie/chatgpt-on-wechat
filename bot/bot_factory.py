@@ -6,9 +6,9 @@ from common import const
 
 def create_bot(bot_type):
     """
-    create a channel instance
-    :param channel_type: channel type code
-    :return: channel instance
+    create a bot_type instance
+    :param bot_type: bot type code
+    :return: bot instance
     """
     if bot_type == const.BAIDU:
         # Baidu Unit对话接口
