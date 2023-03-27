@@ -244,6 +244,9 @@ class WechatChannel(Channel):
 
     # 处理消息 TODO: 如果wechaty解耦，此处逻辑可以放置到父类
     def handle(self, context):
+        if not context.content:
+            return 
+        
         reply = Reply()
 
         logger.debug('[WX] ready to handle context: {}'.format(context))
