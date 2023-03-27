@@ -1,0 +1,7 @@
+providers = ['python']
+
+[phases.setup]
+nixPkgs = ['python310']
+cmds = ['apt-get update','apt-get install -y --no-install-recommends ffmpeg espeak']
+[start]
+cmd = "python ./app.py"
