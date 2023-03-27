@@ -17,13 +17,13 @@ from common.log import logger
 COMMANDS = {
     "help": {
         "alias": ["help", "帮助"],
-        "desc": "打印指令集合",
+        "desc": "打印此帮助",
     },
-    "helpp": {
-        "alias": ["helpp", "插件帮助"],
-        "args": ["插件名"],
-        "desc": "打印插件的帮助信息",
-    },
+    # "helpp": {
+    #     "alias": ["helpp", "插件帮助"],
+    #     "args": ["插件名"],
+    #     "desc": "打印插件的帮助信息",
+    # },
     "auth": {
         "alias": ["auth", "认证"],
         "args": ["口令"],
@@ -91,9 +91,9 @@ ADMIN_COMMANDS = {
 }
 # 定义帮助函数
 def get_help_text(isadmin, isgroup):
-    help_text = "可用指令：\n"
+    help_text = "通用指令：\n"
     for cmd, info in COMMANDS.items():
-        if cmd=="auth" and (isadmin or isgroup): # 群聊不可认证
+        if cmd=="auth": # 隐藏认证指令
             continue
 
         alias=["#"+a for a in info['alias']]
@@ -102,8 +102,18 @@ def get_help_text(isadmin, isgroup):
             args=["{"+a+"}" for a in info['args']]
             help_text += f"{' '.join(args)} "
         help_text += f": {info['desc']}\n"
+
+    # 插件指令
+    plugins = PluginManager().list_plugins()
+    for plugin in plugins:
+        if plugin != 'GODCMD' and plugin != 'BANWORDS' and plugin != 'FINISH' and plugins[plugin].enabled:
+            print(plugin)
+            help_text += "\n%s:\n"%plugin
+            help_text += "#帮助 %s: 关于%s的详细帮助\n"%(plugin,plugin)
+            help_text += PluginManager().instances[plugin].get_help_text(verbose=False)
+
     if ADMIN_COMMANDS and isadmin:
-        help_text += "\n管理员指令：\n"
+        help_text += "\n管理员指令:\n"
         for cmd, info in ADMIN_COMMANDS.items():
             alias=["#"+a for a in info['alias']]
             help_text += f"{','.join(alias)} "
@@ -134,14 +144,14 @@ class Godcmd(Plugin):
         self.handlers[Event.ON_HANDLE_CONTEXT] = self.on_handle_context
         logger.info("[Godcmd] inited")
 
-    
+
     def on_handle_context(self, e_context: EventContext):
         context_type = e_context['context'].type
         if context_type != ContextType.TEXT:
             if not self.isrunning:
                 e_context.action = EventAction.BREAK_PASS
             return
-        
+
         content = e_context['context'].content
         logger.debug("[Godcmd] on_handle_context. content: %s" % content)
         if content.startswith("#"):
@@ -165,19 +175,27 @@ class Godcmd(Plugin):
                 if cmd == "auth":
                     ok, result = self.authenticate(user, args, isadmin, isgroup)
                 elif cmd == "help":
-                    ok, result = True, get_help_text(isadmin, isgroup)
-                elif cmd == "helpp":
-                    if len(args) != 1:
-                        ok, result = False, "请提供插件名"
-                    else:
+                    if len(args) == 0:
+                        ok, result = True, get_help_text(isadmin, isgroup)
+                    elif len(args) == 1:
                         plugins = PluginManager().list_plugins()
                         name = args[0].upper()
-                        if name in plugins and plugins[name].enabled:
-                            ok, result = True, PluginManager().instances[name].get_help_text(isgroup=isgroup, isadmin=isadmin)
+                        if name in plugins and name != 'GODCMD' and name != 'BANWORDS' and plugins[name].enabled:
+                            ok, result = True, PluginManager().instances[name].get_help_text(verbose=True)
                         else:
-                            ok, result= False, "插件不存在或未启用"
-                elif cmd == "id":
-                    ok, result = True, f"用户id=\n{user}"
+                            ok, result = False, "unknown args"
+                # elif cmd == "helpp":
+                #     if len(args) != 1:
+                #         ok, result = False, "请提供插件名"
+                #     else:
+                #         plugins = PluginManager().list_plugins()
+                #         name = args[0].upper()
+                #         if name in plugins and plugins[name].enabled:
+                #             ok, result = True, PluginManager().instances[name].get_help_text(isgroup=isgroup, isadmin=isadmin)
+                #         else:
+                #             ok, result= False, "插件不存在或未启用"
+                # elif cmd == "id":
+                #     ok, result = True, f"用户id=\n{user}"
                 elif cmd == "reset":
                     if bottype in (const.CHATGPT, const.OPEN_AI):
                         bot.sessions.clear_session(session_id)
@@ -269,8 +287,9 @@ class Godcmd(Plugin):
                 else:
                     ok, result = False, "需要管理员权限才能执行该指令"
             else:
-                ok, result = False, f"未知指令：{cmd}\n查看指令列表请输入#help \n"
-            
+                # ok, result = False, f"未知指令：{cmd}\n查看指令列表请输入#help \n"
+                return
+
             reply = Reply()
             if ok:
                 reply.type = ReplyType.INFO
@@ -282,7 +301,7 @@ class Godcmd(Plugin):
             e_context.action = EventAction.BREAK_PASS # 事件结束，并跳过处理context的默认逻辑
         elif not self.isrunning:
             e_context.action = EventAction.BREAK_PASS
-    
+
     def authenticate(self, userid, args, isadmin, isgroup) -> Tuple[bool,str] : 
         if isgroup:
             return False,"请勿在群聊中认证"

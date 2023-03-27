@@ -29,7 +29,7 @@ class RolePlay():
         prompt = self.wrapper % user_action
         return prompt
 
-@plugins.register(name="Role", desc="为你的Bot设置预设角色", version="1.0", author="lanvent", desire_priority= 0)
+@plugins.register(name="角色扮演", desc="为你的Bot设置预设角色", version="1.0", author="lanvent", desire_priority= 0)
 class Role(Plugin):
     def __init__(self):
         super().__init__()
@@ -80,8 +80,9 @@ class Role(Plugin):
         content = e_context['context'].content[:]
         clist = e_context['context'].content.split(maxsplit=1)
         desckey = None
+        customize = False
         sessionid = e_context['context']['session_id']
-        if clist[0] == "$停止扮演":
+        if clist[0] == "#停止扮演":
             if sessionid in self.roleplays:
                 self.roleplays[sessionid].reset()
                 del self.roleplays[sessionid]
@@ -89,20 +90,22 @@ class Role(Plugin):
             e_context['reply'] = reply
             e_context.action = EventAction.BREAK_PASS
             return
-        elif clist[0] == "$角色":
+        elif clist[0] == "#开始扮演":
             desckey = "descn"
-        elif clist[0].lower() == "$role":
+        elif clist[0].lower() == "#roleplay":
             desckey = "description"
+        elif clist[0] == "#设定扮演":
+            customize = True
         elif sessionid not in self.roleplays:
             return
         logger.debug("[Role] on_handle_context. content: %s" % content)
         if desckey is not None:
             if len(clist) == 1 or (len(clist) > 1 and clist[1].lower() in ["help", "帮助"]):
-                reply = Reply(ReplyType.INFO, self.get_help_text())
+                reply = Reply(ReplyType.INFO, self.get_help_text(verbose=True))
                 e_context['reply'] = reply
                 e_context.action = EventAction.BREAK_PASS
                 return
-            role = self.get_role(clist[1])
+            role = self.get_role(clist[1],find_closest=False)
             if role is None:
                 reply = Reply(ReplyType.ERROR, "角色不存在")
                 e_context['reply'] = reply
@@ -110,9 +113,14 @@ class Role(Plugin):
                 return
             else:
                 self.roleplays[sessionid] = RolePlay(bot, sessionid, self.roles[role][desckey], self.roles[role].get("wrapper","%s"))
-                reply = Reply(ReplyType.INFO, f"角色设定为 {role} :\n"+self.roles[role][desckey])
+                reply = Reply(ReplyType.INFO, f"预设角色为 {role}")
                 e_context['reply'] = reply
                 e_context.action = EventAction.BREAK_PASS
+        elif customize == True:
+            self.roleplays[sessionid] = RolePlay(bot, sessionid, clist[1], "%s")
+            reply = Reply(ReplyType.INFO, f"角色设定为 {clist[1]}")
+            e_context['reply'] = reply
+            e_context.action = EventAction.BREAK_PASS
         else:
             prompt = self.roleplays[sessionid].action(content)
             e_context['context'].type = ContextType.TEXT
@@ -120,7 +128,12 @@ class Role(Plugin):
             e_context.action = EventAction.BREAK
 
     def get_help_text(self, **kwargs):
-        help_text = "输入\"$角色 {角色名}\"或\"$role {角色名}\"为我设定角色吧，\"$停止扮演 \" 可以清除设定的角色。\n\n目前可用角色列表：\n"
-        for role in self.roles:
-            help_text += f"[{role}]: {self.roles[role]['remark']}\n"
+        help_text = "#开始扮演 '预设角色名': 设定为预设角色\n#roleplay '预设角色名': 同上，英文对话\n"
+        help_text += "#设定扮演 '角色设定': 设定自定义角色\n"
+        help_text += "#停止扮演: 清除设定的角色。\n"
+        if kwargs.get('verbose') == True:
+            help_text += "\n目前可用的预设角色名列表: \n"
+            for role in self.roles:
+                help_text += f"{role}\n"
+            help_text += "\n命令例子: '#开始扮演 写作助理'"
         return help_text
