@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# filename: main.py
 import web
 import time
 import math
@@ -10,7 +9,10 @@ import channel.wechatmp.reply as reply
 import channel.wechatmp.receive as receive
 from common.log import logger
 from config import conf
-
+from bridge.reply import *
+from bridge.context import *
+from plugins import *
+import traceback
 
 class WechatMPServer():
     def __init__(self):
@@ -23,14 +25,13 @@ class WechatMPServer():
         app = web.application(urls, globals())
         app.run()
 
-
-from concurrent.futures import ThreadPoolExecutor
-thread_pool = ThreadPoolExecutor(max_workers=8)
-
 cache_dict = dict()
 query1 = dict()
 query2 = dict()
 query3 = dict()
+
+from concurrent.futures import ThreadPoolExecutor
+thread_pool = ThreadPoolExecutor(max_workers=8)
 
 class WechatMPChannel(Channel):
 
@@ -66,9 +67,77 @@ class WechatMPChannel(Channel):
         reply_text = super().build_reply_content(message, context)
         # The query is done, record the cache
         logger.info("[threaded] Get reply for {}: {} \nA: {}".format(fromUser, message, reply_text))
-        reply_cnt = math.ceil(len(reply_text) / 600)
         global cache_dict
+        reply_cnt = math.ceil(len(reply_text) / 600)
         cache_dict[cache_key] = (reply_cnt, reply_text)
+
+
+    def send(self, reply : Reply, cache_key):
+        global cache_dict
+        reply_cnt = math.ceil(len(reply.content) / 600)
+        cache_dict[cache_key] = (reply_cnt, reply.content)
+
+
+    def handle(self, context):
+        global cache_dict
+        try:
+            reply = Reply()
+
+            logger.debug('[wechatmp] ready to handle context: {}'.format(context))
+
+            # reply的构建步骤
+            e_context = PluginManager().emit_event(EventContext(Event.ON_HANDLE_CONTEXT, {'channel' : self, 'context': context, 'reply': reply}))
+            reply = e_context['reply']
+            if not e_context.is_pass():
+                logger.debug('[wechatmp] ready to handle context: type={}, content={}'.format(context.type, context.content))
+                if context.type == ContextType.TEXT or context.type == ContextType.IMAGE_CREATE:
+                    reply = super().build_reply_content(context.content, context)
+                # elif context.type == ContextType.VOICE:
+                #     msg = context['msg']
+                #     file_name = TmpDir().path() + context.content
+                #     msg.download(file_name)
+                #     reply = super().build_voice_to_text(file_name)
+                #     if reply.type != ReplyType.ERROR and reply.type != ReplyType.INFO:
+                #         context.content = reply.content # 语音转文字后，将文字内容作为新的context
+                #         context.type = ContextType.TEXT
+                #         reply = super().build_reply_content(context.content, context)
+                #         if reply.type == ReplyType.TEXT:
+                #             if conf().get('voice_reply_voice'):
+                #                 reply = super().build_text_to_voice(reply.content)
+                else:
+                    logger.error('[wechatmp] unknown context type: {}'.format(context.type))
+                    return
+
+            logger.debug('[wechatmp] ready to decorate reply: {}'.format(reply))
+
+            # reply的包装步骤
+            if reply and reply.type:
+                e_context = PluginManager().emit_event(EventContext(Event.ON_DECORATE_REPLY, {'channel' : self, 'context': context, 'reply': reply}))
+                reply=e_context['reply']
+                if not e_context.is_pass() and reply and reply.type:
+                    if reply.type == ReplyType.TEXT:
+                        pass
+                    elif reply.type == ReplyType.ERROR or reply.type == ReplyType.INFO:
+                        reply.content = str(reply.type)+":\n" + reply.content
+                    elif reply.type == ReplyType.IMAGE_URL or reply.type == ReplyType.VOICE or reply.type == ReplyType.IMAGE:
+                        pass
+                    else:
+                        logger.error('[wechatmp] unknown reply type: {}'.format(reply.type))
+                        return
+
+            # reply的发送步骤
+            if reply and reply.type:
+                e_context = PluginManager().emit_event(EventContext(Event.ON_SEND_REPLY, {'channel' : self, 'context': context, 'reply': reply}))
+                reply=e_context['reply']
+                if not e_context.is_pass() and reply and reply.type:
+                    logger.debug('[wechatmp] ready to send reply: {} to {}'.format(reply, context['receiver']))
+                    self.send(reply, context['receiver'])
+            else:
+                cache_dict[context['receiver']] = (1, "No reply")
+        except Exception as exc:
+            print(traceback.format_exc())
+            cache_dict[context['receiver']] = (1, "ERROR")
+
 
 
     def POST(self):
@@ -94,12 +163,23 @@ class WechatMPChannel(Channel):
                 cache = cache_dict.get(cache_key)
 
                 reply_text = ""
-
                 # New request
                 if cache == None:
                     # The first query begin, reset the cache
                     cache_dict[cache_key] = (0, "")
-                    thread_pool.submit(self._do_build_reply, cache_key, fromUser, message)
+                    # thread_pool.submit(self._do_build_reply, cache_key, fromUser, message)
+
+                    context = Context()
+                    context.kwargs = {'isgroup': False, 'receiver': fromUser, 'session_id': fromUser}
+                    img_match_prefix = check_prefix(message, conf().get('image_create_prefix'))
+                    if img_match_prefix:
+                        message = message.replace(img_match_prefix, '', 1).strip()
+                        context.type = ContextType.IMAGE_CREATE
+                    else:
+                        context.type = ContextType.TEXT
+                    context.content = message
+                    thread_pool.submit(self.handle, context)
+
                     query1[cache_key] = False
                     query2[cache_key] = False
                     query3[cache_key] = False
@@ -183,18 +263,28 @@ class WechatMPChannel(Channel):
                 return replyPost
 
             elif isinstance(recMsg, receive.Event) and recMsg.MsgType == 'event':
-                toUser = recMsg.FromUserName
-                fromUser = recMsg.ToUserName
+                logger.info("[wechatmp] Event {} from {}".format(recMsg.Event, recMsg.FromUserName))
                 content = textwrap.dedent("""\
                     感谢您的关注！
                     这里是ChatGPT，可以自由对话。
-                    资源有限，回复较慢，请不要着急。
-                    暂时不支持图片输入输出，但是支持通用表情输入。""")
-                replyMsg = reply.TextMsg(toUser, fromUser, content)
+                    资源有限，回复较慢，请勿着急。
+                    支持通用表情输入。
+                    暂时不支持图片输入。
+                    支持图片输出，画字开头的问题将回复图片链接。
+                    支持角色扮演和文字冒险两种定制模式对话。
+                    输入'#帮助' 查看详细指令。""")
+                replyMsg = reply.TextMsg(recMsg.FromUserName, recMsg.ToUserName, content)
                 return replyMsg.send()
             else:
                 print("暂且不处理")
                 return "success"
-        except Exception as Argment:
-            print(Argment)
-            return Argment
+        except Exception as exc:
+            print(exc)
+            return exc
+
+
+def check_prefix(content, prefix_list):
+    for prefix in prefix_list:
+        if content.startswith(prefix):
+            return prefix
+    return None
