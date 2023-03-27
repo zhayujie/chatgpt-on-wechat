@@ -5,6 +5,9 @@ wechat channel
 """
 
 import os
+import requests
+import io
+import time
 from lib import itchat
 import json
 from lib.itchat.content import *
@@ -17,9 +20,7 @@ from common.tmp_dir import TmpDir
 from config import conf
 from common.time_check import time_checker
 from plugins import *
-import requests
-import io
-import time
+from voice.audio_convert import mp3_to_wav
 
 
 thread_pool = ThreadPoolExecutor(max_workers=8)
@@ -28,8 +29,7 @@ thread_pool = ThreadPoolExecutor(max_workers=8)
 def thread_pool_callback(worker):
     worker_exception = worker.exception()
     if worker_exception:
-        logger.exception(
-            "Worker return exception: {}".format(worker_exception))
+        logger.exception("Worker return exception: {}".format(worker_exception))
 
 
 @itchat.msg_register(TEXT)
@@ -247,9 +247,16 @@ class WechatChannel(Channel):
                 reply = super().build_reply_content(context.content, context)
             elif context.type == ContextType.VOICE:
                 msg = context['msg']
-                file_name = TmpDir().path() + context.content
-                msg.download(file_name)
-                reply = super().build_voice_to_text(file_name)
+                mp3_path = TmpDir().path() + context.content
+                msg.download(mp3_path)
+                # mp3转wav
+                wav_path = os.path.splitext(mp3_path)[0] + '.wav'
+                mp3_to_wav(mp3_path=mp3_path, wav_path=wav_path)
+                # 语音识别
+                reply = super().build_voice_to_text(wav_path)
+                # 删除临时文件
+                os.remove(wav_path)
+                os.remove(mp3_path)
                 if reply.type != ReplyType.ERROR and reply.type != ReplyType.INFO:
                     context.content = reply.content  # 语音转文字后，将文字内容作为新的context
                     context.type = ContextType.TEXT
@@ -263,12 +270,13 @@ class WechatChannel(Channel):
                             prefixes = conf().get('group_chat_prefix')
                             for prefix in prefixes:
                                 if context.content.startswith(prefix):
-                                    context.content = context.content.replace(prefix, '', 1).strip()
+                                    context.content = context.content.replace(
+                                        prefix, '', 1).strip()
                                     break
                         else:
                             logger.info("[WX]receive voice check prefix: " + 'False')
                             return
-                            
+
                     reply = super().build_reply_content(context.content, context)
                     if reply.type == ReplyType.TEXT:
                         if conf().get('voice_reply_voice'):
