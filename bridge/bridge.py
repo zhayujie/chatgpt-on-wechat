@@ -14,7 +14,7 @@ class Bridge(object):
         self.btype={
             "chat": const.CHATGPT,
             "voice_to_text": conf().get("voice_to_text", "openai"),
-            "text_to_voice": conf().get("text_to_voice", "baidu")
+            "text_to_voice": conf().get("text_to_voice", "google")
         }
         model_type = conf().get("model")
         if model_type in ["text-davinci-003"]:
