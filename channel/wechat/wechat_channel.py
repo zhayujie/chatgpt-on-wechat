@@ -52,10 +52,6 @@ def handler_group_voice(msg):
     WechatChannel().handle_group_voice(msg)
     return None
 
-@itchat.msg_register(VOICE, isGroupChat=True)
-def handler_group_voice(msg):
-    WechatChannel().handle_group_voice(msg)
-    return None
 
 
 class WechatChannel(Channel):
@@ -114,7 +110,7 @@ class WechatChannel(Channel):
             context.kwargs = {'isgroup': False, 'msg': msg, 'receiver': other_user_id, 'session_id': other_user_id}
             thread_pool.submit(self.handle, context).add_done_callback(thread_pool_callback)
 
-@time_checker
+    @time_checker
     def handle_text(self, msg):
         logger.debug("[WX]receive text msg: " +
                      json.dumps(msg, ensure_ascii=False))
@@ -209,19 +205,6 @@ class WechatChannel(Channel):
                 thread_pool_callback)
 
     def handle_group_voice(self, msg):
-        if conf().get('group_speech_recognition') != True:
-            return
-        logger.debug("[WX]receive group voice msg: " + msg['FileName'])
-        group_name = msg['User'].get('NickName', None)
-        group_id = msg['User'].get('UserName', None)
-        from_user_id = msg['ActualUserName']
-        context = Context(ContextType.VOICE, msg['FileName'])
-        context.kwargs = {'isgroup': True, 'msg': msg,
-                          'receiver': group_id, 'session_id': from_user_id}
-        thread_pool.submit(self.handle, context).add_done_callback(
-            thread_pool_callback)
-
-    def handle_group_voice(self, msg):
         if conf().get('group_speech_recognition', False) != True:
             return
         logger.debug("[WX]receive voice for group msg: " + msg['FileName'])
@@ -303,19 +286,19 @@ class WechatChannel(Channel):
                 os.remove(wav_path)
                 os.remove(mp3_path)
                 if reply.type != ReplyType.ERROR and reply.type != ReplyType.INFO:
-                    context.content = reply.content  # 语音转文字后，将文字内容作为新的context
+                    content = reply.content  # 语音转文字后，将文字内容作为新的context
                     context.type = ContextType.TEXT
                     if (context["isgroup"] == True):
                         # 校验关键字
-                        match_prefix = self.check_prefix(context.content, conf().get('group_chat_prefix')) \
-                            or self.check_contain(context.content, conf().get('group_chat_keyword'))
+                        match_prefix = self.check_prefix(content, conf().get('group_chat_prefix')) \
+                            or self.check_contain(content, conf().get('group_chat_keyword'))
                         # Wechaty判断is_at为True，返回的内容是过滤掉@之后的内容；而is_at为False，则会返回完整的内容
                         if match_prefix is not None:
                             # 故判断如果匹配到自定义前缀，则返回过滤掉前缀+空格后的内容，用于实现类似自定义+前缀触发生成AI图片的功能
                             prefixes = conf().get('group_chat_prefix')
                             for prefix in prefixes:
-                                if context.content.startswith(prefix):
-                                    context.content = context.content.replace(
+                                if content.startswith(prefix):
+                                    content = content.replace(
                                         prefix, '', 1).strip()
                                     break
                         else:
