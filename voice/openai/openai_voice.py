@@ -28,6 +28,3 @@ class OpenaiVoice(Voice):
             reply = Reply(ReplyType.ERROR, str(e))
         finally:
             return reply
-
-    def textToVoice(self, text):
-        pass
