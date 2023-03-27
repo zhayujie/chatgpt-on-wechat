@@ -44,6 +44,7 @@ class WechatyChannel(Channel):
 
     async def on_scan(self, status: ScanStatus, qr_code: Optional[str] = None,
                       data: Optional[str] = None):
+        pass
         # contact = self.Contact.load(self.contact_id)
         # logger.info('[WX] scan user={}, scan status={}, scan qr_code={}'.format(contact, status.name, qr_code))
         # print(f'user <{contact}> scan status: {status.name} , 'f'qr_code: {qr_code}')

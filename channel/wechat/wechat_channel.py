@@ -190,7 +190,7 @@ class WechatChannel(Channel):
                 thread_pool_callback)
 
     def handle_group_voice(self, msg):
-        if conf().get('speech_recognition') != True:
+        if conf().get('group_speech_recognition') != True:
             return
         logger.debug("[WX]receive group voice msg: " + msg['FileName'])
         group_name = msg['User'].get('NickName', None)
