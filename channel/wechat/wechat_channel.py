@@ -290,16 +290,15 @@ class WechatChannel(Channel):
                     context.type = ContextType.TEXT
                     if (context["isgroup"] == True):
                         # 校验关键字
-                        match_prefix = self.check_prefix(content, conf().get('group_chat_prefix')) \
-                            or self.check_contain(content, conf().get('group_chat_keyword'))
+                        match_prefix = check_prefix(content, conf().get('group_chat_prefix')) \
+                            or check_contain(content, conf().get('group_chat_keyword'))
                         # Wechaty判断is_at为True，返回的内容是过滤掉@之后的内容；而is_at为False，则会返回完整的内容
                         if match_prefix is not None:
                             # 故判断如果匹配到自定义前缀，则返回过滤掉前缀+空格后的内容，用于实现类似自定义+前缀触发生成AI图片的功能
                             prefixes = conf().get('group_chat_prefix')
                             for prefix in prefixes:
                                 if content.startswith(prefix):
-                                    content = content.replace(
-                                        prefix, '', 1).strip()
+                                    content = content.replace(prefix, '', 1).strip()
                                     break
                         else:
                             logger.info("[WX]receive voice check prefix: " + 'False')
