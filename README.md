@@ -112,7 +112,7 @@ pip3 install --upgrade tiktoken
   "image_create_prefix": ["画", "看", "找"],                   # 开启图片回复的前缀
   "conversation_max_tokens": 1000,                            # 支持上下文记忆的最多字符数
   "speech_recognition": false,                                # 是否开启语音识别
-  "group_speech_recognition": false,                          # 是否开启群组语音识别 （目前仅支持wechaty）
+  "group_speech_recognition": false,                          # 是否开启群组语音识别
   "use_azure_chatgpt": false,                                 # 是否使用Azure ChatGPT service代替openai ChatGPT service. 当设置为true时需要设置 open_ai_api_base，如 https://xxx.openai.azure.com/
   "character_desc": "你是ChatGPT, 一个由OpenAI训练的大型语言模型, 你旨在回答并解决人们的任何问题，并且可以使用多种语言与人交流。",  # 人格描述,
 }
@@ -133,8 +133,8 @@ pip3 install --upgrade tiktoken
 
 **3.语音识别**
 
-+ 添加 `"speech_recognition": true` 将开启语音识别，默认使用openai的whisper模型识别为文字，同时以文字回复，该参数仅支持私聊 (注意由于语音消息无法匹配前缀，一旦开启将对所有语音自动回复)；
-+ 添加 `"group_speech_recognition": true` 将开启群组语音识别，默认使用openai的whisper模型识别为文字，同时以文字回复，参数仅支持群聊 (可以匹配group_chat_prefix和group_chat_keyword, 目前wechaty可支持群聊语音触发画图，itchat无法触发画图)；
++ 添加 `"speech_recognition": true` 将开启语音识别，默认使用openai的whisper模型识别为文字，同时以文字回复，该参数仅支持私聊 (注意由于语音消息无法匹配前缀，一旦开启将对所有语音自动回复，支持语音触发画图)；
++ 添加 `"group_speech_recognition": true` 将开启群组语音识别，默认使用openai的whisper模型识别为文字，同时以文字回复，参数仅支持群聊 (会匹配group_chat_prefix和group_chat_keyword, 支持语音触发画图)；
 + 添加 `"voice_reply_voice": true` 将开启语音回复语音（同时作用于私聊和群聊），但是需要配置对应语音合成平台的key，由于itchat协议的限制，只能发送语音mp3文件，若使用wechaty则回复的是微信语音。
 
 **4.其他配置**

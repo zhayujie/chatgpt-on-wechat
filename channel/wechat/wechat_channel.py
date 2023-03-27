@@ -190,14 +190,14 @@ class WechatChannel(Channel):
             thread_pool.submit(self.handle, context).add_done_callback(thread_pool_callback)
 
     def handle_group_voice(self, msg):
-        if conf().get('group_speech_recognition') != True:
+        if conf().get('group_speech_recognition', False) != True:
             return
         logger.debug("[WX]receive voice for group msg: " + msg['FileName'])
         group_name = msg['User'].get('NickName', None)
         group_id = msg['User'].get('UserName', None)
         create_time = msg['CreateTime']             # 消息时间
         if conf().get('hot_reload') == True and int(create_time) < int(time.time()) - 60:    #跳过1分钟前的历史消息
-            logger.debug("[WX]history group message skipped")
+            logger.debug("[WX]history group voice skipped")
             return
         # 验证群名
         if not group_name:
@@ -260,19 +260,29 @@ class WechatChannel(Channel):
                 file_name = TmpDir().path() + context.content
                 msg.download(file_name)
                 reply = super().build_voice_to_text(file_name)
-                if reply.type != ReplyType.ERROR and reply.type != ReplyType.INFO:
-                    context.content = reply.content # 语音转文字后，将文字内容作为新的context
+                if reply.type == ReplyType.TEXT:
+                    content = reply.content # 语音转文字后，将文字内容作为新的context
                     # 如果是群消息，判断是否触发关键字
                     if context['isgroup']:
-                        match_prefix = check_prefix(context.content, conf().get('group_chat_prefix')) or check_contain(context.content, conf().get('group_chat_keyword'))
-                        if match_prefix != True:
+                        match_prefix = check_prefix(content, conf().get('group_chat_prefix'))
+                        match_contain = check_contain(content, conf().get('group_chat_keyword'))
+                        logger.debug('[WX] group chat prefix match: {}'.format(match_prefix))
+                        if match_prefix is None and match_contain is None:
                             return
-                    context.type = ContextType.TEXT
+                        else:
+                            if match_prefix:
+                                content = content.replace(match_prefix, '', 1).strip()
+                        
+                    img_match_prefix = check_prefix(content, conf().get('image_create_prefix'))
+                    if img_match_prefix:
+                        content = content.replace(img_match_prefix, '', 1).strip()
+                        context.type = ContextType.IMAGE_CREATE
+                    else:
+                        context.type = ContextType.TEXT
+                    context.content = content
                     reply = super().build_reply_content(context.content, context)
                     if reply.type == ReplyType.TEXT:
                         if conf().get('voice_reply_voice'):
-                            if context['isgroup']:
-                                reply.content = '@' + context['msg']['ActualNickName'] + ' ' + reply.content
                             reply = super().build_text_to_voice(reply.content)
             else:
                 logger.error('[WX] unknown context type: {}'.format(context.type))
