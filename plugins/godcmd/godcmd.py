@@ -179,7 +179,7 @@ class Godcmd(Plugin):
                 elif cmd == "id":
                     ok, result = True, f"用户id=\n{user}"
                 elif cmd == "reset":
-                    if bottype == const.CHATGPT:
+                    if bottype in (const.CHATGPT, const.OPEN_AI):
                         bot.sessions.clear_session(session_id)
                         ok, result = True, "会话已重置"
                     else:
@@ -201,7 +201,7 @@ class Godcmd(Plugin):
                             load_config()
                             ok, result = True, "配置已重载"
                         elif cmd == "resetall":
-                            if bottype == const.CHATGPT:
+                            if bottype in (const.CHATGPT, const.OPEN_AI):
                                 bot.sessions.clear_all_session()
                                 ok, result = True, "重置所有会话成功"
                             else:
