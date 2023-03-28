@@ -13,7 +13,9 @@
 - [x] **语音识别：** 支持接收和处理语音消息，通过文字或语音回复
 - [x] **插件化：** 支持个性化功能插件，提供角色扮演、文字冒险游戏等预设插件
 
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/qApznZ?referralCode=RC3znh)
+> 快速部署:
+>
+>[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/qApznZ?referralCode=RC3znh)
 
 # 更新日志
 
@@ -62,7 +64,7 @@
 
 ### 2.运行环境
 
-支持 Linux、MacOS、Windows 系统（可在Linux服务器上长期运行)，同时需安装 `Python`。 
+支持 Linux、MacOS、Windows 系统（可在Linux服务器上长期运行)，同时需安装 `Python`。
 > 建议Python版本在 3.7.1~3.9.X 之间，3.10及以上版本在 MacOS 可用，其他系统上不确定能否正常运行。
 
 **(1) 克隆项目代码：**
@@ -75,20 +77,12 @@ cd chatgpt-on-wechat/
 **(2) 安装核心依赖 (必选)：**
 
 ```bash
-pip3 install itchat-uos==1.5.0.dev0
-pip3 install --upgrade openai
+pip3 install -r requirements.txt
 ```
-注：`itchat-uos`使用指定版本1.5.0.dev0，`openai`使用最新版本，需高于0.27.0。
 
 **(3) 拓展依赖 (可选)：**
 
-语音识别及语音回复相关依赖：[#415](https://github.com/zhayujie/chatgpt-on-wechat/issues/415)。
-
-让会话token数量的计算更加精准:
-
-```bash
-pip3 install --upgrade tiktoken
-```
+语音识别及语音回复功能需安装`ffmpeg`，参考[#415](https://github.com/zhayujie/chatgpt-on-wechat/issues/415)
 
 ## 配置
 
@@ -152,6 +146,7 @@ pip3 install --upgrade tiktoken
 + `hot_reload`: 程序退出后，暂存微信扫码状态，默认关闭。
 + `character_desc` 配置中保存着你对机器人说的一段话，他会记住这段话并作为他的设定，你可以为他定制任何人格      (关于会话上下文的更多内容参考该 [issue](https://github.com/zhayujie/chatgpt-on-wechat/issues/43))
 
+**所有可选的配置项均在该[文件](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/config.py)中列出。**
 
 ## 运行
 
