@@ -18,8 +18,9 @@ pip install webuiapi
 
 ## 使用说明
 
-请将`config.json.template`复制为`config.json`，并修改其中的参数和规则。(如果修改了webui的`host`和`port`，也需要在配置文件中更改)
+请将`config.json.template`复制为`config.json`，并修改其中的参数和规则。
 
+PS: 如果修改了webui的`host`和`port`，也需要在配置文件中更改启动参数, 更多启动参数参考：https://github.com/mix1009/sdwebuiapi/blob/a1cb4c6d2f39389d6e962f0e6436f4aa74cd752c/webuiapi/webuiapi.py#L114
 ### 画图请求格式
 
 用户的画图请求格式为:

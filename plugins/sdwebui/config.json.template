@@ -1,7 +1,8 @@
 {
   "start":{
     "host" : "127.0.0.1",
-    "port" : 7860
+    "port" : 7860,
+    "use_https" : false
   },
   "defaults": {
     "params": {
