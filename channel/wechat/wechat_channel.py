@@ -20,8 +20,10 @@ from common.tmp_dir import TmpDir
 from config import conf
 from common.time_check import time_checker
 from plugins import *
-
-
+try:
+    from voice.audio_convert import mp3_to_wav
+except Exception as e:
+    pass
 thread_pool = ThreadPoolExecutor(max_workers=8)
 
 
@@ -271,7 +273,6 @@ class WechatChannel(Channel):
                 msg.download(mp3_path)
                 # mp3转wav
                 wav_path = os.path.splitext(mp3_path)[0] + '.wav'
-                from voice.audio_convert import mp3_to_wav
                 mp3_to_wav(mp3_path=mp3_path, wav_path=wav_path)
                 # 语音识别
                 reply = super().build_voice_to_text(wav_path)
