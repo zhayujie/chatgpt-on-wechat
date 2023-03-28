@@ -282,7 +282,7 @@ class WechatChannel(Channel):
                 if reply.type != ReplyType.ERROR and reply.type != ReplyType.INFO:
                     content = reply.content  # 语音转文字后，将文字内容作为新的context
                     context.type = ContextType.TEXT
-                    if context["isgroup"]:
+                    if context["isgroup"]: # 群聊
                         # 校验关键字
                         match_prefix = check_prefix(content, conf().get('group_chat_prefix'))
                         match_contain = check_contain(content, conf().get('group_chat_keyword'))
@@ -293,7 +293,14 @@ class WechatChannel(Channel):
                         else:
                             logger.info("[WX]receive voice, checkprefix didn't match")
                             return
-                       
+                    else: # 单聊
+                        match_prefix = check_prefix(content, conf().get('single_chat_prefix'))  
+                        if match_prefix: # 判断如果匹配到自定义前缀，则返回过滤掉前缀+空格后的内容
+                            content = content.replace(match_prefix, '', 1).strip()
+                        else:
+                            logger.info("[WX]receive voice, checkprefix didn't match")
+                            return
+                                               
                     img_match_prefix = check_prefix(content, conf().get('image_create_prefix'))
                     if img_match_prefix:
                         content = content.replace(img_match_prefix, '', 1).strip()
