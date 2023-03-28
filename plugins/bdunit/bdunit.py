@@ -25,8 +25,8 @@ class BDunit(Plugin):
             config_path = os.path.join(curdir, "config.json")
             conf = None
             if not os.path.exists(config_path):
-                conf = {"service_id": "s83689", "api_key": "AibyOt3G1AkQWCXVrcE7did6",
-                        "secret_key": "VmZSpXfMriGnjcHgCtNh1DdtmGfwvHOw"}
+                conf = {"service_id": "", "api_key": "",
+                        "secret_key": ""}
                 with open(config_path, "w") as f:
                     json.dump(conf, f, indent=4)
             else:
