@@ -11,8 +11,8 @@ from common.log import logger
 from common.token_bucket import TokenBucket
 from common.expired_dict import ExpiredDict
 import openai
+import openai.error
 import time
-
 # OpenAI对话模型API (可用)
 class ChatGPTBot(Bot,OpenAIImage):
     def __init__(self):

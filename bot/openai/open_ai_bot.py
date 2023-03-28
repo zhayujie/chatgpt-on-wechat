@@ -9,6 +9,7 @@ from bridge.reply import Reply, ReplyType
 from config import conf
 from common.log import logger
 import openai
+import openai.error
 import time
 
 user_session = dict()
