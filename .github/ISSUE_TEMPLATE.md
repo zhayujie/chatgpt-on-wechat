@@ -2,9 +2,10 @@
 
 1. 网络能够访问openai接口
 2. python 已安装：版本在 3.7 ~ 3.10 之间
-3. 执行`pip3 install -r requirements.txt`，检查依赖是否满足
-4. 在已有 issue 中未搜索到类似问题
-5. [FAQS](https://github.com/zhayujie/chatgpt-on-wechat/wiki/FAQs) 中无类似问题
+3. `git pull` 拉取最新代码
+4. 执行`pip3 install -r requirements.txt`，检查依赖是否满足
+5. 在已有 issue 中未搜索到类似问题
+6. [FAQS](https://github.com/zhayujie/chatgpt-on-wechat/wiki/FAQs) 中无类似问题
 
 
 ### 问题描述
