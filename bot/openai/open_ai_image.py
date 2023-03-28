@@ -1,5 +1,6 @@
 import time
 import openai
+import openai.error
 from common.token_bucket import TokenBucket
 from common.log import logger
 from config import conf
