@@ -277,8 +277,12 @@ class WechatChannel(Channel):
                 # 语音识别
                 reply = super().build_voice_to_text(wav_path)
                 # 删除临时文件
-                os.remove(wav_path)
-                os.remove(mp3_path)
+                try:
+                    os.remove(wav_path)
+                    os.remove(mp3_path)
+                except Exception as e:
+                    logger.warning("[WX]delete temp file error: " + str(e))
+
                 if reply.type != ReplyType.ERROR and reply.type != ReplyType.INFO:
                     content = reply.content  # 语音转文字后，将文字内容作为新的context
                     context.type = ContextType.TEXT
