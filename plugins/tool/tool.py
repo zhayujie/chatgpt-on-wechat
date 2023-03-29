@@ -81,7 +81,7 @@ class Tool(Plugin):
                 # chatgpt-tool-hub will reply you with many tools
                 logger.debug("[tool]: just-go")
                 try:
-                    _reply = self.app.ask(content_list[1], user_session)
+                    _reply = self.app.ask(query, user_session)
                     e_context.action = EventAction.BREAK_PASS
                 except ValueError as e:
                     logger.exception(e)
