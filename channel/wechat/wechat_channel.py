@@ -273,7 +273,11 @@ class WechatChannel(Channel):
                 msg.download(mp3_path)
                 # mp3转wav
                 wav_path = os.path.splitext(mp3_path)[0] + '.wav'
-                mp3_to_wav(mp3_path=mp3_path, wav_path=wav_path)
+                try:
+                    mp3_to_wav(mp3_path=mp3_path, wav_path=wav_path)
+                except Exception as e: # 转换失败，直接使用mp3，对于某些api，mp3也可以识别
+                    logger.warning("[WX]mp3 to wav error, use mp3 path. " + str(e))
+                    wav_path = mp3_path
                 # 语音识别
                 reply = super().build_voice_to_text(wav_path)
                 # 删除临时文件
