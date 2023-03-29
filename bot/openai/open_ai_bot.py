@@ -63,7 +63,7 @@ class OpenAIBot(Bot, OpenAIImage):
                     reply = Reply(ReplyType.ERROR, retstring)
                 return reply
 
-    def reply_text(self, query, user_id, retry_count=0):
+    def reply_text(self, query, session_id, retry_count=0):
         try:
             response = openai.Completion.create(
                 model= conf().get("model") or "text-davinci-003",  # 对话模型的名称
@@ -80,17 +80,30 @@ class OpenAIBot(Bot, OpenAIImage):
             completion_tokens = response["usage"]["completion_tokens"]
             logger.info("[OPEN_AI] reply={}".format(res_content))
             return total_tokens, completion_tokens, res_content
-        except openai.error.RateLimitError as e:
-            # rate limit exception
-            logger.warn(e)
-            if retry_count < 1:
-                time.sleep(5)
-                logger.warn("[OPEN_AI] RateLimit exceed, 第{}次重试".format(retry_count+1))
-                return self.reply_text(query, user_id, retry_count+1)
-            else:
-                return 0,0, "提问太快啦，请休息一下再问我吧"
         except Exception as e:
-            # unknown exception
-            logger.exception(e)
-            self.sessions.clear_session(user_id)
-            return 0,0, "请再问我一次吧"
+            need_retry = retry_count < 2
+            result = [0,0,"我现在有点累了，等会再来吧"]
+            if isinstance(e, openai.error.RateLimitError):
+                logger.warn("[OPEN_AI] RateLimitError: {}".format(e))
+                result[2] = "提问太快啦，请休息一下再问我吧"
+                if need_retry:
+                    time.sleep(5)
+            elif isinstance(e, openai.error.Timeout):
+                logger.warn("[OPEN_AI] Timeout: {}".format(e))
+                result[2] = "我没有收到你的消息"
+                if need_retry:
+                    time.sleep(5)
+            elif isinstance(e, openai.error.APIConnectionError):
+                logger.warn("[OPEN_AI] APIConnectionError: {}".format(e))
+                need_retry = False
+                result[2] = "我连接不到你的网络"
+            else:
+                logger.warn("[OPEN_AI] Exception: {}".format(e))
+                need_retry = False
+                self.sessions.clear_session(session_id)
+
+            if need_retry:
+                logger.warn("[OPEN_AI] 第{}次重试".format(retry_count+1))
+                return self.reply_text(query, session_id, retry_count+1)
+            else:
+                return result
