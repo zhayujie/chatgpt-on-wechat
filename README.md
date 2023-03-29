@@ -80,9 +80,15 @@ cd chatgpt-on-wechat/
 pip3 install -r requirements.txt
 ```
 
+其中`tiktoken`要求`python`版本在3.8以上，它用于精确计算会话使用的tokens数量，可以不装但建议安装。
+
 **(3) 拓展依赖 (可选)：**
 
-语音识别及语音回复功能需安装`ffmpeg`，参考[#415](https://github.com/zhayujie/chatgpt-on-wechat/issues/415)
+使用`google`或`baidu`语音识别需安装`ffmpeg`，
+
+默认的`openai`语音识别不需要安装`ffmpeg`。
+
+参考[#415](https://github.com/zhayujie/chatgpt-on-wechat/issues/415)
 
 ## 配置
 
