@@ -1,4 +1,4 @@
-FROM python:3.7.9-alpine
+FROM python:3.10-alpine
 
 LABEL maintainer="foo@bar.com"
 ARG TZ='Asia/Shanghai'
@@ -22,9 +22,7 @@ RUN apk add --no-cache \
     && cd ${BUILD_PREFIX} \
     && cp config-template.json ${BUILD_PREFIX}/config.json \
     && /usr/local/bin/python -m pip install --no-cache --upgrade pip \
-    && pip install --no-cache   \
-        itchat-uos==1.5.0.dev0  \
-        openai                  \
+    && pip install --no-cache -r requirements.txt \
     && apk del curl wget
 
 WORKDIR ${BUILD_PREFIX}
