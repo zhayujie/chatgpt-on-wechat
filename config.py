@@ -74,11 +74,14 @@ available_setting = {
     # wechaty的配置
     "wechaty_puppet_service_token": "",  # wechaty的token
 
+    # wechatmp的配置
+    "wechatmp_token": "",  # 微信公众平台的Token
+
     # chatgpt指令自定义触发词
     "clear_memory_commands": ['#清除记忆'],  # 重置会话指令
 
     # channel配置
-    "channel_type": "wx", # 通道类型，支持wx,wxy和terminal
+    "channel_type": "wx", # 通道类型，支持：{wx,wxy,terminal,wechatmp}
 
 
 }
