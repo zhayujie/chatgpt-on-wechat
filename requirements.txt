@@ -15,3 +15,4 @@ wechaty>=0.10.7
 wechaty_puppet>=0.4.23
 chardet>=5.1.0
 chatgpt_tool_hub>=0.1.9
+ffmpeg
