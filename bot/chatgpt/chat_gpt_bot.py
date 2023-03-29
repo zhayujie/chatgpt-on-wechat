@@ -31,7 +31,7 @@ class ChatGPTBot(Bot,OpenAIImage):
     def reply(self, query, context=None):
         # acquire reply content
         if context.type == ContextType.TEXT:
-            logger.info("[OPEN_AI] query={}".format(query))
+            logger.info("[CHATGPT] query={}".format(query))
 
             session_id = context['session_id']
             reply = None
@@ -48,14 +48,14 @@ class ChatGPTBot(Bot,OpenAIImage):
             if reply:
                 return reply
             session = self.sessions.session_query(query, session_id)
-            logger.debug("[OPEN_AI] session query={}".format(session.messages))
+            logger.debug("[CHATGPT] session query={}".format(session.messages))
 
             # if context.get('stream'):
             #     # reply in stream
             #     return self.reply_text_stream(query, new_query, session_id)
 
             reply_content = self.reply_text(session, session_id, 0)
-            logger.debug("[OPEN_AI] new_query={}, session_id={}, reply_cont={}, completion_tokens={}".format(session.messages, session_id, reply_content["content"], reply_content["completion_tokens"]))
+            logger.debug("[CHATGPT] new_query={}, session_id={}, reply_cont={}, completion_tokens={}".format(session.messages, session_id, reply_content["content"], reply_content["completion_tokens"]))
             if reply_content['completion_tokens'] == 0 and len(reply_content['content']) > 0:
                 reply = Reply(ReplyType.ERROR, reply_content['content'])
             elif reply_content["completion_tokens"] > 0:
@@ -63,7 +63,7 @@ class ChatGPTBot(Bot,OpenAIImage):
                 reply = Reply(ReplyType.TEXT, reply_content["content"])
             else:
                 reply = Reply(ReplyType.ERROR, reply_content['content'])
-                logger.debug("[OPEN_AI] reply {} used 0 tokens.".format(reply_content))
+                logger.debug("[CHATGPT] reply {} used 0 tokens.".format(reply_content))
             return reply
 
         elif context.type == ContextType.IMAGE_CREATE:
@@ -98,7 +98,7 @@ class ChatGPTBot(Bot,OpenAIImage):
         '''
         try:
             if conf().get('rate_limit_chatgpt') and not self.tb4chatgpt.get_token():
-                return {"completion_tokens": 0, "content": "提问太快啦，请休息一下再问我吧"}
+                raise openai.error.RateLimitError("RateLimitError: rate limit exceeded")
             response = openai.ChatCompletion.create(
                 messages=session.messages, **self.compose_args()
             )
@@ -106,29 +106,33 @@ class ChatGPTBot(Bot,OpenAIImage):
             return {"total_tokens": response["usage"]["total_tokens"],
                     "completion_tokens": response["usage"]["completion_tokens"],
                     "content": response.choices[0]['message']['content']}
-        except openai.error.RateLimitError as e:
-            # rate limit exception
-            logger.warn(e)
-            if retry_count < 1:
-                time.sleep(5)
-                logger.warn("[OPEN_AI] RateLimit exceed, 第{}次重试".format(retry_count+1))
+        except Exception as e:
+            need_retry = retry_count < 2
+            result = {"completion_tokens": 0, "content": "我现在有点累了，等会再来吧"}
+            if isinstance(e, openai.error.RateLimitError):
+                logger.warn("[CHATGPT] RateLimitError: {}".format(e))
+                result['content'] = "提问太快啦，请休息一下再问我吧"
+                if need_retry:
+                    time.sleep(5)
+            elif isinstance(e, openai.error.Timeout):
+                logger.warn("[CHATGPT] Timeout: {}".format(e))
+                result['content'] = "我没有收到你的消息"
+                if need_retry:
+                    time.sleep(5)
+            elif isinstance(e, openai.error.APIConnectionError):
+                logger.warn("[CHATGPT] APIConnectionError: {}".format(e))
+                need_retry = False
+                result['content'] = "我连接不到你的网络"
+            else:
+                logger.warn("[CHATGPT] Exception: {}".format(e))
+                need_retry = False
+                self.sessions.clear_session(session_id)
+
+            if need_retry:
+                logger.warn("[CHATGPT] 第{}次重试".format(retry_count+1))
                 return self.reply_text(session, session_id, retry_count+1)
             else:
-                return {"completion_tokens": 0, "content": "提问太快啦，请休息一下再问我吧"}
-        except openai.error.APIConnectionError as e:
-            # api connection exception
-            logger.warn(e)
-            logger.warn("[OPEN_AI] APIConnection failed")
-            return {"completion_tokens": 0, "content": "我连接不到你的网络"}
-        except openai.error.Timeout as e:
-            logger.warn(e)
-            logger.warn("[OPEN_AI] Timeout")
-            return {"completion_tokens": 0, "content": "我没有收到你的消息"}
-        except Exception as e:
-            # unknown exception
-            logger.exception(e)
-            self.sessions.clear_session(session_id)
-            return {"completion_tokens": 0, "content": "请再问我一次吧"}
+                return result
 
 
 class AzureChatGPTBot(ChatGPTBot):
