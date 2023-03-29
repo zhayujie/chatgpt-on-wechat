@@ -11,21 +11,8 @@ from common.log import logger
 class ChatGPTSession(Session):
     def __init__(self, session_id, system_prompt=None, model= "gpt-3.5-turbo"):
         super().__init__(session_id, system_prompt)
-        self.messages = []
         self.model = model
         self.reset()
-    
-    def reset(self):
-        system_item = {'role': 'system', 'content': self.system_prompt}
-        self.messages = [system_item]
-
-    def add_query(self, query):
-        user_item = {'role': 'user', 'content': query}
-        self.messages.append(user_item)
-
-    def add_reply(self, reply):
-        assistant_item = {'role': 'assistant', 'content': reply}
-        self.messages.append(assistant_item)
     
     def discard_exceeding(self, max_tokens, cur_tokens= None):
         precise = True
