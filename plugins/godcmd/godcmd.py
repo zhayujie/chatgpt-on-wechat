@@ -29,6 +29,15 @@ COMMANDS = {
         "args": ["口令"],
         "desc": "管理员认证",
     },
+    "set_openai_api_key": {
+        "alias": ["set_openai_api_key"],
+        "args": ["api_key"],
+        "desc": "设置你的OpenAI私有api_key",
+    },
+    "reset_openai_api_key": {
+        "alias": ["reset_openai_api_key"],
+        "desc": "重置为默认的api_key",
+    },
     # "id": {
     #     "alias": ["id", "用户"],
     #     "desc": "获取用户id", #目前无实际意义
@@ -99,7 +108,7 @@ def get_help_text(isadmin, isgroup):
         alias=["#"+a for a in info['alias']]
         help_text += f"{','.join(alias)} "
         if 'args' in info:
-            args=["{"+a+"}" for a in info['args']]
+            args=["'"+a+"'" for a in info['args']]
             help_text += f"{' '.join(args)} "
         help_text += f": {info['desc']}\n"
 
@@ -162,7 +171,7 @@ class Godcmd(Plugin):
             bottype = Bridge().get_bot_type("chat")
             bot = Bridge().get_bot("chat")
             # 将命令和参数分割
-            command_parts = content[1:].split(" ")
+            command_parts = content[1:].strip().split(" ")
             cmd = command_parts[0]
             args = command_parts[1:]
             isadmin=False
@@ -184,6 +193,22 @@ class Godcmd(Plugin):
                             ok, result = True, PluginManager().instances[name].get_help_text(verbose=True)
                         else:
                             ok, result = False, "unknown args"
+                elif cmd == "set_openai_api_key":
+                    if len(args) == 1:
+                        import redis
+                        R = redis.Redis(host='localhost', port=6379, db=0)
+                        user_openai_api_key = "openai_api_key_" + user
+                        R.set(user_openai_api_key, args[0])
+                        # R.sadd("openai_api_key", args[0])
+                        ok, result = True, "你的OpenAI私有api_key已设置为" + args[0]
+                    else:
+                        ok, result = False, "请提供一个api_key"
+                elif cmd == "reset_openai_api_key":
+                    import redis
+                    R = redis.Redis(host='localhost', port=6379, db=0)
+                    user_openai_api_key = "openai_api_key_" + user
+                    R.delete(user_openai_api_key)
+                    ok, result = True, "OpenAI的api_key已重置"
                 # elif cmd == "helpp":
                 #     if len(args) != 1:
                 #         ok, result = False, "请提供插件名"

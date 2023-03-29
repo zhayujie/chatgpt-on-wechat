@@ -13,6 +13,7 @@ from bridge.reply import *
 from bridge.context import *
 from plugins import *
 import traceback
+import redis
 
 class WechatMPServer():
     def __init__(self):
@@ -82,7 +83,6 @@ class WechatMPChannel(Channel):
         global cache_dict
         try:
             reply = Reply()
-
             logger.debug('[wechatmp] ready to handle context: {}'.format(context))
 
             # reply的构建步骤
@@ -134,6 +134,8 @@ class WechatMPChannel(Channel):
                     self.send(reply, context['receiver'])
             else:
                 cache_dict[context['receiver']] = (1, "No reply")
+
+            logger.info("[threaded] Get reply for {}: {} \nA: {}".format(context['receiver'], context.content, reply.content))
         except Exception as exc:
             print(traceback.format_exc())
             cache_dict[context['receiver']] = (1, "ERROR")
@@ -171,6 +173,14 @@ class WechatMPChannel(Channel):
 
                     context = Context()
                     context.kwargs = {'isgroup': False, 'receiver': fromUser, 'session_id': fromUser}
+
+                    R = redis.Redis(host='localhost', port=6379, db=0)
+                    user_openai_api_key = "openai_api_key_" + fromUser
+                    api_key = R.get(user_openai_api_key)
+                    if api_key != None:
+                        api_key = api_key.decode("utf-8")
+                    context['openai_api_key'] = api_key # None or user openai_api_key
+
                     img_match_prefix = check_prefix(message, conf().get('image_create_prefix'))
                     if img_match_prefix:
                         message = message.replace(img_match_prefix, '', 1).strip()
@@ -240,7 +250,7 @@ class WechatMPChannel(Channel):
                     if cnt == 45:
                         # Have waiting for 3x5 seconds
                         # return timeout message
-                        reply_text = "【服务器有点忙，回复任意文字再次尝试】"
+                        reply_text = "【正在响应中，回复任意文字尝试获取回复】"
                         logger.info("[wechatmp] Three queries has finished For {}: {}".format(fromUser, message_id))
                         replyPost = reply.TextMsg(fromUser, toUser, reply_text).send()
                         return replyPost
