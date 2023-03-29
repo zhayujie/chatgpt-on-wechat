@@ -76,7 +76,7 @@ class Tool(Plugin):
 
                 # Don't modify bot name
                 all_sessions = Bridge().get_bot("chat").sessions
-                user_session = all_sessions.session_query(query, e_context['context']['session_id'])
+                user_session = all_sessions.session_query(query, e_context['context']['session_id']).messages
 
                 # chatgpt-tool-hub will reply you with many tools
                 logger.debug("[tool]: just-go")
