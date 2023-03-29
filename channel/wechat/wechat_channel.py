@@ -297,9 +297,6 @@ class WechatChannel(Channel):
                         match_prefix = check_prefix(content, conf().get('single_chat_prefix'))  
                         if match_prefix: # 判断如果匹配到自定义前缀，则返回过滤掉前缀+空格后的内容
                             content = content.replace(match_prefix, '', 1).strip()
-                        else:
-                            logger.info("[WX]receive voice, checkprefix didn't match")
-                            return
                                                
                     img_match_prefix = check_prefix(content, conf().get('image_create_prefix'))
                     if img_match_prefix:
