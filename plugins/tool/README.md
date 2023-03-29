@@ -1,5 +1,6 @@
 ## 插件描述
-一个能让chatgpt联网，搜索，数字运算的插件，将赋予强大且丰富的扩展能力  
+一个能让chatgpt联网，搜索，数字运算的插件，将赋予强大且丰富的扩展能力   
+使用该插件需在对话内容前加$tool  
 ### 本插件所有工具同步存放至专用仓库：[chatgpt-tool-hub](https://github.com/goldfishh/chatgpt-tool-hub)
   
   

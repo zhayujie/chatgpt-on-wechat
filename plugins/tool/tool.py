@@ -5,14 +5,16 @@ from chatgpt_tool_hub.apps import load_app
 from chatgpt_tool_hub.apps.app import App
 
 import plugins
+from bridge.bridge import Bridge
 from bridge.context import ContextType
 from bridge.reply import Reply, ReplyType
+from common import const
 from common.log import logger
 from config import conf
 from plugins import *
 
 
-@plugins.register(name="tool", desc="Arming your ChatGPT bot with various tools", version="0.1", author="goldfishh", desire_priority=0)
+@plugins.register(name="tool", desc="Arming your ChatGPT bot with various tools", version="0.2", author="goldfishh", desire_priority=0)
 class Tool(Plugin):
     def __init__(self):
         super().__init__()
@@ -30,6 +32,10 @@ class Tool(Plugin):
 
     def on_handle_context(self, e_context: EventContext):
         if e_context['context'].type != ContextType.TEXT:
+            return
+
+        # 暂时不支持未来扩展的bot
+        if Bridge().get_bot_type("chat") not in (const.CHATGPT, const.OPEN_AI, const.CHATGPTONAZURE):
             return
 
         content = e_context['context'].content
@@ -54,24 +60,39 @@ class Tool(Plugin):
             elif len(content_list) > 1:
                 if content_list[1].strip() == "reset":
                     logger.debug("[tool]: reset config")
-                    self._reset_app()
+                    self.app = self._reset_app()
                     reply.content = "重置工具成功"
                     e_context['reply'] = reply
                     e_context.action = EventAction.BREAK_PASS
                     return
                 elif content_list[1].startswith("reset"):
                     logger.debug("[tool]: remind")
-                    reply.content = "你随机挑一个方式，提醒用户如果想重置tool插件，reset之后不要加任何字符"
+                    reply.content = "请你随机用一种聊天风格，提醒用户：如果想重置tool插件，reset之后不要加任何字符"
                     e_context['reply'] = reply
                     e_context.action = EventAction.BREAK
                     return
-                logger.debug("[tool]: just-go")
+
+                query = content_list[1].strip()
+
+                # Don't modify bot name
+                all_sessions = Bridge().get_bot("chat").sessions
+                user_session = all_sessions.session_query(query, e_context['context']['session_id'])
 
                 # chatgpt-tool-hub will reply you with many tools
-                # todo: I don't know how to pass someone session into this ask method yet
-                reply.content = self.app.ask(content_list[1])
+                logger.debug("[tool]: just-go")
+                try:
+                    _reply = self.app.ask(content_list[1], user_session)
+                    e_context.action = EventAction.BREAK_PASS
+                except ValueError as e:
+                    logger.exception(e)
+                    logger.error(str(e))
+
+                    _reply = "请你随机用一种聊天风格，提醒用户：这个问题你无法处理"
+                    reply.type = ReplyType.ERROR
+                    e_context.action = EventAction.BREAK
+                reply.content = _reply
+
                 e_context['reply'] = reply
-                e_context.action = EventAction.BREAK_PASS
         return
 
     def _read_json(self) -> dict:
