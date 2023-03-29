@@ -55,6 +55,6 @@ jobs:
         with: 
           package-name: 'chatgpt-on-wechat'
           package-type: 'container'
-          min-versions-to-keep: 2
+          min-versions-to-keep: 10
           delete-only-untagged-versions: 'true'
           token: ${{ secrets.GITHUB_TOKEN }}
