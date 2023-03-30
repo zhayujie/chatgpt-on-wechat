@@ -88,9 +88,10 @@ class Tool(Plugin):
                     logger.exception(e)
                     logger.error(str(e))
 
-                    _reply = "请你随机用一种聊天风格，提醒用户：这个问题你无法处理"
+                    e_context['context'].content = "这个问题tool插件暂时无法处理"
                     reply.type = ReplyType.ERROR
-                    e_context.action = EventAction.BREAK
+                    e_context.action = EventAction.CONTINUE
+                    return
 
                 reply.content = _reply
                 e_context['reply'] = reply
