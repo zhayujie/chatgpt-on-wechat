@@ -83,6 +83,7 @@ class Tool(Plugin):
                 try:
                     _reply = self.app.ask(query, user_session)
                     e_context.action = EventAction.BREAK_PASS
+                    all_sessions.session_reply(_reply, e_context['context']['session_id'])
                 except ValueError as e:
                     logger.exception(e)
                     logger.error(str(e))
@@ -90,8 +91,8 @@ class Tool(Plugin):
                     _reply = "请你随机用一种聊天风格，提醒用户：这个问题你无法处理"
                     reply.type = ReplyType.ERROR
                     e_context.action = EventAction.BREAK
-                reply.content = _reply
 
+                reply.content = _reply
                 e_context['reply'] = reply
         return
 
