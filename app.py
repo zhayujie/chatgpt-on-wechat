@@ -1,5 +1,5 @@
 # encoding:utf-8
-
+import sys
 from config import conf, load_config
 from channel import channel_factory
 from common.log import logger
@@ -10,9 +10,12 @@ def run():
     try:
         # load config
         load_config()
-
+        print(sys.argv);
+        name = 'wx'
+        if len(sys.argv) > 1:
+            name = sys.argv[1]
         # create channel
-        channel_name=conf().get('channel_type', 'wx')
+        channel_name=conf().get('channel_type', name)
         channel = channel_factory.create_channel(channel_name)
         if channel_name=='wx':
             PluginManager().load_plugins()

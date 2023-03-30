@@ -3,6 +3,7 @@
 .wechaty/
 __pycache__/
 venv*
+venv/
 *.pyc
 config.json
 QR.png

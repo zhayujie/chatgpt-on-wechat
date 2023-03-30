@@ -14,3 +14,4 @@ wechaty_puppet>=0.4.23
 chardet>=5.1.0
 SpeechRecognition
 tiktoken>=0.3.2
+urllib3==1.25.11
