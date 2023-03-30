@@ -62,3 +62,21 @@ class ChatMessage(object):
         if self._prepare_fn and not self._prepared:
             self._prepared = True
             self._prepare_fn()
+
+    def __str__(self):
+        return 'ChatMessage: id={}, create_time={}, ctype={}, content={}, from_user_id={}, from_user_nickname={}, to_user_id={}, to_user_nickname={}, other_user_id={}, other_user_nickname={}, is_group={}, is_at={}, actual_user_id={}, actual_user_nickname={}'.format(
+            self.msg_id,
+            self.create_time,
+            self.ctype,
+            self.content,
+            self.from_user_id,
+            self.from_user_nickname,
+            self.to_user_id,
+            self.to_user_nickname,
+            self.other_user_id,
+            self.other_user_nickname,
+            self.is_group,
+            self.is_at,
+            self.actual_user_id,
+            self.actual_user_nickname,
+        )
