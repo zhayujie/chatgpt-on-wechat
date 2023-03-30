@@ -65,7 +65,6 @@ def _check(func):
         if conf().get('hot_reload') == True and int(create_time) < int(time.time()) - 60:  # 跳过1分钟前的历史消息
             logger.debug("[WX]history message {} skipped".format(msgId))
             return
-        print(create_time)
         return func(self, msg)
     return wrapper
 
@@ -332,6 +331,8 @@ class WechatChannel(Channel):
                         ContextType.TEXT, reply.content, **context.kwargs)
                     if new_context:
                         reply = self._generate_reply(new_context)
+                    else:
+                        return
             else:
                 logger.error('[WX] unknown context type: {}'.format(context.type))
                 return
