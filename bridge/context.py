@@ -14,6 +14,15 @@ class Context:
         self.type = type
         self.content = content
         self.kwargs = kwargs
+
+    def __contains__(self, key):
+        if key == 'type':
+            return self.type is not None
+        elif key == 'content':
+            return self.content is not None
+        else:
+            return key in self.kwargs
+        
     def __getitem__(self, key):
         if key == 'type':
             return self.type
@@ -21,6 +30,12 @@ class Context:
             return self.content
         else:
             return self.kwargs[key]
+    
+    def get(self, key, default=None):
+        try:
+            return self[key]
+        except KeyError:
+            return default
 
     def __setitem__(self, key, value):
         if key == 'type':
