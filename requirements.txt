@@ -14,4 +14,4 @@ wechaty_puppet>=0.4.23
 chardet>=5.1.0
 SpeechRecognition
 tiktoken>=0.3.2
-chatgpt_tool_hub>=0.2.3
+chatgpt_tool_hub>=0.2.5
