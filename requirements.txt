@@ -8,9 +8,9 @@ pysilk>=0.0.1
 pysilk_mod>=1.6.0
 pyttsx3>=2.90
 requests>=2.28.2
-SpeechRecognition>=3.10.0
-tiktoken>=0.3.2
 webuiapi>=0.6.2
 wechaty>=0.10.7
 wechaty_puppet>=0.4.23
 chardet>=5.1.0
+SpeechRecognition
+tiktoken>=0.3.2

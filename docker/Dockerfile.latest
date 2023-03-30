@@ -1,4 +1,4 @@
-FROM python:3.7.9-alpine
+FROM python:3.10-alpine
 
 LABEL maintainer="foo@bar.com"
 ARG TZ='Asia/Shanghai'
@@ -7,22 +7,17 @@ ARG CHATGPT_ON_WECHAT_VER
 
 ENV BUILD_PREFIX=/app
 
-COPY chatgpt-on-wechat.tar.gz ./chatgpt-on-wechat.tar.gz
+ADD . ${BUILD_PREFIX}
 
-RUN apk add --no-cache \
-        bash \
-    && tar -xf chatgpt-on-wechat.tar.gz \
-    && mv chatgpt-on-wechat ${BUILD_PREFIX} \
+RUN apk add --no-cache bash ffmpeg espeak \
     && cd ${BUILD_PREFIX} \
-    && cp config-template.json ${BUILD_PREFIX}/config.json \
+    && cp config-template.json config.json \
     && /usr/local/bin/python -m pip install --no-cache --upgrade pip \
-    && pip install --no-cache   \
-        itchat-uos==1.5.0.dev0  \
-        openai 
+    && pip install --no-cache -r requirements.txt
 
 WORKDIR ${BUILD_PREFIX}
 
-ADD ./entrypoint.sh /entrypoint.sh
+ADD docker/entrypoint.sh /entrypoint.sh
 
 RUN chmod +x /entrypoint.sh \
     && adduser -D -h /home/noroot -u 1000 -s /bin/bash noroot \
@@ -30,4 +25,4 @@ RUN chmod +x /entrypoint.sh \
 
 USER noroot
 
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["docker/entrypoint.sh"]

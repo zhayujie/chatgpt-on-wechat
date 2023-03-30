@@ -225,30 +225,36 @@ class WechatChannel(Channel):
             thread_pool.submit(self.handle, context).add_done_callback(thread_pool_callback)
 
     # 统一的发送函数，每个Channel自行实现，根据reply的type字段发送不同类型的消息
-    def send(self, reply: Reply, receiver):
-        if reply.type == ReplyType.TEXT:
-            itchat.send(reply.content, toUserName=receiver)
-            logger.info('[WX] sendMsg={}, receiver={}'.format(reply, receiver))
-        elif reply.type == ReplyType.ERROR or reply.type == ReplyType.INFO:
-            itchat.send(reply.content, toUserName=receiver)
-            logger.info('[WX] sendMsg={}, receiver={}'.format(reply, receiver))
-        elif reply.type == ReplyType.VOICE:
-            itchat.send_file(reply.content, toUserName=receiver)
-            logger.info('[WX] sendFile={}, receiver={}'.format(reply.content, receiver))
-        elif reply.type == ReplyType.IMAGE_URL: # 从网络下载图片
-            img_url = reply.content
-            pic_res = requests.get(img_url, stream=True)
-            image_storage = io.BytesIO()
-            for block in pic_res.iter_content(1024):
-                image_storage.write(block)
-            image_storage.seek(0)
-            itchat.send_image(image_storage, toUserName=receiver)
-            logger.info('[WX] sendImage url={}, receiver={}'.format(img_url,receiver))
-        elif reply.type == ReplyType.IMAGE: # 从文件读取图片
-            image_storage = reply.content
-            image_storage.seek(0)
-            itchat.send_image(image_storage, toUserName=receiver)
-            logger.info('[WX] sendImage, receiver={}'.format(receiver))
+    def send(self, reply: Reply, receiver, retry_cnt = 0):
+        try:
+            if reply.type == ReplyType.TEXT:
+                itchat.send(reply.content, toUserName=receiver)
+                logger.info('[WX] sendMsg={}, receiver={}'.format(reply, receiver))
+            elif reply.type == ReplyType.ERROR or reply.type == ReplyType.INFO:
+                itchat.send(reply.content, toUserName=receiver)
+                logger.info('[WX] sendMsg={}, receiver={}'.format(reply, receiver))
+            elif reply.type == ReplyType.VOICE:
+                itchat.send_file(reply.content, toUserName=receiver)
+                logger.info('[WX] sendFile={}, receiver={}'.format(reply.content, receiver))
+            elif reply.type == ReplyType.IMAGE_URL: # 从网络下载图片
+                img_url = reply.content
+                pic_res = requests.get(img_url, stream=True)
+                image_storage = io.BytesIO()
+                for block in pic_res.iter_content(1024):
+                    image_storage.write(block)
+                image_storage.seek(0)
+                itchat.send_image(image_storage, toUserName=receiver)
+                logger.info('[WX] sendImage url={}, receiver={}'.format(img_url,receiver))
+            elif reply.type == ReplyType.IMAGE: # 从文件读取图片
+                image_storage = reply.content
+                image_storage.seek(0)
+                itchat.send_image(image_storage, toUserName=receiver)
+                logger.info('[WX] sendImage, receiver={}'.format(receiver))
+        except Exception as e:
+            logger.error('[WX] sendMsg error: {}, receiver={}'.format(e, receiver))
+            if retry_cnt < 2:
+                time.sleep(3+3*retry_cnt)
+                self.send(reply, receiver, retry_cnt + 1)
 
     # 处理消息 TODO: 如果wechaty解耦，此处逻辑可以放置到父类
     def handle(self, context):
@@ -273,12 +279,20 @@ class WechatChannel(Channel):
                 msg.download(mp3_path)
                 # mp3转wav
                 wav_path = os.path.splitext(mp3_path)[0] + '.wav'
-                mp3_to_wav(mp3_path=mp3_path, wav_path=wav_path)
+                try:
+                    mp3_to_wav(mp3_path=mp3_path, wav_path=wav_path)
+                except Exception as e: # 转换失败，直接使用mp3，对于某些api，mp3也可以识别
+                    logger.warning("[WX]mp3 to wav error, use mp3 path. " + str(e))
+                    wav_path = mp3_path
                 # 语音识别
                 reply = super().build_voice_to_text(wav_path)
                 # 删除临时文件
-                os.remove(wav_path)
-                os.remove(mp3_path)
+                try:
+                    os.remove(wav_path)
+                    os.remove(mp3_path)
+                except Exception as e:
+                    logger.warning("[WX]delete temp file error: " + str(e))
+
                 if reply.type != ReplyType.ERROR and reply.type != ReplyType.INFO:
                     content = reply.content  # 语音转文字后，将文字内容作为新的context
                     context.type = ContextType.TEXT
