@@ -18,14 +18,16 @@ https://ai.baidu.com/ai-doc/SPEECH/Vk38lxily
 https://ai.baidu.com/ai-doc/SPEECH/Gk38y8lzk
 
 ## 使用说明
-对于def voiceToText(self, filename)函数中调用的百度语音识别API,中接口调用asr（参数）
+分两个地方配置
+
+1、对于def voiceToText(self, filename)函数中调用的百度语音识别API,中接口调用asr（参数）这个配置见CHATGPT-ON-WECHAT工程目录下的`config.json`文件和config.py文件。
 参数	    可需	描述
 app_id    必填	应用的APPID
 api_key  必填	应用的APIKey
 secret_key  必填	应用的SecretKey
 dev_pid	    必填	语言选择,填写语言对应的dev_pid值
 
-对于def textToVoice(self, text)函数中调用的百度语音合成API,中接口调用synthesis（参数）
+2、对于def textToVoice(self, text)函数中调用的百度语音合成API,中接口调用synthesis（参数）在本目录下的`config.json`文件中进行配置。
 参数	    可需	描述
 tex	        必填	合成的文本，使用UTF-8编码，请注意文本长度必须小于1024字节   
 lan	        必填	固定值zh。语言选择,目前只有中英文混合模式，填写固定值zh
@@ -43,10 +45,6 @@ aue	        选填	3为mp3格式(默认)； 4为pcm-16k；5为pcm-8k；6为wav�
 
 ``` json
     {
-    "app_id":"",
-    "api_key":"",
-    "secret_key":"",
-    "dev_pid":1537,
     "lang": "zh", 
     "ctp": 1,
     "spd": 5, 

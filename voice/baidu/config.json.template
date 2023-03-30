@@ -1,8 +1,4 @@
     {
-    "app_id":"",
-    "api_key":"",
-    "secret_key":"",
-    "dev_pid":1537,        
     "lang": "zh", 
     "ctp": 1,
     "spd": 5, 

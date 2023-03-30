@@ -34,17 +34,8 @@ class BaiduVoice(Voice):
             curdir = os.path.dirname(__file__)
             config_path = os.path.join(curdir, "config.json")
             bconf = None
-            if not os.path.exists(config_path): #如果没有配置文件，就从系统配置文件中读取并创建本地配置文件
-                if conf().get('baidu_app_id'):
-                    self.app_id = conf().get('baidu_app_id')
-                if conf().get('baidu_api_key'):
-                    self.api_key = conf().get('baidu_api_key')
-                if conf().get('baidu_secret_key'):
-                    self.secret_key = conf().get('baidu_secret_key')
-                if conf().get('baidu_dev_pid'):
-                    self.dev_id = conf().get('baidu_dev_pid')
-                bconf = {"app_id": self.app_id, "api_key": self.api_key, "secret_key": self.secret_key,
-                         "dev_pid": self.dev_id, "lang": "zh", "ctp": 1, "spd": 5,
+            if not os.path.exists(config_path): #如果没有配置文件，创建本地配置文件
+                bconf = { "lang": "zh", "ctp": 1, "spd": 5,
                          "pit": 5, "vol": 5, "per": 0}
                 with open(config_path, "w") as fw:
                     json.dump(bconf, fw, indent=4)
@@ -52,10 +43,10 @@ class BaiduVoice(Voice):
                 with open(config_path, "r") as fr:
                     bconf = json.load(fr)
                     
-            self.app_id = bconf["app_id"]
-            self.api_key = bconf["api_key"]
-            self.secret_key = bconf["secret_key"]
-            self.dev_id = bconf["dev_pid"]
+            self.app_id = conf().get('baidu_app_id')
+            self.api_key = conf().get('baidu_api_key')
+            self.secret_key = conf().get('baidu_secret_key')
+            self.dev_id = conf().get('baidu_dev_pid')
             self.lang = bconf["lang"]
             self.ctp = bconf["ctp"]
             self.spd = bconf["spd"]
@@ -67,6 +58,7 @@ class BaiduVoice(Voice):
         except Exception as e:
             logger.warn("BaiduVoice init failed: %s, ignore " % e)
 
+        
     def voiceToText(self, voice_file):
         # 识别本地文件
         logger.debug('[Baidu] voice file name={}'.format(voice_file))
