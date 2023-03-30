@@ -5,9 +5,11 @@ wechat channel
 """
 
 import os
+import re
 import requests
 import io
 import time
+from common.singleton import singleton
 from lib import itchat
 import json
 from lib.itchat.content import *
@@ -68,11 +70,11 @@ def _check(func):
         return func(self, msg)
     return wrapper
 
-
+@singleton
 class WechatChannel(Channel):
     def __init__(self):
-        self.userName = None
-        self.nickName = None
+        self.user_id = None
+        self.name = None
         self.receivedMsgs = ExpiredDict(60*60*24) 
 
     def startup(self):
@@ -90,9 +92,9 @@ class WechatChannel(Channel):
                 itchat.auto_login(enableCmdQR=2, hotReload=hotReload)
             else:
                 raise e
-        self.userName = itchat.instance.storageClass.userName
-        self.nickName = itchat.instance.storageClass.nickName
-        logger.info("Wechat login success, username: {}, nickname: {}".format(self.userName, self.nickName))
+        self.user_id = itchat.instance.storageClass.userName
+        self.name = itchat.instance.storageClass.nickName
+        logger.info("Wechat login success, user_id: {}, nickname: {}".format(self.user_id, self.name))
         # start message listener
         itchat.run()
 
@@ -160,17 +162,12 @@ class WechatChannel(Channel):
         group_id = msg['User'].get('UserName', None)
         if not group_name:
             return ""
-        origin_content = msg['Content']
-        content = msg['Content']
-        content_list = content.split(' ', 1)
-        context_special_list = content.split('\u2005', 1)
-        if len(context_special_list) == 2:
-            content = context_special_list[1]
-        elif len(content_list) == 2:
-            content = content_list[1]
+        content = msg.content
         if "」\n- - - - - - - - - - - - - - -" in content:
             logger.debug("[WX]reference query skipped")
             return ""
+        pattern = f'@{self.name}(\u2005|\u0020)'
+        content = re.sub(pattern, r'', content)
 
         config = conf()
         group_name_white_list = config.get('group_name_white_list', [])
