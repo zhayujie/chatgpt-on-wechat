@@ -105,8 +105,8 @@ class WechatChannel(Channel):
     #        isgroup: 是否是群聊
     #        receiver: 需要回复的对象
     #        msg: itchat的原始消息对象
-    #        origin_ctype: 原始消息类型，用于私聊语音消息时，避免匹配前缀
-    #        desire_rtype: 希望回复类型，TEXT类型是文本回复，VOICE类型是语音回复
+    #        origin_ctype: 原始消息类型，语音转文字后，私聊时如果匹配前缀失败，会根据初始消息是否是语音来放宽触发规则
+    #        desire_rtype: 希望回复类型，默认是文本回复，设置为ReplyType.VOICE是语音回复
 
     @time_checker
     @_check
@@ -209,6 +209,7 @@ class WechatChannel(Channel):
             if context:
                 thread_pool.submit(self.handle, context).add_done_callback(thread_pool_callback)
 
+    # 根据消息构造context，消息内容相关的触发项写在这里
     def _compose_context(self, ctype: ContextType, content, **kwargs):
         context = Context(ctype, content)
         context.kwargs = kwargs
@@ -233,9 +234,9 @@ class WechatChannel(Channel):
                     return None
             else: # 单聊
                 match_prefix = check_prefix(content, conf().get('single_chat_prefix'))  
-                if match_prefix: # 判断如果匹配到自定义前缀，则返回过滤掉前缀+空格后的内容
+                if match_prefix is not None: # 判断如果匹配到自定义前缀，则返回过滤掉前缀+空格后的内容
                     content = content.replace(match_prefix, '', 1).strip()
-                elif context["origin_ctype"] == ContextType.VOICE: # 如果源消息是私聊的语音消息，不匹配前缀，直接返回
+                elif context["origin_ctype"] == ContextType.VOICE: # 如果源消息是私聊的语音消息，允许不匹配前缀，放宽条件
                     pass
                 else:
                     return None                                       
