@@ -19,6 +19,7 @@ from common.log import logger
 from common.tmp_dir import TmpDir
 from config import conf
 from common.time_check import time_checker
+from common.expired_dict import ExpiredDict
 from plugins import *
 try:
     from voice.audio_convert import mp3_to_wav
@@ -53,12 +54,27 @@ def handler_group_voice(msg):
     WechatChannel().handle_group_voice(msg)
     return None
 
+def _check(func):
+    def wrapper(self, msg):
+        msgId = msg['MsgId']
+        if msgId in self.receivedMsgs:
+            logger.info("Wechat message {} already received, ignore".format(msgId))
+            return
+        self.receivedMsgs[msgId] = msg
+        create_time = msg['CreateTime']             # 消息时间
+        if conf().get('hot_reload') == True and int(create_time) < int(time.time()) - 60:  # 跳过1分钟前的历史消息
+            logger.debug("[WX]history message {} skipped".format(msgId))
+            return
+        print(create_time)
+        return func(self, msg)
+    return wrapper
 
 
 class WechatChannel(Channel):
     def __init__(self):
         self.userName = None
         self.nickName = None
+        self.receivedMsgs = ExpiredDict(60*60*24) 
 
     def startup(self):
 
@@ -93,6 +109,8 @@ class WechatChannel(Channel):
     #        origin_ctype: 原始消息类型，用于私聊语音消息时，避免匹配前缀
     #        desire_rtype: 希望回复类型，TEXT类型是文本回复，VOICE类型是语音回复
 
+    @time_checker
+    @_check
     def handle_voice(self, msg):
         if conf().get('speech_recognition') != True:
             return
@@ -113,6 +131,7 @@ class WechatChannel(Channel):
                 thread_pool.submit(self.handle, context).add_done_callback(thread_pool_callback)
 
     @time_checker
+    @_check
     def handle_text(self, msg):
         logger.debug("[WX]receive text msg: " + json.dumps(msg, ensure_ascii=False))
         content = msg['Text']
@@ -126,10 +145,6 @@ class WechatChannel(Channel):
                 other_user_id = to_user_id
             else:
                 other_user_id = from_user_id
-        create_time = msg['CreateTime']             # 消息时间
-        if conf().get('hot_reload') == True and int(create_time) < int(time.time()) - 60:  # 跳过1分钟前的历史消息
-            logger.debug("[WX]history message skipped")
-            return
         if "」\n- - - - - - - - - - - - - - -" in content:
             logger.debug("[WX]reference query skipped")
             return
@@ -139,14 +154,11 @@ class WechatChannel(Channel):
             thread_pool.submit(self.handle, context).add_done_callback(thread_pool_callback)
 
     @time_checker
+    @_check
     def handle_group(self, msg):
         logger.debug("[WX]receive group msg: " + json.dumps(msg, ensure_ascii=False))
         group_name = msg['User'].get('NickName', None)
         group_id = msg['User'].get('UserName', None)
-        create_time = msg['CreateTime']             # 消息时间
-        if conf().get('hot_reload') == True and int(create_time) < int(time.time()) - 60:  # 跳过1分钟前的历史消息
-            logger.debug("[WX]history group message skipped")
-            return
         if not group_name:
             return ""
         origin_content = msg['Content']
@@ -165,7 +177,7 @@ class WechatChannel(Channel):
         group_name_white_list = config.get('group_name_white_list', [])
         group_name_keyword_white_list = config.get('group_name_keyword_white_list', [])
 
-        if any([group_name in group_name_white_list, 'ALL_GROUP' in group_name_white_list, check_contain(group_name, group_name_keyword_white_list), msg['IsAt'] and not config.get("group_at_off", False)]):
+        if any([group_name in group_name_white_list, 'ALL_GROUP' in group_name_white_list, check_contain(group_name, group_name_keyword_white_list)]):
             group_chat_in_one_session = conf().get('group_chat_in_one_session', [])
             session_id = msg['ActualUserName']
             if any([group_name in group_chat_in_one_session, 'ALL_GROUP' in group_chat_in_one_session]):
@@ -173,17 +185,15 @@ class WechatChannel(Channel):
             context = self._compose_context(ContextType.TEXT, content, isgroup=True, msg=msg, receiver=group_id, session_id=session_id)
             if context:
                 thread_pool.submit(self.handle, context).add_done_callback(thread_pool_callback)
-
+    
+    @time_checker
+    @_check
     def handle_group_voice(self, msg):
         if conf().get('group_speech_recognition', False) != True:
             return
         logger.debug("[WX]receive voice for group msg: " + msg['FileName'])
         group_name = msg['User'].get('NickName', None)
         group_id = msg['User'].get('UserName', None)
-        create_time = msg['CreateTime']             # 消息时间
-        if conf().get('hot_reload') == True and int(create_time) < int(time.time()) - 60:    #跳过1分钟前的历史消息
-            logger.debug("[WX]history group voice skipped")
-            return
         # 验证群名
         if not group_name:
             return ""
@@ -215,8 +225,12 @@ class WechatChannel(Channel):
                     # 判断如果匹配到自定义前缀，则返回过滤掉前缀+空格后的内容，用于实现类似自定义+前缀触发生成AI图片的功能
                     if match_prefix:
                         content = content.replace(match_prefix, '', 1).strip()
+                elif context['msg']['IsAt'] and not conf().get("group_at_off", False):
+                    logger.info("[WX]receive group at, continue")
                 elif context["origin_ctype"] == ContextType.VOICE:
                     logger.info("[WX]receive group voice, checkprefix didn't match")
+                    return None
+                else:
                     return None
             else: # 单聊
                 match_prefix = check_prefix(content, conf().get('single_chat_prefix'))  
