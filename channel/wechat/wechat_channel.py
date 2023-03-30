@@ -9,6 +9,7 @@ import re
 import requests
 import io
 import time
+from channel.wechat.wechat_message import *
 from common.singleton import singleton
 from lib import itchat
 import json
@@ -38,36 +39,36 @@ def thread_pool_callback(worker):
 
 @itchat.msg_register(TEXT)
 def handler_single_msg(msg):
-    WechatChannel().handle_text(msg)
+    WechatChannel().handle_text(WeChatMessage(msg))
     return None
 
 @itchat.msg_register(TEXT, isGroupChat=True)
 def handler_group_msg(msg):
-    WechatChannel().handle_group(msg)
+    WechatChannel().handle_group(WeChatMessage(msg,True))
     return None
 
 @itchat.msg_register(VOICE)
 def handler_single_voice(msg):
-    WechatChannel().handle_voice(msg)
+    WechatChannel().handle_voice(WeChatMessage(msg))
     return None
     
 @itchat.msg_register(VOICE, isGroupChat=True)
 def handler_group_voice(msg):
-    WechatChannel().handle_group_voice(msg)
+    WechatChannel().handle_group_voice(WeChatMessage(msg,True))
     return None
 
 def _check(func):
-    def wrapper(self, msg):
-        msgId = msg['MsgId']
+    def wrapper(self, cmsg: ChatMessage):
+        msgId = cmsg.msg_id
         if msgId in self.receivedMsgs:
             logger.info("Wechat message {} already received, ignore".format(msgId))
             return
-        self.receivedMsgs[msgId] = msg
-        create_time = msg['CreateTime']             # 消息时间
+        self.receivedMsgs[msgId] = cmsg
+        create_time = cmsg.create_time            # 消息时间戳
         if conf().get('hot_reload') == True and int(create_time) < int(time.time()) - 60:  # 跳过1分钟前的历史消息
             logger.debug("[WX]history message {} skipped".format(msgId))
             return
-        return func(self, msg)
+        return func(self, cmsg)
     return wrapper
 
 @singleton
@@ -112,57 +113,40 @@ class WechatChannel(Channel):
 
     @time_checker
     @_check
-    def handle_voice(self, msg):
+    def handle_voice(self, cmsg : ChatMessage):
         if conf().get('speech_recognition') != True:
             return
-        logger.debug("[WX]receive voice msg: " + msg['FileName'])
-        to_user_id = msg['ToUserName']
-        from_user_id = msg['FromUserName']
-        try:
-            other_user_id = msg['User']['UserName']     # 对手方id
-        except Exception as e:
-            logger.warn("[WX]get other_user_id failed: " + str(e))
-            if from_user_id == self.userName:
-                other_user_id = to_user_id
-            else:
-                other_user_id = from_user_id
+        logger.debug("[WX]receive voice msg: {}".format(cmsg.content))
+        from_user_id = cmsg.from_user_id
+        other_user_id = cmsg.other_user_id
         if from_user_id == other_user_id:
-            context = self._compose_context(ContextType.VOICE, msg['FileName'], isgroup=False, msg=msg, receiver=other_user_id, session_id=other_user_id)
+            context = self._compose_context(ContextType.VOICE, cmsg.content, isgroup=False, msg=cmsg, receiver=other_user_id, session_id=other_user_id)
             if context:
                 thread_pool.submit(self.handle, context).add_done_callback(thread_pool_callback)
 
     @time_checker
     @_check
-    def handle_text(self, msg):
-        logger.debug("[WX]receive text msg: " + json.dumps(msg, ensure_ascii=False))
-        content = msg['Text']
-        from_user_id = msg['FromUserName']
-        to_user_id = msg['ToUserName']              # 接收人id
-        try:
-            other_user_id = msg['User']['UserName']     # 对手方id
-        except Exception as e:
-            logger.warn("[WX]get other_user_id failed: " + str(e))
-            if from_user_id == self.userName:
-                other_user_id = to_user_id
-            else:
-                other_user_id = from_user_id
-        if "」\n- - - - - - - - - - - - - - -" in content:
+    def handle_text(self, cmsg : ChatMessage):
+        logger.debug("[WX]receive text msg: " + json.dumps(cmsg._rawmsg, ensure_ascii=False))
+        content = cmsg.content
+        other_user_id = cmsg.other_user_id
+        if "」\n- - - - - - - - - - - - - - -" in cmsg.content:
             logger.debug("[WX]reference query skipped")
             return
         
-        context = self._compose_context(ContextType.TEXT, content, isgroup=False, msg=msg, receiver=other_user_id, session_id=other_user_id)
+        context = self._compose_context(ContextType.TEXT, content, isgroup=False, msg=cmsg, receiver=other_user_id, session_id=other_user_id)
         if context:
             thread_pool.submit(self.handle, context).add_done_callback(thread_pool_callback)
 
     @time_checker
     @_check
-    def handle_group(self, msg):
-        logger.debug("[WX]receive group msg: " + json.dumps(msg, ensure_ascii=False))
-        group_name = msg['User'].get('NickName', None)
-        group_id = msg['User'].get('UserName', None)
+    def handle_group(self, cmsg : ChatMessage):
+        logger.debug("[WX]receive group msg: " + json.dumps(cmsg._rawmsg, ensure_ascii=False))
+        group_name = cmsg.other_user_nickname
+        group_id = cmsg.other_user_id
         if not group_name:
             return ""
-        content = msg.content
+        content = cmsg.content
         if "」\n- - - - - - - - - - - - - - -" in content:
             logger.debug("[WX]reference query skipped")
             return ""
@@ -175,21 +159,22 @@ class WechatChannel(Channel):
 
         if any([group_name in group_name_white_list, 'ALL_GROUP' in group_name_white_list, check_contain(group_name, group_name_keyword_white_list)]):
             group_chat_in_one_session = conf().get('group_chat_in_one_session', [])
-            session_id = msg['ActualUserName']
+            session_id = cmsg.actual_user_id
             if any([group_name in group_chat_in_one_session, 'ALL_GROUP' in group_chat_in_one_session]):
                 session_id = group_id
-            context = self._compose_context(ContextType.TEXT, content, isgroup=True, msg=msg, receiver=group_id, session_id=session_id)
+
+            context = self._compose_context(ContextType.TEXT, content, isgroup=True, msg=cmsg, receiver=group_id, session_id=session_id)
             if context:
                 thread_pool.submit(self.handle, context).add_done_callback(thread_pool_callback)
     
     @time_checker
     @_check
-    def handle_group_voice(self, msg):
+    def handle_group_voice(self, cmsg : ChatMessage):
         if conf().get('group_speech_recognition', False) != True:
             return
-        logger.debug("[WX]receive voice for group msg: " + msg['FileName'])
-        group_name = msg['User'].get('NickName', None)
-        group_id = msg['User'].get('UserName', None)
+        logger.debug("[WX]receive voice for group msg: {}".format(cmsg.content))
+        group_name = cmsg.other_user_nickname
+        group_id = cmsg.other_user_id
         # 验证群名
         if not group_name:
             return ""
@@ -199,10 +184,10 @@ class WechatChannel(Channel):
         group_name_keyword_white_list = config.get('group_name_keyword_white_list', [])
         if any([group_name in group_name_white_list, 'ALL_GROUP' in group_name_white_list, check_contain(group_name, group_name_keyword_white_list)]):
             group_chat_in_one_session = conf().get('group_chat_in_one_session', [])
-            session_id =msg['ActualUserName']
+            session_id = cmsg.actual_user_id
             if any([group_name in group_chat_in_one_session, 'ALL_GROUP' in group_chat_in_one_session]):
                 session_id = group_id
-            context = self._compose_context(ContextType.VOICE, msg['FileName'], isgroup=True, msg=msg, receiver=group_id, session_id=session_id)
+            context = self._compose_context(ContextType.VOICE, cmsg.content, isgroup=True, msg=cmsg, receiver=group_id, session_id=session_id)
             if context:
                 thread_pool.submit(self.handle, context).add_done_callback(thread_pool_callback)
 
@@ -222,7 +207,7 @@ class WechatChannel(Channel):
                     # 判断如果匹配到自定义前缀，则返回过滤掉前缀+空格后的内容，用于实现类似自定义+前缀触发生成AI图片的功能
                     if match_prefix:
                         content = content.replace(match_prefix, '', 1).strip()
-                elif context['msg']['IsAt'] and not conf().get("group_at_off", False):
+                elif context['msg'].is_at and not conf().get("group_at_off", False):
                     logger.info("[WX]receive group at, continue")
                 elif context["origin_ctype"] == ContextType.VOICE:
                     logger.info("[WX]receive group voice, checkprefix didn't match")
@@ -306,8 +291,8 @@ class WechatChannel(Channel):
                 reply = super().build_reply_content(context.content, context)
             elif context.type == ContextType.VOICE:  # 语音消息
                 msg = context['msg']
-                mp3_path = TmpDir().path() + context.content
-                msg.download(mp3_path)
+                msg.prepare()
+                mp3_path = context.content
                 # mp3转wav
                 wav_path = os.path.splitext(mp3_path)[0] + '.wav'
                 try:
@@ -349,7 +334,7 @@ class WechatChannel(Channel):
                         reply = super().build_text_to_voice(reply.content)
                         return self._decorate_reply(context, reply)
                     if context['isgroup']:
-                        reply_text = '@' +  context['msg']['ActualNickName'] + ' ' + reply_text.strip()
+                        reply_text = '@' +  context['msg'].actual_user_nickname + ' ' + reply_text.strip()
                         reply_text = conf().get("group_chat_reply_prefix", "")+reply_text
                     else:
                         reply_text = conf().get("single_chat_reply_prefix", "")+reply_text
