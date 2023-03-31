@@ -124,7 +124,12 @@ def load_config():
             try:
                 config[name] = eval(value)
             except:
-                config[name] = value
+                if value == "false":
+                    config[name] = False
+                elif value == "true":
+                    config[name] = True
+                else:
+                    config[name] = value
 
     logger.info("[INIT] load config: {}".format(config))
 
