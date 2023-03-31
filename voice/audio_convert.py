@@ -21,6 +21,16 @@ def mp3_to_wav(mp3_path, wav_path):
     audio = AudioSegment.from_mp3(mp3_path)
     audio.export(wav_path, format="wav")
 
+def any_to_wav(any_path, wav_path):
+    """
+    把任意格式转成wav文件
+    """
+    if any_path.endswith('.wav'):
+        return
+    if any_path.endswith('.sil') or any_path.endswith('.silk') or any_path.endswith('.slk'):
+        return sil_to_wav(any_path, wav_path)
+    audio = AudioSegment.from_file(any_path)
+    audio.export(wav_path, format="wav")
 
 def pcm_to_silk(pcm_path, silk_path):
     """

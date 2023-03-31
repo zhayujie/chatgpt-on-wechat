@@ -1,6 +1,7 @@
 
 
 
+import os
 import re
 import time
 from common.expired_dict import ExpiredDict
@@ -10,7 +11,10 @@ from bridge.context import *
 from config import conf
 from common.log import logger
 from plugins import *
-
+try:
+    from voice.audio_convert import any_to_wav
+except Exception as e:
+    pass
 
 # 抽象类, 它包含了与消息通道无关的通用处理逻辑
 class ChatChannel(Channel):
@@ -30,11 +34,13 @@ class ChatChannel(Channel):
             context['origin_ctype'] = ctype
         # context首次传入时，receiver是None，根据类型设置receiver
         first_in = 'receiver' not in context
-
         # 群名匹配过程，设置session_id和receiver
         if first_in: # context首次传入时，receiver是None，根据类型设置receiver
             config = conf()
             cmsg = context['msg']
+            if cmsg.from_user_id == self.user_id:
+                logger.debug("[WX]self message skipped")
+                return None
             if context["isgroup"]:
                 group_name = cmsg.other_user_nickname
                 group_id = cmsg.other_user_id
@@ -47,13 +53,12 @@ class ChatChannel(Channel):
                     if any([group_name in group_chat_in_one_session, 'ALL_GROUP' in group_chat_in_one_session]):
                         session_id = group_id
                 else:
-                    return
+                    return None
                 context['session_id'] = session_id
                 context['receiver'] = group_id
             else:
                 context['session_id'] = cmsg.other_user_id
                 context['receiver'] = cmsg.other_user_id
-
 
         # 消息内容匹配过程，并处理content
         if ctype == ContextType.TEXT:
@@ -99,10 +104,6 @@ class ChatChannel(Channel):
 
 
         return context
-    
-    # 统一的发送函数，每个Channel自行实现，根据reply的type字段发送不同类型的消息
-    def send(self, reply: Reply, context: Context, retry_cnt = 0):
-        raise NotImplementedError
 
     # 处理消息 TODO: 如果wechaty解耦，此处逻辑可以放置到父类
     def _handle(self, context: Context):
@@ -128,22 +129,21 @@ class ChatChannel(Channel):
             if context.type == ContextType.TEXT or context.type == ContextType.IMAGE_CREATE:  # 文字和图片消息
                 reply = super().build_reply_content(context.content, context)
             elif context.type == ContextType.VOICE:  # 语音消息
-                msg = context['msg']
-                msg.prepare()
-                mp3_path = context.content
-                # mp3转wav
-                wav_path = os.path.splitext(mp3_path)[0] + '.wav'
+                cmsg = context['msg']
+                cmsg.prepare()
+                file_path = context.content
+                wav_path = os.path.splitext(file_path)[0] + '.wav'
                 try:
-                    mp3_to_wav(mp3_path=mp3_path, wav_path=wav_path)
+                    any_to_wav(file_path, wav_path) 
                 except Exception as e:  # 转换失败，直接使用mp3，对于某些api，mp3也可以识别
-                    logger.warning("[WX]mp3 to wav error, use mp3 path. " + str(e))
-                    wav_path = mp3_path
+                    logger.warning("[WX]any to wav error, use raw path. " + str(e))
+                    wav_path = file_path
                 # 语音识别
                 reply = super().build_voice_to_text(wav_path)
                 # 删除临时文件
                 try:
+                    os.remove(file_path)
                     os.remove(wav_path)
-                    os.remove(mp3_path)
                 except Exception as e:
                     logger.warning("[WX]delete temp file error: " + str(e))
 
@@ -204,7 +204,7 @@ class ChatChannel(Channel):
             logger.error('[WX] sendMsg error: {}'.format(e))
             if retry_cnt < 2:
                 time.sleep(3+3*retry_cnt)
-            self._send(reply, context, retry_cnt+1)
+                self._send(reply, context, retry_cnt+1)
 
     
 

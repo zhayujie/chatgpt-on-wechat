@@ -8,27 +8,21 @@ import os
 import requests
 import io
 import time
+import json
 from channel.chat_channel import ChatChannel
 from channel.wechat.wechat_message import *
 from common.singleton import singleton
+from common.log import logger
 from lib import itchat
-import json
 from lib.itchat.content import *
 from bridge.reply import *
 from bridge.context import *
-from channel.channel import Channel
 from concurrent.futures import ThreadPoolExecutor
-from common.log import logger
 from config import conf
 from common.time_check import time_checker
 from common.expired_dict import ExpiredDict
 from plugins import *
-try:
-    from voice.audio_convert import mp3_to_wav
-except Exception as e:
-    pass
 thread_pool = ThreadPoolExecutor(max_workers=8)
-
 
 def thread_pool_callback(worker):
     worker_exception = worker.exception()
@@ -122,7 +116,7 @@ class WechatChannel(ChatChannel):
     @time_checker
     @_check
     def handle_text(self, cmsg : ChatMessage):
-        logger.debug("[WX]receive text msg: " + json.dumps(cmsg._rawmsg, ensure_ascii=False))
+        logger.debug("[WX]receive text msg: {}, cmsg={}".format(json.dumps(cmsg._rawmsg, ensure_ascii=False), cmsg))
         context = self._compose_context(ContextType.TEXT, cmsg.content, isgroup=False, msg=cmsg)
         if context:
             thread_pool.submit(self._handle, context).add_done_callback(thread_pool_callback)
@@ -130,7 +124,7 @@ class WechatChannel(ChatChannel):
     @time_checker
     @_check
     def handle_group(self, cmsg : ChatMessage):
-        logger.debug("[WX]receive group msg: " + json.dumps(cmsg._rawmsg, ensure_ascii=False))
+        logger.debug("[WX]receive group msg: {}, cmsg={}".format(json.dumps(cmsg._rawmsg, ensure_ascii=False), cmsg))
         context = self._compose_context(ContextType.TEXT, cmsg.content, isgroup=True, msg=cmsg)
         if context:
             thread_pool.submit(self._handle, context).add_done_callback(thread_pool_callback)

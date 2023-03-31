@@ -44,7 +44,7 @@ class WeChatMessage(ChatMessage):
                 self.from_user_nickname = self.other_user_nickname
             if self.other_user_id == self.to_user_id:
                 self.to_user_nickname = self.other_user_nickname
-        except KeyError as e:
+        except KeyError as e: # 处理偶尔没有对方信息的情况
             logger.warn("[WX]get other_user_id failed: " + str(e))
             if self.from_user_id == user_id:
                 self.other_user_id = self.to_user_id
