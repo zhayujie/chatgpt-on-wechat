@@ -41,6 +41,8 @@ class WechatyChannel(ChatChannel):
         config = conf()
         token = config.get('wechaty_puppet_service_token')
         os.environ['WECHATY_PUPPET_SERVICE_TOKEN'] = token
+        os.environ['WECHATY_LOG']="warn"
+        # os.environ['WECHATY_PUPPET_SERVICE_ENDPOINT'] = '127.0.0.1:9001'
         self.bot = Wechaty()
         self.bot.on('login', self.on_login)
         self.bot.on('message', self.on_message)
