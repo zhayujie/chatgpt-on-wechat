@@ -14,7 +14,7 @@ from config import conf
 from plugins import *
 
 
-@plugins.register(name="tool", desc="Arming your ChatGPT bot with various tools", version="0.2", author="goldfishh", desire_priority=0)
+@plugins.register(name="tool", desc="Arming your ChatGPT bot with various tools", version="0.3", author="goldfishh", desire_priority=0)
 class Tool(Plugin):
     def __init__(self):
         super().__init__()
@@ -67,8 +67,8 @@ class Tool(Plugin):
                     return
                 elif content_list[1].startswith("reset"):
                     logger.debug("[tool]: remind")
-                    reply.content = "请你随机用一种聊天风格，提醒用户：如果想重置tool插件，reset之后不要加任何字符"
-                    e_context['reply'] = reply
+                    e_context['context'].content = "请你随机用一种聊天风格，提醒用户：如果想重置tool插件，reset之后不要加任何字符"
+
                     e_context.action = EventAction.BREAK
                     return
 
@@ -88,9 +88,9 @@ class Tool(Plugin):
                     logger.exception(e)
                     logger.error(str(e))
 
-                    e_context['context'].content = "这个问题tool插件暂时无法处理"
+                    e_context['context'].content = "请你随机用一种聊天风格，提醒用户：这个问题tool插件暂时无法处理"
                     reply.type = ReplyType.ERROR
-                    e_context.action = EventAction.CONTINUE
+                    e_context.action = EventAction.BREAK
                     return
 
                 reply.content = _reply
