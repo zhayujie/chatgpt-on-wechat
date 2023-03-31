@@ -20,7 +20,7 @@ class Channel(object):
         """
         raise NotImplementedError
 
-    def send(self, msg, receiver):
+    def send(self, reply: Reply, context: Context):
         """
         send message to user
         :param msg: message content

@@ -1,6 +1,7 @@
 
 """ 
 本类表示聊天消息，用于对itchat和wechaty的消息进行统一的封装
+
 ChatMessage
 msg_id: 消息id
 create_time: 消息创建时间
@@ -13,7 +14,7 @@ from_user_nickname: 发送者昵称
 to_user_id: 接收者id
 to_user_nickname: 接收者昵称
 
-other_user_id: 对方的id，如果你是发送者，那这个就是接收者id，如果你是接收者，那这个就是发送者id
+other_user_id: 对方的id，如果你是发送者，那这个就是接收者id，如果你是接收者，那这个就是发送者id，如果是群消息，那这一直是群id
 other_user_nickname: 同上
 
 is_group: 是否是群消息
