@@ -15,7 +15,7 @@ def find_closest_sil_supports(sample_rate):
     for rate in sil_supports:
         diff = abs(rate - sample_rate)
         if diff < mindiff:
-            closest = sample_rate
+            closest = rate
             mindiff = diff
     return closest
 
@@ -68,8 +68,9 @@ def pcm_to_sil(pcm_path, silk_path):
     """
     audio = AudioSegment.from_wav(pcm_path)
     wav_data = audio.raw_data
+    rate = find_closest_sil_supports(audio.frame_rate)
     silk_data = pysilk.encode(
-        wav_data, data_rate=audio.frame_rate, sample_rate=find_closest_sil_supports(audio.frame_rate))
+        wav_data, data_rate=rate, sample_rate=rate)
     with open(silk_path, "wb") as f:
         f.write(silk_data)
     return audio.duration_seconds * 1000
@@ -82,7 +83,8 @@ def mp3_to_sil(mp3_path, silk_path):
     """
     audio = AudioSegment.from_mp3(mp3_path)
     wav_data = audio.raw_data
-    silk_data = pysilk.encode(wav_data, data_rate=audio.frame_rate, sample_rate=find_closest_sil_supports(audio.frame_rate))
+    rate = find_closest_sil_supports(audio.frame_rate)
+    silk_data = pysilk.encode(wav_data, data_rate=rate, sample_rate=rate)
     # Save the silk file
     with open(silk_path, "wb") as f:
         f.write(silk_data)

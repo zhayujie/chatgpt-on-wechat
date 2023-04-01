@@ -72,7 +72,7 @@ class WechatyChannel(ChatChannel):
             voiceLength = None
             file_path = reply.content
             sil_file = os.path.splitext(file_path)[0] + '.sil'
-            voiceLength = any_to_sil(file_path, sil_file)
+            voiceLength = int(any_to_sil(file_path, sil_file))
             # 发送语音
             t = int(time.time())
             msg = FileBox.from_file(sil_file, name=str(t) + '.sil')
