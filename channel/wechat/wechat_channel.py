@@ -72,13 +72,15 @@ def qrCallback(uuid,status,qrcode):
     if status == '0':
         import qrcode
         url = f"https://login.weixin.qq.com/l/{uuid}"
+
+        qr_api="https://api.isoyu.com/qr/?m=1&e=L&p=20&url={}".format(url)
+        print("You can also scan QRCode in the website below:\n{}".format(qr_api))
+        
         qr = qrcode.QRCode(border=1)
         qr.add_data(url)
         qr.make(fit=True)
         qr.print_ascii(invert=True)
 
-        qr_api="https://api.isoyu.com/qr/?m=1&e=L&p=20&url={}".format(url)
-        print("You can also scan QRCode in website below:\n{}".format(qr_api))
 @singleton
 class WechatChannel(ChatChannel):
     def __init__(self):
