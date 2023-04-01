@@ -6,12 +6,10 @@ import json
 import os
 import time
 import azure.cognitiveservices.speech as speechsdk
-from aip import AipSpeech
 from bridge.reply import Reply, ReplyType
 from common.log import logger
 from common.tmp_dir import TmpDir
 from voice.voice import Voice
-from voice.audio_convert import get_pcm_from_wav
 from config import conf
 """
 Azure voice
