@@ -98,10 +98,11 @@ class ChatChannel(Channel):
             else:
                 context.type = ContextType.TEXT
             context.content = content
+            if 'desire_rtype' not in context and conf().get('always_reply_voice'):
+                context['desire_rtype'] = ReplyType.VOICE
         elif context.type == ContextType.VOICE: 
             if 'desire_rtype' not in context and conf().get('voice_reply_voice'):
                 context['desire_rtype'] = ReplyType.VOICE
-
 
         return context
 
