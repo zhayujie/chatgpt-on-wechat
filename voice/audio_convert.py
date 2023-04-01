@@ -3,6 +3,22 @@ import wave
 import pysilk
 from pydub import AudioSegment
 
+sil_supports=[8000, 12000, 16000, 24000, 32000, 44100, 48000] # slk转wav时，支持的采样率
+def find_closest_sil_supports(sample_rate):
+    """
+    找到最接近的支持的采样率
+    """
+    if sample_rate in sil_supports:
+        return sample_rate
+    closest = 0
+    mindiff = 9999999
+    for rate in sil_supports:
+        diff = abs(rate - sample_rate)
+        if diff < mindiff:
+            closest = sample_rate
+            mindiff = diff
+    return closest
+
 def get_pcm_from_wav(wav_path):
     """
     从 wav 文件中读取 pcm
@@ -53,7 +69,7 @@ def pcm_to_sil(pcm_path, silk_path):
     audio = AudioSegment.from_wav(pcm_path)
     wav_data = audio.raw_data
     silk_data = pysilk.encode(
-        wav_data, data_rate=audio.frame_rate, sample_rate=audio.frame_rate)
+        wav_data, data_rate=audio.frame_rate, sample_rate=find_closest_sil_supports(audio.frame_rate))
     with open(silk_path, "wb") as f:
         f.write(silk_data)
     return audio.duration_seconds * 1000
@@ -66,8 +82,7 @@ def mp3_to_sil(mp3_path, silk_path):
     """
     audio = AudioSegment.from_mp3(mp3_path)
     wav_data = audio.raw_data
-    silk_data = pysilk.encode(
-        wav_data, data_rate=audio.frame_rate, sample_rate=audio.frame_rate)
+    silk_data = pysilk.encode(wav_data, data_rate=audio.frame_rate, sample_rate=find_closest_sil_supports(audio.frame_rate))
     # Save the silk file
     with open(silk_path, "wb") as f:
         f.write(silk_data)
