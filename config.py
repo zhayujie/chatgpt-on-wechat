@@ -47,15 +47,19 @@ available_setting = {
     "speech_recognition": False,  # 是否开启语音识别
     "group_speech_recognition": False,  # 是否开启群组语音识别
     "voice_reply_voice": False,  # 是否使用语音回复语音，需要设置对应语音合成引擎的api key
-    "voice_to_text": "openai",  # 语音识别引擎，支持openai,google
-    "text_to_voice": "baidu",  # 语音合成引擎，支持baidu,google,pytts(offline)
+    "voice_to_text": "openai",  # 语音识别引擎，支持openai,google,azure
+    "text_to_voice": "baidu",  # 语音合成引擎，支持baidu,google,pytts(offline),azure
 
-    # baidu api的配置， 使用百度语音识别和语音合成时需要
+    # baidu 语音api配置， 使用百度语音识别和语音合成时需要
     "baidu_app_id": "",
     "baidu_api_key": "",
     "baidu_secret_key": "",
     # 1536普通话(支持简单的英文识别) 1737英语 1637粤语 1837四川话 1936普通话远场
     "baidu_dev_pid": "1536",
+
+    # azure 语音api配置， 使用azure语音识别和语音合成时需要
+    "azure_voice_api_key": "",
+    "azure_voice_region": "japaneast",
 
     # 服务时间限制，目前支持itchat
     "chat_time_module": False,  # 是否开启服务时间限制
