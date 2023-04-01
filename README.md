@@ -90,11 +90,11 @@ pip3 install -r requirements.txt
 
 参考[#415](https://github.com/zhayujie/chatgpt-on-wechat/issues/415)
 
-使用`azure`语音功能需安装:
+使用`azure`语音功能需安装依赖:
 ```bash
-pip install azure-cognitiveservices-speech
+pip3 install azure-cognitiveservices-speech
 ```
-> 目前默认发布的镜像和`railway`部署，都基于`apline`，无法安装`azure`的依赖。若有需求请自行基于`debian`打包。
+> 目前默认发布的镜像和`railway`部署，都基于`apline`，无法安装`azure`的依赖。若有需求请自行基于[`debian`](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/docker/Dockerfile.debian.latest)打包。
 参考[文档](https://learn.microsoft.com/en-us/azure/cognitive-services/speech-service/quickstarts/setup-platform?pivots=programming-language-python&tabs=linux%2Cubuntu%2Cdotnet%2Cjre%2Cmaven%2Cnodejs%2Cmac%2Cpypi)
 
 ## 配置
