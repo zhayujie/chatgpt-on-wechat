@@ -25,12 +25,12 @@ class PyttsVoice(Voice):
 
     def textToVoice(self, text):
         try:
-            mp3File = TmpDir().path() + '语音回复_' + str(int(time.time())) + '.mp3'
-            self.engine.save_to_file(text, mp3File)
+            wavFile = TmpDir().path() + '语音回复_' + str(int(time.time())) + '.wav'
+            self.engine.save_to_file(text, wavFile)
             self.engine.runAndWait()
             logger.info(
-                '[Pytts] textToVoice text={} voice file name={}'.format(text, mp3File))
-            reply = Reply(ReplyType.VOICE, mp3File)
+                '[Pytts] textToVoice text={} voice file name={}'.format(text, wavFile))
+            reply = Reply(ReplyType.VOICE, wavFile)
         except Exception as e:
             reply = Reply(ReplyType.ERROR, str(e))
         finally:

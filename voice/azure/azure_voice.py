@@ -56,7 +56,7 @@ class AzureVoice(Voice):
         return reply
 
     def textToVoice(self, text):
-        fileName = TmpDir().path() + '语音回复_' + str(int(time.time())) + '.mp3'
+        fileName = TmpDir().path() + '语音回复_' + str(int(time.time())) + '.wav'
         audio_config = speechsdk.AudioConfig(filename=fileName)
         speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=self.speech_config, audio_config=audio_config)
         result = speech_synthesizer.speak_text(text)

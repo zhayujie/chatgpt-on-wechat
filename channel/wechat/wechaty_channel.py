@@ -20,7 +20,7 @@ from channel.wechat.wechaty_message import WechatyMessage
 from common.log import logger
 from config import conf
 try:
-    from voice.audio_convert import mp3_to_sil
+    from voice.audio_convert import any_to_sil
 except Exception as e:
     pass
 
@@ -35,14 +35,12 @@ class WechatyChannel(ChatChannel):
         pass
 
     def startup(self):
-        asyncio.run(self.main())
-
-    async def main(self):
         config = conf()
         token = config.get('wechaty_puppet_service_token')
         os.environ['WECHATY_PUPPET_SERVICE_TOKEN'] = token
-        os.environ['WECHATY_LOG']="warn"
-        # os.environ['WECHATY_PUPPET_SERVICE_ENDPOINT'] = '127.0.0.1:9001'
+        asyncio.run(self.main())
+
+    async def main(self):
         self.bot = Wechaty()
         self.bot.on('login', self.on_login)
         self.bot.on('message', self.on_message)
@@ -72,18 +70,9 @@ class WechatyChannel(ChatChannel):
             logger.info('[WX] sendMsg={}, receiver={}'.format(reply, receiver))
         elif reply.type == ReplyType.VOICE:
             voiceLength = None
-            if reply.content.endswith('.mp3'):
-                mp3_file = reply.content
-                sil_file = os.path.splitext(mp3_file)[0] + '.sil'
-                voiceLength = mp3_to_sil(mp3_file, sil_file)
-                try:
-                    os.remove(mp3_file)
-                except Exception as e:
-                    pass
-            elif reply.content.endswith('.sil'):
-                sil_file = reply.content
-            else:
-                raise Exception('voice file must be mp3 or sil format')
+            file_path = reply.content
+            sil_file = os.path.splitext(file_path)[0] + '.sil'
+            voiceLength = any_to_sil(file_path, sil_file)
             # 发送语音
             t = int(time.time())
             msg = FileBox.from_file(sil_file, name=str(t) + '.sil')
@@ -91,6 +80,7 @@ class WechatyChannel(ChatChannel):
                 msg.metadata['voiceLength'] = voiceLength
             asyncio.run_coroutine_threadsafe(receiver.say(msg),loop).result()
             try:
+                os.remove(file_path)
                 os.remove(sil_file)
             except Exception as e:
                 pass

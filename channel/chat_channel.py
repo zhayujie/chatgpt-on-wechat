@@ -194,14 +194,17 @@ class ChatChannel(Channel):
                 'channel': self, 'context': context, 'reply': reply}))
             reply = e_context['reply']
             if not e_context.is_pass() and reply and reply.type:
-                logger.debug('[WX] ready to send reply: {} to {}'.format(reply, context))
+                logger.debug('[WX] ready to send reply: {}, context: {}'.format(reply, context))
                 self._send(reply, context)
 
     def _send(self, reply: Reply, context: Context, retry_cnt = 0):
         try:
             self.send(reply, context)
         except Exception as e:
-            logger.error('[WX] sendMsg error: {}'.format(e))
+            logger.error('[WX] sendMsg error: {}'.format(str(e)))
+            if isinstance(e, NotImplementedError):
+                return
+            logger.exception(e)
             if retry_cnt < 2:
                 time.sleep(3+3*retry_cnt)
                 self._send(reply, context, retry_cnt+1)
