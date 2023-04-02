@@ -34,7 +34,7 @@ class GoogleVoice(Voice):
             return reply
     def textToVoice(self, text):
         try:
-            mp3File = TmpDir().path() + '语音回复_' + str(int(time.time())) + '.mp3'
+            mp3File = TmpDir().path() + 'reply-' + str(int(time.time())) + '.mp3'
             tts = gTTS(text=text, lang='zh')
             tts.save(mp3File)            
             logger.info(

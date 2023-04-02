@@ -25,7 +25,7 @@ class PyttsVoice(Voice):
 
     def textToVoice(self, text):
         try:
-            wavFile = TmpDir().path() + '语音回复_' + str(int(time.time())) + '.wav'
+            wavFile = TmpDir().path() + 'reply-' + str(int(time.time())) + '.wav'
             self.engine.save_to_file(text, wavFile)
             self.engine.runAndWait()
             logger.info(

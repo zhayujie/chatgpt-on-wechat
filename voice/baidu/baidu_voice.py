@@ -80,7 +80,7 @@ class BaiduVoice(Voice):
         result = self.client.synthesis(text, self.lang, self.ctp, {
             'spd': self.spd, 'pit': self.pit, 'vol': self.vol, 'per': self.per})
         if not isinstance(result, dict):
-            fileName = TmpDir().path() + '语音回复_' + str(int(time.time())) + '.mp3'
+            fileName = TmpDir().path() + 'reply-' + str(int(time.time())) + '.mp3'
             with open(fileName, 'wb') as f:
                 f.write(result)
             logger.info(
