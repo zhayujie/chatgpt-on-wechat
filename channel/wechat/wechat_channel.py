@@ -70,9 +70,16 @@ def _check(func):
 def qrCallback(uuid,status,qrcode):
     # logger.debug("qrCallback: {} {}".format(uuid,status))
     if status == '0':
+        try:
+            from PIL import Image
+            img = Image.open(io.BytesIO(qrcode))
+            thread_pool.submit(img.show,"QRCode")
+        except Exception as e:
+            pass
+
         import qrcode
         url = f"https://login.weixin.qq.com/l/{uuid}"
-
+        
         qr_api1="https://api.isoyu.com/qr/?m=1&e=L&p=20&url={}".format(url)
         qr_api2="https://api.qrserver.com/v1/create-qr-code/?size=400×400&data={}".format(url)
         qr_api3="https://api.pwmqr.com/qrcode/create/?url={}".format(url)
