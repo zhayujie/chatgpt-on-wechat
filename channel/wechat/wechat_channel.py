@@ -73,8 +73,15 @@ def qrCallback(uuid,status,qrcode):
         import qrcode
         url = f"https://login.weixin.qq.com/l/{uuid}"
 
-        qr_api="https://api.isoyu.com/qr/?m=1&e=L&p=20&url={}".format(url)
-        print("You can also scan QRCode in the website below:\n{}".format(qr_api))
+        qr_api1="https://api.isoyu.com/qr/?m=1&e=L&p=20&url={}".format(url)
+        qr_api2="https://api.qrserver.com/v1/create-qr-code/?size=400×400&data={}".format(url)
+        qr_api3="https://api.pwmqr.com/qrcode/create/?url={}".format(url)
+        qr_api4="https://my.tv.sohu.com/user/a/wvideo/getQRCode.do?text={}".format(url)
+        print("You can also scan QRCode in any website below:")
+        print(qr_api3)
+        print(qr_api4)
+        print(qr_api2)
+        print(qr_api1)
         
         qr = qrcode.QRCode(border=1)
         qr.add_data(url)
