@@ -144,9 +144,11 @@ class ChatChannel(Channel):
                 # 删除临时文件
                 try:
                     os.remove(file_path)
-                    os.remove(wav_path)
+                    if wav_path != file_path:
+                        os.remove(wav_path)
                 except Exception as e:
-                    logger.warning("[WX]delete temp file error: " + str(e))
+                    pass
+                    # logger.warning("[WX]delete temp file error: " + str(e))
 
                 if reply.type == ReplyType.TEXT:
                     new_context = self._compose_context(

@@ -84,7 +84,8 @@ class WechatyChannel(ChatChannel):
             asyncio.run_coroutine_threadsafe(receiver.say(msg),loop).result()
             try:
                 os.remove(file_path)
-                os.remove(sil_file)
+                if sil_file != file_path:
+                    os.remove(sil_file)
             except Exception as e:
                 pass
             logger.info('[WX] sendVoice={}, receiver={}'.format(reply.content, receiver))
