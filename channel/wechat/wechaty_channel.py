@@ -73,6 +73,9 @@ class WechatyChannel(ChatChannel):
             file_path = reply.content
             sil_file = os.path.splitext(file_path)[0] + '.sil'
             voiceLength = int(any_to_sil(file_path, sil_file))
+            if voiceLength >= 60000:
+                voiceLength = 60000
+                logger.info('[WX] voice too long, length={}, set to 60s'.format(voiceLength))
             # 发送语音
             t = int(time.time())
             msg = FileBox.from_file(sil_file, name=str(t) + '.sil')
@@ -113,7 +116,6 @@ class WechatyChannel(ChatChannel):
             return
         logger.debug('[WX] message:{}'.format(cmsg))
         room = msg.room()  # 获取消息来自的群聊. 如果消息不是来自群聊, 则返回None
-        
         isgroup = room is not None
         ctype = cmsg.ctype
         context = self._compose_context(ctype, cmsg.content, isgroup=isgroup, msg=cmsg)
