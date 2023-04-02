@@ -101,7 +101,7 @@ PS: 插件目前支持`itchat`和`wechaty`
 
 根据`Context`和回复`Reply`的类型，对回复的内容进行装饰。目前的装饰有以下两种:
 
-- `TEXT`文本回复，根据是否在群聊中来决定是艾特接收方还是添加回复的前缀。
+- `TEXT`文本回复:如果这次消息需要的回复是`VOICE`，进行文字转语音回复之后再次装饰。 否则根据是否在群聊中来决定是艾特接收方还是添加回复的前缀。
 
 - `INFO`或`ERROR`类型，会在消息前添加对应的系统提示字样。
 
@@ -110,8 +110,11 @@ PS: 插件目前支持`itchat`和`wechaty`
 ```python
     if reply.type == ReplyType.TEXT:
         reply_text = reply.content
+        if context.get('desire_rtype') == ReplyType.VOICE:
+            reply = super().build_text_to_voice(reply.content)
+            return self._decorate_reply(context, reply)
         if context['isgroup']:
-            reply_text = '@' +  context['msg']['ActualNickName'] + ' ' + reply_text.strip()
+            reply_text = '@' +  context['msg'].actual_user_nickname + ' ' + reply_text.strip()
             reply_text = conf().get("group_chat_reply_prefix", "")+reply_text
         else:
             reply_text = conf().get("single_chat_reply_prefix", "")+reply_text
@@ -213,11 +216,11 @@ class Hello(Plugin):
         if content == "Hello":
             reply = Reply()
             reply.type = ReplyType.TEXT
-            msg = e_context['context']['msg']
+            msg:ChatMessage = e_context['context']['msg']
             if e_context['context']['isgroup']:
-                reply.content = "Hello, " + msg['ActualNickName'] + " from " + msg['User'].get('NickName', "Group")
+                reply.content = f"Hello, {msg.actual_user_nickname} from {msg.from_user_nickname}"
             else:
-                reply.content = "Hello, " + msg['User'].get('NickName', "My friend")
+                reply.content = f"Hello, {msg.from_user_nickname}"
             e_context['reply'] = reply
             e_context.action = EventAction.BREAK_PASS # 事件结束，并跳过处理context的默认逻辑
         if content == "End":

@@ -2,6 +2,7 @@
 
 from bridge.context import ContextType
 from bridge.reply import Reply, ReplyType
+from channel.chat_message import ChatMessage
 import plugins
 from plugins import *
 from common.log import logger
@@ -24,11 +25,11 @@ class Hello(Plugin):
         if content == "Hello":
             reply = Reply()
             reply.type = ReplyType.TEXT
-            msg = e_context['context']['msg']
+            msg:ChatMessage = e_context['context']['msg']
             if e_context['context']['isgroup']:
-                reply.content = "Hello, " + msg['ActualNickName'] + " from " + msg['User'].get('NickName', "Group")
+                reply.content = f"Hello, {msg.actual_user_nickname} from {msg.from_user_nickname}"
             else:
-                reply.content = "Hello, " + msg['User'].get('NickName', "My friend")
+                reply.content = f"Hello, {msg.from_user_nickname}"
             e_context['reply'] = reply
             e_context.action = EventAction.BREAK_PASS # 事件结束，并跳过处理context的默认逻辑
 
