@@ -84,7 +84,7 @@ class Tool(Plugin):
                     _reply = self.app.ask(query, user_session)
                     e_context.action = EventAction.BREAK_PASS
                     all_sessions.session_reply(_reply, e_context['context']['session_id'])
-                except ValueError as e:
+                except Exception as e:
                     logger.exception(e)
                     logger.error(str(e))
 
