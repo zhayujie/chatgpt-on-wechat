@@ -38,7 +38,7 @@ class ChatChannel(Channel):
         if first_in: # context首次传入时，receiver是None，根据类型设置receiver
             config = conf()
             cmsg = context['msg']
-            if cmsg.from_user_id == self.user_id:
+            if cmsg.from_user_id == self.user_id and not config.get('trigger_by_self', False):
                 logger.debug("[WX]self message skipped")
                 return None
             if context["isgroup"]:
