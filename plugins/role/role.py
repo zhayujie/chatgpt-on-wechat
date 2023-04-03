@@ -29,7 +29,7 @@ class RolePlay():
         prompt = self.wrapper % user_action
         return prompt
 
-@plugins.register(name="角色扮演", desc="为你的Bot设置预设角色", version="1.0", author="lanvent", desire_priority= 0)
+@plugins.register(name="Role", desire_priority=0, namecn="角色扮演", desc="为你的Bot设置预设角色", version="1.0", author="lanvent")
 class Role(Plugin):
     def __init__(self):
         super().__init__()

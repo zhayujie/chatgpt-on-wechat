@@ -103,7 +103,7 @@ ADMIN_COMMANDS = {
 def get_help_text(isadmin, isgroup):
     help_text = "通用指令：\n"
     for cmd, info in COMMANDS.items():
-        if cmd=="auth": # 隐藏认证指令
+        if cmd=="auth": #不提示认证指令
             continue
 
         alias=["#"+a for a in info['alias']]
@@ -116,10 +116,11 @@ def get_help_text(isadmin, isgroup):
     # 插件指令
     plugins = PluginManager().list_plugins()
     for plugin in plugins:
-        if plugin != 'GODCMD' and plugin != 'BANWORDS' and plugin != 'FINISH' and plugins[plugin].enabled:
-            print(plugin)
-            help_text += "\n%s:\n"%plugin
-            help_text += "#帮助 %s: 关于%s的详细帮助\n"%(plugin,plugin)
+        if plugins[plugin].enabled and not plugins[plugin].hidden:
+            namecn = plugins[plugin].namecn
+            print(namecn)
+            help_text += "\n%s:\n"%namecn
+            help_text += "#帮助 %s: 关于%s的详细帮助\n"%(namecn,namecn)
             help_text += PluginManager().instances[plugin].get_help_text(verbose=False)
 
     if ADMIN_COMMANDS and isadmin:
@@ -130,7 +131,7 @@ def get_help_text(isadmin, isgroup):
             help_text += f": {info['desc']}\n"
     return help_text
 
-@plugins.register(name="Godcmd", desc="为你的机器人添加指令集，有用户和管理员两种角色，加载顺序请放在首位，初次运行后插件目录会生成配置文件, 填充管理员密码后即可认证", version="1.0", author="lanvent", desire_priority= 999)
+@plugins.register(name="Godcmd", desire_priority=999, hidden=True, desc="为你的机器人添加指令集，有用户和管理员两种角色，加载顺序请放在首位，初次运行后插件目录会生成配置文件, 填充管理员密码后即可认证", version="1.0", author="lanvent")
 class Godcmd(Plugin):
 
     def __init__(self):
@@ -188,12 +189,16 @@ class Godcmd(Plugin):
                     if len(args) == 0:
                         ok, result = True, get_help_text(isadmin, isgroup)
                     elif len(args) == 1:
+                        # This can replace the helpp command
                         plugins = PluginManager().list_plugins()
-                        name = args[0].upper()
-                        if name in plugins and name != 'GODCMD' and name != 'BANWORDS' and plugins[name].enabled:
-                            ok, result = True, PluginManager().instances[name].get_help_text(verbose=True)
-                        else:
-                            ok, result = False, "unknown args"
+                        query_name = args[0].upper()
+                        # search name and namecn
+                        for name, plugincls in plugins.items():
+                            if query_name == name or query_name == plugincls.namecn:
+                                ok, result = True, PluginManager().instances[name].get_help_text(verbose=True)
+                                break
+                        if not ok:
+                            result = "unknown args"
                 elif cmd == "set_openai_api_key":
                     if len(args) == 1:
                         user_data = conf().get_user_data(user)
@@ -208,18 +213,6 @@ class Godcmd(Plugin):
                     except Exception as e:
                         ok, result = False, "你没有设置私有api_key"
                     ok, result = True, "你的OpenAI私有api_key已清除"
-                # elif cmd == "helpp":
-                #     if len(args) != 1:
-                #         ok, result = False, "请提供插件名"
-                #     else:
-                #         plugins = PluginManager().list_plugins()
-                #         name = args[0].upper()
-                #         if name in plugins and plugins[name].enabled:
-                #             ok, result = True, PluginManager().instances[name].get_help_text(isgroup=isgroup, isadmin=isadmin)
-                #         else:
-                #             ok, result= False, "插件不存在或未启用"
-                # elif cmd == "id":
-                #     ok, result = True, f"用户id=\n{user}"
                 elif cmd == "reset":
                     if bottype in (const.CHATGPT, const.OPEN_AI):
                         bot.sessions.clear_session(session_id)

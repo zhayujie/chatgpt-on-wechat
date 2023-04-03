@@ -7,7 +7,7 @@ from plugins import *
 from common.log import logger
 
 
-@plugins.register(name="Finish", desc="A plugin that check unknow command", version="1.0", author="js00000", desire_priority= -999)
+@plugins.register(name="Finish", desire_priority=-999, hidden=True, desc="A plugin that check unknow command", version="1.0", author="js00000")
 class Finish(Plugin):
     def __init__(self):
         super().__init__()
