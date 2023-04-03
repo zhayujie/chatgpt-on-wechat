@@ -70,17 +70,21 @@ class ChatChannel(Channel):
                 # 校验关键字
                 match_prefix = check_prefix(content, conf().get('group_chat_prefix'))
                 match_contain = check_contain(content, conf().get('group_chat_keyword'))
+                flag = False
                 if match_prefix is not None or match_contain is not None:
+                    flag = True
                     if match_prefix:
                         content = content.replace(match_prefix, '', 1).strip()
-                elif context['msg'].is_at and not conf().get("group_at_off", False):
-                    logger.info("[WX]receive group at, continue")
+                if context['msg'].is_at:
+                    logger.info("[WX]receive group at")
+                    if not conf().get("group_at_off", False):
+                        flag = True
                     pattern = f'@{self.name}(\u2005|\u0020)'
                     content = re.sub(pattern, r'', content)
-                elif context["origin_ctype"] == ContextType.VOICE:
-                    logger.info("[WX]receive group voice, checkprefix didn't match")
-                    return None
-                else:
+                
+                if not flag:
+                    if context["origin_ctype"] == ContextType.VOICE:
+                        logger.info("[WX]receive group voice, but checkprefix didn't match")
                     return None
             else: # 单聊
                 match_prefix = check_prefix(content, conf().get('single_chat_prefix'))  
@@ -106,7 +110,6 @@ class ChatChannel(Channel):
 
         return context
 
-    # 处理消息 TODO: 如果wechaty解耦，此处逻辑可以放置到父类
     def _handle(self, context: Context):
         if context is None or not context.content:
             return
