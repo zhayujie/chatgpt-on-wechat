@@ -15,6 +15,13 @@ from plugins import *
 import traceback
 import redis
 
+# If using SSL, uncomment the following lines, and modify the certificate path.
+# from cheroot.server import HTTPServer
+# from cheroot.ssl.builtin import BuiltinSSLAdapter
+# HTTPServer.ssl_adapter = BuiltinSSLAdapter(
+#         certificate='/ssl/cert.pem',
+#         private_key='/ssl/cert.key')
+
 class WechatMPServer():
     def __init__(self):
         pass
