@@ -13,7 +13,6 @@ from common.expired_dict import ExpiredDict
 import openai
 import openai.error
 import time
-import redis
 
 # OpenAI对话模型API (可用)
 class ChatGPTBot(Bot,OpenAIImage):

@@ -13,7 +13,6 @@ from bridge.reply import *
 from bridge.context import *
 from plugins import *
 import traceback
-import redis
 
 # If using SSL, uncomment the following lines, and modify the certificate path.
 # from cheroot.server import HTTPServer
@@ -181,12 +180,8 @@ class WechatMPChannel(Channel):
                     context = Context()
                     context.kwargs = {'isgroup': False, 'receiver': fromUser, 'session_id': fromUser}
 
-                    R = redis.Redis(host='localhost', port=6379, db=0)
-                    user_openai_api_key = "openai_api_key_" + fromUser
-                    api_key = R.get(user_openai_api_key)
-                    if api_key != None:
-                        api_key = api_key.decode("utf-8")
-                    context['openai_api_key'] = api_key # None or user openai_api_key
+                    user_data = conf().get_user_data(fromUser)
+                    context['openai_api_key'] = user_data.get('openai_api_key') # None or user openai_api_key
 
                     img_match_prefix = check_prefix(message, conf().get('image_create_prefix'))
                     if img_match_prefix:

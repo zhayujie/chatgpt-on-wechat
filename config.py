@@ -3,6 +3,7 @@
 import json
 import os
 from common.log import logger
+import pickle
 
 # 将所有可用的配置项写在字典里, 请使用小写字母
 available_setting = {
@@ -88,6 +89,11 @@ available_setting = {
 
 
 class Config(dict):
+    def __init__(self, d:dict={}):
+        super().__init__(d)
+        # user_datas: 用户数据，key为用户名，value为用户数据，也是dict
+        self.user_datas = {}
+
     def __getitem__(self, key):
         if key not in available_setting:
             raise Exception("key {} not in available_setting".format(key))
@@ -106,6 +112,30 @@ class Config(dict):
         except Exception as e:
             raise e
 
+    # Make sure to return a dictionary to ensure atomic
+    def get_user_data(self, user) -> dict:
+        if self.user_datas.get(user) is None:
+            self.user_datas[user] = {}
+        return self.user_datas[user]
+
+    def load_user_datas(self):
+        try:
+            with open('user_datas.pkl', 'rb') as f:
+                self.user_datas = pickle.load(f)
+                logger.info("[Config] User datas loaded.")
+        except FileNotFoundError as e:
+            logger.info("[Config] User datas file not found, ignore.")
+        except Exception as e:
+            logger.info("[Config] User datas error: {}".format(e))
+            self.user_datas = {}
+
+    def save_user_datas(self):
+        try:
+            with open('user_datas.pkl', 'wb') as f:
+                pickle.dump(self.user_datas, f)
+                logger.info("[Config] User datas saved.")
+        except Exception as e:
+            logger.info("[Config] User datas error: {}".format(e))
 
 config = Config()
 
@@ -142,6 +172,7 @@ def load_config():
 
     logger.info("[INIT] load config: {}".format(config))
 
+    config.load_user_datas()
 
 def get_root():
     return os.path.dirname(os.path.abspath(__file__))

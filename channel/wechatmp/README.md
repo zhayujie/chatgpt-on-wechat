@@ -8,18 +8,15 @@
 
 在开始部署前，你需要一个拥有公网IP的服务器，以提供微信服务器和我们自己服务器的连接。或者你需要进行内网穿透，否则微信服务器无法将消息发送给我们的服务器。
 
-此外，需要在我们的服务器上安装额外的依赖web.py和redis，其中redis用来储存用户私有的配置信息。
+此外，需要在我们的服务器上安装python的web框架web.py。
 以ubuntu为例(在ubuntu 22.04上测试):
 ```
-sudo apt-get install redis
-sudo systemctl start redis
-pip3 install redis
 pip3 install web.py
 ```
 
 然后在[微信公众平台](mp.weixin.qq.com)注册一个自己的公众号，类型选择订阅号，主体为个人即可。
 
-然后根据[接入指南](https://developers.weixin.qq.com/doc/offiaccount/Basic_Information/Access_Overview.html)的说明，在[微信公众平台](mp.weixin.qq.com)的“设置与开发”-“基本配置”-“服务器配置”中填写服务器地址(URL)和令牌(Token)。这个Token是你自己编的一个特定的令牌。消息加解密方式目前选择的是明文模式。相关的服务器验证代码已经写好，你不需要再添加任何代码。你只需要将本项目根目录的`app.py`中channel_name改成"mp",将上述的Token填写在本项目根目录的`config.json`中，例如`"wechatmp_token": "Your Token",` 然后运行`python3 app.py`启动web服务器，然后在刚才的“服务器配置”中点击`提交`即可验证你的服务器。
+然后根据[接入指南](https://developers.weixin.qq.com/doc/offiaccount/Basic_Information/Access_Overview.html)的说明，在[微信公众平台](mp.weixin.qq.com)的“设置与开发”-“基本配置”-“服务器配置”中填写服务器地址(URL)和令牌(Token)。这个Token是你自己编的一个特定的令牌。消息加解密方式目前选择的是明文模式。相关的服务器验证代码已经写好，你不需要再添加任何代码。你只需要在本项目根目录的`config.json`中添加`"channel_type": "wechatmp", "wechatmp_token": "your Token", ` 然后运行`python3 app.py`启动web服务器，然后在刚才的“服务器配置”中点击`提交`即可验证你的服务器。
 
 随后在[微信公众平台](mp.weixin.qq.com)启用服务器，关闭手动填写规则的自动回复，即可实现ChatGPT的自动回复。
 
@@ -29,7 +26,7 @@ pip3 install web.py
 另外，由于微信官方的限制，自动回复有长度限制。因此这里将ChatGPT的回答拆分，分成每段600字回复（限制大约在700字）。
 
 ## 私有api_key
-公共api有访问频率限制（免费账号每分钟最多20次ChatGPT的API调用），这在服务多人的时候会遇到问题。因此这里多加了一个设置私有api_key的功能，私有的api_key将储存在redis中。另外后续计划利用redis储存更多的用户个人配置。目前通过godcmd插件的命令来设置私有api_key。
+公共api有访问频率限制（免费账号每分钟最多20次ChatGPT的API调用），这在服务多人的时候会遇到问题。因此这里多加了一个设置私有api_key的功能。目前通过godcmd插件的命令来设置私有api_key。
 
 ## 命令优化
 之前plugin中#和$符号混用，且$这个符号在微信中和中文会有较大间隔，体验实在不好。这里我将所有命令更改成了以#开头。添加了一个叫finish的plugin来最后处理所有#结尾的命令，防止未知命令变成ChatGPT的query。

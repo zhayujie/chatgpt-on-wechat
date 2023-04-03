@@ -7,11 +7,12 @@ from typing import Tuple
 from bridge.bridge import Bridge
 from bridge.context import ContextType
 from bridge.reply import Reply, ReplyType
-from config import load_config
+from config import conf, load_config
 import plugins
 from plugins import *
 from common import const
 from common.log import logger
+import pickle
 
 # 定义指令集
 COMMANDS = {
@@ -195,20 +196,18 @@ class Godcmd(Plugin):
                             ok, result = False, "unknown args"
                 elif cmd == "set_openai_api_key":
                     if len(args) == 1:
-                        import redis
-                        R = redis.Redis(host='localhost', port=6379, db=0)
-                        user_openai_api_key = "openai_api_key_" + user
-                        R.set(user_openai_api_key, args[0])
-                        # R.sadd("openai_api_key", args[0])
+                        user_data = conf().get_user_data(user)
+                        user_data['openai_api_key'] = args[0]
                         ok, result = True, "你的OpenAI私有api_key已设置为" + args[0]
                     else:
                         ok, result = False, "请提供一个api_key"
                 elif cmd == "reset_openai_api_key":
-                    import redis
-                    R = redis.Redis(host='localhost', port=6379, db=0)
-                    user_openai_api_key = "openai_api_key_" + user
-                    R.delete(user_openai_api_key)
-                    ok, result = True, "OpenAI的api_key已重置"
+                    try:
+                        user_data = conf().get_user_data(user)
+                        user_data.pop('openai_api_key')
+                    except Exception as e:
+                        ok, result = False, "你没有设置私有api_key"
+                    ok, result = True, "你的OpenAI私有api_key已清除"
                 # elif cmd == "helpp":
                 #     if len(args) != 1:
                 #         ok, result = False, "请提供插件名"
