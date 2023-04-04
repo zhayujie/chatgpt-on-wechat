@@ -1,6 +1,7 @@
 # encoding:utf-8
 
 import json
+import logging
 import os
 from common.log import logger
 
@@ -37,7 +38,6 @@ available_setting = {
     # chatgpt限流配置
     "rate_limit_chatgpt": 20,  # chatgpt的调用频率限制
     "rate_limit_dalle": 50,  # openai dalle的调用频率限制
-
 
     # chatgpt api参数 参考https://platform.openai.com/docs/api-reference/chat/create
     "temperature": 0.9,
@@ -82,6 +82,7 @@ available_setting = {
     # channel配置
     "channel_type": "wx", # 通道类型，支持wx,wxy和terminal
 
+    "debug": False,  # 是否开启debug模式，开启后会打印更多日志
 
 }
 
@@ -138,6 +139,10 @@ def load_config():
                     config[name] = True
                 else:
                     config[name] = value
+
+    if config["debug"]:
+        logger.setLevel(logging.DEBUG)
+        logger.debug("[INIT] set log level to DEBUG")        
 
     logger.info("[INIT] load config: {}".format(config))
 

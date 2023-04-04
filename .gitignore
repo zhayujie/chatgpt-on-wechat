@@ -10,3 +10,4 @@ nohup.out
 tmp
 plugins.json
 itchat.pkl
+*.log
