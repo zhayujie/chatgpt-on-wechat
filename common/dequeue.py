@@ -26,8 +26,8 @@ class Dequeue(Queue):
             self.unfinished_tasks += 1
             self.not_empty.notify()
 
-    def put_nowait(self, item):
-        return self.put(item, block=False)
+    def putleft_nowait(self, item):
+        return self.putleft(item, block=False)
 
     def _putleft(self, item):
         self.queue.appendleft(item)
