@@ -1,7 +1,3 @@
-# 这是一个插件，用于根据接受文本中由两个“#”包含的内容来选择语音合成的语言，例如“#英语#你好
-# langue就是夹在这两个”#“之间的内容，例如“zh-CN”
-# 并将这个语言写入config，json中的voice_create_prefix中，例如“voice_create_prefix”: “#zh-CN#
-# 再将这个语言写入之前将这两个“#”去掉，例如“zh-CN”
 import plugins
 from plugins import *
 from common.log import logger
