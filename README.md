@@ -75,7 +75,7 @@ cd chatgpt-on-wechat/
 ```
 
 **(2) 安装核心依赖 (必选)：**
-
+> 能够使用`itchat`创建机器人，并具有文字交流功能所需的最小依赖集合。
 ```bash
 pip3 install -r requirements.txt
 ```
