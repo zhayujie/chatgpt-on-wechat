@@ -59,15 +59,16 @@ class Dungeon(Plugin):
         clist = e_context['context'].content.split(maxsplit=1)
         sessionid = e_context['context']['session_id']
         logger.debug("[Dungeon] on_handle_context. content: %s" % clist)
-        if clist[0] == "$停止冒险":
+        trigger_prefix = conf().get('plugin_trigger_prefix', "$")
+        if clist[0] == f"{trigger_prefix}停止冒险":
             if sessionid in self.games:
                 self.games[sessionid].reset()
                 del self.games[sessionid]
                 reply = Reply(ReplyType.INFO, "冒险结束!")
                 e_context['reply'] = reply
                 e_context.action = EventAction.BREAK_PASS
-        elif clist[0] == "$开始冒险" or sessionid in self.games:
-            if sessionid not in self.games or clist[0] == "$开始冒险":
+        elif clist[0] == f"{trigger_prefix}开始冒险" or sessionid in self.games:
+            if sessionid not in self.games or clist[0] == f"{trigger_prefix}开始冒险":
                 if len(clist)>1 :
                     story = clist[1]
                 else:
@@ -85,7 +86,8 @@ class Dungeon(Plugin):
         help_text = "可以和机器人一起玩文字冒险游戏。\n"
         if kwargs.get('verbose') != True:
             return help_text
-        help_text = "$开始冒险 {背景故事}: 开始一个基于{背景故事}的文字冒险，之后你的所有消息会协助完善这个故事。\n$停止冒险: 结束游戏。\n"
+        trigger_prefix = conf().get('plugin_trigger_prefix', "$")
+        help_text = f"{trigger_prefix}开始冒险 "+"{背景故事}: 开始一个基于{背景故事}的文字冒险，之后你的所有消息会协助完善这个故事。\n"+f"{trigger_prefix}停止冒险: 结束游戏。\n"
         if kwargs.get('verbose') == True:
-            help_text += "\n命令例子: '$开始冒险 你在树林里冒险，指不定会从哪里蹦出来一些奇怪的东西，你握紧手上的手枪，希望这次冒险能够找到一些值钱的东西，你往树林深处走去。'"
+            help_text += f"\n命令例子: '{trigger_prefix}开始冒险 你在树林里冒险，指不定会从哪里蹦出来一些奇怪的东西，你握紧手上的手枪，希望这次冒险能够找到一些值钱的东西，你往树林深处走去。'"
         return help_text

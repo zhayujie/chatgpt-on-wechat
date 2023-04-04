@@ -88,6 +88,8 @@ available_setting = {
 
     "debug": False,  # 是否开启debug模式，开启后会打印更多日志
 
+    # 插件配置
+    "plugin_trigger_prefix": "$",  # 规范插件提供聊天相关指令的前缀，建议不要和管理员指令前缀"#"冲突
 }
 
 

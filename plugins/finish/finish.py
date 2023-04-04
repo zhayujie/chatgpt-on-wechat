@@ -2,6 +2,7 @@
 
 from bridge.context import ContextType
 from bridge.reply import Reply, ReplyType
+from config import conf
 import plugins
 from plugins import *
 from common.log import logger
@@ -21,7 +22,8 @@ class Finish(Plugin):
 
         content = e_context['context'].content
         logger.debug("[Finish] on_handle_context. content: %s" % content)
-        if content.startswith("$"):
+        trigger_prefix = conf().get('plugin_trigger_prefix',"$")
+        if content.startswith(trigger_prefix):
             reply = Reply()
             reply.type = ReplyType.ERROR
             reply.content = "未知插件命令\n查看插件命令列表请输入#help {插件名}\n"

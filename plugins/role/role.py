@@ -6,6 +6,7 @@ from bridge.bridge import Bridge
 from bridge.context import ContextType
 from bridge.reply import Reply, ReplyType
 from common import const
+from config import conf
 import plugins
 from plugins import *
 from common.log import logger
@@ -82,7 +83,8 @@ class Role(Plugin):
         desckey = None
         customize = False
         sessionid = e_context['context']['session_id']
-        if clist[0] == "$停止扮演":
+        trigger_prefix = conf().get('plugin_trigger_prefix', "$")
+        if clist[0] == f"{trigger_prefix}停止扮演":
             if sessionid in self.roleplays:
                 self.roleplays[sessionid].reset()
                 del self.roleplays[sessionid]
@@ -90,11 +92,11 @@ class Role(Plugin):
             e_context['reply'] = reply
             e_context.action = EventAction.BREAK_PASS
             return
-        elif clist[0] == "$角色":
+        elif clist[0] == f"{trigger_prefix}角色":
             desckey = "descn"
-        elif clist[0].lower() == "$role":
+        elif clist[0].lower() == f"{trigger_prefix}role":
             desckey = "description"
-        elif clist[0] == "$设定扮演":
+        elif clist[0] == f"{trigger_prefix}设定扮演":
             customize = True
         elif sessionid not in self.roleplays:
             return
@@ -131,11 +133,12 @@ class Role(Plugin):
         help_text = "让机器人扮演不同的角色。\n"
         if not verbose:
             return help_text
-        help_text = "使用方法:\n$角色 {预设角色名}: 设定为预设角色\n$role {预设角色名}: 同上，但使用英文设定\n"
-        help_text += "$设定扮演 {角色设定}: 设定自定义角色人设\n"
-        help_text += "$停止扮演: 清除设定的角色。\n"
+        trigger_prefix = conf().get('plugin_trigger_prefix', "$")
+        help_text = f"使用方法:\n{trigger_prefix}角色"+" {预设角色名}: 设定为预设角色。\n"+f"{trigger_prefix}role"+" {预设角色名}: 同上，但使用英文设定。\n"
+        help_text += f"{trigger_prefix}设定扮演"+" {角色设定}: 设定自定义角色人设。\n"
+        help_text += f"{trigger_prefix}停止扮演: 清除设定的角色。\n"
         help_text += "\n目前可用的预设角色名列表: \n"
         for role in self.roles:
             help_text += f"{role}: {self.roles[role]['remark']}\n"
-        help_text += "\n命令例子: '$角色 写作助理'"
+        help_text += f"\n命令例子: '{trigger_prefix}角色 写作助理'"
         return help_text
