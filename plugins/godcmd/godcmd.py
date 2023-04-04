@@ -146,6 +146,7 @@ class Godcmd(Plugin):
         logger.debug("[Godcmd] on_handle_context. content: %s" % content)
         if content.startswith("#"):
             # msg = e_context['context']['msg']
+            channel = e_context['channel']
             user = e_context['context']['receiver']
             session_id = e_context['context']['session_id']
             isgroup = e_context['context']['isgroup']
@@ -181,6 +182,7 @@ class Godcmd(Plugin):
                 elif cmd == "reset":
                     if bottype in (const.CHATGPT, const.OPEN_AI):
                         bot.sessions.clear_session(session_id)
+                        channel.cancel_session(session_id)
                         ok, result = True, "会话已重置"
                     else:
                         ok, result = False, "当前对话机器人不支持重置会话"
@@ -202,6 +204,7 @@ class Godcmd(Plugin):
                             ok, result = True, "配置已重载"
                         elif cmd == "resetall":
                             if bottype in (const.CHATGPT, const.OPEN_AI):
+                                channel.cancel_all_session()
                                 bot.sessions.clear_all_session()
                                 ok, result = True, "重置所有会话成功"
                             else:
