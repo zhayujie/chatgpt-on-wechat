@@ -131,11 +131,11 @@ class Role(Plugin):
         help_text = "让机器人扮演不同的角色。\n"
         if not verbose:
             return help_text
-        help_text = "使用方法:\n$开始扮演 {预设角色名}: 设定为预设角色\n$role {预设角色名}: 同上，但使用英文设定\n"
-        help_text += "$设定扮演 {角色设定}: 设定自定义角色\n"
+        help_text = "使用方法:\n$角色 {预设角色名}: 设定为预设角色\n$role {预设角色名}: 同上，但使用英文设定\n"
+        help_text += "$设定扮演 {角色设定}: 设定自定义角色人设\n"
         help_text += "$停止扮演: 清除设定的角色。\n"
         help_text += "\n目前可用的预设角色名列表: \n"
         for role in self.roles:
             help_text += f"{role}: {self.roles[role]['remark']}\n"
-        help_text += "\n命令例子: '$开始扮演 写作助理'"
+        help_text += "\n命令例子: '$角色 写作助理'"
         return help_text
