@@ -57,7 +57,6 @@ class AzureVoice(Voice):
     def textToVoice(self, text):
         fileName = TmpDir().path() + 'reply-' + str(int(time.time())) + '.mp3'
         audio_config = speechsdk.audio.AudioOutputConfig(filename=fileName)
-        voice_name = self.chooseVoice(text)
         # 当触发了azure_voice插件时实现选择语种合成，否则默认使用config.json中的语种
         voice_name = self.chooseVoice(text)
         if (voice_name != "nothing"):
