@@ -24,7 +24,7 @@ class Azure_voice_reply(Plugin):
         if e_context['context'].type != ContextType.TEXT:
             return
         # 获取文本消息
-        if(conf().get("text_to_voice" != "azure")):
+        if conf().get("text_to_voice") != "azure":
             return
         text = e_context['context'].content
         logger.debug("[Hello] on_handle_context. content: %s" % text)

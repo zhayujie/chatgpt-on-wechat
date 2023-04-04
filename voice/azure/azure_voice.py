@@ -59,6 +59,7 @@ class AzureVoice(Voice):
         audio_config = speechsdk.audio.AudioOutputConfig(filename=fileName)
         voice_name = self.chooseVoice(text)
         # 当触发了azure_voice插件时实现选择语种合成，否则默认使用config.json中的语种
+        voice_name = self.chooseVoice(text)
         if (voice_name != "nothing"):
             # 去除text文本的第二个“#”前的内容
             text = text.split("#", 2)[2]
