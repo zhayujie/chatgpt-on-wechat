@@ -245,7 +245,7 @@ class ChatChannel(Channel):
         session_id = context['session_id']
         with self.lock:
             if session_id not in self.sessions:
-                self.sessions[session_id] = (queue.Queue(), threading.BoundedSemaphore(1))
+                self.sessions[session_id] = (queue.Queue(), threading.BoundedSemaphore(conf().get("concurrency_in_session", 1)))
             self.sessions[session_id][0].put(context)
 
     # 消费者函数，单独线程，用于从消息队列中取出消息并处理

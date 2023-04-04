@@ -27,6 +27,7 @@ available_setting = {
     "group_chat_in_one_session": ["ChatGPT测试群"],  # 支持会话上下文共享的群名称
     "trigger_by_self": False,  # 是否允许机器人触发
     "image_create_prefix": ["画", "看", "找"],  # 开启图片回复的前缀
+    "concurrency_in_session": 1, # 同一会话最多有多少条消息在处理中，大于1可能乱序
 
     # chatgpt会话参数
     "expires_in_seconds": 3600,  # 无操作会话的过期时间
@@ -43,6 +44,7 @@ available_setting = {
     "top_p": 1,
     "frequency_penalty": 0,
     "presence_penalty": 0,
+    "request_timeout": 30,  # chatgpt请求超时时间
 
     # 语音设置
     "speech_recognition": False,  # 是否开启语音识别

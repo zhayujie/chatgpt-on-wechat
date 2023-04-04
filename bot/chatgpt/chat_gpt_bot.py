@@ -86,6 +86,7 @@ class ChatGPTBot(Bot,OpenAIImage):
             "top_p":1,
             "frequency_penalty":conf().get('frequency_penalty', 0.0),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
             "presence_penalty":conf().get('presence_penalty', 0.0),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
+            "request_timeout": conf().get('request_timeout', 30),  # 请求超时时间
         }
 
     def reply_text(self, session:ChatGPTSession, session_id, retry_count=0) -> dict:
