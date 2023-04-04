@@ -28,7 +28,7 @@ class DiscordChannel(Channel):
         self.voice_enabled = config.get('voice_enabled')
         context = ssl.create_default_context()
         context.load_verify_locations(config.get('certificate_file'))
-        self.bot = commands.Bot(command_prefix='>', intents=self.intents, ssl=context)
+        self.bot = commands.Bot(command_prefix='!', intents=self.intents, ssl=context)
         self.bot.add_listener(self.on_ready)
 
 
@@ -37,28 +37,36 @@ class DiscordChannel(Channel):
         self.bot.run(self.token)
 
     async def on_ready(self):
-        print('Bot is online user:', self.bot.user)
+        logger.info('Bot is online user:{}'.format(self.bot.user))
         if self.voice_enabled == False: 
+            logger.debug('disable music')
             await self.bot.remove_cog("Music")
+    
+    async def join(ctx):
+        logger.debug('join %s', repr(ctx))
+        channel = ctx.author.voice.channel
+        await channel.connect()
 
     async def on_message(self, message):
         """
         listen for message event
         """
         await self.bot.wait_until_ready()
-        # print('discord message:', message)
+        logger.debug('discord message: %s', repr(message))
         if message.author == self.bot.user:
             print('can not be bot user')
             return
         
         prompt = message.content;
         if not prompt:
-            print('no prompt author:', message.author)
+            logger.debug('no prompt author: %s', message.author)
             return
-        # print('prompt:', prompt)
+        logger.debug('author: %s', message.author)
+        logger.debug('prompt: %s', prompt)
+
         context = Context()
         context.type = ContextType.TEXT
-        context['session_id'] = "User"
+        context['session_id'] = message.author
         context.content = prompt
         response = super().build_reply_content(prompt, context).content
         # print('response', response)

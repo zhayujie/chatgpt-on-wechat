@@ -72,6 +72,11 @@ available_setting = {
     "clear_memory_commands": ['#清除记忆'],  # 重置会话指令
     "channel_type": "wx", # 通道类型，支持wx,wxy和terminal
 
+    # 命令
+    "cmd_update_config": "#更新配置", #更新配置
+    "cmd_clear_session": "#清除记忆",
+    "cmd_clear_all_session": "#清除所有",
+
     # ssl ca 证书
     "certificate_file": "", # ca 根证书 https://cacerts.digicert.com/DigiCertTLSRSA4096RootG5.crt.pem
 

@@ -24,6 +24,8 @@ class OpenAISession(Session):
 
         if len(self.messages) > 0 and self.messages[-1]['role'] == 'user':
             prompt += "A: "
+        
+        logger.debug('sesssion prompt: %s', prompt)
         return prompt
 
     def discard_exceeding(self, max_tokens, cur_tokens= None):
