@@ -7,7 +7,7 @@ from typing import Tuple
 from bridge.bridge import Bridge
 from bridge.context import ContextType
 from bridge.reply import Reply, ReplyType
-from config import load_config
+from config import conf, load_config
 import plugins
 from plugins import *
 from common import const
@@ -126,7 +126,14 @@ class Godcmd(Plugin):
         else:
             with open(config_path,"r") as f:
                 gconf=json.load(f)
-                
+        
+        custom_commands = conf().get("clear_memory_commands", [])
+        for custom_command in custom_commands:
+            if custom_command and custom_command.startswith("#"):
+                custom_command = custom_command[1:]
+                if custom_command and custom_command not in COMMANDS["reset"]["alias"]:
+                    COMMANDS["reset"]["alias"].append(custom_command)
+
         self.password = gconf["password"]
         self.admin_users = gconf["admin_users"] # 预存的管理员账号，这些账号不需要认证 TODO: 用户名每次都会变，目前不可用
         self.isrunning = True # 机器人是否运行中

@@ -77,7 +77,7 @@ available_setting = {
     "wechaty_puppet_service_token": "",  # wechaty的token
 
     # chatgpt指令自定义触发词
-    "clear_memory_commands": ['#清除记忆'],  # 重置会话指令
+    "clear_memory_commands": ['#清除记忆'],  # 重置会话指令，必须以#开头
 
     # channel配置
     "channel_type": "wx", # 通道类型，支持wx,wxy和terminal
