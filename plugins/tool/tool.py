@@ -26,8 +26,13 @@ class Tool(Plugin):
 
         logger.info("[tool] inited")
 
-    def get_help_text(self, **kwargs):
-        help_text = "这是一个能让chatgpt联网，搜索，数字运算的插件，将赋予强大且丰富的扩展能力"
+    def get_help_text(self, verbose=False, **kwargs):
+        help_text = "这是一个能让chatgpt联网，搜索，数字运算的插件，将赋予强大且丰富的扩展能力。"
+        if not verbose:
+            return help_text
+        help_text += "使用说明：\n"
+        help_text += "$tool {命令}: chatgpt会根据你的{命令}使用一些可用工具为你返回结果\n"
+        help_text += "$tool reset: 重置工具\n"
         return help_text
 
     def on_handle_context(self, e_context: EventContext):

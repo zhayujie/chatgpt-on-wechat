@@ -12,22 +12,30 @@ import plugins
 from plugins import *
 from common import const
 from common.log import logger
-
 # 定义指令集
 COMMANDS = {
     "help": {
         "alias": ["help", "帮助"],
-        "desc": "打印指令集合",
+        "desc": "回复此帮助",
     },
     "helpp": {
-        "alias": ["helpp", "插件帮助"],
+        "alias": ["help", "帮助"],  # 与help指令共用别名，根据参数数量区分
         "args": ["插件名"],
-        "desc": "打印插件的帮助信息",
+        "desc": "回复指定插件的详细帮助",
     },
     "auth": {
         "alias": ["auth", "认证"],
         "args": ["口令"],
         "desc": "管理员认证",
+    },
+    "set_openai_api_key": {
+        "alias": ["set_openai_api_key"],
+        "args": ["api_key"],
+        "desc": "设置你的OpenAI私有api_key",
+    },
+    "reset_openai_api_key": {
+        "alias": ["reset_openai_api_key"],
+        "desc": "重置为默认的api_key",
     },
     # "id": {
     #     "alias": ["id", "用户"],
@@ -91,26 +99,35 @@ ADMIN_COMMANDS = {
 }
 # 定义帮助函数
 def get_help_text(isadmin, isgroup):
-    help_text = "可用指令：\n"
+    help_text = "通用指令：\n"
     for cmd, info in COMMANDS.items():
-        if cmd=="auth" and (isadmin or isgroup): # 群聊不可认证
+        if cmd=="auth": #不提示认证指令
             continue
-
         alias=["#"+a for a in info['alias']]
         help_text += f"{','.join(alias)} "
         if 'args' in info:
             args=["{"+a+"}" for a in info['args']]
             help_text += f"{' '.join(args)} "
         help_text += f": {info['desc']}\n"
+
+    # 插件指令
+    plugins = PluginManager().list_plugins()
+    help_text += "\n目前可用插件有："
+    for plugin in plugins:
+        if plugins[plugin].enabled and not plugins[plugin].hidden:
+            namecn = plugins[plugin].namecn
+            help_text += "\n%s:"%namecn
+            help_text += PluginManager().instances[plugin].get_help_text(verbose=False).strip()
+
     if ADMIN_COMMANDS and isadmin:
-        help_text += "\n管理员指令：\n"
+        help_text += "\n\n管理员指令：\n"
         for cmd, info in ADMIN_COMMANDS.items():
             alias=["#"+a for a in info['alias']]
             help_text += f"{','.join(alias)} "
             help_text += f": {info['desc']}\n"
     return help_text
 
-@plugins.register(name="Godcmd", desc="为你的机器人添加指令集，有用户和管理员两种角色，加载顺序请放在首位，初次运行后插件目录会生成配置文件, 填充管理员密码后即可认证", version="1.0", author="lanvent", desire_priority= 999)
+@plugins.register(name="Godcmd", desire_priority=999, hidden=True, desc="为你的机器人添加指令集，有用户和管理员两种角色，加载顺序请放在首位，初次运行后插件目录会生成配置文件, 填充管理员密码后即可认证", version="1.0", author="lanvent")
 class Godcmd(Plugin):
 
     def __init__(self):
@@ -141,14 +158,14 @@ class Godcmd(Plugin):
         self.handlers[Event.ON_HANDLE_CONTEXT] = self.on_handle_context
         logger.info("[Godcmd] inited")
 
-    
+
     def on_handle_context(self, e_context: EventContext):
         context_type = e_context['context'].type
         if context_type != ContextType.TEXT:
             if not self.isrunning:
                 e_context.action = EventAction.BREAK_PASS
             return
-        
+
         content = e_context['context'].content
         logger.debug("[Godcmd] on_handle_context. content: %s" % content)
         if content.startswith("#"):
@@ -160,7 +177,7 @@ class Godcmd(Plugin):
             bottype = Bridge().get_bot_type("chat")
             bot = Bridge().get_bot("chat")
             # 将命令和参数分割
-            command_parts = content[1:].split(" ")
+            command_parts = content[1:].strip().split()
             cmd = command_parts[0]
             args = command_parts[1:]
             isadmin=False
@@ -172,20 +189,36 @@ class Godcmd(Plugin):
                 cmd = next(c for c, info in COMMANDS.items() if cmd in info['alias'])
                 if cmd == "auth":
                     ok, result = self.authenticate(user, args, isadmin, isgroup)
-                elif cmd == "help":
-                    ok, result = True, get_help_text(isadmin, isgroup)
-                elif cmd == "helpp":
-                    if len(args) != 1:
-                        ok, result = False, "请提供插件名"
+                elif cmd == "help" or cmd == "helpp":
+                    if len(args) == 0:
+                        ok, result = True, get_help_text(isadmin, isgroup)
                     else:
+                        # This can replace the helpp command
                         plugins = PluginManager().list_plugins()
-                        name = args[0].upper()
-                        if name in plugins and plugins[name].enabled:
-                            ok, result = True, PluginManager().instances[name].get_help_text(isgroup=isgroup, isadmin=isadmin)
-                        else:
-                            ok, result= False, "插件不存在或未启用"
-                elif cmd == "id":
-                    ok, result = True, f"用户id=\n{user}"
+                        query_name = args[0].upper()
+                        # search name and namecn
+                        for name, plugincls in plugins.items():
+                            if not plugincls.enabled :
+                                continue
+                            if query_name == name or query_name == plugincls.namecn:
+                                ok, result = True, PluginManager().instances[name].get_help_text(isgroup=isgroup, isadmin=isadmin, verbose=True)
+                                break
+                        if not ok:
+                            result = "插件不存在或未启用"
+                elif cmd == "set_openai_api_key":
+                    if len(args) == 1:
+                        user_data = conf().get_user_data(user)
+                        user_data['openai_api_key'] = args[0]
+                        ok, result = True, "你的OpenAI私有api_key已设置为" + args[0]
+                    else:
+                        ok, result = False, "请提供一个api_key"
+                elif cmd == "reset_openai_api_key":
+                    try:
+                        user_data = conf().get_user_data(user)
+                        user_data.pop('openai_api_key')
+                        ok, result = True, "你的OpenAI私有api_key已清除"
+                    except Exception as e:
+                        ok, result = False, "你没有设置私有api_key"
                 elif cmd == "reset":
                     if bottype in (const.CHATGPT, const.OPEN_AI):
                         bot.sessions.clear_session(session_id)
@@ -292,7 +325,7 @@ class Godcmd(Plugin):
             e_context.action = EventAction.BREAK_PASS # 事件结束，并跳过处理context的默认逻辑
         elif not self.isrunning:
             e_context.action = EventAction.BREAK_PASS
-    
+
     def authenticate(self, userid, args, isadmin, isgroup) -> Tuple[bool,str] : 
         if isgroup:
             return False,"请勿在群聊中认证"

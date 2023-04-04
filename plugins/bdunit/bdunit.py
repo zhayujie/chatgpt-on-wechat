@@ -16,7 +16,7 @@ from uuid import getnode as get_mac
 """
 
 
-@plugins.register(name="BDunit", desc="Baidu unit bot system", version="0.1", author="jackson", desire_priority=0)
+@plugins.register(name="BDunit", desire_priority=0, hidden=True, desc="Baidu unit bot system", version="0.1", author="jackson")
 class BDunit(Plugin):
     def __init__(self):
         super().__init__()
