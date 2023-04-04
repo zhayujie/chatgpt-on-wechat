@@ -1,0 +1,8 @@
+{
+  "tools": ["python", "requests", "terminal", "meteo-weather"],
+  "kwargs": {
+      "top_k_results": 2,
+      "no_default": false,
+      "model_name": "gpt-3.5-turbo"
+  }
+}
