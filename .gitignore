@@ -11,3 +11,4 @@ tmp
 plugins.json
 itchat.pkl
 user_datas.pkl
+*.log

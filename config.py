@@ -1,6 +1,7 @@
 # encoding:utf-8
 
 import json
+import logging
 import os
 from common.log import logger
 import pickle
@@ -28,6 +29,7 @@ available_setting = {
     "group_chat_in_one_session": ["ChatGPT测试群"],  # 支持会话上下文共享的群名称
     "trigger_by_self": False,  # 是否允许机器人触发
     "image_create_prefix": ["画", "看", "找"],  # 开启图片回复的前缀
+    "concurrency_in_session": 1, # 同一会话最多有多少条消息在处理中，大于1可能乱序
 
     # chatgpt会话参数
     "expires_in_seconds": 3600,  # 无操作会话的过期时间
@@ -38,12 +40,13 @@ available_setting = {
     "rate_limit_chatgpt": 20,  # chatgpt的调用频率限制
     "rate_limit_dalle": 50,  # openai dalle的调用频率限制
 
-
     # chatgpt api参数 参考https://platform.openai.com/docs/api-reference/chat/create
     "temperature": 0.9,
     "top_p": 1,
     "frequency_penalty": 0,
     "presence_penalty": 0,
+    "request_timeout": 120, # chatgpt请求超时时间，openai接口默认设置为600，对于难问题一般需要较长时间
+    "timeout": 120,         # chatgpt重试超时时间，在这个时间内，将会自动重试
 
     # 语音设置
     "speech_recognition": False,  # 是否开启语音识别
@@ -79,11 +82,12 @@ available_setting = {
     "wechatmp_token": "",  # 微信公众平台的Token
 
     # chatgpt指令自定义触发词
-    "clear_memory_commands": ['#清除记忆'],  # 重置会话指令
+    "clear_memory_commands": ['#清除记忆'],  # 重置会话指令，必须以#开头
 
     # channel配置
     "channel_type": "wx", # 通道类型，支持：{wx,wxy,terminal,wechatmp}
 
+    "debug": False,  # 是否开启debug模式，开启后会打印更多日志
 
 }
 
@@ -169,6 +173,10 @@ def load_config():
                     config[name] = True
                 else:
                     config[name] = value
+
+    if config.get("debug", False):
+        logger.setLevel(logging.DEBUG)
+        logger.debug("[INIT] set log level to DEBUG")        
 
     logger.info("[INIT] load config: {}".format(config))
 

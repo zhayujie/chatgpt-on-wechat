@@ -147,7 +147,14 @@ class Godcmd(Plugin):
         else:
             with open(config_path,"r") as f:
                 gconf=json.load(f)
-                
+        
+        custom_commands = conf().get("clear_memory_commands", [])
+        for custom_command in custom_commands:
+            if custom_command and custom_command.startswith("#"):
+                custom_command = custom_command[1:]
+                if custom_command and custom_command not in COMMANDS["reset"]["alias"]:
+                    COMMANDS["reset"]["alias"].append(custom_command)
+
         self.password = gconf["password"]
         self.admin_users = gconf["admin_users"] # 预存的管理员账号，这些账号不需要认证 TODO: 用户名每次都会变，目前不可用
         self.isrunning = True # 机器人是否运行中
@@ -167,6 +174,7 @@ class Godcmd(Plugin):
         logger.debug("[Godcmd] on_handle_context. content: %s" % content)
         if content.startswith("#"):
             # msg = e_context['context']['msg']
+            channel = e_context['channel']
             user = e_context['context']['receiver']
             session_id = e_context['context']['session_id']
             isgroup = e_context['context']['isgroup']
@@ -216,6 +224,7 @@ class Godcmd(Plugin):
                 elif cmd == "reset":
                     if bottype in (const.CHATGPT, const.OPEN_AI):
                         bot.sessions.clear_session(session_id)
+                        channel.cancel_session(session_id)
                         ok, result = True, "会话已重置"
                     else:
                         ok, result = False, "当前对话机器人不支持重置会话"
@@ -237,6 +246,7 @@ class Godcmd(Plugin):
                             ok, result = True, "配置已重载"
                         elif cmd == "resetall":
                             if bottype in (const.CHATGPT, const.OPEN_AI):
+                                channel.cancel_all_session()
                                 bot.sessions.clear_all_session()
                                 ok, result = True, "重置所有会话成功"
                             else:

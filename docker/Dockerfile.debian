@@ -23,7 +23,8 @@ RUN apt-get update  \
     && cd ${BUILD_PREFIX} \
     && cp config-template.json ${BUILD_PREFIX}/config.json \
     && /usr/local/bin/python -m pip install --no-cache --upgrade pip \
-    && pip install --no-cache -r requirements.txt
+    && pip install --no-cache -r requirements.txt \
+    && pip install --no-cache -r requirements-optional.txt
 
 WORKDIR ${BUILD_PREFIX}
 

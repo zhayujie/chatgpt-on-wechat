@@ -5,6 +5,7 @@ wechat channel
 """
 
 import os
+import threading
 import requests
 import io
 import time
@@ -17,18 +18,10 @@ from lib import itchat
 from lib.itchat.content import *
 from bridge.reply import *
 from bridge.context import *
-from concurrent.futures import ThreadPoolExecutor
 from config import conf
 from common.time_check import time_checker
 from common.expired_dict import ExpiredDict
 from plugins import *
-thread_pool = ThreadPoolExecutor(max_workers=8)
-
-def thread_pool_callback(worker):
-    worker_exception = worker.exception()
-    if worker_exception:
-        logger.exception("Worker return exception: {}".format(worker_exception))
-
 
 @itchat.msg_register(TEXT)
 def handler_single_msg(msg):
@@ -73,7 +66,9 @@ def qrCallback(uuid,status,qrcode):
         try:
             from PIL import Image
             img = Image.open(io.BytesIO(qrcode))
-            thread_pool.submit(img.show,"QRCode")
+            _thread = threading.Thread(target=img.show, args=("QRCode",))
+            _thread.setDaemon(True)
+            _thread.start()
         except Exception as e:
             pass
 
@@ -142,7 +137,7 @@ class WechatChannel(ChatChannel):
         logger.debug("[WX]receive voice msg: {}".format(cmsg.content))
         context = self._compose_context(ContextType.VOICE, cmsg.content, isgroup=False, msg=cmsg)
         if context:
-            thread_pool.submit(self._handle, context).add_done_callback(thread_pool_callback)
+            self.produce(context)
 
     @time_checker
     @_check
@@ -150,7 +145,7 @@ class WechatChannel(ChatChannel):
         logger.debug("[WX]receive text msg: {}, cmsg={}".format(json.dumps(cmsg._rawmsg, ensure_ascii=False), cmsg))
         context = self._compose_context(ContextType.TEXT, cmsg.content, isgroup=False, msg=cmsg)
         if context:
-            thread_pool.submit(self._handle, context).add_done_callback(thread_pool_callback)
+            self.produce(context)
 
     @time_checker
     @_check
@@ -158,7 +153,7 @@ class WechatChannel(ChatChannel):
         logger.debug("[WX]receive group msg: {}, cmsg={}".format(json.dumps(cmsg._rawmsg, ensure_ascii=False), cmsg))
         context = self._compose_context(ContextType.TEXT, cmsg.content, isgroup=True, msg=cmsg)
         if context:
-            thread_pool.submit(self._handle, context).add_done_callback(thread_pool_callback)
+            self.produce(context)
     
     @time_checker
     @_check
@@ -168,7 +163,7 @@ class WechatChannel(ChatChannel):
         logger.debug("[WX]receive voice for group msg: {}".format(cmsg.content))
         context = self._compose_context(ContextType.VOICE, cmsg.content, isgroup=True, msg=cmsg)
         if context:
-            thread_pool.submit(self._handle, context).add_done_callback(thread_pool_callback)
+            self.produce(context)
     
     # 统一的发送函数，每个Channel自行实现，根据reply的type字段发送不同类型的消息
     def send(self, reply: Reply, context: Context):

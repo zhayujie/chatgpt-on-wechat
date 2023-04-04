@@ -65,7 +65,7 @@
 ### 2.运行环境
 
 支持 Linux、MacOS、Windows 系统（可在Linux服务器上长期运行)，同时需安装 `Python`。
-> 建议Python版本在 3.7.1~3.9.X 之间，3.10及以上版本在 MacOS 可用，其他系统上不确定能否正常运行。
+> 建议Python版本在 3.7.1~3.9.X 之间，推荐3.8版本，3.10及以上版本在 MacOS 可用，其他系统上不确定能否正常运行。
 
 **(1) 克隆项目代码：**
 
@@ -75,14 +75,20 @@ cd chatgpt-on-wechat/
 ```
 
 **(2) 安装核心依赖 (必选)：**
-
+> 能够使用`itchat`创建机器人，并具有文字交流功能所需的最小依赖集合。
 ```bash
 pip3 install -r requirements.txt
 ```
 
-其中`tiktoken`要求`python`版本在3.8以上，它用于精确计算会话使用的tokens数量，可以不装但建议安装。
+**(3) 拓展依赖 (可选，建议安装)：**
 
-**(3) 拓展依赖 (可选)：**
+```bash
+pip3 install -r requirements-optional.txt
+```
+> 如果某项依赖安装失败请注释掉对应的行再继续。
+
+其中`tiktoken`要求`python`版本在3.8以上，它用于精确计算会话使用的tokens数量，强烈建议安装。
+
 
 使用`google`或`baidu`语音识别需安装`ffmpeg`，
 
@@ -90,10 +96,12 @@ pip3 install -r requirements.txt
 
 参考[#415](https://github.com/zhayujie/chatgpt-on-wechat/issues/415)
 
-使用`azure`语音功能需安装依赖:
+使用`azure`语音功能需安装依赖（列在`requirements-optional.txt`内，但为便于`railway`部署已注释）:
+
 ```bash
 pip3 install azure-cognitiveservices-speech
 ```
+
 > 目前默认发布的镜像和`railway`部署，都基于`apline`，无法安装`azure`的依赖。若有需求请自行基于[`debian`](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/docker/Dockerfile.debian.latest)打包。
 参考[文档](https://learn.microsoft.com/en-us/azure/cognitive-services/speech-service/quickstarts/setup-platform?pivots=programming-language-python&tabs=linux%2Cubuntu%2Cdotnet%2Cjre%2Cmaven%2Cnodejs%2Cmac%2Cpypi)
 

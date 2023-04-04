@@ -23,6 +23,7 @@ RUN apk add --no-cache \
     && cp config-template.json ${BUILD_PREFIX}/config.json \
     && /usr/local/bin/python -m pip install --no-cache --upgrade pip \
     && pip install --no-cache -r requirements.txt \
+    && pip install --no-cache -r requirements-optional.txt \
     && apk del curl wget
 
 WORKDIR ${BUILD_PREFIX}

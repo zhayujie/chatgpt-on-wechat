@@ -4,8 +4,9 @@
 2. python 已安装：版本在 3.7 ~ 3.10 之间
 3. `git pull` 拉取最新代码
 4. 执行`pip3 install -r requirements.txt`，检查依赖是否满足
-5. 在已有 issue 中未搜索到类似问题
-6. [FAQS](https://github.com/zhayujie/chatgpt-on-wechat/wiki/FAQs) 中无类似问题
+5. 拓展功能请执行`pip3 install -r requirements-optional.txt`，检查依赖是否满足
+6. 在已有 issue 中未搜索到类似问题
+7. [FAQS](https://github.com/zhayujie/chatgpt-on-wechat/wiki/FAQs) 中无类似问题
 
 
 ### 问题描述
@@ -18,7 +19,7 @@
 ### 终端日志 (如有报错)
 
 ```
-[在此处粘贴终端日志]
+[在此处粘贴终端日志, 可在主目录下`run.log`文件中找到]
 ```
 
 
