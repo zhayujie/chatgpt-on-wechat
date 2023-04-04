@@ -72,6 +72,14 @@ available_setting = {
     "clear_memory_commands": ['#清除记忆'],  # 重置会话指令
     "channel_type": "wx", # 通道类型，支持wx,wxy和terminal
 
+    # ssl ca 证书
+    "certificate_file": "", # ca 根证书 https://cacerts.digicert.com/DigiCertTLSRSA4096RootG5.crt.pem
+
+    # 语音依赖
+    "voice_enabled": False,
+
+    # discord的配置
+    "discord_app_token": ""
 
 }
 
