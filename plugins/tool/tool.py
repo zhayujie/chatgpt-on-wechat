@@ -3,7 +3,7 @@ import os
 
 from chatgpt_tool_hub.apps import load_app
 from chatgpt_tool_hub.apps.app import App
-
+from chatgpt_tool_hub.tools.all_tool_list import get_all_tool_names
 import plugins
 from bridge.bridge import Bridge
 from bridge.context import ContextType
@@ -19,8 +19,6 @@ class Tool(Plugin):
     def __init__(self):
         super().__init__()
         self.handlers[Event.ON_HANDLE_CONTEXT] = self.on_handle_context
-        os.environ["OPENAI_API_KEY"] = conf().get("open_ai_api_key", "")
-        os.environ["PROXY"] = conf().get("proxy", "")
 
         self.app = self._reset_app()
 
@@ -117,9 +115,42 @@ class Tool(Plugin):
                 tool_config = json.load(f)
         return tool_config
 
+    def _build_tool_kwargs(self, kwargs: dict):
+        tool_model_name = kwargs.get("model_name")
+
+        return {
+            "openai_api_key": conf().get("open_ai_api_key", ""),
+            "proxy": conf().get("proxy", ""),
+            # note: 目前tool暂未对其他模型测试，但这里仍对配置来源做了优先级区分，一般插件配置可覆盖全局配置
+            "model_name": tool_model_name if tool_model_name else conf().get("model", "gpt-3.5-turbo"),
+            "no_default": kwargs.get("no_default", False),
+            "top_k_results": kwargs.get("top_k_results", 2),
+            # for news tool
+            "news_api_key": kwargs.get("news_api_key", ""),
+            # for bing-search tool
+            "bing_subscription_key": kwargs.get("bing_subscription_key", ""),
+            # for google-search tool
+            "google_api_key": kwargs.get("google_api_key", ""),
+            "google_cse_id": kwargs.get("google_cse_id", ""),
+            # for searxng-search tool
+            "searx_host": kwargs.get("searx_host", ""),
+            # for wolfram-alpha tool
+            "wolfram_alpha_appid": kwargs.get("wolfram_alpha_appid", ""),
+        }
+
+    def _filter_tool_list(self, tool_list: list):
+        valid_list = []
+        for tool in tool_list:
+            if tool in get_all_tool_names():
+                valid_list.append(tool)
+            else:
+                logger.warning("[tool] filter invalid tool: " + repr(tool))
+        return valid_list
+
     def _reset_app(self) -> App:
         tool_config = self._read_json()
-        kwargs = tool_config.get("kwargs", {})
-        if kwargs.get("model_name", "") == "":
-            kwargs["model_name"] = conf().get("model", "gpt-3.5-turbo")
-        return load_app(tools_list=tool_config.get("tools"), **tool_config.get("kwargs"))
+
+        # filter not support tool
+        tool_list = self._filter_tool_list(tool_config.get("tools", []))
+
+        return load_app(tools_list=tool_list, **self._build_tool_kwargs(tool_config.get("kwargs", {})))
