@@ -36,8 +36,8 @@ class BDunit(Plugin):
             self.handlers[Event.ON_HANDLE_CONTEXT] = self.on_handle_context
             logger.info("[BDunit] inited")
         except Exception as e:
-            logger.warn(
-                "BDunit init failed: %s, ignore " % e)
+            logger.warn("[BDunit] init failed, ignore ")
+            raise e
 
     def on_handle_context(self, e_context: EventContext):
 

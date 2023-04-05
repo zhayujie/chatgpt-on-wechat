@@ -45,10 +45,12 @@ class Role(Plugin):
             self.handlers[Event.ON_HANDLE_CONTEXT] = self.on_handle_context
             self.roleplays = {}
             logger.info("[Role] inited")
-        except FileNotFoundError:
-            logger.warn(f"[Role] init failed, {config_path} not found, ignore or see https://github.com/zhayujie/chatgpt-on-wechat/tree/master/plugins/role .")
         except Exception as e:
-            logger.warn("[Role] init failed, exception: %s, ignore or see https://github.com/zhayujie/chatgpt-on-wechat/tree/master/plugins/role ." % e)
+            if isinstance(e, FileNotFoundError):
+                logger.warn(f"[Role] init failed, {config_path} not found, ignore or see https://github.com/zhayujie/chatgpt-on-wechat/tree/master/plugins/role .")
+            else:
+                logger.warn("[Role] init failed, ignore or see https://github.com/zhayujie/chatgpt-on-wechat/tree/master/plugins/role .")
+            raise e
 
     def get_role(self, name, find_closest=True):
         name = name.lower()
