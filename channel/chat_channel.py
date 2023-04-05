@@ -112,10 +112,10 @@ class ChatChannel(Channel):
             else:
                 context.type = ContextType.TEXT
             context.content = content
-            if 'desire_rtype' not in context and conf().get('always_reply_voice'):
+            if 'desire_rtype' not in context and conf().get('always_reply_voice') and ReplyType.VOICE not in self.NOT_SUPPORT_REPLYTYPE:
                 context['desire_rtype'] = ReplyType.VOICE
         elif context.type == ContextType.VOICE: 
-            if 'desire_rtype' not in context and conf().get('voice_reply_voice'):
+            if 'desire_rtype' not in context and conf().get('voice_reply_voice') and ReplyType.VOICE not in self.NOT_SUPPORT_REPLYTYPE:
                 context['desire_rtype'] = ReplyType.VOICE
 
         return context
@@ -182,19 +182,25 @@ class ChatChannel(Channel):
             reply = e_context['reply']
             desire_rtype = context.get('desire_rtype')
             if not e_context.is_pass() and reply and reply.type:
+                
+                if reply.type in self.NOT_SUPPORT_REPLYTYPE:
+                    logger.error("[WX]reply type not support: " + str(reply.type))
+                    reply.type = ReplyType.ERROR
+                    reply.content = "不支持发送的消息类型: " + str(reply.type)
+
                 if reply.type == ReplyType.TEXT:
                     reply_text = reply.content
-                    if desire_rtype == ReplyType.VOICE:
+                    if desire_rtype == ReplyType.VOICE and ReplyType.VOICE not in self.NOT_SUPPORT_REPLYTYPE:
                         reply = super().build_text_to_voice(reply.content)
                         return self._decorate_reply(context, reply)
                     if context['isgroup']:
                         reply_text = '@' +  context['msg'].actual_user_nickname + ' ' + reply_text.strip()
-                        reply_text = conf().get("group_chat_reply_prefix", "")+reply_text
+                        reply_text = conf().get("group_chat_reply_prefix", "") + reply_text
                     else:
-                        reply_text = conf().get("single_chat_reply_prefix", "")+reply_text
+                        reply_text = conf().get("single_chat_reply_prefix", "") + reply_text
                     reply.content = reply_text
                 elif reply.type == ReplyType.ERROR or reply.type == ReplyType.INFO:
-                    reply.content = str(reply.type)+":\n" + reply.content
+                    reply.content = "["+str(reply.type)+"]\n" + reply.content
                 elif reply.type == ReplyType.IMAGE_URL or reply.type == ReplyType.VOICE or reply.type == ReplyType.IMAGE:
                     pass
                 else:

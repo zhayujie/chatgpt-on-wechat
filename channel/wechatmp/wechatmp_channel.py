@@ -28,6 +28,7 @@ import traceback
 
 @singleton
 class WechatMPChannel(ChatChannel):
+    NOT_SUPPORT_REPLYTYPE = [ReplyType.IMAGE, ReplyType.VOICE]
     def __init__(self):
         super().__init__()
         self.cache_dict = dict()
