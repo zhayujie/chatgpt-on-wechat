@@ -30,7 +30,7 @@ class WechatMPServer():
             '/wx', 'WechatMPChannel',
         )
         app = web.application(urls, globals())
-        web.httpserver.runsimple(app.wsgifunc(), ('0.0.0.0', 80))
+        app.run()
 
 cache_dict = dict()
 query1 = dict()
