@@ -18,6 +18,6 @@ def create_channel(channel_type):
         from channel.terminal.terminal_channel import TerminalChannel
         return TerminalChannel()
     elif channel_type == 'wechatmp':
-        from channel.wechatmp.wechatmp_channel import WechatMPServer
-        return WechatMPServer()
+        from channel.wechatmp.wechatmp_channel import WechatMPChannel
+        return WechatMPChannel()
     raise RuntimeError

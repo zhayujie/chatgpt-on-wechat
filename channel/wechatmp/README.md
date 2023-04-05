@@ -18,7 +18,18 @@ pip3 install web.py
 
 然后根据[接入指南](https://developers.weixin.qq.com/doc/offiaccount/Basic_Information/Access_Overview.html)的说明，在[微信公众平台](https://mp.weixin.qq.com)的“设置与开发”-“基本配置”-“服务器配置”中填写服务器地址`URL`和令牌`Token`。这里的`URL`是`example.com/wx`的形式，不可以使用IP，`Token`是你自己编的一个特定的令牌。消息加解密方式目前选择的是明文模式。 
 
-相关的服务器验证代码已经写好，你不需要再添加任何代码。你只需要在本项目根目录的`config.json`中添加`"channel_type": "wechatmp", "wechatmp_token": "your Token", ` 然后运行`python3 app.py`启动web服务器，然后在刚才的“服务器配置”中点击`提交`即可验证你的服务器。
+相关的服务器验证代码已经写好，你不需要再添加任何代码。你只需要在本项目根目录的`config.json`中添加
+```
+"channel_type": "wechatmp", 
+"wechatmp_token": "your Token", 
+``` 
+然后运行`python3 app.py`启动web服务器。这里会默认监听8080端口，但是微信公众号的服务器配置只支持80/443端口，有两种方法来解决这个问题。第一个是推荐的方法，使用端口转发命令将80端口转发到8080端口（443同理，注意需要支持SSL，也就是https的访问，在`wechatmp_channel.py`需要修改相应的证书路径）：
+```
+sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 8080
+sudo iptables-save > /etc/iptables/rules.v4
+```
+第二个方法是让python程序直接监听80端口，可以直接使用命令`python3 app.py 80`。这样可能会导致权限问题，在linux上需要使用`sudo`。然而这会导致后续缓存文件的权限问题，因此不是推荐的方法。
+最后在刚才的“服务器配置”中点击`提交`即可验证你的服务器。
 
 随后在[微信公众平台](https://mp.weixin.qq.com)启用服务器，关闭手动填写规则的自动回复，即可实现ChatGPT的自动回复。
 

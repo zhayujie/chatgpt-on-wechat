@@ -1,47 +1,42 @@
 # -*- coding: utf-8 -*-#
 # filename: receive.py
 import xml.etree.ElementTree as ET
+from bridge.context import ContextType
+from channel.chat_message import ChatMessage
+from common.log import logger
 
 
 def parse_xml(web_data):
     if len(web_data) == 0:
         return None
     xmlData = ET.fromstring(web_data)
-    msg_type = xmlData.find('MsgType').text
-    if msg_type == 'text':
-        return TextMsg(xmlData)
-    elif msg_type == 'image':
-        return ImageMsg(xmlData)
-    elif msg_type == 'event':
-        return Event(xmlData)
+    return WeChatMPMessage(xmlData)
 
-
-class Msg(object):
+class WeChatMPMessage(ChatMessage):
     def __init__(self, xmlData):
-        self.ToUserName = xmlData.find('ToUserName').text
-        self.FromUserName = xmlData.find('FromUserName').text
-        self.CreateTime = xmlData.find('CreateTime').text
-        self.MsgType = xmlData.find('MsgType').text
-        self.MsgId = xmlData.find('MsgId').text
+        super().__init__(xmlData)
+        self.to_user_id = xmlData.find('ToUserName').text
+        self.from_user_id = xmlData.find('FromUserName').text
+        self.create_time = xmlData.find('CreateTime').text
+        self.msg_type = xmlData.find('MsgType').text
+        self.msg_id = xmlData.find('MsgId').text
+        self.is_group = False
+        
+        # reply to other_user_id
+        self.other_user_id = self.from_user_id
 
-
-class TextMsg(Msg):
-    def __init__(self, xmlData):
-        Msg.__init__(self, xmlData)
-        self.Content = xmlData.find('Content').text.encode("utf-8")
-
-
-class ImageMsg(Msg):
-    def __init__(self, xmlData):
-        Msg.__init__(self, xmlData)
-        self.PicUrl = xmlData.find('PicUrl').text
-        self.MediaId = xmlData.find('MediaId').text
-
-
-class Event(object):
-    def __init__(self, xmlData):
-        self.ToUserName = xmlData.find('ToUserName').text
-        self.FromUserName = xmlData.find('FromUserName').text
-        self.CreateTime = xmlData.find('CreateTime').text
-        self.MsgType = xmlData.find('MsgType').text
-        self.Event = xmlData.find('Event').text
+        if self.msg_type == 'text':
+            self.ctype = ContextType.TEXT
+            self.content = xmlData.find('Content').text.encode("utf-8")
+        elif self.msg_type == 'voice':
+            self.ctype = ContextType.TEXT
+            self.content = xmlData.find('Recognition').text.encode("utf-8")  # 接收语音识别结果
+        elif self.msg_type == 'image':
+            # not implemented
+            self.pic_url = xmlData.find('PicUrl').text
+            self.media_id = xmlData.find('MediaId').text
+        elif self.msg_type == 'event':
+            self.event = xmlData.find('Event').text
+        else: # video, shortvideo, location, link
+            # not implemented
+            pass
