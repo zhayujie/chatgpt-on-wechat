@@ -41,7 +41,8 @@ class WechatMPChannel(ChatChannel):
             '/wx', 'SubsribeAccountQuery',
         )
         app = web.application(urls, globals())
-        app.run()
+        port = conf().get('wechatmp_port', 8080)
+        web.httpserver.runsimple(app.wsgifunc(), ('0.0.0.0', port))
 
 
     def send(self, reply: Reply, context: Context):

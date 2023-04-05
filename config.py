@@ -80,6 +80,7 @@ available_setting = {
 
     # wechatmp的配置
     "wechatmp_token": "",  # 微信公众平台的Token
+    "wechatmp_port": 8080, # 微信公众平台的端口,需要端口转发到80或443
 
     # chatgpt指令自定义触发词
     "clear_memory_commands": ['#清除记忆'],  # 重置会话指令，必须以#开头
