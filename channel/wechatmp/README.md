@@ -14,11 +14,13 @@
 pip3 install web.py
 ```
 
-然后在[微信公众平台](mp.weixin.qq.com)注册一个自己的公众号，类型选择订阅号，主体为个人即可。
+然后在[微信公众平台](https://mp.weixin.qq.com)注册一个自己的公众号，类型选择订阅号，主体为个人即可。
 
-然后根据[接入指南](https://developers.weixin.qq.com/doc/offiaccount/Basic_Information/Access_Overview.html)的说明，在[微信公众平台](mp.weixin.qq.com)的“设置与开发”-“基本配置”-“服务器配置”中填写服务器地址(URL)和令牌(Token)。这个Token是你自己编的一个特定的令牌。消息加解密方式目前选择的是明文模式。相关的服务器验证代码已经写好，你不需要再添加任何代码。你只需要在本项目根目录的`config.json`中添加`"channel_type": "wechatmp", "wechatmp_token": "your Token", ` 然后运行`python3 app.py`启动web服务器，然后在刚才的“服务器配置”中点击`提交`即可验证你的服务器。
+然后根据[接入指南](https://developers.weixin.qq.com/doc/offiaccount/Basic_Information/Access_Overview.html)的说明，在[微信公众平台](https://mp.weixin.qq.com)的“设置与开发”-“基本配置”-“服务器配置”中填写服务器地址`URL`和令牌`Token`。这里的`URL`是`example.com/wx`的形式，不可以使用IP，`Token`是你自己编的一个特定的令牌。消息加解密方式目前选择的是明文模式。 
 
-随后在[微信公众平台](mp.weixin.qq.com)启用服务器，关闭手动填写规则的自动回复，即可实现ChatGPT的自动回复。
+相关的服务器验证代码已经写好，你不需要再添加任何代码。你只需要在本项目根目录的`config.json`中添加`"channel_type": "wechatmp", "wechatmp_token": "your Token", ` 然后运行`python3 app.py`启动web服务器，然后在刚才的“服务器配置”中点击`提交`即可验证你的服务器。
+
+随后在[微信公众平台](https://mp.weixin.qq.com)启用服务器，关闭手动填写规则的自动回复，即可实现ChatGPT的自动回复。
 
 ## 个人微信公众号的限制
 由于目前测试的公众号不是企业主体，所以没有客服接口，因此公众号无法主动发出消息，只能被动回复。而微信官方对被动回复有5秒的时间限制，最多重试2次，因此最多只有15秒的自动回复时间窗口。因此如果问题比较复杂或者我们的服务器比较忙，ChatGPT的回答就没办法及时回复给用户。为了解决这个问题，这里做了回答缓存，它需要你在回复超时后，再次主动发送任意文字（例如1）来尝试拿到回答缓存。为了优化使用体验，目前设置了两分钟（120秒）的timeout，用户在至多两分钟后即可得到查询到回复或者错误原因。
@@ -27,9 +29,6 @@ pip3 install web.py
 
 ## 私有api_key
 公共api有访问频率限制（免费账号每分钟最多20次ChatGPT的API调用），这在服务多人的时候会遇到问题。因此这里多加了一个设置私有api_key的功能。目前通过godcmd插件的命令来设置私有api_key。
-
-## 命令优化
-之前plugin中#和$符号混用，且$这个符号在微信中和中文会有较大间隔，体验实在不好。这里我将所有命令更改成了以#开头。添加了一个叫finish的plugin来最后处理所有#结尾的命令，防止未知命令变成ChatGPT的query。
 
 ## 测试范围
 目前在`RoboStyle`这个公众号上进行了测试，感兴趣的可以关注并体验。开启了godcmd, Banwords, role, dungeon, finish这五个插件，其他的插件还没有测试。百度的接口暂未测试。语音对话没有测试。图片直接以链接形式回复（没有临时素材上传接口的权限）。

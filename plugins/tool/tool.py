@@ -26,8 +26,14 @@ class Tool(Plugin):
 
         logger.info("[tool] inited")
 
-    def get_help_text(self, **kwargs):
-        help_text = "这是一个能让chatgpt联网，搜索，数字运算的插件，将赋予强大且丰富的扩展能力"
+    def get_help_text(self, verbose=False, **kwargs):
+        help_text = "这是一个能让chatgpt联网，搜索，数字运算的插件，将赋予强大且丰富的扩展能力。"
+        if not verbose:
+            return help_text
+        trigger_prefix = conf().get('plugin_trigger_prefix', "$")
+        help_text += "使用说明：\n"
+        help_text += f"{trigger_prefix}tool "+"{命令}: 根据给出的命令使用一些可用工具尽力为你得到结果。\n"
+        help_text += f"{trigger_prefix}tool reset: 重置工具。\n"
         return help_text
 
     def on_handle_context(self, e_context: EventContext):
@@ -48,9 +54,9 @@ class Tool(Plugin):
         logger.debug("[tool] on_handle_context. content: %s" % content)
         reply = Reply()
         reply.type = ReplyType.TEXT
-
+        trigger_prefix = conf().get('plugin_trigger_prefix', "$")
         # todo: 有些工具必须要api-key，需要修改config文件，所以这里没有实现query增删tool的功能
-        if content.startswith("$tool"):
+        if content.startswith(f"{trigger_prefix}tool"):
             if len(content_list) == 1:
                 logger.debug("[tool]: get help")
                 reply.content = self.get_help_text()

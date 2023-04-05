@@ -2,12 +2,13 @@
 
 from bridge.context import ContextType
 from bridge.reply import Reply, ReplyType
+from config import conf
 import plugins
 from plugins import *
 from common.log import logger
 
 
-@plugins.register(name="Finish", desire_priority=-999, hidden=True, desc="A plugin that check unknow command", version="1.0", author="js00000")
+@plugins.register(name="Finish", desire_priority=-999, hidden=True, desc="A plugin that check unknown command", version="1.0", author="js00000")
 class Finish(Plugin):
     def __init__(self):
         super().__init__()
@@ -21,10 +22,11 @@ class Finish(Plugin):
 
         content = e_context['context'].content
         logger.debug("[Finish] on_handle_context. content: %s" % content)
-        if content.startswith("#"):
+        trigger_prefix = conf().get('plugin_trigger_prefix',"$")
+        if content.startswith(trigger_prefix):
             reply = Reply()
-            reply.type = ReplyType.TEXT
-            reply.content = "未知指令\n查看指令列表请输入#help\n"
+            reply.type = ReplyType.ERROR
+            reply.content = "未知插件命令\n查看插件命令列表请输入#help {插件名}\n"
             e_context['reply'] = reply
             e_context.action = EventAction.BREAK_PASS # 事件结束，并跳过处理context的默认逻辑
 

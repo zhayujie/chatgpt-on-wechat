@@ -10,5 +10,5 @@ nohup.out
 tmp
 plugins.json
 itchat.pkl
-user_datas.pkl
 *.log
+user_datas.pkl

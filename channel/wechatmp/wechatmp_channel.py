@@ -25,12 +25,12 @@ class WechatMPServer():
     def __init__(self):
         pass
 
-    def startup(self):
+    def startup(self): 
         urls = (
             '/wx', 'WechatMPChannel',
         )
         app = web.application(urls, globals())
-        app.run()
+        web.httpserver.runsimple(app.wsgifunc(), ('0.0.0.0', 80))
 
 cache_dict = dict()
 query1 = dict()
@@ -265,7 +265,7 @@ class WechatMPChannel(Channel):
 
 
                 if cache[0] > 1:
-                    reply_text = cache[1][:600] + " 【未完待续，回复任意文字以继续】" #wechatmp auto_reply length limit
+                    reply_text = cache[1][:600] + "\n【未完待续，回复任意文字以继续】" #wechatmp auto_reply length limit
                     cache_dict[cache_key] = (cache[0] - 1, cache[1][600:])
                 elif cache[0] == 1:
                     reply_text = cache[1]
@@ -288,10 +288,10 @@ class WechatMPChannel(Channel):
                 replyMsg = reply.TextMsg(recMsg.FromUserName, recMsg.ToUserName, content)
                 return replyMsg.send()
             else:
-                print("暂且不处理")
+                logger.info("暂且不处理")
                 return "success"
         except Exception as exc:
-            print(exc)
+            logger.exception(exc)
             return exc
 
 
