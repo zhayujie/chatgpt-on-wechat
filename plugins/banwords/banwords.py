@@ -38,7 +38,8 @@ class Banwords(Plugin):
             self.handlers[Event.ON_HANDLE_CONTEXT] = self.on_handle_context
             logger.info("[Banwords] inited")
         except Exception as e:
-            logger.warn("Banwords init failed: %s, ignore or see https://github.com/zhayujie/chatgpt-on-wechat/tree/master/plugins/banwords ." % e)
+            logger.warn("[Banwords] init failed, ignore or see https://github.com/zhayujie/chatgpt-on-wechat/tree/master/plugins/banwords .")
+            raise e
         
 
 

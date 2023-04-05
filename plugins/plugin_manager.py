@@ -95,7 +95,12 @@ class PluginManager:
         for name, plugincls in self.plugins.items():
             if plugincls.enabled:
                 if name not in self.instances:
-                    instance = plugincls()
+                    try:
+                        instance = plugincls()
+                    except Exception as e:
+                        logger.warn("Failed to create init %s, diabled. %s" % (name, e))
+                        self.disable_plugin(name)
+                        continue
                     self.instances[name] = instance
                     for event in instance.handlers:
                         if event not in self.listening_plugins:

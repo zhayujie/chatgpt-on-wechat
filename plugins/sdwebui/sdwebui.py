@@ -29,10 +29,12 @@ class SDWebUI(Plugin):
                 self.api = webuiapi.WebUIApi(**self.start_args)
             self.handlers[Event.ON_HANDLE_CONTEXT] = self.on_handle_context
             logger.info("[SD] inited")
-        except FileNotFoundError:
-            logger.warn(f"[SD] init failed, {config_path} not found, ignore or see https://github.com/zhayujie/chatgpt-on-wechat/tree/master/plugins/sdwebui .")
         except Exception as e:
-            logger.warn("[SD] init failed, exception: %s, ignore or see https://github.com/zhayujie/chatgpt-on-wechat/tree/master/plugins/sdwebui ." % e)
+            if isinstance(e, FileNotFoundError):
+                logger.warn(f"[SD] init failed, {config_path} not found, ignore or see https://github.com/zhayujie/chatgpt-on-wechat/tree/master/plugins/sdwebui .")
+            else:
+                logger.warn("[SD] init failed, ignore or see https://github.com/zhayujie/chatgpt-on-wechat/tree/master/plugins/sdwebui .")
+            raise e
     
     def on_handle_context(self, e_context: EventContext):
 
