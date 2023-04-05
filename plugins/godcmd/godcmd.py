@@ -106,8 +106,8 @@ def get_help_text(isadmin, isgroup):
         alias=["#"+a for a in info['alias']]
         help_text += f"{','.join(alias)} "
         if 'args' in info:
-            args=["{"+a+"}" for a in info['args']]
-            help_text += f"{' '.join(args)} "
+            args=[a for a in info['args']]
+            help_text += f"{' '.join(args)}"
         help_text += f": {info['desc']}\n"
 
     # 插件指令
@@ -124,6 +124,9 @@ def get_help_text(isadmin, isgroup):
         for cmd, info in ADMIN_COMMANDS.items():
             alias=["#"+a for a in info['alias']]
             help_text += f"{','.join(alias)} "
+            if 'args' in info:
+                args=[a for a in info['args']]
+                help_text += f"{' '.join(args)}"
             help_text += f": {info['desc']}\n"
     return help_text
 
