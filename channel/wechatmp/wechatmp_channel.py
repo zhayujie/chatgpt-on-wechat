@@ -182,14 +182,14 @@ class SubsribeAccountQuery():
                     logger.debug("[wechatmp] query3 {}".format(cache_key))
                     channel_instance.query3[cache_key] = True
                     cnt = 0
-                    while cache[0] == 0 and cnt < 45:
+                    while cache[0] == 0 and cnt < 40:
                         cnt = cnt + 1
                         time.sleep(0.1)
                         cache = channel_instance.cache_dict.get(cache_key)
-                    if cnt == 45:
+                    if cnt == 40:
                         # Have waiting for 3x5 seconds
                         # return timeout message
-                        reply_text = "【正在响应中，回复任意文字尝试获取回复】"
+                        reply_text = "【正在思考中，回复任意文字尝试获取回复】"
                         logger.info("[wechatmp] Three queries has finished For {}: {}".format(from_user, message_id))
                         replyPost = reply.TextMsg(from_user, to_user, reply_text).send()
                         return replyPost
