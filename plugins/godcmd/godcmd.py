@@ -310,11 +310,7 @@ class Godcmd(Plugin):
                             if len(args) != 1:
                                 ok, result = False, "请提供插件名"
                             else:
-                                ok = PluginManager().enable_plugin(args[0])
-                                if ok:
-                                    result = "插件已启用"
-                                else:
-                                    result = "插件不存在"
+                                ok, result = PluginManager().enable_plugin(args[0])
                         elif cmd == "disablep":
                             if len(args) != 1:
                                 ok, result = False, "请提供插件名"
