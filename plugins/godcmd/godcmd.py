@@ -194,7 +194,7 @@ class Godcmd(Plugin):
             channel = e_context['channel']
             user = e_context['context']['receiver']
             session_id = e_context['context']['session_id']
-            isgroup = e_context['context']['isgroup']
+            isgroup = e_context['context'].get("isgroup", False)
             bottype = Bridge().get_bot_type("chat")
             bot = Bridge().get_bot("chat")
             # 将命令和参数分割

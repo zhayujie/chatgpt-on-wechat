@@ -51,7 +51,7 @@ class ChatChannel(Channel):
             if cmsg.from_user_id == self.user_id and not config.get('trigger_by_self', True):
                 logger.debug("[WX]self message skipped")
                 return None
-            if context["isgroup"]:
+            if context.get("isgroup", False):
                 group_name = cmsg.other_user_nickname
                 group_id = cmsg.other_user_id
 
@@ -76,7 +76,7 @@ class ChatChannel(Channel):
                 logger.debug("[WX]reference query skipped")
                 return None
             
-            if context["isgroup"]: # 群聊
+            if context.get("isgroup", False): # 群聊
                 # 校验关键字
                 match_prefix = check_prefix(content, conf().get('group_chat_prefix'))
                 match_contain = check_contain(content, conf().get('group_chat_keyword'))
@@ -193,7 +193,7 @@ class ChatChannel(Channel):
                     if desire_rtype == ReplyType.VOICE and ReplyType.VOICE not in self.NOT_SUPPORT_REPLYTYPE:
                         reply = super().build_text_to_voice(reply.content)
                         return self._decorate_reply(context, reply)
-                    if context['isgroup']:
+                    if context.get("isgroup", False):
                         reply_text = '@' +  context['msg'].actual_user_nickname + ' ' + reply_text.strip()
                         reply_text = conf().get("group_chat_reply_prefix", "") + reply_text
                     else:
