@@ -40,7 +40,7 @@ class SDWebUI(Plugin):
 
         if e_context['context'].type != ContextType.IMAGE_CREATE:
             return
-        channel = e_context['context'].channel
+        channel = e_context['channel']
         if ReplyType.IMAGE in channel.NOT_SUPPORT_REPLYTYPE:
             return
 
