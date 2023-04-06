@@ -17,6 +17,7 @@ class PluginManager:
         self.listening_plugins = {}
         self.instances = {}
         self.pconf = {}
+        self.current_plugin_path = None
 
     def register(self, name: str, desire_priority: int = 0, **kwargs):
         def wrapper(plugincls):
@@ -24,12 +25,13 @@ class PluginManager:
             plugincls.priority = desire_priority
             plugincls.desc = kwargs.get('desc')
             plugincls.author = kwargs.get('author')
+            plugincls.path = self.current_plugin_path
             plugincls.version = kwargs.get('version') if kwargs.get('version') != None else "1.0"
             plugincls.namecn = kwargs.get('namecn') if kwargs.get('namecn') != None else name
             plugincls.hidden = kwargs.get('hidden') if kwargs.get('hidden') != None else False
             plugincls.enabled = True
             self.plugins[name.upper()] = plugincls
-            logger.info("Plugin %s_v%s registered" % (name, plugincls.version))
+            logger.info("Plugin %s_v%s registered, path=%s" % (name, plugincls.version, plugincls.path))
             return plugincls
         return wrapper
 
@@ -59,12 +61,13 @@ class PluginManager:
         for plugin_name in os.listdir(plugins_dir):
             plugin_path = os.path.join(plugins_dir, plugin_name)
             if os.path.isdir(plugin_path):
-                # 判断插件是否包含同名.py文件
-                main_module_path = os.path.join(plugin_path, plugin_name+".py")
+                # 判断插件是否包含同名__init__.py文件
+                main_module_path = os.path.join(plugin_path,"__init__.py")
                 if os.path.isfile(main_module_path):
                     # 导入插件
-                    import_path = "plugins.{}.{}".format(plugin_name, plugin_name)
+                    import_path = "plugins.{}".format(plugin_name)
                     try:
+                        self.current_plugin_path = plugin_path
                         main_module = importlib.import_module(import_path)
                     except Exception as e:
                         logger.warn("Failed to import plugin %s: %s" % (plugin_name, e))
@@ -180,3 +183,58 @@ class PluginManager:
     
     def list_plugins(self):
         return self.plugins
+    
+    def install_plugin(self, repo:str):
+        try:
+            import common.package_manager as pkgmgr
+            pkgmgr.check_dulwich()
+        except Exception as e:
+            logger.error("Failed to install plugin, {}".format(e))
+            return False, "无法导入dulwich，安装插件失败"
+        import re
+        from dulwich import porcelain
+
+        logger.info("clone git repo: {}".format(repo))
+        
+        match = re.match(r"^(https?:\/\/|git@)([^\/:]+)[\/:]([^\/:]+)\/(.+).git$", repo)
+        
+        if not match:
+            try:
+                with open("./plugins/source.json","r") as f:
+                    source = json.load(f)
+                if repo in source["repo"]:
+                    repo = source["repo"][repo]["url"]
+                    match = re.match(r"^(https?:\/\/|git@)([^\/:]+)[\/:]([^\/:]+)\/(.+).git$", repo)
+                    if not match:
+                        return False, "source中的仓库地址不合法"
+                else:
+                    return False, "仓库地址不合法"
+            except Exception as e:
+                logger.error("Failed to install plugin, {}".format(e))
+                return False, "安装插件失败"
+        dirname = os.path.join("./plugins",match.group(4))
+        try:
+            repo = porcelain.clone(repo, dirname, checkout=True)
+            if os.path.exists(os.path.join(dirname,"requirements.txt")):
+                logger.info("detect requirements.txt，installing...")
+            pkgmgr.install_requirements(os.path.join(dirname,"requirements.txt"))
+            return True, "安装插件成功，请扫描插件或重启程序"
+        except Exception as e:
+            logger.error("Failed to install plugin, {}".format(e))
+            return False, "安装插件失败"
+        
+    def uninstall_plugin(self, name:str):
+        name = name.upper()
+        if name not in self.plugins:
+            return False, "插件不存在"
+        if name in self.instances:
+            self.disable_plugin(name)
+        dirname = self.plugins[name].path
+        try:
+            import shutil
+            shutil.rmtree(dirname)
+            del self.plugins[name]
+            return True, "卸载插件成功"
+        except Exception as e:
+            logger.error("Failed to uninstall plugin, {}".format(e))
+            return False, "卸载插件失败"

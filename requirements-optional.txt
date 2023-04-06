@@ -8,6 +8,9 @@ pyttsx3>=2.90 # pytsx text to speech
 baidu_aip>=4.16.10 # baidu voice
 # azure-cognitiveservices-speech # azure voice
 
+#install plugin
+dulwich
+
 # wechaty
 wechaty>=0.10.7
 wechaty_puppet>=0.4.23

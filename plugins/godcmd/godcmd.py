@@ -37,10 +37,10 @@ COMMANDS = {
         "alias": ["reset_openai_api_key"],
         "desc": "重置为默认的api_key",
     },
-    # "id": {
-    #     "alias": ["id", "用户"],
-    #     "desc": "获取用户id", #目前无实际意义
-    # },
+    "id": {
+        "alias": ["id", "用户"],
+        "desc": "获取用户id", # wechaty和wechatmp的用户id不会变化，可用于绑定管理员
+    },
     "reset": {
         "alias": ["reset", "重置会话"],
         "desc": "重置会话",
@@ -92,6 +92,16 @@ ADMIN_COMMANDS = {
         "args": ["插件名"],
         "desc": "禁用指定插件",
     },
+    "installp": {
+        "alias": ["installp", "安装插件"],
+        "args": ["仓库地址或插件名"],
+        "desc": "安装指定插件",
+    },
+    "uninstallp": {
+        "alias": ["uninstallp", "卸载插件"],
+        "args": ["插件名"],
+        "desc": "卸载指定插件",
+    },
     "debug": {
         "alias": ["debug", "调试模式", "DEBUG"],
         "desc": "开启机器调试日志",
@@ -103,7 +113,9 @@ def get_help_text(isadmin, isgroup):
     for cmd, info in COMMANDS.items():
         if cmd=="auth": #不提示认证指令
             continue
-        alias=["#"+a for a in info['alias']]
+        if cmd=="id" and conf().get("channel_type","wx") not in ["wxy","wechatmp"]:
+            continue
+        alias=["#"+a for a in info['alias'][:1]]
         help_text += f"{','.join(alias)} "
         if 'args' in info:
             args=[a for a in info['args']]
@@ -122,7 +134,7 @@ def get_help_text(isadmin, isgroup):
     if ADMIN_COMMANDS and isadmin:
         help_text += "\n\n管理员指令：\n"
         for cmd, info in ADMIN_COMMANDS.items():
-            alias=["#"+a for a in info['alias']]
+            alias=["#"+a for a in info['alias'][:1]]
             help_text += f"{','.join(alias)} "
             if 'args' in info:
                 args=[a for a in info['args']]
@@ -208,6 +220,8 @@ class Godcmd(Plugin):
                                 break
                         if not ok:
                             result = "插件不存在或未启用"
+                elif cmd == "id":
+                    ok, result = True, user
                 elif cmd == "set_openai_api_key":
                     if len(args) == 1:
                         user_data = conf().get_user_data(user)
@@ -310,7 +324,16 @@ class Godcmd(Plugin):
                                     result = "插件已禁用"
                                 else:
                                     result = "插件不存在"
-
+                        elif cmd == "installp":
+                            if len(args) != 1:
+                                ok, result = False, "请提供插件名或.git结尾的仓库地址"
+                            else:
+                                ok, result = PluginManager().install_plugin(args[0])
+                        elif cmd == "uninstallp":
+                            if len(args) != 1:
+                                ok, result = False, "请提供插件名"
+                            else:
+                                ok, result = PluginManager().uninstall_plugin(args[0])
                         logger.debug("[Godcmd] admin command: %s by %s" % (cmd, user))
                 else:
                     ok, result = False, "需要管理员权限才能执行该指令"
