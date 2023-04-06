@@ -238,7 +238,7 @@ class PluginManager:
             if os.path.exists(os.path.join(dirname,"requirements.txt")):
                 logger.info("detect requirements.txt，installing...")
             pkgmgr.install_requirements(os.path.join(dirname,"requirements.txt"))
-            return True, "安装插件成功，请扫描插件或重启程序"
+            return True, "安装插件成功，请使用#scanp命令扫描插件或重启程序"
         except Exception as e:
             logger.error("Failed to install plugin, {}".format(e))
             return False, "安装插件失败，"+str(e)
@@ -254,6 +254,9 @@ class PluginManager:
             import shutil
             shutil.rmtree(dirname)
             rawname = self.plugins[name].name
+            for event in self.listening_plugins:
+                if name in self.listening_plugins[event]:
+                    self.listening_plugins[event].remove(name)
             del self.plugins[name]
             del self.pconf["plugins"][rawname]
             self.loaded[dirname] = None

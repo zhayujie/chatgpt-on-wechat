@@ -2,6 +2,8 @@
 
 import json
 import os
+import random
+import string
 import traceback
 from typing import Tuple
 from bridge.bridge import Bridge
@@ -158,7 +160,11 @@ class Godcmd(Plugin):
         else:
             with open(config_path,"r") as f:
                 gconf=json.load(f)
-        
+        if gconf["password"] == "":
+            self.temp_password = "".join(random.sample(string.digits, 4))
+            logger.info("[Godcmd] 因未设置口令，本次的临时口令为%s。"%self.temp_password)
+        else:
+            self.temp_password = None
         custom_commands = conf().get("clear_memory_commands", [])
         for custom_command in custom_commands:
             if custom_command and custom_command.startswith("#"):
@@ -167,7 +173,7 @@ class Godcmd(Plugin):
                     COMMANDS["reset"]["alias"].append(custom_command)
 
         self.password = gconf["password"]
-        self.admin_users = gconf["admin_users"] # 预存的管理员账号，这些账号不需要认证 TODO: 用户名每次都会变，目前不可用
+        self.admin_users = gconf["admin_users"] # 预存的管理员账号，这些账号不需要认证。itchat的用户名每次都会变，不可用
         self.isrunning = True # 机器人是否运行中
 
         self.handlers[Event.ON_HANDLE_CONTEXT] = self.on_handle_context
@@ -358,9 +364,6 @@ class Godcmd(Plugin):
         if isadmin:
             return False,"管理员账号无需认证"
         
-        if len(self.password) == 0:
-            return False,"未设置口令，无法认证"
-        
         if len(args) != 1:
             return False,"请提供口令"
         
@@ -368,6 +371,9 @@ class Godcmd(Plugin):
         if password == self.password:
             self.admin_users.append(userid)
             return True,"认证成功"
+        elif password == self.temp_password:
+            self.admin_users.append(userid)
+            return True,"认证成功，请尽快设置口令"
         else:
             return False,"认证失败"
 

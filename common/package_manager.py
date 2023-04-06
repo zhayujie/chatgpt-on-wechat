@@ -1,11 +1,14 @@
 import time
 import pip
+from pip._internal import main as pipmain
+from common.log import logger,_reset_logger
 
 def install(package):
-    pip.main(['install', package])
+    pipmain(['install', package])
 
 def install_requirements(file):
-    pip.main(['install', '-r', file, "--upgrade"])
+    pipmain(['install', '-r', file, "--upgrade"])
+    _reset_logger(logger)
 
 def check_dulwich():
     needwait = False
