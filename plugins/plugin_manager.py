@@ -238,7 +238,7 @@ class PluginManager:
             if os.path.exists(os.path.join(dirname,"requirements.txt")):
                 logger.info("detect requirements.txt，installing...")
             pkgmgr.install_requirements(os.path.join(dirname,"requirements.txt"))
-            return True, "安装插件成功，请使用 #scanp 命令扫描插件或重启程序"
+            return True, "安装插件成功，请使用 #scanp 命令扫描插件或重启程序，开启前请检查插件是否需要配置"
         except Exception as e:
             logger.error("Failed to install plugin, {}".format(e))
             return False, "安装插件失败，"+str(e)
