@@ -2,7 +2,7 @@
 
 """
 discord channel
-Python Wechaty - https://github.com/wechaty/python-wechaty
+Python discord - https://github.com/Rapptz/discord.py.git
 """
 import os
 import time
