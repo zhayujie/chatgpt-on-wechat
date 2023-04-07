@@ -79,14 +79,16 @@ available_setting = {
     "wechaty_puppet_service_token": "",  # wechaty的token
 
     # wechatmp的配置
-    "wechatmp_token": "",  # 微信公众平台的Token
-    "wechatmp_port": 8080, # 微信公众平台的端口,需要端口转发到80或443
+    "wechatmp_token": "",       # 微信公众平台的Token
+    "wechatmp_port": 8080,      # 微信公众平台的端口,需要端口转发到80或443
+    "wechatmp_app_id": "",      # 微信公众平台的appID，仅服务号需要
+    "wechatmp_app_secret": "",  # 微信公众平台的appsecret，仅服务号需要
 
     # chatgpt指令自定义触发词
     "clear_memory_commands": ['#清除记忆'],  # 重置会话指令，必须以#开头
 
     # channel配置
-    "channel_type": "wx", # 通道类型，支持：{wx,wxy,terminal,wechatmp}
+    "channel_type": "wx", # 通道类型，支持：{wx,wxy,terminal,wechatmp,wechatmp_service}
 
     "debug": False,  # 是否开启debug模式，开启后会打印更多日志
 
