@@ -1,0 +1,12 @@
+{
+    "repo": {
+        "sdwebui": {
+            "url": "https://github.com/lanvent/plugin_sdwebui.git",
+            "desc": "利用stable-diffusion画图的插件"
+        },
+        "replicate": {
+            "url": "https://github.com/lanvent/plugin_replicate.git",
+            "desc": "利用replicate api画图的插件"
+        }
+    }
+}

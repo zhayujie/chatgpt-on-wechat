@@ -27,12 +27,16 @@ def run():
 
         # create channel
         channel_name=conf().get('channel_type', 'wx')
+
+        if "--cmd" in sys.argv:
+            channel_name = 'terminal'
+
         if channel_name == 'wxy':
             os.environ['WECHATY_LOG']="warn"
             # os.environ['WECHATY_PUPPET_SERVICE_ENDPOINT'] = '127.0.0.1:9001'
 
         channel = channel_factory.create_channel(channel_name)
-        if channel_name in ['wx','wxy','wechatmp']:
+        if channel_name in ['wx','wxy','wechatmp','terminal']:
             PluginManager().load_plugins()
 
         # startup channel

@@ -1,8 +1,10 @@
 # encoding:utf-8
 
 import importlib
+import importlib.util
 import json
 import os
+import sys
 from common.singleton import singleton
 from common.sorted_dict import SortedDict
 from .event import *
@@ -17,6 +19,8 @@ class PluginManager:
         self.listening_plugins = {}
         self.instances = {}
         self.pconf = {}
+        self.current_plugin_path = None
+        self.loaded = {}
 
     def register(self, name: str, desire_priority: int = 0, **kwargs):
         def wrapper(plugincls):
@@ -24,13 +28,15 @@ class PluginManager:
             plugincls.priority = desire_priority
             plugincls.desc = kwargs.get('desc')
             plugincls.author = kwargs.get('author')
+            plugincls.path = self.current_plugin_path
             plugincls.version = kwargs.get('version') if kwargs.get('version') != None else "1.0"
             plugincls.namecn = kwargs.get('namecn') if kwargs.get('namecn') != None else name
             plugincls.hidden = kwargs.get('hidden') if kwargs.get('hidden') != None else False
             plugincls.enabled = True
+            if self.current_plugin_path == None:
+                raise Exception("Plugin path not set")
             self.plugins[name.upper()] = plugincls
-            logger.info("Plugin %s_v%s registered" % (name, plugincls.version))
-            return plugincls
+            logger.info("Plugin %s_v%s registered, path=%s" % (name, plugincls.version, plugincls.path))
         return wrapper
 
     def save_config(self):
@@ -56,26 +62,38 @@ class PluginManager:
     def scan_plugins(self):
         logger.info("Scaning plugins ...")
         plugins_dir = "./plugins"
+        raws = [self.plugins[name] for name in self.plugins]
         for plugin_name in os.listdir(plugins_dir):
             plugin_path = os.path.join(plugins_dir, plugin_name)
             if os.path.isdir(plugin_path):
-                # 判断插件是否包含同名.py文件
-                main_module_path = os.path.join(plugin_path, plugin_name+".py")
+                # 判断插件是否包含同名__init__.py文件
+                main_module_path = os.path.join(plugin_path,"__init__.py")
                 if os.path.isfile(main_module_path):
                     # 导入插件
-                    import_path = "plugins.{}.{}".format(plugin_name, plugin_name)
+                    import_path = "plugins.{}".format(plugin_name)
                     try:
-                        main_module = importlib.import_module(import_path)
+                        self.current_plugin_path = plugin_path
+                        if plugin_path in self.loaded:
+                            if self.loaded[plugin_path] == None:
+                                logger.info("reload module %s" % plugin_name)
+                                self.loaded[plugin_path] = importlib.reload(sys.modules[import_path])
+                                dependent_module_names = [name for name in sys.modules.keys() if name.startswith( import_path+ '.')]
+                                for name in dependent_module_names:
+                                    logger.info("reload module %s" % name)
+                                    importlib.reload(sys.modules[name])
+                        else:
+                            self.loaded[plugin_path] = importlib.import_module(import_path)
+                        self.current_plugin_path = None
                     except Exception as e:
-                        logger.warn("Failed to import plugin %s: %s" % (plugin_name, e))
+                        logger.exception("Failed to import plugin %s: %s" % (plugin_name, e))
                         continue
         pconf = self.pconf
-        new_plugins = []
+        news = [self.plugins[name] for name in self.plugins]
+        new_plugins = list(set(news) - set(raws))
         modified = False
         for name, plugincls in self.plugins.items():
             rawname = plugincls.name
             if rawname not in pconf["plugins"]:
-                new_plugins.append(plugincls)
                 modified = True
                 logger.info("Plugin %s not found in pconfig, adding to pconfig..." % name)
                 pconf["plugins"][rawname] = {"enabled": plugincls.enabled, "priority": plugincls.priority}
@@ -92,14 +110,16 @@ class PluginManager:
             self.listening_plugins[event].sort(key=lambda name: self.plugins[name].priority, reverse=True)
 
     def activate_plugins(self): # 生成新开启的插件实例
+        failed_plugins = []
         for name, plugincls in self.plugins.items():
             if plugincls.enabled:
                 if name not in self.instances:
                     try:
                         instance = plugincls()
                     except Exception as e:
-                        logger.warn("Failed to create init %s, diabled. %s" % (name, e))
+                        logger.warn("Failed to init %s, diabled. %s" % (name, e))
                         self.disable_plugin(name)
+                        failed_plugins.append(name)
                         continue
                     self.instances[name] = instance
                     for event in instance.handlers:
@@ -107,6 +127,7 @@ class PluginManager:
                             self.listening_plugins[event] = []
                         self.listening_plugins[event].append(name)
         self.refresh_order()
+        return failed_plugins
 
     def reload_plugin(self, name:str):
         name = name.upper()
@@ -156,15 +177,17 @@ class PluginManager:
     def enable_plugin(self, name:str):
         name = name.upper()
         if name not in self.plugins:
-            return False
+            return False, "插件不存在"
         if not self.plugins[name].enabled :
             self.plugins[name].enabled = True
             rawname = self.plugins[name].name
             self.pconf["plugins"][rawname]["enabled"] = True
             self.save_config()
-            self.activate_plugins()
-            return True
-        return True
+            failed_plugins = self.activate_plugins()
+            if name in failed_plugins:
+                return False, "插件开启失败"
+            return True, "插件已开启"
+        return True, "插件已开启"
     
     def disable_plugin(self, name:str):
         name = name.upper()
@@ -180,3 +203,65 @@ class PluginManager:
     
     def list_plugins(self):
         return self.plugins
+    
+    def install_plugin(self, repo:str):
+        try:
+            import common.package_manager as pkgmgr
+            pkgmgr.check_dulwich()
+        except Exception as e:
+            logger.error("Failed to install plugin, {}".format(e))
+            return False, "无法导入dulwich，安装插件失败"
+        import re
+        from dulwich import porcelain
+
+        logger.info("clone git repo: {}".format(repo))
+        
+        match = re.match(r"^(https?:\/\/|git@)([^\/:]+)[\/:]([^\/:]+)\/(.+).git$", repo)
+        
+        if not match:
+            try:
+                with open("./plugins/source.json","r", encoding="utf-8") as f:
+                    source = json.load(f)
+                if repo in source["repo"]:
+                    repo = source["repo"][repo]["url"]
+                    match = re.match(r"^(https?:\/\/|git@)([^\/:]+)[\/:]([^\/:]+)\/(.+).git$", repo)
+                    if not match:
+                        return False, "安装插件失败，source中的仓库地址不合法"
+                else:
+                    return False, "安装插件失败，仓库地址不合法"
+            except Exception as e:
+                logger.error("Failed to install plugin, {}".format(e))
+                return False, "安装插件失败，请检查仓库地址是否正确"
+        dirname = os.path.join("./plugins",match.group(4))
+        try:
+            repo = porcelain.clone(repo, dirname, checkout=True)
+            if os.path.exists(os.path.join(dirname,"requirements.txt")):
+                logger.info("detect requirements.txt，installing...")
+            pkgmgr.install_requirements(os.path.join(dirname,"requirements.txt"))
+            return True, "安装插件成功，请使用 #scanp 命令扫描插件或重启程序，开启前请检查插件是否需要配置"
+        except Exception as e:
+            logger.error("Failed to install plugin, {}".format(e))
+            return False, "安装插件失败，"+str(e)
+        
+    def uninstall_plugin(self, name:str):
+        name = name.upper()
+        if name not in self.plugins:
+            return False, "插件不存在"
+        if name in self.instances:
+            self.disable_plugin(name)
+        dirname = self.plugins[name].path
+        try:
+            import shutil
+            shutil.rmtree(dirname)
+            rawname = self.plugins[name].name
+            for event in self.listening_plugins:
+                if name in self.listening_plugins[event]:
+                    self.listening_plugins[event].remove(name)
+            del self.plugins[name]
+            del self.pconf["plugins"][rawname]
+            self.loaded[dirname] = None
+            self.save_config()
+            return True, "卸载插件成功"
+        except Exception as e:
+            logger.error("Failed to uninstall plugin, {}".format(e))
+            return False, "卸载插件失败，请手动删除文件夹完成卸载，"+str(e)

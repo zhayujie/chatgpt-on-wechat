@@ -19,7 +19,10 @@ class WeChatMPMessage(ChatMessage):
         self.from_user_id = xmlData.find('FromUserName').text
         self.create_time = xmlData.find('CreateTime').text
         self.msg_type = xmlData.find('MsgType').text
-        self.msg_id = xmlData.find('MsgId').text
+        try:
+            self.msg_id = xmlData.find('MsgId').text
+        except:
+            self.msg_id = self.from_user_id+self.create_time
         self.is_group = False
         
         # reply to other_user_id
@@ -36,7 +39,7 @@ class WeChatMPMessage(ChatMessage):
             self.pic_url = xmlData.find('PicUrl').text
             self.media_id = xmlData.find('MediaId').text
         elif self.msg_type == 'event':
-            self.event = xmlData.find('Event').text
+            self.content = xmlData.find('Event').text
         else: # video, shortvideo, location, link
             # not implemented
             pass

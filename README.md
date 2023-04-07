@@ -13,9 +13,13 @@
 - [x] **语音识别：** 支持接收和处理语音消息，通过文字或语音回复
 - [x] **插件化：** 支持个性化功能插件，提供角色扮演、文字冒险游戏等预设插件
 
-> 快速部署:
+> 目前支持微信和微信个人号部署，欢迎接入更多应用，参考[`Terminal`代码](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/channel/terminal/terminal_channel.py)实现接收和发送消息逻辑即可接入。
+
+
+快速部署:
 >
 >[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/qApznZ?referralCode=RC3znh)
+
 
 # 更新日志
 
