@@ -23,9 +23,9 @@
 
 在本仓库中预置了一些插件，如果要安装其他仓库的插件，有两种方法。
 
-- 第一种方法是在将下载的插件文件都解压到"plugins"文件夹的一个单独的文件夹，最终插件的代码都位于"plugins/PLUGIN_NAME/*"中。启动程序后，如果插件的目录结构正确，插件会自动被扫描加载。
+- 第一种方法是在将下载的插件文件都解压到"plugins"文件夹的一个单独的文件夹，最终插件的代码都位于"plugins/PLUGIN_NAME/*"中。启动程序后，如果插件的目录结构正确，插件会自动被扫描加载。除此以外，注意你还需要安装文件夹中`requirements.txt`中的依赖。
     
-- 第二种方法是`Godcmd`插件，它是预置的管理员插件，能够让程序在运行时就能安装插件。
+- 第二种方法是`Godcmd`插件，它是预置的管理员插件，能够让程序在运行时就能安装插件，它能够自动安装依赖。
     
     安装插件的命令是"#installp [仓库源](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/plugins/source.json)记录的插件名/仓库地址"。这是管理员命令，认证方法在[这里](https://github.com/zhayujie/chatgpt-on-wechat/tree/master/plugins/godcmd)。
     
