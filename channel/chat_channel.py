@@ -102,6 +102,8 @@ class ChatChannel(Channel):
                     content = content.replace(match_prefix, '', 1).strip()
                 elif context["origin_ctype"] == ContextType.VOICE: # 如果源消息是私聊的语音消息，允许不匹配前缀，放宽条件
                     pass
+                elif len(conf().get('single_chat_prefix')) == 0: # 判断个人前缀为空，可以直接回复
+                    pass
                 else:
                     return None     
                                                   
