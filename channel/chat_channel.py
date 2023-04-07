@@ -231,12 +231,15 @@ class ChatChannel(Channel):
                 time.sleep(3+3*retry_cnt)
                 self._send(reply, context, retry_cnt+1)
 
-    def thread_pool_callback(self, session_id):
+    def _fail_callback(self, session_id, exception, **kwargs): # 线程异常结束时的回调函数
+        logger.exception("Worker return exception: {}".format(exception))
+
+    def _thread_pool_callback(self, session_id, **kwargs):
         def func(worker:Future):
             try:
                 worker_exception = worker.exception()
                 if worker_exception:
-                    logger.exception("Worker return exception: {}".format(worker_exception))
+                    self._fail_callback(session_id, exception = worker_exception, **kwargs)
             except CancelledError as e:
                 logger.info("Worker cancelled, session_id = {}".format(session_id))
             except Exception as e:
@@ -267,7 +270,7 @@ class ChatChannel(Channel):
                             context = context_queue.get()
                             logger.debug("[WX] consume context: {}".format(context))
                             future:Future = self.handler_pool.submit(self._handle, context)
-                            future.add_done_callback(self.thread_pool_callback(session_id))
+                            future.add_done_callback(self._thread_pool_callback(session_id, context = context))
                             if session_id not in self.futures:
                                 self.futures[session_id] = []
                             self.futures[session_id].append(future)
