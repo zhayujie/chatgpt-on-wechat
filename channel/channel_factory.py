@@ -19,5 +19,8 @@ def create_channel(channel_type):
         return TerminalChannel()
     elif channel_type == 'wechatmp':
         from channel.wechatmp.wechatmp_channel import WechatMPChannel
-        return WechatMPChannel()
+        return WechatMPChannel(passive_reply = True)
+    elif channel_type == 'wechatmp_service':
+        from channel.wechatmp.wechatmp_channel import WechatMPChannel
+        return WechatMPChannel(passive_reply = False)
     raise RuntimeError
