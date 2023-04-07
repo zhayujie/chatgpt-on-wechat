@@ -70,7 +70,7 @@ available_setting = {
 
     # chatgpt指令自定义触发词
     "clear_memory_commands": ['#清除记忆'],  # 重置会话指令
-    "channel_type": "wx", # 通道类型，支持wx,wxy和terminal
+    "channel_type": "wx", # 通道类型，支持wx,wxy,discord和terminal
 
     # 命令
     "cmd_update_config": "#更新配置", #更新配置
@@ -84,8 +84,9 @@ available_setting = {
     "voice_enabled": False,
 
     # discord的配置
-    "discord_app_token": ""
-
+    "discord_app_token": "",
+    "discord_channel_name": "", # 空值将接管整个服务器的所有频道
+    "discord_channel_session": "author", # 会话管理 author:每个用户是一个会话， thread:每个子区是一个会话，
 }
 
 
@@ -112,7 +113,7 @@ class Config(dict):
 config = Config()
 
 
-def load_config():
+def load_config(param):
     global config
     config_path = "./config.json"
     if not os.path.exists(config_path):
@@ -122,8 +123,12 @@ def load_config():
     config_str = read_file(config_path)
     logger.debug("[INIT] config str: {}".format(config_str))
 
-    # 将json字符串反序列化为dict类型
-    config = Config(json.loads(config_str))
+    # 将json字符串反序列化为dict类型,并合并到available_setting
+    available_setting.update(json.loads(config_str))
+    if isinstance(param, dict):
+        available_setting.update(param)
+        
+    config = Config(available_setting)
 
     # override config with environment variables.
     # Some online deployment platforms (e.g. Railway) deploy project from github directly. So you shouldn't put your secrets like api key in a config file, instead use environment variables to override the default config.

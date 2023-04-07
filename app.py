@@ -9,11 +9,12 @@ from plugins import *
 def run():
     try:
         # load config
-        load_config()
-        print(sys.argv);
         name = 'wx'
         if len(sys.argv) > 1:
             name = sys.argv[1]
+        
+        load_config({"channel_type": name})
+        
         # create channel
         channel_name=conf().get('channel_type', name)
         channel = channel_factory.create_channel(channel_name)
