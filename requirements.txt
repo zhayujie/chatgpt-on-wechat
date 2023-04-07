@@ -13,7 +13,7 @@ wechaty>=0.10.7
 wechaty_puppet>=0.4.23
 chardet==5.1.0
 SpeechRecognition
-tiktoken>=0.3.2
+tiktoken==0.3.3
 urllib3==1.25.11
 discord.py>=2.0.0
 ffmpeg==1.4
