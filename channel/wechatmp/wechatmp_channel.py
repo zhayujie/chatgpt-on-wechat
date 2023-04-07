@@ -150,7 +150,7 @@ class SubsribeAccountQuery():
                     channel.query2[cache_key] = False
                     channel.query3[cache_key] = False
                 # Request again
-                elif cache_key in channel.running:
+                elif cache_key in channel.running and channel.query1.get(cache_key) == True and channel.query2.get(cache_key) == True and channel.query3.get(cache_key) == True:
                     channel.query1[cache_key] = False  #To improve waiting experience, this can be set to True.
                     channel.query2[cache_key] = False  #To improve waiting experience, this can be set to True.
                     channel.query3[cache_key] = False
@@ -231,7 +231,7 @@ class SubsribeAccountQuery():
                 return replyPost
 
             elif wechat_msg.msg_type == 'event':
-                logger.info("[wechatmp] Event {} from {}".format(wechat_msg.Event, wechat_msg.from_user_id))
+                logger.info("[wechatmp] Event {} from {}".format(wechat_msg.content, wechat_msg.from_user_id))
                 trigger_prefix = conf().get('single_chat_prefix',[''])[0]
                 content = textwrap.dedent(f"""\
                     感谢您的关注！
