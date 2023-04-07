@@ -104,6 +104,11 @@ ADMIN_COMMANDS = {
         "args": ["插件名"],
         "desc": "卸载指定插件",
     },
+    "updatep": {
+        "alias": ["updatep", "更新插件"],
+        "args": ["插件名"],
+        "desc": "更新指定插件",
+    },
     "debug": {
         "alias": ["debug", "调试模式", "DEBUG"],
         "desc": "开启机器调试日志",
@@ -336,6 +341,11 @@ class Godcmd(Plugin):
                                 ok, result = False, "请提供插件名"
                             else:
                                 ok, result = PluginManager().uninstall_plugin(args[0])
+                        elif cmd == "updatep":
+                            if len(args) != 1:
+                                ok, result = False, "请提供插件名"
+                            else:
+                                ok, result = PluginManager().update_plugin(args[0])
                         logger.debug("[Godcmd] admin command: %s by %s" % (cmd, user))
                 else:
                     ok, result = False, "需要管理员权限才能执行该指令"

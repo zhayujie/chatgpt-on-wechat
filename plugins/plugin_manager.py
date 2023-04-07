@@ -243,6 +243,30 @@ class PluginManager:
             logger.error("Failed to install plugin, {}".format(e))
             return False, "安装插件失败，"+str(e)
         
+    def update_plugin(self, name:str):
+        try:
+            import common.package_manager as pkgmgr
+            pkgmgr.check_dulwich()
+        except Exception as e:
+            logger.error("Failed to install plugin, {}".format(e))
+            return False, "无法导入dulwich，更新插件失败"
+        from dulwich import porcelain
+        name = name.upper()
+        if name not in self.plugins:
+            return False, "插件不存在"
+        if name in ["HELLO","GODCMD","ROLE","TOOL","BDUNIT","BANWORDS","FINISH","DUNGEON"]:
+            return False, "预置插件无法更新，请更新主程序仓库"
+        dirname = self.plugins[name].path
+        try:
+            porcelain.pull(dirname, "origin")
+            if os.path.exists(os.path.join(dirname,"requirements.txt")):
+                logger.info("detect requirements.txt，installing...")
+            pkgmgr.install_requirements(os.path.join(dirname,"requirements.txt"))
+            return True, "更新插件成功，请重新运行程序"
+        except Exception as e:
+            logger.error("Failed to update plugin, {}".format(e))
+            return False, "更新插件失败，"+str(e)
+        
     def uninstall_plugin(self, name:str):
         name = name.upper()
         if name not in self.plugins:
