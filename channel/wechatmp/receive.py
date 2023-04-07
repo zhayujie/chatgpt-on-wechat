@@ -19,7 +19,10 @@ class WeChatMPMessage(ChatMessage):
         self.from_user_id = xmlData.find('FromUserName').text
         self.create_time = xmlData.find('CreateTime').text
         self.msg_type = xmlData.find('MsgType').text
-        self.msg_id = xmlData.find('MsgId').text
+        if self.msg_type != 'event':
+            self.msg_id = xmlData.find('MsgId').text
+        else:
+            self.msg_id = self.create_time
         self.is_group = False
         
         # reply to other_user_id
