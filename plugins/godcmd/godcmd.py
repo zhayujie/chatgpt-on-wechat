@@ -2,6 +2,8 @@
 
 import json
 import os
+import random
+import string
 import traceback
 from typing import Tuple
 from bridge.bridge import Bridge
@@ -37,10 +39,10 @@ COMMANDS = {
         "alias": ["reset_openai_api_key"],
         "desc": "重置为默认的api_key",
     },
-    # "id": {
-    #     "alias": ["id", "用户"],
-    #     "desc": "获取用户id", #目前无实际意义
-    # },
+    "id": {
+        "alias": ["id", "用户"],
+        "desc": "获取用户id", # wechaty和wechatmp的用户id不会变化，可用于绑定管理员
+    },
     "reset": {
         "alias": ["reset", "重置会话"],
         "desc": "重置会话",
@@ -92,6 +94,16 @@ ADMIN_COMMANDS = {
         "args": ["插件名"],
         "desc": "禁用指定插件",
     },
+    "installp": {
+        "alias": ["installp", "安装插件"],
+        "args": ["仓库地址或插件名"],
+        "desc": "安装指定插件",
+    },
+    "uninstallp": {
+        "alias": ["uninstallp", "卸载插件"],
+        "args": ["插件名"],
+        "desc": "卸载指定插件",
+    },
     "debug": {
         "alias": ["debug", "调试模式", "DEBUG"],
         "desc": "开启机器调试日志",
@@ -103,11 +115,13 @@ def get_help_text(isadmin, isgroup):
     for cmd, info in COMMANDS.items():
         if cmd=="auth": #不提示认证指令
             continue
-        alias=["#"+a for a in info['alias']]
+        if cmd=="id" and conf().get("channel_type","wx") not in ["wxy","wechatmp"]:
+            continue
+        alias=["#"+a for a in info['alias'][:1]]
         help_text += f"{','.join(alias)} "
         if 'args' in info:
-            args=["'"+a+"'" for a in info['args']]
-            help_text += f"{' '.join(args)} "
+            args=[a for a in info['args']]
+            help_text += f"{' '.join(args)}"
         help_text += f": {info['desc']}\n"
 
     # 插件指令
@@ -122,8 +136,11 @@ def get_help_text(isadmin, isgroup):
     if ADMIN_COMMANDS and isadmin:
         help_text += "\n\n管理员指令：\n"
         for cmd, info in ADMIN_COMMANDS.items():
-            alias=["#"+a for a in info['alias']]
+            alias=["#"+a for a in info['alias'][:1]]
             help_text += f"{','.join(alias)} "
+            if 'args' in info:
+                args=[a for a in info['args']]
+                help_text += f"{' '.join(args)}"
             help_text += f": {info['desc']}\n"
     return help_text
 
@@ -143,7 +160,11 @@ class Godcmd(Plugin):
         else:
             with open(config_path,"r") as f:
                 gconf=json.load(f)
-        
+        if gconf["password"] == "":
+            self.temp_password = "".join(random.sample(string.digits, 4))
+            logger.info("[Godcmd] 因未设置口令，本次的临时口令为%s。"%self.temp_password)
+        else:
+            self.temp_password = None
         custom_commands = conf().get("clear_memory_commands", [])
         for custom_command in custom_commands:
             if custom_command and custom_command.startswith("#"):
@@ -152,7 +173,7 @@ class Godcmd(Plugin):
                     COMMANDS["reset"]["alias"].append(custom_command)
 
         self.password = gconf["password"]
-        self.admin_users = gconf["admin_users"] # 预存的管理员账号，这些账号不需要认证 TODO: 用户名每次都会变，目前不可用
+        self.admin_users = gconf["admin_users"] # 预存的管理员账号，这些账号不需要认证。itchat的用户名每次都会变，不可用
         self.isrunning = True # 机器人是否运行中
 
         self.handlers[Event.ON_HANDLE_CONTEXT] = self.on_handle_context
@@ -173,7 +194,7 @@ class Godcmd(Plugin):
             channel = e_context['channel']
             user = e_context['context']['receiver']
             session_id = e_context['context']['session_id']
-            isgroup = e_context['context']['isgroup']
+            isgroup = e_context['context'].get("isgroup", False)
             bottype = Bridge().get_bot_type("chat")
             bot = Bridge().get_bot("chat")
             # 将命令和参数分割
@@ -205,6 +226,8 @@ class Godcmd(Plugin):
                                 break
                         if not ok:
                             result = "插件不存在或未启用"
+                elif cmd == "id":
+                    ok, result = True, user
                 elif cmd == "set_openai_api_key":
                     if len(args) == 1:
                         user_data = conf().get_user_data(user)
@@ -293,11 +316,7 @@ class Godcmd(Plugin):
                             if len(args) != 1:
                                 ok, result = False, "请提供插件名"
                             else:
-                                ok = PluginManager().enable_plugin(args[0])
-                                if ok:
-                                    result = "插件已启用"
-                                else:
-                                    result = "插件不存在"
+                                ok, result = PluginManager().enable_plugin(args[0])
                         elif cmd == "disablep":
                             if len(args) != 1:
                                 ok, result = False, "请提供插件名"
@@ -307,7 +326,16 @@ class Godcmd(Plugin):
                                     result = "插件已禁用"
                                 else:
                                     result = "插件不存在"
-
+                        elif cmd == "installp":
+                            if len(args) != 1:
+                                ok, result = False, "请提供插件名或.git结尾的仓库地址"
+                            else:
+                                ok, result = PluginManager().install_plugin(args[0])
+                        elif cmd == "uninstallp":
+                            if len(args) != 1:
+                                ok, result = False, "请提供插件名"
+                            else:
+                                ok, result = PluginManager().uninstall_plugin(args[0])
                         logger.debug("[Godcmd] admin command: %s by %s" % (cmd, user))
                 else:
                     ok, result = False, "需要管理员权限才能执行该指令"
@@ -336,9 +364,6 @@ class Godcmd(Plugin):
         if isadmin:
             return False,"管理员账号无需认证"
         
-        if len(self.password) == 0:
-            return False,"未设置口令，无法认证"
-        
         if len(args) != 1:
             return False,"请提供口令"
         
@@ -346,6 +371,9 @@ class Godcmd(Plugin):
         if password == self.password:
             self.admin_users.append(userid)
             return True,"认证成功"
+        elif password == self.temp_password:
+            self.admin_users.append(userid)
+            return True,"认证成功，请尽快设置口令"
         else:
             return False,"认证失败"
 

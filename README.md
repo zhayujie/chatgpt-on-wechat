@@ -13,15 +13,23 @@
 - [x] **语音识别：** 支持接收和处理语音消息，通过文字或语音回复
 - [x] **插件化：** 支持个性化功能插件，提供角色扮演、文字冒险游戏等预设插件
 
-> 快速部署:
+> 目前支持微信和微信个人号部署，欢迎接入更多应用，参考[`Terminal`代码](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/channel/terminal/terminal_channel.py)实现接收和发送消息逻辑即可接入。
+
+
+快速部署:
 >
 >[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/qApznZ?referralCode=RC3znh)
 
+
 # 更新日志
+
+>**2023.04.05：** 支持微信个人号部署，兼容角色扮演等预设插件，[使用文档](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/channel/wechatmp/README.md)。(contributed by [@JS00000](https://github.com/JS00000) in [#686](https://github.com/zhayujie/chatgpt-on-wechat/pull/686))
+
+>**2023.04.05：** 增加能让ChatGPT使用工具的`tool`插件，[使用文档](https://github.com/goldfishh/chatgpt-on-wechat/blob/master/plugins/tool/README.md)。工具相关issue可反馈至[chatgpt-tool-hub](https://github.com/goldfishh/chatgpt-tool-hub)。(contributed by [@goldfishh](https://github.com/goldfishh) in [#663](https://github.com/zhayujie/chatgpt-on-wechat/pull/663))
 
 >**2023.03.25：** 支持插件化开发，目前已实现 多角色切换、文字冒险游戏、管理员指令、Stable Diffusion等插件，使用参考 [#578](https://github.com/zhayujie/chatgpt-on-wechat/issues/578)。(contributed by [@lanvent](https://github.com/lanvent) in [#565](https://github.com/zhayujie/chatgpt-on-wechat/pull/565))
 
->**2023.03.09：** 基于 `whisper API` 实现对微信语音消息的解析和回复，添加配置项 `"speech_recognition":true` 即可启用，使用参考 [#415](https://github.com/zhayujie/chatgpt-on-wechat/issues/415)。(contributed by [wanggang1987](https://github.com/wanggang1987) in [#385](https://github.com/zhayujie/chatgpt-on-wechat/pull/385))
+>**2023.03.09：** 基于 `whisper API`(后续已接入更多的语音`API`服务) 实现对微信语音消息的解析和回复，添加配置项 `"speech_recognition":true` 即可启用，使用参考 [#415](https://github.com/zhayujie/chatgpt-on-wechat/issues/415)。(contributed by [wanggang1987](https://github.com/wanggang1987) in [#385](https://github.com/zhayujie/chatgpt-on-wechat/pull/385))
 
 >**2023.03.02：** 接入[ChatGPT API](https://platform.openai.com/docs/guides/chat) (gpt-3.5-turbo)，默认使用该模型进行对话，需升级openai依赖 (`pip3 install --upgrade openai`)。网络问题参考 [#351](https://github.com/zhayujie/chatgpt-on-wechat/issues/351)
 
@@ -57,10 +65,6 @@
 前往 [OpenAI注册页面](https://beta.openai.com/signup) 创建账号，参考这篇 [教程](https://www.pythonthree.com/register-openai-chatgpt/) 可以通过虚拟手机号来接收验证码。创建完账号则前往 [API管理页面](https://beta.openai.com/account/api-keys) 创建一个 API Key 并保存下来，后面需要在项目中配置这个key。
 
 > 项目中使用的对话模型是 davinci，计费方式是约每 750 字 (包含请求和回复) 消耗 $0.02，图片生成是每张消耗 $0.016，账号创建有免费的 $18 额度 (更新3.25: 最新注册的已经无免费额度了)，使用完可以更换邮箱重新注册。
-
-#### 1.1 ChapGPT service On Azure
-一种替换以上的方法是使用Azure推出的[ChatGPT service](https://azure.microsoft.com/en-in/products/cognitive-services/openai-service/)。它host在公有云Azure上，因此不需要VPN就可以直接访问。不过目前仍然处于preview阶段。新用户可以通过Try Azure for free来薅一段时间的羊毛
-
 
 ### 2.运行环境
 
@@ -191,11 +195,9 @@ nohup python3 app.py & tail -f nohup.out          # 在后台运行程序并通�
 ```
 扫码登录后程序即可运行于服务器后台，此时可通过 `ctrl+c` 关闭日志，不会影响后台程序的运行。使用 `ps -ef | grep app.py | grep -v grep` 命令可查看运行于后台的进程，如果想要重新启动程序可以先 `kill` 掉对应的进程。日志关闭后如果想要再次打开只需输入 `tail -f nohup.out`。此外，`scripts` 目录下有一键运行、关闭程序的脚本供使用。
 
-> **注意：** 如果 扫码后手机提示登录验证需要等待5s，而终端的二维码再次刷新并提示 `Log in time out, reloading QR code`，此时需参考此 [issue](https://github.com/zhayujie/chatgpt-on-wechat/issues/8) 修改一行代码即可解决。
+> **多账号支持：** 将项目复制多份，分别启动程序，用不同账号扫码登录即可实现同时运行。
 
-> **多账号支持：** 将 项目复制多份，分别启动程序，用不同账号扫码登录即可实现同时运行。
-
-> **特殊指令：** 用户向机器人发送 **#清除记忆** 即可清空该用户的上下文记忆。
+> **特殊指令：** 用户向机器人发送 **#reset** 即可清空该用户的上下文记忆。
 
 
 ### 3.Docker部署

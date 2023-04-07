@@ -8,27 +8,35 @@ from plugins import *
 import signal
 import sys
 
-def sigterm_handler(_signo, _stack_frame):
-    conf().save_user_datas()
-    sys.exit(0)
+def sigterm_handler_wrap(_signo):
+    old_handler = signal.getsignal(_signo)
+    def func(_signo, _stack_frame):
+        logger.info("signal {} received, exiting...".format(_signo))
+        conf().save_user_datas()
+        return old_handler(_signo, _stack_frame)
+    signal.signal(_signo, func)
 
 def run():
     try:
         # load config
         load_config()
         # ctrl + c
-        signal.signal(signal.SIGINT, sigterm_handler)
+        sigterm_handler_wrap(signal.SIGINT)
         # kill signal
-        signal.signal(signal.SIGTERM, sigterm_handler)
+        sigterm_handler_wrap(signal.SIGTERM)
 
         # create channel
         channel_name=conf().get('channel_type', 'wx')
+
+        if "--cmd" in sys.argv:
+            channel_name = 'terminal'
+
         if channel_name == 'wxy':
             os.environ['WECHATY_LOG']="warn"
             # os.environ['WECHATY_PUPPET_SERVICE_ENDPOINT'] = '127.0.0.1:9001'
 
         channel = channel_factory.create_channel(channel_name)
-        if channel_name in ['wx','wxy','wechatmp','wechatmp_service']:
+        if channel_name in ['wx','wxy','terminal','wechatmp','wechatmp_service']:
             PluginManager().load_plugins()
 
         # startup channel

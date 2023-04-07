@@ -8,6 +8,7 @@ import requests
 import threading
 from common.singleton import singleton
 from common.log import logger
+from common.expired_dict import ExpiredDict
 from config import conf
 from bridge.reply import *
 from bridge.context import *
@@ -26,12 +27,17 @@ class WechatMPChannel(ChatChannel):
     def __init__(self, passive_reply = True):
         super().__init__()
         self.passive_reply = passive_reply
+        self.running = set()
+        self.received_msgs = ExpiredDict(60*60*24)
         if self.passive_reply:
+            self.NOT_SUPPORT_REPLYTYPE = [ReplyType.IMAGE, ReplyType.VOICE]
             self.cache_dict = dict()
             self.query1 = dict()
             self.query2 = dict()
             self.query3 = dict()
         else:
+            # TODO support image
+            self.NOT_SUPPORT_REPLYTYPE = [ReplyType.IMAGE, ReplyType.VOICE]
             self.app_id = conf().get('wechatmp_app_id')
             self.app_secret = conf().get('wechatmp_app_secret')
             self.access_token = None
@@ -45,7 +51,9 @@ class WechatMPChannel(ChatChannel):
         else:
             urls = ('/wx', 'channel.wechatmp.ServiceAccount.Query')
         app = web.application(urls, globals())
-        app.run()
+        # app.run()
+        port = conf().get('wechatmp_port', 8080)
+        web.httpserver.runsimple(app.wsgifunc(), ('0.0.0.0', port))
 
 
     def wechatmp_request(self, method, url, **kwargs):
@@ -94,6 +102,7 @@ class WechatMPChannel(ChatChannel):
             reply_text = reply.content
             reply_cnt = math.ceil(len(reply_text) / 600)
             self.cache_dict[receiver] = (reply_cnt, reply_text)
+            self.running.remove(receiver)
             logger.debug("[send] reply to {} saved to cache: {}".format(receiver, reply_text))
         else:
             receiver = context["receiver"]
@@ -110,6 +119,13 @@ class WechatMPChannel(ChatChannel):
             self.wechatmp_request(method='post', url=url, params=params, data=json.dumps(json_data, ensure_ascii=False).encode('utf8'))
             logger.info("[send] Do send to {}: {}".format(receiver, reply_text))
         return
+
+
+    def _fail_callback(self, session_id, exception, context, **kwargs):
+        logger.exception("[wechatmp] Fail to generation message to user, msgId={}, exception={}".format(context['msg'].msg_id, exception))
+        assert session_id not in self.cache_dict
+        self.running.remove(session_id)
+
 
 # Last import to avoid circular import
 import channel.wechatmp.SubscribeAccount

@@ -8,6 +8,9 @@ pyttsx3>=2.90 # pytsx text to speech
 baidu_aip>=4.16.10 # baidu voice
 # azure-cognitiveservices-speech # azure voice
 
+#install plugin
+dulwich
+
 # wechaty
 wechaty>=0.10.7
 wechaty_puppet>=0.4.23
@@ -15,9 +18,6 @@ pysilk_mod>=1.6.0 # needed by send voice
 
 # wechatmp
 web.py
-
-# sdwebui plugin
-webuiapi>=0.6.2
 
 # chatgpt-tool-hub plugin
 --extra-index-url https://pypi.python.org/simple

@@ -92,6 +92,7 @@ def qrCallback(uuid,status,qrcode):
 
 @singleton
 class WechatChannel(ChatChannel):
+    NOT_SUPPORT_REPLYTYPE = []
     def __init__(self):
         super().__init__()
         self.receivedMsgs = ExpiredDict(60*60*24) 

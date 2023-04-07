@@ -91,7 +91,7 @@ class ChatGPTBot(Bot,OpenAIImage):
             "top_p":1,
             "frequency_penalty":conf().get('frequency_penalty', 0.0),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
             "presence_penalty":conf().get('presence_penalty', 0.0),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
-            "request_timeout": conf().get('request_timeout', 120),  # 请求超时时间，openai接口默认设置为600，对于难问题一般需要较长时间
+            "request_timeout": conf().get('request_timeout', 60),  # 请求超时时间，openai接口默认设置为600，对于难问题一般需要较长时间
             "timeout": conf().get('request_timeout', 120), #重试超时时间，在这个时间内，将会自动重试
         }
 
@@ -124,18 +124,18 @@ class ChatGPTBot(Bot,OpenAIImage):
                     time.sleep(5)
             elif isinstance(e, openai.error.Timeout):
                 logger.warn("[CHATGPT] Timeout: {}".format(e))
-                result['content'] = "服务器出现问题"
+                result['content'] = "我没有收到你的消息"
                 if need_retry:
                     time.sleep(5)
             elif isinstance(e, openai.error.APIConnectionError):
                 logger.warn("[CHATGPT] APIConnectionError: {}".format(e))
                 need_retry = False
-                result['content'] = "网络连接出现问题"
+                result['content'] = "我连接不到你的网络"
             else:
                 logger.warn("[CHATGPT] Exception: {}".format(e))
                 need_retry = False
                 self.sessions.clear_session(session_id)
-                result['content'] = str(e)
+
             if need_retry:
                 logger.warn("[CHATGPT] 第{}次重试".format(retry_count+1))
                 return self.reply_text(session, session_id, api_key, retry_count+1)

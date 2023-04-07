@@ -39,7 +39,20 @@ class Role(Plugin):
         try:
             with open(config_path, "r", encoding="utf-8") as f:
                 config = json.load(f)
-                self.roles = {role["title"].lower(): role for role in config["roles"]}
+                self.tags = { tag:(desc,[]) for tag,desc in config["tags"].items()}
+                self.roles = {}
+                for role in config["roles"]:
+                    self.roles[role["title"].lower()] = role
+                    for tag in role["tags"]:
+                        if tag not in self.tags:
+                            logger.warning(f"[Role] unknown tag {tag} ")
+                            self.tags[tag] = (tag, [])
+                        self.tags[tag][1].append(role)
+                for tag in list(self.tags.keys()):
+                    if len(self.tags[tag][1]) == 0:
+                        logger.debug(f"[Role] no role found for tag {tag} ")
+                        del self.tags[tag]
+
             if len(self.roles) == 0:
                 raise Exception("no role found")
             self.handlers[Event.ON_HANDLE_CONTEXT] = self.on_handle_context
@@ -52,7 +65,7 @@ class Role(Plugin):
                 logger.warn("[Role] init failed, ignore or see https://github.com/zhayujie/chatgpt-on-wechat/tree/master/plugins/role .")
             raise e
 
-    def get_role(self, name, find_closest=True):
+    def get_role(self, name, find_closest=True, min_sim = 0.35):
         name = name.lower()
         found_role = None
         if name in self.roles:
@@ -62,7 +75,7 @@ class Role(Plugin):
 
             def str_simularity(a, b):
                 return difflib.SequenceMatcher(None, a, b).ratio()
-            max_sim = 0.0
+            max_sim = min_sim
             max_role = None
             for role in self.roles:
                 sim = str_simularity(name, role)
@@ -100,6 +113,32 @@ class Role(Plugin):
             desckey = "description"
         elif clist[0] == f"{trigger_prefix}设定扮演":
             customize = True
+        elif clist[0] == f"{trigger_prefix}角色类型":
+            if len(clist) >1:
+                tag = clist[1].strip()
+                help_text = "角色列表：\n"
+                for key,value in self.tags.items():
+                    if value[0] == tag:
+                        tag = key
+                        break
+                if tag == "所有":
+                    for role in self.roles.values():
+                        help_text += f"{role['title']}: {role['remark']}\n"
+                elif tag in self.tags:
+                    for role in self.tags[tag][1]:
+                        help_text += f"{role['title']}: {role['remark']}\n"
+                else:
+                    help_text = f"未知角色类型。\n"
+                    help_text += "目前的角色类型有: \n"
+                    help_text += "，".join([self.tags[tag][0] for tag in self.tags])+"\n"
+            else:
+                help_text = f"请输入角色类型。\n"
+                help_text += "目前的角色类型有: \n"
+                help_text += "，".join([self.tags[tag][0] for tag in self.tags])+"\n"
+            reply = Reply(ReplyType.INFO, help_text)
+            e_context['reply'] = reply
+            e_context.action = EventAction.BREAK_PASS
+            return
         elif sessionid not in self.roleplays:
             return
         logger.debug("[Role] on_handle_context. content: %s" % content)
@@ -109,7 +148,7 @@ class Role(Plugin):
                 e_context['reply'] = reply
                 e_context.action = EventAction.BREAK_PASS
                 return
-            role = self.get_role(clist[1],find_closest=False)
+            role = self.get_role(clist[1])
             if role is None:
                 reply = Reply(ReplyType.ERROR, "角色不存在")
                 e_context['reply'] = reply
@@ -136,11 +175,13 @@ class Role(Plugin):
         if not verbose:
             return help_text
         trigger_prefix = conf().get('plugin_trigger_prefix', "$")
-        help_text = f"使用方法:\n{trigger_prefix}角色"+" {预设角色名}: 设定为预设角色。\n"+f"{trigger_prefix}role"+" {预设角色名}: 同上，但使用英文设定。\n"
-        help_text += f"{trigger_prefix}设定扮演"+" {角色设定}: 设定自定义角色人设。\n"
+        help_text = f"使用方法:\n{trigger_prefix}角色"+" 预设角色名: 设定角色为{预设角色名}。\n"+f"{trigger_prefix}role"+" 预设角色名: 同上，但使用英文设定。\n"
+        help_text += f"{trigger_prefix}设定扮演"+" 角色设定: 设定自定义角色人设为{角色设定}。\n"
         help_text += f"{trigger_prefix}停止扮演: 清除设定的角色。\n"
-        help_text += "\n目前可用的预设角色名列表: \n"
-        for role in self.roles:
-            help_text += f"{role}: {self.roles[role]['remark']}\n"
-        help_text += f"\n命令例子: '{trigger_prefix}角色 写作助理'"
+        help_text += f"{trigger_prefix}角色类型"+" 角色类型: 查看某类{角色类型}的所有预设角色，为所有时输出所有预设角色。\n"
+        help_text += "\n目前的角色类型有: \n"
+        help_text += "，".join([self.tags[tag][0] for tag in self.tags])+"。\n"
+        help_text += f"\n命令例子: \n{trigger_prefix}角色 写作助理\n"
+        help_text += f"{trigger_prefix}角色类型 所有\n"
+        help_text += f"{trigger_prefix}停止扮演\n"
         return help_text

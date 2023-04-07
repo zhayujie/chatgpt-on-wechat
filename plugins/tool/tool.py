@@ -30,7 +30,7 @@ class Tool(Plugin):
             return help_text
         trigger_prefix = conf().get('plugin_trigger_prefix', "$")
         help_text += "使用说明：\n"
-        help_text += f"{trigger_prefix}tool "+"{命令}: 根据给出的命令使用一些可用工具尽力为你得到结果。\n"
+        help_text += f"{trigger_prefix}tool "+"命令: 根据给出的{命令}使用一些可用工具尽力为你得到结果。\n"
         help_text += f"{trigger_prefix}tool reset: 重置工具。\n"
         return help_text
 

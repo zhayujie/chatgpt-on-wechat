@@ -26,7 +26,7 @@ except Exception as e:
 
 @singleton
 class WechatyChannel(ChatChannel):
-
+    NOT_SUPPORT_REPLYTYPE = []
     def __init__(self):
         super().__init__()
 
