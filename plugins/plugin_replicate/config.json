@@ -135,6 +135,7 @@
       },
       "desc": "使用openjourney模型出图"
     },
+
       {
       "keywords": [
         "表情",
@@ -150,7 +151,6 @@
       },
       "desc": "使用openjourney模型出图"
     },
-    ,
     {
       "keywords": [
         "修复",
@@ -166,6 +166,6 @@
         "codeformer_fidelity": 0.7
       },
       "desc": "修复人像图片"
-    },
+    }
   ]
 }
