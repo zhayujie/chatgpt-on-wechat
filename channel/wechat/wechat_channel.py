@@ -23,13 +23,18 @@ from common.time_check import time_checker
 from common.expired_dict import ExpiredDict
 from plugins import *
 
-@itchat.msg_register([TEXT,VOICE])
+@itchat.msg_register([TEXT,VOICE,PICTURE])
 def handler_single_msg(msg):
+    # logger.debug("handler_single_msg: {}".format(msg))
+    if msg['Type'] == PICTURE and msg['MsgType'] == 47:
+        return None
     WechatChannel().handle_single(WeChatMessage(msg))
     return None
 
-@itchat.msg_register([TEXT,VOICE], isGroupChat=True)
+@itchat.msg_register([TEXT,VOICE,PICTURE], isGroupChat=True)
 def handler_group_msg(msg):
+    if msg['Type'] == PICTURE and msg['MsgType'] == 47:
+        return None
     WechatChannel().handle_group(WeChatMessage(msg,True))
     return None
 
@@ -127,6 +132,8 @@ class WechatChannel(ChatChannel):
             if conf().get('speech_recognition') != True:
                 return
             logger.debug("[WX]receive voice msg: {}".format(cmsg.content))
+        elif cmsg.ctype == ContextType.IMAGE:
+            logger.debug("[WX]receive image msg: {}".format(cmsg.content))
         else:
             logger.debug("[WX]receive text msg: {}, cmsg={}".format(json.dumps(cmsg._rawmsg, ensure_ascii=False), cmsg))
         context = self._compose_context(cmsg.ctype, cmsg.content, isgroup=False, msg=cmsg)

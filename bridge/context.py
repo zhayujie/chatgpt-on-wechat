@@ -5,7 +5,8 @@ from enum import Enum
 class ContextType (Enum):
     TEXT = 1         # 文本消息
     VOICE = 2        # 音频消息
-    IMAGE_CREATE = 3 # 创建图片命令
+    IMAGE = 3        # 图片消息
+    IMAGE_CREATE = 10 # 创建图片命令
     
     def __str__(self):
         return self.name

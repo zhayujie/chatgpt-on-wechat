@@ -170,6 +170,8 @@ class ChatChannel(Channel):
                         reply = self._generate_reply(new_context)
                     else:
                         return
+            elif context.type == ContextType.IMAGE:  # 图片消息，当前无默认逻辑
+                pass
             else:
                 logger.error('[WX] unknown context type: {}'.format(context.type))
                 return
