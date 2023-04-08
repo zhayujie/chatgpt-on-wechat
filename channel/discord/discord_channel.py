@@ -133,6 +133,7 @@ class DiscordChannel(Channel):
             logger.debug('on_message author %s', message.author)
             context['session_id'] = message.author
         context.content = prompt
+        await message.channel.send('...')
         response = super().build_reply_content(prompt, context).content
         await message.channel.send(response)
 
