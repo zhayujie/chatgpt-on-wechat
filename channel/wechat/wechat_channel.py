@@ -23,24 +23,14 @@ from common.time_check import time_checker
 from common.expired_dict import ExpiredDict
 from plugins import *
 
-@itchat.msg_register(TEXT)
+@itchat.msg_register([TEXT,VOICE])
 def handler_single_msg(msg):
-    WechatChannel().handle_text(WeChatMessage(msg))
+    WechatChannel().handle_single(WeChatMessage(msg))
     return None
 
-@itchat.msg_register(TEXT, isGroupChat=True)
+@itchat.msg_register([TEXT,VOICE], isGroupChat=True)
 def handler_group_msg(msg):
     WechatChannel().handle_group(WeChatMessage(msg,True))
-    return None
-
-@itchat.msg_register(VOICE)
-def handler_single_voice(msg):
-    WechatChannel().handle_voice(WeChatMessage(msg))
-    return None
-    
-@itchat.msg_register(VOICE, isGroupChat=True)
-def handler_group_voice(msg):
-    WechatChannel().handle_group_voice(WeChatMessage(msg,True))
     return None
 
 def _check(func):
@@ -118,7 +108,7 @@ class WechatChannel(ChatChannel):
         # start message listener
         itchat.run()
 
-    # handle_* 系列函数处理收到的消息后构造Context，然后传入_handle函数中处理Context和发送回复
+    # handle_* 系列函数处理收到的消息后构造Context，然后传入produce函数中处理Context和发送回复
     # Context包含了消息的所有信息，包括以下属性
     #   type 消息类型, 包括TEXT、VOICE、IMAGE_CREATE
     #   content 消息内容，如果是TEXT类型，content就是文本内容，如果是VOICE类型，content就是语音文件名，如果是IMAGE_CREATE类型，content就是图片生成命令
@@ -132,37 +122,28 @@ class WechatChannel(ChatChannel):
 
     @time_checker
     @_check
-    def handle_voice(self, cmsg : ChatMessage):
-        if conf().get('speech_recognition') != True:
-            return
-        logger.debug("[WX]receive voice msg: {}".format(cmsg.content))
-        context = self._compose_context(ContextType.VOICE, cmsg.content, isgroup=False, msg=cmsg)
-        if context:
-            self.produce(context)
-
-    @time_checker
-    @_check
-    def handle_text(self, cmsg : ChatMessage):
-        logger.debug("[WX]receive text msg: {}, cmsg={}".format(json.dumps(cmsg._rawmsg, ensure_ascii=False), cmsg))
-        context = self._compose_context(ContextType.TEXT, cmsg.content, isgroup=False, msg=cmsg)
+    def handle_single(self, cmsg : ChatMessage):
+        if cmsg.ctype == ContextType.VOICE:
+            if conf().get('speech_recognition') != True:
+                return
+            logger.debug("[WX]receive voice msg: {}".format(cmsg.content))
+        else:
+            logger.debug("[WX]receive text msg: {}, cmsg={}".format(json.dumps(cmsg._rawmsg, ensure_ascii=False), cmsg))
+        context = self._compose_context(cmsg.ctype, cmsg.content, isgroup=False, msg=cmsg)
         if context:
             self.produce(context)
 
     @time_checker
     @_check
     def handle_group(self, cmsg : ChatMessage):
-        logger.debug("[WX]receive group msg: {}, cmsg={}".format(json.dumps(cmsg._rawmsg, ensure_ascii=False), cmsg))
-        context = self._compose_context(ContextType.TEXT, cmsg.content, isgroup=True, msg=cmsg)
-        if context:
-            self.produce(context)
-    
-    @time_checker
-    @_check
-    def handle_group_voice(self, cmsg : ChatMessage):
-        if conf().get('group_speech_recognition', False) != True:
-            return
-        logger.debug("[WX]receive voice for group msg: {}".format(cmsg.content))
-        context = self._compose_context(ContextType.VOICE, cmsg.content, isgroup=True, msg=cmsg)
+        if cmsg.ctype == ContextType.VOICE:
+            if conf().get('speech_recognition') != True:
+                return
+            logger.debug("[WX]receive voice for group msg: {}".format(cmsg.content))
+        else:
+            # logger.debug("[WX]receive group msg: {}, cmsg={}".format(json.dumps(cmsg._rawmsg, ensure_ascii=False), cmsg))
+            pass
+        context = self._compose_context(cmsg.ctype, cmsg.content, isgroup=True, msg=cmsg)
         if context:
             self.produce(context)
     
