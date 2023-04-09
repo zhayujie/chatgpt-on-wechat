@@ -34,7 +34,6 @@ class Query():
                     user_data = conf().get_user_data(from_user)
                     context['openai_api_key'] = user_data.get('openai_api_key') # None or user openai_api_key
                     channel.produce(context)
-                    channel.running.add(from_user)
                 # The reply will be sent by channel.send() in another thread
                 return "success"
 
