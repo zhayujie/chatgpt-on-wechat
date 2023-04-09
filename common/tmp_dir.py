@@ -12,7 +12,7 @@ class TmpDir(object):
     
     def __init__(self):
         pathExists = os.path.exists(self.tmpFilePath)
-        if not pathExists and conf().get('speech_recognition') == True:
+        if not pathExists:
             os.makedirs(self.tmpFilePath)
 
     def path(self):
