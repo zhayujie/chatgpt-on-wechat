@@ -93,6 +93,8 @@ available_setting = {
 
     "debug": False,  # 是否开启debug模式，开启后会打印更多日志
 
+    "config_data_path": "",    # 数据目录
+
     # 插件配置
     "plugin_trigger_prefix": "$",  # 规范插件提供聊天相关指令的前缀，建议不要和管理员指令前缀"#"冲突
 }
@@ -130,7 +132,7 @@ class Config(dict):
 
     def load_user_datas(self):
         try:
-            with open('user_datas.pkl', 'rb') as f:
+            with open(os.path.join(get_data_path(), 'user_datas.pkl'), 'rb') as f:
                 self.user_datas = pickle.load(f)
                 logger.info("[Config] User datas loaded.")
         except FileNotFoundError as e:
@@ -141,7 +143,7 @@ class Config(dict):
 
     def save_user_datas(self):
         try:
-            with open('user_datas.pkl', 'wb') as f:
+            with open(os.path.join(get_data_path(), 'user_datas.pkl'), 'wb') as f:
                 pickle.dump(self.user_datas, f)
                 logger.info("[Config] User datas saved.")
         except Exception as e:
@@ -196,6 +198,12 @@ def read_file(path):
     with open(path, mode='r', encoding='utf-8') as f:
         return f.read()
 
-
 def conf():
     return config
+
+def get_data_path():
+    data_path = os.path.join(get_root(), conf().get('config_data_path', ""))
+    if not os.path.exists(data_path):
+        logger.info("[INIT] data path not exists, create it: {}".format(data_path))
+        os.makedirs(data_path)
+    return data_path
