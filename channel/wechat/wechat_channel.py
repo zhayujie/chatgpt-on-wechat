@@ -147,6 +147,8 @@ class WechatChannel(ChatChannel):
             if conf().get('speech_recognition') != True:
                 return
             logger.debug("[WX]receive voice for group msg: {}".format(cmsg.content))
+        elif cmsg.ctype == ContextType.IMAGE:
+            logger.debug("[WX]receive image for group msg: {}".format(cmsg.content))
         else:
             # logger.debug("[WX]receive group msg: {}, cmsg={}".format(json.dumps(cmsg._rawmsg, ensure_ascii=False), cmsg))
             pass
