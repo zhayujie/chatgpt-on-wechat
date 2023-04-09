@@ -97,8 +97,7 @@ class WechatMPChannel(ChatChannel):
         if self.passive_reply:
             receiver = context["receiver"]
             self.cache_dict[receiver] = reply.content
-            self.running.remove(receiver)
-            logger.debug("[send] reply to {} saved to cache: {}".format(receiver, reply))
+            logger.info("[send] reply to {} saved to cache: {}".format(receiver, reply))
         else:
             receiver = context["receiver"]
             reply_text = reply.content
@@ -115,11 +114,12 @@ class WechatMPChannel(ChatChannel):
             logger.info("[send] Do send to {}: {}".format(receiver, reply_text))
         return
 
-
-    def _fail_callback(self, session_id, exception, context, **kwargs):
-        logger.exception("[wechatmp] Fail to generation message to user, msgId={}, exception={}".format(context['msg'].msg_id, exception))
-        assert session_id not in self.cache_dict
+    def _success_callback(self, session_id, **kwargs): # 线程正常结束时的回调函数
         self.running.remove(session_id)
 
-
+    def _fail_callback(self, session_id, exception, context, **kwargs): # 线程异常结束时的回调函数
+        logger.exception("[wechatmp] Fail to generation message to user, msgId={}, exception={}".format(context['msg'].msg_id, exception))
+        if self.passive_reply:
+            assert session_id not in self.cache_dict
+        self.running.remove(session_id)
 

@@ -41,7 +41,8 @@ class Query():
                     context = channel._compose_context(ContextType.TEXT, message, isgroup=False, msg=wechatmp_msg)
                     logger.debug("[wechatmp] context: {} {}".format(context, wechatmp_msg))
                     if message_id in channel.received_msgs: # received and finished
-                        return 
+                        # no return because of bandwords or other reasons
+                        return "success"
                     if supported and context:
                         # set private openai_api_key
                         # if from_user is not changed in itchat, this can be placed at chat_channel
@@ -71,11 +72,12 @@ class Query():
                     channel.query1[cache_key] = False
                     channel.query2[cache_key] = False
                     channel.query3[cache_key] = False
-                # Request again
+                # User request again, and the answer is not ready
                 elif cache_key in channel.running and channel.query1.get(cache_key) == True and channel.query2.get(cache_key) == True and channel.query3.get(cache_key) == True:
                     channel.query1[cache_key] = False  #To improve waiting experience, this can be set to True.
                     channel.query2[cache_key] = False  #To improve waiting experience, this can be set to True.
                     channel.query3[cache_key] = False
+                # User request again, and the answer is ready
                 elif cache_key in channel.cache_dict:
                     # Skip the waiting phase
                     channel.query1[cache_key] = True
@@ -89,7 +91,7 @@ class Query():
                     logger.debug("[wechatmp] query1 {}".format(cache_key))
                     channel.query1[cache_key] = True
                     cnt = 0
-                    while cache_key not in channel.cache_dict and cnt < 45:
+                    while cache_key in channel.running and cnt < 45:
                         cnt = cnt + 1
                         time.sleep(0.1)
                     if cnt == 45:
@@ -104,7 +106,7 @@ class Query():
                     logger.debug("[wechatmp] query2 {}".format(cache_key))
                     channel.query2[cache_key] = True
                     cnt = 0
-                    while cache_key not in channel.cache_dict and cnt < 45:
+                    while cache_key in channel.running and cnt < 45:
                         cnt = cnt + 1
                         time.sleep(0.1)
                     if cnt == 45:
@@ -119,7 +121,7 @@ class Query():
                     logger.debug("[wechatmp] query3 {}".format(cache_key))
                     channel.query3[cache_key] = True
                     cnt = 0
-                    while cache_key not in channel.cache_dict and cnt < 40:
+                    while cache_key in channel.running and cnt < 40:
                         cnt = cnt + 1
                         time.sleep(0.1)
                     if cnt == 40:
@@ -132,12 +134,17 @@ class Query():
                     else:
                         pass
 
-                if float(time.time()) - float(query_time) > 4.8:
-                    reply_text = "【正在思考中，回复任意文字尝试获取回复】"
-                    logger.info("[wechatmp] Timeout for {} {}, return".format(from_user, message_id))
-                    replyPost = reply.TextMsg(from_user, to_user, reply_text).send()
-                    return replyPost
-                
+
+                if cache_key not in channel.cache_dict and cache_key not in channel.running:
+                    # no return because of bandwords or other reasons
+                    return "success"
+
+                # if float(time.time()) - float(query_time) > 4.8:
+                #     reply_text = "【正在思考中，回复任意文字尝试获取回复】"
+                #     logger.info("[wechatmp] Timeout for {} {}, return".format(from_user, message_id))
+                #     replyPost = reply.TextMsg(from_user, to_user, reply_text).send()
+                #     return replyPost
+
                 if cache_key in channel.cache_dict:
                     content = channel.cache_dict[cache_key]
                     if len(content.encode('utf8'))<=MAX_UTF8_LEN:
