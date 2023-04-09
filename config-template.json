@@ -2,7 +2,6 @@
   "open_ai_api_key": "YOUR API KEY",
   "model": "gpt-3.5-turbo",
   "proxy": "",
-  "use_azure_chatgpt": false,
   "single_chat_prefix": ["bot", "@bot"],
   "single_chat_reply_prefix": "[bot] ",
   "group_chat_prefix": ["@bot"],
