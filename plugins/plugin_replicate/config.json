@@ -133,7 +133,7 @@
         "num_inference_steps": 20,
         "guidance_scale": 12
       },
-      "desc": "使用openjourney模型出图"
+      "desc": "使用pastel模型出图"
     },
       {
       "keywords": [
@@ -148,9 +148,8 @@
         "num_inference_steps": 50,
         "guidance_scale": 7
       },
-      "desc": "使用openjourney模型出图"
+      "desc": "使用emoji模型出图"
     },
-    ,
     {
       "keywords": [
         "修复",
@@ -166,6 +165,7 @@
         "codeformer_fidelity": 0.7
       },
       "desc": "修复人像图片"
-    },
+    }
+    }
   ]
 }
