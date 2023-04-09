@@ -151,6 +151,7 @@ class AzureChatGPTBot(ChatGPTBot):
 
     def compose_args(self):
         args = super().compose_args()
-        args["engine"] = args["model"]
-        del(args["model"])
+        args["deployment_id"] = conf().get("azure_deployment_id")
+        #args["engine"] = args["model"]
+        #del(args["model"])
         return args
