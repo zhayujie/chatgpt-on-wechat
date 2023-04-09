@@ -1,0 +1,171 @@
+{
+  "replicate_api_token": "YOUR API TOKEN",
+  "defaults": {
+    "model": "cjwbw/anything-v3-better-vae",
+    "version": "09a5805203f4c12da649ec1923bb7729517ca25fcac790e640eaa9ed66573b65",
+    "negative_prompt": "lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry, artist name",
+    "prompt": "masterpiece, best quality, illustration, beautiful detailed, finely detailed, dramatic light, intricate details"
+  },
+  "rules": [
+ {
+      "keywords": [
+        "SD",
+        "sd"
+      ],
+      "params": {
+        "model": "stability-ai/stable-diffusion",
+        "prompt": "best quality",
+        "version": "db21e45d3f7023abc2a46ee38a23973f6dce16bb082a930b0c49861f96d1e5bf",
+        "image_dimensions": "512x512"
+      },
+      "desc": "使用SD模型画图"
+    },
+    {
+      "keywords": [
+        "横版"
+      ],
+      "params": {
+        "width": 768,
+        "height": 512
+      },
+      "desc": "分辨率会变成640x512，对SD模型无效"
+    },
+        {
+      "keywords": [
+        "大图"
+      ],
+      "params": {
+        "width": 1024,
+        "height": 1024
+      },
+      "desc": "分辨率会变成640x512，对SD模型无效"
+    },
+        {
+      "keywords": [
+        "正方形",
+        "方"
+      ],
+      "params": {
+        "width": 512,
+        "height": 512
+      },
+      "desc": "分辨率会变成640x512，对SD模型无效"
+    },
+    {
+      "keywords": [
+        "竖版"
+      ],
+      "params": {
+        "width": 512,
+        "height": 768
+      },
+      "desc": "分辨率会变成512x640，对SD模型无效"
+    },
+    {
+      "keywords": [
+        "二次元"
+      ],
+      "params": {
+        "model": "cjwbw/anything-v3-better-vae",
+        "version": "09a5805203f4c12da649ec1923bb7729517ca25fcac790e640eaa9ed66573b65",
+        "negative_prompt": "lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry, artist name",
+        "prompt": "masterpiece, best quality, illustration, beautiful detailed, finely detailed, dramatic light, intricate details",
+        "num_inference_steps": 20,
+        "guidance_scale": 9
+      },
+      "desc": "使用二次元风格模型anything-v3出图"
+    },
+    {
+      "keywords": [
+        "未来",
+        "future"
+      ],
+      "params": {
+        "model": "cjwbw/future-diffusion",
+        "version": "b5c46a3b3f0db2a154d4be534ba7758caded970b748a2e26e6d02e9b3bd7da2a",
+        "negative_prompt": "duplicate heads bad anatomy",
+        "prompt": "duplicate heads bad anatomy",
+        "num_inference_steps": 20,
+        "guidance_scale": 7
+      },
+      "desc": "使用未来风格模型出图"
+    },
+      {
+      "keywords": [
+        "openjourney",
+        "journey"
+      ],
+      "params": {
+        "model": "prompthero/openjourney",
+        "version": "9936c2001faa2194a261c01381f90e65261879985476014a0a37a334593a05eb",
+        "negative_prompt": "duplicate heads bad anatomy",
+        "prompt": "mdjrny-v4,",
+        "num_inference_steps": 20,
+        "guidance_scale": 7
+      },
+      "desc": "使用openjourney模型出图"
+    },
+          {
+      "keywords": [
+        "dream",
+        "梦"
+      ],
+      "params": {
+        "model": "cjwbw/dreamshaper",
+        "version": "ed6d8bee9a278b0d7125872bddfb9dd3fc4c401426ad634d8246a660e387475b",
+        "negative_prompt": "((disfigured)), ((bad art)), ((deformed)),((extra limbs)),((close up)),((b&w)), wierd colors, blurry,  (((duplicate))), ((morbid)), ((mutilated)), [out of frame], extra fingers, mutated hands, ((poorly drawn hands)), ((poorly drawn face)), (((mutation))), (((deformed))), ((ugly)), blurry, ((bad anatomy)), (((bad proportions))), ((extra limbs)), cloned face, (((disfigured))), out of frame, ugly, extra limbs, (bad anatomy), gross proportions, (malformed limbs), ((missing arms)), ((missing legs)), (((extra arms))), (((extra legs))), mutated hands, (fused fingers), (too many fingers), (((long neck))), Photoshop, video game, ugly, tiling, poorly drawn hands, poorly drawn feet, poorly drawn face, out of frame, mutation, mutated, extra limbs, extra legs, extra arms, disfigured, deformed, cross-eye, body out of frame, blurry, bad art, bad anatomy, 3d render ENSD: 31337,",
+        "prompt": "(extremely detailed CG unity 8k wallpaper),",
+        "num_inference_steps": 20,
+        "guidance_scale": 7
+      },
+      "desc": "使用openjourney模型出图"
+    },
+              {
+      "keywords": [
+        "pastel",
+        "彩色"
+      ],
+      "params": {
+        "model": "cjwbw/pastel-mix",
+        "version": "0c9ff376fe89e11daecf5a3781d782acc69415b2f1fa910460c59e5325ed86f7",
+        "negative_prompt": "lowres, ((bad anatomy)), ((bad hands)), text, missing finger, extra digits, fewer digits, blurry, ((mutated hands and fingers)), (poorly drawn face), ((mutation)), ((deformed face)), (ugly), ((bad proportions)), ((extra limbs)), extra face, (double head), (extra head), ((extra feet)), monster, logo, cropped, worst quality, low quality, normal quality, jpeg, humpbacked, long body, long neck, ((jpeg artifacts))",
+        "prompt": "masterpiece, best quality, ultra-detailed, illustration,",
+        "num_inference_steps": 20,
+        "guidance_scale": 12
+      },
+      "desc": "使用openjourney模型出图"
+    },
+      {
+      "keywords": [
+        "表情",
+        "emoji"
+      ],
+      "params": {
+        "model": "m1guelpf/emoji-diffusion",
+        "version": "ba30355ce02ca4755d60f7f083e3c0e2593fd3ee687a0dc1fca236deb6046e4d",
+        "negative_prompt": "duplicate heads bad anatomy",
+        "prompt": "emoji,",
+        "num_inference_steps": 50,
+        "guidance_scale": 7
+      },
+      "desc": "使用openjourney模型出图"
+    },
+    ,
+    {
+      "keywords": [
+        "修复",
+        "fix"
+      ],
+      "params": {
+        "model": "sczhou/codeformer",
+        "version": "7de2ea26c616d5bf2245ad0d5e24f0ff9a6204578a5c876db53142edd9d2cd56",
+        "image": "image",
+        "upscale": 2,
+        "face_upsample": true,
+        "background_enhance": true,
+        "codeformer_fidelity": 0.7
+      },
+      "desc": "修复人像图片"
+    },
+  ]
+}
