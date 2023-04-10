@@ -21,4 +21,4 @@ web.py
 
 # chatgpt-tool-hub plugin
 --extra-index-url https://pypi.python.org/simple
-chatgpt_tool_hub>=0.3.5
+chatgpt_tool_hub>=0.3.7

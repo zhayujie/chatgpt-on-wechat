@@ -3,13 +3,12 @@
 from bot.bot import Bot
 from bot.chatgpt.chat_gpt_session import ChatGPTSession
 from bot.openai.open_ai_image import OpenAIImage
-from bot.session_manager import Session, SessionManager
+from bot.session_manager import SessionManager
 from bridge.context import ContextType
 from bridge.reply import Reply, ReplyType
 from config import conf, load_config
 from common.log import logger
 from common.token_bucket import TokenBucket
-from common.expired_dict import ExpiredDict
 import openai
 import openai.error
 import time
@@ -91,8 +90,8 @@ class ChatGPTBot(Bot,OpenAIImage):
             "top_p":1,
             "frequency_penalty":conf().get('frequency_penalty', 0.0),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
             "presence_penalty":conf().get('presence_penalty', 0.0),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
-            "request_timeout": conf().get('request_timeout', 60),  # 请求超时时间，openai接口默认设置为600，对于难问题一般需要较长时间
-            "timeout": conf().get('request_timeout', 120), #重试超时时间，在这个时间内，将会自动重试
+            "request_timeout": conf().get('request_timeout', None),  # 请求超时时间，openai接口默认设置为600，对于难问题一般需要较长时间
+            "timeout": conf().get('request_timeout', None), #重试超时时间，在这个时间内，将会自动重试
         }
 
     def reply_text(self, session:ChatGPTSession, session_id, api_key, retry_count=0) -> dict:
@@ -151,6 +150,7 @@ class AzureChatGPTBot(ChatGPTBot):
 
     def compose_args(self):
         args = super().compose_args()
-        args["engine"] = args["model"]
-        del(args["model"])
+        args["deployment_id"] = conf().get("azure_deployment_id")
+        #args["engine"] = args["model"]
+        #del(args["model"])
         return args
