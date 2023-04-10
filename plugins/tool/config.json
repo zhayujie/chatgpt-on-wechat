@@ -1,5 +1,5 @@
 {
-  "tools": ["python", "requests", "terminal", "meteo-weather", "wikipedia", "wolfram-alpha", "bing-search", "news"],
+  "tools": ["wikipedia", "wolfram-alpha", "bing-search", "news"],
   "kwargs": {
       "top_k_results": 2,
       "no_default": false,
