@@ -12,3 +12,5 @@ chatgpt_tool_hub>=0.3.5
 timeout_decorator
 --extra-index-url https://pypi.python.org/simple
 replicate>=0.7.0
+
+lxml==4.9.2
