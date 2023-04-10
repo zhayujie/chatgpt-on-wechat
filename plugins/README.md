@@ -1,7 +1,7 @@
 **Table of Content**
 
 - [插件化初衷](#插件化初衷)
-- [插件安装方法](#插件化安装方法)
+- [插件安装方法](#插件安装方法)
 - [插件化实现](#插件化实现)
 - [插件编写示例](#插件编写示例)
 - [插件设计建议](#插件设计建议)
@@ -52,6 +52,8 @@
 
 以下是它们的默认处理逻辑(太长不看，可跳到[插件编写示例](#插件编写示例))：
 
+**注意以下包含的代码是`v1.1.0`中的片段，已过时，只可用于理解事件，最新的默认代码逻辑请参考[chat_channel](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/channel/chat_channel.py)**
+
 #### 1. 收到消息
 
 负责接收用户消息，根据用户的配置，判断本条消息是否触发机器人。如果触发，则会判断该消息的类型（声音、文本、画图命令等），将消息包装成如下的`Context`交付给下一个步骤。
@@ -91,9 +93,9 @@
     if context.type == ContextType.TEXT or context.type == ContextType.IMAGE_CREATE:
         reply = super().build_reply_content(context.content, context) #文字跟画图交付给chatgpt
     elif context.type == ContextType.VOICE: # 声音先进行语音转文字后，修改Context类型为文字后，再交付给chatgpt
-        msg = context['msg']
-        file_name = TmpDir().path() + context.content
-        msg.download(file_name)
+        cmsg = context['msg']
+        cmsg.prepare()
+        file_name = context.content
         reply = super().build_voice_to_text(file_name)
         if reply.type != ReplyType.ERROR and reply.type != ReplyType.INFO:
             context.content = reply.content # 语音转文字后，将文字内容作为新的context
