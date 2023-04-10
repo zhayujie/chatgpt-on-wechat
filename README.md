@@ -7,18 +7,17 @@
 
 - [x] **文本对话：** 接收私聊及群组中的微信消息，使用ChatGPT生成回复内容，完成自动回复
 - [x] **规则定制化：** 支持私聊中按指定规则触发自动回复，支持对群组设置自动回复白名单
-- [x] **多账号：** 支持多微信账号同时运行
-- [x] **图片生成：** 支持根据描述生成图片，并自动发送至个人聊天或群聊
+- [x] **图片生成：** 支持根据描述生成图片，支持图片修复
 - [x] **上下文记忆**：支持多轮对话记忆，且为每个好友维护独立的上下会话
 - [x] **语音识别：** 支持接收和处理语音消息，通过文字或语音回复
-- [x] **插件化：** 支持个性化功能插件，提供角色扮演、文字冒险游戏等预设插件
+- [x] **插件化：** 支持个性化插件，提供角色扮演、文字冒险、与操作系统交互、访问网络数据等能力
 
-> 目前支持微信和微信个人号部署，欢迎接入更多应用，参考[`Terminal`代码](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/channel/terminal/terminal_channel.py)实现接收和发送消息逻辑即可接入。
+> 目前支持微信和微信公众号部署，欢迎接入更多应用，参考 [Terminal代码](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/channel/terminal/terminal_channel.py)实现接收和发送消息逻辑即可接入。 同时欢迎增加新的插件，参考 [插件说明文档](https://github.com/zhayujie/chatgpt-on-wechat/tree/master/plugins)。
 
 
-快速部署:
->
->[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/qApznZ?referralCode=RC3znh)
+**一键部署:**
+
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/qApznZ?referralCode=RC3znh)
 
 
 # 更新日志
@@ -217,6 +216,6 @@ FAQs： <https://github.com/zhayujie/chatgpt-on-wechat/wiki/FAQs>
 
 ## 联系
 
-欢迎提交PR、Issues，以及Star支持一下。程序运行遇到问题优先查看 [常见问题列表](https://github.com/zhayujie/chatgpt-on-wechat/wiki/FAQs) ，其次前往 [Issues](https://github.com/zhayujie/chatgpt-on-wechat/issues) 中搜索，若无相似问题可创建Issue，或加微信 eijuyahz 交流。
+欢迎提交PR、Issues，以及Star支持一下。程序运行遇到问题优先查看 [常见问题列表](https://github.com/zhayujie/chatgpt-on-wechat/wiki/FAQs) ，其次前往 [Issues](https://github.com/zhayujie/chatgpt-on-wechat/issues) 中搜索。如果你想了解更多项目细节，并与开发者们交流更多关于AI技术的实践，欢迎加入星球:
 
- 
+<a href="https://public.zsxq.com/groups/88885848842852.html"><img width="360" src="./docs/images/planet.jpg"></a>
