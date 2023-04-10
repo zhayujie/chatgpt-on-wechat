@@ -117,6 +117,34 @@ class Tool(Plugin):
 
     def _build_tool_kwargs(self, kwargs: dict):
         tool_model_name = kwargs.get("model_name")
+        news_api_key = None
+        bing_subscription_key = None
+        google_api_key = None
+        wolfram_alpha_appid = None
+        google_cse_id = None
+        searx_host = None
+        
+        try:
+            if os.environ.get("news_api_key", None):
+                news_api_key = os.environ.get("news_api_key","")
+            if os.environ.get("bing_subscription_key", None):
+                bing_subscription_key = os.environ.get("bing_subscription_key","")
+            if os.environ.get("google_api_key", None):
+                google_api_key = os.environ.get("google_api_key","")
+            if os.environ.get("wolfram_alpha_appid", None):
+                wolfram_alpha_appid = os.environ.get("wolfram_alpha_appid","")
+            if os.environ.get("google_cse_id", None):
+                google_cse_id = os.environ.get("google_cse_id","")
+            if os.environ.get("searx_host", None):
+                searx_host = os.environ.get("searx_host","")
+                
+        except Exception as e:
+            if isinstance(e, FileNotFoundError):
+                logger.warn(f"[tool] init failed, file not found.")
+            else:
+                logger.warn("[tool] getapi failed.")
+            raise e
+            
 
         return {
             "openai_api_key": conf().get("open_ai_api_key", ""),
@@ -127,22 +155,23 @@ class Tool(Plugin):
             "no_default": kwargs.get("no_default", False),
             "top_k_results": kwargs.get("top_k_results", 2),
             # for news tool
-            "news_api_key": kwargs.get("news_api_key", ""),
+            "news_api_key": kwargs.get("news_api_key", news_api_key),
             # for bing-search tool
-            "bing_subscription_key": kwargs.get("bing_subscription_key", ""),
+            "bing_subscription_key": kwargs.get("bing_subscription_key", bing_subscription_key),
             # for google-search tool
-            "google_api_key": kwargs.get("google_api_key", ""),
-            "google_cse_id": kwargs.get("google_cse_id", ""),
+            "google_api_key": kwargs.get("google_api_key", google_api_key),
+            "google_cse_id": kwargs.get("google_cse_id", google_cse_id),
             # for searxng-search tool
-            "searx_host": kwargs.get("searx_host", ""),
-            # for wolfram-alpha tool
-            "wolfram_alpha_appid": kwargs.get("wolfram_alpha_appid", ""),
+            "searx_host": kwargs.get("searx_host", searx_host),
             # for morning-news tool
             "zaobao_api_key": kwargs.get("zaobao_api_key", ""),
             # for visual_dl tool
             "cuda_device": kwargs.get("cuda_device", "cpu"),
             # for browser tool
             "phantomjs_exec_path": kwargs.get("phantomjs_exec_path", ""),
+            # for wolfram-alpha tool
+            "wolfram_alpha_appid": kwargs.get("wolfram_alpha_appid", wolfram_alpha_appid),
+
         }
 
     def _filter_tool_list(self, tool_list: list):
