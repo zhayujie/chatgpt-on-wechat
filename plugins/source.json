@@ -10,7 +10,7 @@
         }
         ,
         "getnews": {
-            "url": "https://github.com/congxuma/plugin_getnews",
+            "url": "https://github.com/congxuma/plugin_getnews.get",
             "desc": "测试获取新闻"
         }
     }
