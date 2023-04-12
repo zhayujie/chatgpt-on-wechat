@@ -29,9 +29,15 @@ class BDunit(Plugin):
             else:
                 with open(config_path, "r") as f:
                     conf = json.load(f)
-            self.service_id = conf["service_id"]
-            self.api_key = conf["api_key"]
-            self.secret_key = conf["secret_key"]
+                    
+#             self.service_id = conf["service_id"]
+#             self.api_key = conf["api_key"]
+#             self.secret_key = conf["secret_key"]
+                    
+            self.service_id = os.environ.get("bdubit_service_id","")
+            self.api_key = os.environ.get("bdubit_api_key","")
+            self.secret_key = os.environ.get("bdubit_secret_key","")
+            
             self.access_token = self.get_token()
             self.handlers[Event.ON_HANDLE_CONTEXT] = self.on_handle_context
             logger.info("[BDunit] inited")
