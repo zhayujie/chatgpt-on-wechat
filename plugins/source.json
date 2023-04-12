@@ -8,5 +8,10 @@
             "url": "https://github.com/lanvent/plugin_replicate.git",
             "desc": "利用replicate api画图的插件"
         }
+        ,
+        "getnews": {
+            "url": "https://github.com/congxuma/plugin_getnews",
+            "desc": "测试获取新闻"
+        }
     }
 }
