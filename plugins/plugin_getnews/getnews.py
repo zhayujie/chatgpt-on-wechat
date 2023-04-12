@@ -10,7 +10,7 @@ import requests
 import json
 
 
-@plugins.register(name="getnews", desire_priority=-1, hidden=True, desc="A simple plugin that says getnews", version="0.1", author="congxu")
+@plugins.register(name="getnews", desire_priority=-1, hidden=True, desc="A simple plugin that get news", version="0.1", author="congxu")
 class getnews(Plugin):
     def __init__(self):
         super().__init__()
@@ -18,7 +18,7 @@ class getnews(Plugin):
         self.url = "https://v2.alapi.cn/api/zaobao"
         self.headers = {'Content-Type': "application/x-www-form-urlencoded"}
         self.getnews_api_token = "UDuxUGXTKAlCJ3qt"
-        self.payload = "token="+getnews_api_token+"&format=json"
+        self.payload = "token="+self.getnews_api_token+"&format=json"
         logger.info("[getnews] inited")
 
     def on_handle_context(self, e_context: EventContext):
