@@ -121,6 +121,7 @@ class Tool(Plugin):
         return {
             "openai_api_key": conf().get("open_ai_api_key", ""),
             "proxy": conf().get("proxy", ""),
+            "request_timeout": conf().get("request_timeout", 60),
             # note: 目前tool暂未对其他模型测试，但这里仍对配置来源做了优先级区分，一般插件配置可覆盖全局配置
             "model_name": tool_model_name if tool_model_name else conf().get("model", "gpt-3.5-turbo"),
             "no_default": kwargs.get("no_default", False),
@@ -136,6 +137,12 @@ class Tool(Plugin):
             "searx_host": kwargs.get("searx_host", ""),
             # for wolfram-alpha tool
             "wolfram_alpha_appid": kwargs.get("wolfram_alpha_appid", ""),
+            # for morning-news tool
+            "zaobao_api_key": kwargs.get("zaobao_api_key", ""),
+            # for visual_dl tool
+            "cuda_device": kwargs.get("cuda_device", "cpu"),
+            # for browser tool
+            "phantomjs_exec_path": kwargs.get("phantomjs_exec_path", ""),
         }
 
     def _filter_tool_list(self, tool_list: list):
