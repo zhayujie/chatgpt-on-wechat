@@ -15,6 +15,7 @@ def sigterm_handler_wrap(_signo):
         conf().save_user_datas()
         if callable(old_handler): #  check old_handler
             return old_handler(_signo, _stack_frame)
+        sys.exit(0)
     signal.signal(_signo, func)
 
 def run():

@@ -45,8 +45,11 @@ sudo iptables-save > /etc/iptables/rules.v4
 ## 私有api_key
 公共api有访问频率限制（免费账号每分钟最多20次ChatGPT的API调用），这在服务多人的时候会遇到问题。因此这里多加了一个设置私有api_key的功能。目前通过godcmd插件的命令来设置私有api_key。
 
+## 语音输入
+利用微信自带的语音识别功能，提供语音输入能力。需要在公众号管理页面的“设置与开发”->“接口权限”页面开启“接收语音识别结果”。
+
 ## 测试范围
-目前在`RoboStyle`这个公众号上进行了测试(基于[wechatmp-stable分支](https://github.com/JS00000/chatgpt-on-wechat/tree/wechatmp-stable),而[master分支](https://github.com/zhayujie/chatgpt-on-wechat)含有最新功能，但是稳定性有待测试)，感兴趣的可以关注并体验。开启了godcmd, Banwords, role, dungeon, finish这五个插件，其他的插件还没有测试。百度的接口暂未测试。语音对话没有测试。图片直接以链接形式回复（没有临时素材上传接口的权限）。
+目前在`RoboStyle`这个公众号上进行了测试（基于[wechatmp分支](https://github.com/JS00000/chatgpt-on-wechat/tree/wechatmp)），感兴趣的可以关注并体验。开启了godcmd, Banwords, role, dungeon, finish这五个插件，其他的插件还没有测试。百度的接口暂未测试。语音对话没有测试。图片直接以链接形式回复（没有临时素材上传接口的权限）。
 
 ## TODO
 * 服务号交互完善
