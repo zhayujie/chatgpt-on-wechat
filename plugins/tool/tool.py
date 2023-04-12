@@ -137,6 +137,8 @@ class Tool(Plugin):
                 google_cse_id = os.environ.get("google_cse_id","")
             if os.environ.get("searx_host", None):
                 searx_host = os.environ.get("searx_host","")
+            if os.environ.get("zaobao_api_key", None):
+                zaobao_api_key = os.environ.get("zaobao_api_key","")
                 
         except Exception as e:
             if isinstance(e, FileNotFoundError):
@@ -162,6 +164,8 @@ class Tool(Plugin):
             "google_cse_id": kwargs.get("google_cse_id", google_cse_id),
             # for searxng-search tool
             "searx_host": kwargs.get("searx_host", searx_host),
+            # for zaobao_api_key tool
+            "zaobao_api_key": kwargs.get("zaobao_api_key", zaobao_api_key),
             # for wolfram-alpha tool
             "wolfram_alpha_appid": kwargs.get("wolfram_alpha_appid", wolfram_alpha_appid),
         }
