@@ -7,6 +7,10 @@
         "replicate": {
             "url": "https://github.com/lanvent/plugin_replicate.git",
             "desc": "利用replicate api画图的插件"
+        },
+        "summary": {
+            "url": "https://github.com/lanvent/plugin_summary.git",
+            "desc": "总结聊天记录的插件"
         }
     }
 }
