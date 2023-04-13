@@ -42,11 +42,9 @@ class OpenAIBot(Bot, OpenAIImage):
                     reply = Reply(ReplyType.INFO, '所有人记忆已清除')
                 else:
                     session = self.sessions.session_query(query, session_id)
-                    new_query = str(session)
-                    logger.debug("[OPEN_AI] session query={}".format(new_query))
-
-                    total_tokens, completion_tokens, reply_content = self.reply_text(new_query, session_id, 0)
-                    logger.debug("[OPEN_AI] new_query={}, session_id={}, reply_cont={}, completion_tokens={}".format(new_query, session_id, reply_content, completion_tokens))
+                    result = self.reply_text(session)
+                    total_tokens, completion_tokens, reply_content = result['total_tokens'], result['completion_tokens'], result['content']
+                    logger.debug("[OPEN_AI] new_query={}, session_id={}, reply_cont={}, completion_tokens={}".format(str(session), session_id, reply_content, completion_tokens))
 
                     if total_tokens == 0 :
                         reply = Reply(ReplyType.ERROR, reply_content)
@@ -63,11 +61,11 @@ class OpenAIBot(Bot, OpenAIImage):
                     reply = Reply(ReplyType.ERROR, retstring)
                 return reply
 
-    def reply_text(self, query, session_id, retry_count=0):
+    def reply_text(self, session:OpenAISession, retry_count=0):
         try:
             response = openai.Completion.create(
                 model= conf().get("model") or "text-davinci-003",  # 对话模型的名称
-                prompt=query,
+                prompt=str(session),
                 temperature=0.9,  # 值在[0,1]之间，越大表示回复越具有不确定性
                 max_tokens=1200,  # 回复最大的字符数
                 top_p=1,
@@ -79,31 +77,33 @@ class OpenAIBot(Bot, OpenAIImage):
             total_tokens = response["usage"]["total_tokens"]
             completion_tokens = response["usage"]["completion_tokens"]
             logger.info("[OPEN_AI] reply={}".format(res_content))
-            return total_tokens, completion_tokens, res_content
+            return {"total_tokens": total_tokens,
+                    "completion_tokens": completion_tokens,
+                    "content": res_content}
         except Exception as e:
             need_retry = retry_count < 2
-            result = [0,0,"我现在有点累了，等会再来吧"]
+            result = {"completion_tokens": 0, "content": "我现在有点累了，等会再来吧"}
             if isinstance(e, openai.error.RateLimitError):
                 logger.warn("[OPEN_AI] RateLimitError: {}".format(e))
-                result[2] = "提问太快啦，请休息一下再问我吧"
+                result['content'] = "提问太快啦，请休息一下再问我吧"
                 if need_retry:
                     time.sleep(5)
             elif isinstance(e, openai.error.Timeout):
                 logger.warn("[OPEN_AI] Timeout: {}".format(e))
-                result[2] = "我没有收到你的消息"
+                result['content'] = "我没有收到你的消息"
                 if need_retry:
                     time.sleep(5)
             elif isinstance(e, openai.error.APIConnectionError):
                 logger.warn("[OPEN_AI] APIConnectionError: {}".format(e))
                 need_retry = False
-                result[2] = "我连接不到你的网络"
+                result['content'] = "我连接不到你的网络"
             else:
                 logger.warn("[OPEN_AI] Exception: {}".format(e))
                 need_retry = False
-                self.sessions.clear_session(session_id)
+                self.sessions.clear_session(session.session_id)
 
             if need_retry:
                 logger.warn("[OPEN_AI] 第{}次重试".format(retry_count+1))
-                return self.reply_text(query, session_id, retry_count+1)
+                return self.reply_text(session, retry_count+1)
             else:
                 return result

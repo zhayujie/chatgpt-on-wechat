@@ -31,6 +31,8 @@ class Session(object):
     def discard_exceeding(self, max_tokens=None, cur_tokens=None):
         raise NotImplementedError
 
+    def calc_tokens(self):
+        raise NotImplementedError
 
 
 class SessionManager(object):

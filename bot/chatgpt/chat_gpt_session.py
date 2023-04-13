@@ -17,7 +17,7 @@ class ChatGPTSession(Session):
     def discard_exceeding(self, max_tokens, cur_tokens= None):
         precise = True
         try:
-            cur_tokens = num_tokens_from_messages(self.messages, self.model)
+            cur_tokens = self.calc_tokens()
         except Exception as e:
             precise = False
             if cur_tokens is None:
@@ -29,7 +29,7 @@ class ChatGPTSession(Session):
             elif len(self.messages) == 2 and self.messages[1]["role"] == "assistant":
                 self.messages.pop(1)
                 if precise:
-                    cur_tokens = num_tokens_from_messages(self.messages, self.model)
+                    cur_tokens = self.calc_tokens()
                 else:
                     cur_tokens = cur_tokens - max_tokens
                 break
@@ -40,10 +40,13 @@ class ChatGPTSession(Session):
                 logger.debug("max_tokens={}, total_tokens={}, len(messages)={}".format(max_tokens, cur_tokens, len(self.messages)))
                 break
             if precise:
-                cur_tokens = num_tokens_from_messages(self.messages, self.model)
+                cur_tokens = self.calc_tokens()
             else:
                 cur_tokens = cur_tokens - max_tokens
         return cur_tokens
+    
+    def calc_tokens(self):
+        return num_tokens_from_messages(self.messages, self.model)
     
 
 # refer to https://github.com/openai/openai-cookbook/blob/main/examples/How_to_count_tokens_with_tiktoken.ipynb

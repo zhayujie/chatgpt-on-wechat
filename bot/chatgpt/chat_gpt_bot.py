@@ -58,7 +58,7 @@ class ChatGPTBot(Bot,OpenAIImage):
             #     # reply in stream
             #     return self.reply_text_stream(query, new_query, session_id)
 
-            reply_content = self.reply_text(session, session_id, api_key, 0)
+            reply_content = self.reply_text(session, api_key)
             logger.debug("[CHATGPT] new_query={}, session_id={}, reply_cont={}, completion_tokens={}".format(session.messages, session_id, reply_content["content"], reply_content["completion_tokens"]))
             if reply_content['completion_tokens'] == 0 and len(reply_content['content']) > 0:
                 reply = Reply(ReplyType.ERROR, reply_content['content'])
@@ -94,7 +94,7 @@ class ChatGPTBot(Bot,OpenAIImage):
             "timeout": conf().get('request_timeout', None), #重试超时时间，在这个时间内，将会自动重试
         }
 
-    def reply_text(self, session:ChatGPTSession, session_id, api_key, retry_count=0) -> dict:
+    def reply_text(self, session:ChatGPTSession, api_key=None, retry_count=0) -> dict:
         '''
         call openai's ChatCompletion to get the answer
         :param session: a conversation session
@@ -133,11 +133,11 @@ class ChatGPTBot(Bot,OpenAIImage):
             else:
                 logger.warn("[CHATGPT] Exception: {}".format(e))
                 need_retry = False
-                self.sessions.clear_session(session_id)
+                self.sessions.clear_session(session.session_id)
 
             if need_retry:
                 logger.warn("[CHATGPT] 第{}次重试".format(retry_count+1))
-                return self.reply_text(session, session_id, api_key, retry_count+1)
+                return self.reply_text(session, api_key, retry_count+1)
             else:
                 return result
 

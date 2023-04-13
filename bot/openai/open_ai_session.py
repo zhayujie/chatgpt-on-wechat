@@ -29,7 +29,7 @@ class OpenAISession(Session):
     def discard_exceeding(self, max_tokens, cur_tokens= None):
         precise = True
         try:
-            cur_tokens = num_tokens_from_string(str(self), self.model)
+            cur_tokens = self.calc_tokens()
         except Exception as e:
             precise = False
             if cur_tokens is None:
@@ -41,7 +41,7 @@ class OpenAISession(Session):
             elif len(self.messages) == 1 and self.messages[0]["role"] == "assistant":
                 self.messages.pop(0)
                 if precise:
-                    cur_tokens = num_tokens_from_string(str(self), self.model)
+                    cur_tokens = self.calc_tokens()
                 else:
                     cur_tokens = len(str(self))
                 break
@@ -52,11 +52,13 @@ class OpenAISession(Session):
                 logger.debug("max_tokens={}, total_tokens={}, len(conversation)={}".format(max_tokens, cur_tokens, len(self.messages)))
                 break
             if precise:
-                cur_tokens = num_tokens_from_string(str(self), self.model)
+                cur_tokens = self.calc_tokens()
             else:
                 cur_tokens = len(str(self))
         return cur_tokens
     
+    def calc_tokens(self):
+        return num_tokens_from_string(str(self), self.model)
 
 # refer to https://github.com/openai/openai-cookbook/blob/main/examples/How_to_count_tokens_with_tiktoken.ipynb
 def num_tokens_from_string(string: str, model: str) -> int:
