@@ -176,7 +176,6 @@ class Tool(Plugin):
 
             # for wolfram-alpha tool
             "wolfram_alpha_appid": kwargs.get("wolfram_alpha_appid", wolfram_alpha_appid),
-
         }
 
     def _filter_tool_list(self, tool_list: list):
