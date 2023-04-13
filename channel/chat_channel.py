@@ -48,9 +48,6 @@ class ChatChannel(Channel):
         if first_in: # context首次传入时，receiver是None，根据类型设置receiver
             config = conf()
             cmsg = context['msg']
-            if cmsg.from_user_id == self.user_id and not config.get('trigger_by_self', True):
-                logger.debug("[WX]self message skipped")
-                return None
             if context.get("isgroup", False):
                 group_name = cmsg.other_user_nickname
                 group_id = cmsg.other_user_id
@@ -69,6 +66,13 @@ class ChatChannel(Channel):
             else:
                 context['session_id'] = cmsg.other_user_id
                 context['receiver'] = cmsg.other_user_id
+            e_context = PluginManager().emit_event(EventContext(Event.ON_RECEIVE_MESSAGE, {'channel': self, 'context': context}))
+            context = e_context['context']
+            if e_context.is_pass() or context is None:
+                return context
+            if cmsg.from_user_id == self.user_id and not config.get('trigger_by_self', True):
+                logger.debug("[WX]self message skipped")
+                return None
 
         # 消息内容匹配过程，并处理content
         if ctype == ContextType.TEXT:
