@@ -1,5 +1,5 @@
 {
-  "tools": ["python", "requests", "terminal", "meteo-weather"],
+  "tools": ["python", "url-get", "terminal", "meteo-weather"],
   "kwargs": {
       "top_k_results": 2,
       "no_default": false,

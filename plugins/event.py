@@ -4,7 +4,10 @@ from enum import Enum
 
 
 class Event(Enum):
-    # ON_RECEIVE_MESSAGE = 1  # 收到消息
+    ON_RECEIVE_MESSAGE = 1  # 收到消息
+    """
+    e_context = {  "channel": 消息channel, "context" : 本次消息的context}
+    """
 
     ON_HANDLE_CONTEXT = 2   # 处理消息前
     """

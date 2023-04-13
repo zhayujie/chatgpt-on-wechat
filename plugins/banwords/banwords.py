@@ -36,6 +36,9 @@ class Banwords(Plugin):
                         words.append(word)
             self.searchr.SetKeywords(words)
             self.handlers[Event.ON_HANDLE_CONTEXT] = self.on_handle_context
+            if conf.get("reply_filter",True):
+                self.handlers[Event.ON_DECORATE_REPLY] = self.on_decorate_reply
+                self.reply_action = conf.get("reply_action","ignore")
             logger.info("[Banwords] inited")
         except Exception as e:
             logger.warn("[Banwords] init failed, ignore or see https://github.com/zhayujie/chatgpt-on-wechat/tree/master/plugins/banwords .")
@@ -53,7 +56,7 @@ class Banwords(Plugin):
         if self.action == "ignore":
             f = self.searchr.FindFirst(content)
             if f:
-                logger.info("Banwords: %s" % f["Keyword"])
+                logger.info("[Banwords] %s in message" % f["Keyword"])
                 e_context.action = EventAction.BREAK_PASS
                 return
         elif self.action == "replace":
@@ -63,5 +66,26 @@ class Banwords(Plugin):
                 e_context.action = EventAction.BREAK_PASS
                 return
             
+    def on_decorate_reply(self, e_context: EventContext):
+
+        if e_context['reply'].type not in [ReplyType.TEXT]:
+            return
+        
+        reply = e_context['reply']
+        content = reply.content
+        if self.reply_action == "ignore":
+            f = self.searchr.FindFirst(content)
+            if f:
+                logger.info("[Banwords] %s in reply" % f["Keyword"])
+                e_context['reply'] = None
+                e_context.action = EventAction.BREAK_PASS
+                return
+        elif self.reply_action == "replace":
+            if self.searchr.ContainsAny(content):
+                reply = Reply(ReplyType.INFO, "已替换回复中的敏感词: \n"+self.searchr.Replace(content))
+                e_context['reply'] = reply
+                e_context.action = EventAction.CONTINUE
+                return
+    
     def get_help_text(self, **kwargs):
         return Banwords.desc
