@@ -1,5 +1,5 @@
 {
-  "tools": ["morning-news", "wolfram-alpha", "bing-search"],
+  "tools": [ "wolfram-alpha", "bing-search"],
   "kwargs": {
       "top_k_results": 2,
       "no_default": false,
