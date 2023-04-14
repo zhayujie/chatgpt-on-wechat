@@ -5,7 +5,6 @@
 __pycache__/
 venv*
 *.pyc
-config.json
 QR.png
 nohup.out
 tmp
