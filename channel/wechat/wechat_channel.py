@@ -20,7 +20,7 @@ from common.expired_dict import ExpiredDict
 from common.log import logger
 from common.singleton import singleton
 from common.time_check import time_checker
-from config import conf
+from config import conf, get_appdata_dir
 from lib import itchat
 from lib.itchat.content import *
 from plugins import *
@@ -116,13 +116,19 @@ class WechatChannel(ChatChannel):
         itchat.instance.receivingRetryCount = 600  # 修改断线超时时间
         # login by scan QRCode
         hotReload = conf().get("hot_reload", False)
+        status_path = os.path.join(get_appdata_dir(), "itchat.pkl")
         try:
-            itchat.auto_login(enableCmdQR=2, hotReload=hotReload, qrCallback=qrCallback)
+            itchat.auto_login(
+                enableCmdQR=2,
+                hotReload=hotReload,
+                statusStorageDir=status_path,
+                qrCallback=qrCallback,
+            )
         except Exception as e:
             if hotReload:
                 logger.error("Hot reload failed, try to login without hot reload")
                 itchat.logout()
-                os.remove("itchat.pkl")
+                os.remove(status_path)
                 itchat.auto_login(
                     enableCmdQR=2, hotReload=hotReload, qrCallback=qrCallback
                 )
