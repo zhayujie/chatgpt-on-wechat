@@ -18,7 +18,11 @@ from common.log import logger
 COMMANDS = {
     "help": {
         "alias": ["help", "帮助"],
-        "desc": "回复此帮助",
+        "desc": "回复此帮助\n使用技巧回复#tips",
+    },
+    "tips": {
+        "alias": ["tips", "技巧"],
+        "desc": "1、私聊bot开头的问题会触发chatGPT，比如：bot 上海明天天气怎么样?\n2、输入内容中含‘每日新闻’可获取当日新闻；含‘每日摄影’可获取每日的一张摄影作品\n",
     },
     "helpp": {
         "alias": ["help", "帮助"],  # 与help指令共用别名，根据参数数量区分
