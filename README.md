@@ -54,8 +54,9 @@
 
 ![group-chat-sample.jpg](docs/images/image-create-sample.jpg)
 
+### 公众号功能视频展示
 
-# 快速开始
+[ChatGPT智能交互：为公众号注入智慧与灵性！](https://www.wangpc.cc/software/wechatmp_chatgpt/)
 
 ## 准备
 
