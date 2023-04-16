@@ -111,11 +111,11 @@ class ChatChannel(Channel):
                                                   
             img_match_prefix = check_prefix(content, conf().get('image_create_prefix'))
             if img_match_prefix:
-                content = content.replace(img_match_prefix, '', 1).strip()
+                content = content.replace(img_match_prefix, '', 1)
                 context.type = ContextType.IMAGE_CREATE
             else:
                 context.type = ContextType.TEXT
-            context.content = content
+            context.content = content.strip()
             if 'desire_rtype' not in context and conf().get('always_reply_voice') and ReplyType.VOICE not in self.NOT_SUPPORT_REPLYTYPE:
                 context['desire_rtype'] = ReplyType.VOICE
         elif context.type == ContextType.VOICE: 
