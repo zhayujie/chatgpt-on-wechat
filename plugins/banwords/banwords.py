@@ -7,7 +7,7 @@ from bridge.reply import Reply, ReplyType
 import plugins
 from plugins import *
 from common.log import logger
-from .WordsSearch import WordsSearch
+from .lib.WordsSearch import WordsSearch
 
 
 @plugins.register(name="Banwords", desire_priority=100, hidden=True, desc="判断消息中是否有敏感词、决定是否回复。", version="1.0", author="lanvent")
