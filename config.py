@@ -32,6 +32,8 @@ available_setting = {
     "image_create_prefix": ["画", "看", "找"],  # 开启图片回复的前缀
     "concurrency_in_session": 1, # 同一会话最多有多少条消息在处理中，大于1可能乱序
 
+    "image_create_size": "256x256", #图片大小,可选有 256x256, 512x512, 1024x1024
+
     # chatgpt会话参数
     "expires_in_seconds": 3600,  # 无操作会话的过期时间
     "character_desc": "你是ChatGPT, 一个由OpenAI训练的大型语言模型, 你旨在回答并解决人们的任何问题，并且可以使用多种语言与人交流。",  # 人格描述
