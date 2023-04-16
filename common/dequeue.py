@@ -1,6 +1,6 @@
-
 from queue import Full, Queue
 from time import monotonic as time
+
 
 # add implementation of putleft to Queue
 class Dequeue(Queue):
