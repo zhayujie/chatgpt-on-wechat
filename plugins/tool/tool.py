@@ -165,7 +165,7 @@ class Tool(Plugin):
         return {
             "openai_api_key": conf().get("open_ai_api_key", ""),
             "proxy": conf().get("proxy", ""),
-            "request_timeout": conf().get("request_timeout", 60),
+            "request_timeout": str(conf().get("request_timeout", 60)),
             # note: 目前tool暂未对其他模型测试，但这里仍对配置来源做了优先级区分，一般插件配置可覆盖全局配置
             "model_name": tool_model_name
             if tool_model_name
