@@ -23,7 +23,11 @@ class Query:
             webData = web.data()
             # logger.debug("[wechatmp] Receive request:\n" + webData.decode("utf-8"))
             wechatmp_msg = receive.parse_xml(webData)
-            if wechatmp_msg.msg_type == "text" or wechatmp_msg.msg_type == "voice":
+            if (
+                wechatmp_msg.msg_type == "text" 
+                or wechatmp_msg.msg_type == "voice" 
+                # or wechatmp_msg.msg_type == "image"
+            ):
                 from_user = wechatmp_msg.from_user_id
                 message = wechatmp_msg.content.decode("utf-8")
                 message_id = wechatmp_msg.msg_id
