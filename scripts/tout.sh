@@ -7,7 +7,7 @@ echo $BASE_DIR
 
 # check the nohup.out log output file
 if [ ! -f "${BASE_DIR}/nohup.out" ]; then
-   echo "No file  ${BASE_DIR}/nohup.out"  
+   echo "No file  ${BASE_DIR}/nohup.out"
    exit -1;
 fi
 

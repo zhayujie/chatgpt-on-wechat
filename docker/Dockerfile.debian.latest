@@ -18,7 +18,7 @@ RUN apt-get update \
     && pip install --no-cache -r requirements.txt \
     && pip install --no-cache -r requirements-optional.txt \
     && pip install azure-cognitiveservices-speech
-    
+
 WORKDIR ${BUILD_PREFIX}
 
 ADD docker/entrypoint.sh /entrypoint.sh
