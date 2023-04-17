@@ -1,7 +1,7 @@
 import json
 import os
 
-from chatgpt_tool_hub.apps import load_app
+from chatgpt_tool_hub.apps import AppFactory
 from chatgpt_tool_hub.apps.app import App
 from chatgpt_tool_hub.tools.all_tool_list import get_all_tool_names
 
@@ -172,11 +172,12 @@ class Tool(Plugin):
 
     def _reset_app(self) -> App:
         tool_config = self._read_json()
+        app_kwargs = self._build_tool_kwargs(tool_config.get("kwargs", {}))
+
+        app = AppFactory()
+        app.init_env(**app_kwargs)
 
         # filter not support tool
         tool_list = self._filter_tool_list(tool_config.get("tools", []))
 
-        return load_app(
-            tools_list=tool_list,
-            **self._build_tool_kwargs(tool_config.get("kwargs", {})),
-        )
+        return app.create_app(tools_list=tool_list, **app_kwargs)
