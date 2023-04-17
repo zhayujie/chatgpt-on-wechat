@@ -21,12 +21,12 @@ pip3 install web.py
 
 相关的服务器验证代码已经写好，你不需要再添加任何代码。你只需要在本项目根目录的`config.json`中添加
 ```
-"channel_type": "wechatmp", 
+"channel_type": "wechatmp",
 "wechatmp_token": "Token",  # 微信公众平台的Token
 "wechatmp_port": 8080,      # 微信公众平台的端口,需要端口转发到80或443
 "wechatmp_app_id": "",      # 微信公众平台的appID，仅服务号需要
 "wechatmp_app_secret": "",  # 微信公众平台的appsecret，仅服务号需要
-``` 
+```
 然后运行`python3 app.py`启动web服务器。这里会默认监听8080端口，但是微信公众号的服务器配置只支持80/443端口，有两种方法来解决这个问题。第一个是推荐的方法，使用端口转发命令将80端口转发到8080端口（443同理，注意需要支持SSL，也就是https的访问，在`wechatmp_channel.py`需要修改相应的证书路径）：
 ```
 sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 8080

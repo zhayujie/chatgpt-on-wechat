@@ -1,17 +1,19 @@
 # -*- coding: utf-8 -*-
-import web
-import time
 import json
-import requests
 import threading
-from common.singleton import singleton
-from common.log import logger
-from common.expired_dict import ExpiredDict
-from config import conf
-from bridge.reply import *
+import time
+
+import requests
+import web
+
 from bridge.context import *
+from bridge.reply import *
 from channel.chat_channel import ChatChannel
-from channel.wechatmp.common import * 
+from channel.wechatmp.common import *
+from common.expired_dict import ExpiredDict
+from common.log import logger
+from common.singleton import singleton
+from config import conf
 
 # If using SSL, uncomment the following lines, and modify the certificate path.
 # from cheroot.server import HTTPServer
@@ -20,13 +22,14 @@ from channel.wechatmp.common import *
 #         certificate='/ssl/cert.pem',
 #         private_key='/ssl/cert.key')
 
+
 @singleton
 class WechatMPChannel(ChatChannel):
-    def __init__(self, passive_reply = True):
+    def __init__(self, passive_reply=True):
         super().__init__()
         self.passive_reply = passive_reply
         self.running = set()
-        self.received_msgs = ExpiredDict(60*60*24)
+        self.received_msgs = ExpiredDict(60 * 60 * 24)
         if self.passive_reply:
             self.NOT_SUPPORT_REPLYTYPE = [ReplyType.IMAGE, ReplyType.VOICE]
             self.cache_dict = dict()
@@ -36,8 +39,8 @@ class WechatMPChannel(ChatChannel):
         else:
             # TODO support image
             self.NOT_SUPPORT_REPLYTYPE = [ReplyType.IMAGE, ReplyType.VOICE]
-            self.app_id = conf().get('wechatmp_app_id')
-            self.app_secret = conf().get('wechatmp_app_secret')
+            self.app_id = conf().get("wechatmp_app_id")
+            self.app_secret = conf().get("wechatmp_app_secret")
             self.access_token = None
             self.access_token_expires_time = 0
             self.access_token_lock = threading.Lock()
@@ -45,13 +48,12 @@ class WechatMPChannel(ChatChannel):
 
     def startup(self):
         if self.passive_reply:
-            urls = ('/wx', 'channel.wechatmp.SubscribeAccount.Query')
+            urls = ("/wx", "channel.wechatmp.SubscribeAccount.Query")
         else:
-            urls = ('/wx', 'channel.wechatmp.ServiceAccount.Query')
+            urls = ("/wx", "channel.wechatmp.ServiceAccount.Query")
         app = web.application(urls, globals(), autoreload=False)
-        port = conf().get('wechatmp_port', 8080)
-        web.httpserver.runsimple(app.wsgifunc(), ('0.0.0.0', port))
-
+        port = conf().get("wechatmp_port", 8080)
+        web.httpserver.runsimple(app.wsgifunc(), ("0.0.0.0", port))
 
     def wechatmp_request(self, method, url, **kwargs):
         r = requests.request(method=method, url=url, **kwargs)
@@ -63,7 +65,6 @@ class WechatMPChannel(ChatChannel):
         return ret
 
     def get_access_token(self):
-
         # return the access_token
         if self.access_token:
             if self.access_token_expires_time - time.time() > 60:
@@ -76,15 +77,15 @@ class WechatMPChannel(ChatChannel):
             # This happens every 2 hours, so it doesn't affect the experience very much
             time.sleep(1)
             self.access_token = None
-            url="https://api.weixin.qq.com/cgi-bin/token"
-            params={
+            url = "https://api.weixin.qq.com/cgi-bin/token"
+            params = {
                 "grant_type": "client_credential",
                 "appid": self.app_id,
-                "secret": self.app_secret
+                "secret": self.app_secret,
             }
-            data = self.wechatmp_request(method='get', url=url, params=params)
-            self.access_token = data['access_token']
-            self.access_token_expires_time = int(time.time()) + data['expires_in']
+            data = self.wechatmp_request(method="get", url=url, params=params)
+            self.access_token = data["access_token"]
+            self.access_token_expires_time = int(time.time()) + data["expires_in"]
             logger.info("[wechatmp] access_token: {}".format(self.access_token))
             self.access_token_lock.release()
         else:
@@ -101,29 +102,37 @@ class WechatMPChannel(ChatChannel):
         else:
             receiver = context["receiver"]
             reply_text = reply.content
-            url="https://api.weixin.qq.com/cgi-bin/message/custom/send"
-            params = {
-                "access_token": self.get_access_token()
-            }
+            url = "https://api.weixin.qq.com/cgi-bin/message/custom/send"
+            params = {"access_token": self.get_access_token()}
             json_data = {
                 "touser": receiver,
                 "msgtype": "text",
-                "text": {"content": reply_text}
+                "text": {"content": reply_text},
             }
-            self.wechatmp_request(method='post', url=url, params=params, data=json.dumps(json_data, ensure_ascii=False).encode('utf8'))
+            self.wechatmp_request(
+                method="post",
+                url=url,
+                params=params,
+                data=json.dumps(json_data, ensure_ascii=False).encode("utf8"),
+            )
             logger.info("[send] Do send to {}: {}".format(receiver, reply_text))
         return
 
-
-    def _success_callback(self, session_id, context, **kwargs): # 线程异常结束时的回调函数
-        logger.debug("[wechatmp] Success to generate reply, msgId={}".format(context['msg'].msg_id))
+    def _success_callback(self, session_id, context, **kwargs):  # 线程异常结束时的回调函数
+        logger.debug(
+            "[wechatmp] Success to generate reply, msgId={}".format(
+                context["msg"].msg_id
+            )
+        )
         if self.passive_reply:
             self.running.remove(session_id)
 
-
-    def _fail_callback(self, session_id, exception, context, **kwargs): # 线程异常结束时的回调函数
-        logger.exception("[wechatmp] Fail to generate reply to user, msgId={}, exception={}".format(context['msg'].msg_id, exception))
+    def _fail_callback(self, session_id, exception, context, **kwargs):  # 线程异常结束时的回调函数
+        logger.exception(
+            "[wechatmp] Fail to generate reply to user, msgId={}, exception={}".format(
+                context["msg"].msg_id, exception
+            )
+        )
         if self.passive_reply:
             assert session_id not in self.cache_dict
             self.running.remove(session_id)
-

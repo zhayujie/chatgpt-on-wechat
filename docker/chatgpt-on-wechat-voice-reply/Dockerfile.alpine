@@ -9,7 +9,7 @@ RUN apk add --no-cache \
         ffmpeg  \
         espeak \
     && pip install --no-cache \
-        baidu-aip \ 
+        baidu-aip \
         chardet \
         SpeechRecognition
 

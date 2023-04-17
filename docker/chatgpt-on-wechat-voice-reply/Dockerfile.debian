@@ -10,7 +10,7 @@ RUN apt-get update  \
         ffmpeg \
         espeak  \
     && pip install --no-cache \
-        baidu-aip \ 
+        baidu-aip \
         chardet \
         SpeechRecognition
 

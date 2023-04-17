@@ -2,6 +2,7 @@
 Voice service abstract class
 """
 
+
 class Voice(object):
     def voiceToText(self, voice_file):
         """

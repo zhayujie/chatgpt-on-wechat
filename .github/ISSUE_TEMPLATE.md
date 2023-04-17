@@ -27,5 +27,5 @@
 ### 环境
 
  - 操作系统类型  (Mac/Windows/Linux)：
- - Python版本  ( 执行 `python3 -V` )：                      
+ - Python版本  ( 执行 `python3 -V` )：  
  - pip版本  ( 依赖问题此项必填，执行 `pip3 -V`)：
