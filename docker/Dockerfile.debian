@@ -33,7 +33,7 @@ ADD ./entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh \
     && groupadd -r noroot \
     && useradd -r -g noroot -s /bin/bash -d /home/noroot noroot \
-    && chown -R noroot:noroot ${BUILD_PREFIX} 
+    && chown -R noroot:noroot ${BUILD_PREFIX}
 
 USER noroot
 

@@ -24,17 +24,17 @@
 在本仓库中预置了一些插件，如果要安装其他仓库的插件，有两种方法。
 
 - 第一种方法是在将下载的插件文件都解压到"plugins"文件夹的一个单独的文件夹，最终插件的代码都位于"plugins/PLUGIN_NAME/*"中。启动程序后，如果插件的目录结构正确，插件会自动被扫描加载。除此以外，注意你还需要安装文件夹中`requirements.txt`中的依赖。
-    
+
 - 第二种方法是`Godcmd`插件，它是预置的管理员插件，能够让程序在运行时就能安装插件，它能够自动安装依赖。
-    
+
     安装插件的命令是"#installp [仓库源](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/plugins/source.json)记录的插件名/仓库地址"。这是管理员命令，认证方法在[这里](https://github.com/zhayujie/chatgpt-on-wechat/tree/master/plugins/godcmd)。
-    
+
     - 安装[仓库源](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/plugins/source.json)记录的插件：#installp sdwebui
 
     - 安装指定仓库的插件：#installp https://github.com/lanvent/plugin_sdwebui.git
-    
+
     在安装之后，需要执行"#scanp"命令来扫描加载新安装的插件（或者重新启动程序）。
-    
+
 安装插件后需要注意有些插件有自己的配置模板，一般要去掉".template"新建一个配置文件。
 
 ## 插件化实现
@@ -107,14 +107,14 @@
 ```
 
 回复`Reply`的定义如下所示，它允许Bot可以回复多类不同的消息。同时也加入了`INFO`和`ERROR`消息类型区分系统提示和系统错误。
-    
+
 ```python
     class ReplyType(Enum):
         TEXT = 1        # 文本
         VOICE = 2       # 音频文件
         IMAGE = 3       # 图片文件
         IMAGE_URL = 4   # 图片URL
-        
+
         INFO = 9
         ERROR = 10
     class Reply:
@@ -159,12 +159,12 @@
 
 目前支持三类触发事件：
 ```
-1.收到消息 
----> `ON_HANDLE_CONTEXT` 
-2.产生回复 
----> `ON_DECORATE_REPLY` 
-3.装饰回复 
----> `ON_SEND_REPLY` 
+1.收到消息
+---> `ON_HANDLE_CONTEXT`
+2.产生回复
+---> `ON_DECORATE_REPLY`
+3.装饰回复
+---> `ON_SEND_REPLY`
 4.发送回复
 ```
 
@@ -268,6 +268,6 @@ class Hello(Plugin):
 - 一个插件目录建议只注册一个插件类。建议使用单独的仓库维护插件，便于更新。
 
   在测试调试好后提交`PR`，把自己的仓库加入到[仓库源](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/plugins/source.json)中。
-  
+
 - 插件的config文件、使用说明`README.md`、`requirement.txt`等放置在插件目录中。
 - 默认优先级不要超过管理员插件`Godcmd`的优先级(999)，`Godcmd`插件提供了配置管理、插件管理等功能。

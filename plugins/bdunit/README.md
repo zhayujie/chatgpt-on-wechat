@@ -24,7 +24,7 @@ see https://ai.baidu.com/unit/home#/home?track=61fe1b0d3407ce3face1d92cb5c291087
 ``` json
     {
     "service_id": "s...", #"机器人ID"
-    "api_key": "", 
+    "api_key": "",
     "secret_key": ""
     }
 ```
