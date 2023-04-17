@@ -15,4 +15,4 @@ replicate>=0.7.0
 
 lxml==4.9.2
 pre-commit
-
+webdriver_manager
