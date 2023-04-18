@@ -114,7 +114,7 @@ class OpenAIBot(Bot, OpenAIImage):
                 logger.warn("[OPEN_AI] RateLimitError: {}".format(e))
                 result["content"] = "提问太快啦，请休息一下再问我吧"
                 if need_retry:
-                    time.sleep(5)
+                    time.sleep(20)
             elif isinstance(e, openai.error.Timeout):
                 logger.warn("[OPEN_AI] Timeout: {}".format(e))
                 result["content"] = "我没有收到你的消息"
