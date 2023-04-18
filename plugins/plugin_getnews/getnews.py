@@ -27,6 +27,13 @@ class getnews(Plugin):
         getnews_api_token = "UDuxUGXTKAlCJ3qt"
         content = e_context['context'].content
         logger.debug("[getnews] on_handle_context. content: %s" % content)
+        
+        help_info = "\n【请注意尽量不要询问涉及个人隐私和敏感问题哦！】 \
+\n\n使用技巧 \
+\n\n0、直接输入可进行对话，支持1000字上下文联系，输入#help 获取帮助 \
+\n\n1、输入内容中含‘每日新闻’可获取当日新闻；含‘每日摄影’可获取每日的一张摄影作品 \
+\n\n2、关键字画开头将触发画图，目前需要以特殊的格式输入【画 <模型>:prompt】如：画journey:1cat,big eyes,garden \
+\n\n3、输入‘画修复’可触发修复人像功能，会提示上传一张照片"
 
         if re.search(r"每日新闻|getnews|今日新闻|今天有什么新闻", content):
             reply = Reply()
@@ -47,7 +54,21 @@ class getnews(Plugin):
             
             e_context['reply'] = reply
             e_context.action = EventAction.BREAK_PASS # 事件结束，并跳过处理context的默认逻辑
-
+        
+        if re.match(r"我是.*", content):
+            reply = Reply()
+            reply.type = ReplyType.TEXT
+            
+            msg: ChatMessage = e_context["context"]["msg"]
+            if e_context["context"]["isgroup"]:
+                reply.content = (
+                    f"Hello, {msg.actual_user_nickname} from {msg.from_user_nickname} \n" + help_info
+                )
+            else:
+                reply.content = f"Hello, {msg.from_user_nickname} \n" + help_info
+            e_context["reply"] = reply
+            e_context.action = EventAction.BREAK_PASS  # 事件结束，并跳过处理context的默认逻辑
+            
         if re.search(r"每日图片|getimg|今日摄影|每日摄影", content):
             reply = Reply()
             reply.type = ReplyType.IMAGE_URL
