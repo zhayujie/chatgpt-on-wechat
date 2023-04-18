@@ -10,9 +10,7 @@ class TmpDir(object):
     tmpFilePath = pathlib.Path("./tmp/")
 
     def __init__(self):
-        pathExists = os.path.exists(self.tmpFilePath)
-        if not pathExists:
-            os.makedirs(self.tmpFilePath)
+        os.makedirs(self.tmpFilePath, exist_ok=True)
 
     def path(self):
-        return str(self.tmpFilePath) + "/"
+        return str(self.tmpFilePath)
