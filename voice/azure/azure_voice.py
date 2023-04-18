@@ -83,6 +83,10 @@ class AzureVoice(Voice):
             )
             reply = Reply(ReplyType.VOICE, fileName)
         else:
-            logger.error("[Azure] textToVoice error, result={}".format(result))
+            logger.error(
+                "[Azure] textToVoice error, result={}, canceldetails={}".format(
+                    result, result.cancellation_details
+                )
+            )
             reply = Reply(ReplyType.ERROR, "抱歉，语音合成失败")
         return reply
