@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import web
 import io
 import imghdr
 import requests
@@ -8,18 +7,17 @@ from bridge.reply import *
 from channel.chat_channel import ChatChannel
 from channel.wechatmp.wechatmp_client import WechatMPClient
 from channel.wechatmp.common import *
-from common.expired_dict import ExpiredDict
 from common.log import logger
-from common.tmp_dir import TmpDir
 from common.singleton import singleton
 from config import conf
 
+import web
 # If using SSL, uncomment the following lines, and modify the certificate path.
-from cheroot.server import HTTPServer
-from cheroot.ssl.builtin import BuiltinSSLAdapter
-HTTPServer.ssl_adapter = BuiltinSSLAdapter(
-        certificate='/ssl/cert.pem',
-        private_key='/ssl/cert.key')
+# from cheroot.server import HTTPServer
+# from cheroot.ssl.builtin import BuiltinSSLAdapter
+# HTTPServer.ssl_adapter = BuiltinSSLAdapter(
+#         certificate='/ssl/cert.pem',
+#         private_key='/ssl/cert.key')
 
 
 @singleton
@@ -27,15 +25,17 @@ class WechatMPChannel(ChatChannel):
     def __init__(self, passive_reply=True):
         super().__init__()
         self.passive_reply = passive_reply
-        self.running = set()
-        self.received_msgs = ExpiredDict(60 * 60 * 24)
+        self.flag = 0
+
         self.client = WechatMPClient()
         if self.passive_reply:
             self.NOT_SUPPORT_REPLYTYPE = [ReplyType.IMAGE, ReplyType.VOICE]
+            # Cache the reply to the user's first message
             self.cache_dict = dict()
-            self.query1 = dict()
-            self.query2 = dict()
-            self.query3 = dict()
+            # Record whether the current message is being processed
+            self.running = set()
+            # Count the request from wechat official server by message_id
+            self.request_cnt = dict()
         else:
             self.NOT_SUPPORT_REPLYTYPE = []
 
@@ -53,8 +53,8 @@ class WechatMPChannel(ChatChannel):
     def send(self, reply: Reply, context: Context):
         receiver = context["receiver"]
         if self.passive_reply:
+            logger.info("[wechatmp] reply to {} cached:\n{}".format(receiver, reply))
             self.cache_dict[receiver] = reply.content
-            logger.info("[wechatmp] reply cached reply to {}: {}".format(receiver, reply))
         else:
             if reply.type == ReplyType.TEXT or reply.type == ReplyType.INFO or reply.type == ReplyType.ERROR:
                 reply_text = reply.content
@@ -64,7 +64,6 @@ class WechatMPChannel(ChatChannel):
             elif reply.type == ReplyType.VOICE:
                 voice_file_path = reply.content
                 logger.info("[wechatmp] voice file path {}".format(voice_file_path))
-
                 with open(voice_file_path, 'rb') as f:
                     filename = receiver + "-" + context["msg"].msg_id + ".mp3"
                     media_id = self.client.upload_media("voice", (filename, f, "audio/mpeg"))
@@ -86,6 +85,7 @@ class WechatMPChannel(ChatChannel):
                 media_id = self.client.upload_media("image", (filename, image_storage, content_type))
                 self.client.send_image(receiver, media_id)
                 logger.info("[wechatmp] sendImage url={}, receiver={}".format(img_url, receiver))
+
             elif reply.type == ReplyType.IMAGE:  # 从文件读取图片
                 image_storage = reply.content
                 image_storage.seek(0)
