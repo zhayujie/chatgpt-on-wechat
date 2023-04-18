@@ -26,7 +26,7 @@ from lib.itchat.content import *
 from plugins import *
 
 
-@itchat.msg_register([TEXT, VOICE, PICTURE])
+@itchat.msg_register([TEXT, VOICE, PICTURE, NOTE])
 def handler_single_msg(msg):
     try:
         cmsg = WeChatMessage(msg, False)
@@ -170,12 +170,16 @@ class WechatChannel(ChatChannel):
             logger.debug("[WX]receive voice msg: {}".format(cmsg.content))
         elif cmsg.ctype == ContextType.IMAGE:
             logger.debug("[WX]receive image msg: {}".format(cmsg.content))
-        else:
+        elif cmsg.ctype == ContextType.PATPAT:
+            logger.debug("[WX]receive patpat msg: {}".format(cmsg.content))
+        elif cmsg.ctype == ContextType.TEXT:
             logger.debug(
                 "[WX]receive text msg: {}, cmsg={}".format(
                     json.dumps(cmsg._rawmsg, ensure_ascii=False), cmsg
                 )
             )
+        else:
+            logger.debug("[WX]receive msg: {}, cmsg={}".format(cmsg.content, cmsg))
         context = self._compose_context(
             cmsg.ctype, cmsg.content, isgroup=False, msg=cmsg
         )
@@ -191,11 +195,13 @@ class WechatChannel(ChatChannel):
             logger.debug("[WX]receive voice for group msg: {}".format(cmsg.content))
         elif cmsg.ctype == ContextType.IMAGE:
             logger.debug("[WX]receive image for group msg: {}".format(cmsg.content))
-        elif cmsg.ctype == ContextType.JOIN_GROUP:
-            logger.debug("[WX]receive join group msg: {}".format(cmsg.content))
-        else:
+        elif cmsg.ctype in [ContextType.JOIN_GROUP, ContextType.PATPAT]:
+            logger.debug("[WX]receive note msg: {}".format(cmsg.content))
+        elif cmsg.ctype == ContextType.TEXT:
             # logger.debug("[WX]receive group msg: {}, cmsg={}".format(json.dumps(cmsg._rawmsg, ensure_ascii=False), cmsg))
             pass
+        else:
+            logger.debug("[WX]receive group msg: {}".format(cmsg.content))
         context = self._compose_context(
             cmsg.ctype, cmsg.content, isgroup=True, msg=cmsg
         )
