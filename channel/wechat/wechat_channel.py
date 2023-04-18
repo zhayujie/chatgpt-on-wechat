@@ -28,18 +28,23 @@ from plugins import *
 
 @itchat.msg_register([TEXT, VOICE, PICTURE])
 def handler_single_msg(msg):
-    # logger.debug("handler_single_msg: {}".format(msg))
-    if msg["Type"] == PICTURE and msg["MsgType"] == 47:
+    try:
+        cmsg = WeChatMessage(msg, False)
+    except NotImplementedError as e:
+        logger.debug("[WX]single message {} skipped: {}".format(msg["MsgId"], e))
         return None
-    WechatChannel().handle_single(WeChatMessage(msg))
+    WechatChannel().handle_single(cmsg)
     return None
 
 
-@itchat.msg_register([TEXT, VOICE, PICTURE], isGroupChat=True)
+@itchat.msg_register([TEXT, VOICE, PICTURE, NOTE], isGroupChat=True)
 def handler_group_msg(msg):
-    if msg["Type"] == PICTURE and msg["MsgType"] == 47:
+    try:
+        cmsg = WeChatMessage(msg, True)
+    except NotImplementedError as e:
+        logger.debug("[WX]group message {} skipped: {}".format(msg["MsgId"], e))
         return None
-    WechatChannel().handle_group(WeChatMessage(msg, True))
+    WechatChannel().handle_group(cmsg)
     return None
 
 
@@ -186,6 +191,8 @@ class WechatChannel(ChatChannel):
             logger.debug("[WX]receive voice for group msg: {}".format(cmsg.content))
         elif cmsg.ctype == ContextType.IMAGE:
             logger.debug("[WX]receive image for group msg: {}".format(cmsg.content))
+        elif cmsg.ctype == ContextType.JOIN_GROUP:
+            logger.debug("[WX]receive join group msg: {}".format(cmsg.content))
         else:
             # logger.debug("[WX]receive group msg: {}, cmsg={}".format(json.dumps(cmsg._rawmsg, ensure_ascii=False), cmsg))
             pass

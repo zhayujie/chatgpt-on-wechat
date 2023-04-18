@@ -1,3 +1,5 @@
+import re
+
 from bridge.context import ContextType
 from channel.chat_message import ChatMessage
 from common.log import logger
@@ -24,9 +26,31 @@ class WeChatMessage(ChatMessage):
             self.ctype = ContextType.IMAGE
             self.content = TmpDir().path() + itchat_msg["FileName"]  # content直接存临时目录路径
             self._prepare_fn = lambda: itchat_msg.download(self.content)
+        elif itchat_msg["Type"] == NOTE and itchat_msg["MsgType"] == 10000:
+            if is_group and (
+                "加入群聊" in itchat_msg["Content"] or "加入了群聊" in itchat_msg["Content"]
+            ):
+                self.ctype = ContextType.JOIN_GROUP
+                logger.debug("[WX]join group message: " + itchat_msg["Content"])
+                self.content = itchat_msg["Content"]
+                # 这里只能得到nickname， actual_user_id还是机器人的id
+                if "加入了群聊" in itchat_msg["Content"]:
+                    self.actual_user_nickname = re.findall(
+                        r"\"(.*?)\"", itchat_msg["Content"]
+                    )[-1]
+                elif "加入群聊" in itchat_msg["Content"]:
+                    self.actual_user_nickname = re.findall(
+                        r"\"(.*?)\"", itchat_msg["Content"]
+                    )[0]
+            else:
+                raise NotImplementedError(
+                    "Unsupported note message: " + itchat_msg["Content"]
+                )
         else:
             raise NotImplementedError(
-                "Unsupported message type: {}".format(itchat_msg["Type"])
+                "Unsupported message type: Type:{} MsgType:{}".format(
+                    itchat_msg["Type"], itchat_msg["MsgType"]
+                )
             )
 
         self.from_user_id = itchat_msg["FromUserName"]
@@ -58,4 +82,5 @@ class WeChatMessage(ChatMessage):
         if self.is_group:
             self.is_at = itchat_msg["IsAt"]
             self.actual_user_id = itchat_msg["ActualUserName"]
-            self.actual_user_nickname = itchat_msg["ActualNickName"]
+            if self.ctype != ContextType.JOIN_GROUP:
+                self.actual_user_nickname = itchat_msg["ActualNickName"]
