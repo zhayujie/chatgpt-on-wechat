@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 # -*- coding=utf-8 -*-
+import os
+
 import web
 from wechatpy.enterprise import WeChatClient, create_reply, parse_message
 from wechatpy.enterprise.crypto import WeChatCrypto
 from wechatpy.enterprise.exceptions import InvalidCorpIdException
-from wechatpy.exceptions import InvalidSignatureException
+from wechatpy.exceptions import InvalidSignatureException, WeChatClientException
 
 from bridge.context import Context
 from bridge.reply import Reply, ReplyType
@@ -13,11 +15,12 @@ from channel.wechatcom.wechatcom_message import WechatComMessage
 from common.log import logger
 from common.singleton import singleton
 from config import conf
+from voice.audio_convert import any_to_amr
 
 
 @singleton
 class WechatComChannel(ChatChannel):
-    NOT_SUPPORT_REPLYTYPE = [ReplyType.IMAGE, ReplyType.VOICE]
+    NOT_SUPPORT_REPLYTYPE = [ReplyType.IMAGE]
 
     def __init__(self):
         super().__init__()
@@ -43,11 +46,32 @@ class WechatComChannel(ChatChannel):
         web.httpserver.runsimple(app.wsgifunc(), ("0.0.0.0", port))
 
     def send(self, reply: Reply, context: Context):
-        print("send reply: ", reply.content, context["receiver"])
         receiver = context["receiver"]
-        reply_text = reply.content
-        self.client.message.send_text(self.agent_id, receiver, reply_text)
-        logger.info("[send] Do send to {}: {}".format(receiver, reply_text))
+        if reply.type in [ReplyType.TEXT, ReplyType.ERROR, ReplyType.INFO]:
+            self.client.message.send_text(self.agent_id, receiver, reply.content)
+            logger.info("[wechatcom] sendMsg={}, receiver={}".format(reply, receiver))
+        elif reply.type == ReplyType.VOICE:
+            try:
+                file_path = reply.content
+                amr_file = os.path.splitext(file_path)[0] + ".amr"
+                any_to_amr(file_path, amr_file)
+                response = self.client.media.upload("voice", open(amr_file, "rb"))
+                logger.debug("[wechatcom] upload voice response: {}".format(response))
+            except WeChatClientException as e:
+                logger.error("[wechatcom] upload voice failed: {}".format(e))
+                return
+            try:
+                os.remove(file_path)
+                if amr_file != file_path:
+                    os.remove(amr_file)
+            except Exception:
+                pass
+            self.client.message.send_voice(
+                self.agent_id, receiver, response["media_id"]
+            )
+            logger.info(
+                "[wechatcom] sendVoice={}, receiver={}".format(reply.content, receiver)
+            )
 
 
 class Query:

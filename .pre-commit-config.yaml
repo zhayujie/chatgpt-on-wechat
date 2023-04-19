@@ -18,6 +18,7 @@ repos:
     hooks:
       - id: isort
         exclude: '(\/|^)lib\/'
+        args: [ -l, '88']
   - repo: https://github.com/psf/black
     rev: 23.3.0
     hooks:
