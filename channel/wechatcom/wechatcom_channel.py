@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 # -*- coding=utf-8 -*-
+import io
 import os
+import textwrap
 
+import requests
 import web
 from wechatpy.enterprise import WeChatClient, create_reply, parse_message
 from wechatpy.enterprise.crypto import WeChatCrypto
@@ -20,7 +23,7 @@ from voice.audio_convert import any_to_amr
 
 @singleton
 class WechatComChannel(ChatChannel):
-    NOT_SUPPORT_REPLYTYPE = [ReplyType.IMAGE]
+    NOT_SUPPORT_REPLYTYPE = []
 
     def __init__(self):
         super().__init__()
@@ -72,6 +75,38 @@ class WechatComChannel(ChatChannel):
             logger.info(
                 "[wechatcom] sendVoice={}, receiver={}".format(reply.content, receiver)
             )
+        elif reply.type == ReplyType.IMAGE_URL:  # 从网络下载图片
+            img_url = reply.content
+            pic_res = requests.get(img_url, stream=True)
+            image_storage = io.BytesIO()
+            for block in pic_res.iter_content(1024):
+                image_storage.write(block)
+            image_storage.seek(0)
+            try:
+                response = self.client.media.upload("image", image_storage)
+                logger.debug("[wechatcom] upload image response: {}".format(response))
+            except WeChatClientException as e:
+                logger.error("[wechatcom] upload image failed: {}".format(e))
+                return
+            self.client.message.send_image(
+                self.agent_id, receiver, response["media_id"]
+            )
+            logger.info(
+                "[wechatcom] sendImage url={}, receiver={}".format(img_url, receiver)
+            )
+        elif reply.type == ReplyType.IMAGE:  # 从文件读取图片
+            image_storage = reply.content
+            image_storage.seek(0)
+            try:
+                response = self.client.media.upload("image", image_storage)
+                logger.debug("[wechatcom] upload image response: {}".format(response))
+            except WeChatClientException as e:
+                logger.error("[wechatcom] upload image failed: {}".format(e))
+                return
+            self.client.message.send_image(
+                self.agent_id, receiver, response["media_id"]
+            )
+            logger.info("[wechatcom] sendImage, receiver={}".format(receiver))
 
 
 class Query:
@@ -103,13 +138,22 @@ class Query:
             )
         except (InvalidSignatureException, InvalidCorpIdException):
             raise web.Forbidden()
-        print(message)
         msg = parse_message(message)
-
-        print(msg)
+        logger.debug("[wechatcom] receive message: {}, msg= {}".format(message, msg))
         if msg.type == "event":
             if msg.event == "subscribe":
-                reply = create_reply("感谢关注", msg).render()
+                trigger_prefix = conf().get("single_chat_prefix", [""])[0]
+                reply_content = textwrap.dedent(
+                    f"""\
+                    感谢您的关注！
+                    这里是ChatGPT，可以自由对话。
+                    支持语音对话。
+                    支持通用表情输入。
+                    支持图片输入输出。
+                    支持角色扮演和文字冒险两种定制模式对话。
+                    输入'{trigger_prefix}#help' 查看详细指令。"""
+                )
+                reply = create_reply(reply_content, msg).render()
                 res = channel.crypto.encrypt_message(reply, nonce, timestamp)
                 return res
         else:

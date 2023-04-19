@@ -41,9 +41,20 @@ class WechatComMessage(ChatMessage):
             self._prepare_fn = download_voice
         elif msg.type == "image":
             self.ctype = ContextType.IMAGE
-            self.content = msg.image  # content直接存临时目录路径
-            print(self.content)
-            # self._prepare_fn = lambda: itchat_msg.download(self.content) # TODO: download image
+            self.content = TmpDir().path() + msg.media_id + ".png"  # content直接存临时目录路径
+
+            def download_image():
+                # 如果响应状态码是200，则将响应内容写入本地文件
+                response = client.media.download(msg.media_id)
+                if response.status_code == 200:
+                    with open(self.content, "wb") as f:
+                        f.write(response.content)
+                else:
+                    logger.info(
+                        f"[wechatcom] Failed to download image file, {response.content}"
+                    )
+
+            self._prepare_fn = download_image
         else:
             raise NotImplementedError(
                 "Unsupported message type: Type:{} ".format(msg.type)
