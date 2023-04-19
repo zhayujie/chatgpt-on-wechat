@@ -42,9 +42,9 @@ class WechatMPChannel(ChatChannel):
 
     def startup(self):
         if self.passive_reply:
-            urls = ("/wx", "channel.wechatmp.subscribe_account.Query")
+            urls = ("/wx", "channel.wechatmp.passive_reply.Query")
         else:
-            urls = ("/wx", "channel.wechatmp.service_account.Query")
+            urls = ("/wx", "channel.wechatmp.active_reply.Query")
         app = web.application(urls, globals(), autoreload=False)
         port = conf().get("wechatmp_port", 8080)
         web.httpserver.runsimple(app.wsgifunc(), ("0.0.0.0", port))

@@ -2,8 +2,8 @@ import time
 
 import web
 
-import channel.wechatmp.receive as receive
-import channel.wechatmp.reply as reply
+from channel.wechatmp.wechatmp_message import parse_xml
+from channel.wechatmp.passive_reply_message import TextMsg
 from bridge.context import *
 from channel.wechatmp.common import *
 from channel.wechatmp.wechatmp_channel import WechatMPChannel
@@ -22,7 +22,7 @@ class Query:
         try:
             webData = web.data()
             # logger.debug("[wechatmp] Receive request:\n" + webData.decode("utf-8"))
-            wechatmp_msg = receive.parse_xml(webData)
+            wechatmp_msg = parse_xml(webData)
             if (
                 wechatmp_msg.msg_type == "text" 
                 or wechatmp_msg.msg_type == "voice" 
@@ -62,7 +62,7 @@ class Query:
                     )
                 )
                 content = subscribe_msg()
-                replyMsg = reply.TextMsg(
+                replyMsg = TextMsg(
                     wechatmp_msg.from_user_id, wechatmp_msg.to_user_id, content
                 )
                 return replyMsg.send()

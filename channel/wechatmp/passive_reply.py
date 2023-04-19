@@ -2,8 +2,8 @@ import time
 
 import web
 
-import channel.wechatmp.receive as receive
-import channel.wechatmp.reply as reply
+from channel.wechatmp.wechatmp_message import parse_xml
+from channel.wechatmp.passive_reply_message import TextMsg
 from bridge.context import *
 from channel.wechatmp.common import *
 from channel.wechatmp.wechatmp_channel import WechatMPChannel
@@ -22,7 +22,7 @@ class Query:
             channel = WechatMPChannel()
             webData = web.data()
             logger.debug("[wechatmp] Receive post data:\n" + webData.decode("utf-8"))
-            wechatmp_msg = receive.parse_xml(webData)
+            wechatmp_msg = parse_xml(webData)
             if wechatmp_msg.msg_type == "text" or wechatmp_msg.msg_type == "voice":
                 from_user = wechatmp_msg.from_user_id
                 to_user = wechatmp_msg.to_user_id
@@ -77,7 +77,7 @@ class Query:
                                 """\
                                 未知错误，请稍后再试"""
                             )
-                        replyPost = reply.TextMsg(wechatmp_msg.from_user_id, wechatmp_msg.to_user_id, content).send()
+                        replyPost = TextMsg(wechatmp_msg.from_user_id, wechatmp_msg.to_user_id, content).send()
                         return replyPost
 
 
@@ -157,7 +157,7 @@ class Query:
                         reply_text,
                     )
                 )
-                replyPost = reply.TextMsg(from_user, to_user, reply_text).send()
+                replyPost = TextMsg(from_user, to_user, reply_text).send()
                 return replyPost
 
             elif wechatmp_msg.msg_type == "event":
@@ -167,7 +167,7 @@ class Query:
                     )
                 )
                 content = subscribe_msg()
-                replyMsg = reply.TextMsg(
+                replyMsg = TextMsg(
                     wechatmp_msg.from_user_id, wechatmp_msg.to_user_id, content
                 )
                 return replyMsg.send()
