@@ -1,7 +1,7 @@
 import json
 import os
 
-from chatgpt_tool_hub.apps import load_app
+from chatgpt_tool_hub.apps import AppFactory
 from chatgpt_tool_hub.apps.app import App
 from chatgpt_tool_hub.tools.all_tool_list import get_all_tool_names
 
@@ -18,7 +18,7 @@ from plugins import *
 @plugins.register(
     name="tool",
     desc="Arming your ChatGPT bot with various tools",
-    version="0.3",
+    version="0.4",
     author="goldfishh",
     desire_priority=0,
 )
@@ -160,18 +160,18 @@ class Tool(Plugin):
             else:
                 logger.warn("[tool] getapi failed.")
             raise e
-            
+
+        request_timeout = kwargs.get("request_timeout")
 
         return {
+            "debug": kwargs.get("debug", False),
             "openai_api_key": conf().get("open_ai_api_key", ""),
             "proxy": conf().get("proxy", ""),
-            "request_timeout": str(conf().get("request_timeout", 60)),
+            "request_timeout": request_timeout if request_timeout else conf().get("request_timeout", 120),
             # note: 目前tool暂未对其他模型测试，但这里仍对配置来源做了优先级区分，一般插件配置可覆盖全局配置
-            "model_name": tool_model_name
-            if tool_model_name
-            else conf().get("model", "gpt-3.5-turbo"),
+            "model_name": tool_model_name if tool_model_name else conf().get("model", "gpt-3.5-turbo"),
             "no_default": kwargs.get("no_default", False),
-            "top_k_results": kwargs.get("top_k_results", 2),
+            "top_k_results": kwargs.get("top_k_results", 3),
             # for news tool
             "news_api_key": kwargs.get("news_api_key", news_api_key),
             # for bing-search tool
@@ -205,11 +205,12 @@ class Tool(Plugin):
 
     def _reset_app(self) -> App:
         tool_config = self._read_json()
+        app_kwargs = self._build_tool_kwargs(tool_config.get("kwargs", {}))
+
+        app = AppFactory()
+        app.init_env(**app_kwargs)
 
         # filter not support tool
         tool_list = self._filter_tool_list(tool_config.get("tools", []))
 
-        return load_app(
-            tools_list=tool_list,
-            **self._build_tool_kwargs(tool_config.get("kwargs", {})),
-        )
+        return app.create_app(tools_list=tool_list, **app_kwargs)
