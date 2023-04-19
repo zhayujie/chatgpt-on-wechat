@@ -8,7 +8,7 @@ from lib import itchat
 from lib.itchat.content import *
 
 
-class WeChatMessage(ChatMessage):
+class WechatMessage(ChatMessage):
     def __init__(self, itchat_msg, is_group=False):
         super().__init__(itchat_msg)
         self.msg_id = itchat_msg["MsgId"]

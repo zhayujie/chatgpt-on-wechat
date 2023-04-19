@@ -98,7 +98,9 @@ class WechatMPChannel(ChatChannel):
         if self.passive_reply:
             receiver = context["receiver"]
             self.cache_dict[receiver] = reply.content
-            logger.info("[send] reply to {} saved to cache: {}".format(receiver, reply))
+            logger.info(
+                "[wechatmp] reply to {} saved to cache: {}".format(receiver, reply)
+            )
         else:
             receiver = context["receiver"]
             reply_text = reply.content
@@ -115,7 +117,7 @@ class WechatMPChannel(ChatChannel):
                 params=params,
                 data=json.dumps(json_data, ensure_ascii=False).encode("utf8"),
             )
-            logger.info("[send] Do send to {}: {}".format(receiver, reply_text))
+            logger.info("[wechatmp] Do send to {}: {}".format(receiver, reply_text))
         return
 
     def _success_callback(self, session_id, context, **kwargs):  # 线程异常结束时的回调函数
