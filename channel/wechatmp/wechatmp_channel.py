@@ -27,7 +27,6 @@ class WechatMPChannel(ChatChannel):
         self.passive_reply = passive_reply
         self.flag = 0
 
-        self.client = WechatMPClient()
         if self.passive_reply:
             self.NOT_SUPPORT_REPLYTYPE = [ReplyType.IMAGE, ReplyType.VOICE]
             # Cache the reply to the user's first message
@@ -38,6 +37,7 @@ class WechatMPChannel(ChatChannel):
             self.request_cnt = dict()
         else:
             self.NOT_SUPPORT_REPLYTYPE = []
+            self.client = WechatMPClient()
 
 
     def startup(self):

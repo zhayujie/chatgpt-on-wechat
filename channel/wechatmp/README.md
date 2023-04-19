@@ -20,10 +20,10 @@ pip3 install web.py
 相关的服务器验证代码已经写好，你不需要再添加任何代码。你只需要在本项目根目录的`config.json`中添加
 ```
 "channel_type": "wechatmp",     # 如果通过了微信认证，将"wechatmp"替换为"wechatmp_service"，可极大的优化使用体验
-"wechatmp_token": "Token",      # 微信公众平台的Token
+"wechatmp_token": "xxxx",       # 微信公众平台的Token
 "wechatmp_port": 8080,          # 微信公众平台的端口,需要端口转发到80或443
-"wechatmp_app_id": "",          # 微信公众平台的appID，wechatmp_service需要填写
-"wechatmp_app_secret": "",      # 微信公众平台的appsecret，wechatmp_service需要填写
+"wechatmp_app_id": "xxxx",      # 微信公众平台的appID
+"wechatmp_app_secret": "xxxx",  # 微信公众平台的appsecret
 "single_chat_prefix": [""],     # 推荐设置，任意对话都可以触发回复，不添加前缀
 "single_chat_reply_prefix": "", # 推荐设置，回复不设置前缀
 "plugin_trigger_prefix": "&",   # 推荐设置，在手机微信客户端中，$%^等符号与中文连在一起时会自动显示一段较大的间隔，用户体验不好。请不要使用管理员指令前缀"#"，这会造成未知问题。
