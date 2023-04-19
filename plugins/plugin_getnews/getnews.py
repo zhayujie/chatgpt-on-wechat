@@ -29,7 +29,7 @@ class getnews(Plugin):
         logger.debug("[getnews] on_handle_context. content: %s" % content)
         
         help_info = "\n【请注意尽量不要询问涉及个人隐私和敏感问题哦！】 \
-\n\n使用技巧 \
+\n\n    使用技巧 \
 \n\n0、直接输入可进行对话，支持1000字上下文联系，输入#help 获取帮助 \
 \n\n1、输入内容中含‘每日新闻’可获取当日新闻；含‘每日摄影’可获取每日的一张摄影作品 \
 \n\n2、关键字画开头将触发画图，目前需要以特殊的格式输入【画 <模型>:prompt】如：画journey:1cat,big eyes,garden \
@@ -54,7 +54,7 @@ class getnews(Plugin):
             
             e_context['reply'] = reply
             e_context.action = EventAction.BREAK_PASS # 事件结束，并跳过处理context的默认逻辑
-        
+            
         if re.match(r"我是.*", content):
             reply = Reply()
             reply.type = ReplyType.TEXT
@@ -68,7 +68,7 @@ class getnews(Plugin):
                 reply.content = f"Hello, {msg.from_user_nickname} \n" + help_info
             e_context["reply"] = reply
             e_context.action = EventAction.BREAK_PASS  # 事件结束，并跳过处理context的默认逻辑
-            
+      
         if re.search(r"每日图片|getimg|今日摄影|每日摄影", content):
             reply = Reply()
             reply.type = ReplyType.IMAGE_URL
@@ -107,7 +107,14 @@ class getnews(Plugin):
 
             e_context['reply'] = reply
             e_context.action = EventAction.BREAK_PASS # 事件结束，并跳过处理context的默认逻辑
-
+        
+                # 替换开头的bot
+        if re.match(r"bot.*", content):
+            content = re.sub(r'^bot', '', content) #删除开头的bot
+            logger.info("[getnews] replace bot and new content:" + content)
+            
+            e_context.action = EventAction.CONTINUE  # 事件继续，交付给下个插件或默认逻辑
+            
         # if content == "Hi":
         #     reply = Reply()
         #     reply.type = ReplyType.TEXT
