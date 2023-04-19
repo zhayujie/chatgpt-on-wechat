@@ -16,4 +16,4 @@ replicate>=0.7.0
 lxml==4.9.2
 pre-commit
 webdriver_manager
-selenium==2.48.0
+selenium>=3.13.0
