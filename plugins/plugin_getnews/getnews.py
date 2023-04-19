@@ -113,6 +113,7 @@ class getnews(Plugin):
             content = re.sub(r'^bot', '', content) #删除开头的bot
             logger.info("[getnews] replace bot and new content:" + content)
             
+            e_context['context'].content = content
             e_context.action = EventAction.CONTINUE  # 事件继续，交付给下个插件或默认逻辑
             
         # if content == "Hi":
