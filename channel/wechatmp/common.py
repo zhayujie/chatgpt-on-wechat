@@ -1,8 +1,10 @@
-import hashlib
 import textwrap
+import web
 
 from config import conf
-
+from wechatpy.utils import check_signature
+from wechatpy.crypto import WeChatCrypto
+from wechatpy.exceptions import InvalidSignatureException
 MAX_UTF8_LEN = 2048
 
 
@@ -12,27 +14,17 @@ class WeChatAPIException(Exception):
 
 def verify_server(data):
     try:
-        if len(data) == 0:
-            return "None"
         signature = data.signature
         timestamp = data.timestamp
         nonce = data.nonce
         echostr = data.echostr
         token = conf().get("wechatmp_token")  # 请按照公众平台官网\基本配置中信息填写
-
-        data_list = [token, timestamp, nonce]
-        data_list.sort()
-        sha1 = hashlib.sha1()
-        # map(sha1.update, data_list) #python2
-        sha1.update("".join(data_list).encode("utf-8"))
-        hashcode = sha1.hexdigest()
-        print("handle/GET func: hashcode, signature: ", hashcode, signature)
-        if hashcode == signature:
-            return echostr
-        else:
-            return ""
-    except Exception as Argument:
-        return Argument
+        check_signature(token, signature, timestamp, nonce)
+        return echostr
+    except InvalidSignatureException:
+        raise web.Forbidden("Invalid signature")
+    except Exception as e:
+        raise web.Forbidden(str(e))
 
 
 def subscribe_msg():
