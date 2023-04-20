@@ -62,4 +62,4 @@ class SortedDict(dict):
         return iter(self.keys())
 
     def __repr__(self):
-        return f'{type(self).__name__}({dict(self)}, sort_func={self.sort_func.__name__}, reverse={self.reverse})'
+        return f"{type(self).__name__}({dict(self)}, sort_func={self.sort_func.__name__}, reverse={self.reverse})"

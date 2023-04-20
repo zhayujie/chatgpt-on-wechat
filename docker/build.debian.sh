@@ -11,5 +11,5 @@ docker build -f Dockerfile.debian \
              -t zhayujie/chatgpt-on-wechat .
 
 # tag image
-docker tag zhayujie/chatgpt-on-wechat zhayujie/chatgpt-on-wechat:debian 
+docker tag zhayujie/chatgpt-on-wechat zhayujie/chatgpt-on-wechat:debian
 docker tag zhayujie/chatgpt-on-wechat zhayujie/chatgpt-on-wechat:$CHATGPT_ON_WECHAT_TAG-debian

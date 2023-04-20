@@ -49,9 +49,9 @@ jobs:
           file: ./docker/Dockerfile.latest
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-      
+
       - uses: actions/delete-package-versions@v4
-        with: 
+        with:
           package-name: 'chatgpt-on-wechat'
           package-type: 'container'
           min-versions-to-keep: 10
