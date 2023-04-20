@@ -2,6 +2,7 @@
 
 import json
 import os
+import re
 
 import plugins
 from bridge.context import ContextType
@@ -52,15 +53,16 @@ class Keyword(Plugin):
 
         content = e_context["context"].content.strip()
         logger.debug("[keyword] on_handle_context. content: %s" % content)
-        if content in self.keyword:
-            logger.debug(f"[keyword] 匹配到关键字【{content}】")
-            reply_text = self.keyword[content]
-
-            reply = Reply()
-            reply.type = ReplyType.TEXT
-            reply.content = reply_text
-            e_context["reply"] = reply
-            e_context.action = EventAction.BREAK_PASS  # 事件结束，并跳过处理context的默认逻辑
+        for keyword in self.keyword:
+            pattern = r'{}'.format(re.escape(keyword))
+            if re.search(pattern, content, re.UNICODE):
+                logger.debug(f"[keyword] 匹配到关键字【{content}】")
+                reply_text = keyword
+                reply = Reply()
+                reply.type = ReplyType.TEXT
+                reply.content = reply_text
+                e_context["reply"] = reply
+                e_context.action = EventAction.BREAK_PASS  # 事件结束，并跳过处理context的默认逻辑
 
     def get_help_text(self, **kwargs):
         help_text = "关键词过滤"
