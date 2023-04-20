@@ -43,7 +43,7 @@ class WechatComAppChannel(ChatChannel):
 
     def startup(self):
         # start message listener
-        urls = ("/wxcom", "channel.wechatcom.wechatcomapp_channel.Query")
+        urls = ("/wxcomapp", "channel.wechatcom.wechatcomapp_channel.Query")
         app = web.application(urls, globals(), autoreload=False)
         port = conf().get("wechatcomapp_port", 8080)
         web.httpserver.runsimple(app.wsgifunc(), ("0.0.0.0", port))
