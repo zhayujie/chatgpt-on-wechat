@@ -5,6 +5,7 @@ import web
 
 from channel.wechatmp.wechatmp_message import WeChatMPMessage
 from bridge.context import *
+from bridge.reply import *
 from channel.wechatmp.common import *
 from channel.wechatmp.wechatmp_channel import WechatMPChannel
 from common.log import logger
@@ -53,10 +54,9 @@ class Query:
                     and message_id not in channel.request_cnt # insert the godcmd
                 ):
                     # The first query begin
-                    if (msg.type == "voice" and wechatmp_msg.ctype == ContextType.TEXT):
-                        origin_ctype = ContextType.VOICE
+                    if msg.type == "voice" and wechatmp_msg.ctype == ContextType.TEXT and conf().get("voice_reply_voice", False):
                         context = channel._compose_context(
-                            wechatmp_msg.ctype, content, isgroup=False, origin_ctype=origin_ctype, msg=wechatmp_msg
+                            wechatmp_msg.ctype, content, isgroup=False, desire_rtype=ReplyType.VOICE, msg=wechatmp_msg
                         )
                     else:
                         context = channel._compose_context(
