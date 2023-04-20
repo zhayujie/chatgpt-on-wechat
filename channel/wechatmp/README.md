@@ -33,7 +33,7 @@ pip3 install web.py
 sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 8080
 sudo iptables-save > /etc/iptables/rules.v4
 ```
-第二个方法是让python程序直接监听80端口，在配置文件中设置`"wechatmp_port": 80`,在linux上需要使用`sudo python3 app`启动程序。然而这会导致一系列环境和权限问题，因此不是推荐的方法。
+第二个方法是让python程序直接监听80端口，在配置文件中设置`"wechatmp_port": 80` ，在linux上需要使用`sudo python3 app.py`启动程序。然而这会导致一系列环境和权限问题，因此不是推荐的方法。
 
 443端口同理，注意需要支持SSL，也就是https的访问，在`wechatmp_channel.py`中需要修改相应的证书路径。
 
@@ -51,10 +51,32 @@ sudo iptables-save > /etc/iptables/rules.v4
 ## 语音输入
 利用微信自带的语音识别功能，提供语音输入能力。需要在公众号管理页面的“设置与开发”->“接口权限”页面开启“接收语音识别结果”。
 
+## 语音回复
+请在配置文件中添加以下词条：
+```
+  "voice_reply_voice": true,
+  "text_to_voice": "pytts",
+```
+这样公众号将会用语音回复语音消息，实现语音对话。
+pytts是语音合成引擎之一。还支持baidu,google,azure，这些你需要自行配置相关的依赖和key。
+如果使用pytts，在ubuntu上需要安装如下依赖：
+```
+sudo apt update
+sudo apt install espeak
+sudo apt install ffmpeg
+python3 -m pip install pyttsx3
+```
+不是很建议开启pytts语音回复，因为它是离线本地计算，算的慢会拖垮服务器，且声音不好听。
+
+## 图片回复
+现在认证公众号和非认证公众号都可以实现的图片和语音回复。但是非认证公众号使用了永久素材接口，每天有1000次的调用上限（每个月有10次重置机会，程序中已设定遇到上限会自动重置），且永久素材库存也有上限。因此对于非认证公众号，我们会在回复图片或者语音消息后的10秒内从永久素材库存内删除该素材。
+
 ## 测试
-目前在`RoboStyle`这个公众号上进行了测试（基于[wechatmp-stable分支](https://github.com/JS00000/chatgpt-on-wechat/tree/wechatmp-stable)），感兴趣的可以关注并体验。开启了godcmd, Banwords, role, dungeon, finish这五个插件，其他的插件还没有详尽测试。百度的接口暂未测试。pytts可用。
+目前在`RoboStyle`这个公众号上进行了测试（基于[wechatmp分支](https://github.com/JS00000/chatgpt-on-wechat/tree/wechatmp)），感兴趣的可以关注并体验。开启了godcmd, Banwords, role, dungeon, finish这五个插件，其他的插件还没有详尽测试。百度的接口暂未测试。[wechatmp-stable分支](https://github.com/JS00000/chatgpt-on-wechat/tree/wechatmp-stable)是较稳定的上个版本，但也缺少最新的功能支持。
 
 ## TODO
-* 图片输入
-* 使用永久素材接口提供未认证公众号的图片和语音回复
-* 高并发支持
+ - [x] 语音输入
+ - [ ] 图片输入
+ - [x] 使用临时素材接口提供认证公众号的图片和语音回复
+ - [x] 使用永久素材接口提供未认证公众号的图片和语音回复
+ - [ ] 高并发支持
