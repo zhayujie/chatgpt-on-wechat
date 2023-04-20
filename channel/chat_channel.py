@@ -56,8 +56,9 @@ class ChatChannel(Channel):
                 group_name_keyword_white_list = config.get('group_name_keyword_white_list', [])
                 if any([group_name in group_name_white_list, 'ALL_GROUP' in group_name_white_list, check_contain(group_name, group_name_keyword_white_list)]):
                     group_chat_in_one_session = conf().get('group_chat_in_one_session', [])
+                    group_chat_in_one_session_name_keyword = conf().get('group_chat_in_one_session_name_keyword', [])
                     session_id = cmsg.actual_user_id
-                    if any([group_name in group_chat_in_one_session, 'ALL_GROUP' in group_chat_in_one_session]):
+                    if any([group_name in group_chat_in_one_session, 'ALL_GROUP' in group_chat_in_one_session, check_contain(group_name, group_chat_in_one_session_name_keyword)]):
                         session_id = group_id
                 else:
                     return None
