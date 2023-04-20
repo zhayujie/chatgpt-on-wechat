@@ -117,13 +117,13 @@ class WechatMPClient:
             "type": media_type
         }
         files={"media": media_file}
-        logger.info("[wechatmp] media {} uploaded".format(media_file))
         ret = self.wechatmp_request(
             method="post",
             url=url,
             params=params,
             files=files
         )
+        logger.debug("[wechatmp] media {} uploaded".format(media_file))
         return ret["media_id"]
 
 
@@ -134,13 +134,13 @@ class WechatMPClient:
             "type": media_type
         }
         files={"media": media_file}
-        logger.info("[wechatmp] media {} uploaded".format(media_file))
         ret = self.wechatmp_request(
             method="post",
             url=url,
             params=params,
             files=files
         )
+        logger.debug("[wechatmp] permanent media {} uploaded".format(media_file))
         return ret["media_id"]
 
 
@@ -149,13 +149,13 @@ class WechatMPClient:
         params={
             "access_token": self.get_access_token()
         }
-        logger.info("[wechatmp] media {} deleted".format(media_id))
         self.wechatmp_request(
             method="post",
             url=url,
             params=params,
-            data={"media_id": media_id}
+            data=json.dumps({"media_id": media_id}, ensure_ascii=False).encode("utf8")
         )
+        logger.debug("[wechatmp] permanent media {} deleted".format(media_id))
 
     def clear_quota(self):
         url="https://api.weixin.qq.com/cgi-bin/clear_quota"
@@ -168,6 +168,7 @@ class WechatMPClient:
             params=params,
             data={"appid": self.app_id}
         )
+        logger.debug("[wechatmp] API quata has been cleard")
 
     def clear_quota_v2(self):
         url="https://api.weixin.qq.com/cgi-bin/clear_quota/v2"
@@ -176,3 +177,4 @@ class WechatMPClient:
             url=url,
             data={"appid": self.app_id, "appsecret": self.app_secret}
         )
+        logger.debug("[wechatmp] API quata has been cleard")

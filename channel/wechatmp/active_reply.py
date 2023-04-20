@@ -42,7 +42,10 @@ class Query:
                         message,
                     )
                 )
-                rtype = ReplyType.VOICE if wechatmp_msg.msg_type == "voice" else None
+                if (wechatmp_msg.msg_type == "voice" and conf().get("voice_reply_voice") == True):
+                    rtype = ReplyType.VOICE
+                else:
+                    rtype = None
                 context = channel._compose_context(
                     ContextType.TEXT, message, isgroup=False, desire_rtype=rtype, msg=wechatmp_msg
                 )
