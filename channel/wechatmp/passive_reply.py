@@ -1,10 +1,12 @@
 import time
+import asyncio
 
 import web
 
 from channel.wechatmp.wechatmp_message import parse_xml
-from channel.wechatmp.passive_reply_message import TextMsg
+from channel.wechatmp.passive_reply_message import TextMsg, VoiceMsg, ImageMsg
 from bridge.context import *
+from bridge.reply import ReplyType
 from channel.wechatmp.common import *
 from channel.wechatmp.wechatmp_channel import WechatMPChannel
 from common.log import logger
@@ -26,7 +28,7 @@ class Query:
             if wechatmp_msg.msg_type == "text" or wechatmp_msg.msg_type == "voice":
                 from_user = wechatmp_msg.from_user_id
                 to_user = wechatmp_msg.to_user_id
-                message = wechatmp_msg.content.decode("utf-8")
+                message = wechatmp_msg.content
                 message_id = wechatmp_msg.msg_id
 
                 supported = True
@@ -41,8 +43,9 @@ class Query:
                     and message_id not in channel.request_cnt # insert the godcmd
                 ):
                     # The first query begin
+                    rtype = ReplyType.VOICE if wechatmp_msg.msg_type == "voice" else None
                     context = channel._compose_context(
-                        ContextType.TEXT, message, isgroup=False, msg=wechatmp_msg
+                        ContextType.TEXT, message, isgroup=False, desire_rtype=rtype, msg=wechatmp_msg
                     )
                     logger.debug(
                         "[wechatmp] context: {} {}".format(context, wechatmp_msg)
@@ -115,10 +118,10 @@ class Query:
                     else: # request_cnt == 3:
                         # return timeout message
                         reply_text = "【正在思考中，回复任意文字尝试获取回复】"
-                        # replyPost = reply.TextMsg(from_user, to_user, reply_text).send()
-                        # return replyPost
+                        replyPost = TextMsg(from_user, to_user, reply_text).send()
+                        return replyPost
 
-                # reply or reply_text is ready
+                # reply is ready
                 channel.request_cnt.pop(message_id)
 
                 # no return because of bandwords or other reasons
@@ -128,14 +131,13 @@ class Query:
                 ):
                     return "success"
 
-                # reply is ready
-                if from_user in channel.cache_dict:
-                    # Only one message thread can access to the cached data
-                    try:
-                        content = channel.cache_dict.pop(from_user)
-                    except KeyError:
-                        return "success"
+                # Only one request can access to the cached data
+                try:
+                    (reply_type, content) = channel.cache_dict.pop(from_user)
+                except KeyError:
+                    return "success"
 
+                if (reply_type == "text"):
                     if len(content.encode("utf8")) <= MAX_UTF8_LEN:
                         reply_text = content
                     else:
@@ -146,19 +148,31 @@ class Query:
                             max_split=1,
                         )
                         reply_text = splits[0] + continue_text
-                        channel.cache_dict[from_user] = splits[1]
-
-                logger.info(
-                    "[wechatmp] Request {} do send to {} {}: {}\n{}".format(
-                        request_cnt,
-                        from_user,
-                        message_id,
-                        message,
-                        reply_text,
+                        channel.cache_dict[from_user] = ("text", splits[1])
+                    
+                    logger.info(
+                        "[wechatmp] Request {} do send to {} {}: {}\n{}".format(
+                            request_cnt,
+                            from_user,
+                            message_id,
+                            message,
+                            reply_text,
+                        )
                     )
-                )
-                replyPost = TextMsg(from_user, to_user, reply_text).send()
-                return replyPost
+                    replyPost = TextMsg(from_user, to_user, reply_text).send()
+                    return replyPost
+
+                elif (reply_type == "voice"):
+                    media_id = content
+                    asyncio.run_coroutine_threadsafe(channel.delete_media(media_id), channel.delete_media_loop)
+                    replyPost = VoiceMsg(from_user, to_user, media_id).send()
+                    return replyPost
+
+                elif (reply_type == "image"):
+                    media_id = content
+                    asyncio.run_coroutine_threadsafe(channel.delete_media(media_id), channel.delete_media_loop)
+                    replyPost = ImageMsg(from_user, to_user, media_id).send()
+                    return replyPost
 
             elif wechatmp_msg.msg_type == "event":
                 logger.info(

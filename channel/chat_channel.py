@@ -144,14 +144,14 @@ class ChatChannel(Channel):
                 context.type = ContextType.TEXT
             context.content = content.strip()
             if (
-                "desire_rtype" not in context
+                context["desire_rtype"] == None
                 and conf().get("always_reply_voice")
                 and ReplyType.VOICE not in self.NOT_SUPPORT_REPLYTYPE
             ):
                 context["desire_rtype"] = ReplyType.VOICE
         elif context.type == ContextType.VOICE:
             if (
-                "desire_rtype" not in context
+                context["desire_rtype"] == None
                 and conf().get("voice_reply_voice")
                 and ReplyType.VOICE not in self.NOT_SUPPORT_REPLYTYPE
             ):

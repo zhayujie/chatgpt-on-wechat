@@ -23,6 +23,8 @@ class WechatMPClient:
         r.encoding = "utf-8"
         ret = r.json()
         if "errcode" in ret and ret["errcode"] != 0:
+            if ret["errcode"] == 45009:
+                self.clear_quota_v2()
             raise WeChatAPIException("{}".format(ret))
         return ret
 
@@ -123,3 +125,54 @@ class WechatMPClient:
             files=files
         )
         return ret["media_id"]
+
+
+    def upload_permanent_media(self, media_type, media_file):
+        url="https://api.weixin.qq.com/cgi-bin/material/add_material"
+        params={
+            "access_token": self.get_access_token(),
+            "type": media_type
+        }
+        files={"media": media_file}
+        logger.info("[wechatmp] media {} uploaded".format(media_file))
+        ret = self.wechatmp_request(
+            method="post",
+            url=url,
+            params=params,
+            files=files
+        )
+        return ret["media_id"]
+
+
+    def delete_permanent_media(self, media_id):
+        url="https://api.weixin.qq.com/cgi-bin/material/del_material"
+        params={
+            "access_token": self.get_access_token()
+        }
+        logger.info("[wechatmp] media {} deleted".format(media_id))
+        self.wechatmp_request(
+            method="post",
+            url=url,
+            params=params,
+            data={"media_id": media_id}
+        )
+
+    def clear_quota(self):
+        url="https://api.weixin.qq.com/cgi-bin/clear_quota"
+        params = {
+            "access_token": self.get_access_token()
+        }
+        self.wechatmp_request(
+            method="post",
+            url=url,
+            params=params,
+            data={"appid": self.app_id}
+        )
+
+    def clear_quota_v2(self):
+        url="https://api.weixin.qq.com/cgi-bin/clear_quota/v2"
+        self.wechatmp_request(
+            method="post",
+            url=url,
+            data={"appid": self.app_id, "appsecret": self.app_secret}
+        )

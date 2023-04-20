@@ -5,6 +5,7 @@ import web
 from channel.wechatmp.wechatmp_message import parse_xml
 from channel.wechatmp.passive_reply_message import TextMsg
 from bridge.context import *
+from bridge.reply import ReplyType
 from channel.wechatmp.common import *
 from channel.wechatmp.wechatmp_channel import WechatMPChannel
 from common.log import logger
@@ -29,7 +30,7 @@ class Query:
                 # or wechatmp_msg.msg_type == "image"
             ):
                 from_user = wechatmp_msg.from_user_id
-                message = wechatmp_msg.content.decode("utf-8")
+                message = wechatmp_msg.content
                 message_id = wechatmp_msg.msg_id
 
                 logger.info(
@@ -41,8 +42,9 @@ class Query:
                         message,
                     )
                 )
+                rtype = ReplyType.VOICE if wechatmp_msg.msg_type == "voice" else None
                 context = channel._compose_context(
-                    ContextType.TEXT, message, isgroup=False, msg=wechatmp_msg
+                    ContextType.TEXT, message, isgroup=False, desire_rtype=rtype, msg=wechatmp_msg
                 )
                 if context:
                     # set private openai_api_key

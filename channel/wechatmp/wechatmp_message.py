@@ -32,12 +32,15 @@ class WeChatMPMessage(ChatMessage):
 
         if self.msg_type == "text":
             self.ctype = ContextType.TEXT
-            self.content = xmlData.find("Content").text.encode("utf-8")
+            self.content = xmlData.find("Content").text
         elif self.msg_type == "voice":
             self.ctype = ContextType.TEXT
-            self.content = xmlData.find("Recognition").text.encode("utf-8")  # 接收语音识别结果
+            self.content = xmlData.find("Recognition").text  # 接收语音识别结果
+            # other voice_to_text method not implemented yet
+            if self.content == None:
+                self.content = "你好"
         elif self.msg_type == "image":
-            # not implemented
+            # not implemented yet
             self.pic_url = xmlData.find("PicUrl").text
             self.media_id = xmlData.find("MediaId").text
         elif self.msg_type == "event":
