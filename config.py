@@ -10,7 +10,7 @@ from common.log import logger
 # 将所有可用的配置项写在字典里, 请使用小写字母
 available_setting = {
     # openai api配置
-    "open_ai_api_key": "",  # openai api key
+    "open_ai_api_key": "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",  # openai api key
     # openai apibase，当use_azure_chatgpt为true时，需要设置对应的api base
     "open_ai_api_base": "https://api.openai.com/v1",
     "proxy": "",  # openai使用的代理
@@ -19,9 +19,9 @@ available_setting = {
     "use_azure_chatgpt": False,  # 是否使用azure的chatgpt
     "azure_deployment_id": "",  # azure 模型部署名称
     # Bot触发配置
-    "single_chat_prefix": ["bot", "@bot"],  # 私聊时文本需要包含该前缀才能触发机器人回复
-    "single_chat_reply_prefix": "[bot] ",  # 私聊时自动回复的前缀，用于区分真人
-    "group_chat_prefix": ["@bot"],  # 群聊时包含该前缀则会触发机器人回复
+    "single_chat_prefix": ["蜡笔小新不新", "@蜡笔小新不新"],  # 私聊时文本需要包含该前缀才能触发机器人回复
+    "single_chat_reply_prefix": "[蜡笔小新不新] ",  # 私聊时自动回复的前缀，用于区分真人
+    "group_chat_prefix": ["@蜡笔小新不新"],  # 群聊时包含该前缀则会触发机器人回复
     "group_chat_reply_prefix": "",  # 群聊时自动回复的前缀
     "group_chat_keyword": [],  # 群聊时包含该关键词则会触发机器人回复
     "group_at_off": False,  # 是否关闭群聊时@bot的触发
