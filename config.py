@@ -75,13 +75,14 @@ available_setting = {
     "wechatmp_port": 8080,  # 微信公众平台的端口,需要端口转发到80或443
     "wechatmp_app_id": "",  # 微信公众平台的appID，仅服务号需要
     "wechatmp_app_secret": "",  # 微信公众平台的appsecret，仅服务号需要
-    # wechatcom的配置
-    "wechatcom_token": "",  # 企业微信的token
-    "wechatcom_port": 9898,  # 企业微信的服务端口,不需要端口转发
-    "wechatcom_corp_id": "",  # 企业微信的corpID
-    "wechatcom_secret": "",  # 企业微信的secret
-    "wechatcom_agent_id": "",  # 企业微信的appID
-    "wechatcom_aes_key": "",  # 企业微信的aes_key
+    # wechatcom的通用配置
+    "wechatcom_corp_id": "",  # 企业微信公司的corpID
+    # wechatcomapp的配置
+    "wechatcomapp_token": "",  # 企业微信app的token
+    "wechatcomapp_port": 9898,  # 企业微信app的服务端口,不需要端口转发
+    "wechatcomapp_secret": "",  # 企业微信app的secret
+    "wechatcomapp_agent_id": "",  # 企业微信app的agent_id
+    "wechatcomapp_aes_key": "",  # 企业微信app的aes_key
     # chatgpt指令自定义触发词
     "clear_memory_commands": ["#清除记忆"],  # 重置会话指令，必须以#开头
     # channel配置

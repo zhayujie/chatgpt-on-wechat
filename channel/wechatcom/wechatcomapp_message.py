@@ -11,7 +11,7 @@ from lib import itchat
 from lib.itchat.content import *
 
 
-class WechatComMessage(ChatMessage):
+class WechatComAppMessage(ChatMessage):
     def __init__(self, msg, client: WeChatClient, is_group=False):
         super().__init__(msg)
         self.msg_id = msg.id

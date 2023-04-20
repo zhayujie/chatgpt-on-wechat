@@ -14,7 +14,7 @@ from wechatpy.exceptions import InvalidSignatureException, WeChatClientException
 from bridge.context import Context
 from bridge.reply import Reply, ReplyType
 from channel.chat_channel import ChatChannel
-from channel.wechatcom.wechatcom_message import WechatComMessage
+from channel.wechatcom.wechatcomapp_message import WechatComAppMessage
 from common.log import logger
 from common.singleton import singleton
 from config import conf
@@ -22,16 +22,16 @@ from voice.audio_convert import any_to_amr
 
 
 @singleton
-class WechatComChannel(ChatChannel):
+class WechatComAppChannel(ChatChannel):
     NOT_SUPPORT_REPLYTYPE = []
 
     def __init__(self):
         super().__init__()
         self.corp_id = conf().get("wechatcom_corp_id")
-        self.secret = conf().get("wechatcom_secret")
-        self.agent_id = conf().get("wechatcom_agent_id")
-        self.token = conf().get("wechatcom_token")
-        self.aes_key = conf().get("wechatcom_aes_key")
+        self.secret = conf().get("wechatcomapp_secret")
+        self.agent_id = conf().get("wechatcomapp_agent_id")
+        self.token = conf().get("wechatcomapp_token")
+        self.aes_key = conf().get("wechatcomapp_aes_key")
         print(self.corp_id, self.secret, self.agent_id, self.token, self.aes_key)
         logger.info(
             "[wechatcom] init: corp_id: {}, secret: {}, agent_id: {}, token: {}, aes_key: {}".format(
@@ -43,9 +43,9 @@ class WechatComChannel(ChatChannel):
 
     def startup(self):
         # start message listener
-        urls = ("/wxcom", "channel.wechatcom.wechatcom_channel.Query")
+        urls = ("/wxcom", "channel.wechatcom.wechatcomapp_channel.Query")
         app = web.application(urls, globals(), autoreload=False)
-        port = conf().get("wechatcom_port", 8080)
+        port = conf().get("wechatcomapp_port", 8080)
         web.httpserver.runsimple(app.wsgifunc(), ("0.0.0.0", port))
 
     def send(self, reply: Reply, context: Context):
@@ -111,7 +111,7 @@ class WechatComChannel(ChatChannel):
 
 class Query:
     def GET(self):
-        channel = WechatComChannel()
+        channel = WechatComAppChannel()
         params = web.input()
         signature = params.msg_signature
         timestamp = params.timestamp
@@ -127,7 +127,7 @@ class Query:
         return echostr
 
     def POST(self):
-        channel = WechatComChannel()
+        channel = WechatComAppChannel()
         params = web.input()
         signature = params.msg_signature
         timestamp = params.timestamp
@@ -158,7 +158,7 @@ class Query:
                 return res
         else:
             try:
-                wechatcom_msg = WechatComMessage(msg, client=channel.client)
+                wechatcom_msg = WechatComAppMessage(msg, client=channel.client)
             except NotImplementedError as e:
                 logger.debug("[wechatcom] " + str(e))
                 return "success"
