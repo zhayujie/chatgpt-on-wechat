@@ -62,7 +62,7 @@ class Query:
                         channel.running.add(from_user)
                         channel.produce(context)
                     else:
-                        trigger_prefix = conf().get("single_chat_prefix", [""])
+                        trigger_prefix = conf().get("single_chat_prefix", [""])[0]
                         if trigger_prefix or not supported:
                             if trigger_prefix:
                                 content = textwrap.dedent(
@@ -92,13 +92,13 @@ class Query:
                 request_cnt = channel.request_cnt.get(message_id, 0) + 1
                 channel.request_cnt[message_id] = request_cnt
                 logger.info(
-                    "[wechatmp] Request {} from {} {}\n{}\n{}:{}".format(
+                    "[wechatmp] Request {} from {} {} {}:{}\n{}".format(
                         request_cnt,
                         from_user,
                         message_id,
-                        message,
                         web.ctx.env.get("REMOTE_ADDR"),
                         web.ctx.env.get("REMOTE_PORT"),
+                        message
                     )
                 )
 
@@ -168,12 +168,30 @@ class Query:
                 elif (reply_type == "voice"):
                     media_id = content
                     asyncio.run_coroutine_threadsafe(channel.delete_media(media_id), channel.delete_media_loop)
+                    logger.info(
+                        "[wechatmp] Request {} do send to {} {}: {} voice media_id {}".format(
+                            request_cnt,
+                            from_user,
+                            message_id,
+                            message,
+                            media_id,
+                        )
+                    )
                     replyPost = VoiceMsg(from_user, to_user, media_id).send()
                     return replyPost
 
                 elif (reply_type == "image"):
                     media_id = content
                     asyncio.run_coroutine_threadsafe(channel.delete_media(media_id), channel.delete_media_loop)
+                    logger.info(
+                        "[wechatmp] Request {} do send to {} {}: {} image media_id {}".format(
+                            request_cnt,
+                            from_user,
+                            message_id,
+                            message,
+                            media_id,
+                        )
+                    )
                     replyPost = ImageMsg(from_user, to_user, media_id).send()
                     return replyPost
 

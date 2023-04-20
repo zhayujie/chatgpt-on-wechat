@@ -70,24 +70,22 @@ class WechatMPChannel(ChatChannel):
         if self.passive_reply:
             if reply.type == ReplyType.TEXT or reply.type == ReplyType.INFO or reply.type == ReplyType.ERROR:
                 reply_text = reply.content
-                logger.info("[wechatmp] reply to {} cached:\n{}".format(receiver, reply_text))
+                logger.info("[wechatmp] text cached, receiver {}\n{}".format(receiver, reply_text))
                 self.cache_dict[receiver] = ("text", reply_text)
             elif reply.type == ReplyType.VOICE:
                 voice_file_path = reply.content
-                logger.info("[wechatmp] voice file path {}".format(voice_file_path))
+                logger.debug("[wechatmp] voice file path {}".format(voice_file_path))
                 with open(voice_file_path, 'rb') as f:
                     filename = receiver + "-" + context["msg"].msg_id + ".mp3"
                     media_id = self.client.upload_permanent_media("voice", (filename, f, "audio/mpeg"))
                     # 根据文件大小估计一个微信自动审核的时间，审核结束前返回将会导致语音无法播放，这个估计有待验证
                     f_size = os.fstat(f.fileno()).st_size
-                    print(f_size)
                     time.sleep(1.0 + 2 * f_size / 1024 / 1024)
-                    logger.info("[wechatmp] voice reply to {} uploaded: {}".format(receiver, media_id))
+                    logger.info("[wechatmp] voice uploaded, receiver {}, media_id {}".format(receiver, media_id))
                     self.cache_dict[receiver] = ("voice", media_id)
             elif reply.type == ReplyType.IMAGE_URL:  # 从网络下载图片
                 img_url = reply.content
                 pic_res = requests.get(img_url, stream=True)
-                print(pic_res.headers)
                 image_storage = io.BytesIO()
                 for block in pic_res.iter_content(1024):
                     image_storage.write(block)
@@ -96,7 +94,7 @@ class WechatMPChannel(ChatChannel):
                 filename = receiver + "-" + context["msg"].msg_id + "." + image_type
                 content_type = "image/" + image_type
                 media_id = self.client.upload_permanent_media("image", (filename, image_storage, content_type))
-                logger.info("[wechatmp] image reply to {} uploaded: {}".format(receiver, media_id))
+                logger.info("[wechatmp] image uploaded, receiver {}, media_id {}".format(receiver, media_id))
                 self.cache_dict[receiver] = ("image", media_id)
             elif reply.type == ReplyType.IMAGE:  # 从文件读取图片
                 image_storage = reply.content
@@ -105,16 +103,16 @@ class WechatMPChannel(ChatChannel):
                 filename = receiver + "-" + context["msg"].msg_id + "." + image_type
                 content_type = "image/" + image_type
                 media_id = self.client.upload_permanent_media("image", (filename, image_storage, content_type))
-                logger.info("[wechatmp] image reply to {} uploaded: {}".format(receiver, media_id))
+                logger.info("[wechatmp] image uploaded, receiver {}, media_id {}".format(receiver, media_id))
                 self.cache_dict[receiver] = ("image", media_id)
         else:
             if reply.type == ReplyType.TEXT or reply.type == ReplyType.INFO or reply.type == ReplyType.ERROR:
                 reply_text = reply.content
                 self.client.send_text(receiver, reply_text)
-                logger.info("[wechatmp] Do send to {}: {}".format(receiver, reply_text))
+                logger.info("[wechatmp] Do send text to {}: {}".format(receiver, reply_text))
             elif reply.type == ReplyType.VOICE:
                 voice_file_path = reply.content
-                logger.info("[wechatmp] voice file path {}".format(voice_file_path))
+                logger.debug("[wechatmp] voice file path {}".format(voice_file_path))
                 with open(voice_file_path, 'rb') as f:
                     filename = receiver + "-" + context["msg"].msg_id + ".mp3"
                     media_id = self.client.upload_media("voice", (filename, f, "audio/mpeg"))
@@ -123,7 +121,6 @@ class WechatMPChannel(ChatChannel):
             elif reply.type == ReplyType.IMAGE_URL:  # 从网络下载图片
                 img_url = reply.content
                 pic_res = requests.get(img_url, stream=True)
-                print(pic_res.headers)
                 image_storage = io.BytesIO()
                 for block in pic_res.iter_content(1024):
                     image_storage.write(block)
@@ -134,7 +131,7 @@ class WechatMPChannel(ChatChannel):
                 # content_type = pic_res.headers.get('content-type')
                 media_id = self.client.upload_media("image", (filename, image_storage, content_type))
                 self.client.send_image(receiver, media_id)
-                logger.info("[wechatmp] sendImage url={}, receiver={}".format(img_url, receiver))
+                logger.info("[wechatmp] Do send image to {}".format(receiver))
             elif reply.type == ReplyType.IMAGE:  # 从文件读取图片
                 image_storage = reply.content
                 image_storage.seek(0)
@@ -143,7 +140,7 @@ class WechatMPChannel(ChatChannel):
                 content_type = "image/" + image_type
                 media_id = self.client.upload_media("image", (filename, image_storage, content_type))
                 self.client.send_image(receiver, media_id)
-                logger.info("[wechatmp] sendImage, receiver={}".format(receiver))
+                logger.info("[wechatmp] Do send image to {}".format(receiver))
         return
 
     def _success_callback(self, session_id, context, **kwargs):  # 线程异常结束时的回调函数
