@@ -36,16 +36,16 @@ def verify_server(data):
 
 
 def subscribe_msg():
-    trigger_prefix = conf().get("single_chat_prefix", [""])[0]
+    trigger_prefix = conf().get("single_chat_prefix", [""])
     msg = textwrap.dedent(
         f"""\
                     感谢您的关注！
                     这里是ChatGPT，可以自由对话。
                     资源有限，回复较慢，请勿着急。
-                    支持通用表情输入。
+                    支持语音对话。
                     暂时不支持图片输入。
-                    支持图片输出，画字开头的问题将回复图片链接。
-                    支持角色扮演和文字冒险两种定制模式对话。
+                    支持图片输出，画字开头的消息将按要求创作图片。
+                    支持tool、角色扮演和文字冒险等丰富的插件。
                     输入'{trigger_prefix}#帮助' 查看详细指令。"""
     )
     return msg
