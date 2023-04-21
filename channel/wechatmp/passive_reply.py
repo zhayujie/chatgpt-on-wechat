@@ -25,21 +25,9 @@ class Query:
             message = web.data() # todo crypto
             msg = parse_message(message)
             logger.debug("[wechatmp] Receive post data:\n" + message.decode("utf-8"))
-            if msg.type == "event":
-                logger.info(
-                    "[wechatmp] Event {} from {}".format(
-                        msg.event, msg.source
-                    )
-                )
-                if msg.event in ["subscribe", "subscribe_scan"]:
-                    reply_text = subscribe_msg()
-                    replyPost = create_reply(reply_text, msg)
-                    return replyPost.render()
-                else:
-                    return "success"
-        
-            wechatmp_msg = WeChatMPMessage(msg, client=channel.client)
-            if wechatmp_msg.ctype in [ContextType.TEXT, ContextType.IMAGE, ContextType.VOICE]:
+
+            if msg.type in ["text", "voice", "image"]:
+                wechatmp_msg = WeChatMPMessage(msg, client=channel.client)
                 from_user = wechatmp_msg.from_user_id
                 content = wechatmp_msg.content
                 message_id = wechatmp_msg.msg_id
@@ -76,7 +64,7 @@ class Query:
                         channel.running.add(from_user)
                         channel.produce(context)
                     else:
-                        trigger_prefix = conf().get("single_chat_prefix", [""])
+                        trigger_prefix = conf().get("single_chat_prefix", [""])[0]
                         if trigger_prefix or not supported:
                             if trigger_prefix:
                                 reply_text = textwrap.dedent(
@@ -107,13 +95,13 @@ class Query:
                 request_cnt = channel.request_cnt.get(message_id, 0) + 1
                 channel.request_cnt[message_id] = request_cnt
                 logger.info(
-                    "[wechatmp] Request {} from {} {}\n{}\n{}:{}".format(
+                    "[wechatmp] Request {} from {} {} {}:{}\n{}".format(
                         request_cnt,
                         from_user,
                         message_id,
-                        content,
                         web.ctx.env.get("REMOTE_ADDR"),
                         web.ctx.env.get("REMOTE_PORT"),
+                        content
                     )
                 )
 
@@ -151,23 +139,23 @@ class Query:
 
                 # Only one request can access to the cached data
                 try:
-                    (reply_type, content) = channel.cache_dict.pop(from_user)
+                    (reply_type, reply_content) = channel.cache_dict.pop(from_user)
                 except KeyError:
                     return "success"
 
                 if (reply_type == "text"):
-                    if len(content.encode("utf8")) <= MAX_UTF8_LEN:
-                        reply_text = content
+                    if len(reply_content.encode("utf8")) <= MAX_UTF8_LEN:
+                        reply_text = reply_content
                     else:
                         continue_text = "\n【未完待续，回复任意文字以继续】"
                         splits = split_string_by_utf8_length(
-                            content,
+                            reply_content,
                             MAX_UTF8_LEN - len(continue_text.encode("utf-8")),
                             max_split=1,
                         )
                         reply_text = splits[0] + continue_text
                         channel.cache_dict[from_user] = ("text", splits[1])
-                    
+
                     logger.info(
                         "[wechatmp] Request {} do send to {} {}: {}\n{}".format(
                             request_cnt,
@@ -180,20 +168,51 @@ class Query:
                     replyPost = create_reply(reply_text, msg)
                     return replyPost.render()
 
-
                 elif (reply_type == "voice"):
-                    media_id = content
+                    media_id = reply_content
                     asyncio.run_coroutine_threadsafe(channel.delete_media(media_id), channel.delete_media_loop)
+                    logger.info(
+                        "[wechatmp] Request {} do send to {} {}: {} voice media_id {}".format(
+                            request_cnt,
+                            from_user,
+                            message_id,
+                            content,
+                            media_id,
+                        )
+                    )
                     replyPost = VoiceReply(message=msg)
                     replyPost.media_id = media_id
                     return replyPost.render()
 
                 elif (reply_type == "image"):
-                    media_id = content
+                    media_id = reply_content
                     asyncio.run_coroutine_threadsafe(channel.delete_media(media_id), channel.delete_media_loop)
+                    logger.info(
+                        "[wechatmp] Request {} do send to {} {}: {} image media_id {}".format(
+                            request_cnt,
+                            from_user,
+                            message_id,
+                            content,
+                            media_id,
+                        )
+                    )
                     replyPost = ImageReply(message=msg)
                     replyPost.media_id = media_id
                     return replyPost.render()
+
+            elif msg.type == "event":
+                logger.info(
+                    "[wechatmp] Event {} from {}".format(
+                        msg.event, msg.source
+                    )
+                )
+                if msg.event in ["subscribe", "subscribe_scan"]:
+                    reply_text = subscribe_msg()
+                    replyPost = create_reply(reply_text, msg)
+                    return replyPost.render()
+                else:
+                    return "success"
+
             else:
                 logger.info("暂且不处理")
                 return "success"
