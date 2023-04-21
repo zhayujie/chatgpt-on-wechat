@@ -92,7 +92,6 @@ class WechatMPChannel(ChatChannel):
             elif reply.type == ReplyType.IMAGE_URL:  # 从网络下载图片
                 img_url = reply.content
                 pic_res = requests.get(img_url, stream=True)
-                print(pic_res.headers)
                 image_storage = io.BytesIO()
                 for block in pic_res.iter_content(1024):
                     image_storage.write(block)
@@ -159,7 +158,6 @@ class WechatMPChannel(ChatChannel):
             elif reply.type == ReplyType.IMAGE_URL:  # 从网络下载图片
                 img_url = reply.content
                 pic_res = requests.get(img_url, stream=True)
-                print(pic_res.headers)
                 image_storage = io.BytesIO()
                 for block in pic_res.iter_content(1024):
                     image_storage.write(block)
