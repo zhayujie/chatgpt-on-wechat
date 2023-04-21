@@ -30,9 +30,12 @@ class Query:
                         msg.event, msg.source
                     )
                 )
-                reply_text = subscribe_msg()
-                replyPost = create_reply(reply_text, msg)
-                return replyPost.render()
+                if msg.event in ["subscribe", "subscribe_scan"]:
+                    reply_text = subscribe_msg()
+                    replyPost = create_reply(reply_text, msg)
+                    return replyPost.render()
+                else:
+                    return "success"
             wechatmp_msg = WeChatMPMessage(msg, client=channel.client)
             if wechatmp_msg.ctype in [ContextType.TEXT, ContextType.IMAGE, ContextType.VOICE]:
                 from_user = wechatmp_msg.from_user_id

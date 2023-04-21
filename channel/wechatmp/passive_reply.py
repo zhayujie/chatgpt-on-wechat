@@ -25,16 +25,18 @@ class Query:
             message = web.data() # todo crypto
             msg = parse_message(message)
             logger.debug("[wechatmp] Receive post data:\n" + message.decode("utf-8"))
-            
             if msg.type == "event":
                 logger.info(
                     "[wechatmp] Event {} from {}".format(
                         msg.event, msg.source
                     )
                 )
-                reply_text = subscribe_msg()
-                replyPost = create_reply(reply_text, msg)
-                return replyPost.render()
+                if msg.event in ["subscribe", "subscribe_scan"]:
+                    reply_text = subscribe_msg()
+                    replyPost = create_reply(reply_text, msg)
+                    return replyPost.render()
+                else:
+                    return "success"
         
             wechatmp_msg = WeChatMPMessage(msg, client=channel.client)
             if wechatmp_msg.ctype in [ContextType.TEXT, ContextType.IMAGE, ContextType.VOICE]:
