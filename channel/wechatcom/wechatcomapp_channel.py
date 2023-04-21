@@ -17,6 +17,7 @@ from channel.chat_channel import ChatChannel
 from channel.wechatcom.wechatcomapp_message import WechatComAppMessage
 from common.log import logger
 from common.singleton import singleton
+from common.utils import compress_imgfile, fsize
 from config import conf
 from voice.audio_convert import any_to_amr
 
@@ -81,6 +82,14 @@ class WechatComAppChannel(ChatChannel):
             image_storage = io.BytesIO()
             for block in pic_res.iter_content(1024):
                 image_storage.write(block)
+            if (sz := fsize(image_storage)) >= 10 * 1024 * 1024:
+                logger.info(
+                    "[wechatcom] image too large, ready to compress, sz={}".format(sz)
+                )
+                image_storage = compress_imgfile(image_storage, 10 * 1024 * 1024 - 1)
+                logger.info(
+                    "[wechatcom] image compressed, sz={}".format(fsize(image_storage))
+                )
             image_storage.seek(0)
             try:
                 response = self.client.media.upload("image", image_storage)
@@ -88,6 +97,7 @@ class WechatComAppChannel(ChatChannel):
             except WeChatClientException as e:
                 logger.error("[wechatcom] upload image failed: {}".format(e))
                 return
+
             self.client.message.send_image(
                 self.agent_id, receiver, response["media_id"]
             )
@@ -96,6 +106,14 @@ class WechatComAppChannel(ChatChannel):
             )
         elif reply.type == ReplyType.IMAGE:  # 从文件读取图片
             image_storage = reply.content
+            if (sz := fsize(image_storage)) >= 10 * 1024 * 1024:
+                logger.info(
+                    "[wechatcom] image too large, ready to compress, sz={}".format(sz)
+                )
+                image_storage = compress_imgfile(image_storage, 10 * 1024 * 1024 - 1)
+                logger.info(
+                    "[wechatcom] image compressed, sz={}".format(fsize(image_storage))
+                )
             image_storage.seek(0)
             try:
                 response = self.client.media.upload("image", image_storage)
