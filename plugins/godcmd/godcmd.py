@@ -209,6 +209,13 @@ class Godcmd(Plugin):
         content = e_context["context"].content
         logger.debug("[Godcmd] on_handle_context. content: %s" % content)
         if content.startswith("#"):
+            if len(content) == 1:
+                reply = Reply()
+                reply.type = ReplyType.ERROR
+                reply.content = f"空指令，输入#help查看指令列表\n"
+                e_context["reply"] = reply
+                e_context.action = EventAction.BREAK_PASS
+                return 
             # msg = e_context['context']['msg']
             channel = e_context["channel"]
             user = e_context["context"]["receiver"]

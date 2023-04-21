@@ -1,20 +1,22 @@
 # -*- coding: utf-8 -*-
-import json
-import threading
+import io
+import os
 import time
-
+import imghdr
 import requests
-import web
-
 from bridge.context import *
 from bridge.reply import *
 from channel.chat_channel import ChatChannel
+from channel.wechatmp.wechatmp_client import WechatMPClient
 from channel.wechatmp.common import *
-from common.expired_dict import ExpiredDict
 from common.log import logger
 from common.singleton import singleton
 from config import conf
 
+import asyncio
+from threading import Thread
+
+import web
 # If using SSL, uncomment the following lines, and modify the certificate path.
 # from cheroot.server import HTTPServer
 # from cheroot.ssl.builtin import BuiltinSSLAdapter
@@ -28,94 +30,120 @@ class WechatMPChannel(ChatChannel):
     def __init__(self, passive_reply=True):
         super().__init__()
         self.passive_reply = passive_reply
-        self.running = set()
-        self.received_msgs = ExpiredDict(60 * 60 * 24)
+        self.NOT_SUPPORT_REPLYTYPE = []
+        self.client = WechatMPClient()
         if self.passive_reply:
-            self.NOT_SUPPORT_REPLYTYPE = [ReplyType.IMAGE, ReplyType.VOICE]
+            # Cache the reply to the user's first message
             self.cache_dict = dict()
-            self.query1 = dict()
-            self.query2 = dict()
-            self.query3 = dict()
-        else:
-            # TODO support image
-            self.NOT_SUPPORT_REPLYTYPE = [ReplyType.IMAGE, ReplyType.VOICE]
-            self.app_id = conf().get("wechatmp_app_id")
-            self.app_secret = conf().get("wechatmp_app_secret")
-            self.access_token = None
-            self.access_token_expires_time = 0
-            self.access_token_lock = threading.Lock()
-            self.get_access_token()
+            # Record whether the current message is being processed
+            self.running = set()
+            # Count the request from wechat official server by message_id
+            self.request_cnt = dict()
+            # The permanent media need to be deleted to avoid media number limit
+            self.delete_media_loop = asyncio.new_event_loop()
+            t = Thread(target=self.start_loop, args=(self.delete_media_loop,))
+            t.setDaemon(True)
+            t.start()
+
 
     def startup(self):
         if self.passive_reply:
-            urls = ("/wx", "channel.wechatmp.SubscribeAccount.Query")
+            urls = ("/wx", "channel.wechatmp.passive_reply.Query")
         else:
-            urls = ("/wx", "channel.wechatmp.ServiceAccount.Query")
+            urls = ("/wx", "channel.wechatmp.active_reply.Query")
         app = web.application(urls, globals(), autoreload=False)
         port = conf().get("wechatmp_port", 8080)
         web.httpserver.runsimple(app.wsgifunc(), ("0.0.0.0", port))
 
-    def wechatmp_request(self, method, url, **kwargs):
-        r = requests.request(method=method, url=url, **kwargs)
-        r.raise_for_status()
-        r.encoding = "utf-8"
-        ret = r.json()
-        if "errcode" in ret and ret["errcode"] != 0:
-            raise WeChatAPIException("{}".format(ret))
-        return ret
+    def start_loop(self, loop):
+        asyncio.set_event_loop(loop)
+        loop.run_forever()
 
-    def get_access_token(self):
-        # return the access_token
-        if self.access_token:
-            if self.access_token_expires_time - time.time() > 60:
-                return self.access_token
-
-        # Get new access_token
-        # Do not request access_token in parallel! Only the last obtained is valid.
-        if self.access_token_lock.acquire(blocking=False):
-            # Wait for other threads that have previously obtained access_token to complete the request
-            # This happens every 2 hours, so it doesn't affect the experience very much
-            time.sleep(1)
-            self.access_token = None
-            url = "https://api.weixin.qq.com/cgi-bin/token"
-            params = {
-                "grant_type": "client_credential",
-                "appid": self.app_id,
-                "secret": self.app_secret,
-            }
-            data = self.wechatmp_request(method="get", url=url, params=params)
-            self.access_token = data["access_token"]
-            self.access_token_expires_time = int(time.time()) + data["expires_in"]
-            logger.info("[wechatmp] access_token: {}".format(self.access_token))
-            self.access_token_lock.release()
-        else:
-            # Wait for token update
-            while self.access_token_lock.locked():
-                time.sleep(0.1)
-        return self.access_token
+    async def delete_media(self, media_id):
+        logger.debug("[wechatmp] permanent media {} will be deleted in 10s".format(media_id))
+        await asyncio.sleep(10)
+        self.client.delete_permanent_media(media_id)
+        logger.info("[wechatmp] permanent media {} has been deleted".format(media_id))
 
     def send(self, reply: Reply, context: Context):
+        receiver = context["receiver"]
         if self.passive_reply:
-            receiver = context["receiver"]
-            self.cache_dict[receiver] = reply.content
-            logger.info("[send] reply to {} saved to cache: {}".format(receiver, reply))
+            if reply.type == ReplyType.TEXT or reply.type == ReplyType.INFO or reply.type == ReplyType.ERROR:
+                reply_text = reply.content
+                logger.info("[wechatmp] reply to {} cached:\n{}".format(receiver, reply_text))
+                self.cache_dict[receiver] = ("text", reply_text)
+            elif reply.type == ReplyType.VOICE:
+                voice_file_path = reply.content
+                logger.info("[wechatmp] voice file path {}".format(voice_file_path))
+                with open(voice_file_path, 'rb') as f:
+                    filename = receiver + "-" + context["msg"].msg_id + ".mp3"
+                    media_id = self.client.upload_permanent_media("voice", (filename, f, "audio/mpeg"))
+                    # 根据文件大小估计一个微信自动审核的时间，审核结束前返回将会导致语音无法播放，这个估计有待验证
+                    f_size = os.fstat(f.fileno()).st_size
+                    print(f_size)
+                    time.sleep(1.0 + 2 * f_size / 1024 / 1024)
+                    logger.info("[wechatmp] voice reply to {} uploaded: {}".format(receiver, media_id))
+                    self.cache_dict[receiver] = ("voice", media_id)
+            elif reply.type == ReplyType.IMAGE_URL:  # 从网络下载图片
+                img_url = reply.content
+                pic_res = requests.get(img_url, stream=True)
+                print(pic_res.headers)
+                image_storage = io.BytesIO()
+                for block in pic_res.iter_content(1024):
+                    image_storage.write(block)
+                image_storage.seek(0)
+                image_type = imghdr.what(image_storage)
+                filename = receiver + "-" + context["msg"].msg_id + "." + image_type
+                content_type = "image/" + image_type
+                media_id = self.client.upload_permanent_media("image", (filename, image_storage, content_type))
+                logger.info("[wechatmp] image reply to {} uploaded: {}".format(receiver, media_id))
+                self.cache_dict[receiver] = ("image", media_id)
+            elif reply.type == ReplyType.IMAGE:  # 从文件读取图片
+                image_storage = reply.content
+                image_storage.seek(0)
+                image_type = imghdr.what(image_storage)
+                filename = receiver + "-" + context["msg"].msg_id + "." + image_type
+                content_type = "image/" + image_type
+                media_id = self.client.upload_permanent_media("image", (filename, image_storage, content_type))
+                logger.info("[wechatmp] image reply to {} uploaded: {}".format(receiver, media_id))
+                self.cache_dict[receiver] = ("image", media_id)
         else:
-            receiver = context["receiver"]
-            reply_text = reply.content
-            url = "https://api.weixin.qq.com/cgi-bin/message/custom/send"
-            params = {"access_token": self.get_access_token()}
-            json_data = {
-                "touser": receiver,
-                "msgtype": "text",
-                "text": {"content": reply_text},
-            }
-            self.wechatmp_request(
-                method="post",
-                url=url,
-                params=params,
-                data=json.dumps(json_data, ensure_ascii=False).encode("utf8"),
-            )
-            logger.info("[send] Do send to {}: {}".format(receiver, reply_text))
+            if reply.type == ReplyType.TEXT or reply.type == ReplyType.INFO or reply.type == ReplyType.ERROR:
+                reply_text = reply.content
+                self.client.send_text(receiver, reply_text)
+                logger.info("[wechatmp] Do send to {}: {}".format(receiver, reply_text))
+            elif reply.type == ReplyType.VOICE:
+                voice_file_path = reply.content
+                logger.info("[wechatmp] voice file path {}".format(voice_file_path))
+                with open(voice_file_path, 'rb') as f:
+                    filename = receiver + "-" + context["msg"].msg_id + ".mp3"
+                    media_id = self.client.upload_media("voice", (filename, f, "audio/mpeg"))
+                    self.client.send_voice(receiver, media_id)
+                    logger.info("[wechatmp] Do send voice to {}".format(receiver))
+            elif reply.type == ReplyType.IMAGE_URL:  # 从网络下载图片
+                img_url = reply.content
+                pic_res = requests.get(img_url, stream=True)
+                print(pic_res.headers)
+                image_storage = io.BytesIO()
+                for block in pic_res.iter_content(1024):
+                    image_storage.write(block)
+                image_storage.seek(0)
+                image_type = imghdr.what(image_storage)
+                filename = receiver + "-" + context["msg"].msg_id + "." + image_type
+                content_type = "image/" + image_type
+                # content_type = pic_res.headers.get('content-type')
+                media_id = self.client.upload_media("image", (filename, image_storage, content_type))
+                self.client.send_image(receiver, media_id)
+                logger.info("[wechatmp] sendImage url={}, receiver={}".format(img_url, receiver))
+            elif reply.type == ReplyType.IMAGE:  # 从文件读取图片
+                image_storage = reply.content
+                image_storage.seek(0)
+                image_type = imghdr.what(image_storage)
+                filename = receiver + "-" + context["msg"].msg_id + "." + image_type
+                content_type = "image/" + image_type
+                media_id = self.client.upload_media("image", (filename, image_storage, content_type))
+                self.client.send_image(receiver, media_id)
+                logger.info("[wechatmp] sendImage, receiver={}".format(receiver))
         return
 
     def _success_callback(self, session_id, context, **kwargs):  # 线程异常结束时的回调函数

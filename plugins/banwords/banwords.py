@@ -102,4 +102,4 @@ class Banwords(Plugin):
                 return
 
     def get_help_text(self, **kwargs):
-        return Banwords.desc
+        return "过滤消息中的敏感词。"
