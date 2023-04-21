@@ -21,6 +21,7 @@ class Query:
         # Make sure to return the instance that first created, @singleton will do that.
         channel = WechatMPChannel()
         try:
+            verify_server(web.input())
             message = web.data() # todo crypto
             # logger.debug("[wechatmp] Receive request:\n" + webData.decode("utf-8"))
             msg = parse_message(message)

@@ -20,6 +20,7 @@ class Query:
 
     def POST(self):
         try:
+            verify_server(web.input())
             request_time = time.time()
             channel = WechatMPChannel()
             message = web.data() # todo crypto
