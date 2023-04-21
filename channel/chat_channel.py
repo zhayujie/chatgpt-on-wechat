@@ -13,6 +13,8 @@ from common.log import logger
 from config import conf
 from plugins import *
 
+import pypinyin
+
 try:
     from voice.audio_convert import any_to_wav
 except Exception as e:
@@ -107,7 +109,7 @@ class ChatChannel(Channel):
 
             if context.get("isgroup", False):  # 群聊
                 # 校验关键字
-                match_prefix = check_prefix(content, conf().get("group_chat_prefix"))
+                match_prefix = check_prefix(content, conf().get("group_chat_prefix"), context)
                 match_contain = check_contain(content, conf().get("group_chat_keyword"))
                 flag = False
                 if match_prefix is not None or match_contain is not None:
@@ -129,7 +131,7 @@ class ChatChannel(Channel):
                     return None
             else:  # 单聊
                 match_prefix = check_prefix(
-                    content, conf().get("single_chat_prefix", [""])
+                    content, conf().get("single_chat_prefix", [""]), context
                 )
                 if match_prefix is not None:  # 判断如果匹配到自定义前缀，则返回过滤掉前缀+空格后的内容
                     content = content.replace(match_prefix, "", 1).strip()
@@ -140,7 +142,7 @@ class ChatChannel(Channel):
                 else:
                     return None
 
-            img_match_prefix = check_prefix(content, conf().get("image_create_prefix"))
+            img_match_prefix = check_prefix(content, conf().get("image_create_prefix"), context)
             if img_match_prefix:
                 content = content.replace(img_match_prefix, "", 1)
                 context.type = ContextType.IMAGE_CREATE
@@ -419,12 +421,22 @@ class ChatChannel(Channel):
                 self.sessions[session_id][0] = Dequeue()
 
 
-def check_prefix(content, prefix_list):
+def check_prefix(content, prefix_list, context):
     if not prefix_list:
         return None
     for prefix in prefix_list:
         if content.startswith(prefix):
             return prefix
+    # 当直接中文匹配不成功时，尝试用拼音匹配，提升语音识别率
+    if context is not None and context["origin_ctype"] == ContextType.VOICE:
+        prefix_list_pinyin = [pypinyin.slug(p, separator='', style=pypinyin.NORMAL) for p in prefix_list]
+        max_len = len(max(prefix_list, key=len))
+        content_pinyin = pypinyin.slug(content[0:max_len], separator='', style=pypinyin.NORMAL)
+        index = 0
+        for prefix_pinyin in prefix_list_pinyin:
+            if content_pinyin.startswith(prefix_pinyin):
+                return content[0:prefix_list[index]]
+            index += 1
     return None
 
 
