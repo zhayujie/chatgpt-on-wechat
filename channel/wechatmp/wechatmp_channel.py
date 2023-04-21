@@ -130,7 +130,11 @@ class WechatMPChannel(ChatChannel):
         else:
             if reply.type == ReplyType.TEXT or reply.type == ReplyType.INFO or reply.type == ReplyType.ERROR:
                 reply_text = reply.content
-                self.client.message.send_text(receiver, reply_text)
+                texts = split_string_by_utf8_length(reply_text, MAX_UTF8_LEN)
+                if len(texts)>1:
+                    logger.info("[wechatmp] text too long, split into {} parts".format(len(texts)))
+                for text in texts:
+                    self.client.message.send_text(receiver, text)
                 logger.info("[wechatmp] Do send text to {}: {}".format(receiver, reply_text))
             elif reply.type == ReplyType.VOICE:
                 try:

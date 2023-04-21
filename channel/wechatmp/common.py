@@ -51,7 +51,7 @@ def split_string_by_utf8_length(string, max_length, max_split=0):
         if max_split > 0 and len(result) >= max_split:
             result.append(encoded[start:].decode("utf-8"))
             break
-        end = start + max_length
+        end = min(start + max_length, len(encoded))
         # 如果当前字节不是 UTF-8 编码的开始字节，则向前查找直到找到开始字节为止
         while end < len(encoded) and (encoded[end] & 0b11000000) == 0b10000000:
             end -= 1
