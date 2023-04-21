@@ -16,6 +16,7 @@ from channel.chat_channel import ChatChannel
 from channel.wechatmp.common import *
 from channel.wechatmp.wechatmp_client import WechatMPClient
 from wechatpy.exceptions import WeChatClientException
+from wechatpy.crypto import WeChatCrypto
 
 import web
 # If using SSL, uncomment the following lines, and modify the certificate path.
@@ -34,7 +35,12 @@ class WechatMPChannel(ChatChannel):
         self.NOT_SUPPORT_REPLYTYPE = []
         appid = conf().get("wechatmp_app_id")
         secret = conf().get("wechatmp_app_secret")
+        token = conf().get("wechatmp_token")
+        aes_key = conf().get("wechatmp_aes_key")
         self.client = WechatMPClient(appid, secret)
+        self.crypto = None
+        if aes_key:
+            self.crypto = WeChatCrypto(token, aes_key, appid)
         if self.passive_reply:
             # Cache the reply to the user's first message
             self.cache_dict = dict()

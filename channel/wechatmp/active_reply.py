@@ -19,26 +19,23 @@ class Query:
 
     def POST(self):
         # Make sure to return the instance that first created, @singleton will do that.
-        channel = WechatMPChannel()
         try:
-            verify_server(web.input())
-            message = web.data() # todo crypto
-            # logger.debug("[wechatmp] Receive request:\n" + webData.decode("utf-8"))
+            args = web.input()
+            verify_server(args)
+            channel = WechatMPChannel()
+            message = web.data()
+            encrypt_func = lambda x: x
+            if args.get("encrypt_type") == "aes":
+                logger.debug("[wechatmp] Receive encrypted post data:\n" + message.decode("utf-8"))
+                if not channel.crypto:
+                    raise Exception("Crypto not initialized, Please set wechatmp_aes_key in config.json")
+                message = channel.crypto.decrypt_message(message, args.msg_signature, args.timestamp, args.nonce)
+                encrypt_func = lambda x: channel.crypto.encrypt_message(x, args.nonce, args.timestamp)
+            else:
+                logger.debug("[wechatmp] Receive post data:\n" + message.decode("utf-8"))
             msg = parse_message(message)
-            if msg.type == "event":
-                logger.info(
-                    "[wechatmp] Event {} from {}".format(
-                        msg.event, msg.source
-                    )
-                )
-                if msg.event in ["subscribe", "subscribe_scan"]:
-                    reply_text = subscribe_msg()
-                    replyPost = create_reply(reply_text, msg)
-                    return replyPost.render()
-                else:
-                    return "success"
-            wechatmp_msg = WeChatMPMessage(msg, client=channel.client)
-            if wechatmp_msg.ctype in [ContextType.TEXT, ContextType.IMAGE, ContextType.VOICE]:
+            if msg.type in ["text", "voice", "image"]:
+                wechatmp_msg = WeChatMPMessage(msg, client=channel.client)
                 from_user = wechatmp_msg.from_user_id
                 content = wechatmp_msg.content
                 message_id = wechatmp_msg.msg_id
@@ -70,6 +67,18 @@ class Query:
                     channel.produce(context)
                 # The reply will be sent by channel.send() in another thread
                 return "success"
+            elif msg.type == "event":
+                logger.info(
+                    "[wechatmp] Event {} from {}".format(
+                        msg.event, msg.source
+                    )
+                )
+                if msg.event in ["subscribe", "subscribe_scan"]:
+                    reply_text = subscribe_msg()
+                    replyPost = create_reply(reply_text, msg)
+                    return encrypt_func(replyPost.render())
+                else:
+                    return "success"
             else:
                 logger.info("暂且不处理")
                 return "success"

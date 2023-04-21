@@ -20,13 +20,21 @@ class Query:
 
     def POST(self):
         try:
-            verify_server(web.input())
+            args = web.input()
+            verify_server(args)
             request_time = time.time()
             channel = WechatMPChannel()
-            message = web.data() # todo crypto
+            message = web.data()
+            encrypt_func = lambda x: x
+            if args.get("encrypt_type") == "aes":
+                logger.debug("[wechatmp] Receive encrypted post data:\n" + message.decode("utf-8"))
+                if not channel.crypto:
+                    raise Exception("Crypto not initialized, Please set wechatmp_aes_key in config.json")
+                message = channel.crypto.decrypt_message(message, args.msg_signature, args.timestamp, args.nonce)
+                encrypt_func = lambda x: channel.crypto.encrypt_message(x, args.nonce, args.timestamp)
+            else:
+                logger.debug("[wechatmp] Receive post data:\n" + message.decode("utf-8"))
             msg = parse_message(message)
-            logger.debug("[wechatmp] Receive post data:\n" + message.decode("utf-8"))
-
             if msg.type in ["text", "voice", "image"]:
                 wechatmp_msg = WeChatMPMessage(msg, client=channel.client)
                 from_user = wechatmp_msg.from_user_id
@@ -88,7 +96,7 @@ class Query:
                             )
                         
                         replyPost = create_reply(reply_text, msg)
-                        return replyPost.render()
+                        return encrypt_func(replyPost.render())
 
 
                 # Wechat official server will request 3 times (5 seconds each), with the same message_id.
@@ -126,7 +134,7 @@ class Query:
                         # return timeout message
                         reply_text = "【正在思考中，回复任意文字尝试获取回复】"
                         replyPost = create_reply(reply_text, msg)
-                        return replyPost.render()
+                        return encrypt_func(replyPost.render())
 
                 # reply is ready
                 channel.request_cnt.pop(message_id)
@@ -167,7 +175,7 @@ class Query:
                         )
                     )
                     replyPost = create_reply(reply_text, msg)
-                    return replyPost.render()
+                    return encrypt_func(replyPost.render())
 
                 elif (reply_type == "voice"):
                     media_id = reply_content
@@ -183,7 +191,7 @@ class Query:
                     )
                     replyPost = VoiceReply(message=msg)
                     replyPost.media_id = media_id
-                    return replyPost.render()
+                    return encrypt_func(replyPost.render())
 
                 elif (reply_type == "image"):
                     media_id = reply_content
@@ -199,7 +207,7 @@ class Query:
                     )
                     replyPost = ImageReply(message=msg)
                     replyPost.media_id = media_id
-                    return replyPost.render()
+                    return encrypt_func(replyPost.render())
 
             elif msg.type == "event":
                 logger.info(
@@ -210,7 +218,7 @@ class Query:
                 if msg.event in ["subscribe", "subscribe_scan"]:
                     reply_text = subscribe_msg()
                     replyPost = create_reply(reply_text, msg)
-                    return replyPost.render()
+                    return encrypt_func(replyPost.render())
                 else:
                     return "success"
 

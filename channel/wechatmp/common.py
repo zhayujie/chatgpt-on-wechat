@@ -17,7 +17,7 @@ def verify_server(data):
         signature = data.signature
         timestamp = data.timestamp
         nonce = data.nonce
-        echostr = data.echostr
+        echostr = data.get("echostr", None)
         token = conf().get("wechatmp_token")  # 请按照公众平台官网\基本配置中信息填写
         check_signature(token, signature, timestamp, nonce)
         return echostr
