@@ -435,7 +435,7 @@ def check_prefix(content, prefix_list, context):
         index = 0
         for prefix_pinyin in prefix_list_pinyin:
             if content_pinyin.startswith(prefix_pinyin):
-                return content[0:prefix_list[index]]
+                return content[0:len(prefix_list[index])]
             index += 1
     return None
 
