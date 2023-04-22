@@ -31,23 +31,14 @@ class PluginManager:
             plugincls.desc = kwargs.get("desc")
             plugincls.author = kwargs.get("author")
             plugincls.path = self.current_plugin_path
-            plugincls.version = (
-                kwargs.get("version") if kwargs.get("version") != None else "1.0"
-            )
-            plugincls.namecn = (
-                kwargs.get("namecn") if kwargs.get("namecn") != None else name
-            )
-            plugincls.hidden = (
-                kwargs.get("hidden") if kwargs.get("hidden") != None else False
-            )
+            plugincls.version = kwargs.get("version") if kwargs.get("version") != None else "1.0"
+            plugincls.namecn = kwargs.get("namecn") if kwargs.get("namecn") != None else name
+            plugincls.hidden = kwargs.get("hidden") if kwargs.get("hidden") != None else False
             plugincls.enabled = True
             if self.current_plugin_path == None:
                 raise Exception("Plugin path not set")
             self.plugins[name.upper()] = plugincls
-            logger.info(
-                "Plugin %s_v%s registered, path=%s"
-                % (name, plugincls.version, plugincls.path)
-            )
+            logger.info("Plugin %s_v%s registered, path=%s" % (name, plugincls.version, plugincls.path))
 
         return wrapper
 
@@ -62,9 +53,7 @@ class PluginManager:
         if os.path.exists("./plugins/plugins.json"):
             with open("./plugins/plugins.json", "r", encoding="utf-8") as f:
                 pconf = json.load(f)
-                pconf["plugins"] = SortedDict(
-                    lambda k, v: v["priority"], pconf["plugins"], reverse=True
-                )
+                pconf["plugins"] = SortedDict(lambda k, v: v["priority"], pconf["plugins"], reverse=True)
         else:
             modified = True
             pconf = {"plugins": SortedDict(lambda k, v: v["priority"], reverse=True)}
@@ -90,26 +79,16 @@ class PluginManager:
                         if plugin_path in self.loaded:
                             if self.loaded[plugin_path] == None:
                                 logger.info("reload module %s" % plugin_name)
-                                self.loaded[plugin_path] = importlib.reload(
-                                    sys.modules[import_path]
-                                )
-                                dependent_module_names = [
-                                    name
-                                    for name in sys.modules.keys()
-                                    if name.startswith(import_path + ".")
-                                ]
+                                self.loaded[plugin_path] = importlib.reload(sys.modules[import_path])
+                                dependent_module_names = [name for name in sys.modules.keys() if name.startswith(import_path + ".")]
                                 for name in dependent_module_names:
                                     logger.info("reload module %s" % name)
                                     importlib.reload(sys.modules[name])
                         else:
-                            self.loaded[plugin_path] = importlib.import_module(
-                                import_path
-                            )
+                            self.loaded[plugin_path] = importlib.import_module(import_path)
                         self.current_plugin_path = None
                     except Exception as e:
-                        logger.exception(
-                            "Failed to import plugin %s: %s" % (plugin_name, e)
-                        )
+                        logger.exception("Failed to import plugin %s: %s" % (plugin_name, e))
                         continue
         pconf = self.pconf
         news = [self.plugins[name] for name in self.plugins]
@@ -119,9 +98,7 @@ class PluginManager:
             rawname = plugincls.name
             if rawname not in pconf["plugins"]:
                 modified = True
-                logger.info(
-                    "Plugin %s not found in pconfig, adding to pconfig..." % name
-                )
+                logger.info("Plugin %s not found in pconfig, adding to pconfig..." % name)
                 pconf["plugins"][rawname] = {
                     "enabled": plugincls.enabled,
                     "priority": plugincls.priority,
@@ -136,9 +113,7 @@ class PluginManager:
 
     def refresh_order(self):
         for event in self.listening_plugins.keys():
-            self.listening_plugins[event].sort(
-                key=lambda name: self.plugins[name].priority, reverse=True
-            )
+            self.listening_plugins[event].sort(key=lambda name: self.plugins[name].priority, reverse=True)
 
     def activate_plugins(self):  # 生成新开启的插件实例
         failed_plugins = []
@@ -184,13 +159,8 @@ class PluginManager:
     def emit_event(self, e_context: EventContext, *args, **kwargs):
         if e_context.event in self.listening_plugins:
             for name in self.listening_plugins[e_context.event]:
-                if (
-                    self.plugins[name].enabled
-                    and e_context.action == EventAction.CONTINUE
-                ):
-                    logger.debug(
-                        "Plugin %s triggered by event %s" % (name, e_context.event)
-                    )
+                if self.plugins[name].enabled and e_context.action == EventAction.CONTINUE:
+                    logger.debug("Plugin %s triggered by event %s" % (name, e_context.event))
                     instance = self.instances[name]
                     instance.handlers[e_context.event](e_context, *args, **kwargs)
         return e_context
@@ -262,9 +232,7 @@ class PluginManager:
                     source = json.load(f)
                 if repo in source["repo"]:
                     repo = source["repo"][repo]["url"]
-                    match = re.match(
-                        r"^(https?:\/\/|git@)([^\/:]+)[\/:]([^\/:]+)\/(.+).git$", repo
-                    )
+                    match = re.match(r"^(https?:\/\/|git@)([^\/:]+)[\/:]([^\/:]+)\/(.+).git$", repo)
                     if not match:
                         return False, "安装插件失败，source中的仓库地址不合法"
                 else:

@@ -84,9 +84,7 @@ class Dungeon(Plugin):
                 if len(clist) > 1:
                     story = clist[1]
                 else:
-                    story = (
-                        "你在树林里冒险，指不定会从哪里蹦出来一些奇怪的东西，你握紧手上的手枪，希望这次冒险能够找到一些值钱的东西，你往树林深处走去。"
-                    )
+                    story = "你在树林里冒险，指不定会从哪里蹦出来一些奇怪的东西，你握紧手上的手枪，希望这次冒险能够找到一些值钱的东西，你往树林深处走去。"
                 self.games[sessionid] = StoryTeller(bot, sessionid, story)
                 reply = Reply(ReplyType.INFO, "冒险开始，你可以输入任意内容，让故事继续下去。故事背景是：" + story)
                 e_context["reply"] = reply
@@ -102,11 +100,7 @@ class Dungeon(Plugin):
         if kwargs.get("verbose") != True:
             return help_text
         trigger_prefix = conf().get("plugin_trigger_prefix", "$")
-        help_text = (
-            f"{trigger_prefix}开始冒险 "
-            + "背景故事: 开始一个基于{背景故事}的文字冒险，之后你的所有消息会协助完善这个故事。\n"
-            + f"{trigger_prefix}停止冒险: 结束游戏。\n"
-        )
+        help_text = f"{trigger_prefix}开始冒险 " + "背景故事: 开始一个基于{背景故事}的文字冒险，之后你的所有消息会协助完善这个故事。\n" + f"{trigger_prefix}停止冒险: 结束游戏。\n"
         if kwargs.get("verbose") == True:
             help_text += f"\n命令例子: '{trigger_prefix}开始冒险 你在树林里冒险，指不定会从哪里蹦出来一些奇怪的东西，你握紧手上的手枪，希望这次冒险能够找到一些值钱的东西，你往树林深处走去。'"
         return help_text

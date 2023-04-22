@@ -1,17 +1,18 @@
-import time
 import asyncio
+import time
 
 import web
+from wechatpy import parse_message
+from wechatpy.replies import ImageReply, VoiceReply, create_reply
 
-from channel.wechatmp.wechatmp_message import WeChatMPMessage
 from bridge.context import *
 from bridge.reply import *
 from channel.wechatmp.common import *
 from channel.wechatmp.wechatmp_channel import WechatMPChannel
+from channel.wechatmp.wechatmp_message import WeChatMPMessage
 from common.log import logger
 from config import conf
-from wechatpy import parse_message
-from wechatpy.replies import create_reply, ImageReply, VoiceReply
+
 
 # This class is instantiated once per query
 class Query:
@@ -49,21 +50,15 @@ class Query:
                 if (
                     from_user not in channel.cache_dict
                     and from_user not in channel.running
-                    or content.startswith("#") 
-                    and message_id not in channel.request_cnt # insert the godcmd
+                    or content.startswith("#")
+                    and message_id not in channel.request_cnt  # insert the godcmd
                 ):
                     # The first query begin
                     if msg.type == "voice" and wechatmp_msg.ctype == ContextType.TEXT and conf().get("voice_reply_voice", False):
-                        context = channel._compose_context(
-                            wechatmp_msg.ctype, content, isgroup=False, desire_rtype=ReplyType.VOICE, msg=wechatmp_msg
-                        )
+                        context = channel._compose_context(wechatmp_msg.ctype, content, isgroup=False, desire_rtype=ReplyType.VOICE, msg=wechatmp_msg)
                     else:
-                        context = channel._compose_context(
-                            wechatmp_msg.ctype, content, isgroup=False, msg=wechatmp_msg
-                        )
-                    logger.debug(
-                        "[wechatmp] context: {} {} {}".format(context, wechatmp_msg, supported)
-                    )
+                        context = channel._compose_context(wechatmp_msg.ctype, content, isgroup=False, msg=wechatmp_msg)
+                    logger.debug("[wechatmp] context: {} {} {}".format(context, wechatmp_msg, supported))
 
                     if supported and context:
                         # set private openai_api_key
@@ -94,10 +89,9 @@ class Query:
                                 """\
                                 未知错误，请稍后再试"""
                             )
-                        
+
                         replyPost = create_reply(reply_text, msg)
                         return encrypt_func(replyPost.render())
-
 
                 # Wechat official server will request 3 times (5 seconds each), with the same message_id.
                 # Because the interval is 5 seconds, here assumed that do not have multithreading problems.
@@ -105,12 +99,7 @@ class Query:
                 channel.request_cnt[message_id] = request_cnt
                 logger.info(
                     "[wechatmp] Request {} from {} {} {}:{}\n{}".format(
-                        request_cnt,
-                        from_user,
-                        message_id,
-                        web.ctx.env.get("REMOTE_ADDR"),
-                        web.ctx.env.get("REMOTE_PORT"),
-                        content
+                        request_cnt, from_user, message_id, web.ctx.env.get("REMOTE_ADDR"), web.ctx.env.get("REMOTE_PORT"), content
                     )
                 )
 
@@ -130,7 +119,7 @@ class Query:
                         time.sleep(2)
                         # and do nothing, waiting for the next request
                         return "success"
-                    else: # request_cnt == 3:
+                    else:  # request_cnt == 3:
                         # return timeout message
                         reply_text = "【正在思考中，回复任意文字尝试获取回复】"
                         replyPost = create_reply(reply_text, msg)
@@ -140,10 +129,7 @@ class Query:
                 channel.request_cnt.pop(message_id)
 
                 # no return because of bandwords or other reasons
-                if (
-                    from_user not in channel.cache_dict
-                    and from_user not in channel.running
-                ):
+                if from_user not in channel.cache_dict and from_user not in channel.running:
                     return "success"
 
                 # Only one request can access to the cached data
@@ -152,7 +138,7 @@ class Query:
                 except KeyError:
                     return "success"
 
-                if (reply_type == "text"):
+                if reply_type == "text":
                     if len(reply_content.encode("utf8")) <= MAX_UTF8_LEN:
                         reply_text = reply_content
                     else:
@@ -177,7 +163,7 @@ class Query:
                     replyPost = create_reply(reply_text, msg)
                     return encrypt_func(replyPost.render())
 
-                elif (reply_type == "voice"):
+                elif reply_type == "voice":
                     media_id = reply_content
                     asyncio.run_coroutine_threadsafe(channel.delete_media(media_id), channel.delete_media_loop)
                     logger.info(
@@ -193,7 +179,7 @@ class Query:
                     replyPost.media_id = media_id
                     return encrypt_func(replyPost.render())
 
-                elif (reply_type == "image"):
+                elif reply_type == "image":
                     media_id = reply_content
                     asyncio.run_coroutine_threadsafe(channel.delete_media(media_id), channel.delete_media_loop)
                     logger.info(
@@ -210,11 +196,7 @@ class Query:
                     return encrypt_func(replyPost.render())
 
             elif msg.type == "event":
-                logger.info(
-                    "[wechatmp] Event {} from {}".format(
-                        msg.event, msg.source
-                    )
-                )
+                logger.info("[wechatmp] Event {} from {}".format(msg.event, msg.source))
                 if msg.event in ["subscribe", "subscribe_scan"]:
                     reply_text = subscribe_msg()
                     replyPost = create_reply(reply_text, msg)

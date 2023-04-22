@@ -60,7 +60,7 @@
 
 > 该tool每天返回内容相同
 
-#### 6.3. finance-news 
+#### 6.3. finance-news
 ###### 获取实时的金融财政新闻
 
 > 该工具需要解决browser tool 的google-chrome依赖安装

@@ -6,7 +6,6 @@ from common.log import logger
 from common.tmp_dir import TmpDir
 
 
-
 class WeChatMPMessage(ChatMessage):
     def __init__(self, msg, client=None):
         super().__init__(msg)
@@ -18,12 +17,9 @@ class WeChatMPMessage(ChatMessage):
             self.ctype = ContextType.TEXT
             self.content = msg.content
         elif msg.type == "voice":
-            
             if msg.recognition == None:
                 self.ctype = ContextType.VOICE
-                self.content = (
-                    TmpDir().path() + msg.media_id + "." + msg.format
-                )  # content直接存临时目录路径
+                self.content = TmpDir().path() + msg.media_id + "." + msg.format  # content直接存临时目录路径
 
                 def download_voice():
                     # 如果响应状态码是200，则将响应内容写入本地文件
@@ -32,9 +28,7 @@ class WeChatMPMessage(ChatMessage):
                         with open(self.content, "wb") as f:
                             f.write(response.content)
                     else:
-                        logger.info(
-                            f"[wechatmp] Failed to download voice file, {response.content}"
-                        )
+                        logger.info(f"[wechatmp] Failed to download voice file, {response.content}")
 
                 self._prepare_fn = download_voice
             else:
@@ -43,6 +37,7 @@ class WeChatMPMessage(ChatMessage):
         elif msg.type == "image":
             self.ctype = ContextType.IMAGE
             self.content = TmpDir().path() + msg.media_id + ".png"  # content直接存临时目录路径
+
             def download_image():
                 # 如果响应状态码是200，则将响应内容写入本地文件
                 response = client.media.download(msg.media_id)
@@ -50,15 +45,11 @@ class WeChatMPMessage(ChatMessage):
                     with open(self.content, "wb") as f:
                         f.write(response.content)
                 else:
-                    logger.info(
-                        f"[wechatmp] Failed to download image file, {response.content}"
-                    )
+                    logger.info(f"[wechatmp] Failed to download image file, {response.content}")
 
             self._prepare_fn = download_image
         else:
-            raise NotImplementedError(
-                "Unsupported message type: Type:{} ".format(msg.type)
-            )
+            raise NotImplementedError("Unsupported message type: Type:{} ".format(msg.type))
 
         self.from_user_id = msg.source
         self.to_user_id = msg.target

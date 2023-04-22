@@ -82,9 +82,7 @@ class Tool(Plugin):
                     return
                 elif content_list[1].startswith("reset"):
                     logger.debug("[tool]: remind")
-                    e_context[
-                        "context"
-                    ].content = "请你随机用一种聊天风格，提醒用户：如果想重置tool插件，reset之后不要加任何字符"
+                    e_context["context"].content = "请你随机用一种聊天风格，提醒用户：如果想重置tool插件，reset之后不要加任何字符"
 
                     e_context.action = EventAction.BREAK
                     return
@@ -93,18 +91,14 @@ class Tool(Plugin):
 
                 # Don't modify bot name
                 all_sessions = Bridge().get_bot("chat").sessions
-                user_session = all_sessions.session_query(
-                    query, e_context["context"]["session_id"]
-                ).messages
+                user_session = all_sessions.session_query(query, e_context["context"]["session_id"]).messages
 
                 # chatgpt-tool-hub will reply you with many tools
                 logger.debug("[tool]: just-go")
                 try:
                     _reply = self.app.ask(query, user_session)
                     e_context.action = EventAction.BREAK_PASS
-                    all_sessions.session_reply(
-                        _reply, e_context["context"]["session_id"]
-                    )
+                    all_sessions.session_reply(_reply, e_context["context"]["session_id"])
                 except Exception as e:
                     logger.exception(e)
                     logger.error(str(e))

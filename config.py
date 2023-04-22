@@ -158,9 +158,7 @@ def load_config():
     for name, value in os.environ.items():
         name = name.lower()
         if name in available_setting:
-            logger.info(
-                "[INIT] override config by environ args: {}={}".format(name, value)
-            )
+            logger.info("[INIT] override config by environ args: {}={}".format(name, value))
             try:
                 config[name] = eval(value)
             except:

@@ -33,6 +33,7 @@ def get_pcm_from_wav(wav_path):
     wav = wave.open(wav_path, "rb")
     return wav.readframes(wav.getnframes())
 
+
 def any_to_mp3(any_path, mp3_path):
     """
     把任意格式转成mp3文件
@@ -40,15 +41,12 @@ def any_to_mp3(any_path, mp3_path):
     if any_path.endswith(".mp3"):
         shutil.copy2(any_path, mp3_path)
         return
-    if (
-        any_path.endswith(".sil")
-        or any_path.endswith(".silk")
-        or any_path.endswith(".slk")
-    ):
+    if any_path.endswith(".sil") or any_path.endswith(".silk") or any_path.endswith(".slk"):
         sil_to_wav(any_path, any_path)
         any_path = mp3_path
     audio = AudioSegment.from_file(any_path)
     audio.export(mp3_path, format="mp3")
+
 
 def any_to_wav(any_path, wav_path):
     """
@@ -57,11 +55,7 @@ def any_to_wav(any_path, wav_path):
     if any_path.endswith(".wav"):
         shutil.copy2(any_path, wav_path)
         return
-    if (
-        any_path.endswith(".sil")
-        or any_path.endswith(".silk")
-        or any_path.endswith(".slk")
-    ):
+    if any_path.endswith(".sil") or any_path.endswith(".silk") or any_path.endswith(".slk"):
         return sil_to_wav(any_path, wav_path)
     audio = AudioSegment.from_file(any_path)
     audio.export(wav_path, format="wav")
@@ -71,11 +65,7 @@ def any_to_sil(any_path, sil_path):
     """
     把任意格式转成sil文件
     """
-    if (
-        any_path.endswith(".sil")
-        or any_path.endswith(".silk")
-        or any_path.endswith(".slk")
-    ):
+    if any_path.endswith(".sil") or any_path.endswith(".silk") or any_path.endswith(".slk"):
         shutil.copy2(any_path, sil_path)
         return 10000
     audio = AudioSegment.from_file(any_path)

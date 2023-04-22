@@ -1,16 +1,17 @@
 import time
 
 import web
+from wechatpy import parse_message
+from wechatpy.replies import create_reply
 
-from channel.wechatmp.wechatmp_message import WeChatMPMessage
 from bridge.context import *
 from bridge.reply import *
 from channel.wechatmp.common import *
 from channel.wechatmp.wechatmp_channel import WechatMPChannel
-from wechatpy import parse_message
+from channel.wechatmp.wechatmp_message import WeChatMPMessage
 from common.log import logger
 from config import conf
-from wechatpy.replies import create_reply
+
 
 # This class is instantiated once per query
 class Query:
@@ -50,29 +51,19 @@ class Query:
                     )
                 )
                 if msg.type == "voice" and wechatmp_msg.ctype == ContextType.TEXT and conf().get("voice_reply_voice", False):
-                    context = channel._compose_context(
-                        wechatmp_msg.ctype, content, isgroup=False, desire_rtype=ReplyType.VOICE, msg=wechatmp_msg
-                    )
+                    context = channel._compose_context(wechatmp_msg.ctype, content, isgroup=False, desire_rtype=ReplyType.VOICE, msg=wechatmp_msg)
                 else:
-                    context = channel._compose_context(
-                        wechatmp_msg.ctype, content, isgroup=False, msg=wechatmp_msg
-                    )
+                    context = channel._compose_context(wechatmp_msg.ctype, content, isgroup=False, msg=wechatmp_msg)
                 if context:
                     # set private openai_api_key
                     # if from_user is not changed in itchat, this can be placed at chat_channel
                     user_data = conf().get_user_data(from_user)
-                    context["openai_api_key"] = user_data.get(
-                        "openai_api_key"
-                    )  # None or user openai_api_key
+                    context["openai_api_key"] = user_data.get("openai_api_key")  # None or user openai_api_key
                     channel.produce(context)
                 # The reply will be sent by channel.send() in another thread
                 return "success"
             elif msg.type == "event":
-                logger.info(
-                    "[wechatmp] Event {} from {}".format(
-                        msg.event, msg.source
-                    )
-                )
+                logger.info("[wechatmp] Event {} from {}".format(msg.event, msg.source))
                 if msg.event in ["subscribe", "subscribe_scan"]:
                     reply_text = subscribe_msg()
                     replyPost = create_reply(reply_text, msg)

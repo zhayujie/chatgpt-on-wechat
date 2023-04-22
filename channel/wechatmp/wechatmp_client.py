@@ -1,17 +1,16 @@
-import time
 import threading
-from channel.wechatmp.common import *
+import time
+
 from wechatpy.client import WeChatClient
-from common.log import logger
 from wechatpy.exceptions import APILimitedException
+
+from channel.wechatmp.common import *
+from common.log import logger
 
 
 class WechatMPClient(WeChatClient):
-    def __init__(self, appid, secret, access_token=None,
-                 session=None, timeout=None, auto_retry=True):
-        super(WechatMPClient, self).__init__(
-            appid, secret, access_token, session, timeout, auto_retry
-        )
+    def __init__(self, appid, secret, access_token=None, session=None, timeout=None, auto_retry=True):
+        super(WechatMPClient, self).__init__(appid, secret, access_token, session, timeout, auto_retry)
         self.fetch_access_token_lock = threading.Lock()
 
     def clear_quota(self):
@@ -20,7 +19,7 @@ class WechatMPClient(WeChatClient):
     def clear_quota_v2(self):
         return self.post("clear_quota/v2", params={"appid": self.appid, "appsecret": self.secret})
 
-    def fetch_access_token(self): # 重载父类方法，加锁避免多线程重复获取access_token
+    def fetch_access_token(self):  # 重载父类方法，加锁避免多线程重复获取access_token
         with self.fetch_access_token_lock:
             access_token = self.session.get(self.access_token_key)
             if access_token:
@@ -31,7 +30,7 @@ class WechatMPClient(WeChatClient):
                     return access_token
             return super().fetch_access_token()
 
-    def _request(self, method, url_or_endpoint, **kwargs): # 重载父类方法，遇到API限流时，清除quota后重试
+    def _request(self, method, url_or_endpoint, **kwargs):  # 重载父类方法，遇到API限流时，清除quota后重试
         try:
             return super()._request(method, url_or_endpoint, **kwargs)
         except APILimitedException as e:

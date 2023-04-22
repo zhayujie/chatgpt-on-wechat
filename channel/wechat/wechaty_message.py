@@ -45,16 +45,12 @@ class WechatyMessage(ChatMessage, aobject):
 
             def func():
                 loop = asyncio.get_event_loop()
-                asyncio.run_coroutine_threadsafe(
-                    voice_file.to_file(self.content), loop
-                ).result()
+                asyncio.run_coroutine_threadsafe(voice_file.to_file(self.content), loop).result()
 
             self._prepare_fn = func
 
         else:
-            raise NotImplementedError(
-                "Unsupported message type: {}".format(wechaty_msg.type())
-            )
+            raise NotImplementedError("Unsupported message type: {}".format(wechaty_msg.type()))
 
         from_contact = wechaty_msg.talker()  # 获取消息的发送者
         self.from_user_id = from_contact.contact_id
@@ -73,9 +69,7 @@ class WechatyMessage(ChatMessage, aobject):
             self.to_user_id = to_contact.contact_id
             self.to_user_nickname = to_contact.name
 
-        if (
-            self.is_group or wechaty_msg.is_self()
-        ):  # 如果是群消息，other_user设置为群，如果是私聊消息，而且自己发的，就设置成对方。
+        if self.is_group or wechaty_msg.is_self():  # 如果是群消息，other_user设置为群，如果是私聊消息，而且自己发的，就设置成对方。
             self.other_user_id = self.to_user_id
             self.other_user_nickname = self.to_user_nickname
         else:

@@ -1,24 +1,26 @@
 # -*- coding: utf-8 -*-
+import asyncio
+import imghdr
 import io
 import os
-import time
-import imghdr
-import requests
-import asyncio
 import threading
-from config import conf
+import time
+
+import requests
+import web
+from wechatpy.crypto import WeChatCrypto
+from wechatpy.exceptions import WeChatClientException
+
 from bridge.context import *
 from bridge.reply import *
-from common.log import logger
-from common.singleton import singleton
-from voice.audio_convert import any_to_mp3
 from channel.chat_channel import ChatChannel
 from channel.wechatmp.common import *
 from channel.wechatmp.wechatmp_client import WechatMPClient
-from wechatpy.exceptions import WeChatClientException
-from wechatpy.crypto import WeChatCrypto
+from common.log import logger
+from common.singleton import singleton
+from config import conf
+from voice.audio_convert import any_to_mp3
 
-import web
 # If using SSL, uncomment the following lines, and modify the certificate path.
 # from cheroot.server import HTTPServer
 # from cheroot.ssl.builtin import BuiltinSSLAdapter
@@ -54,7 +56,6 @@ class WechatMPChannel(ChatChannel):
             t.setDaemon(True)
             t.start()
 
-
     def startup(self):
         if self.passive_reply:
             urls = ("/wx", "channel.wechatmp.passive_reply.Query")
@@ -84,7 +85,7 @@ class WechatMPChannel(ChatChannel):
             elif reply.type == ReplyType.VOICE:
                 try:
                     voice_file_path = reply.content
-                    with open(voice_file_path, 'rb') as f:
+                    with open(voice_file_path, "rb") as f:
                         # support: <2M, <60s, mp3/wma/wav/amr
                         response = self.client.material.add("voice", f)
                         logger.debug("[wechatmp] upload voice response: {}".format(response))
@@ -107,7 +108,7 @@ class WechatMPChannel(ChatChannel):
                     image_storage.write(block)
                 image_storage.seek(0)
                 image_type = imghdr.what(image_storage)
-                filename = receiver + "-" + str(context['msg'].msg_id) + "." + image_type
+                filename = receiver + "-" + str(context["msg"].msg_id) + "." + image_type
                 content_type = "image/" + image_type
                 try:
                     response = self.client.material.add("image", (filename, image_storage, content_type))
@@ -122,7 +123,7 @@ class WechatMPChannel(ChatChannel):
                 image_storage = reply.content
                 image_storage.seek(0)
                 image_type = imghdr.what(image_storage)
-                filename = receiver + "-" + str(context['msg'].msg_id) + "." + image_type
+                filename = receiver + "-" + str(context["msg"].msg_id) + "." + image_type
                 content_type = "image/" + image_type
                 try:
                     response = self.client.material.add("image", (filename, image_storage, content_type))
@@ -137,7 +138,7 @@ class WechatMPChannel(ChatChannel):
             if reply.type == ReplyType.TEXT or reply.type == ReplyType.INFO or reply.type == ReplyType.ERROR:
                 reply_text = reply.content
                 texts = split_string_by_utf8_length(reply_text, MAX_UTF8_LEN)
-                if len(texts)>1:
+                if len(texts) > 1:
                     logger.info("[wechatmp] text too long, split into {} parts".format(len(texts)))
                 for text in texts:
                     self.client.message.send_text(receiver, text)
@@ -174,7 +175,7 @@ class WechatMPChannel(ChatChannel):
                     image_storage.write(block)
                 image_storage.seek(0)
                 image_type = imghdr.what(image_storage)
-                filename = receiver + "-" + str(context['msg'].msg_id) + "." + image_type
+                filename = receiver + "-" + str(context["msg"].msg_id) + "." + image_type
                 content_type = "image/" + image_type
                 try:
                     response = self.client.media.upload("image", (filename, image_storage, content_type))
@@ -188,7 +189,7 @@ class WechatMPChannel(ChatChannel):
                 image_storage = reply.content
                 image_storage.seek(0)
                 image_type = imghdr.what(image_storage)
-                filename = receiver + "-" + str(context['msg'].msg_id) + "." + image_type
+                filename = receiver + "-" + str(context["msg"].msg_id) + "." + image_type
                 content_type = "image/" + image_type
                 try:
                     response = self.client.media.upload("image", (filename, image_storage, content_type))
@@ -201,20 +202,12 @@ class WechatMPChannel(ChatChannel):
         return
 
     def _success_callback(self, session_id, context, **kwargs):  # 线程异常结束时的回调函数
-        logger.debug(
-            "[wechatmp] Success to generate reply, msgId={}".format(
-                context["msg"].msg_id
-            )
-        )
+        logger.debug("[wechatmp] Success to generate reply, msgId={}".format(context["msg"].msg_id))
         if self.passive_reply:
             self.running.remove(session_id)
 
     def _fail_callback(self, session_id, exception, context, **kwargs):  # 线程异常结束时的回调函数
-        logger.exception(
-            "[wechatmp] Fail to generate reply to user, msgId={}, exception={}".format(
-                context["msg"].msg_id, exception
-            )
-        )
+        logger.exception("[wechatmp] Fail to generate reply to user, msgId={}, exception={}".format(context["msg"].msg_id, exception))
         if self.passive_reply:
             assert session_id not in self.cache_dict
             self.running.remove(session_id)

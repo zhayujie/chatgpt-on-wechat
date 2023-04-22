@@ -60,13 +60,9 @@ class WechatyChannel(ChatChannel):
         receiver_id = context["receiver"]
         loop = asyncio.get_event_loop()
         if context["isgroup"]:
-            receiver = asyncio.run_coroutine_threadsafe(
-                self.bot.Room.find(receiver_id), loop
-            ).result()
+            receiver = asyncio.run_coroutine_threadsafe(self.bot.Room.find(receiver_id), loop).result()
         else:
-            receiver = asyncio.run_coroutine_threadsafe(
-                self.bot.Contact.find(receiver_id), loop
-            ).result()
+            receiver = asyncio.run_coroutine_threadsafe(self.bot.Contact.find(receiver_id), loop).result()
         msg = None
         if reply.type == ReplyType.TEXT:
             msg = reply.content
@@ -83,9 +79,7 @@ class WechatyChannel(ChatChannel):
             voiceLength = int(any_to_sil(file_path, sil_file))
             if voiceLength >= 60000:
                 voiceLength = 60000
-                logger.info(
-                    "[WX] voice too long, length={}, set to 60s".format(voiceLength)
-                )
+                logger.info("[WX] voice too long, length={}, set to 60s".format(voiceLength))
             # 发送语音
             t = int(time.time())
             msg = FileBox.from_file(sil_file, name=str(t) + ".sil")
@@ -98,9 +92,7 @@ class WechatyChannel(ChatChannel):
                     os.remove(sil_file)
             except Exception as e:
                 pass
-            logger.info(
-                "[WX] sendVoice={}, receiver={}".format(reply.content, receiver)
-            )
+            logger.info("[WX] sendVoice={}, receiver={}".format(reply.content, receiver))
         elif reply.type == ReplyType.IMAGE_URL:  # 从网络下载图片
             img_url = reply.content
             t = int(time.time())
@@ -111,9 +103,7 @@ class WechatyChannel(ChatChannel):
             image_storage = reply.content
             image_storage.seek(0)
             t = int(time.time())
-            msg = FileBox.from_base64(
-                base64.b64encode(image_storage.read()), str(t) + ".png"
-            )
+            msg = FileBox.from_base64(base64.b64encode(image_storage.read()), str(t) + ".png")
             asyncio.run_coroutine_threadsafe(receiver.say(msg), loop).result()
             logger.info("[WX] sendImage, receiver={}".format(receiver))
 
