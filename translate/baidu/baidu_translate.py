@@ -8,8 +8,6 @@ import requests
 from config import conf
 from translate.translator import Translator
 
-# from langid import classify
-
 
 class BaiduTranslator(Translator):
     def __init__(self) -> None:
@@ -24,7 +22,6 @@ class BaiduTranslator(Translator):
     def translate(self, query: str, from_lang: str = "", to_lang: str = "en") -> str:
         if not from_lang:
             from_lang = "auto"  # baidu suppport auto detect
-            # from_lang = classify(query)[0]
         salt = random.randint(32768, 65536)
         sign = self.make_md5(self.appid + query + str(salt) + self.appkey)
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
