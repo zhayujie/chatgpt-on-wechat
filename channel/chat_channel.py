@@ -114,8 +114,8 @@ class ChatChannel(Channel):
                     logger.info("[WX]receive group at")
                     if not conf().get("group_at_off", False):
                         flag = True
-                    pattern = f"@{self.name}(\u2005|\u0020)"
-                    content = re.sub(re.escape(pattern), r"", content)
+                    pattern = f"@{re.escape(self.name)}(\u2005|\u0020)"
+                    content = re.sub(pattern, r"", content)
 
                 if not flag:
                     if context["origin_ctype"] == ContextType.VOICE:
