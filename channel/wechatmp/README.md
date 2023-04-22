@@ -7,10 +7,11 @@
 
 在开始部署前，你需要一个拥有公网IP的服务器，以提供微信服务器和我们自己服务器的连接。或者你需要进行内网穿透，否则微信服务器无法将消息发送给我们的服务器。
 
-此外，需要在我们的服务器上安装python的web框架web.py。
+此外，需要在我们的服务器上安装python的web框架web.py和wechatpy。
 以ubuntu为例(在ubuntu 22.04上测试):
 ```
 pip3 install web.py
+pip3 install wechatpy
 ```
 
 然后在[微信公众平台](https://mp.weixin.qq.com)注册一个自己的公众号，类型选择订阅号，主体为个人即可。
