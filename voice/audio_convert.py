@@ -33,6 +33,22 @@ def get_pcm_from_wav(wav_path):
     wav = wave.open(wav_path, "rb")
     return wav.readframes(wav.getnframes())
 
+def any_to_mp3(any_path, mp3_path):
+    """
+    把任意格式转成mp3文件
+    """
+    if any_path.endswith(".mp3"):
+        shutil.copy2(any_path, mp3_path)
+        return
+    if (
+        any_path.endswith(".sil")
+        or any_path.endswith(".silk")
+        or any_path.endswith(".slk")
+    ):
+        sil_to_wav(any_path, any_path)
+        any_path = mp3_path
+    audio = AudioSegment.from_file(any_path)
+    audio.export(mp3_path, format="mp3")
 
 def any_to_wav(any_path, wav_path):
     """
