@@ -1,0 +1,8 @@
+[tool.black]
+line-length = 176
+target-version = ['py37']
+include = '\.pyi?$'
+extend-exclude = '.+/(dist|.venv|venv|build|lib)/.+'
+
+[tool.isort]
+profile = "black"
