@@ -87,7 +87,7 @@ class WechatyMessage(ChatMessage, aobject):
             if not self.is_at:  # 有时候复制粘贴的消息，不算做@，但是内容里面会有@xxx，这里做一下兼容
                 name = wechaty_msg.wechaty.user_self().name
                 pattern = f"@{name}(\u2005|\u0020)"
-                if re.search(pattern, self.content):
+                if re.search(re.escape(pattern), self.content):
                     logger.debug(f"wechaty message {self.msg_id} include at")
                     self.is_at = True
 
