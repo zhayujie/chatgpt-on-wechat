@@ -66,6 +66,11 @@ available_setting = {
     "chat_time_module": False,  # 是否开启服务时间限制
     "chat_start_time": "00:00",  # 服务开始时间
     "chat_stop_time": "24:00",  # 服务结束时间
+    # 翻译api
+    "translate": "baidu",  # 翻译api，支持baidu
+    # baidu翻译api的配置
+    "baidu_translate_app_id": "",  # 百度翻译api的appid
+    "baidu_translate_app_key": "",  # 百度翻译api的秘钥
     # itchat的配置
     "hot_reload": False,  # 是否开启热重载
     # wechaty的配置
