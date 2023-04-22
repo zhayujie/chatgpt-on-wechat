@@ -1,4 +1,4 @@
-from bot.factory import create_bot
+from bot.bot_factory import create_bot
 from bridge.context import Context
 from bridge.reply import Reply
 from common import const
@@ -49,3 +49,6 @@ class Bridge(object):
 
     def fetch_text_to_voice(self, text) -> Reply:
         return self.get_bot("text_to_voice").textToVoice(text)
+
+    def fetch_translate(self, text, from_lang="", to_lang="en") -> Reply:
+        return self.get_bot("translate").translate(text, from_lang, to_lang)
