@@ -1,5 +1,5 @@
 name: Bug report 🐛
-description: 项目运行中遇到的Bug或问题.
+description: 项目运行中遇到的Bug或问题。
 labels: ['status: needs check']
 body:
   - type: markdown
@@ -48,10 +48,11 @@ body:
       required: true
   - type: dropdown
     attributes:
-      label: 运行的`python`版本是?
+      label: 运行的python版本是?
       description: |
-        请选择你运行程序的`python`版本。经过长时间的观察，我们认为`python 3.8`是兼容性最好的版本。
+        请选择你运行程序的`python`版本。
         注意：在`python 3.7`中，有部分可选依赖无法安装。
+        经过长时间的观察，我们认为`python 3.8`是兼容性最好的版本。
         `python 3.7`~`python 3.10`以外版本的issue，将视情况直接关闭。
       options:
         - python 3.7

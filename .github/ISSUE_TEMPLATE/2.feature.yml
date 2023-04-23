@@ -1,5 +1,5 @@
 name: Feature request 🚀
-description: 提出你对项目的新想法或建议.
+description: 提出你对项目的新想法或建议。
 labels: ['status: needs check']
 body:
   - type: markdown
