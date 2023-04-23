@@ -131,12 +131,12 @@ class Query:
     def GET(self):
         channel = WechatComAppChannel()
         params = web.input()
-        signature = params.msg_signature
-        timestamp = params.timestamp
-        nonce = params.nonce
-        echostr = params.echostr
-        print(params)
+        logger.info("[wechatcom] receive params: {}".format(params))
         try:
+            signature = params.msg_signature
+            timestamp = params.timestamp
+            nonce = params.nonce
+            echostr = params.echostr
             echostr = channel.crypto.check_signature(
                 signature, timestamp, nonce, echostr
             )
@@ -147,10 +147,11 @@ class Query:
     def POST(self):
         channel = WechatComAppChannel()
         params = web.input()
-        signature = params.msg_signature
-        timestamp = params.timestamp
-        nonce = params.nonce
+        logger.info("[wechatcom] receive params: {}".format(params))
         try:
+            signature = params.msg_signature
+            timestamp = params.timestamp
+            nonce = params.nonce
             message = channel.crypto.decrypt_message(
                 web.data(), signature, timestamp, nonce
             )
