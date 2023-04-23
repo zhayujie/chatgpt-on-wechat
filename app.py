@@ -49,7 +49,7 @@ def run():
             "terminal",
             "wechatmp",
             "wechatmp_service",
-            "wechatcom",
+            "wechatcom_app",
         ]:
             PluginManager().load_plugins()
 
