@@ -44,7 +44,7 @@ Demo made by [Visionn](https://www.wangpc.cc/)
 
 前往 [OpenAI注册页面](https://beta.openai.com/signup) 创建账号，参考这篇 [教程](https://www.pythonthree.com/register-openai-chatgpt/) 可以通过虚拟手机号来接收验证码。创建完账号则前往 [API管理页面](https://beta.openai.com/account/api-keys) 创建一个 API Key 并保存下来，后面需要在项目中配置这个key。
 
-> 项目中使用的对话模型是 davinci，计费方式是约每 750 字 (包含请求和回复) 消耗 $0.02，图片生成是每张消耗 $0.016，账号创建有免费的 $18 额度 (更新3.25: 最新注册的已经无免费额度了)，使用完可以更换邮箱重新注册。
+> 项目中默认使用的对话模型是 gpt3.5 turbo，计费方式是约每 500 汉字 (包含请求和回复) 消耗 $0.002，图片生成是每张消耗 $0.016。
 
 ### 2.运行环境
 
