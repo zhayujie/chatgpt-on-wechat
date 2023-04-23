@@ -35,7 +35,8 @@ class GoogleVoice(Voice):
 
     def textToVoice(self, text):
         try:
-            mp3File = TmpDir().path() + "reply-" + str(int(time.time())) + ".mp3"
+            # Avoid the same filename under multithreading
+            mp3File = TmpDir().path() + "reply-" + str(int(time.time())) + "-" + str(hash(text) & 0x7FFFFFFF) + ".mp3"
             tts = gTTS(text=text, lang="zh")
             tts.save(mp3File)
             logger.info("[Google] textToVoice text={} voice file name={}".format(text, mp3File))

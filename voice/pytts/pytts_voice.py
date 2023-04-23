@@ -34,7 +34,7 @@ class PyttsVoice(Voice):
 
     def textToVoice(self, text):
         try:
-            # avoid the same filename
+            # Avoid the same filename under multithreading
             wavFileName = "reply-" + str(int(time.time())) + "-" + str(hash(text) & 0x7FFFFFFF) + ".wav"
             wavFile = TmpDir().path() + wavFileName
             logger.info("[Pytts] textToVoice text={} voice file name={}".format(text, wavFile))
