@@ -82,7 +82,8 @@ class BaiduVoice(Voice):
             {"spd": self.spd, "pit": self.pit, "vol": self.vol, "per": self.per},
         )
         if not isinstance(result, dict):
-            fileName = TmpDir().path() + "reply-" + str(int(time.time())) + ".mp3"
+            # Avoid the same filename under multithreading
+            fileName = TmpDir().path() + "reply-" + str(int(time.time())) + "-" + str(hash(text) & 0x7FFFFFFF) + ".mp3"
             with open(fileName, "wb") as f:
                 f.write(result)
             logger.info("[Baidu] textToVoice text={} voice file name={}".format(text, fileName))

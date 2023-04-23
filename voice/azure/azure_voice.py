@@ -79,7 +79,8 @@ class AzureVoice(Voice):
                 self.speech_config.speech_synthesis_voice_name = self.config["speech_synthesis_voice_name"]
         else:
             self.speech_config.speech_synthesis_voice_name = self.config["speech_synthesis_voice_name"]
-        fileName = TmpDir().path() + "reply-" + str(int(time.time())) + ".wav"
+        # Avoid the same filename under multithreading
+        fileName = TmpDir().path() + "reply-" + str(int(time.time())) + "-" + str(hash(text) & 0x7FFFFFFF) + ".wav"
         audio_config = speechsdk.AudioConfig(filename=fileName)
         speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=self.speech_config, audio_config=audio_config)
         result = speech_synthesizer.speak_text(text)
