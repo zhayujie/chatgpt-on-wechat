@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding=utf-8 -*-
 import io
 import os
@@ -6,7 +5,7 @@ import textwrap
 
 import requests
 import web
-from wechatpy.enterprise import WeChatClient, create_reply, parse_message
+from wechatpy.enterprise import create_reply, parse_message
 from wechatpy.enterprise.crypto import WeChatCrypto
 from wechatpy.enterprise.exceptions import InvalidCorpIdException
 from wechatpy.exceptions import InvalidSignatureException, WeChatClientException
@@ -14,6 +13,7 @@ from wechatpy.exceptions import InvalidSignatureException, WeChatClientException
 from bridge.context import Context
 from bridge.reply import Reply, ReplyType
 from channel.chat_channel import ChatChannel
+from channel.wechatcom.wechatcomapp_client import WechatComAppClient
 from channel.wechatcom.wechatcomapp_message import WechatComAppMessage
 from common.log import logger
 from common.singleton import singleton
@@ -38,7 +38,7 @@ class WechatComAppChannel(ChatChannel):
             "[wechatcom] init: corp_id: {}, secret: {}, agent_id: {}, token: {}, aes_key: {}".format(self.corp_id, self.secret, self.agent_id, self.token, self.aes_key)
         )
         self.crypto = WeChatCrypto(self.token, self.aes_key, self.corp_id)
-        self.client = WeChatClient(self.corp_id, self.secret)  # todo: 这里可能有线程安全问题
+        self.client = WechatComAppClient(self.corp_id, self.secret)
 
     def startup(self):
         # start message listener

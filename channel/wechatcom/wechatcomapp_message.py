@@ -1,14 +1,9 @@
-import re
-
-import requests
 from wechatpy.enterprise import WeChatClient
 
 from bridge.context import ContextType
 from channel.chat_message import ChatMessage
 from common.log import logger
 from common.tmp_dir import TmpDir
-from lib import itchat
-from lib.itchat.content import *
 
 
 class WechatComAppMessage(ChatMessage):
@@ -23,9 +18,7 @@ class WechatComAppMessage(ChatMessage):
             self.content = msg.content
         elif msg.type == "voice":
             self.ctype = ContextType.VOICE
-            self.content = (
-                TmpDir().path() + msg.media_id + "." + msg.format
-            )  # content直接存临时目录路径
+            self.content = TmpDir().path() + msg.media_id + "." + msg.format  # content直接存临时目录路径
 
             def download_voice():
                 # 如果响应状态码是200，则将响应内容写入本地文件
@@ -34,9 +27,7 @@ class WechatComAppMessage(ChatMessage):
                     with open(self.content, "wb") as f:
                         f.write(response.content)
                 else:
-                    logger.info(
-                        f"[wechatcom] Failed to download voice file, {response.content}"
-                    )
+                    logger.info(f"[wechatcom] Failed to download voice file, {response.content}")
 
             self._prepare_fn = download_voice
         elif msg.type == "image":
@@ -50,15 +41,11 @@ class WechatComAppMessage(ChatMessage):
                     with open(self.content, "wb") as f:
                         f.write(response.content)
                 else:
-                    logger.info(
-                        f"[wechatcom] Failed to download image file, {response.content}"
-                    )
+                    logger.info(f"[wechatcom] Failed to download image file, {response.content}")
 
             self._prepare_fn = download_image
         else:
-            raise NotImplementedError(
-                "Unsupported message type: Type:{} ".format(msg.type)
-            )
+            raise NotImplementedError("Unsupported message type: Type:{} ".format(msg.type))
 
         self.from_user_id = msg.source
         self.to_user_id = msg.target
