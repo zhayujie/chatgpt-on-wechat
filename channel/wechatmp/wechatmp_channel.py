@@ -5,7 +5,7 @@ import io
 import os
 import threading
 import time
-import imghdr
+
 import requests
 import web
 from wechatpy.crypto import WeChatCrypto
@@ -14,7 +14,6 @@ from wechatpy.exceptions import WeChatClientException
 from bridge.context import *
 from bridge.reply import *
 from channel.chat_channel import ChatChannel
-from channel.wechatmp.wechatmp_client import WechatMPClient
 from channel.wechatmp.common import *
 from channel.wechatmp.wechatmp_client import WechatMPClient
 from common.log import logger
@@ -22,10 +21,6 @@ from common.singleton import singleton
 from config import conf
 from voice.audio_convert import any_to_mp3
 
-import asyncio
-from threading import Thread
-
-import web
 # If using SSL, uncomment the following lines, and modify the certificate path.
 # from cheroot.server import HTTPServer
 # from cheroot.ssl.builtin import BuiltinSSLAdapter

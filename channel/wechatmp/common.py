@@ -30,7 +30,7 @@ def verify_server(data):
 
 
 def subscribe_msg():
-    trigger_prefix = conf().get("single_chat_prefix", [""])
+    trigger_prefix = conf().get("single_chat_prefix", [""])[0]
     msg = textwrap.dedent(
         f"""\
                     感谢您的关注！

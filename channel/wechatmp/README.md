@@ -2,7 +2,8 @@
 
 鉴于个人微信号在服务器上通过itchat登录有封号风险，这里新增了微信公众号channel，提供无风险的服务。
 
-目前支持订阅号和服务号两种类型的公众号。个人主体的微信订阅号由于无法通过微信认证，接口存在限制，目前仅支持最基本的文本交互和语音输入。通过微信认证的订阅号或者服务号可以回复图片和语音。
+目前支持订阅号和服务号两种类型的公众号，它们都支持文本交互，语音和图片输入。其中个人主体的微信订阅号由于无法通过微信认证，存在回复时间限制，每天的图片和声音回复次数也有限制。
+
 
 ## 使用方法（订阅号，服务号类似）
 
@@ -27,7 +28,6 @@ pip3 install wechatpy
 "wechatmp_app_id": "xxxx",      # 微信公众平台的appID
 "wechatmp_app_secret": "xxxx",  # 微信公众平台的appsecret
 "wechatmp_aes_key": "",         # 微信公众平台的EncodingAESKey，加密模式需要
-
 "single_chat_prefix": [""],     # 推荐设置，任意对话都可以触发回复，不添加前缀
 "single_chat_reply_prefix": "", # 推荐设置，回复不设置前缀
 "plugin_trigger_prefix": "&",   # 推荐设置，在手机微信客户端中，$%^等符号与中文连在一起时会自动显示一段较大的间隔，用户体验不好。请不要使用管理员指令前缀"#"，这会造成未知问题。
@@ -44,7 +44,6 @@ sudo iptables-save > /etc/iptables/rules.v4
 程序启动并监听端口后，在刚才的“服务器配置”中点击`提交`即可验证你的服务器。
 随后在[微信公众平台](https://mp.weixin.qq.com)启用服务器，关闭手动填写规则的自动回复，即可实现ChatGPT的自动回复。
 
-
 之后需要在公众号开发信息下将本机IP加入到IP白名单。
 
 不然在启用后，发送语音、图片等消息可能会遇到如下报错：
@@ -52,7 +51,6 @@ sudo iptables-save > /etc/iptables/rules.v4
 'errcode': 40164, 'errmsg': 'invalid ip xx.xx.xx.xx not in whitelist rid
 ```
 
-需要在公众号开发信息下将IP加入到IP白名单。
 
 
 ## 个人微信公众号的限制

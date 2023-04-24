@@ -20,4 +20,3 @@ selenium>=3.13.0
 
 Pillow
 pre-commit
-
