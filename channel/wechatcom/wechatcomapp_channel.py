@@ -35,9 +35,7 @@ class WechatComAppChannel(ChatChannel):
         self.aes_key = conf().get("wechatcomapp_aes_key")
         print(self.corp_id, self.secret, self.agent_id, self.token, self.aes_key)
         logger.info(
-            "[wechatcom] init: corp_id: {}, secret: {}, agent_id: {}, token: {}, aes_key: {}".format(
-                self.corp_id, self.secret, self.agent_id, self.token, self.aes_key
-            )
+            "[wechatcom] init: corp_id: {}, secret: {}, agent_id: {}, token: {}, aes_key: {}".format(self.corp_id, self.secret, self.agent_id, self.token, self.aes_key)
         )
         self.crypto = WeChatCrypto(self.token, self.aes_key, self.corp_id)
         self.client = WeChatClient(self.corp_id, self.secret)  # todo: 这里可能有线程安全问题
@@ -46,7 +44,7 @@ class WechatComAppChannel(ChatChannel):
         # start message listener
         urls = ("/wxcomapp", "channel.wechatcom.wechatcomapp_channel.Query")
         app = web.application(urls, globals(), autoreload=False)
-        port = conf().get("wechatcomapp_port", 8080)
+        port = conf().get("wechatcomapp_port", 9898)
         web.httpserver.runsimple(app.wsgifunc(), ("0.0.0.0", port))
 
     def send(self, reply: Reply, context: Context):
@@ -70,12 +68,8 @@ class WechatComAppChannel(ChatChannel):
                     os.remove(amr_file)
             except Exception:
                 pass
-            self.client.message.send_voice(
-                self.agent_id, receiver, response["media_id"]
-            )
-            logger.info(
-                "[wechatcom] sendVoice={}, receiver={}".format(reply.content, receiver)
-            )
+            self.client.message.send_voice(self.agent_id, receiver, response["media_id"])
+            logger.info("[wechatcom] sendVoice={}, receiver={}".format(reply.content, receiver))
         elif reply.type == ReplyType.IMAGE_URL:  # 从网络下载图片
             img_url = reply.content
             pic_res = requests.get(img_url, stream=True)
@@ -83,13 +77,9 @@ class WechatComAppChannel(ChatChannel):
             for block in pic_res.iter_content(1024):
                 image_storage.write(block)
             if (sz := fsize(image_storage)) >= 10 * 1024 * 1024:
-                logger.info(
-                    "[wechatcom] image too large, ready to compress, sz={}".format(sz)
-                )
+                logger.info("[wechatcom] image too large, ready to compress, sz={}".format(sz))
                 image_storage = compress_imgfile(image_storage, 10 * 1024 * 1024 - 1)
-                logger.info(
-                    "[wechatcom] image compressed, sz={}".format(fsize(image_storage))
-                )
+                logger.info("[wechatcom] image compressed, sz={}".format(fsize(image_storage)))
             image_storage.seek(0)
             try:
                 response = self.client.media.upload("image", image_storage)
@@ -98,22 +88,14 @@ class WechatComAppChannel(ChatChannel):
                 logger.error("[wechatcom] upload image failed: {}".format(e))
                 return
 
-            self.client.message.send_image(
-                self.agent_id, receiver, response["media_id"]
-            )
-            logger.info(
-                "[wechatcom] sendImage url={}, receiver={}".format(img_url, receiver)
-            )
+            self.client.message.send_image(self.agent_id, receiver, response["media_id"])
+            logger.info("[wechatcom] sendImage url={}, receiver={}".format(img_url, receiver))
         elif reply.type == ReplyType.IMAGE:  # 从文件读取图片
             image_storage = reply.content
             if (sz := fsize(image_storage)) >= 10 * 1024 * 1024:
-                logger.info(
-                    "[wechatcom] image too large, ready to compress, sz={}".format(sz)
-                )
+                logger.info("[wechatcom] image too large, ready to compress, sz={}".format(sz))
                 image_storage = compress_imgfile(image_storage, 10 * 1024 * 1024 - 1)
-                logger.info(
-                    "[wechatcom] image compressed, sz={}".format(fsize(image_storage))
-                )
+                logger.info("[wechatcom] image compressed, sz={}".format(fsize(image_storage)))
             image_storage.seek(0)
             try:
                 response = self.client.media.upload("image", image_storage)
@@ -121,9 +103,7 @@ class WechatComAppChannel(ChatChannel):
             except WeChatClientException as e:
                 logger.error("[wechatcom] upload image failed: {}".format(e))
                 return
-            self.client.message.send_image(
-                self.agent_id, receiver, response["media_id"]
-            )
+            self.client.message.send_image(self.agent_id, receiver, response["media_id"])
             logger.info("[wechatcom] sendImage, receiver={}".format(receiver))
 
 
@@ -137,9 +117,7 @@ class Query:
             timestamp = params.timestamp
             nonce = params.nonce
             echostr = params.echostr
-            echostr = channel.crypto.check_signature(
-                signature, timestamp, nonce, echostr
-            )
+            echostr = channel.crypto.check_signature(signature, timestamp, nonce, echostr)
         except InvalidSignatureException:
             raise web.Forbidden()
         return echostr
@@ -152,9 +130,7 @@ class Query:
             signature = params.msg_signature
             timestamp = params.timestamp
             nonce = params.nonce
-            message = channel.crypto.decrypt_message(
-                web.data(), signature, timestamp, nonce
-            )
+            message = channel.crypto.decrypt_message(web.data(), signature, timestamp, nonce)
         except (InvalidSignatureException, InvalidCorpIdException):
             raise web.Forbidden()
         msg = parse_message(message)
