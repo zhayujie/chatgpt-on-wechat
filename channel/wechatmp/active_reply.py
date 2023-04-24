@@ -1,6 +1,7 @@
 import time
 
 import web
+
 from wechatpy import parse_message
 from wechatpy.replies import create_reply
 
@@ -9,6 +10,7 @@ from bridge.reply import *
 from channel.wechatmp.common import *
 from channel.wechatmp.wechatmp_channel import WechatMPChannel
 from channel.wechatmp.wechatmp_message import WeChatMPMessage
+
 from common.log import logger
 from config import conf
 
@@ -20,6 +22,7 @@ class Query:
 
     def POST(self):
         # Make sure to return the instance that first created, @singleton will do that.
+
         try:
             args = web.input()
             verify_server(args)
@@ -39,6 +42,7 @@ class Query:
                 wechatmp_msg = WeChatMPMessage(msg, client=channel.client)
                 from_user = wechatmp_msg.from_user_id
                 content = wechatmp_msg.content
+                
                 message_id = wechatmp_msg.msg_id
 
                 logger.info(
@@ -54,6 +58,7 @@ class Query:
                     context = channel._compose_context(wechatmp_msg.ctype, content, isgroup=False, desire_rtype=ReplyType.VOICE, msg=wechatmp_msg)
                 else:
                     context = channel._compose_context(wechatmp_msg.ctype, content, isgroup=False, msg=wechatmp_msg)
+
                 if context:
                     # set private openai_api_key
                     # if from_user is not changed in itchat, this can be placed at chat_channel
@@ -70,6 +75,7 @@ class Query:
                     return encrypt_func(replyPost.render())
                 else:
                     return "success"
+
             else:
                 logger.info("暂且不处理")
                 return "success"
