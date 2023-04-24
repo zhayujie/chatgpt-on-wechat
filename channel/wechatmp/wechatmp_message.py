@@ -1,50 +1,56 @@
 # -*- coding: utf-8 -*-#
-# filename: receive.py
-import xml.etree.ElementTree as ET
 
 from bridge.context import ContextType
 from channel.chat_message import ChatMessage
 from common.log import logger
-
-
-def parse_xml(web_data):
-    if len(web_data) == 0:
-        return None
-    xmlData = ET.fromstring(web_data)
-    return WeChatMPMessage(xmlData)
+from common.tmp_dir import TmpDir
 
 
 class WeChatMPMessage(ChatMessage):
-    def __init__(self, xmlData):
-        super().__init__(xmlData)
-        self.to_user_id = xmlData.find("ToUserName").text
-        self.from_user_id = xmlData.find("FromUserName").text
-        self.create_time = xmlData.find("CreateTime").text
-        self.msg_type = xmlData.find("MsgType").text
-        try:
-            self.msg_id = xmlData.find("MsgId").text
-        except:
-            self.msg_id = self.from_user_id + self.create_time
+    def __init__(self, msg, client=None):
+        super().__init__(msg)
+        self.msg_id = msg.id
+        self.create_time = msg.time
         self.is_group = False
 
-        # reply to other_user_id
-        self.other_user_id = self.from_user_id
+        if msg.type == "text":
+            self.ctype = ContextType.TEXT
+            self.content = msg.content
+        elif msg.type == "voice":
+            if msg.recognition == None:
+                self.ctype = ContextType.VOICE
+                self.content = TmpDir().path() + msg.media_id + "." + msg.format  # content直接存临时目录路径
 
-        if self.msg_type == "text":
-            self.ctype = ContextType.TEXT
-            self.content = xmlData.find("Content").text
-        elif self.msg_type == "voice":
-            self.ctype = ContextType.TEXT
-            self.content = xmlData.find("Recognition").text  # 接收语音识别结果
-            # other voice_to_text method not implemented yet
-            if self.content == None:
-                self.content = "你好"
-        elif self.msg_type == "image":
-            # not implemented yet
-            self.pic_url = xmlData.find("PicUrl").text
-            self.media_id = xmlData.find("MediaId").text
-        elif self.msg_type == "event":
-            self.content = xmlData.find("Event").text
-        else:  # video, shortvideo, location, link
-            # not implemented
-            pass
+                def download_voice():
+                    # 如果响应状态码是200，则将响应内容写入本地文件
+                    response = client.media.download(msg.media_id)
+                    if response.status_code == 200:
+                        with open(self.content, "wb") as f:
+                            f.write(response.content)
+                    else:
+                        logger.info(f"[wechatmp] Failed to download voice file, {response.content}")
+
+                self._prepare_fn = download_voice
+            else:
+                self.ctype = ContextType.TEXT
+                self.content = msg.recognition
+        elif msg.type == "image":
+            self.ctype = ContextType.IMAGE
+            self.content = TmpDir().path() + msg.media_id + ".png"  # content直接存临时目录路径
+
+            def download_image():
+                # 如果响应状态码是200，则将响应内容写入本地文件
+                response = client.media.download(msg.media_id)
+                if response.status_code == 200:
+                    with open(self.content, "wb") as f:
+                        f.write(response.content)
+                else:
+                    logger.info(f"[wechatmp] Failed to download image file, {response.content}")
+
+            self._prepare_fn = download_image
+        else:
+            raise NotImplementedError("Unsupported message type: Type:{} ".format(msg.type))
+
+        self.from_user_id = msg.source
+        self.to_user_id = msg.target
+        self.other_user_id = msg.source

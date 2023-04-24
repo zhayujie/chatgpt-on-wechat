@@ -33,9 +33,7 @@ class Hello(Plugin):
         if e_context["context"].type == ContextType.JOIN_GROUP:
             e_context["context"].type = ContextType.TEXT
             msg: ChatMessage = e_context["context"]["msg"]
-            e_context[
-                "context"
-            ].content = f'请你随机使用一种风格说一句问候语来欢迎新用户"{msg.actual_user_nickname}"加入群聊。'
+            e_context["context"].content = f'请你随机使用一种风格说一句问候语来欢迎新用户"{msg.actual_user_nickname}"加入群聊。'
             e_context.action = EventAction.CONTINUE  # 事件继续，交付给下个插件或默认逻辑
             return
 
@@ -53,9 +51,7 @@ class Hello(Plugin):
             reply.type = ReplyType.TEXT
             msg: ChatMessage = e_context["context"]["msg"]
             if e_context["context"]["isgroup"]:
-                reply.content = (
-                    f"Hello, {msg.actual_user_nickname} from {msg.from_user_nickname}"
-                )
+                reply.content = f"Hello, {msg.actual_user_nickname} from {msg.from_user_nickname}"
             else:
                 reply.content = f"Hello, {msg.from_user_nickname}"
             e_context["reply"] = reply

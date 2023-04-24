@@ -140,9 +140,7 @@ def get_help_text(isadmin, isgroup):
         if plugins[plugin].enabled and not plugins[plugin].hidden:
             namecn = plugins[plugin].namecn
             help_text += "\n%s:" % namecn
-            help_text += (
-                PluginManager().instances[plugin].get_help_text(verbose=False).strip()
-            )
+            help_text += PluginManager().instances[plugin].get_help_text(verbose=False).strip()
 
     if ADMIN_COMMANDS and isadmin:
         help_text += "\n\n管理员指令：\n"
@@ -191,9 +189,7 @@ class Godcmd(Plugin):
                     COMMANDS["reset"]["alias"].append(custom_command)
 
         self.password = gconf["password"]
-        self.admin_users = gconf[
-            "admin_users"
-        ]  # 预存的管理员账号，这些账号不需要认证。itchat的用户名每次都会变，不可用
+        self.admin_users = gconf["admin_users"]  # 预存的管理员账号，这些账号不需要认证。itchat的用户名每次都会变，不可用
         self.isrunning = True  # 机器人是否运行中
 
         self.handlers[Event.ON_HANDLE_CONTEXT] = self.on_handle_context
@@ -215,7 +211,7 @@ class Godcmd(Plugin):
                 reply.content = f"空指令，输入#help查看指令列表\n"
                 e_context["reply"] = reply
                 e_context.action = EventAction.BREAK_PASS
-                return 
+                return
             # msg = e_context['context']['msg']
             channel = e_context["channel"]
             user = e_context["context"]["receiver"]
@@ -248,11 +244,7 @@ class Godcmd(Plugin):
                             if not plugincls.enabled:
                                 continue
                             if query_name == name or query_name == plugincls.namecn:
-                                ok, result = True, PluginManager().instances[
-                                    name
-                                ].get_help_text(
-                                    isgroup=isgroup, isadmin=isadmin, verbose=True
-                                )
+                                ok, result = True, PluginManager().instances[name].get_help_text(isgroup=isgroup, isadmin=isadmin, verbose=True)
                                 break
                         if not ok:
                             result = "插件不存在或未启用"
@@ -285,11 +277,7 @@ class Godcmd(Plugin):
                     if isgroup:
                         ok, result = False, "群聊不可执行管理员指令"
                     else:
-                        cmd = next(
-                            c
-                            for c, info in ADMIN_COMMANDS.items()
-                            if cmd in info["alias"]
-                        )
+                        cmd = next(c for c, info in ADMIN_COMMANDS.items() if cmd in info["alias"])
                         if cmd == "stop":
                             self.isrunning = False
                             ok, result = True, "服务已暂停"
@@ -325,18 +313,14 @@ class Godcmd(Plugin):
                             PluginManager().activate_plugins()
                             if len(new_plugins) > 0:
                                 result += "\n发现新插件：\n"
-                                result += "\n".join(
-                                    [f"{p.name}_v{p.version}" for p in new_plugins]
-                                )
+                                result += "\n".join([f"{p.name}_v{p.version}" for p in new_plugins])
                             else:
                                 result += ", 未发现新插件"
                         elif cmd == "setpri":
                             if len(args) != 2:
                                 ok, result = False, "请提供插件名和优先级"
                             else:
-                                ok = PluginManager().set_plugin_priority(
-                                    args[0], int(args[1])
-                                )
+                                ok = PluginManager().set_plugin_priority(args[0], int(args[1]))
                                 if ok:
                                     result = "插件" + args[0] + "优先级已设置为" + args[1]
                                 else:

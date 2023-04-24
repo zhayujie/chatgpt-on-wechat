@@ -18,6 +18,7 @@ pysilk_mod>=1.6.0 # needed by send voice
 
 # wechatmp
 web.py
+wechatpy
 
 # chatgpt-tool-hub plugin
 
