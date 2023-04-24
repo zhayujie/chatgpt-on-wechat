@@ -34,6 +34,20 @@ def get_pcm_from_wav(wav_path):
     return wav.readframes(wav.getnframes())
 
 
+def any_to_mp3(any_path, mp3_path):
+    """
+    把任意格式转成mp3文件
+    """
+    if any_path.endswith(".mp3"):
+        shutil.copy2(any_path, mp3_path)
+        return
+    if any_path.endswith(".sil") or any_path.endswith(".silk") or any_path.endswith(".slk"):
+        sil_to_wav(any_path, any_path)
+        any_path = mp3_path
+    audio = AudioSegment.from_file(any_path)
+    audio.export(mp3_path, format="mp3")
+
+
 def any_to_wav(any_path, wav_path):
     """
     把任意格式转成wav文件
@@ -41,11 +55,7 @@ def any_to_wav(any_path, wav_path):
     if any_path.endswith(".wav"):
         shutil.copy2(any_path, wav_path)
         return
-    if (
-        any_path.endswith(".sil")
-        or any_path.endswith(".silk")
-        or any_path.endswith(".slk")
-    ):
+    if any_path.endswith(".sil") or any_path.endswith(".silk") or any_path.endswith(".slk"):
         return sil_to_wav(any_path, wav_path)
     audio = AudioSegment.from_file(any_path)
     audio.export(wav_path, format="wav")
@@ -55,59 +65,17 @@ def any_to_sil(any_path, sil_path):
     """
     把任意格式转成sil文件
     """
-    if (
-        any_path.endswith(".sil")
-        or any_path.endswith(".silk")
-        or any_path.endswith(".slk")
-    ):
+    if any_path.endswith(".sil") or any_path.endswith(".silk") or any_path.endswith(".slk"):
         shutil.copy2(any_path, sil_path)
         return 10000
-    if any_path.endswith(".wav"):
-        return pcm_to_sil(any_path, sil_path)
-    if any_path.endswith(".mp3"):
-        return mp3_to_sil(any_path, sil_path)
-    raise NotImplementedError("Not support file type: {}".format(any_path))
-
-
-def mp3_to_wav(mp3_path, wav_path):
-    """
-    把mp3格式转成pcm文件
-    """
-    audio = AudioSegment.from_mp3(mp3_path)
-    audio.export(wav_path, format="wav")
-
-
-def pcm_to_sil(pcm_path, silk_path):
-    """
-    wav 文件转成 silk
-    return 声音长度，毫秒
-    """
-    audio = AudioSegment.from_wav(pcm_path)
+    audio = AudioSegment.from_file(any_path)
     rate = find_closest_sil_supports(audio.frame_rate)
     # Convert to PCM_s16
     pcm_s16 = audio.set_sample_width(2)
     pcm_s16 = pcm_s16.set_frame_rate(rate)
     wav_data = pcm_s16.raw_data
     silk_data = pysilk.encode(wav_data, data_rate=rate, sample_rate=rate)
-    with open(silk_path, "wb") as f:
-        f.write(silk_data)
-    return audio.duration_seconds * 1000
-
-
-def mp3_to_sil(mp3_path, silk_path):
-    """
-    mp3 文件转成 silk
-    return 声音长度，毫秒
-    """
-    audio = AudioSegment.from_mp3(mp3_path)
-    rate = find_closest_sil_supports(audio.frame_rate)
-    # Convert to PCM_s16
-    pcm_s16 = audio.set_sample_width(2)
-    pcm_s16 = pcm_s16.set_frame_rate(rate)
-    wav_data = pcm_s16.raw_data
-    silk_data = pysilk.encode(wav_data, data_rate=rate, sample_rate=rate)
-    # Save the silk file
-    with open(silk_path, "wb") as f:
+    with open(sil_path, "wb") as f:
         f.write(silk_data)
     return audio.duration_seconds * 1000
 

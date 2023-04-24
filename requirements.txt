@@ -17,3 +17,7 @@ lxml==4.9.2
 pre-commit
 webdriver_manager
 selenium>=3.13.0
+
+Pillow
+pre-commit
+

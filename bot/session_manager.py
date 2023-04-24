@@ -55,9 +55,7 @@ class SessionManager(object):
             return self.sessioncls(session_id, system_prompt, **self.session_args)
 
         if session_id not in self.sessions:
-            self.sessions[session_id] = self.sessioncls(
-                session_id, system_prompt, **self.session_args
-            )
+            self.sessions[session_id] = self.sessioncls(session_id, system_prompt, **self.session_args)
         elif system_prompt is not None:  # 如果有新的system_prompt，更新并重置session
             self.sessions[session_id].set_system_prompt(system_prompt)
         session = self.sessions[session_id]
@@ -71,9 +69,7 @@ class SessionManager(object):
             total_tokens = session.discard_exceeding(max_tokens, None)
             logger.debug("prompt tokens used={}".format(total_tokens))
         except Exception as e:
-            logger.debug(
-                "Exception when counting tokens precisely for prompt: {}".format(str(e))
-            )
+            logger.debug("Exception when counting tokens precisely for prompt: {}".format(str(e)))
         return session
 
     def session_reply(self, reply, session_id, total_tokens=None):
@@ -82,17 +78,9 @@ class SessionManager(object):
         try:
             max_tokens = conf().get("conversation_max_tokens", 1000)
             tokens_cnt = session.discard_exceeding(max_tokens, total_tokens)
-            logger.debug(
-                "raw total_tokens={}, savesession tokens={}".format(
-                    total_tokens, tokens_cnt
-                )
-            )
+            logger.debug("raw total_tokens={}, savesession tokens={}".format(total_tokens, tokens_cnt))
         except Exception as e:
-            logger.debug(
-                "Exception when counting tokens precisely for session: {}".format(
-                    str(e)
-                )
-            )
+            logger.debug("Exception when counting tokens precisely for session: {}".format(str(e)))
         return session
 
     def clear_session(self, session_id):

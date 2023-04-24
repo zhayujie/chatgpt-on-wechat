@@ -60,6 +60,4 @@ class Context:
             del self.kwargs[key]
 
     def __str__(self):
-        return "Context(type={}, content={}, kwargs={})".format(
-            self.type, self.content, self.kwargs
-        )
+        return "Context(type={}, content={}, kwargs={})".format(self.type, self.content, self.kwargs)

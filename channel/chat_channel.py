@@ -53,9 +53,7 @@ class ChatChannel(Channel):
                 group_id = cmsg.other_user_id
 
                 group_name_white_list = config.get("group_name_white_list", [])
-                group_name_keyword_white_list = config.get(
-                    "group_name_keyword_white_list", []
-                )
+                group_name_keyword_white_list = config.get("group_name_keyword_white_list", [])
                 if any(
                     [
                         group_name in group_name_white_list,
@@ -63,9 +61,7 @@ class ChatChannel(Channel):
                         check_contain(group_name, group_name_keyword_white_list),
                     ]
                 ):
-                    group_chat_in_one_session = conf().get(
-                        "group_chat_in_one_session", []
-                    )
+                    group_chat_in_one_session = conf().get("group_chat_in_one_session", [])
                     session_id = cmsg.actual_user_id
                     if any(
                         [
@@ -81,17 +77,11 @@ class ChatChannel(Channel):
             else:
                 context["session_id"] = cmsg.other_user_id
                 context["receiver"] = cmsg.other_user_id
-            e_context = PluginManager().emit_event(
-                EventContext(
-                    Event.ON_RECEIVE_MESSAGE, {"channel": self, "context": context}
-                )
-            )
+            e_context = PluginManager().emit_event(EventContext(Event.ON_RECEIVE_MESSAGE, {"channel": self, "context": context}))
             context = e_context["context"]
             if e_context.is_pass() or context is None:
                 return context
-            if cmsg.from_user_id == self.user_id and not config.get(
-                "trigger_by_self", True
-            ):
+            if cmsg.from_user_id == self.user_id and not config.get("trigger_by_self", True):
                 logger.debug("[WX]self message skipped")
                 return None
 
@@ -114,28 +104,22 @@ class ChatChannel(Channel):
                     logger.info("[WX]receive group at")
                     if not conf().get("group_at_off", False):
                         flag = True
-                    pattern = f"@{self.name}(\u2005|\u0020)"
+                    pattern = f"@{re.escape(self.name)}(\u2005|\u0020)"
                     content = re.sub(pattern, r"", content)
 
                 if not flag:
                     if context["origin_ctype"] == ContextType.VOICE:
-                        logger.info(
-                            "[WX]receive group voice, but checkprefix didn't match"
-                        )
+                        logger.info("[WX]receive group voice, but checkprefix didn't match")
                     return None
             else:  # 单聊
-                match_prefix = check_prefix(
-                    content, conf().get("single_chat_prefix", [""])
-                )
+                match_prefix = check_prefix(content, conf().get("single_chat_prefix", [""]))
                 if match_prefix is not None:  # 判断如果匹配到自定义前缀，则返回过滤掉前缀+空格后的内容
                     content = content.replace(match_prefix, "", 1).strip()
-                elif (
-                    context["origin_ctype"] == ContextType.VOICE
-                ):  # 如果源消息是私聊的语音消息，允许不匹配前缀，放宽条件
+                elif context["origin_ctype"] == ContextType.VOICE:  # 如果源消息是私聊的语音消息，允许不匹配前缀，放宽条件
                     pass
                 else:
                     return None
-
+            content = content.strip()
             img_match_prefix = check_prefix(content, conf().get("image_create_prefix"))
             if img_match_prefix:
                 content = content.replace(img_match_prefix, "", 1)
@@ -143,18 +127,10 @@ class ChatChannel(Channel):
             else:
                 context.type = ContextType.TEXT
             context.content = content.strip()
-            if (
-                "desire_rtype" not in context
-                and conf().get("always_reply_voice")
-                and ReplyType.VOICE not in self.NOT_SUPPORT_REPLYTYPE
-            ):
+            if "desire_rtype" not in context and conf().get("always_reply_voice") and ReplyType.VOICE not in self.NOT_SUPPORT_REPLYTYPE:
                 context["desire_rtype"] = ReplyType.VOICE
         elif context.type == ContextType.VOICE:
-            if (
-                "desire_rtype" not in context
-                and conf().get("voice_reply_voice")
-                and ReplyType.VOICE not in self.NOT_SUPPORT_REPLYTYPE
-            ):
+            if "desire_rtype" not in context and conf().get("voice_reply_voice") and ReplyType.VOICE not in self.NOT_SUPPORT_REPLYTYPE:
                 context["desire_rtype"] = ReplyType.VOICE
 
         return context
@@ -182,15 +158,8 @@ class ChatChannel(Channel):
         )
         reply = e_context["reply"]
         if not e_context.is_pass():
-            logger.debug(
-                "[WX] ready to handle context: type={}, content={}".format(
-                    context.type, context.content
-                )
-            )
-            if (
-                context.type == ContextType.TEXT
-                or context.type == ContextType.IMAGE_CREATE
-            ):  # 文字和图片消息
+            logger.debug("[WX] ready to handle context: type={}, content={}".format(context.type, context.content))
+            if context.type == ContextType.TEXT or context.type == ContextType.IMAGE_CREATE:  # 文字和图片消息
                 reply = super().build_reply_content(context.content, context)
             elif context.type == ContextType.VOICE:  # 语音消息
                 cmsg = context["msg"]
@@ -214,9 +183,7 @@ class ChatChannel(Channel):
                     # logger.warning("[WX]delete temp file error: " + str(e))
 
                 if reply.type == ReplyType.TEXT:
-                    new_context = self._compose_context(
-                        ContextType.TEXT, reply.content, **context.kwargs
-                    )
+                    new_context = self._compose_context(ContextType.TEXT, reply.content, **context.kwargs)
                     if new_context:
                         reply = self._generate_reply(new_context)
                     else:
@@ -246,48 +213,24 @@ class ChatChannel(Channel):
 
                 if reply.type == ReplyType.TEXT:
                     reply_text = reply.content
-                    if (
-                        desire_rtype == ReplyType.VOICE
-                        and ReplyType.VOICE not in self.NOT_SUPPORT_REPLYTYPE
-                    ):
+                    if desire_rtype == ReplyType.VOICE and ReplyType.VOICE not in self.NOT_SUPPORT_REPLYTYPE:
                         reply = super().build_text_to_voice(reply.content)
                         return self._decorate_reply(context, reply)
                     if context.get("isgroup", False):
-                        reply_text = (
-                            "@"
-                            + context["msg"].actual_user_nickname
-                            + " "
-                            + reply_text.strip()
-                        )
-                        reply_text = (
-                            conf().get("group_chat_reply_prefix", "") + reply_text
-                        )
+                        reply_text = "@" + context["msg"].actual_user_nickname + " " + reply_text.strip()
+                        reply_text = conf().get("group_chat_reply_prefix", "") + reply_text
                     else:
-                        reply_text = (
-                            conf().get("single_chat_reply_prefix", "") + reply_text
-                        )
+                        reply_text = conf().get("single_chat_reply_prefix", "") + reply_text
                     reply.content = reply_text
                 elif reply.type == ReplyType.ERROR or reply.type == ReplyType.INFO:
                     reply.content = "[" + str(reply.type) + "]\n" + reply.content
-                elif (
-                    reply.type == ReplyType.IMAGE_URL
-                    or reply.type == ReplyType.VOICE
-                    or reply.type == ReplyType.IMAGE
-                ):
+                elif reply.type == ReplyType.IMAGE_URL or reply.type == ReplyType.VOICE or reply.type == ReplyType.IMAGE:
                     pass
                 else:
                     logger.error("[WX] unknown reply type: {}".format(reply.type))
                     return
-            if (
-                desire_rtype
-                and desire_rtype != reply.type
-                and reply.type not in [ReplyType.ERROR, ReplyType.INFO]
-            ):
-                logger.warning(
-                    "[WX] desire_rtype: {}, but reply type: {}".format(
-                        context.get("desire_rtype"), reply.type
-                    )
-                )
+            if desire_rtype and desire_rtype != reply.type and reply.type not in [ReplyType.ERROR, ReplyType.INFO]:
+                logger.warning("[WX] desire_rtype: {}, but reply type: {}".format(context.get("desire_rtype"), reply.type))
             return reply
 
     def _send_reply(self, context: Context, reply: Reply):
@@ -300,9 +243,7 @@ class ChatChannel(Channel):
             )
             reply = e_context["reply"]
             if not e_context.is_pass() and reply and reply.type:
-                logger.debug(
-                    "[WX] ready to send reply: {}, context: {}".format(reply, context)
-                )
+                logger.debug("[WX] ready to send reply: {}, context: {}".format(reply, context))
                 self._send(reply, context)
 
     def _send(self, reply: Reply, context: Context, retry_cnt=0):
@@ -328,9 +269,7 @@ class ChatChannel(Channel):
             try:
                 worker_exception = worker.exception()
                 if worker_exception:
-                    self._fail_callback(
-                        session_id, exception=worker_exception, **kwargs
-                    )
+                    self._fail_callback(session_id, exception=worker_exception, **kwargs)
                 else:
                     self._success_callback(session_id, **kwargs)
             except CancelledError as e:
@@ -366,24 +305,14 @@ class ChatChannel(Channel):
                         if not context_queue.empty():
                             context = context_queue.get()
                             logger.debug("[WX] consume context: {}".format(context))
-                            future: Future = self.handler_pool.submit(
-                                self._handle, context
-                            )
-                            future.add_done_callback(
-                                self._thread_pool_callback(session_id, context=context)
-                            )
+                            future: Future = self.handler_pool.submit(self._handle, context)
+                            future.add_done_callback(self._thread_pool_callback(session_id, context=context))
                             if session_id not in self.futures:
                                 self.futures[session_id] = []
                             self.futures[session_id].append(future)
-                        elif (
-                            semaphore._initial_value == semaphore._value + 1
-                        ):  # 除了当前，没有任务再申请到信号量，说明所有任务都处理完毕
-                            self.futures[session_id] = [
-                                t for t in self.futures[session_id] if not t.done()
-                            ]
-                            assert (
-                                len(self.futures[session_id]) == 0
-                            ), "thread pool error"
+                        elif semaphore._initial_value == semaphore._value + 1:  # 除了当前，没有任务再申请到信号量，说明所有任务都处理完毕
+                            self.futures[session_id] = [t for t in self.futures[session_id] if not t.done()]
+                            assert len(self.futures[session_id]) == 0, "thread pool error"
                             del self.sessions[session_id]
                         else:
                             semaphore.release()
@@ -397,9 +326,7 @@ class ChatChannel(Channel):
                     future.cancel()
                 cnt = self.sessions[session_id][0].qsize()
                 if cnt > 0:
-                    logger.info(
-                        "Cancel {} messages in session {}".format(cnt, session_id)
-                    )
+                    logger.info("Cancel {} messages in session {}".format(cnt, session_id))
                 self.sessions[session_id][0] = Dequeue()
 
     def cancel_all_session(self):
@@ -409,9 +336,7 @@ class ChatChannel(Channel):
                     future.cancel()
                 cnt = self.sessions[session_id][0].qsize()
                 if cnt > 0:
-                    logger.info(
-                        "Cancel {} messages in session {}".format(cnt, session_id)
-                    )
+                    logger.info("Cancel {} messages in session {}".format(cnt, session_id))
                 self.sessions[session_id][0] = Dequeue()
 
 

@@ -30,23 +30,15 @@ class ChatGPTBot(Bot, OpenAIImage):
         if conf().get("rate_limit_chatgpt"):
             self.tb4chatgpt = TokenBucket(conf().get("rate_limit_chatgpt", 20))
 
-        self.sessions = SessionManager(
-            ChatGPTSession, model=conf().get("model") or "gpt-3.5-turbo"
-        )
+        self.sessions = SessionManager(ChatGPTSession, model=conf().get("model") or "gpt-3.5-turbo")
         self.args = {
             "model": conf().get("model") or "gpt-3.5-turbo",  # 对话模型的名称
             "temperature": conf().get("temperature", 0.9),  # 值在[0,1]之间，越大表示回复越具有不确定性
             # "max_tokens":4096,  # 回复最大的字符数
             "top_p": 1,
-            "frequency_penalty": conf().get(
-                "frequency_penalty", 0.0
-            ),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
-            "presence_penalty": conf().get(
-                "presence_penalty", 0.0
-            ),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
-            "request_timeout": conf().get(
-                "request_timeout", None
-            ),  # 请求超时时间，openai接口默认设置为600，对于难问题一般需要较长时间
+            "frequency_penalty": conf().get("frequency_penalty", 0.0),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
+            "presence_penalty": conf().get("presence_penalty", 0.0),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
+            "request_timeout": conf().get("request_timeout", None),  # 请求超时时间，openai接口默认设置为600，对于难问题一般需要较长时间
             "timeout": conf().get("request_timeout", None),  # 重试超时时间，在这个时间内，将会自动重试
         }
 
@@ -87,15 +79,10 @@ class ChatGPTBot(Bot, OpenAIImage):
                     reply_content["completion_tokens"],
                 )
             )
-            if (
-                reply_content["completion_tokens"] == 0
-                and len(reply_content["content"]) > 0
-            ):
+            if reply_content["completion_tokens"] == 0 and len(reply_content["content"]) > 0:
                 reply = Reply(ReplyType.ERROR, reply_content["content"])
             elif reply_content["completion_tokens"] > 0:
-                self.sessions.session_reply(
-                    reply_content["content"], session_id, reply_content["total_tokens"]
-                )
+                self.sessions.session_reply(reply_content["content"], session_id, reply_content["total_tokens"])
                 reply = Reply(ReplyType.TEXT, reply_content["content"])
             else:
                 reply = Reply(ReplyType.ERROR, reply_content["content"])
@@ -126,9 +113,7 @@ class ChatGPTBot(Bot, OpenAIImage):
             if conf().get("rate_limit_chatgpt") and not self.tb4chatgpt.get_token():
                 raise openai.error.RateLimitError("RateLimitError: rate limit exceeded")
             # if api_key == None, the default openai.api_key will be used
-            response = openai.ChatCompletion.create(
-                api_key=api_key, messages=session.messages, **self.args
-            )
+            response = openai.ChatCompletion.create(api_key=api_key, messages=session.messages, **self.args)
             # logger.info("[ChatGPT] reply={}, total_tokens={}".format(response.choices[0]['message']['content'], response["usage"]["total_tokens"]))
             return {
                 "total_tokens": response["usage"]["total_tokens"],

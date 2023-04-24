@@ -23,9 +23,7 @@ class OpenAIImage(object):
             response = openai.Image.create(
                 prompt=query,  # 图片描述
                 n=1,  # 每次生成图片的数量
-                size=conf().get(
-                    "image_create_size", "256x256"
-                ),  # 图片大小,可选有 256x256, 512x512, 1024x1024
+                size=conf().get("image_create_size", "256x256"),  # 图片大小,可选有 256x256, 512x512, 1024x1024
             )
             image_url = response["data"][0]["url"]
             logger.info("[OPEN_AI] image_url={}".format(image_url))
@@ -34,11 +32,7 @@ class OpenAIImage(object):
             logger.warn(e)
             if retry_count < 1:
                 time.sleep(5)
-                logger.warn(
-                    "[OPEN_AI] ImgCreate RateLimit exceed, 第{}次重试".format(
-                        retry_count + 1
-                    )
-                )
+                logger.warn("[OPEN_AI] ImgCreate RateLimit exceed, 第{}次重试".format(retry_count + 1))
                 return self.create_img(query, retry_count + 1)
             else:
                 return False, "提问太快啦，请休息一下再问我吧"

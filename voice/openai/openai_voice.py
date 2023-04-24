@@ -22,11 +22,7 @@ class OpenaiVoice(Voice):
             result = openai.Audio.transcribe("whisper-1", file)
             text = result["text"]
             reply = Reply(ReplyType.TEXT, text)
-            logger.info(
-                "[Openai] voiceToText text={} voice file name={}".format(
-                    text, voice_file
-                )
-            )
+            logger.info("[Openai] voiceToText text={} voice file name={}".format(text, voice_file))
         except Exception as e:
             reply = Reply(ReplyType.ERROR, str(e))
         finally:

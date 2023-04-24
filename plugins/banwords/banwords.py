@@ -50,9 +50,7 @@ class Banwords(Plugin):
                 self.reply_action = conf.get("reply_action", "ignore")
             logger.info("[Banwords] inited")
         except Exception as e:
-            logger.warn(
-                "[Banwords] init failed, ignore or see https://github.com/zhayujie/chatgpt-on-wechat/tree/master/plugins/banwords ."
-            )
+            logger.warn("[Banwords] init failed, ignore or see https://github.com/zhayujie/chatgpt-on-wechat/tree/master/plugins/banwords .")
             raise e
 
     def on_handle_context(self, e_context: EventContext):
@@ -72,9 +70,7 @@ class Banwords(Plugin):
                 return
         elif self.action == "replace":
             if self.searchr.ContainsAny(content):
-                reply = Reply(
-                    ReplyType.INFO, "发言中包含敏感词，请重试: \n" + self.searchr.Replace(content)
-                )
+                reply = Reply(ReplyType.INFO, "发言中包含敏感词，请重试: \n" + self.searchr.Replace(content))
                 e_context["reply"] = reply
                 e_context.action = EventAction.BREAK_PASS
                 return
@@ -94,9 +90,7 @@ class Banwords(Plugin):
                 return
         elif self.reply_action == "replace":
             if self.searchr.ContainsAny(content):
-                reply = Reply(
-                    ReplyType.INFO, "已替换回复中的敏感词: \n" + self.searchr.Replace(content)
-                )
+                reply = Reply(ReplyType.INFO, "已替换回复中的敏感词: \n" + self.searchr.Replace(content))
                 e_context["reply"] = reply
                 e_context.action = EventAction.CONTINUE
                 return

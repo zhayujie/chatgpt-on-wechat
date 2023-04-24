@@ -28,23 +28,15 @@ class OpenAIBot(Bot, OpenAIImage):
         if proxy:
             openai.proxy = proxy
 
-        self.sessions = SessionManager(
-            OpenAISession, model=conf().get("model") or "text-davinci-003"
-        )
+        self.sessions = SessionManager(OpenAISession, model=conf().get("model") or "text-davinci-003")
         self.args = {
             "model": conf().get("model") or "text-davinci-003",  # 对话模型的名称
             "temperature": conf().get("temperature", 0.9),  # 值在[0,1]之间，越大表示回复越具有不确定性
             "max_tokens": 1200,  # 回复最大的字符数
             "top_p": 1,
-            "frequency_penalty": conf().get(
-                "frequency_penalty", 0.0
-            ),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
-            "presence_penalty": conf().get(
-                "presence_penalty", 0.0
-            ),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
-            "request_timeout": conf().get(
-                "request_timeout", None
-            ),  # 请求超时时间，openai接口默认设置为600，对于难问题一般需要较长时间
+            "frequency_penalty": conf().get("frequency_penalty", 0.0),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
+            "presence_penalty": conf().get("presence_penalty", 0.0),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
+            "request_timeout": conf().get("request_timeout", None),  # 请求超时时间，openai接口默认设置为600，对于难问题一般需要较长时间
             "timeout": conf().get("request_timeout", None),  # 重试超时时间，在这个时间内，将会自动重试
             "stop": ["\n\n\n"],
         }
@@ -71,17 +63,13 @@ class OpenAIBot(Bot, OpenAIImage):
                         result["content"],
                     )
                     logger.debug(
-                        "[OPEN_AI] new_query={}, session_id={}, reply_cont={}, completion_tokens={}".format(
-                            str(session), session_id, reply_content, completion_tokens
-                        )
+                        "[OPEN_AI] new_query={}, session_id={}, reply_cont={}, completion_tokens={}".format(str(session), session_id, reply_content, completion_tokens)
                     )
 
                     if total_tokens == 0:
                         reply = Reply(ReplyType.ERROR, reply_content)
                     else:
-                        self.sessions.session_reply(
-                            reply_content, session_id, total_tokens
-                        )
+                        self.sessions.session_reply(reply_content, session_id, total_tokens)
                         reply = Reply(ReplyType.TEXT, reply_content)
                 return reply
             elif context.type == ContextType.IMAGE_CREATE:
@@ -96,9 +84,7 @@ class OpenAIBot(Bot, OpenAIImage):
     def reply_text(self, session: OpenAISession, retry_count=0):
         try:
             response = openai.Completion.create(prompt=str(session), **self.args)
-            res_content = (
-                response.choices[0]["text"].strip().replace("<|endoftext|>", "")
-            )
+            res_content = response.choices[0]["text"].strip().replace("<|endoftext|>", "")
             total_tokens = response["usage"]["total_tokens"]
             completion_tokens = response["usage"]["completion_tokens"]
             logger.info("[OPEN_AI] reply={}".format(res_content))

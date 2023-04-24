@@ -68,6 +68,11 @@ available_setting = {
     "chat_time_module": False,  # 是否开启服务时间限制
     "chat_start_time": "00:00",  # 服务开始时间
     "chat_stop_time": "24:00",  # 服务结束时间
+    # 翻译api
+    "translate": "baidu",  # 翻译api，支持baidu
+    # baidu翻译api的配置
+    "baidu_translate_app_id": "",  # 百度翻译api的appid
+    "baidu_translate_app_key": "",  # 百度翻译api的秘钥
     # itchat的配置
     "hot_reload": False,  # 是否开启热重载
     # wechaty的配置
@@ -75,8 +80,9 @@ available_setting = {
     # wechatmp的配置
     "wechatmp_token": "",  # 微信公众平台的Token
     "wechatmp_port": 8080,  # 微信公众平台的端口,需要端口转发到80或443
-    "wechatmp_app_id": "",  # 微信公众平台的appID，仅服务号需要
-    "wechatmp_app_secret": "",  # 微信公众平台的appsecret，仅服务号需要
+    "wechatmp_app_id": "",  # 微信公众平台的appID
+    "wechatmp_app_secret": "",  # 微信公众平台的appsecret
+    "wechatmp_aes_key": "",  # 微信公众平台的EncodingAESKey，加密模式需要
     # chatgpt指令自定义触发词
     "clear_memory_commands": ["#清除记忆"],  # 重置会话指令，必须以#开头
     # channel配置
@@ -159,9 +165,7 @@ def load_config():
     for name, value in os.environ.items():
         name = name.lower()
         if name in available_setting:
-            logger.info(
-                "[INIT] override config by environ args: {}={}".format(name, value)
-            )
+            logger.info("[INIT] override config by environ args: {}={}".format(name, value))
             try:
                 config[name] = eval(value)
             except:

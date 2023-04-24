@@ -69,13 +69,9 @@ class Role(Plugin):
             logger.info("[Role] inited")
         except Exception as e:
             if isinstance(e, FileNotFoundError):
-                logger.warn(
-                    f"[Role] init failed, {config_path} not found, ignore or see https://github.com/zhayujie/chatgpt-on-wechat/tree/master/plugins/role ."
-                )
+                logger.warn(f"[Role] init failed, {config_path} not found, ignore or see https://github.com/zhayujie/chatgpt-on-wechat/tree/master/plugins/role .")
             else:
-                logger.warn(
-                    "[Role] init failed, ignore or see https://github.com/zhayujie/chatgpt-on-wechat/tree/master/plugins/role ."
-                )
+                logger.warn("[Role] init failed, ignore or see https://github.com/zhayujie/chatgpt-on-wechat/tree/master/plugins/role .")
             raise e
 
     def get_role(self, name, find_closest=True, min_sim=0.35):
@@ -143,9 +139,7 @@ class Role(Plugin):
                 else:
                     help_text = f"未知角色类型。\n"
                     help_text += "目前的角色类型有: \n"
-                    help_text += (
-                        "，".join([self.tags[tag][0] for tag in self.tags]) + "\n"
-                    )
+                    help_text += "，".join([self.tags[tag][0] for tag in self.tags]) + "\n"
             else:
                 help_text = f"请输入角色类型。\n"
                 help_text += "目前的角色类型有: \n"
@@ -158,9 +152,7 @@ class Role(Plugin):
             return
         logger.debug("[Role] on_handle_context. content: %s" % content)
         if desckey is not None:
-            if len(clist) == 1 or (
-                len(clist) > 1 and clist[1].lower() in ["help", "帮助"]
-            ):
+            if len(clist) == 1 or (len(clist) > 1 and clist[1].lower() in ["help", "帮助"]):
                 reply = Reply(ReplyType.INFO, self.get_help_text(verbose=True))
                 e_context["reply"] = reply
                 e_context.action = EventAction.BREAK_PASS
@@ -178,9 +170,7 @@ class Role(Plugin):
                     self.roles[role][desckey],
                     self.roles[role].get("wrapper", "%s"),
                 )
-                reply = Reply(
-                    ReplyType.INFO, f"预设角色为 {role}:\n" + self.roles[role][desckey]
-                )
+                reply = Reply(ReplyType.INFO, f"预设角色为 {role}:\n" + self.roles[role][desckey])
                 e_context["reply"] = reply
                 e_context.action = EventAction.BREAK_PASS
         elif customize == True:
@@ -199,17 +189,10 @@ class Role(Plugin):
         if not verbose:
             return help_text
         trigger_prefix = conf().get("plugin_trigger_prefix", "$")
-        help_text = (
-            f"使用方法:\n{trigger_prefix}角色"
-            + " 预设角色名: 设定角色为{预设角色名}。\n"
-            + f"{trigger_prefix}role"
-            + " 预设角色名: 同上，但使用英文设定。\n"
-        )
+        help_text = f"使用方法:\n{trigger_prefix}角色" + " 预设角色名: 设定角色为{预设角色名}。\n" + f"{trigger_prefix}role" + " 预设角色名: 同上，但使用英文设定。\n"
         help_text += f"{trigger_prefix}设定扮演" + " 角色设定: 设定自定义角色人设为{角色设定}。\n"
         help_text += f"{trigger_prefix}停止扮演: 清除设定的角色。\n"
-        help_text += (
-            f"{trigger_prefix}角色类型" + " 角色类型: 查看某类{角色类型}的所有预设角色，为所有时输出所有预设角色。\n"
-        )
+        help_text += f"{trigger_prefix}角色类型" + " 角色类型: 查看某类{角色类型}的所有预设角色，为所有时输出所有预设角色。\n"
         help_text += "\n目前的角色类型有: \n"
         help_text += "，".join([self.tags[tag][0] for tag in self.tags]) + "。\n"
         help_text += f"\n命令例子: \n{trigger_prefix}角色 写作助理\n"
