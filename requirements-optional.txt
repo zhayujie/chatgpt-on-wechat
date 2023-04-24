@@ -18,7 +18,7 @@ wechaty>=0.10.7
 wechaty_puppet>=0.4.23
 pysilk_mod>=1.6.0 # needed by send voice
 
-# wechatmp
+# wechatmp wechatcom
 web.py
 wechatpy
 
