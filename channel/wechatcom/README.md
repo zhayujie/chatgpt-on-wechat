@@ -1,6 +1,8 @@
 # 企业微信应用号channel
 
-企业微信官方提供了客服、应用等API，本channel使用的是企业微信的应用API的能力。因为未来可能还会开发客服能力，所以本channel的类型名叫作`wechatcom_app`。
+企业微信官方提供了客服、应用等API，本channel使用的是企业微信的应用API的能力。
+
+因为未来可能还会开发客服能力，所以本channel的类型名叫作`wechatcom_app`。
 
 `wechatcom_app` channel支持插件系统和图片声音交互等能力，除了无法加入群聊，作为个人使用的私人助理已绰绰有余。
 
@@ -29,7 +31,7 @@
 
 - 在详情页如果点击`企业可信IP`的配置(没看到可以不管)，填入你服务器的公网IP
 - 点击`接收消息`下的启用API接收消息
-- `URL`填写格式为`http://url:port/wxcomapp`，是程序监听的端口，默认是9898
+- `URL`填写格式为`http://url:port/wxcomapp`，`port`是程序监听的端口，默认是9898
     如果是未认证的企业，url可直接使用服务器的IP。如果是认证企业，需要使用备案的域名，可使用二级域名。
 - `Token`可随意填写，停留在这个页面
 - 在程序根目录`config.json`中增加配置（**去掉注释**），`wechatcomapp_aes_key`是当前页面的`wechatcomapp_aes_key`
