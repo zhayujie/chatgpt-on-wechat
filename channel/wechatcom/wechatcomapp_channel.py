@@ -1,7 +1,6 @@
 # -*- coding=utf-8 -*-
 import io
 import os
-import textwrap
 import time
 
 import requests
@@ -19,7 +18,7 @@ from channel.wechatcom.wechatcomapp_message import WechatComAppMessage
 from common.log import logger
 from common.singleton import singleton
 from common.utils import compress_imgfile, fsize, split_string_by_utf8_length
-from config import conf
+from config import conf, subscribe_msg
 from voice.audio_convert import any_to_amr
 
 MAX_UTF8_LEN = 2048
@@ -147,20 +146,11 @@ class Query:
         logger.debug("[wechatcom] receive message: {}, msg= {}".format(message, msg))
         if msg.type == "event":
             if msg.event == "subscribe":
-                trigger_prefix = conf().get("single_chat_prefix", [""])[0]
-                reply_content = textwrap.dedent(
-                    f"""\
-                    感谢您的关注！
-                    这里是ChatGPT，可以自由对话。
-                    支持语音对话。
-                    支持通用表情输入。
-                    支持图片输入输出。
-                    支持角色扮演和文字冒险两种定制模式对话。
-                    输入'{trigger_prefix}#help' 查看详细指令。"""
-                )
-                reply = create_reply(reply_content, msg).render()
-                res = channel.crypto.encrypt_message(reply, nonce, timestamp)
-                return res
+                reply_content = subscribe_msg()
+                if reply_content:
+                    reply = create_reply(reply_content, msg).render()
+                    res = channel.crypto.encrypt_message(reply, nonce, timestamp)
+                    return res
         else:
             try:
                 wechatcom_msg = WechatComAppMessage(msg, client=channel.client)

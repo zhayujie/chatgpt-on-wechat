@@ -8,6 +8,7 @@ import pickle
 from common.log import logger
 
 # 将所有可用的配置项写在字典里, 请使用小写字母
+# 此处的配置值无实际意义，程序不会读取此处的配置，仅用于提示格式，请将配置加入到config.json中
 available_setting = {
     # openai api配置
     "open_ai_api_key": "",  # openai api key
@@ -93,6 +94,7 @@ available_setting = {
     "clear_memory_commands": ["#清除记忆"],  # 重置会话指令，必须以#开头
     # channel配置
     "channel_type": "wx",  # 通道类型，支持：{wx,wxy,terminal,wechatmp,wechatmp_service,wechatcom_app}
+    "subscribe_msg": "",  # 订阅消息, 支持: wechatmp, wechatmp_service, wechatcom_app
     "debug": False,  # 是否开启debug模式，开启后会打印更多日志
     "appdata_dir": "",  # 数据目录
     # 插件配置
@@ -101,8 +103,12 @@ available_setting = {
 
 
 class Config(dict):
-    def __init__(self, d: dict = {}):
-        super().__init__(d)
+    def __init__(self, d=None):
+        super().__init__()
+        if d is None:
+            d = {}
+        for k, v in d.items():
+            self[k] = v
         # user_datas: 用户数据，key为用户名，value为用户数据，也是dict
         self.user_datas = {}
 
@@ -210,3 +216,9 @@ def get_appdata_dir():
         logger.info("[INIT] data path not exists, create it: {}".format(data_path))
         os.makedirs(data_path)
     return data_path
+
+
+def subscribe_msg():
+    trigger_prefix = conf().get("single_chat_prefix", [""])[0]
+    msg = conf().get("subscribe_msg", "")
+    return msg.format(trigger_prefix=trigger_prefix)
