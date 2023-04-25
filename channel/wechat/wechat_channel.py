@@ -29,7 +29,7 @@ from plugins import *
 @itchat.msg_register([TEXT, VOICE, PICTURE, NOTE])
 def handler_single_msg(msg):
     try:
-        cmsg = WeChatMessage(msg, False)
+        cmsg = WechatMessage(msg, False)
     except NotImplementedError as e:
         logger.debug("[WX]single message {} skipped: {}".format(msg["MsgId"], e))
         return None
@@ -40,7 +40,7 @@ def handler_single_msg(msg):
 @itchat.msg_register([TEXT, VOICE, PICTURE, NOTE], isGroupChat=True)
 def handler_group_msg(msg):
     try:
-        cmsg = WeChatMessage(msg, True)
+        cmsg = WechatMessage(msg, True)
     except NotImplementedError as e:
         logger.debug("[WX]group message {} skipped: {}".format(msg["MsgId"], e))
         return None

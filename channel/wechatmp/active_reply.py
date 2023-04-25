@@ -10,7 +10,7 @@ from channel.wechatmp.common import *
 from channel.wechatmp.wechatmp_channel import WechatMPChannel
 from channel.wechatmp.wechatmp_message import WeChatMPMessage
 from common.log import logger
-from config import conf
+from config import conf, subscribe_msg
 
 
 # This class is instantiated once per query
@@ -66,13 +66,14 @@ class Query:
                 logger.info("[wechatmp] Event {} from {}".format(msg.event, msg.source))
                 if msg.event in ["subscribe", "subscribe_scan"]:
                     reply_text = subscribe_msg()
-                    replyPost = create_reply(reply_text, msg)
-                    return encrypt_func(replyPost.render())
+                    if reply_text:
+                        replyPost = create_reply(reply_text, msg)
+                        return encrypt_func(replyPost.render())
                 else:
                     return "success"
             else:
                 logger.info("暂且不处理")
-                return "success"
+            return "success"
         except Exception as exc:
             logger.exception(exc)
             return exc
