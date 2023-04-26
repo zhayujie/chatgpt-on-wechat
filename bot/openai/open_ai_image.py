@@ -19,10 +19,10 @@ class OpenAIImage(object):
         try:
             if conf().get("rate_limit_dalle") and not self.tb4dalle.get_token():
                 return False, "请求太快了，请休息一下再问我吧"
-            logger.info("[OPEN_AI] image_query={}".format(query))
+            logger.info("[OPEN_AI] big_image_query={}".format(query))
             response = openai.Image.create(
                 prompt=query,  # 图片描述
-                n=1,  # 每次生成图片的数量
+                n=3,  # 每次生成图片的数量
                 size=conf().get("image_create_size", "1024x1024"),  # 图片大小,可选有 256x256, 512x512, 1024x1024
             )
             image_url = response["data"][0]["url"]
