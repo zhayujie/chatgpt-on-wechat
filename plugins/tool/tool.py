@@ -28,7 +28,7 @@ class Tool(Plugin):
         self.handlers[Event.ON_HANDLE_CONTEXT] = self.on_handle_context
 
         self.app = self._reset_app()
-
+        logger.info("[tool] 测试")
         logger.info("[tool] inited")
 
     def get_help_text(self, verbose=False, **kwargs):
