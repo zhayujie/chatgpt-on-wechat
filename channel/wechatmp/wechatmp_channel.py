@@ -18,6 +18,7 @@ from channel.wechatmp.common import *
 from channel.wechatmp.wechatmp_client import WechatMPClient
 from common.log import logger
 from common.singleton import singleton
+from common.utils import split_string_by_utf8_length
 from config import conf
 from voice.audio_convert import any_to_mp3
 
@@ -140,8 +141,10 @@ class WechatMPChannel(ChatChannel):
                 texts = split_string_by_utf8_length(reply_text, MAX_UTF8_LEN)
                 if len(texts) > 1:
                     logger.info("[wechatmp] text too long, split into {} parts".format(len(texts)))
-                for text in texts:
+                for i, text in enumerate(texts):
                     self.client.message.send_text(receiver, text)
+                    if i != len(texts) - 1:
+                        time.sleep(0.5)  # 休眠0.5秒，防止发送过快乱序
                 logger.info("[wechatmp] Do send text to {}: {}".format(receiver, reply_text))
             elif reply.type == ReplyType.VOICE:
                 try:

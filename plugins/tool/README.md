@@ -1,6 +1,11 @@
 ## 插件描述
-一个能让chatgpt联网，搜索，数字运算的插件，将赋予强大且丰富的扩展能力  
-使用该插件需在机器人回复你的前提下，在对话内容前加$tool；仅输入$tool将返回tool插件帮助信息，用于测试插件是否加载成功  
+一个能让chatgpt联网，搜索，数字运算的插件，将赋予强大且丰富的扩展能力   
+使用说明(默认trigger_prefix为$)：  
+```text
+#help tool: 查看tool帮助信息，可查看已加载工具列表  
+$tool 命令: 根据给出的{命令}使用一些可用工具尽力为你得到结果。  
+$tool reset: 重置工具。  
+```
 ### 本插件所有工具同步存放至专用仓库：[chatgpt-tool-hub](https://github.com/goldfishh/chatgpt-tool-hub)
 
 
@@ -19,9 +24,9 @@
 
 > 注1：url-get默认配置、browser需额外配置，browser依赖google-chrome，你需要提前安装好
 
-> 注2：browser默认使用summary tool 分段总结长文本信息，tokens可能会大量消耗！
+> 注2：当检测到长文本时会进入summary tool总结长文本，tokens可能会大量消耗！
 
-这是debian端安装google-chrome教程，其他系统请执行查找
+这是debian端安装google-chrome教程，其他系统请自行查找
 > https://www.linuxjournal.com/content/how-can-you-install-google-browser-debian
 
 ### 3. terminal
@@ -50,7 +55,7 @@
 ### 5. wikipedia
 ###### 可以回答你想要知道确切的人事物
 
-### 6. 新闻类工具
+### 6. news 新闻类工具集合
 
 #### 6.1. news-api *
 ###### 从全球 80,000 多个信息源中获取当前和历史新闻文章
@@ -58,12 +63,19 @@
 #### 6.2. morning-news *
 ###### 每日60秒早报，每天凌晨一点更新，本工具使用了[alapi-每日60秒早报](https://alapi.cn/api/view/93)
 
+```text
+可配置参数：
+1. morning_news_use_llm: 是否使用LLM润色结果，默认false（可能会慢）
+```
+
 > 该tool每天返回内容相同
 
 #### 6.3. finance-news
 ###### 获取实时的金融财政新闻
 
 > 该工具需要解决browser tool 的google-chrome依赖安装
+
+> news更新：0.4版本对news工具做了整合，只要加入news一个工具就会自动加载所有新闻类工具
 
 ### 7. bing-search *
 ###### bing搜索引擎，从此你不用再烦恼搜索要用哪些关键词
@@ -74,26 +86,25 @@
 ### 9. google-search *
 ###### google搜索引擎，申请流程较bing-search繁琐
 
-
-### 10. arxiv(dev 开发中)
+### 10. arxiv
 ###### 用于查找论文
 
+```text
+可配置参数：
+1. arxiv_summary: 是否使用总结工具，默认true, 当为false时会直接返回论文的标题、作者、发布时间、摘要、分类、备注、pdf链接等内容
+```
 
-### 11. debug(dev 开发中，目前没有接入wechat)
-###### 当bot遇到无法确定的信息时，将会向你寻求帮助的工具
+> 0.4.2更新，例子：帮我找一篇吴恩达写的论文
 
-
-### 12. summary
+### 11. summary
 ###### 总结工具，该工具必须输入一个本地文件的绝对路径
 
 > 该工具目前是和其他工具配合使用，暂未测试单独使用效果
 
-
-### 13. image2text
+### 12. image2text
 ###### 将图片转换成文字，底层调用imageCaption模型，该工具必须输入一个本地文件的绝对路径
 
-
-### 14. searxng-search *
+### 13. searxng-search *
 ###### 一个私有化的搜索引擎工具
 
 > 安装教程：https://docs.searxng.org/admin/installation.html
@@ -118,7 +129,7 @@
 
 ```
 注：config.json文件非必须，未创建仍可使用本tool；带*工具需在kwargs填入对应api-key键值对  
-- `tools`：本插件初始化时加载的工具, 目前可选集：["wikipedia", "wolfram-alpha", "bing-search", "google-search", "news"] & 默认工具，除wikipedia工具之外均需要申请api-key
+- `tools`：本插件初始化时加载的工具, 上述标题即是对应工具名称，带*工具必须在kwargs中配置相应api-key
 - `kwargs`：工具执行时的配置，一般在这里存放**api-key**，或环境配置
   - `debug`: 输出chatgpt-tool-hub额外信息用于调试
   - `request_timeout`: 访问openai接口的超时时间，默认与wechat-on-chatgpt配置一致，可单独配置
@@ -133,4 +144,3 @@
 - 虽然我会有意加入一些限制，但请不要使用本插件做危害他人的事情，请提前了解清楚某些内容是否会违反相关规定，建议提前做好过滤
 - 如有本插件问题，请将debug设置为true无上下文重新问一遍，如仍有问题请访问[chatgpt-tool-hub](https://github.com/goldfishh/chatgpt-tool-hub)建个issue，将日志贴进去，我无法处理不能复现的问题
 - 欢迎 star & 宣传，有能力请提pr
-

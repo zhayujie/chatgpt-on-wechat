@@ -80,6 +80,20 @@ def any_to_sil(any_path, sil_path):
     return audio.duration_seconds * 1000
 
 
+def any_to_amr(any_path, amr_path):
+    """
+    把任意格式转成amr文件
+    """
+    if any_path.endswith(".amr"):
+        shutil.copy2(any_path, amr_path)
+        return
+    if any_path.endswith(".sil") or any_path.endswith(".silk") or any_path.endswith(".slk"):
+        raise NotImplementedError("Not support file type: {}".format(any_path))
+    audio = AudioSegment.from_file(any_path)
+    audio = audio.set_frame_rate(8000)  # only support 8000
+    audio.export(amr_path, format="amr")
+
+
 def sil_to_wav(silk_path, wav_path, rate: int = 24000):
     """
     silk 文件转 wav
