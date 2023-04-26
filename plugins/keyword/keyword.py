@@ -53,16 +53,24 @@ class Keyword(Plugin):
 
         content = e_context["context"].content.strip()
         logger.debug("[keyword] on_handle_context. content: %s" % content)
-        for keyword in self.keyword:
+        # 使用正则表达式将文本分割成句子，包括中文符号和英文符号
+        sentences = re.split(r'[。？！.!?;:，,~]\s*', content)
+        matched_sentences = []
+        for keyword, value in self.keyword.items():
             pattern = r'{}'.format(re.escape(keyword))
-            if re.search(pattern, content, re.UNICODE):
-                logger.debug(f"[keyword] 匹配到关键字【{content}】")
-                reply_text = keyword
-                reply = Reply()
-                reply.type = ReplyType.TEXT
-                reply.content = reply_text
-                e_context["reply"] = reply
-                e_context.action = EventAction.BREAK_PASS  # 事件结束，并跳过处理context的默认逻辑
+            for sentence in sentences:
+                if re.search(pattern, sentence, re.UNICODE):
+                    logger.debug(f"[keyword] 对于文本【{sentence}】, 匹配到关键字【{value}】")
+                    matched_sentences.append(f"{sentence}: {value}")
+
+        # 将匹配到的句子和值组合成一个字符串
+        reply_text = "; ".join(matched_sentences)     
+        if reply_text:
+            reply = Reply()
+            reply.type = ReplyType.TEXT
+            reply.content = reply_text
+            e_context["reply"] = reply
+            e_context.action = EventAction.BREAK_PASS  # 事件结束，并跳过处理context的默认逻辑
 
     def get_help_text(self, **kwargs):
         help_text = "关键词过滤"
