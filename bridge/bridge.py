@@ -27,7 +27,7 @@ class Bridge(object):
 
     def get_bot(self, typename):
         if self.bots.get(typename) is None:
-            logger.info("测试")
+            logger.info("测试202304261140")
             logger.info("create bot {} for {}".format(self.btype[typename], typename))
             if typename == "text_to_voice":
                 self.bots[typename] = create_voice(self.btype[typename])
