@@ -195,13 +195,17 @@ def process_login_info(core, loginContent):
     core.loginInfo['logintime'] = int(time.time() * 1e3)
     core.loginInfo['BaseRequest'] = {}
     cookies = core.s.cookies.get_dict()
-    skey = re.findall('<skey>(.*?)</skey>', r.text, re.S)[0]
-    pass_ticket = re.findall(
-        '<pass_ticket>(.*?)</pass_ticket>', r.text, re.S)[0]
-    core.loginInfo['skey'] = core.loginInfo['BaseRequest']['Skey'] = skey
+    res = re.findall('<skey>(.*?)</skey>', r.text, re.S)
+    skey = res[0] if res else None
+    res = re.findall(
+        '<pass_ticket>(.*?)</pass_ticket>', r.text, re.S)
+    pass_ticket = res[0] if res else None
+    if skey is not None:
+        core.loginInfo['skey'] = core.loginInfo['BaseRequest']['Skey'] = skey
     core.loginInfo['wxsid'] = core.loginInfo['BaseRequest']['Sid'] = cookies["wxsid"]
     core.loginInfo['wxuin'] = core.loginInfo['BaseRequest']['Uin'] = cookies["wxuin"]
-    core.loginInfo['pass_ticket'] = pass_ticket
+    if pass_ticket is not None:
+        core.loginInfo['pass_ticket'] = pass_ticket
     # A question : why pass_ticket == DeviceID ?
     #               deviceID is only a randomly generated number
 
