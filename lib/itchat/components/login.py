@@ -321,6 +321,8 @@ def start_receiving(self, exitCallback=None, getReceivingFnOnly=False):
                 retryCount += 1
                 logger.error(traceback.format_exc())
                 if self.receivingRetryCount < retryCount:
+                    logger.error("Having tried %s times, but still failed. " % (
+                        retryCount) + "Stop trying...")
                     self.alive = False
                 else:
                     time.sleep(1)
