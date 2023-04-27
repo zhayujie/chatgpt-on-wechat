@@ -74,7 +74,7 @@ Error code: 60020, message: "not allow to access from your ip, ...from ip: xx.xx
 
 ### Railway部署方式
 
-公众号不能在`Railway`上部署，但企业微信应用可以!
+公众号不能在`Railway`上部署，但企业微信应用[可以](https://railway.app/template/-FHS--?referralCode=RC3znh)!
 
 [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/-FHS--?referralCode=RC3znh)
 
