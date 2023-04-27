@@ -43,6 +43,7 @@ def login(self, enableCmdQR=False, picDir=None, qrCallback=None,
         logger.warning('itchat has already logged in.')
         return
     self.isLogging = True
+    logger.info('Ready to login.')
     while self.isLogging:
         uuid = push_login(self)
         if uuid:
@@ -84,7 +85,7 @@ def login(self, enableCmdQR=False, picDir=None, qrCallback=None,
     if hasattr(loginCallback, '__call__'):
         r = loginCallback()
     else:
-        utils.clear_screen()
+        # utils.clear_screen()
         if os.path.exists(picDir or config.DEFAULT_QR):
             os.remove(picDir or config.DEFAULT_QR)
         logger.info('Login successfully as %s' % self.storageClass.nickName)
