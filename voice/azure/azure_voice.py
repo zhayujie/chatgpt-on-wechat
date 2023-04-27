@@ -64,7 +64,8 @@ class AzureVoice(Voice):
             logger.info("[Azure] voiceToText voice file name={} text={}".format(voice_file, result.text))
             reply = Reply(ReplyType.TEXT, result.text)
         else:
-            logger.error("[Azure] voiceToText error, result={}, canceldetails={}".format(result, result.cancellation_details))
+            cancel_details = result.cancellation_details
+            logger.error("[Azure] voiceToText error, result={}, errordetails={}".format(result, cancel_details.error_details))
             reply = Reply(ReplyType.ERROR, "抱歉，语音识别失败")
         return reply
 
@@ -88,6 +89,7 @@ class AzureVoice(Voice):
             logger.info("[Azure] textToVoice text={} voice file name={}".format(text, fileName))
             reply = Reply(ReplyType.VOICE, fileName)
         else:
-            logger.error("[Azure] textToVoice error, result={}, canceldetails={}".format(result, result.cancellation_details))
+            cancel_details = result.cancellation_details
+            logger.error("[Azure] textToVoice error, result={}, errordetails={}".format(result, cancel_details.error_details))
             reply = Reply(ReplyType.ERROR, "抱歉，语音合成失败")
         return reply
