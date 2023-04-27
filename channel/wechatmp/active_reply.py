@@ -55,10 +55,6 @@ class Query:
                 else:
                     context = channel._compose_context(wechatmp_msg.ctype, content, isgroup=False, msg=wechatmp_msg)
                 if context:
-                    # set private openai_api_key
-                    # if from_user is not changed in itchat, this can be placed at chat_channel
-                    user_data = conf().get_user_data(from_user)
-                    context["openai_api_key"] = user_data.get("openai_api_key")  # None or user openai_api_key
                     channel.produce(context)
                 # The reply will be sent by channel.send() in another thread
                 return "success"
