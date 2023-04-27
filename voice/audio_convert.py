@@ -111,7 +111,7 @@ def split_audio(file_path, max_segment_length_ms=60000):
     audio = AudioSegment.from_file(file_path)
     audio_length_ms = len(audio)
     if audio_length_ms <= max_segment_length_ms:
-        return [file_path]
+        return audio_length_ms, [file_path]
     segments = []
     for start_ms in range(0, audio_length_ms, max_segment_length_ms):
         end_ms = min(audio_length_ms, start_ms + max_segment_length_ms)
@@ -124,4 +124,4 @@ def split_audio(file_path, max_segment_length_ms=60000):
         path = f"{file_prefix}_{i+1}" + f".{format}"
         segment.export(path, format=format)
         files.append(path)
-    return files
+    return audio_length_ms, files

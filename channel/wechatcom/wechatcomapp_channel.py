@@ -63,15 +63,17 @@ class WechatComAppChannel(ChatChannel):
             logger.info("[wechatcom] Do send text to {}: {}".format(receiver, reply_text))
         elif reply.type == ReplyType.VOICE:
             try:
+                media_ids = []
                 file_path = reply.content
                 amr_file = os.path.splitext(file_path)[0] + ".amr"
                 any_to_amr(file_path, amr_file)
-                files = split_audio(amr_file, 60000)
+                duration, files = split_audio(amr_file, 60 * 1000)
                 if len(files) > 1:
-                    logger.info("[wechatcom] voice too long, split into {} parts".format(len(files)))
+                    logger.info("[wechatcom] voice too long {}s > 60s , split into {} parts".format(duration / 1000.0, len(files)))
                 for path in files:
                     response = self.client.media.upload("voice", open(path, "rb"))
                     logger.debug("[wechatcom] upload voice response: {}".format(response))
+                    media_ids.append(response["media_id"])
             except WeChatClientException as e:
                 logger.error("[wechatcom] upload voice failed: {}".format(e))
                 return
@@ -81,7 +83,9 @@ class WechatComAppChannel(ChatChannel):
                     os.remove(amr_file)
             except Exception:
                 pass
-            self.client.message.send_voice(self.agent_id, receiver, response["media_id"])
+            for media_id in media_ids:
+                self.client.message.send_voice(self.agent_id, receiver, media_id)
+                time.sleep(1)
             logger.info("[wechatcom] sendVoice={}, receiver={}".format(reply.content, receiver))
         elif reply.type == ReplyType.IMAGE_URL:  # 从网络下载图片
             img_url = reply.content
