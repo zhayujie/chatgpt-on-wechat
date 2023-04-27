@@ -11,7 +11,7 @@ ADD . ${BUILD_PREFIX}
 
 RUN apt-get update \
     &&apt-get install -y --no-install-recommends  bash \
-    ffmpeg espeak \
+    ffmpeg espeak libavcodec-extra\
     && cd ${BUILD_PREFIX} \
     && cp config-template.json config.json \
     && /usr/local/bin/python -m pip install --no-cache --upgrade pip \
