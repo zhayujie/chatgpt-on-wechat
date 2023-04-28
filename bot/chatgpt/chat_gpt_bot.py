@@ -174,7 +174,7 @@ class AzureChatGPTBot(ChatGPTBot):
                 time.sleep(int(retry_after))
                 response = requests.get(operation_location, headers=headers)
                 status = response.json()["status"]
-                image_url = response.json()["result"]["contentUrl"]
+            image_url = response.json()["result"]["contentUrl"]
             return True, image_url
         except Exception as e:
             logger.error("create image error: {}".format(e))
