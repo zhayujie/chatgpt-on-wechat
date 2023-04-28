@@ -158,9 +158,8 @@ class AzureChatGPTBot(ChatGPTBot):
         self.args["deployment_id"] = conf().get("azure_deployment_id")
 
     def create_img(self, query, retry_count=0, api_key=None):
-        api_base = "https://a-wxf.openai.azure.com/"
         api_version = "2022-08-03-preview"
-        url = "{}dalle/text-to-image?api-version={}".format(api_base, api_version)
+        url = "{}dalle/text-to-image?api-version={}".format(openai.api_base, api_version)
         api_key = api_key or openai.api_key
         headers = {"api-key": api_key, "Content-Type": "application/json"}
         try:
