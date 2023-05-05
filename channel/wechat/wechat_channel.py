@@ -29,7 +29,7 @@ from plugins import *
 @itchat.msg_register([TEXT, VOICE, PICTURE, NOTE])
 def handler_single_msg(msg):
     try:
-        cmsg = WeChatMessage(msg, False)
+        cmsg = WechatMessage(msg, False)
     except NotImplementedError as e:
         logger.debug("[WX]single message {} skipped: {}".format(msg["MsgId"], e))
         return None
@@ -40,7 +40,7 @@ def handler_single_msg(msg):
 @itchat.msg_register([TEXT, VOICE, PICTURE, NOTE], isGroupChat=True)
 def handler_group_msg(msg):
     try:
-        cmsg = WeChatMessage(msg, True)
+        cmsg = WechatMessage(msg, True)
     except NotImplementedError as e:
         logger.debug("[WX]group message {} skipped: {}".format(msg["MsgId"], e))
         return None
@@ -113,21 +113,12 @@ class WechatChannel(ChatChannel):
         # login by scan QRCode
         hotReload = conf().get("hot_reload", False)
         status_path = os.path.join(get_appdata_dir(), "itchat.pkl")
-        try:
-            itchat.auto_login(
-                enableCmdQR=2,
-                hotReload=hotReload,
-                statusStorageDir=status_path,
-                qrCallback=qrCallback,
-            )
-        except Exception as e:
-            if hotReload:
-                logger.error("Hot reload failed, try to login without hot reload")
-                itchat.logout()
-                os.remove(status_path)
-                itchat.auto_login(enableCmdQR=2, hotReload=hotReload, qrCallback=qrCallback)
-            else:
-                raise e
+        itchat.auto_login(
+            enableCmdQR=2,
+            hotReload=hotReload,
+            statusStorageDir=status_path,
+            qrCallback=qrCallback,
+        )
         self.user_id = itchat.instance.storageClass.userName
         self.name = itchat.instance.storageClass.nickName
         logger.info("Wechat login success, user_id: {}, nickname: {}".format(self.user_id, self.name))

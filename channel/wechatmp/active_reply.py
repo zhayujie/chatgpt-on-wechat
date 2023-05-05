@@ -10,7 +10,7 @@ from channel.wechatmp.common import *
 from channel.wechatmp.wechatmp_channel import WechatMPChannel
 from channel.wechatmp.wechatmp_message import WeChatMPMessage
 from common.log import logger
-from config import conf
+from config import conf, subscribe_msg
 
 
 # This class is instantiated once per query
@@ -55,10 +55,6 @@ class Query:
                 else:
                     context = channel._compose_context(wechatmp_msg.ctype, content, isgroup=False, msg=wechatmp_msg)
                 if context:
-                    # set private openai_api_key
-                    # if from_user is not changed in itchat, this can be placed at chat_channel
-                    user_data = conf().get_user_data(from_user)
-                    context["openai_api_key"] = user_data.get("openai_api_key")  # None or user openai_api_key
                     channel.produce(context)
                 # The reply will be sent by channel.send() in another thread
                 return "success"
@@ -66,13 +62,14 @@ class Query:
                 logger.info("[wechatmp] Event {} from {}".format(msg.event, msg.source))
                 if msg.event in ["subscribe", "subscribe_scan"]:
                     reply_text = subscribe_msg()
-                    replyPost = create_reply(reply_text, msg)
-                    return encrypt_func(replyPost.render())
+                    if reply_text:
+                        replyPost = create_reply(reply_text, msg)
+                        return encrypt_func(replyPost.render())
                 else:
                     return "success"
             else:
                 logger.info("暂且不处理")
-                return "success"
+            return "success"
         except Exception as exc:
             logger.exception(exc)
             return exc

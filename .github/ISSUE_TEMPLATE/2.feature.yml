@@ -1,0 +1,28 @@
+name: Feature request 🚀
+description: 提出你对项目的新想法或建议。
+labels: ['status: needs check']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        请在上方的`title`中填写简略总结，谢谢❤️。
+  - type: checkboxes
+    attributes:
+      label: ⚠️ 搜索是否存在类似issue
+      description: >
+        请在 [历史issue](https://github.com/zhayujie/chatgpt-on-wechat/issues) 中清空输入框，搜索关键词查找是否存在相似issue。
+      options:
+        - label: 我已经搜索过issues和disscussions，没有发现相似issue
+          required: true
+  - type: textarea
+    attributes:
+      label: 总结
+      description: 描述feature的功能。
+  - type: textarea
+    attributes:
+      label: 举例
+      description: 提供聊天示例，草图或相关网址。
+  - type: textarea
+    attributes:
+      label: 动机
+      description: 描述你提出该feature的动机，比如没有这项feature对你的使用造成了怎样的影响。 请提供更详细的场景描述，这可能会帮助我们发现并提出更好的解决方案。

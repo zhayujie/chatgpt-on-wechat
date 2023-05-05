@@ -43,6 +43,7 @@ def login(self, enableCmdQR=False, picDir=None, qrCallback=None,
         logger.warning('itchat has already logged in.')
         return
     self.isLogging = True
+    logger.info('Ready to login.')
     while self.isLogging:
         uuid = push_login(self)
         if uuid:
@@ -84,7 +85,7 @@ def login(self, enableCmdQR=False, picDir=None, qrCallback=None,
     if hasattr(loginCallback, '__call__'):
         r = loginCallback()
     else:
-        utils.clear_screen()
+        # utils.clear_screen()
         if os.path.exists(picDir or config.DEFAULT_QR):
             os.remove(picDir or config.DEFAULT_QR)
         logger.info('Login successfully as %s' % self.storageClass.nickName)
@@ -195,13 +196,17 @@ def process_login_info(core, loginContent):
     core.loginInfo['logintime'] = int(time.time() * 1e3)
     core.loginInfo['BaseRequest'] = {}
     cookies = core.s.cookies.get_dict()
-    skey = re.findall('<skey>(.*?)</skey>', r.text, re.S)[0]
-    pass_ticket = re.findall(
-        '<pass_ticket>(.*?)</pass_ticket>', r.text, re.S)[0]
-    core.loginInfo['skey'] = core.loginInfo['BaseRequest']['Skey'] = skey
+    res = re.findall('<skey>(.*?)</skey>', r.text, re.S)
+    skey = res[0] if res else None
+    res = re.findall(
+        '<pass_ticket>(.*?)</pass_ticket>', r.text, re.S)
+    pass_ticket = res[0] if res else None
+    if skey is not None:
+        core.loginInfo['skey'] = core.loginInfo['BaseRequest']['Skey'] = skey
     core.loginInfo['wxsid'] = core.loginInfo['BaseRequest']['Sid'] = cookies["wxsid"]
     core.loginInfo['wxuin'] = core.loginInfo['BaseRequest']['Uin'] = cookies["wxuin"]
-    core.loginInfo['pass_ticket'] = pass_ticket
+    if pass_ticket is not None:
+        core.loginInfo['pass_ticket'] = pass_ticket
     # A question : why pass_ticket == DeviceID ?
     #               deviceID is only a randomly generated number
 
@@ -317,6 +322,8 @@ def start_receiving(self, exitCallback=None, getReceivingFnOnly=False):
                 retryCount += 1
                 logger.error(traceback.format_exc())
                 if self.receivingRetryCount < retryCount:
+                    logger.error("Having tried %s times, but still failed. " % (
+                        retryCount) + "Stop trying...")
                     self.alive = False
                 else:
                     time.sleep(1)
@@ -363,7 +370,7 @@ def sync_check(self):
     regx = r'window.synccheck={retcode:"(\d+)",selector:"(\d+)"}'
     pm = re.search(regx, r.text)
     if pm is None or pm.group(1) != '0':
-        logger.debug('Unexpected sync check result: %s' % r.text)
+        logger.error('Unexpected sync check result: %s' % r.text)
         return None
     return pm.group(2)
 

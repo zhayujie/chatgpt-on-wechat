@@ -16,7 +16,7 @@ pip3 install wechatpy
 
 然后在[微信公众平台](https://mp.weixin.qq.com)注册一个自己的公众号，类型选择订阅号，主体为个人即可。
 
-然后根据[接入指南](https://developers.weixin.qq.com/doc/offiaccount/Basic_Information/Access_Overview.html)的说明，在[微信公众平台](https://mp.weixin.qq.com)的“设置与开发”-“基本配置”-“服务器配置”中填写服务器地址`URL`和令牌`Token`。这里的`URL`是`example.com/wx`的形式，不可以使用IP，`Token`是你自己编的一个特定的令牌。消息加解密方式如果选择了需要加密的模式，需要在配置中填写`wechatmp_aes_key`。
+然后根据[接入指南](https://developers.weixin.qq.com/doc/offiaccount/Basic_Information/Access_Overview.html)的说明，在[微信公众平台](https://mp.weixin.qq.com)的“设置与开发”-“基本配置”-“服务器配置”中填写服务器地址`URL`和令牌`Token`。`URL`填写格式为`http://url/wx`，可使用IP（成功几率看脸），`Token`是你自己编的一个特定的令牌。消息加解密方式如果选择了需要加密的模式，需要在配置中填写`wechatmp_aes_key`。
 
 相关的服务器验证代码已经写好，你不需要再添加任何代码。你只需要在本项目根目录的`config.json`中添加
 ```

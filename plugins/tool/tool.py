@@ -33,12 +33,17 @@ class Tool(Plugin):
 
     def get_help_text(self, verbose=False, **kwargs):
         help_text = "这是一个能让chatgpt联网，搜索，数字运算的插件，将赋予强大且丰富的扩展能力。"
+        trigger_prefix = conf().get("plugin_trigger_prefix", "$")
         if not verbose:
             return help_text
-        trigger_prefix = conf().get("plugin_trigger_prefix", "$")
-        help_text += "使用说明：\n"
+        help_text += "\n使用说明：\n"
         help_text += f"{trigger_prefix}tool " + "命令: 根据给出的{命令}使用一些可用工具尽力为你得到结果。\n"
-        help_text += f"{trigger_prefix}tool reset: 重置工具。\n"
+        help_text += f"{trigger_prefix}tool reset: 重置工具。\n\n"
+        help_text += f"已加载工具列表: \n"
+        for idx, tool in enumerate(self.app.get_tool_list()):
+            if idx != 0:
+                help_text += ", "
+            help_text += f"{tool}"
         return help_text
 
     def on_handle_context(self, e_context: EventContext):
@@ -130,6 +135,7 @@ class Tool(Plugin):
         return {
             "debug": kwargs.get("debug", False),
             "openai_api_key": conf().get("open_ai_api_key", ""),
+            "open_ai_api_base": conf().get("open_ai_api_base", "https://api.openai.com/v1"),
             "proxy": conf().get("proxy", ""),
             "request_timeout": request_timeout if request_timeout else conf().get("request_timeout", 120),
             # note: 目前tool暂未对其他模型测试，但这里仍对配置来源做了优先级区分，一般插件配置可覆盖全局配置
@@ -144,13 +150,16 @@ class Tool(Plugin):
             "google_api_key": kwargs.get("google_api_key", ""),
             "google_cse_id": kwargs.get("google_cse_id", ""),
             # for searxng-search tool
-            "searx_host": kwargs.get("searx_host", ""),
+            "searx_search_host": kwargs.get("searx_search_host", ""),
             # for wolfram-alpha tool
             "wolfram_alpha_appid": kwargs.get("wolfram_alpha_appid", ""),
             # for morning-news tool
-            "zaobao_api_key": kwargs.get("zaobao_api_key", ""),
+            "morning_news_api_key": kwargs.get("morning_news_api_key", ""),
             # for visual_dl tool
             "cuda_device": kwargs.get("cuda_device", "cpu"),
+            "think_depth": kwargs.get("think_depth", 3),
+            "arxiv_summary": kwargs.get("arxiv_summary", True),
+            "morning_news_use_llm": kwargs.get("morning_news_use_llm", False),
         }
 
     def _filter_tool_list(self, tool_list: list):
