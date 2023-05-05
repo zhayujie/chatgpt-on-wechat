@@ -14,6 +14,18 @@
 
 本channel需安装的依赖与公众号一致，需要安装`wechatpy`和`web.py`，它们包含在`requirements-optional.txt`中。
 
+此外，如果你是`Linux`系统，除了`ffmpeg`还需要安装`amr`编码器，否则会出现找不到编码器的错误，无法正常使用语音功能。
+
+- Ubuntu/Debian
+
+```bash
+apt-get install libavcodec-extra
+```
+
+- Alpine
+
+需自行编译`ffmpeg`，在编译参数里加入`amr`编码器的支持
+
 ## 使用方法
 
 1.查看企业ID
@@ -29,7 +41,7 @@
 
 3.配置应用
 
-- 在详情页如果点击`企业可信IP`的配置(没看到可以不管)，填入你服务器的公网IP
+- 在详情页点击`企业可信IP`的配置(没看到可以不管)，填入你服务器的公网IP，如果不知道可以先不填
 - 点击`接收消息`下的启用API接收消息
 - `URL`填写格式为`http://url:port/wxcomapp`，`port`是程序监听的端口，默认是9898
     如果是未认证的企业，url可直接使用服务器的IP。如果是认证企业，需要使用备案的域名，可使用二级域名。
@@ -51,6 +63,22 @@
 4.连接个人微信
 
 选择`我的企业`，点击`微信插件`，下面有个邀请关注的二维码。微信扫码后，即可在微信中看到对应企业，在这里你便可以和机器人沟通。
+
+向机器人发送消息，如果日志里出现报错:
+
+```bash
+Error code: 60020, message: "not allow to access from your ip, ...from ip: xx.xx.xx.xx"
+```
+
+意思是IP不可信，需要参考上一步的`企业可信IP`配置，把这里的IP加进去。
+
+### Railway部署方式
+
+公众号不能在`Railway`上部署，但企业微信应用[可以](https://railway.app/template/-FHS--?referralCode=RC3znh)!
+
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/-FHS--?referralCode=RC3znh)
+
+填写配置后，将部署完成后的网址```**.railway.app/wxcomapp```，填写在上一步的URL中。发送信息后观察日志，把报错的IP加入到可信IP。（每次重启后都需要加入可信IP）
 
 ## 测试体验
 

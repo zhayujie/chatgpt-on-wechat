@@ -25,9 +25,11 @@ def auto_login(self, hotReload=False, statusStorageDir='itchat.pkl',
     self.useHotReload = hotReload
     self.hotReloadDir = statusStorageDir
     if hotReload:
-        if self.load_login_status(statusStorageDir,
+        if rval:=self.load_login_status(statusStorageDir,
                 loginCallback=loginCallback, exitCallback=exitCallback):
             return
+        logger.error('Hot reload failed, logging in normally, error={}'.format(rval))
+        self.logout()
         self.login(enableCmdQR=enableCmdQR, picDir=picDir, qrCallback=qrCallback,
             loginCallback=loginCallback, exitCallback=exitCallback)
         self.dump_login_status(statusStorageDir)

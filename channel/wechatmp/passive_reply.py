@@ -62,10 +62,6 @@ class Query:
                     logger.debug("[wechatmp] context: {} {} {}".format(context, wechatmp_msg, supported))
 
                     if supported and context:
-                        # set private openai_api_key
-                        # if from_user is not changed in itchat, this can be placed at chat_channel
-                        user_data = conf().get_user_data(from_user)
-                        context["openai_api_key"] = user_data.get("openai_api_key")
                         channel.running.add(from_user)
                         channel.produce(context)
                     else:

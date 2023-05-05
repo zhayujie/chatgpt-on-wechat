@@ -48,6 +48,8 @@ class ChatChannel(Channel):
         if first_in:  # context首次传入时，receiver是None，根据类型设置receiver
             config = conf()
             cmsg = context["msg"]
+            user_data = conf().get_user_data(cmsg.from_user_id)
+            context["openai_api_key"] = user_data.get("openai_api_key")
             if context.get("isgroup", False):
                 group_name = cmsg.other_user_nickname
                 group_id = cmsg.other_user_id

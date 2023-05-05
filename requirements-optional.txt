@@ -6,7 +6,7 @@ SpeechRecognition # google speech to text
 gTTS>=2.3.1 # google text to speech
 pyttsx3>=2.90 # pytsx text to speech
 baidu_aip>=4.16.10 # baidu voice
-# azure-cognitiveservices-speech # azure voice
+azure-cognitiveservices-speech # azure voice
 numpy<=1.24.2
 langid # language detect
 
@@ -25,4 +25,4 @@ wechatpy
 # chatgpt-tool-hub plugin
 
 --extra-index-url https://pypi.python.org/simple
-chatgpt_tool_hub>=0.4.1
+chatgpt_tool_hub==0.4.3

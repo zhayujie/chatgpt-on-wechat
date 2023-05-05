@@ -25,7 +25,7 @@ Demo made by [Visionn](https://www.wangpc.cc/)
 
 # 更新日志
 
->**2023.04.26：** 支持企业微信应用号部署，兼容插件，并支持语音图片交互，[使用文档](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/channel/wechatcom/README.md)。(contributed by [@lanvent](https://github.com/lanvent) in [#944](https://github.com/zhayujie/chatgpt-on-wechat/pull/944))
+>**2023.04.26：** 支持企业微信应用号部署，兼容插件，并支持语音图片交互，支持Railway部署，[使用文档](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/channel/wechatcom/README.md)。(contributed by [@lanvent](https://github.com/lanvent) in [#944](https://github.com/zhayujie/chatgpt-on-wechat/pull/944))
 
 >**2023.04.05：** 支持微信公众号部署，兼容插件，并支持语音图片交互，[使用文档](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/channel/wechatmp/README.md)。(contributed by [@JS00000](https://github.com/JS00000) in [#686](https://github.com/zhayujie/chatgpt-on-wechat/pull/686))
 
@@ -83,14 +83,12 @@ pip3 install -r requirements-optional.txt
 
 参考[#415](https://github.com/zhayujie/chatgpt-on-wechat/issues/415)
 
-使用`azure`语音功能需安装依赖（列在`requirements-optional.txt`内，但为便于`railway`部署已注释）:
+使用`azure`语音功能需安装依赖，并参考[文档](https://learn.microsoft.com/en-us/azure/cognitive-services/speech-service/quickstarts/setup-platform?pivots=programming-language-python&tabs=linux%2Cubuntu%2Cdotnet%2Cjre%2Cmaven%2Cnodejs%2Cmac%2Cpypi)的环境要求。
+:
 
 ```bash
 pip3 install azure-cognitiveservices-speech
 ```
-
-> 目前默认发布的镜像和`railway`部署，都基于`apline`，无法安装`azure`的依赖。若有需求请自行基于[`debian`](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/docker/Dockerfile.debian.latest)打包。
-参考[文档](https://learn.microsoft.com/en-us/azure/cognitive-services/speech-service/quickstarts/setup-platform?pivots=programming-language-python&tabs=linux%2Cubuntu%2Cdotnet%2Cjre%2Cmaven%2Cnodejs%2Cmac%2Cpypi)
 
 ## 配置
 
