@@ -93,7 +93,8 @@ class WechatComAppChannel(ChatChannel):
             image_storage = io.BytesIO()
             for block in pic_res.iter_content(1024):
                 image_storage.write(block)
-            if (sz := fsize(image_storage)) >= 10 * 1024 * 1024:
+            sz = fsize(image_storage)
+            if sz >= 10 * 1024 * 1024:
                 logger.info("[wechatcom] image too large, ready to compress, sz={}".format(sz))
                 image_storage = compress_imgfile(image_storage, 10 * 1024 * 1024 - 1)
                 logger.info("[wechatcom] image compressed, sz={}".format(fsize(image_storage)))
@@ -109,7 +110,8 @@ class WechatComAppChannel(ChatChannel):
             logger.info("[wechatcom] sendImage url={}, receiver={}".format(img_url, receiver))
         elif reply.type == ReplyType.IMAGE:  # 从文件读取图片
             image_storage = reply.content
-            if (sz := fsize(image_storage)) >= 10 * 1024 * 1024:
+            sz = fsize(image_storage)
+            if sz >= 10 * 1024 * 1024:
                 logger.info("[wechatcom] image too large, ready to compress, sz={}".format(sz))
                 image_storage = compress_imgfile(image_storage, 10 * 1024 * 1024 - 1)
                 logger.info("[wechatcom] image compressed, sz={}".format(fsize(image_storage)))
