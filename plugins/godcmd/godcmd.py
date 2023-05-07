@@ -284,7 +284,11 @@ class Godcmd(Plugin):
                     else:
                         ok, result = False, "请提供一个GPT模型"
                 elif cmd == "gpt_model":
-                    result = True, "你的GPT模型已设置为" + conf().get_user_data(user)["gpt_model"] or "gpt-3.5-turbo"
+                    user_data = conf().get_user_data(user)
+                    model = conf().get('model')
+                    if 'gpt_model' in user_data:
+                        model = user_data['gpt_model']
+                    result = True, "你的GPT模型已设置为" + model
                 elif cmd == "reset_gpt_model":
                     try:
                         user_data = conf().get_user_data(user)
