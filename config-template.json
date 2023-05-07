@@ -1,12 +1,9 @@
 {
-  "open_ai_api_key": "YOUR API KEY",
-  "model": "gpt-3.5-turbo",
+  "open_ai_api_key": "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",
+  "model": "gpt-4",
   "proxy": "",
-  "single_chat_prefix": [
-    "bot",
-    "@bot"
-  ],
-  "single_chat_reply_prefix": "[bot] ",
+  "single_chat_prefix": [""],
+  "single_chat_reply_prefix": "",
   "group_chat_prefix": [
     "@bot"
   ],
