@@ -31,7 +31,8 @@ class BaiduTranslator(Translator):
         while retry_cnt:
             r = requests.post(self.url, params=payload, headers=headers)
             result = r.json()
-            if errcode := result.get("error_code", "52000") != "52000":
+            errcode = result.get("error_code", "52000")
+            if errcode != "52000":
                 if errcode == "52001" or errcode == "52002":
                     retry_cnt -= 1
                     continue
