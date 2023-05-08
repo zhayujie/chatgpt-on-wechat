@@ -26,4 +26,4 @@ RUN chmod +x /entrypoint.sh \
 
 USER noroot
 
-ENTRYPOINT ["docker/entrypoint.sh"]
+ENTRYPOINT ["/entrypoint.sh"]
