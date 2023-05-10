@@ -11,6 +11,10 @@
     "summary": {
       "url": "https://github.com/lanvent/plugin_summary.git",
       "desc": "总结聊天记录的插件"
+    },
+    "Midjourney": {
+      "url": "https://github.com/wh1214088649/plugin_midjourney.git",
+      "desc": "调用discord的Midjourney Bot API来实现画图"
     }
   }
 }
