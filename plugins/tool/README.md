@@ -57,6 +57,8 @@ $tool reset: 重置工具。
 
 ### 6. news 新闻类工具集合
 
+> news更新：0.4版本对新闻类工具做了整合，配置文件只要加入`news`一个工具名就会自动加载所有新闻类工具
+
 #### 6.1. news-api *
 ###### 从全球 80,000 多个信息源中获取当前和历史新闻文章
 
@@ -75,7 +77,7 @@ $tool reset: 重置工具。
 
 > 该工具需要解决browser tool 的google-chrome依赖安装
 
-> news更新：0.4版本对news工具做了整合，只要加入news一个工具就会自动加载所有新闻类工具
+
 
 ### 7. bing-search *
 ###### bing搜索引擎，从此你不用再烦恼搜索要用哪些关键词
@@ -129,7 +131,7 @@ $tool reset: 重置工具。
 
 ```
 注：config.json文件非必须，未创建仍可使用本tool；带*工具需在kwargs填入对应api-key键值对  
-- `tools`：本插件初始化时加载的工具, 上述标题即是对应工具名称，带*工具必须在kwargs中配置相应api-key
+- `tools`：本插件初始化时加载的工具, 上述一级标题即是对应工具名称，带*工具必须在kwargs中配置相应api-key
 - `kwargs`：工具执行时的配置，一般在这里存放**api-key**，或环境配置
   - `debug`: 输出chatgpt-tool-hub额外信息用于调试
   - `request_timeout`: 访问openai接口的超时时间，默认与wechat-on-chatgpt配置一致，可单独配置
