@@ -4,7 +4,7 @@ import time
 import web
 from wechatpy import parse_message
 from wechatpy.replies import ImageReply, VoiceReply, create_reply
-
+import textwrap
 from bridge.context import *
 from bridge.reply import *
 from channel.wechatmp.common import *
