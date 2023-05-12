@@ -2,6 +2,7 @@ import os
 import re
 import threading
 import time
+from opencc import OpenCC
 from asyncio import CancelledError
 from concurrent.futures import Future, ThreadPoolExecutor
 
@@ -94,6 +95,10 @@ class ChatChannel(Channel):
                 return None
 
             if context.get("isgroup", False):  # 群聊
+                # 判断是否为语音转成的文字，进行繁转简处理，TODO:进行模糊处理
+                if context["origin_ctype"] == ContextType.VOICE:
+                    cc = OpenCC('t2s')
+                    content = convert_to_simplified(content, cc)            
                 # 校验关键字
                 match_prefix = check_prefix(content, conf().get("group_chat_prefix"))
                 match_contain = check_contain(content, conf().get("group_chat_keyword"))
@@ -350,7 +355,6 @@ def check_prefix(content, prefix_list):
             return prefix
     return None
 
-
 def check_contain(content, keyword_list):
     if not keyword_list:
         return None
@@ -358,3 +362,7 @@ def check_contain(content, keyword_list):
         if content.find(ky) != -1:
             return True
     return None
+
+def convert_to_simplified(text, cc):
+    simplified_text = cc.convert(text)
+    return simplified_text
