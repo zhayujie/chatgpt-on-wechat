@@ -134,12 +134,17 @@ class ChatGPTBot(Bot, OpenAIImage):
                 result["content"] = "我没有收到你的消息"
                 if need_retry:
                     time.sleep(5)
+            elif isinstance(e, openai.error.APIError:):
+                logger.warn("[CHATGPT] Bad Gateway: {}".format(e))
+                result["content"] = "请再问我一次"
+                if need_retry:
+                    time.sleep(10)
             elif isinstance(e, openai.error.APIConnectionError):
                 logger.warn("[CHATGPT] APIConnectionError: {}".format(e))
                 need_retry = False
                 result["content"] = "我连接不到你的网络"
             else:
-                logger.warn("[CHATGPT] Exception: {}".format(e))
+                logger.exception("[CHATGPT] Exception: {}".format(e))
                 need_retry = False
                 self.sessions.clear_session(session.session_id)
 
