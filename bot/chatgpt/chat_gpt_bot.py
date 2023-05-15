@@ -134,7 +134,7 @@ class ChatGPTBot(Bot, OpenAIImage):
                 result["content"] = "我没有收到你的消息"
                 if need_retry:
                     time.sleep(5)
-            elif isinstance(e, openai.error.APIError:):
+            elif isinstance(e, openai.error.APIError):
                 logger.warn("[CHATGPT] Bad Gateway: {}".format(e))
                 result["content"] = "请再问我一次"
                 if need_retry:
