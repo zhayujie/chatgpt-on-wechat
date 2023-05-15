@@ -50,6 +50,7 @@ class ChatChannel(Channel):
             cmsg = context["msg"]
             user_data = conf().get_user_data(cmsg.from_user_id)
             context["openai_api_key"] = user_data.get("openai_api_key")
+            context["gpt_model"] = user_data.get("gpt_model")
             if context.get("isgroup", False):
                 group_name = cmsg.other_user_nickname
                 group_id = cmsg.other_user_id
