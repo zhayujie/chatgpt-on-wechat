@@ -48,6 +48,7 @@ class ChatMessage(object):
     to_user_nickname = None
     other_user_id = None
     other_user_nickname = None
+    my_msg = False
 
     is_group = False
     is_at = False
