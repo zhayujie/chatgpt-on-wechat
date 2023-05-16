@@ -9,7 +9,6 @@ baidu_aip>=4.16.10 # baidu voice
 azure-cognitiveservices-speech # azure voice
 numpy<=1.24.2
 langid # language detect
-elevenlabs==0.2.15
 
 #install plugin
 dulwich
