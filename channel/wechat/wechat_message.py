@@ -58,6 +58,8 @@ class WechatMessage(ChatMessage):
         if self.to_user_id == user_id:
             self.to_user_nickname = nickname
         try:  # 陌生人时候, 'User'字段可能不存在
+            self.my_msg = itchat_msg["ToUserName"] == itchat_msg["User"]["UserName"] and \
+                          itchat_msg["ToUserName"] != itchat_msg["FromUserName"]
             self.other_user_id = itchat_msg["User"]["UserName"]
             self.other_user_nickname = itchat_msg["User"]["NickName"]
             if self.other_user_id == self.from_user_id:
