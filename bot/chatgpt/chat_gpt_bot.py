@@ -33,6 +33,7 @@ class ChatGPTBot(Bot, OpenAIImage):
 
         self.sessions = SessionManager(ChatGPTSession, model=conf().get("model") or "gpt-3.5-turbo")
         self.args = {
+            "deployment_id": conf().get("model"),  # 对话部署的ID，主要用作Azure部署的模型
             "model": conf().get("model") or "gpt-3.5-turbo",  # 对话模型的名称
             "temperature": conf().get("temperature", 0.9),  # 值在[0,1]之间，越大表示回复越具有不确定性
             # "max_tokens":4096,  # 回复最大的字符数
@@ -159,7 +160,8 @@ class AzureChatGPTBot(ChatGPTBot):
     def __init__(self):
         super().__init__()
         openai.api_type = "azure"
-        openai.api_version = "2023-03-15-preview"
+        openai.api_version = "2023-05-15"
+
         self.args["deployment_id"] = conf().get("azure_deployment_id")
 
     def create_img(self, query, retry_count=0, api_key=None):
