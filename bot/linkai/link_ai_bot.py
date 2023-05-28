@@ -16,6 +16,7 @@ class LinkAIBot(Bot):
 
     def __init__(self):
         self.base_url = "https://api.link-ai.chat/v1"
+        self.sessions = SessionManager(ChatGPTSession, model=conf().get("model") or "gpt-3.5-turbo")
 
     def reply(self, query, context: Context = None) -> Reply:
         return self._chat(query, context)
@@ -28,7 +29,7 @@ class LinkAIBot(Bot):
 
         try:
             session_id = context["session_id"]
-            self.sessions = SessionManager(ChatGPTSession, model=conf().get("model") or "gpt-3.5-turbo")
+
             session = self.sessions.session_query(query, session_id)
 
             # remove system message
@@ -61,6 +62,7 @@ class LinkAIBot(Bot):
             # execute success
             reply_content = res["data"]["content"]
             logger.info(f"[LINKAI] reply={reply_content}")
+            self.sessions.session_reply(reply_content, session_id)
             return Reply(ReplyType.TEXT, reply_content)
         except Exception as e:
             logger.exception(e)
