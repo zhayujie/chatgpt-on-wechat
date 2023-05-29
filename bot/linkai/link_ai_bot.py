@@ -37,22 +37,22 @@ class LinkAIBot(Bot):
                 session.messages.pop(0)
 
             # load config
-            app_code = conf().get("app_code")
-            app_market_api_key = conf().get("app_market_api_key")
+            app_code = conf().get("linkai_app_code")
+            linkai_api_key = conf().get("linkai_api_key")
             logger.info(f"[LINKAI] query={query}, app_code={app_code}")
 
             body = {
                 "appCode": app_code,
                 "messages": session.messages
             }
-            headers = {"Authorization": "Bearer " + app_market_api_key}
+            headers = {"Authorization": "Bearer " + linkai_api_key}
 
             # do http request
             res = requests.post(url=self.base_url + "/chat/completion", json=body, headers=headers).json()
 
             if not res or not res["success"]:
                 if res.get("code") == self.AUTH_FAILED_CODE:
-                    logger.exception(f"[LINKAI] please check your app_market_api_key, res={res}")
+                    logger.exception(f"[LINKAI] please check your linkai_api_key, res={res}")
                     return Reply(ReplyType.ERROR, "请再问我一次吧")
                 else:
                     # retry
