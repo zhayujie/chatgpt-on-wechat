@@ -23,7 +23,7 @@ class Bridge(object):
             self.btype["chat"] = const.OPEN_AI
         if conf().get("use_azure_chatgpt", False):
             self.btype["chat"] = const.CHATGPTONAZURE
-        if conf().get("app_market_api_key") and conf().get("app_code"):
+        if conf().get("linkai_api_key") and conf().get("linkai_app_code"):
             self.btype["chat"] = const.LINKAI
         self.bots = {}
 
