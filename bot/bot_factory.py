@@ -33,4 +33,9 @@ def create_bot(bot_type):
         from bot.chatgpt.chat_gpt_bot import AzureChatGPTBot
 
         return AzureChatGPTBot()
+
+    elif bot_type == const.LINKAI:
+        from bot.linkai.link_ai_bot import LinkAIBot
+        return LinkAIBot()
+
     raise RuntimeError
