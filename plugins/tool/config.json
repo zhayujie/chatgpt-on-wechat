@@ -1,0 +1,16 @@
+{
+  "tools": [
+    "news",
+    "wikipedia"
+  ],
+  "kwargs": {
+    "llm_api_key": "",
+    "think_depth": 1,
+    "top_k_results": 2,
+    "no_default": false,
+    "model_name": "gpt-3.5-turbo",
+    "morning_news_use_llm": false,
+    "morning_news_api_key": "RnFgF6oqCYCjt6EV",
+    "news_api_key": "57a3e2ac9aa34e638741f08a89cb0dc3"
+  }
+}

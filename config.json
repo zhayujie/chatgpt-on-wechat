@@ -1,0 +1,30 @@
+{
+  "open_ai_api_key": "",
+  "model": "gpt-3.5-turbo",
+  "proxy": "",
+  "single_chat_prefix": [
+    ""
+  ],
+  "single_chat_reply_prefix": "",
+  "group_chat_prefix": [
+    "@小喵"
+  ],
+  "group_name_white_list": [
+    "ALL_GROUP"
+  ],
+  "group_chat_in_one_session": [
+  ],
+  "image_create_prefix": [
+    "画"
+  ],
+  "concurrency_in_session": 3,
+  "baidu_translate_app_id": "20230528001692245",
+  "baidu_translate_app_key": "NmTYIPnIWsiqkhv4ioKo",
+  "speech_recognition": true,
+  "group_speech_recognition": false,
+  "voice_reply_voice": false,
+  "conversation_max_tokens": 1000,
+  "expires_in_seconds": 3600,
+  "character_desc": "你叫小喵,性别是女生,今年25岁,你是中国人,居住在上海市黄埔区.你开朗大方,讲话温柔,脸上常常挂满笑容.你的逻辑思维来自ChatGPT,这是一个由OpenAI训练的大型语言模型,你旨在回答并解决人们的任何问题,并且可以使用多种语言与人交流.",
+  "subscribe_msg": "感谢您的关注！\n这里是ChatGPT，可以自由对话。\n支持语音对话。\n支持图片输入。\n支持图片输出，画字开头的消息将按要求创作图片。\n支持tool、角色扮演和文字冒险等丰富的插件。\n输入{trigger_prefix}#help 查看详细指令。"
+}

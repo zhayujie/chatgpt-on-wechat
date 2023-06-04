@@ -1,0 +1,118 @@
+{
+  "replicate_api_token": "r8_dtFtm2srXT64Vt1AlFnEPZOit4AxddL3FUPWM",
+  "translate_prompt": true,
+  "defaults": {
+    "model": "cjwbw/anything-v3-better-vae",
+    "version": "09a5805203f4c12da649ec1923bb7729517ca25fcac790e640eaa9ed66573b65",
+    "negative_prompt": "lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry, artist name",
+    "prompt": "masterpiece, best quality, illustration, beautiful detailed, finely detailed, dramatic light, intricate details"
+  },
+  "rules": [
+    {
+      "keywords": [
+        "SD",
+        "sd"
+      ],
+      "params": {
+        "model": "stability-ai/stable-diffusion",
+        "prompt": "best quality",
+        "version": "db21e45d3f7023abc2a46ee38a23973f6dce16bb082a930b0c49861f96d1e5bf",
+        "image_dimensions": "512x512"
+      },
+      "desc": "使用SD模型画图"
+    },
+    {
+      "keywords": [
+        "横版",
+        "壁纸"
+      ],
+      "params": {
+        "width": 640,
+        "height": 512
+      },
+      "desc": "分辨率会变成640x512，对SD模型无效"
+    },
+    {
+      "keywords": [
+        "竖版"
+      ],
+      "params": {
+        "width": 512,
+        "height": 640
+      },
+      "desc": "分辨率会变成512x640，对SD模型无效"
+    },
+    {
+      "keywords": [
+        "二次元"
+      ],
+      "params": {
+        "model": "cjwbw/anything-v3-better-vae",
+        "version": "09a5805203f4c12da649ec1923bb7729517ca25fcac790e640eaa9ed66573b65",
+        "negative_prompt": "lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry, artist name",
+        "prompt": "masterpiece, best quality, illustration, beautiful detailed, finely detailed, dramatic light, intricate details",
+        "num_inference_steps": 20,
+        "guidance_scale": 9
+      },
+      "desc": "使用二次元风格模型anything-v3出图"
+    },
+    {
+      "keywords": [
+        "未来",
+        "future"
+      ],
+      "params": {
+        "model": "cjwbw/future-diffusion",
+        "version": "b5c46a3b3f0db2a154d4be534ba7758caded970b748a2e26e6d02e9b3bd7da2a",
+        "negative_prompt": "duplicate heads bad anatomy",
+        "prompt": "duplicate heads bad anatomy",
+        "num_inference_steps": 20,
+        "guidance_scale": 7
+      },
+      "desc": "使用未来风格模型出图"
+    },
+    {
+      "keywords": [
+        "修复",
+        "fix"
+      ],
+      "params": {
+        "model": "sczhou/codeformer",
+        "version": "7de2ea26c616d5bf2245ad0d5e24f0ff9a6204578a5c876db53142edd9d2cd56",
+        "image": "image",
+        "upscale": 2,
+        "face_upsample": true,
+        "background_enhance": true,
+        "codeformer_fidelity": 0.7
+      },
+      "desc": "修复人像图片"
+    },
+    {
+      "keywords": [
+        "open",
+        "openjourney"
+      ],
+      "params": {
+        "model": "prompthero/openjourney",
+        "version": "9936c2001faa2194a261c01381f90e65261879985476014a0a37a334593a05eb",
+        "negative_prompt": "",
+        "prompt": "mdjrny-v4 style, masterpiece, 8k, best quality, illustration, beautiful detailed, finely detailed, dramatic light, intricate details",
+        "num_inference_steps": 30,
+        "guidance_scale": 7
+      },
+      "desc": "使用openjourney模型出图"
+    },
+    {
+      "keywords": [
+        "去除模糊"
+      ],
+      "params": {
+        "model": "google-research/maxim",
+        "version": "494ca4d578293b4b93945115601b6a38190519da18467556ca223d219c3af9f9",
+        "_model": "Image Deblurring (GoPro)",
+        "image": "image"
+      },
+      "desc": "去除运动模糊"
+    }
+  ]
+}
