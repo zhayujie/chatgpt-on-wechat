@@ -1,5 +1,7 @@
+# access LinkAI knowledge base platform
+# docs: https://link-ai.tech/platform/link-app/wechat
+
 from bot.bot import Bot
-from bridge.context import ContextType
 from bridge.reply import Reply, ReplyType
 from common.log import logger
 from bridge.context import Context
@@ -13,6 +15,7 @@ class LinkAIBot(Bot):
 
     # authentication failed
     AUTH_FAILED_CODE = 401
+    NO_QUOTA_CODE = 406
 
     def __init__(self):
         self.base_url = "https://api.link-ai.chat/v1"
@@ -51,19 +54,27 @@ class LinkAIBot(Bot):
             res = requests.post(url=self.base_url + "/chat/completion", json=body, headers=headers).json()
 
             if not res or not res["success"]:
+
                 if res.get("code") == self.AUTH_FAILED_CODE:
                     logger.exception(f"[LINKAI] please check your linkai_api_key, res={res}")
                     return Reply(ReplyType.ERROR, "请再问我一次吧")
+
+                elif res.get("code") == self.NO_QUOTA_CODE:
+                    logger.exception(f"[LINKAI] please check your account quota, https://link-ai.chat/console/account")
+                    return Reply(ReplyType.ERROR, "提问太快啦，请休息一下再问我吧")
+
                 else:
                     # retry
                     time.sleep(2)
                     logger.warn(f"[LINKAI] do retry, times={retry_count}")
                     return self._chat(query, context, retry_count + 1)
+
             # execute success
             reply_content = res["data"]["content"]
             logger.info(f"[LINKAI] reply={reply_content}")
             self.sessions.session_reply(reply_content, session_id)
             return Reply(ReplyType.TEXT, reply_content)
+
         except Exception as e:
             logger.exception(e)
             # retry
