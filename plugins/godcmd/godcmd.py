@@ -297,7 +297,7 @@ class Godcmd(Plugin):
                     except Exception as e:
                         ok, result = False, "你没有设置私有GPT模型"
                 elif cmd == "reset":
-                    if bottype in [const.OPEN_AI, const.CHATGPT, const.CHATGPTONAZURE]:
+                    if bottype in [const.OPEN_AI, const.CHATGPT, const.CHATGPTONAZURE, const.LINKAI]:
                         bot.sessions.clear_session(session_id)
                         channel.cancel_session(session_id)
                         ok, result = True, "会话已重置"
