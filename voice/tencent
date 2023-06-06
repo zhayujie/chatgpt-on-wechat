@@ -1,0 +1,50 @@
+import requests
+import json
+
+# 设置腾讯云API密钥和请求URL
+AAPID ='1313210295'
+secret_id = 'AKIDV7pMeilgM0cBiBcBXffcQ4WieFcjdKze'
+secret_key = 'jSCyfCgAbszvd8QkxxKTN2SecLqF0e6M'
+url = 'https://tts.tencentcloudapi.com/'
+
+# 设置请求参数
+params = {
+    'Action': 'TextToVoice',
+    'Version': '2019-08-23',
+    'Text': '您好，我是聊天机器人，很高兴为您服务。',
+    'SessionId': 'chatbot',
+    'ModelType': 1,
+    'VoiceType': 1,
+    'SampleRate': 16000,
+    'Codec': 'mp3',
+    'Expired': 2592000
+}
+
+# 生成签名
+from tencentcloud.common import credential
+from tencentcloud.common.exception.tencent_cloud_sdk_exception import TencentCloudSDKException
+from tencentcloud.common.profile.client_profile import ClientProfile
+from tencentcloud.common.profile.http_profile import HttpProfile
+from tencentcloud.tts.v20190823 import tts_client, models
+
+try:
+    cred = credential.Credential(secret_id, secret_key)
+    httpProfile = HttpProfile()
+    httpProfile.endpoint = url
+    clientProfile = ClientProfile()
+    clientProfile.httpProfile = httpProfile
+    client = tts_client.TtsClient(cred, "ap-guangzhou", clientProfile)
+    req = models.TextToVoiceRequest()
+    params = json.dumps(params)
+    req.from_json_string(params)
+
+    # 发送请求
+    resp = client.TextToVoice(req)
+    print(resp.to_json_string())
+
+    # 保存语音文件
+    with open('output.mp3', 'wb') as f:
+        f.write(resp.Audio)
+
+except TencentCloudSDKException as err:
+    print(err)
