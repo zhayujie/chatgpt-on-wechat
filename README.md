@@ -27,6 +27,12 @@ https://user-images.githubusercontent.com/26161723/233777277-e3b9928e-b88f-43e2-
 
 Demo made by [Visionn](https://www.wangpc.cc/)
 
+# 交流群
+
+添加小助手微信进群：
+
+<img width="240" src="./docs/images/contact.jpg">
+
 # 更新日志
 
 >**2023.04.26：** 支持企业微信应用号部署，兼容插件，并支持语音图片交互，支持Railway部署，[使用文档](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/channel/wechatcom/README.md)。(contributed by [@lanvent](https://github.com/lanvent) in [#944](https://github.com/zhayujie/chatgpt-on-wechat/pull/944))
@@ -205,6 +211,8 @@ FAQs： <https://github.com/zhayujie/chatgpt-on-wechat/wiki/FAQs>
 
 ## 联系
 
-欢迎提交PR、Issues，以及Star支持一下。程序运行遇到问题优先查看 [常见问题列表](https://github.com/zhayujie/chatgpt-on-wechat/wiki/FAQs) ，其次前往 [Issues](https://github.com/zhayujie/chatgpt-on-wechat/issues) 中搜索。如果你想了解更多项目细节，并与开发者们交流更多关于AI技术的实践，欢迎加入星球:
+欢迎提交PR、Issues，以及Star支持一下。程序运行遇到问题可以查看 [常见问题列表](https://github.com/zhayujie/chatgpt-on-wechat/wiki/FAQs) ，其次前往 [Issues](https://github.com/zhayujie/chatgpt-on-wechat/issues) 中搜索。
+
+如果你想了解更多项目细节，与开发者们交流更多关于AI技术的实践，欢迎加入星球:
 
 <a href="https://public.zsxq.com/groups/88885848842852.html"><img width="360" src="./docs/images/planet.jpg"></a>
