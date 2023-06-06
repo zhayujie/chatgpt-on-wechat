@@ -27,6 +27,12 @@ https://user-images.githubusercontent.com/26161723/233777277-e3b9928e-b88f-43e2-
 
 Demo made by [Visionn](https://www.wangpc.cc/)
 
+# 交流群
+
+添加小助手微信进群：
+
+<img width="240" src="./docs/images/contact.jpg">
+
 # 更新日志
 
 >**2023.04.26：** 支持企业微信应用号部署，兼容插件，并支持语音图片交互，支持Railway部署，[使用文档](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/channel/wechatcom/README.md)。(contributed by [@lanvent](https://github.com/lanvent) in [#944](https://github.com/zhayujie/chatgpt-on-wechat/pull/944))
