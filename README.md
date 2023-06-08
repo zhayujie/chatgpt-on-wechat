@@ -17,9 +17,6 @@
 - 个人微信
   
   [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/qApznZ?referralCode=RC3znh)
-- 企业微信应用号
-  
-  [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/-FHS--?referralCode=RC3znh)
 
 # 演示
 
