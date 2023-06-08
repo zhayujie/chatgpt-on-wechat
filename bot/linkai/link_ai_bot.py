@@ -31,22 +31,25 @@ class LinkAIBot(Bot):
             return Reply(ReplyType.ERROR, "请再问我一次吧")
 
         try:
+            # load config
+            app_code = conf().get("linkai_app_code")
+            linkai_api_key = conf().get("linkai_api_key")
+
             session_id = context["session_id"]
 
             session = self.sessions.session_query(query, session_id)
 
             # remove system message
-            if session.messages[0].get("role") == "system":
+            if app_code and session.messages[0].get("role") == "system":
                 session.messages.pop(0)
 
-            # load config
-            app_code = conf().get("linkai_app_code")
-            linkai_api_key = conf().get("linkai_api_key")
+
             logger.info(f"[LINKAI] query={query}, app_code={app_code}")
 
             body = {
                 "appCode": app_code,
-                "messages": session.messages
+                "messages": session.messages,
+                "temperature": conf().get("temperature")
             }
             headers = {"Authorization": "Bearer " + linkai_api_key}
 
@@ -60,7 +63,7 @@ class LinkAIBot(Bot):
                     return Reply(ReplyType.ERROR, "请再问我一次吧")
 
                 elif res.get("code") == self.NO_QUOTA_CODE:
-                    logger.exception(f"[LINKAI] please check your account quota, https://link-ai.chat/console/account")
+                    logger.exception(f"[LINKAI] please check your account quota, https://chat.link-ai.tech/console/account")
                     return Reply(ReplyType.ERROR, "提问太快啦，请休息一下再问我吧")
 
                 else:
