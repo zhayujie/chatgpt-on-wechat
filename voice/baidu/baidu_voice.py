@@ -43,9 +43,9 @@ class BaiduVoice(Voice):
                 with open(config_path, "r") as fr:
                     bconf = json.load(fr)
 
-            self.app_id = conf().get("baidu_app_id")
-            self.api_key = conf().get("baidu_api_key")
-            self.secret_key = conf().get("baidu_secret_key")
+            self.app_id = str(conf().get("baidu_app_id"))
+            self.api_key = str(conf().get("baidu_api_key"))
+            self.secret_key = str(conf().get("baidu_secret_key"))
             self.dev_id = conf().get("baidu_dev_pid")
             self.lang = bconf["lang"]
             self.ctp = bconf["ctp"]
