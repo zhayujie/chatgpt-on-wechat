@@ -100,6 +100,7 @@ available_setting = {
     # 插件配置
     "plugin_trigger_prefix": "$",  # 规范插件提供聊天相关指令的前缀，建议不要和管理员指令前缀"#"冲突
     # 知识库平台配置
+    "use_linkai": False,
     "linkai_api_key": "",
     "linkai_app_code": ""
 }

@@ -1,18 +1,20 @@
 # access LinkAI knowledge base platform
 # docs: https://link-ai.tech/platform/link-app/wechat
 
-from bot.bot import Bot
-from bridge.reply import Reply, ReplyType
-from common.log import logger
-from bridge.context import Context
-from bot.chatgpt.chat_gpt_session import ChatGPTSession
-from bot.session_manager import SessionManager
-from config import conf
-import requests
 import time
 
-class LinkAIBot(Bot):
+import requests
 
+from bot.bot import Bot
+from bot.chatgpt.chat_gpt_session import ChatGPTSession
+from bot.session_manager import SessionManager
+from bridge.context import Context
+from bridge.reply import Reply, ReplyType
+from common.log import logger
+from config import conf
+
+
+class LinkAIBot(Bot):
     # authentication failed
     AUTH_FAILED_CODE = 401
     NO_QUOTA_CODE = 406
@@ -31,22 +33,28 @@ class LinkAIBot(Bot):
             return Reply(ReplyType.ERROR, "请再问我一次吧")
 
         try:
+            # load config
+            app_code = conf().get("linkai_app_code")
+            linkai_api_key = conf().get("linkai_api_key")
+
             session_id = context["session_id"]
 
             session = self.sessions.session_query(query, session_id)
 
             # remove system message
-            if session.messages[0].get("role") == "system":
+            if app_code and session.messages[0].get("role") == "system":
                 session.messages.pop(0)
 
-            # load config
-            app_code = conf().get("linkai_app_code")
-            linkai_api_key = conf().get("linkai_api_key")
             logger.info(f"[LINKAI] query={query}, app_code={app_code}")
 
             body = {
                 "appCode": app_code,
-                "messages": session.messages
+                "messages": session.messages,
+                "model": conf().get("model") or "gpt-3.5-turbo",  # 对话模型的名称
+                "temperature": conf().get("temperature"),
+                "top_p": conf().get("top_p", 1),
+                "frequency_penalty": conf().get("frequency_penalty", 0.0),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
+                "presence_penalty": conf().get("presence_penalty", 0.0),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
             }
             headers = {"Authorization": "Bearer " + linkai_api_key}
 
@@ -54,13 +62,12 @@ class LinkAIBot(Bot):
             res = requests.post(url=self.base_url + "/chat/completion", json=body, headers=headers).json()
 
             if not res or not res["success"]:
-
                 if res.get("code") == self.AUTH_FAILED_CODE:
                     logger.exception(f"[LINKAI] please check your linkai_api_key, res={res}")
                     return Reply(ReplyType.ERROR, "请再问我一次吧")
 
                 elif res.get("code") == self.NO_QUOTA_CODE:
-                    logger.exception(f"[LINKAI] please check your account quota, https://link-ai.chat/console/account")
+                    logger.exception(f"[LINKAI] please check your account quota, https://chat.link-ai.tech/console/account")
                     return Reply(ReplyType.ERROR, "提问太快啦，请休息一下再问我吧")
 
                 else:
