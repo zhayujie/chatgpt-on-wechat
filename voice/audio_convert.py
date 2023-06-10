@@ -1,7 +1,13 @@
 import shutil
 import wave
 
-import pysilk
+from common.log import logger
+
+try:
+    import pysilk
+except ImportError:
+    logger.warn("import pysilk failed, wechaty voice message will not be supported.")
+
 from pydub import AudioSegment
 
 sil_supports = [8000, 12000, 16000, 24000, 32000, 44100, 48000]  # slk转wav时，支持的采样率
