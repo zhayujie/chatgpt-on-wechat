@@ -34,7 +34,11 @@ class LinkAIBot(Bot):
 
         try:
             # load config
-            app_code = conf().get("linkai_app_code")
+            if context.get("generate_breaked_by"):
+                logger.info(f"[LINKAI] won't set appcode because a plugin ({context['generate_breaked_by']}) affected the context")
+                app_code = None
+            else:
+                app_code = conf().get("linkai_app_code")
             linkai_api_key = conf().get("linkai_api_key")
 
             session_id = context["session_id"]

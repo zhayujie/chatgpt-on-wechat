@@ -55,6 +55,7 @@ class Tool(Plugin):
             const.CHATGPT,
             const.OPEN_AI,
             const.CHATGPTONAZURE,
+            const.LINKAI,
         ):
             return
 
