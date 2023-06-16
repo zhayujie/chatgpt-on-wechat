@@ -114,18 +114,19 @@ $tool reset: 重置工具。
 ---
 
 ###### 注1：带*工具需要获取api-key才能使用(在config.json内的kwargs添加项)，部分工具需要外网支持  
-#### [申请方法](https://github.com/goldfishh/chatgpt-tool-hub/blob/master/docs/apply_optional_tool.md)
+## [工具的api申请方法](https://github.com/goldfishh/chatgpt-tool-hub/blob/master/docs/apply_optional_tool.md)
 
 ## config.json 配置说明
-###### 默认工具无需配置，其它工具需手动配置，一个例子：
+###### 默认工具无需配置，其它工具需手动配置，以增加morning-news和bing-search两个工具为例：
 ```json
 {
-  "tools": ["wikipedia", "你想要添加的其他工具"],  // 填入你想用到的额外工具名
+  "tools": ["bing-search", "news", "你想要添加的其他工具"],  // 填入你想用到的额外工具名，这里加入了工具"bing-search"和工具"news"(news工具会自动加载morning-news、finance-news等子工具)
   "kwargs": {
       "debug": true, // 当你遇到问题求助时，需要配置
       "request_timeout": 120,  // openai接口超时时间
       "no_default": false,  // 是否不使用默认的4个工具
-      // 带*工具需要申请api-key，在这里填入，api_name参考前述`申请方法`
+      "bing_subscription_key": "4871f273a4804743",//带*工具需要申请api-key，这里填入了工具bing-search对应的api，api_name参考前述`工具的api申请方法`
+      "morning_news_api_key": "5w1kjNh9VQlUc",// 这里填入了morning-news对应的api，
   }
 }
 
