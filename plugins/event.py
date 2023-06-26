@@ -50,3 +50,6 @@ class EventContext:
 
     def is_pass(self):
         return self.action == EventAction.BREAK_PASS
+
+    def is_break(self):
+        return self.action == EventAction.BREAK or self.action == EventAction.BREAK_PASS

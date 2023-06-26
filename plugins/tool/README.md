@@ -57,6 +57,8 @@ $tool reset: 重置工具。
 
 ### 6. news 新闻类工具集合
 
+> news更新：0.4版本对新闻类工具做了整合，配置文件只要加入`news`一个工具名就会自动加载所有新闻类工具
+
 #### 6.1. news-api *
 ###### 从全球 80,000 多个信息源中获取当前和历史新闻文章
 
@@ -75,7 +77,7 @@ $tool reset: 重置工具。
 
 > 该工具需要解决browser tool 的google-chrome依赖安装
 
-> news更新：0.4版本对news工具做了整合，只要加入news一个工具就会自动加载所有新闻类工具
+
 
 ### 7. bing-search *
 ###### bing搜索引擎，从此你不用再烦恼搜索要用哪些关键词
@@ -112,24 +114,25 @@ $tool reset: 重置工具。
 ---
 
 ###### 注1：带*工具需要获取api-key才能使用(在config.json内的kwargs添加项)，部分工具需要外网支持  
-#### [申请方法](https://github.com/goldfishh/chatgpt-tool-hub/blob/master/docs/apply_optional_tool.md)
+## [工具的api申请方法](https://github.com/goldfishh/chatgpt-tool-hub/blob/master/docs/apply_optional_tool.md)
 
 ## config.json 配置说明
-###### 默认工具无需配置，其它工具需手动配置，一个例子：
+###### 默认工具无需配置，其它工具需手动配置，以增加morning-news和bing-search两个工具为例：
 ```json
 {
-  "tools": ["wikipedia", "你想要添加的其他工具"],  // 填入你想用到的额外工具名
+  "tools": ["bing-search", "news", "你想要添加的其他工具"],  // 填入你想用到的额外工具名，这里加入了工具"bing-search"和工具"news"(news工具会自动加载morning-news、finance-news等子工具)
   "kwargs": {
       "debug": true, // 当你遇到问题求助时，需要配置
       "request_timeout": 120,  // openai接口超时时间
       "no_default": false,  // 是否不使用默认的4个工具
-      // 带*工具需要申请api-key，在这里填入，api_name参考前述`申请方法`
+      "bing_subscription_key": "4871f273a4804743",//带*工具需要申请api-key，这里填入了工具bing-search对应的api，api_name参考前述`工具的api申请方法`
+      "morning_news_api_key": "5w1kjNh9VQlUc",// 这里填入了morning-news对应的api，
   }
 }
 
 ```
 注：config.json文件非必须，未创建仍可使用本tool；带*工具需在kwargs填入对应api-key键值对  
-- `tools`：本插件初始化时加载的工具, 上述标题即是对应工具名称，带*工具必须在kwargs中配置相应api-key
+- `tools`：本插件初始化时加载的工具, 上述一级标题即是对应工具名称，带*工具必须在kwargs中配置相应api-key
 - `kwargs`：工具执行时的配置，一般在这里存放**api-key**，或环境配置
   - `debug`: 输出chatgpt-tool-hub额外信息用于调试
   - `request_timeout`: 访问openai接口的超时时间，默认与wechat-on-chatgpt配置一致，可单独配置

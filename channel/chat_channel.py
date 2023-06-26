@@ -52,6 +52,7 @@ class ChatChannel(Channel):
             cmsg = context["msg"]
             user_data = conf().get_user_data(cmsg.from_user_id)
             context["openai_api_key"] = user_data.get("openai_api_key")
+            context["gpt_model"] = user_data.get("gpt_model")
             if context.get("isgroup", False):
                 group_name = cmsg.other_user_nickname
                 group_id = cmsg.other_user_id
@@ -172,6 +173,8 @@ class ChatChannel(Channel):
         reply = e_context["reply"]
         if not e_context.is_pass():
             logger.debug("[WX] ready to handle context: type={}, content={}".format(context.type, context.content))
+            if e_context.is_break():
+                context["generate_breaked_by"] = e_context["breaked_by"]
             if context.type == ContextType.TEXT or context.type == ContextType.IMAGE_CREATE:  # 文字和图片消息
                 reply = super().build_reply_content(context.content, context)
             elif context.type == ContextType.VOICE:  # 语音消息
@@ -230,10 +233,10 @@ class ChatChannel(Channel):
                         reply = super().build_text_to_voice(reply.content)
                         return self._decorate_reply(context, reply)
                     if context.get("isgroup", False):
-                        reply_text = "@" + context["msg"].actual_user_nickname + " " + reply_text.strip()
-                        reply_text = conf().get("group_chat_reply_prefix", "") + reply_text
+                        reply_text = "@" + context["msg"].actual_user_nickname + "\n" + reply_text.strip()
+                        reply_text = conf().get("group_chat_reply_prefix", "") + reply_text + conf().get("group_chat_reply_suffix", "")
                     else:
-                        reply_text = conf().get("single_chat_reply_prefix", "") + reply_text
+                        reply_text = conf().get("single_chat_reply_prefix", "") + reply_text + conf().get("single_chat_reply_suffix", "")
                     reply.content = reply_text
                 elif reply.type == ReplyType.ERROR or reply.type == ReplyType.INFO:
                     reply.content = "[" + str(reply.type) + "]\n" + reply.content
