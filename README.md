@@ -63,6 +63,8 @@ Demo made by [Visionn](https://www.wangpc.cc/)
 支持 Linux、MacOS、Windows 系统（可在Linux服务器上长期运行)，同时需安装 `Python`。
 > 建议Python版本在 3.7.1~3.9.X 之间，推荐3.8版本，3.10及以上版本在 MacOS 可用，其他系统上不确定能否正常运行。
 
+> Docker 或 Railway 部署无需安装python环境，可直接快进到下一步。
+
 **(1) 克隆项目代码：**
 
 ```bash
