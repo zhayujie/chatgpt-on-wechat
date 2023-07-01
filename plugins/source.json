@@ -11,6 +11,10 @@
     "summary": {
       "url": "https://github.com/lanvent/plugin_summary.git",
       "desc": "总结聊天记录的插件"
+    },
+    "timetask": {
+      "url": "https://github.com/haikerapples/timetask.git",
+      "desc": "一款定时任务系统的插件"
     }
   }
 }
