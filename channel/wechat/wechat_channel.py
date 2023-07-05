@@ -7,6 +7,7 @@ wechat channel
 import io
 import json
 import os
+import random
 import threading
 import time
 
@@ -45,6 +46,22 @@ def handler_group_msg(msg):
         return None
     WechatChannel().handle_group(cmsg)
     return None
+
+
+@itchat.msg_register(FRIENDS)
+def handle_friend_request(msg):
+    try:
+        accept_friend = conf().get("accept_friend", False)
+        friend_info = msg['RecommendInfo']
+    except NotImplementedError as e:
+        logger.debug("[WX]group message {} skipped: {}".format(msg["MsgId"], e))
+        return None
+    logger.info(f"接收到好友请求：{friend_info}")
+    if accept_friend:
+        get_accept_friend(friend_info)
+    else:
+        logger.info("系统未开启自动通过好友")
+        return None
 
 
 def _check(func):
@@ -97,6 +114,39 @@ def qrCallback(uuid, status, qrcode):
         qr.add_data(url)
         qr.make(fit=True)
         qr.print_ascii(invert=True)
+
+
+def get_accept_friend(friend_info, max_retries=5):
+    """
+    接受一个好友请求。如果添加好友失败，将尝试多次重试。
+
+    :param friend_info: 包含好友请求信息的字典
+    :param max_retries: 最大重试次数，默认为5
+    :return: 添加成功返回True，否则返回False
+    """
+    # 从friend_info中提取所需信息
+    userName = friend_info['UserName']
+    Name = friend_info['NickName']
+    V4 = friend_info['Ticket']
+
+    # 生成1到10之间的随机延迟时间并添加延迟
+    delay = random.randint(1, 10)
+    time.sleep(delay)
+
+    retries = 0  # 设置重试次数
+
+    while retries < max_retries:
+        try:
+            itchat.accept_friend(userName, V4)
+            logger.info(f"已自动接受'{Name}'的好友请求")
+            return
+        except Exception as e:  # 捕获所有可能的异常
+            retries += 1  # 增加重试次数
+            logger.info(f"添加好友失败，正在重试... (尝试 {retries} / {max_retries})")
+            time.sleep(5)  # 休眠5秒后重试
+    else:
+        logger.error("达到最大重试次数，添加好友失败")
+        return
 
 
 @singleton
