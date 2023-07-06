@@ -159,7 +159,7 @@ class WechatChannel(ChatChannel):
     @_check
     def handle_group(self, cmsg: ChatMessage):
         if cmsg.ctype == ContextType.VOICE:
-            if conf().get("speech_recognition") != True:
+            if conf().get("group_speech_recognition") != True:
                 return
             logger.debug("[WX]receive voice for group msg: {}".format(cmsg.content))
         elif cmsg.ctype == ContextType.IMAGE:
