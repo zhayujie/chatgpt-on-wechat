@@ -41,7 +41,8 @@ class Horoscope(Plugin):
             self.command = parts[1]
             user_data = zodiac_dict[self.command]
             url = "https://v2.alapi.cn/api/star"
-            payload = f"token=NdEUedYlsXta5EDz&star={user_data}"
+            #这里申请token：https://alapi.cn
+            payload = f"token=<填写你的tooken>&star={user_data}"
             headers = {'Content-Type': "application/x-www-form-urlencoded"}
 
             try:
