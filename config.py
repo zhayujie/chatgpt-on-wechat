@@ -10,6 +10,10 @@ from common.log import logger
 # 将所有可用的配置项写在字典里, 请使用小写字母
 # 此处的配置值无实际意义，程序不会读取此处的配置，仅用于提示格式，请将配置加入到config.json中
 available_setting = {
+    #这里申请apikey https://serper.dev/
+    "serper_api_key":"",
+    #这里申请token：https://alapi.cn
+    "star_token":"",
     #早报token https://alapi.cn/  在这里申请你的token
     "zaobao_token":"",
     # openai api配置

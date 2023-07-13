@@ -4,6 +4,7 @@ import plugins
 from bridge.reply import Reply
 from bridge.reply import ReplyType
 from plugins import *
+from config import conf
 
 zodiac_dict = {
     '白羊座': 'aries',
@@ -40,9 +41,10 @@ class Horoscope(Plugin):
             parts = content.split(" ")
             self.command = parts[1]
             user_data = zodiac_dict[self.command]
+            tooken = conf().get("star_token")
             url = "https://v2.alapi.cn/api/star"
             #这里申请token：https://alapi.cn
-            payload = f"token=<填写你的tooken>&star={user_data}"
+            payload = f"token={tooken}&star={user_data}"
             headers = {'Content-Type': "application/x-www-form-urlencoded"}
 
             try:
