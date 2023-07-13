@@ -4,7 +4,7 @@ import re
 import plugins
 from bridge.reply import Reply, ReplyType
 from plugins import *
-
+from config import conf
 
 @plugins.register(
     name="DailyNews",
@@ -23,9 +23,10 @@ class DailyNews(Plugin):
     def on_handle_context(self, e_context: EventContext):
         content = e_context["context"].content
         if content == "早报":
+            token = conf().get("zaobao_token")
             url = "https://v2.alapi.cn/api/zaobao"
             # https://alapi.cn/  在这里申请你的token
-            payload = "token=<再次填写你的token>&format=json"
+            payload = f"token={token}&format=json"
             headers = {'Content-Type': "application/x-www-form-urlencoded"}
 
             try:
