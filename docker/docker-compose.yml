@@ -1,7 +1,7 @@
 version: '2.0'
 services:
   chatgpt-on-wechat:
-    image: JC0v0/chatgpt-on-wechat
+    image: zhayujie/chatgpt-on-wechat
     container_name: chatgpt-on-wechat
     environment:
       OPEN_AI_API_KEY: 'YOUR API KEY'
