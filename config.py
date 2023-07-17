@@ -11,7 +11,7 @@ from common.log import logger
 # 此处的配置值无实际意义，程序不会读取此处的配置，仅用于提示格式，请将配置加入到config.json中
 available_setting = {
     # openai api配置
-    "open_ai_api_key": "",  # openai api key
+    "open_ai_api_key": "soOzsnWLuipLNwq0RK98T3BlbkFJu6Ft4gI8MoDx42XkNZJw",  # openai api key
     # openai apibase，当use_azure_chatgpt为true时，需要设置对应的api base
     "open_ai_api_base": "https://api.openai.com/v1",
     "proxy": "",  # openai使用的代理
@@ -50,9 +50,9 @@ available_setting = {
     "request_timeout": 60,  # chatgpt请求超时时间，openai接口默认设置为600，对于难问题一般需要较长时间
     "timeout": 120,  # chatgpt重试超时时间，在这个时间内，将会自动重试
     # 语音设置
-    "speech_recognition": False,  # 是否开启语音识别
-    "group_speech_recognition": False,  # 是否开启群组语音识别
-    "voice_reply_voice": False,  # 是否使用语音回复语音，需要设置对应语音合成引擎的api key
+    "speech_recognition": True,  # 是否开启语音识别
+    "group_speech_recognition": True,  # 是否开启群组语音识别
+    "voice_reply_voice": True,  # 是否使用语音回复语音，需要设置对应语音合成引擎的api key
     "always_reply_voice": False,  # 是否一直使用语音回复
     "voice_to_text": "openai",  # 语音识别引擎，支持openai,baidu,google,azure
     "text_to_voice": "baidu",  # 语音合成引擎，支持baidu,google,pytts(offline),azure
