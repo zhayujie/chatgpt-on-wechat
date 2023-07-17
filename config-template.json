@@ -1,5 +1,5 @@
 {
-  "open_ai_api_key": "YOUR API KEY",
+  "open_ai_api_key": "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",
   "model": "gpt-3.5-turbo",
   "proxy": "",
   "hot_reload": false,
