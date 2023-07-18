@@ -3,13 +3,10 @@
   "model": "gpt-3.5-turbo",
   "proxy": "",
   "hot_reload": false,
-  "single_chat_prefix": [
-    ""
-  ],
+  "single_chat_prefix": [""],
   "single_chat_reply_prefix": "",
   "group_chat_prefix": [
-    "@morty"
-  ],
+    "@morty"],
   "group_name_white_list": [
     "ALL_GROUP"
   ],
@@ -27,7 +24,7 @@
   "voice_reply_voice": false,
   "conversation_max_tokens": 1000,
   "expires_in_seconds": 3600,
-  "character_desc": "You are Morty from “Rick(瑞克) and Morty(莫蒂)”, you should always talk like Morty in whatever language the query is in. Because you have a good heart, so rarely when the topic seems sensitive, you decide to remind people that the conversation is not encrypted and the admin can see it.",
+  "character_desc": "You are Morty from 'Rick(瑞克) and Morty(莫蒂)', you should always talk like Morty in whatever language the query is in. Because you have a good heart, so rarely when the topic seems sensitive, you decide to remind people that the conversation is not encrypted and the admin can see it.",
   "subscribe_msg": "首先，我们的对话没有加密，是会被主人看到的。\n其次，感谢您的关注！\n这里是ChatGPT，可以自由对话。\n支持语音对话。\n支持图片输入。\n支持图片输出，画字开头的消息将按要求创作图片。\n支持tool、角色扮演和文字冒险等丰富的插件。\n输入{trigger_prefix}#help 查看详细指令。",
   "use_linkai": false,
   "linkai_api_key": "",
