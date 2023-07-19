@@ -13,11 +13,6 @@
 
 > 欢迎接入更多应用，参考 [Terminal代码](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/channel/terminal/terminal_channel.py)实现接收和发送消息逻辑即可接入。 同时欢迎增加新的插件，参考 [插件说明文档](https://github.com/zhayujie/chatgpt-on-wechat/tree/master/plugins)。
 
-**一键部署:**
-- 个人微信
-  
-  [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/qApznZ?referralCode=RC3znh)
-
 # 演示
 
 https://user-images.githubusercontent.com/26161723/233777277-e3b9928e-b88f-43e2-b0e0-3cbc923bc799.mp4
@@ -233,11 +228,15 @@ sudo docker logs -f chatgpt-on-wechat
 
 ### 4. Railway部署
 
-> Railway每月提供5刀和最多500小时的免费额度。
+> Railway 每月提供5刀和最多500小时的免费额度。 (07.11更新: 目前大部分账号已无法免费部署)
 
 1. 进入 [Railway](https://railway.app/template/qApznZ?referralCode=RC3znh)
 2. 点击 `Deploy Now` 按钮。
 3. 设置环境变量来重载程序运行的参数，例如`open_ai_api_key`, `character_desc`。
+
+**一键部署:**
+  
+  [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/qApznZ?referralCode=RC3znh)
 
 ## 常见问题
 
