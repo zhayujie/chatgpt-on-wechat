@@ -29,15 +29,9 @@ class BDunit(Plugin):
     def __init__(self):
         super().__init__()
         try:
-            curdir = os.path.dirname(__file__)
-            config_path = os.path.join(curdir, "config.json")
             conf = super().load_config()
             if not conf:
-                if not os.path.exists(config_path):
-                    raise Exception("config.json not found")
-                else:
-                    with open(config_path, "r") as f:
-                        conf = json.load(f)
+                raise Exception("config.json not found")
             self.service_id = conf["service_id"]
             self.api_key = conf["api_key"]
             self.secret_key = conf["secret_key"]
