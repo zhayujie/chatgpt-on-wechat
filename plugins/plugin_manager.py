@@ -145,7 +145,7 @@ class PluginManager:
                     try:
                         instance = plugincls()
                     except Exception as e:
-                        logger.exception("Failed to init %s, diabled. %s" % (name, e))
+                        logger.warn("Failed to init %s, diabled. %s" % (name, e))
                         self.disable_plugin(name)
                         failed_plugins.append(name)
                         continue
