@@ -126,7 +126,7 @@ class Tool(Plugin):
             return tool_config
         else:
             with open(config_path, "r") as f:
-                tool_config = json.load(f)
+                tool_config = super().load_config() or json.load(f)
         return tool_config
 
     def _build_tool_kwargs(self, kwargs: dict):

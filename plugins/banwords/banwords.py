@@ -33,7 +33,7 @@ class Banwords(Plugin):
                     json.dump(conf, f, indent=4)
             else:
                 with open(config_path, "r") as f:
-                    conf = json.load(f)
+                    conf = super().load_config() or json.load(f)
             self.searchr = WordsSearch()
             self.action = conf["action"]
             banwords_path = os.path.join(curdir, "banwords.txt")
