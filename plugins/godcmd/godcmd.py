@@ -178,16 +178,13 @@ class Godcmd(Plugin):
     def __init__(self):
         super().__init__()
 
-        curdir = os.path.dirname(__file__)
-        config_path = os.path.join(curdir, "config.json")
-        gconf = None
-        if not os.path.exists(config_path):
-            gconf = {"password": "", "admin_users": []}
-            with open(config_path, "w") as f:
-                json.dump(gconf, f, indent=4)
-        else:
-            with open(config_path, "r") as f:
-                gconf = json.load(f)
+        config_path = os.path.join(os.path.dirname(__file__), "config.json")
+        gconf = super().load_config()
+        if not gconf:
+            if not os.path.exists(config_path):
+                gconf = {"password": "", "admin_users": []}
+                with open(config_path, "w") as f:
+                    json.dump(gconf, f, indent=4)
         if gconf["password"] == "":
             self.temp_password = "".join(random.sample(string.digits, 4))
             logger.info("[Godcmd] 因未设置口令，本次的临时口令为%s。" % self.temp_password)
