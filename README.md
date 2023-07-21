@@ -27,7 +27,7 @@ Demo made by [Visionn](https://www.wangpc.cc/)
 
 # 更新日志
 
->**2023.06.12：** 接入 [LinkAI](https://chat.link-ai.tech/console) 平台，可在线创建 个人知识库，并接入微信中。Beta版本欢迎体验，使用参考 [接入文档](https://link-ai.tech/platform/link-app/wechat)。
+>**2023.06.12：** 接入 [LinkAI](https://chat.link-ai.tech/console) 平台，可在线创建 个人知识库，并接入微信、公众号及企业微信中。使用参考 [接入文档](https://link-ai.tech/platform/link-app/wechat)。
 
 >**2023.04.26：** 支持企业微信应用号部署，兼容插件，并支持语音图片交互，私人助理理想选择，[使用文档](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/channel/wechatcom/README.md)。(contributed by [@lanvent](https://github.com/lanvent) in [#944](https://github.com/zhayujie/chatgpt-on-wechat/pull/944))
 
@@ -224,6 +224,16 @@ sudo docker compose up -d
 
 ```bash
 sudo docker logs -f chatgpt-on-wechat
+```
+
+#### (3) 插件使用
+
+如果需要在docker容器中修改插件配置，可通过挂载的方式完成，将 [插件配置文件](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/plugins/config.json.template)
+重命名为 `config.json`，放置于 `docker-compose.yml` 相同目录下，并在 `docker-compose.yml` 中的 `chatgpt-on-wechat` 部分下添加 `volumes` 映射:
+
+```
+volumes:
+  - ./config.json:/app/plugins/config.json
 ```
 
 ### 4. Railway部署
