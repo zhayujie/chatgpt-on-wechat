@@ -1,7 +1,6 @@
 # encoding:utf-8
 
 import requests, json
-import pdb
 from bot.bot import Bot
 from bridge.reply import Reply, ReplyType
 from bot.session_manager import SessionManager
@@ -12,7 +11,7 @@ from config import conf
 from bot.baidu.baidu_wenxin_session import BaiduWenxinSession
 
 BAIDU_API_KEY = conf().get("baidu_wenxin_api_key")
-BAIDU_SECRET_KEY = conf().get("baidu_wenxin_api_key")
+BAIDU_SECRET_KEY = conf().get("baidu_wenxin_secret_key")
 
 class BaiduWenxinBot(Bot):
 
@@ -62,7 +61,15 @@ class BaiduWenxinBot(Bot):
 
     def reply_text(self, session: BaiduWenxinSession, retry_count=0):
         try:
+            logger.info("[BAIDU] model={}".format(session.model))
             access_token = self.get_access_token()
+            if access_token == 'None':
+                logger.warn("[BAIDU] access token 获取失败")
+                return {
+                    "total_tokens": 0,
+                    "completion_tokens": 0,
+                    "content": 0,
+                    }
             url = "https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat/" + session.model + "?access_token=" + access_token
             headers = {
                 'Content-Type': 'application/json'
