@@ -1,0 +1,16 @@
+{
+    "domain_name": "",
+    "api_key": "",
+    "image_ins": "/p",
+    "blend_ins": "/b",
+    "change_ins": "/c",
+    "default_params": {
+        "action": "IMAGINE:出图",
+        "prompt": ""
+  },
+    "gpt_optimized": true,
+    "lock":true,
+    "group_lock":false,
+    "trial_lock":2,
+    "complete_prompt": "\uD83E\uDD42任务完成！\n⌚\uFE0F耗时{start_finish},总耗时{submit_finish}\n--------------------------------\n\uD83D\uDCE7按示例回复指令衍生或选图\n\n画 {change_ins} {id} V1\n--------------------------------\n\uD83D\uDC49V指令衍生创作图片\n\uD83D\uDC49U指令确认放大选图\n\u200D\uD83D\uDCBBTip：左上到右下依次为1234\n--------------------------------\n\uD83C\uDF20原图链接：\n{imgurl}"
+}
