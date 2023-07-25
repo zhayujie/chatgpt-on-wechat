@@ -8,12 +8,7 @@
   "group_chat_prefix": ["@morty"],
   "group_name_white_list": ["ALL_GROUP"],
   "group_chat_in_one_session": ["ALL_GROUP"],
-  "image_create_prefix": [
-    "画",
-    "看",
-    "找",
-    "Draw"
-  ],
+  "image_create_prefix": ["画", "看", "找","draw","show"],
   "speech_recognition": true,
   "group_speech_recognition": true,
   "voice_reply_voice": false,
