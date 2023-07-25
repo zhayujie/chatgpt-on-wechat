@@ -34,7 +34,7 @@ available_setting = {
     "trigger_by_self": False,  # 是否允许机器人触发
     "image_create_prefix": ["画", "看", "找"],  # 开启图片回复的前缀
     "concurrency_in_session": 1,  # 同一会话最多有多少条消息在处理中，大于1可能乱序
-    "image_create_size": "256x256",  # 图片大小,可选有 256x256, 512x512, 1024x1024
+    "image_create_size": "1024x1024",  # 图片大小,可选有 256x256, 512x512, 1024x1024
     # chatgpt会话参数
     "expires_in_seconds": 3600,  # 无操作会话的过期时间
     "character_desc": "你是ChatGPT, 一个由OpenAI训练的大型语言模型, 你旨在回答并解决人们的任何问题，并且可以使用多种语言与人交流。",  # 人格描述
@@ -50,16 +50,16 @@ available_setting = {
     "request_timeout": 60,  # chatgpt请求超时时间，openai接口默认设置为600，对于难问题一般需要较长时间
     "timeout": 120,  # chatgpt重试超时时间，在这个时间内，将会自动重试
     # 语音设置
-    "speech_recognition": False,  # 是否开启语音识别
-    "group_speech_recognition": False,  # 是否开启群组语音识别
-    "voice_reply_voice": False,  # 是否使用语音回复语音，需要设置对应语音合成引擎的api key
+    "speech_recognition": True,  # 是否开启语音识别
+    "group_speech_recognition": True,  # 是否开启群组语音识别
+    "voice_reply_voice": True,  # 是否使用语音回复语音，需要设置对应语音合成引擎的api key
     "always_reply_voice": False,  # 是否一直使用语音回复
     "voice_to_text": "openai",  # 语音识别引擎，支持openai,baidu,google,azure
     "text_to_voice": "baidu",  # 语音合成引擎，支持baidu,google,pytts(offline),azure
     # baidu 语音api配置， 使用百度语音识别和语音合成时需要
-    "baidu_app_id": "",
-    "baidu_api_key": "",
-    "baidu_secret_key": "",
+    "baidu_app_id": "36630591",
+    "baidu_api_key": "3D9IzMm7xtRGG9ZjTDz33W41",
+    "baidu_secret_key": "tVzSAVKCbDdeV3tzM0c8G9xAHhvkYehG",
     # 1536普通话(支持简单的英文识别) 1737英语 1637粤语 1837四川话 1936普通话远场
     "baidu_dev_pid": "1536",
     # azure 语音api配置， 使用azure语音识别和语音合成时需要
@@ -72,8 +72,8 @@ available_setting = {
     # 翻译api
     "translate": "baidu",  # 翻译api，支持baidu
     # baidu翻译api的配置
-    "baidu_translate_app_id": "",  # 百度翻译api的appid
-    "baidu_translate_app_key": "",  # 百度翻译api的秘钥
+    "baidu_translate_app_id": "20230724001755976",  # 百度翻译api的appid
+    "baidu_translate_app_key": "OD2_imeZgqHSCuZ4KLRw",  # 百度翻译api的秘钥
     # itchat的配置
     "hot_reload": False,  # 是否开启热重载
     # wechaty的配置

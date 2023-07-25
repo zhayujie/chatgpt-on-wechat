@@ -147,7 +147,7 @@ def get_help_text(isadmin, isgroup):
 
     # 插件指令
     plugins = PluginManager().list_plugins()
-    help_text += "\n目前可用插件有："
+    help_text += "\n目前可用插件有：使用方法为$+插件名。如$tool查询重庆天气"
     for plugin in plugins:
         if plugins[plugin].enabled and not plugins[plugin].hidden:
             namecn = plugins[plugin].namecn

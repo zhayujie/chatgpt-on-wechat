@@ -1,0 +1,12 @@
+{
+  "files": {
+    "plugins/plugin_replicate/config.json": [
+      {
+        "id": "00152194-d988-4dc2-8227-509ccaa8c01c",
+        "line": 2,
+        "version": 25,
+        "index": 2
+      }
+    ]
+  }
+}
