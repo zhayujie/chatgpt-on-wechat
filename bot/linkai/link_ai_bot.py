@@ -52,7 +52,7 @@ class LinkAIBot(Bot, OpenAIImage):
                 logger.info(f"[LINKAI] won't set appcode because a plugin ({context['generate_breaked_by']}) affected the context")
                 app_code = None
             else:
-                app_code = conf().get("linkai_app_code")
+                app_code = context.kwargs.get("app_code") or conf().get("linkai_app_code")
             linkai_api_key = conf().get("linkai_api_key")
 
             session_id = context["session_id"]
