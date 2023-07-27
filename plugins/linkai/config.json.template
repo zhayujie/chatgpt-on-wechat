@@ -1,0 +1,13 @@
+{
+    "group_app_map": {
+        "测试群1": "default",
+        "测试群2": "Kv2fXJcH"
+    },
+    "midjourney": {
+        "enabled": true,
+        "mode": "relax",
+        "auto_translate": true,
+        "max_tasks": 3,
+        "max_tasks_per_user": 1
+    }
+}
