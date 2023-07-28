@@ -36,7 +36,7 @@ class LinkAI(Plugin):
         :param e_context: 消息上下文
         """
         context = e_context['context']
-        if context.type not in [ContextType.TEXT, ContextType.IMAGE]:
+        if context.type not in [ContextType.TEXT, ContextType.IMAGE, ContextType.IMAGE_CREATE]:
             # filter content no need solve
             return
 
@@ -114,11 +114,11 @@ class LinkAI(Plugin):
 
     def get_help_text(self, verbose=False, **kwargs):
         trigger_prefix = _get_trigger_prefix()
-        help_text = "用于集成 LinkAI 提供的文本对话、知识库、绘画等能力。\n"
+        help_text = "用于集成 LinkAI 提供的知识库、Midjourney绘画等能力。\n\n"
         if not verbose:
             return help_text
-        help_text += ""
-        help_text += f"{trigger_prefix}mj 描述词1,描述词2 ... ： 利用描述词作画，参数请放在提示词之后。\n\n{trigger_prefix}mju ID 图片序号: 对指定ID消息中的第x张图片进行放大。\n例如：\n\"{trigger_prefix}mj a little cat, white --ar 9:16\"\n\"{trigger_prefix}mjimage a white cat --ar 9:16\"\n\"{trigger_prefix}mju 1105592717188272288 2\""
+        help_text += f'📖 知识库\n - 群聊中指定应用: {trigger_prefix}linkai app 应用编码\n\n例如: \n"$linkai app Kv2fXJcH"\n\n'
+        help_text += f"🎨 绘画\n - 生成: {trigger_prefix}mj 描述词1, 描述词2.. \n - 放大: {trigger_prefix}mju 图片ID 图片序号\n\n例如：\n\"{trigger_prefix}mj a little cat, white --ar 9:16\"\n\"{trigger_prefix}mju 1105592717188272288 2\""
         return help_text
 
 

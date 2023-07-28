@@ -75,9 +75,8 @@ class MJBot:
                     return TaskType.GENERATE
                 elif cmd_list[0].lower() == f"{trigger_prefix}mju":
                     return TaskType.UPSCALE
-                elif self.config.get("use_image_create_prefix") and \
-                        check_prefix(context.content, conf().get("image_create_prefix")):
-                    return TaskType.GENERATE
+        elif context.type == ContextType.IMAGE_CREATE and self.config.get("use_image_create_prefix"):
+            return TaskType.GENERATE
 
 
     def process_mj_task(self, mj_type: TaskType, e_context: EventContext):
@@ -89,7 +88,7 @@ class MJBot:
         context = e_context['context']
         session_id = context["session_id"]
         cmd = context.content.split(maxsplit=1)
-        if len(cmd) == 1:
+        if len(cmd) == 1 and context.type == ContextType.TEXT:
             self._set_reply_text(self.get_help_text(verbose=True), e_context, level=ReplyType.INFO)
             return
 
@@ -98,9 +97,8 @@ class MJBot:
             return
 
         if mj_type == TaskType.GENERATE:
-            image_prefix = check_prefix(context.content, conf().get("image_create_prefix"))
-            if image_prefix:
-                raw_prompt = context.content.replace(image_prefix, "", 1)
+            if context.type == ContextType.IMAGE_CREATE:
+                raw_prompt = context.content
             else:
                 # 图片生成
                 raw_prompt = cmd[1]
@@ -155,7 +153,7 @@ class MJBot:
                     time_str = "1~10分钟"
                 else:
                     time_str = "1~2分钟"
-                content = f"🚀你的作品将在{time_str}左右完成，请耐心等待\n- - - - - - - - -\n"
+                content = f"🚀您的作品将在{time_str}左右完成，请耐心等待\n- - - - - - - - -\n"
                 if real_prompt:
                     content += f"初始prompt: {prompt}\n转换后prompt: {real_prompt}"
                 else:
@@ -205,20 +203,25 @@ class MJBot:
             await asyncio.sleep(10)
             async with aiohttp.ClientSession() as session:
                 url = f"{self.base_url}/tasks/{task.id}"
-                async with session.get(url, headers=self.headers) as res:
-                    if res.status == 200:
-                        res_json = await res.json()
-                        logger.debug(f"[MJ] task check res, task_id={task.id}, status={res.status}, "
-                                     f"data={res_json.get('data')}, thread={threading.current_thread().name}")
-                        if res_json.get("data") and res_json.get("data").get("status") == Status.FINISHED.name:
-                            # process success res
-                            if self.tasks.get(task.id):
-                                self.tasks[task.id].status = Status.FINISHED
-                            self._process_success_task(task, res_json.get("data"), e_context)
-                            return
-                    else:
-                        logger.warn(f"[MJ] image check error, status_code={res.status}")
-                        max_retry_times -= 20
+                try:
+                    async with session.get(url, headers=self.headers) as res:
+                        if res.status == 200:
+                            res_json = await res.json()
+                            logger.debug(f"[MJ] task check res, task_id={task.id}, status={res.status}, "
+                                         f"data={res_json.get('data')}, thread={threading.current_thread().name}")
+                            if res_json.get("data") and res_json.get("data").get("status") == Status.FINISHED.name:
+                                # process success res
+                                if self.tasks.get(task.id):
+                                    self.tasks[task.id].status = Status.FINISHED
+                                self._process_success_task(task, res_json.get("data"), e_context)
+                                return
+                        else:
+                            res_json = await res.json()
+                            logger.warn(f"[MJ] image check error, status_code={res.status}, res={res_json}")
+                            max_retry_times -= 20
+                except Exception as e:
+                    max_retry_times -= 20
+                    logger.warn(e)
             max_retry_times -= 1
         logger.warn("[MJ] end from poll")
         if self.tasks.get(task.id):
@@ -308,10 +311,11 @@ class MJBot:
 
     def get_help_text(self, verbose=False, **kwargs):
         trigger_prefix = conf().get("plugin_trigger_prefix", "$")
-        help_text = "利用midjourney来画图。\n"
+        help_text = "🎨利用Midjourney进行画图\n\n"
         if not verbose:
             return help_text
-        help_text += f"{trigger_prefix}mj 描述词1,描述词2 ... ： 利用描述词作画，参数请放在提示词之后。\n{trigger_prefix}mjimage 描述词1,描述词2 ... ： 利用描述词进行图生图，参数请放在提示词之后。\n{trigger_prefix}mjr ID: 对指定ID消息重新生成图片。\n{trigger_prefix}mju ID 图片序号: 对指定ID消息中的第x张图片进行放大。\n{trigger_prefix}mjv ID 图片序号: 对指定ID消息中的第x张图片进行变换。\n例如：\n\"{trigger_prefix}mj a little cat, white --ar 9:16\"\n\"{trigger_prefix}mjimage a white cat --ar 9:16\"\n\"{trigger_prefix}mju 1105592717188272288 2\""
+        help_text += f" - 生成: {trigger_prefix}mj 描述词1, 描述词2.. \n - 放大: {trigger_prefix}mju 图片ID 图片序号\n\n例如：\n\"{trigger_prefix}mj a little cat, white --ar 9:16\"\n\"{trigger_prefix}mju 1105592717188272288 2\""
+
         return help_text
 
     def find_tasks_by_user_id(self, user_id) -> list[MJTask]:
