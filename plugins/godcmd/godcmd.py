@@ -13,7 +13,7 @@ from bridge.context import ContextType
 from bridge.reply import Reply, ReplyType
 from common import const
 from common.log import logger
-from config import conf, load_config
+from config import conf, load_config, global_config
 from plugins import *
 
 # 定义指令集
@@ -426,9 +426,11 @@ class Godcmd(Plugin):
         password = args[0]
         if password == self.password:
             self.admin_users.append(userid)
+            global_config["admin_users"].append(userid)
             return True, "认证成功"
         elif password == self.temp_password:
             self.admin_users.append(userid)
+            global_config["admin_users"].append(userid)
             return True, "认证成功，请尽快设置口令"
         else:
             return False, "认证失败"

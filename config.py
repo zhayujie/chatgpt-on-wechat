@@ -252,3 +252,9 @@ def pconf(plugin_name: str) -> dict:
     :return: 该插件的配置项
     """
     return plugin_config.get(plugin_name.lower())
+
+
+# 全局配置，用于存放全局生效的状态
+global_config = {
+    "admin_users": []
+}

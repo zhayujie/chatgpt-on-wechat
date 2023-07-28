@@ -8,6 +8,7 @@
         "mode": "relax",
         "auto_translate": true,
         "max_tasks": 3,
-        "max_tasks_per_user": 1
+        "max_tasks_per_user": 1,
+        "use_image_create_prefix": true
     }
 }
