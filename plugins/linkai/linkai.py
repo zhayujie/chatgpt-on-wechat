@@ -66,7 +66,7 @@ class LinkAI(Plugin):
             if not context.kwargs.get("isgroup"):
                 _set_reply_text("该指令需在群聊中使用", e_context, level=ReplyType.ERROR)
                 return
-            if e_context["context"]["session_id"] not in global_config["admin_users"]:
+            if context.kwargs.get("msg").actual_user_id not in global_config["admin_users"]:
                 _set_reply_text("需要管理员权限执行", e_context, level=ReplyType.ERROR)
                 return
             app_code = cmd[2]

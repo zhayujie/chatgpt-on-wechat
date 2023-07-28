@@ -149,7 +149,7 @@ class MJBot:
             if res.get("code") == 200:
                 task_id = res.get("data").get("taskId")
                 real_prompt = res.get("data").get("realPrompt")
-                if mode == TaskMode.RELAX.name:
+                if mode == TaskMode.RELAX.value:
                     time_str = "1~10分钟"
                 else:
                     time_str = "1~2分钟"
@@ -174,11 +174,12 @@ class MJBot:
         logger.info(f"[MJ] image upscale, img_id={img_id}, index={index}")
         body = {"type": TaskType.UPSCALE.name, "imgId": img_id, "index": index}
         res = requests.post(url=self.base_url + "/operate", json=body, headers=self.headers)
+        logger.debug(res)
         if res.status_code == 200:
             res = res.json()
-            logger.info(res)
             if res.get("code") == 200:
                 task_id = res.get("data").get("taskId")
+                logger.info(f"[MJ] image upscale processing, task_id={task_id}")
                 content = f"🔎图片正在放大中，请耐心等待"
                 reply = Reply(ReplyType.INFO, content)
                 task = MJTask(id=task_id, status=Status.PENDING, user_id=user_id, task_type=TaskType.UPSCALE)
@@ -274,7 +275,7 @@ class MJBot:
             return False
         task_count = len([t for t in self.tasks.values() if t.status == Status.PENDING])
         if task_count >= self.config.get("max_tasks"):
-            reply = Reply(ReplyType.INFO, "Midjourney服务的总任务数已达上限，请稍后再试")
+            reply = Reply(ReplyType.INFO, "Midjourney作图任务数已达上限，请稍后再试")
             e_context["reply"] = reply
             e_context.action = EventAction.BREAK_PASS
             return False
@@ -282,9 +283,9 @@ class MJBot:
 
     def _fetch_mode(self, prompt) -> str:
         mode = self.config.get("mode")
-        if "--relax" in prompt or mode == TaskMode.RELAX.name:
-            return TaskMode.RELAX.name
-        return TaskMode.FAST.name
+        if "--relax" in prompt or mode == TaskMode.RELAX.value:
+            return TaskMode.RELAX.value
+        return mode or TaskMode.RELAX.value
 
     def _run_loop(self, loop: asyncio.BaseEventLoop):
         """
