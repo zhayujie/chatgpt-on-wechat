@@ -1,15 +1,16 @@
 version: '2.0'
 services:
   chatgpt-on-wechat:
-    image: zhayujie/chatgpt-on-wechat
+    image: fjh2023/chatgpt-on-wechat
     container_name: chatgpt-on-wechat
     environment:
-      OPEN_AI_API_KEY: 'YOUR API KEY'
+      OPEN_AI_API_BASE: 'https://api.openai-proxy.com/v1'
+      OPEN_AI_API_KEY: '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'
       MODEL: 'gpt-3.5-turbo'
       OPEN_AI_PROXY: ''
-      SINGLE_CHAT_PREFIX: '["bot", "@bot"]'
-      SINGLE_CHAT_REPLY_PREFIX: '"[bot] "'
-      GROUP_CHAT_PREFIX: '["@bot"]'
+      SINGLE_CHAT_PREFIX: '[]'
+      SINGLE_CHAT_REPLY_PREFIX: '"[Chat自动回复，仅供参考！请遵守国家法律法规]\n "'
+      GROUP_CHAT_PREFIX: '["bot","@", "@bot", "AI高手","@AI高手","@机器人"]'
       GROUP_NAME_WHITE_LIST: '["ChatGPT测试群", "ChatGPT测试群2"]'
       IMAGE_CREATE_PREFIX: '["画", "看", "找"]'
       CONVERSATION_MAX_TOKENS: 1000
