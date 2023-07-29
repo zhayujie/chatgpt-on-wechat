@@ -1,0 +1,24 @@
+{
+"tools": [
+"python",
+
+"url-get",
+"terminal",
+"meteo-weather",
+"google-search",
+"news",
+"wikipedia",
+"image2text",
+"arxiv"
+],
+
+"kwargs": {
+"top_k_results": 2,
+"no_default": false,
+"model_name": "gpt-3.5-turbo",
+
+"morning_news_api_key": "ZSmf51UHQyaE2unc",
+"google_api_key": "AIzaSyAifabYvlFSl-UlUu0fSkYL_UA3EdN6Sm0",
+"google_cse_id": "a2d680f6416d34714"
+}
+}
