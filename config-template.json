@@ -1,15 +1,14 @@
 {
-  "open_ai_api_key": "YOUR API KEY",
+  "open_ai_api_base": "https://api.openai-proxy.com/v1",
+  "open_ai_api_key": "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",
   "model": "gpt-3.5-turbo",
   "proxy": "",
   "hot_reload": false,
   "single_chat_prefix": [
-    "bot",
-    "@bot"
-  ],
-  "single_chat_reply_prefix": "[bot] ",
+      ],
+  "single_chat_reply_prefix": "[Chat自动回复，仅供参考！请遵守国家法律法规]\n ",
   "group_chat_prefix": [
-    "@bot"
+    "bot","@", "@bot", "AI高手","@AI高手","@机器人"
   ],
   "group_name_white_list": [
     "ChatGPT测试群",
