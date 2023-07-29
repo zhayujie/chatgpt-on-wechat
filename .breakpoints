@@ -7,6 +7,14 @@
         "version": 25,
         "index": 2
       }
+    ],
+    "plugins/tool/config.json": [
+      {
+        "id": "5be8d153-75ab-40dd-a431-abaaffa29508",
+        "line": 1,
+        "version": 54,
+        "index": 0
+      }
     ]
   }
 }

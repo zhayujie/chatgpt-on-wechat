@@ -1,4 +1,4 @@
-**Table of Content**
+* *Table of Content**
 
 - [插件化初衷](#插件化初衷)
 - [插件安装方法](#插件安装方法)
