@@ -1,0 +1,28 @@
+{
+    "start":{
+        "host" : "139.199.221.80",
+        "port" : 7860,
+        "use_https" : false
+  },
+    "params": {
+        "sampler_name": "DPM++ SDE Karras",
+        "steps": 30,
+        "width": 960,
+        "height": 540,
+        "cfg_scale": 7,
+        "prompt":"masterpiece, best quality, ",
+        "negative_prompt": "verybadimagenegative_v1.3, EasyNegative, badhandv4, badhandsv5-neg, bad-picture-chill-75v, NSFW, (worst quality:2), (low quality:2), (normal quality:2)",
+        "enable_hr": false,
+        "hr_scale": 1,
+        "hr_upscaler": "ESRGAN_4x",
+        "hr_second_pass_steps": 15,
+        "denoising_strength": 0.6
+    },
+    "options": {
+        "model": "chilloutmix_NiPrunedFp32Fix",
+        "lora": "<lora:add_detail:1>",
+        "controlnet_mod": "lineart",
+        "controlnet_model": "control_v11p_sd15_lineart [43d4be0d]"
+    } 
+}
+  

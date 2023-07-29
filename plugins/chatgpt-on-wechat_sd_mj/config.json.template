@@ -1,0 +1,55 @@
+{
+  "commands": ["help", "start", "stop", "config", "fix", "fstop"],
+  "gpt_prompt": "我正在使用一个叫做Stable_Diffusion的AI图像生成工具。我想让你充当关键词生成器。我将在我想生成的主题之前添加\"/\"你会生成各种关键词。例如，如果我输入\"/在高速公路上疾驰的汽车\"，你将生成精准的英文描述词，不需要生僻、华丽的描述词，只需要通俗准确的描述。模版如下：(subject)(style), (action/scene), (artist), (filters)。 (subject) 代表画面的主题，锚定画面内容，这是任何提示的基本组成部分。(style) 是画面风格，可选。(action/scene) 代表动作/场景，描述了主体在哪里做了什么。(artist) 代表艺术家名字或者出品公司名字。(filters) 代表一些细节，补充。可以使用 艺术家，工作室，摄影术语，角色名字，风格，特效等等。描述时对象和行为必须用()强调，例如(a car driving on the highway)用来强调对象和行为。下面我给出一个完整示例:\"photorealistic, (a car driving on the highway), speed fast, sunlight\"。其中photorealistic代表画风主题是照片写实风，(a car driving on the highway)表示主体和主体的行为，speed fast和sunlight表示对象的细节。当我没给你提供风格或者其他条件的时候，你自己选择适合的描述给我，当你回复我的时候必须照着这个模板给我，并且模仿完整示例一样只回复英文单词，不加引号并且不需要添加任何注释，所有的单词均在一行内给出，不需要添加回车。剔除掉不健康的单词。现在我要给你第一个任务，/",
+    "sd_keywords":{
+    "高清":{
+      "params":{ 
+        "enable_hr": true,
+        "hr_scale": 1.6
+      },
+      "options":{
+      },
+      "desc": "出图分辨率长宽变为1.6倍"
+    },
+    "竖版":{
+      "params":{
+        "width": 540,
+        "height": 960
+      },
+      "options":{
+      },
+      "desc":"图片尺寸变为竖版"
+    },
+    "默认":{
+      "params":{
+        "steps": 30,
+        "width": 960,
+        "height": 540,
+        "cfg_scale": 7,
+        "enable_hr": false,
+        "hr_scale": 1,
+        "hr_upscaler": "ESRGAN_4x",
+        "hr_second_pass_steps": 15,
+        "denoising_strength": 0.6
+
+      },
+      "options":{
+        "model": "请修改为你想选择的默认模型",
+        "lora": "请选择你选择默认Lora，可以留空",
+        "controlnet_mod": "lineart",
+        "controlnet_model": "control_v11p_sd15_lineart [43d4be0d]"
+      },
+      "desc": "换回默认配置"
+    }
+  },
+  "base_url": "请选择你的mj-proxy所监听的端口/mj",
+  "mj_keywords":{
+    "IMAGINE": {"path": "submit/imagine", "method": "POST"},
+    "DESCRIBE": {"path": "submit/describe", "method": "POST"},
+    "BLEND": {"path": "submit/blend", "method": "POST"},
+    "UPSCALE" : {"path": "submit/change", "method": "POST"},
+    "VARIATION" : {"path": "submit/change", "method": "POST"},
+    "REROLL" : {"path": "submit/change", "method": "POST"}
+  }
+  
+}
