@@ -27,7 +27,8 @@ class LinkAI(Plugin):
         super().__init__()
         self.handlers[Event.ON_HANDLE_CONTEXT] = self.on_handle_context
         self.config = super().load_config()
-        self.mj_bot = MJBot(self.config.get("midjourney"))
+        if self.config:
+            self.mj_bot = MJBot(self.config.get("midjourney"))
         logger.info("[LinkAI] inited")
 
     def on_handle_context(self, e_context: EventContext):
@@ -35,6 +36,9 @@ class LinkAI(Plugin):
         消息处理逻辑
         :param e_context: 消息上下文
         """
+        if not self.config:
+            return
+
         context = e_context['context']
         if context.type not in [ContextType.TEXT, ContextType.IMAGE, ContextType.IMAGE_CREATE]:
             # filter content no need solve
