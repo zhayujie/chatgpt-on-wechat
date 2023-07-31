@@ -1,10 +1,12 @@
 ## 插件说明
 
-基于 LinkAI 提供的知识库、Midjourney绘画等能力对机器人的功能进行增强。地址: https://chat.link-ai.tech/console
+基于 LinkAI 提供的知识库、Midjourney绘画等能力对机器人的功能进行增强。平台地址: https://chat.link-ai.tech/console
 
 ## 插件配置
 
-将 `plugins/linkai` 下的 `config.json.template` 复制为 `config.json`。如果是`docker`部署，可通过映射 plugins/config.json 来完成配置。以下是配置项说明：
+将 `plugins/linkai` 目录下的 `config.json.template` 配置模板复制为最终生效的 `config.json`:
+
+以下是配置项说明：
 
 ```bash
 {
@@ -23,11 +25,15 @@
 }
 
 ```
-注意：实际 `config.json` 配置中应保证json格式，不应携带 '#' 及后面的注释。
+注意：
+
+ - 配置项中 `group_app_map` 部分是用于映射群聊与LinkAI平台上的应用， `midjourney` 部分是 mj 画图的配置，可根据需要进行填写，未填写配置时默认不开启相应功能
+ - 实际 `config.json` 配置中应保证json格式，不应携带 '#' 及后面的注释
+ - 如果是`docker`部署，可通过映射 `plugins/config.json` 到容器中来完成插件配置，参考[文档](https://github.com/zhayujie/chatgpt-on-wechat#3-%E6%8F%92%E4%BB%B6%E4%BD%BF%E7%94%A8)
 
 ## 插件使用
 
-> 使用插件中的知识库管理功能需要首先开启`linkai`对话，依赖于全局 `config.json` 中的 `use_linkai` 和 `linkai_api_key` 配置；midjourney绘画功能则只需填写 `linkai_api_key` 配置。
+> 使用插件中的知识库管理功能需要首先开启`linkai`对话，依赖全局 `config.json` 中的 `use_linkai` 和 `linkai_api_key` 配置；而midjourney绘画功能则只需填写 `linkai_api_key` 配置。具体可参考 [详细文档](https://link-ai.tech/platform/link-app/wechat)。
 
 完成配置后运行项目，会自动运行插件，输入 `#help linkai` 可查看插件功能。
 
@@ -56,3 +62,5 @@
 "$mj a little cat, white --ar 9:16"
 "$mju 1105592717188272288 2"
 ```
+
+注：开启 `use_image_create_prefix` 配置后可直接复用全局画图触发词，以"画"开头便可以生成图片。
