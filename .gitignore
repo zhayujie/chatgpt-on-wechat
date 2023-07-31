@@ -25,3 +25,4 @@ plugins/**/
 !plugins/hello
 !plugins/role
 !plugins/keyword
+!plugins/linkai
