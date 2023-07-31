@@ -5,7 +5,6 @@
     },
     "midjourney": {
         "enabled": true,
-        "mode": "relax",
         "auto_translate": true,
         "img_proxy": true,
         "max_tasks": 3,
