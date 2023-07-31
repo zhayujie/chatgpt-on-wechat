@@ -58,6 +58,9 @@ def _check(func):
         if conf().get("hot_reload") == True and int(create_time) < int(time.time()) - 60:  # 跳过1分钟前的历史消息
             logger.debug("[WX]history message {} skipped".format(msgId))
             return
+        if cmsg.my_msg:
+            logger.debug("[WX]my message {} skipped".format(msgId))
+            return
         return func(self, cmsg)
 
     return wrapper
