@@ -335,7 +335,7 @@ class MJBot:
         mode = self.config.get("mode")
         if "--relax" in prompt or mode == TaskMode.RELAX.value:
             return TaskMode.RELAX.value
-        return mode or TaskMode.RELAX.value
+        return mode or TaskMode.FAST.value
 
     def _run_loop(self, loop: asyncio.BaseEventLoop):
         """
