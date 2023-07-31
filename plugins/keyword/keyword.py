@@ -54,9 +54,18 @@ class Keyword(Plugin):
             logger.debug(f"[keyword] 匹配到关键字【{content}】")
             reply_text = self.keyword[content]
 
-            reply = Reply()
-            reply.type = ReplyType.TEXT
-            reply.content = reply_text
+            # 判断匹配内容的类型
+            if (reply_text.startswith("http://") or reply_text.startswith("https://")) and any(reply_text.endswith(ext) for ext in [".jpg", ".jpeg", ".png", ".gif", ".webp"]):
+                # 如果是以 http:// 或 https:// 开头，且.jpg/.jpeg/.png/.gif结尾，则认为是图片 URL
+                reply = Reply()
+                reply.type = ReplyType.IMAGE_URL
+                reply.content = reply_text
+            else:
+            # 否则认为是普通文本
+                reply = Reply()
+                reply.type = ReplyType.TEXT
+                reply.content = reply_text
+            
             e_context["reply"] = reply
             e_context.action = EventAction.BREAK_PASS  # 事件结束，并跳过处理context的默认逻辑
 
