@@ -166,7 +166,7 @@ class AzureChatGPTBot(ChatGPTBot):
     def __init__(self):
         super().__init__()
         openai.api_type = "azure"
-        openai.api_version = "2023-03-15-preview"
+        openai.api_version = conf().get("azure_api_version", "2023-06-01-preview")
         self.args["deployment_id"] = conf().get("azure_deployment_id")
 
     def create_img(self, query, retry_count=0, api_key=None):
