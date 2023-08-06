@@ -33,7 +33,7 @@
 
 ## 插件使用
 
-> 使用插件中的知识库管理功能需要首先开启`linkai`对话，依赖全局 `config.json` 中的 `use_linkai` 和 `linkai_api_key` 配置；而midjourney绘画功能则只需填写 `linkai_api_key` 配置。具体可参考 [详细文档](https://link-ai.tech/platform/link-app/wechat)。
+> 使用插件中的知识库管理功能需要首先开启`linkai`对话，依赖全局 `config.json` 中的 `use_linkai` 和 `linkai_api_key` 配置；而midjourney绘画功能则只需填写 `linkai_api_key` 配置，`use_linkai` 无论是否关闭均可使用。具体可参考 [详细文档](https://link-ai.tech/platform/link-app/wechat)。
 
 完成配置后运行项目，会自动运行插件，输入 `#help linkai` 可查看插件功能。
 
