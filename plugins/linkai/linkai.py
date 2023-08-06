@@ -1,19 +1,10 @@
-import asyncio
-import json
-import threading
-from concurrent.futures import ThreadPoolExecutor
-
 import plugins
 from bridge.context import ContextType
 from bridge.reply import Reply, ReplyType
-from channel.chat_message import ChatMessage
-from common.log import logger
-from config import conf, global_config
+from config import global_config
 from plugins import *
-from .midjourney import MJBot, TaskType
-
-# 任务线程池
-task_thread_pool = ThreadPoolExecutor(max_workers=4)
+from .midjourney import MJBot
+from bridge import bridge
 
 
 @plugins.register(
@@ -66,11 +57,28 @@ class LinkAI(Plugin):
         if len(cmd) == 1 or (len(cmd) == 2 and cmd[1] == "help"):
             _set_reply_text(self.get_help_text(verbose=True), e_context, level=ReplyType.INFO)
             return
+
+        if len(cmd) == 2 and (cmd[1] == "open" or cmd[1] == "close"):
+            # 知识库开关指令
+            if not _is_admin(e_context):
+                _set_reply_text("需要管理员权限执行", e_context, level=ReplyType.ERROR)
+                return
+            is_open = True
+            tips_text = "开启"
+            if cmd[1] == "close":
+                tips_text = "关闭"
+                is_open = False
+            conf()["use_linkai"] = is_open
+            bridge.Bridge().reset_bot()
+            _set_reply_text(f"知识库功能已{tips_text}", e_context, level=ReplyType.INFO)
+            return
+
         if len(cmd) == 3 and cmd[1] == "app":
+            # 知识库应用切换指令
             if not context.kwargs.get("isgroup"):
                 _set_reply_text("该指令需在群聊中使用", e_context, level=ReplyType.ERROR)
                 return
-            if context.kwargs.get("msg").actual_user_id not in global_config["admin_users"]:
+            if not _is_admin(e_context):
                 _set_reply_text("需要管理员权限执行", e_context, level=ReplyType.ERROR)
                 return
             app_code = cmd[2]
@@ -84,7 +92,8 @@ class LinkAI(Plugin):
             super().save_config(self.config)
             _set_reply_text(f"应用设置成功: {app_code}", e_context, level=ReplyType.INFO)
         else:
-            _set_reply_text(f"指令错误，请输入{_get_trigger_prefix()}linkai help 获取帮助", e_context, level=ReplyType.INFO)
+            _set_reply_text(f"指令错误，请输入{_get_trigger_prefix()}linkai help 获取帮助", e_context,
+                            level=ReplyType.INFO)
             return
 
     # LinkAI 对话任务处理
@@ -127,6 +136,19 @@ class LinkAI(Plugin):
 
 
 # 静态方法
+def _is_admin(e_context: EventContext) -> bool:
+    """
+    判断消息是否由管理员用户发送
+    :param e_context: 消息上下文
+    :return: True: 是, False: 否
+    """
+    context = e_context["context"]
+    if context["isgroup"]:
+        return context.kwargs.get("msg").actual_user_id in global_config["admin_users"]
+    else:
+        return context["receiver"] in global_config["admin_users"]
+
+
 def _set_reply_text(content: str, e_context: EventContext, level: ReplyType = ReplyType.ERROR):
     reply = Reply(level, content)
     e_context["reply"] = reply
