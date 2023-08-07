@@ -54,3 +54,9 @@ class Bridge(object):
 
     def fetch_translate(self, text, from_lang="", to_lang="en") -> Reply:
         return self.get_bot("translate").translate(text, from_lang, to_lang)
+
+    def reset_bot(self):
+        """
+        重置bot路由
+        """
+        self.__init__()

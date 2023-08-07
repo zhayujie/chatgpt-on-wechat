@@ -69,7 +69,7 @@ class MJBot:
         :param e_context: 上下文
         :return: 任务类型枚举
         """
-        if not self.config or not self.config.get("enabled"):
+        if not self.config:
             return None
         trigger_prefix = conf().get("plugin_trigger_prefix", "$")
         context = e_context['context']
@@ -92,7 +92,24 @@ class MJBot:
         session_id = context["session_id"]
         cmd = context.content.split(maxsplit=1)
         if len(cmd) == 1 and context.type == ContextType.TEXT:
+            # midjourney 帮助指令
             self._set_reply_text(self.get_help_text(verbose=True), e_context, level=ReplyType.INFO)
+            return
+
+        if len(cmd) == 2 and (cmd[1] == "open" or cmd[1] == "close"):
+            # midjourney 开关指令
+            is_open = True
+            tips_text = "开启"
+            if cmd[1] == "close":
+                tips_text = "关闭"
+                is_open = False
+            self.config["enabled"] = is_open
+            self._set_reply_text(f"Midjourney绘画已{tips_text}", e_context, level=ReplyType.INFO)
+            return
+
+        if not self.config.get("enabled"):
+            logger.warn("Midjourney绘画未开启，请查看 plugins/linkai/config.json 中的配置")
+            self._set_reply_text(f"Midjourney绘画未开启", e_context, level=ReplyType.INFO)
             return
 
         if not self._check_rate_limit(session_id, e_context):
