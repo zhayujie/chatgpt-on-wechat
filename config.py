@@ -19,6 +19,7 @@ available_setting = {
     "model": "gpt-3.5-turbo",
     "use_azure_chatgpt": False,  # 是否使用azure的chatgpt
     "azure_deployment_id": "",  # azure 模型部署名称
+    "azure_api_version": "",  # azure api版本
     # Bot触发配置
     "single_chat_prefix": ["bot", "@bot"],  # 私聊时文本需要包含该前缀才能触发机器人回复
     "single_chat_reply_prefix": "[bot] ",  # 私聊时自动回复的前缀，用于区分真人
@@ -102,6 +103,8 @@ available_setting = {
     "appdata_dir": "",  # 数据目录
     # 插件配置
     "plugin_trigger_prefix": "$",  # 规范插件提供聊天相关指令的前缀，建议不要和管理员指令前缀"#"冲突
+    # 是否使用全局插件配置
+    "use_global_plugin_config": False,
     # 知识库平台配置
     "use_linkai": False,
     "linkai_api_key": "",
@@ -252,3 +255,9 @@ def pconf(plugin_name: str) -> dict:
     :return: 该插件的配置项
     """
     return plugin_config.get(plugin_name.lower())
+
+
+# 全局配置，用于存放全局生效的状态
+global_config = {
+    "admin_users": []
+}
