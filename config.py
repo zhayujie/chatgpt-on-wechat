@@ -19,6 +19,7 @@ available_setting = {
     "model": "gpt-3.5-turbo",
     "use_azure_chatgpt": False,  # 是否使用azure的chatgpt
     "azure_deployment_id": "",  # azure 模型部署名称
+    "use_baidu_wenxin": False,  # 是否使用baidu文心一言，优先级次于azure
     "azure_api_version": "",  # azure api版本
     # Bot触发配置
     "single_chat_prefix": ["bot", "@bot"],  # 私聊时文本需要包含该前缀才能触发机器人回复
@@ -51,6 +52,10 @@ available_setting = {
     "presence_penalty": 0,
     "request_timeout": 60,  # chatgpt请求超时时间，openai接口默认设置为600，对于难问题一般需要较长时间
     "timeout": 120,  # chatgpt重试超时时间，在这个时间内，将会自动重试
+    # Baidu 文心一言参数
+    "baidu_wenxin_model": "eb-instant", # 默认使用ERNIE-Bot-turbo模型
+    "baidu_wenxin_api_key": "", # Baidu api key
+    "baidu_wenxin_secret_key": "", # Baidu secret key
     # 语音设置
     "speech_recognition": False,  # 是否开启语音识别
     "group_speech_recognition": False,  # 是否开启群组语音识别
