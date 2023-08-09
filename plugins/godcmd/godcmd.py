@@ -13,7 +13,7 @@ from bridge.context import ContextType
 from bridge.reply import Reply, ReplyType
 from common import const
 from common.log import logger
-from config import conf, load_config
+from config import conf, load_config, global_config
 from plugins import *
 
 # 定义指令集
@@ -178,16 +178,13 @@ class Godcmd(Plugin):
     def __init__(self):
         super().__init__()
 
-        curdir = os.path.dirname(__file__)
-        config_path = os.path.join(curdir, "config.json")
-        gconf = None
-        if not os.path.exists(config_path):
-            gconf = {"password": "", "admin_users": []}
-            with open(config_path, "w") as f:
-                json.dump(gconf, f, indent=4)
-        else:
-            with open(config_path, "r") as f:
-                gconf = json.load(f)
+        config_path = os.path.join(os.path.dirname(__file__), "config.json")
+        gconf = super().load_config()
+        if not gconf:
+            if not os.path.exists(config_path):
+                gconf = {"password": "", "admin_users": []}
+                with open(config_path, "w") as f:
+                    json.dump(gconf, f, indent=4)
         if gconf["password"] == "":
             self.temp_password = "".join(random.sample(string.digits, 4))
             logger.info("[Godcmd] 因未设置口令，本次的临时口令为%s。" % self.temp_password)
@@ -429,9 +426,11 @@ class Godcmd(Plugin):
         password = args[0]
         if password == self.password:
             self.admin_users.append(userid)
+            global_config["admin_users"].append(userid)
             return True, "认证成功"
         elif password == self.temp_password:
             self.admin_users.append(userid)
+            global_config["admin_users"].append(userid)
             return True, "认证成功，请尽快设置口令"
         else:
             return False, "认证失败"

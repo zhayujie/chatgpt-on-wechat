@@ -9,7 +9,7 @@ import sys
 from common.log import logger
 from common.singleton import singleton
 from common.sorted_dict import SortedDict
-from config import conf
+from config import conf, write_plugin_config
 
 from .event import *
 
@@ -62,6 +62,28 @@ class PluginManager:
             self.save_config()
         return pconf
 
+    @staticmethod
+    def _load_all_config():
+        """
+        背景: 目前插件配置存放于每个插件目录的config.json下，docker运行时不方便进行映射，故增加统一管理的入口，优先
+        加载 plugins/config.json，原插件目录下的config.json 不受影响
+
+        从 plugins/config.json 中加载所有插件的配置并写入 config.py 的全局配置中，供插件中使用
+        插件实例中通过 config.pconf(plugin_name) 即可获取该插件的配置
+        """
+        all_config_path = "./plugins/config.json"
+        try:
+            if os.path.exists(all_config_path):
+                # read from all plugins config
+                with open(all_config_path, "r", encoding="utf-8") as f:
+                    all_conf = json.load(f)
+                    logger.info(f"load all config from plugins/config.json: {all_conf}")
+
+                # write to global config
+                write_plugin_config(all_conf)
+        except Exception as e:
+            logger.error(e)
+
     def scan_plugins(self):
         logger.info("Scaning plugins ...")
         plugins_dir = "./plugins"
@@ -88,7 +110,7 @@ class PluginManager:
                             self.loaded[plugin_path] = importlib.import_module(import_path)
                         self.current_plugin_path = None
                     except Exception as e:
-                        logger.exception("Failed to import plugin %s: %s" % (plugin_name, e))
+                        logger.warn("Failed to import plugin %s: %s" % (plugin_name, e))
                         continue
         pconf = self.pconf
         news = [self.plugins[name] for name in self.plugins]
@@ -123,7 +145,7 @@ class PluginManager:
                     try:
                         instance = plugincls()
                     except Exception as e:
-                        logger.exception("Failed to init %s, diabled. %s" % (name, e))
+                        logger.warn("Failed to init %s, diabled. %s" % (name, e))
                         self.disable_plugin(name)
                         failed_plugins.append(name)
                         continue
@@ -149,6 +171,8 @@ class PluginManager:
     def load_plugins(self):
         self.load_config()
         self.scan_plugins()
+        # 加载全量插件配置
+        self._load_all_config()
         pconf = self.pconf
         logger.debug("plugins.json config={}".format(pconf))
         for name, plugin in pconf["plugins"].items():

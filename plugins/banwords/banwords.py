@@ -24,16 +24,17 @@ class Banwords(Plugin):
     def __init__(self):
         super().__init__()
         try:
+            # load config
+            conf = super().load_config()
             curdir = os.path.dirname(__file__)
-            config_path = os.path.join(curdir, "config.json")
-            conf = None
-            if not os.path.exists(config_path):
-                conf = {"action": "ignore"}
-                with open(config_path, "w") as f:
-                    json.dump(conf, f, indent=4)
-            else:
-                with open(config_path, "r") as f:
-                    conf = json.load(f)
+            if not conf:
+                # 配置不存在则写入默认配置
+                config_path = os.path.join(curdir, "config.json")
+                if not os.path.exists(config_path):
+                    conf = {"action": "ignore"}
+                    with open(config_path, "w") as f:
+                        json.dump(conf, f, indent=4)
+
             self.searchr = WordsSearch()
             self.action = conf["action"]
             banwords_path = os.path.join(curdir, "banwords.txt")

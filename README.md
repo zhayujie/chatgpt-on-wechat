@@ -5,18 +5,14 @@
 最新版本支持的功能如下：
 
 - [x] **多端部署：** 有多种部署方式可选择且功能完备，目前已支持个人微信，微信公众号和企业微信应用等部署方式
-- [x] **基础对话：** 私聊及群聊的消息智能回复，支持多轮会话上下文记忆，支持 GPT-3，GPT-3.5，GPT-4模型
+- [x] **基础对话：** 私聊及群聊的消息智能回复，支持多轮会话上下文记忆，支持 GPT-3, GPT-3.5, GPT-4, 文心一言模型
 - [x] **语音识别：** 可识别语音消息，通过文字或语音回复，支持 azure, baidu, google, openai等多种语音模型
-- [x] **图片生成：** 支持图片生成 和 图生图（如照片修复），可选择 Dell-E, stable diffusion, replicate模型
+- [x] **图片生成：** 支持图片生成 和 图生图（如照片修复），可选择 Dell-E, stable diffusion, replicate, midjourney模型
 - [x] **丰富插件：** 支持个性化插件扩展，已实现多角色切换、文字冒险、敏感词过滤、聊天记录总结等插件
 - [X] **Tool工具：** 与操作系统和互联网交互，支持最新信息搜索、数学计算、天气和资讯查询、网页总结，基于 [chatgpt-tool-hub](https://github.com/goldfishh/chatgpt-tool-hub) 实现
+- [x] **知识库：** 通过上传知识库文件自定义专属机器人，可作为数字分身、领域知识库、智能客服使用，基于 [LinkAI](https://chat.link-ai.tech/console) 实现
 
 > 欢迎接入更多应用，参考 [Terminal代码](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/channel/terminal/terminal_channel.py)实现接收和发送消息逻辑即可接入。 同时欢迎增加新的插件，参考 [插件说明文档](https://github.com/zhayujie/chatgpt-on-wechat/tree/master/plugins)。
-
-**一键部署:**
-- 个人微信
-  
-  [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/qApznZ?referralCode=RC3znh)
 
 # 演示
 
@@ -26,13 +22,15 @@ Demo made by [Visionn](https://www.wangpc.cc/)
 
 # 交流群
 
-添加小助手微信进群：
+添加小助手微信进群，请备注 "wechat"：
 
 <img width="240" src="./docs/images/contact.jpg">
 
 # 更新日志
 
->**2023.06.12：** 接入 [LinkAI](https://chat.link-ai.tech/console) 平台，可在线创建 个人知识库，并接入微信中。Beta版本欢迎体验，使用参考 [接入文档](https://link-ai.tech/platform/link-app/wechat)。
+>**2023.08.08：** 接入百度文心一言模型，通过 [插件](https://github.com/zhayujie/chatgpt-on-wechat/tree/master/plugins/linkai) 支持 Midjourney 绘图
+
+>**2023.06.12：** 接入 [LinkAI](https://chat.link-ai.tech/console) 平台，可在线创建个人知识库，并接入微信、公众号及企业微信中，打造专属客服机器人。使用参考 [接入文档](https://link-ai.tech/platform/link-app/wechat)。
 
 >**2023.04.26：** 支持企业微信应用号部署，兼容插件，并支持语音图片交互，私人助理理想选择，[使用文档](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/channel/wechatcom/README.md)。(contributed by [@lanvent](https://github.com/lanvent) in [#944](https://github.com/zhayujie/chatgpt-on-wechat/pull/944))
 
@@ -62,6 +60,8 @@ Demo made by [Visionn](https://www.wangpc.cc/)
 
 支持 Linux、MacOS、Windows 系统（可在Linux服务器上长期运行)，同时需安装 `Python`。
 > 建议Python版本在 3.7.1~3.9.X 之间，推荐3.8版本，3.10及以上版本在 MacOS 可用，其他系统上不确定能否正常运行。
+
+> 注意：Docker 或 Railway 部署无需安装python环境和下载源码，可直接快进到下一节。
 
 **(1) 克隆项目代码：**
 
@@ -114,7 +114,7 @@ pip3 install azure-cognitiveservices-speech
 {
   "open_ai_api_key": "YOUR API KEY",                          # 填入上面创建的 OpenAI API KEY
   "model": "gpt-3.5-turbo",                                   # 模型名称。当use_azure_chatgpt为true时，其名称为Azure上model deployment名称
-  "proxy": "127.0.0.1:7890",                                  # 代理客户端的ip和端口
+  "proxy": "",                                                # 代理客户端的ip和端口，国内环境开启代理的需要填写该项，如 "127.0.0.1:7890"
   "single_chat_prefix": ["bot", "@bot"],                      # 私聊时文本需要包含该前缀才能触发机器人回复
   "single_chat_reply_prefix": "[bot] ",                       # 私聊时自动回复的前缀，用于区分真人
   "group_chat_prefix": ["@bot"],                              # 群聊时包含该前缀则会触发机器人回复
@@ -126,6 +126,7 @@ pip3 install azure-cognitiveservices-speech
   "group_speech_recognition": false,                          # 是否开启群组语音识别
   "use_azure_chatgpt": false,                                 # 是否使用Azure ChatGPT service代替openai ChatGPT service. 当设置为true时需要设置 open_ai_api_base，如 https://xxx.openai.azure.com/
   "azure_deployment_id": "",                                  # 采用Azure ChatGPT时，模型部署名称
+  "azure_api_version": "",                                    # 采用Azure ChatGPT时，API版本
   "character_desc": "你是ChatGPT, 一个由OpenAI训练的大型语言模型, 你旨在回答并解决人们的任何问题，并且可以使用多种语言与人交流。",  # 人格描述
   # 订阅消息，公众号和企业微信channel中请填写，当被订阅时会自动回复，可使用特殊占位符。目前支持的占位符有{trigger_prefix}，在程序中它会自动替换成bot的触发词。
   "subscribe_msg": "感谢您的关注！\n这里是ChatGPT，可以自由对话。\n支持语音对话。\n支持图片输出，画字开头的消息将按要求创作图片。\n支持角色扮演和文字冒险等丰富插件。\n输入{trigger_prefix}#help 查看详细指令。"
@@ -153,7 +154,7 @@ pip3 install azure-cognitiveservices-speech
 
 **4.其他配置**
 
-+ `model`: 模型名称，目前支持 `gpt-3.5-turbo`, `text-davinci-003`, `gpt-4`, `gpt-4-32k`  (其中gpt-4 api暂未完全开放，申请通过后可使用)
++ `model`: 模型名称，目前支持 `gpt-3.5-turbo`, `text-davinci-003`, `gpt-4`, `gpt-4-32k`, `wenxin`  (其中gpt-4 api暂未完全开放，申请通过后可使用)
 + `temperature`,`frequency_penalty`,`presence_penalty`: Chat API接口参数，详情参考[OpenAI官方文档。](https://platform.openai.com/docs/api-reference/chat)
 + `proxy`：由于目前 `openai` 接口国内无法访问，需配置代理客户端的地址，详情参考  [#351](https://github.com/zhayujie/chatgpt-on-wechat/issues/351)
 + 对于图像生成，在满足个人或群组触发条件外，还需要额外的关键词前缀来触发，对应配置 `image_create_prefix `
@@ -196,13 +197,60 @@ nohup python3 app.py & tail -f nohup.out          # 在后台运行程序并通�
 
 ### 3.Docker部署
 
-参考文档 [Docker部署](https://github.com/limccn/chatgpt-on-wechat/wiki/Docker%E9%83%A8%E7%BD%B2)   (Contributed by [limccn](https://github.com/limccn))。
+> 使用docker部署无需下载源码和安装依赖，只需要获取 docker-compose.yml 配置文件并启动容器即可。
 
-### 4. Railway部署 (✅推荐)
-> Railway每月提供5刀和最多500小时的免费额度。
-1. 进入 [Railway](https://railway.app/template/qApznZ?referralCode=RC3znh)。
+> 前提是需要安装好 `docker` 及 `docker-compose`，安装成功的表现是执行 `docker -v` 和 `docker-compose version` (或 docker compose version) 可以查看到版本号，可前往 [docker官网](https://docs.docker.com/engine/install/) 进行下载。
+
+#### (1) 下载 docker-compose.yml 文件
+
+```bash
+wget https://open-1317903499.cos.ap-guangzhou.myqcloud.com/docker-compose.yml
+```
+
+下载完成后打开 `docker-compose.yml` 修改所需配置，如 `OPEN_AI_API_KEY` 和 `GROUP_NAME_WHITE_LIST` 等。
+
+#### (2) 启动容器
+
+在 `docker-compose.yml` 所在目录下执行以下命令启动容器：
+
+```bash
+sudo docker compose up -d
+```
+
+运行 `sudo docker ps` 能查看到 NAMES 为 chatgpt-on-wechat 的容器即表示运行成功。
+
+注意：
+
+ - 如果 `docker-compose` 是 1.X 版本 则需要执行 `sudo  docker-compose up -d` 来启动容器
+ - 该命令会自动去 [docker hub](https://hub.docker.com/r/zhayujie/chatgpt-on-wechat) 拉取 latest 版本的镜像，latest 镜像会在每次项目 release 新的版本时生成
+
+最后运行以下命令可查看容器运行日志，扫描日志中的二维码即可完成登录：
+
+```bash
+sudo docker logs -f chatgpt-on-wechat
+```
+
+#### (3) 插件使用
+
+如果需要在docker容器中修改插件配置，可通过挂载的方式完成，将 [插件配置文件](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/plugins/config.json.template)
+重命名为 `config.json`，放置于 `docker-compose.yml` 相同目录下，并在 `docker-compose.yml` 中的 `chatgpt-on-wechat` 部分下添加 `volumes` 映射:
+
+```
+volumes:
+  - ./config.json:/app/plugins/config.json
+```
+
+### 4. Railway部署
+
+> Railway 每月提供5刀和最多500小时的免费额度。 (07.11更新: 目前大部分账号已无法免费部署)
+
+1. 进入 [Railway](https://railway.app/template/qApznZ?referralCode=RC3znh)
 2. 点击 `Deploy Now` 按钮。
 3. 设置环境变量来重载程序运行的参数，例如`open_ai_api_key`, `character_desc`。
+
+**一键部署:**
+  
+  [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/qApznZ?referralCode=RC3znh)
 
 ## 常见问题
 

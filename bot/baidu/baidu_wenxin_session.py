@@ -3,21 +3,21 @@ from common.log import logger
 
 """
     e.g.  [
-        {"role": "system", "content": "You are a helpful assistant."},
         {"role": "user", "content": "Who won the world series in 2020?"},
         {"role": "assistant", "content": "The Los Angeles Dodgers won the World Series in 2020."},
         {"role": "user", "content": "Where was it played?"}
     ]
 """
 
-
-class ChatGPTSession(Session):
+class BaiduWenxinSession(Session):
     def __init__(self, session_id, system_prompt=None, model="gpt-3.5-turbo"):
         super().__init__(session_id, system_prompt)
         self.model = model
-        self.reset()
+        # 百度文心不支持system prompt
+        # self.reset()
 
     def discard_exceeding(self, max_tokens, cur_tokens=None):
+        # pdb.set_trace()
         precise = True
         try:
             cur_tokens = self.calc_tokens()

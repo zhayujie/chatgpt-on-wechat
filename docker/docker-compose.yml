@@ -3,10 +3,12 @@ services:
   chatgpt-on-wechat:
     image: zhayujie/chatgpt-on-wechat
     container_name: chatgpt-on-wechat
+    security_opt:
+      - seccomp:unconfined
     environment:
       OPEN_AI_API_KEY: 'YOUR API KEY'
       MODEL: 'gpt-3.5-turbo'
-      OPEN_AI_PROXY: ''
+      PROXY: ''
       SINGLE_CHAT_PREFIX: '["bot", "@bot"]'
       SINGLE_CHAT_REPLY_PREFIX: '"[bot] "'
       GROUP_CHAT_PREFIX: '["@bot"]'
@@ -16,6 +18,7 @@ services:
       SPEECH_RECOGNITION: 'False'
       CHARACTER_DESC: '你是ChatGPT, 一个由OpenAI训练的大型语言模型, 你旨在回答并解决人们的任何问题，并且可以使用多种语言与人交流。'
       EXPIRES_IN_SECONDS: 3600
+      USE_GLOBAL_PLUGIN_CONFIG: 'True'
       USE_LINKAI: 'False'
       LINKAI_API_KEY: ''
       LINKAI_APP_CODE: ''
