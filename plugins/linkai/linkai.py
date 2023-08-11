@@ -130,8 +130,11 @@ class LinkAI(Plugin):
         help_text = "用于集成 LinkAI 提供的知识库、Midjourney绘画等能力。\n\n"
         if not verbose:
             return help_text
-        help_text += f'📖 知识库\n - 群聊中指定应用: {trigger_prefix}linkai app 应用编码\n\n例如: \n"$linkai app Kv2fXJcH"\n\n'
-        help_text += f"🎨 绘画\n - 生成: {trigger_prefix}mj 描述词1, 描述词2.. \n - 放大: {trigger_prefix}mju 图片ID 图片序号\n - 变换: mjv 图片ID 图片序号\n - 重置: mjr 图片ID"
+        help_text += f'📖 知识库\n - 群聊中指定应用: {trigger_prefix}linkai app 应用编码\n'
+        help_text += f' - {trigger_prefix}linkai open: 开启对话\n'
+        help_text += f' - {trigger_prefix}linkai close: 关闭对话\n'
+        help_text += f'\n例如: \n"{trigger_prefix}linkai app Kv2fXJcH"\n\n'
+        help_text += f"🎨 绘画\n - 生成: {trigger_prefix}mj 描述词1, 描述词2.. \n - 放大: {trigger_prefix}mju 图片ID 图片序号\n - 变换: {trigger_prefix}mjv 图片ID 图片序号\n - 重置: {trigger_prefix}mjr 图片ID"
         help_text += f"\n\n例如：\n\"{trigger_prefix}mj a little cat, white --ar 9:16\"\n\"{trigger_prefix}mju 11055927171882 2\""
         help_text += f"\n\"{trigger_prefix}mjv 11055927171882 2\"\n\"{trigger_prefix}mjr 11055927171882\""
         return help_text
