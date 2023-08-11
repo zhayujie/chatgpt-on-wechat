@@ -240,7 +240,13 @@ volumes:
   - ./config.json:/app/plugins/config.json
 ```
 
-### 4. Railway部署
+### 4. Google Colab谷歌合作實驗室
+
+> Google Colab 使用 Tesla T4 GPU 免費提供 12 小時的每日運行時間
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1NO_G4QrCIyWdOWkdYp5De1VHhjvXtpd7?usp=sharing)
+
+### 5. Railway部署
 
 > Railway 每月提供5刀和最多500小时的免费额度。 (07.11更新: 目前大部分账号已无法免费部署)
 
