@@ -108,8 +108,12 @@ class ChatChannel(Channel):
                     if not conf().get("group_at_off", False):
                         flag = True
                     pattern = f"@{re.escape(self.name)}(\u2005|\u0020)"
-                    content = re.sub(pattern, r"", content)
-
+                    subtract_res = re.sub(pattern, r"", content)
+                    if subtract_res == content and context["msg"].self_display_name:
+                        # 前缀移除后没有变化，使用群昵称再次移除
+                        pattern = f"@{re.escape(context['msg'].self_display_name)}(\u2005|\u0020)"
+                        subtract_res = re.sub(pattern, r"", content)
+                    content = subtract_res
                 if not flag:
                     if context["origin_ctype"] == ContextType.VOICE:
                         logger.info("[WX]receive group voice, but checkprefix didn't match")
