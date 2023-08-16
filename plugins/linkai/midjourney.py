@@ -310,7 +310,7 @@ class MJBot:
         # send img
         reply = Reply(ReplyType.IMAGE_URL, task.img_url)
         channel = e_context["channel"]
-        channel._send(reply, e_context["context"])
+        _send(channel, reply, e_context["context"])
 
         # send info
         trigger_prefix = conf().get("plugin_trigger_prefix", "$")
@@ -327,7 +327,7 @@ class MJBot:
             text += f"\n\n🔄使用 {trigger_prefix}mjr 命令重新生成图片\n"
             text += f"例如：\n{trigger_prefix}mjr {task.img_id}"
             reply = Reply(ReplyType.INFO, text)
-            channel._send(reply, e_context["context"])
+            _send(channel, reply, e_context["context"])
 
         self._print_tasks()
         return
@@ -404,6 +404,19 @@ class MJBot:
                 if task.user_id == user_id:
                     result.append(task)
         return result
+
+
+def _send(channel, reply: Reply, context, retry_cnt=0):
+    try:
+        channel.send(reply, context)
+    except Exception as e:
+        logger.error("[WX] sendMsg error: {}".format(str(e)))
+        if isinstance(e, NotImplementedError):
+            return
+        logger.exception(e)
+        if retry_cnt < 2:
+            time.sleep(3 + 3 * retry_cnt)
+            channel.send(reply, context, retry_cnt + 1)
 
 
 def check_prefix(content, prefix_list):
