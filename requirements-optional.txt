@@ -2,7 +2,7 @@ tiktoken>=0.3.2 # openai calculate token
 
 #voice
 pydub>=0.25.1 # need ffmpeg
-SpeechRecognition # google speech to text
+# SpeechRecognition # google speech to text
 gTTS>=2.3.1 # google text to speech
 pyttsx3>=2.90 # pytsx text to speech
 baidu_aip>=4.16.10 # baidu voice
