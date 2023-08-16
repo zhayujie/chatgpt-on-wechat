@@ -1,28 +1,31 @@
 {
-  "open_ai_api_key": "YOUR API KEY",
+  "open_ai_api_key": "",
   "model": "gpt-3.5-turbo",
   "channel_type": "wx",
-  "proxy": "",
-  "hot_reload": false,
+  "proxy": "127.0.0.1:7890",
+  "hot_reload": true,
   "single_chat_prefix": [
-    "bot",
-    "@bot"
+    "-",
+    "@Henrik"
   ],
-  "single_chat_reply_prefix": "[bot] ",
+  "single_chat_reply_prefix": "[机器人小布为您服务[愉快]]\n\n",
   "group_chat_prefix": [
-    "@bot"
+    "@Henrik",
+    "@模块七-延安-卷王-陈伟"
+  ],
+  "group_chat_keyword": [
+    "-小布"
   ],
   "group_name_white_list": [
-    "ChatGPT测试群",
-    "ChatGPT测试群2"
+    "七天舔狗速成",
+    "路飞-Python学习4群"
   ],
+  "group_chat_reply_prefix":"[机器人小布为您服务[愉快]]\n\n",
   "group_chat_in_one_session": [
-    "ChatGPT测试群"
+    "七天舔狗速成"
   ],
   "image_create_prefix": [
-    "画",
-    "看",
-    "找"
+    "画"
   ],
   "speech_recognition": false,
   "group_speech_recognition": false,

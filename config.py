@@ -111,7 +111,7 @@ available_setting = {
     "use_global_plugin_config": False,
     # 知识库平台配置
     "use_linkai": False,
-    "linkai_api_key": "",
+    "linkai_api_key": "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",
     "linkai_app_code": ""
 }
 
