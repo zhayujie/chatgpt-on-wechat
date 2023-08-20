@@ -6,7 +6,7 @@ services:
     security_opt:
       - seccomp:unconfined
     environment:
-      OPEN_AI_API_KEY: 'YOUR API KEY'
+      OPEN_AI_API_KEY: 'sk-...VtEv'
       MODEL: 'gpt-3.5-turbo'
       PROXY: ''
       SINGLE_CHAT_PREFIX: '["bot", "@bot"]'
@@ -20,5 +20,5 @@ services:
       EXPIRES_IN_SECONDS: 3600
       USE_GLOBAL_PLUGIN_CONFIG: 'True'
       USE_LINKAI: 'False'
-      LINKAI_API_KEY: ''
-      LINKAI_APP_CODE: ''
+      LINKAI_API_KEY: 'sk-...VtEv'
+      LINKAI_APP_CODE: 'sk-...VtEv'
