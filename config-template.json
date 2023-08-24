@@ -1,5 +1,5 @@
 {
-  "open_ai_api_key": "YOUR API KEY",
+  "open_ai_api_key": "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",
   "model": "gpt-3.5-turbo",
   "channel_type": "wx",
   "proxy": "",
