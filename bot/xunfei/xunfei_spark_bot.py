@@ -178,11 +178,12 @@ class ReplyItem:
 
 # 收到websocket错误的处理
 def on_error(ws, error):
+
     logger.error("[XunFei] error:", error)
 
 
 # 收到websocket关闭的处理
-def on_close(ws, one, two):
+def on_close(ws):
     data_queue = queue_map.get(ws.session_id)
     data_queue.put("END")
 
