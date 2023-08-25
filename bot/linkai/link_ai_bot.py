@@ -22,6 +22,7 @@ class LinkAIBot(Bot, OpenAIImage):
 
     def __init__(self):
         super().__init__()
+        self.base_url = "https://api.link-ai.chat/v1"
         self.sessions = SessionManager(ChatGPTSession, model=conf().get("model") or "gpt-3.5-turbo")
 
     def reply(self, query, context: Context = None) -> Reply:
@@ -82,8 +83,7 @@ class LinkAIBot(Bot, OpenAIImage):
             headers = {"Authorization": "Bearer " + linkai_api_key}
 
             # do http request
-            base_url = conf().get("linkai_api_base", "https://api.link-ai.chat")
-            res = requests.post(url=base_url + "/v1/chat/completions", json=body, headers=headers,
+            res = requests.post(url=self.base_url + "/chat/completions", json=body, headers=headers,
                                 timeout=conf().get("request_timeout", 180))
             if res.status_code == 200:
                 # execute success
