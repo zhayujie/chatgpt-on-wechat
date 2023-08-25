@@ -2,7 +2,6 @@
 
 import requests, json
 from bot.bot import Bot
-from bridge.reply import Reply, ReplyType
 from bot.session_manager import SessionManager
 from bridge.context import ContextType
 from bridge.reply import Reply, ReplyType
