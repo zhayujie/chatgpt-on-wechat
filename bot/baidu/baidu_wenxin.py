@@ -77,6 +77,7 @@ class BaiduWenxinBot(Bot):
             payload = {'messages': session.messages}
             response = requests.request("POST", url, headers=headers, data=json.dumps(payload))
             response_text = json.loads(response.text)
+            logger.info(f"[BAIDU] response text={response_text}")
             res_content = response_text["result"]
             total_tokens = response_text["usage"]["total_tokens"]
             completion_tokens = response_text["usage"]["completion_tokens"]
