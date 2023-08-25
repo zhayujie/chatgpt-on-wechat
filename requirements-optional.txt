@@ -28,4 +28,4 @@ chatgpt_tool_hub==0.4.6
 
 # xunfei spark
 websocket==0.2.1
-websocket-client==0.57.0
+websocket-client==1.6.2
