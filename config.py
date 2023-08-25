@@ -16,7 +16,7 @@ available_setting = {
     "open_ai_api_base": "https://api.openai.com/v1",
     "proxy": "",  # openai使用的代理
     # chatgpt模型， 当use_azure_chatgpt为true时，其名称为Azure上model deployment名称
-    "model": "gpt-3.5-turbo",    # 还支持 gpt-3.5-turbo-16k, gpt-4, wenxin
+    "model": "gpt-3.5-turbo",  # 还支持 gpt-3.5-turbo-16k, gpt-4, wenxin, xunfei
     "use_azure_chatgpt": False,  # 是否使用azure的chatgpt
     "azure_deployment_id": "",  # azure 模型部署名称
     "azure_api_version": "",  # azure api版本
@@ -52,9 +52,13 @@ available_setting = {
     "request_timeout": 60,  # chatgpt请求超时时间，openai接口默认设置为600，对于难问题一般需要较长时间
     "timeout": 120,  # chatgpt重试超时时间，在这个时间内，将会自动重试
     # Baidu 文心一言参数
-    "baidu_wenxin_model": "eb-instant", # 默认使用ERNIE-Bot-turbo模型
-    "baidu_wenxin_api_key": "", # Baidu api key
-    "baidu_wenxin_secret_key": "", # Baidu secret key
+    "baidu_wenxin_model": "eb-instant",  # 默认使用ERNIE-Bot-turbo模型
+    "baidu_wenxin_api_key": "",  # Baidu api key
+    "baidu_wenxin_secret_key": "",  # Baidu secret key
+    # 讯飞星火API
+    "xunfei_app_id": "",  # 讯飞应用ID
+    "xunfei_api_key": "",  # 讯飞 API key
+    "xunfei_api_secret": "",  # 讯飞 API secret
     # 语音设置
     "speech_recognition": False,  # 是否开启语音识别
     "group_speech_recognition": False,  # 是否开启群组语音识别

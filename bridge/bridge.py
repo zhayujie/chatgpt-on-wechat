@@ -25,6 +25,8 @@ class Bridge(object):
             self.btype["chat"] = const.CHATGPTONAZURE
         if model_type in ["wenxin"]:
             self.btype["chat"] = const.BAIDU
+        if model_type in ["xunfei"]:
+            self.btype["chat"] = const.XUNFEI
         if conf().get("use_linkai") and conf().get("linkai_api_key"):
             self.btype["chat"] = const.LINKAI
         self.bots = {}

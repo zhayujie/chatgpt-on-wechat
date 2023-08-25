@@ -2,6 +2,7 @@
 OPEN_AI = "openAI"
 CHATGPT = "chatGPT"
 BAIDU = "baidu"
+XUNFEI = "xunfei"
 CHATGPTONAZURE = "chatGPTOnAzure"
 LINKAI = "linkai"
 
