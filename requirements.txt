@@ -6,3 +6,4 @@ requests>=2.28.2
 chardet>=5.1.0
 Pillow
 pre-commit
+web.py
