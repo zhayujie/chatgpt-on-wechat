@@ -17,6 +17,7 @@ itchat.pkl
 user_datas.pkl
 chatgpt_tool_hub/
 plugins/**/
+!plugins/xiaohu
 !plugins/bdunit
 !plugins/dungeon
 !plugins/finish
