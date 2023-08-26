@@ -9,7 +9,6 @@ from bridge.context import *
 from bridge.reply import *
 from channel.channel import Channel
 from common.dequeue import Dequeue
-from common.log import logger
 from config import conf
 from plugins import *
 
@@ -29,6 +28,7 @@ class ChatChannel(Channel):
     handler_pool = ThreadPoolExecutor(max_workers=8)  # 处理消息的线程池
 
     def __init__(self):
+        self.should_stop = False
         _thread = threading.Thread(target=self.consume)
         _thread.setDaemon(True)
         _thread.start()
@@ -55,24 +55,29 @@ class ChatChannel(Channel):
                 group_name = cmsg.other_user_nickname
                 group_id = cmsg.other_user_id
 
+                logger.debug(f"正在处理群组消息，群名：{group_name}, 群ID：{group_id}")
+
                 group_name_white_list = config.get("group_name_white_list", [])
                 group_name_keyword_white_list = config.get("group_name_keyword_white_list", [])
+
                 if any(
-                    [
-                        group_name in group_name_white_list,
-                        "ALL_GROUP" in group_name_white_list,
-                        check_contain(group_name, group_name_keyword_white_list),
-                    ]
+                        [
+                            group_name in group_name_white_list,
+                            "ALL_GROUP" in group_name_white_list,
+                            check_contain(group_name, group_name_keyword_white_list),
+                        ]
                 ):
                     group_chat_in_one_session = conf().get("group_chat_in_one_session", [])
                     session_id = cmsg.actual_user_id
+
                     if any(
-                        [
-                            group_name in group_chat_in_one_session,
-                            "ALL_GROUP" in group_chat_in_one_session,
-                        ]
+                            [
+                                group_name in group_chat_in_one_session,
+                                "ALL_GROUP" in group_chat_in_one_session,
+                            ]
                     ):
                         session_id = group_id
+
                 else:
                     return None
                 context["session_id"] = session_id
@@ -80,11 +85,16 @@ class ChatChannel(Channel):
             else:
                 context["session_id"] = cmsg.other_user_id
                 context["receiver"] = cmsg.other_user_id
-            e_context = PluginManager().emit_event(EventContext(Event.ON_RECEIVE_MESSAGE, {"channel": self, "context": context}))
+
+            logger.debug(f"最终的会话ID：{context['session_id']}")
+            logger.debug(f"最终的接收者ID：{context['receiver']}")
+            e_context = PluginManager().emit_event(
+                EventContext(Event.ON_RECEIVE_MESSAGE, {"channel": self, "context": context}))
             context = e_context["context"]
             if e_context.is_pass() or context is None:
                 return context
-            if cmsg.from_user_id == self.user_id and not config.get("trigger_by_self", True):
+
+            if cmsg.from_user_id == self.user_id and not config.get("trigger_by_self", False):
                 logger.debug("[WX]self message skipped")
                 return None
 
@@ -134,10 +144,12 @@ class ChatChannel(Channel):
             else:
                 context.type = ContextType.TEXT
             context.content = content.strip()
-            if "desire_rtype" not in context and conf().get("always_reply_voice") and ReplyType.VOICE not in self.NOT_SUPPORT_REPLYTYPE:
+            if "desire_rtype" not in context and conf().get(
+                    "always_reply_voice") and ReplyType.VOICE not in self.NOT_SUPPORT_REPLYTYPE:
                 context["desire_rtype"] = ReplyType.VOICE
         elif context.type == ContextType.VOICE:
-            if "desire_rtype" not in context and conf().get("voice_reply_voice") and ReplyType.VOICE not in self.NOT_SUPPORT_REPLYTYPE:
+            if "desire_rtype" not in context and conf().get(
+                    "voice_reply_voice") and ReplyType.VOICE not in self.NOT_SUPPORT_REPLYTYPE:
                 context["desire_rtype"] = ReplyType.VOICE
 
         return context
@@ -197,7 +209,8 @@ class ChatChannel(Channel):
                         reply = self._generate_reply(new_context)
                     else:
                         return
-            elif context.type == ContextType.IMAGE:  # 图片消息，当前无默认逻辑
+            elif context.type == ContextType.IMAGE or context.type == ContextType.FUNCTION \
+                    or context.type == ContextType.FILE:
                 pass
             else:
                 logger.error("[WX] unknown context type: {}".format(context.type))
@@ -214,6 +227,7 @@ class ChatChannel(Channel):
             )
             reply = e_context["reply"]
             desire_rtype = context.get("desire_rtype")
+            logger.debug(f"context:{context}")
             if not e_context.is_pass() and reply and reply.type:
                 if reply.type in self.NOT_SUPPORT_REPLYTYPE:
                     logger.error("[WX]reply type not support: " + str(reply.type))
@@ -227,19 +241,34 @@ class ChatChannel(Channel):
                         return self._decorate_reply(context, reply)
                     if context.get("isgroup", False):
                         reply_text = "@" + context["msg"].actual_user_nickname + "\n" + reply_text.strip()
-                        reply_text = conf().get("group_chat_reply_prefix", "") + reply_text + conf().get("group_chat_reply_suffix", "")
+                        reply_text = conf().get("group_chat_reply_prefix", "") + reply_text + conf().get(
+                            "group_chat_reply_suffix", "")
                     else:
-                        reply_text = conf().get("single_chat_reply_prefix", "") + reply_text + conf().get("single_chat_reply_suffix", "")
+                        reply_text = conf().get("single_chat_reply_prefix", "") + reply_text + conf().get(
+                            "single_chat_reply_suffix", "")
                     reply.content = reply_text
                 elif reply.type == ReplyType.ERROR or reply.type == ReplyType.INFO:
                     reply.content = "[" + str(reply.type) + "]\n" + reply.content
                 elif reply.type == ReplyType.IMAGE_URL or reply.type == ReplyType.VOICE or reply.type == ReplyType.IMAGE:
                     pass
+                elif reply.type == ReplyType.VIDEO_URL:
+                    pass
+                elif reply.type == ReplyType.CARD:
+                    pass
+                elif reply.type == ReplyType.InviteRoom:
+                    pass
+                elif reply.type == ReplyType.TEXT_:
+                    pass
+                elif reply.type == ReplyType.FILE:
+                    pass
+                elif reply.type == ReplyType.MINIAPP:
+                    pass
                 else:
                     logger.error("[WX] unknown reply type: {}".format(reply.type))
                     return
             if desire_rtype and desire_rtype != reply.type and reply.type not in [ReplyType.ERROR, ReplyType.INFO]:
-                logger.warning("[WX] desire_rtype: {}, but reply type: {}".format(context.get("desire_rtype"), reply.type))
+                logger.warning(
+                    "[WX] desire_rtype: {}, but reply type: {}".format(context.get("desire_rtype"), reply.type))
             return reply
 
     def _send_reply(self, context: Context, reply: Reply):
@@ -305,7 +334,8 @@ class ChatChannel(Channel):
 
     # 消费者函数，单独线程，用于从消息队列中取出消息并处理
     def consume(self):
-        while True:
+        logger.debug("[ChatChannel] consume method started.")
+        while not self.should_stop:
             with self.lock:
                 session_ids = list(self.sessions.keys())
                 for session_id in session_ids:
@@ -313,7 +343,6 @@ class ChatChannel(Channel):
                     if semaphore.acquire(blocking=False):  # 等线程处理完毕才能删除
                         if not context_queue.empty():
                             context = context_queue.get()
-                            logger.debug("[WX] consume context: {}".format(context))
                             future: Future = self.handler_pool.submit(self._handle, context)
                             future.add_done_callback(self._thread_pool_callback(session_id, context=context))
                             if session_id not in self.futures:
@@ -325,7 +354,7 @@ class ChatChannel(Channel):
                             del self.sessions[session_id]
                         else:
                             semaphore.release()
-            time.sleep(0.1)
+            time.sleep(0.5)
 
     # 取消session_id对应的所有任务，只能取消排队的消息和已提交线程池但未执行的任务
     def cancel_session(self, session_id):
@@ -347,6 +376,9 @@ class ChatChannel(Channel):
                 if cnt > 0:
                     logger.info("Cancel {} messages in session {}".format(cnt, session_id))
                 self.sessions[session_id][0] = Dequeue()
+
+    def stop(self):
+        self.should_stop = True
 
 
 def check_prefix(content, prefix_list):
