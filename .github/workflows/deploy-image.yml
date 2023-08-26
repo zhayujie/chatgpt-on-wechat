@@ -57,6 +57,7 @@ jobs:
           file: ./docker/Dockerfile.latest
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          platform: linux/amd64,linux/arm64
 
       - uses: actions/delete-package-versions@v4
         with:
