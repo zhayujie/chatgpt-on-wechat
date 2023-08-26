@@ -178,7 +178,7 @@ class ReplyItem:
 
 # 收到websocket错误的处理
 def on_error(ws, error):
-    logger.error("[XunFei] error:", error)
+    logger.error(f"[XunFei] error: {str(error)}")
 
 
 # 收到websocket关闭的处理
