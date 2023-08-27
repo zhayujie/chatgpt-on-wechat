@@ -1,21 +1,5 @@
-import os
-import sys
-import json
-import random
-from apscheduler.schedulers.blocking import BlockingScheduler
-import bleach
 import asyncio
-import re
 
-
-from contextlib import aclosing
-
-
-import time
-
-import openai
-import openai.error
-import requests
 
 from bot.bot import Bot
 from bot.Bing.Sydney_session import SydneySession
@@ -23,7 +7,6 @@ from bot.session_manager import SessionManager
 from bridge.context import Context, ContextType
 from bridge.reply import Reply, ReplyType
 from common.log import logger
-from common.token_bucket import TokenBucket
 from config import conf, load_config
 
 from bot.Bing import Sydney_proess
@@ -43,7 +26,7 @@ class SydneyBot(Bot):
             if query in clear_memory_commands:
                 self.sessions.clear_session(session_id)
                 reply = Reply(ReplyType.INFO, "记忆已清除")
-            elif query == "#清除所有":
+            elif "clearall" in query:
                 self.sessions.clear_all_session()
                 reply = Reply(ReplyType.INFO, "所有人记忆已清除")
             elif query == "#更新配置":
