@@ -7,3 +7,7 @@ chardet>=5.1.0
 Pillow
 pre-commit
 web.py
+<<<<<<< 827e8eddf87b73f310464e3d6c0509e5b6e2ba67
+=======
+curl_cffi
+>>>>>>> claude bot

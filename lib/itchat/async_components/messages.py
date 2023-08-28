@@ -349,7 +349,11 @@ def upload_chunk_file(core, fileDir, fileSymbol, fileSize,
         ('id', (None, 'WU_FILE_0')),
         ('name', (None, fileName)),
         ('type', (None, fileType)),
+<<<<<<< 827e8eddf87b73f310464e3d6c0509e5b6e2ba67
         ('lastModifiedDate', (None, time.strftime('%a %b %d %Y %H:%M:%S GMT+0800 (CST)'))),
+=======
+        ('lastModifiedDate', (None, time.strftime('%a %b %claude_ai_bot.py%Y %H:%M:%S GMT+0800 (CST)'))),
+>>>>>>> claude bot
         ('size', (None, str(fileSize))),
         ('chunks', (None, None)),
         ('chunk', (None, None)),

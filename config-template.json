@@ -2,8 +2,12 @@
   "open_ai_api_key": "YOUR API KEY",
   "model": "gpt-3.5-turbo",
   "channel_type": "wx",
-  "proxy": "",
+  "proxy": "http://127.0.0.1:33210",
   "hot_reload": false,
+  "model": "claude",
+  "channel_type": "wx",
+  "claude_api_cookie": "intercom-device-id-lupk8zyo=b37192f8-c3a5-408d-8525-60ad8c2cc57c; sessionKey=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; intercom-session-lupk8zyo=dHBseWhqVVIvVW4vZU1NMWM3eUpTQldjQkUwYUMwQVlGQ3g4azR6RlQ3ZDBkTTRqQWd4aGN6ZmY4MSt4aEVERy0tdXY0OGdnUTdYdVhsYWx3c2ErUFFTdz09--58fbe081d071984de6a196e49d513761e8b806e9; cf_clearance=9R_XpUT12.KKIRtXlXUFng05L_sdc0GDwz55ZBGsZ6o-1693003153-0-1-636ec5eb.e36b35e5.346f9a0b-0.2.1693003153; __cf_bm=TLFZA8a7JhAo6NRLVIL0jYsD8nb4cDna6slscBAns3A-1693004564-0-AfWzEcpZbRjF6cLEjxhPUnA84TNQDNQofUkZCuabIKkmQan+BlCvvYIeZod8ISJ/RLq1URvIsp++UwTDJyKfLI8=",
+  "hot_reload": true,
   "single_chat_prefix": [
     "bot",
     "@bot"
@@ -14,6 +18,7 @@
   ],
   "group_name_white_list": [
     "ChatGPT测试群",
+    "高中数学应用题",
     "ChatGPT测试群2"
   ],
   "group_chat_in_one_session": [

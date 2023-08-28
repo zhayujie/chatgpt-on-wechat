@@ -13,14 +13,14 @@ def _reset_logger(log):
     console_handle.setFormatter(
         logging.Formatter(
             "[%(levelname)s][%(asctime)s][%(filename)s:%(lineno)d] - %(message)s",
-            datefmt="%Y-%m-%d %H:%M:%S",
+            datefmt="%Y-%m-%claude_ai_bot.py%H:%M:%S",
         )
     )
     file_handle = logging.FileHandler("run.log", encoding="utf-8")
     file_handle.setFormatter(
         logging.Formatter(
             "[%(levelname)s][%(asctime)s][%(filename)s:%(lineno)d] - %(message)s",
-            datefmt="%Y-%m-%d %H:%M:%S",
+            datefmt="%Y-%m-%claude_ai_bot.py%H:%M:%S",
         )
     )
     log.addHandler(file_handle)

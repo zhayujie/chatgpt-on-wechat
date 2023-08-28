@@ -106,6 +106,10 @@ class ChatGPTBot(Bot, OpenAIImage):
             reply = Reply(ReplyType.ERROR, "Bot不支持处理{}类型的消息".format(context.type))
             return reply
 
+<<<<<<< 827e8eddf87b73f310464e3d6c0509e5b6e2ba67
+=======
+
+>>>>>>> claude bot
     def reply_text(self, session: ChatGPTSession, api_key=None, args=None, retry_count=0) -> dict:
         """
         call openai's ChatCompletion to get the answer
