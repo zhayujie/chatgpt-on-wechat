@@ -2,7 +2,6 @@ import re
 import time
 import json
 import uuid
-
 from curl_cffi import requests
 from bot.bot import Bot
 from bot.chatgpt.chat_gpt_session import ChatGPTSession
@@ -15,10 +14,6 @@ from config import conf
 
 
 class ClaudeAIBot(Bot, OpenAIImage):
-    # authentication failed
-    AUTH_FAILED_CODE = 401
-    NO_QUOTA_CODE = 406
-
     def __init__(self):
         super().__init__()
         self.sessions = SessionManager(ChatGPTSession, model=conf().get("model") or "gpt-3.5-turbo")
@@ -31,9 +26,6 @@ class ClaudeAIBot(Bot, OpenAIImage):
         self.org_uuid = self.get_organization_id()
         self.con_uuid = None
         self.get_uuid()
-
-
-
 
     def generate_uuid(self):
         random_uuid = uuid.uuid4()
@@ -48,11 +40,8 @@ class ClaudeAIBot(Bot, OpenAIImage):
             self.con_uuid = self.generate_uuid()
             self.create_new_chat()
 
-
-
     def get_organization_id(self):
         url = "https://claude.ai/api/organizations"
-
         headers = {
             'User-Agent':
                 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/115.0',
@@ -65,12 +54,11 @@ class ClaudeAIBot(Bot, OpenAIImage):
             'Connection': 'keep-alive',
             'Cookie': f'{self.claude_api_cookie}'
         }
-
         response = requests.get(url, headers=headers,impersonate="chrome110",proxies=self.proxies)
         res = json.loads(response.text)
         uuid = res[0]['uuid']
-
         return uuid
+        
     def reply(self, query, context: Context = None) -> Reply:
         if context.type == ContextType.TEXT:
             return self._chat(query, context)
@@ -108,9 +96,9 @@ class ClaudeAIBot(Bot, OpenAIImage):
             print(response.text)
 
         return uuid
+        
     def create_new_chat(self):
         url = f"https://claude.ai/api/organizations/{self.org_uuid}/chat_conversations"
-
         payload = json.dumps({"uuid": self.con_uuid, "name": ""})
         headers = {
             'User-Agent':
@@ -127,11 +115,10 @@ class ClaudeAIBot(Bot, OpenAIImage):
             'Sec-Fetch-Site': 'same-origin',
             'TE': 'trailers'
         }
-
         response = requests.post( url, headers=headers, data=payload,impersonate="chrome110", proxies= self.proxies)
-
         # Returns JSON of the newly created conversation information
         return response.json()
+        
     def _chat(self, query, context, retry_count=0) -> Reply:
         """
         发起对话请求
@@ -146,7 +133,6 @@ class ClaudeAIBot(Bot, OpenAIImage):
             return Reply(ReplyType.ERROR, "请再问我一次吧")
 
         try:
-
             session_id = context["session_id"]
             session = self.sessions.session_query(query, session_id)
             model = conf().get("model") or "gpt-3.5-turbo"
@@ -154,8 +140,6 @@ class ClaudeAIBot(Bot, OpenAIImage):
             if session.messages[0].get("role") == "system":
                 if model == "wenxin":
                     session.messages.pop(0)
-
-
             logger.info(f"[CLAUDEAI] query={query}")
 
             # do http request
@@ -189,7 +173,6 @@ class ClaudeAIBot(Bot, OpenAIImage):
             }
 
             res = requests.post(base_url + "/api/append_message", headers=headers, data=payload,impersonate="chrome110",proxies= self.proxies,timeout=400)
-
             if res.status_code == 200 or "pemission" in res.text:
                 # execute success
                 decoded_data = res.content.decode("utf-8")
@@ -206,7 +189,6 @@ class ClaudeAIBot(Bot, OpenAIImage):
                 logger.info(f"[CLAUDE] reply={reply_content}, total_tokens=100")
                 self.sessions.session_reply(reply_content, session_id, 100)
                 return Reply(ReplyType.TEXT, reply_content)
-
             else:
                 response = res.json()
                 error = response.get("error")
@@ -218,7 +200,6 @@ class ClaudeAIBot(Bot, OpenAIImage):
                     time.sleep(2)
                     logger.warn(f"[CLAUDE] do retry, times={retry_count}")
                     return self._chat(query, context, retry_count + 1)
-
                 return Reply(ReplyType.ERROR, "提问太快啦，请休息一下再问我吧")
 
         except Exception as e:
