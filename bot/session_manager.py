@@ -22,11 +22,11 @@ class Session(object):
         self.reset()
 
     def add_query(self, query):
-        user_item = {f"[user](#message)\n": query}
+        user_item = {f"[user](#message)": query}
         self.messages.append(user_item)
 
     def add_reply(self, reply):
-        assistant_item = {"[assistant](#message)\n": reply}
+        assistant_item = {"[assistant](#message)": reply}
         self.messages.append(assistant_item)
 
     def discard_exceeding(self, max_tokens=None, cur_tokens=None):
