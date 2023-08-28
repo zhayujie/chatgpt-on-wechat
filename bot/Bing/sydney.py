@@ -8,8 +8,11 @@ import uuid
 from enum import Enum
 from time import time
 from typing import Union
+import urllib.parse
 
 import aiohttp
+
+_DEBUG = True
 
 _PROXY = urllib.request.getproxies().get("https")
 
@@ -198,6 +201,11 @@ _HEADERS_INIT_CONVER = {
 }
 
 
+def _print(msg):
+    if _DEBUG:
+        print(msg)
+
+
 def _format(msg: dict) -> str:
     return json.dumps(msg, ensure_ascii=False) + _DELIMITER
 
@@ -228,6 +236,8 @@ async def create_conversation(
         raise Exception(text)
     if conversation["result"]["value"] == "UnauthorizedRequest":
         raise Exception(conversation["result"]["message"])
+    if 'X-Sydney-Encryptedconversationsignature' in response.headers:
+        conversation['sec_access_token'] = response.headers['X-Sydney-Encryptedconversationsignature']
     return conversation
 
 
@@ -264,11 +274,14 @@ async def ask_stream(
     async with aiohttp.ClientSession(timeout=timeout, cookies=formatted_cookies) as session:
         conversation_id = conversation["conversationId"]
         client_id = conversation["clientId"]
-        conversation_signature = conversation["conversationSignature"]
+        sec_access_token = conversation["sec_access_token"] if 'sec_access_token' in conversation else None
+        conversation_signature = conversation["conversationSignature"] \
+            if 'conversationSignature' in conversation else None
         message_id = str(uuid.uuid4())
 
         async with session.ws_connect(
-                wss_url,
+                wss_url + (
+                        '?sec_access_token=' + urllib.parse.quote_plus(sec_access_token) if sec_access_token else ''),
                 autoping=False,
                 headers=_HEADERS,
                 proxy=proxy
@@ -306,7 +319,7 @@ async def ask_stream(
                             "imageUrl": image_url or None,
                         },
                         "tone": conversation_style.capitalize(),
-                        'conversationSignature': conversation_signature,
+                        'conversationSignature': conversation_signature if conversation_signature else None,
                         'participant': {
                             'id': client_id
                         },
@@ -340,7 +353,7 @@ async def ask_stream(
             # struct['arguments'][0]['previousMessages'] = struct1['arguments'][0]['previousMessages']
 
             await wss.send_str(_format(struct))
-            print(f'Sent:\n{json.dumps(struct)}')
+            _print(f'Sent:\n{json.dumps(struct)}')
 
             retry_count = 5
             while True:
@@ -362,11 +375,11 @@ async def ask_stream(
                 for obj in objects:
                     if int(time()) % 6 == 0:
                         await wss.send_str(_format({"type": 6}))
-                        print(f'Sent:\n{json.dumps({"type": 6})}')
+                        _print(f'Sent:\n{json.dumps({"type": 6})}')
                     if not obj:
                         continue
                     response = json.loads(obj)
-                    print(f'Received:\n{obj}')
+                    _print(f'Received:\n{obj}')
                     if response["type"] == 2:
                         if response["item"]["result"].get("error"):
                             raise Exception(
