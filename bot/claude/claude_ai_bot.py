@@ -19,10 +19,13 @@ class ClaudeAIBot(Bot, OpenAIImage):
         self.sessions = SessionManager(ChatGPTSession, model=conf().get("model") or "gpt-3.5-turbo")
         self.claude_api_cookie = conf().get("claude_api_cookie")
         self.proxy = conf().get("proxy")
-        self.proxies = {
+        if self.proxy:
+            self.proxies = {
             "http": self.proxy,
             "https": self.proxy
         }
+        else:
+            self.proxies = None
         self.org_uuid = self.get_organization_id()
         self.con_uuid = None
         self.get_uuid()
