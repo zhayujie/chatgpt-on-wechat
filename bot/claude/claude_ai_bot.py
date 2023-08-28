@@ -141,7 +141,7 @@ class ClaudeAIBot(Bot, OpenAIImage):
             model = conf().get("model") or "gpt-3.5-turbo"
             # remove system message
             if session.messages[0].get("role") == "system":
-                if model == "wenxin":
+                if model == "wenxin" or model == "claude":
                     session.messages.pop(0)
             logger.info(f"[CLAUDEAI] query={query}")
 
