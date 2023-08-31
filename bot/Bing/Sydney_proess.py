@@ -86,23 +86,23 @@ async def sydney_reply(session: SydneySession):
                     if msg_type is None:
                         if message.get("contentOrigin") == "Apology":
                             failed = True
-                            secreply = await stream_conversation_replied(reply, context_extended, cookies, ask_string_extended, proxy)
-                            if "回复" not in secreply:
-                                reply = concat_reply(reply, secreply)
-                            reply = remove_extra_format(reply)
-                            break
+                            # secreply = await stream_conversation_replied(reply, context_extended, cookies, ask_string_extended, proxy)
+                            # if "回复" not in secreply:
+                            #     reply = concat_reply(reply, secreply)
+                            # reply = remove_extra_format(reply)
+                            # break
+                            return reply
                         else:
                             reply = ""                   
                             reply +=  remove_extra_format(message["adaptiveCards"][0]["body"][0]["text"])
                             if "suggestedResponses" in message:
-                                break
-                if response["type"] == 2:
+                                return reply
+                if secresponse["type"] == 2:
                     # if reply is not None:
                     #     break 
-                    message = response["item"]["messages"][-1]
+                    message = secresponse["item"]["messages"][-1]
                     if "suggestedResponses" in message:
-                        break 
-            return reply
+                        return reply 
     try:                
         # Get the absolute path of the JSON file
         file_path = os.path.abspath("./cookies.json")
@@ -112,7 +112,7 @@ async def sydney_reply(session: SydneySession):
         conversation = await sydney.create_conversation(cookies=cookies, proxy=proxy)
     except Exception as e:
         print(e)
-        return
+        return {"content": "抱歉，因为主机端网络问题连接失败，重新发送一次消息即可。"} 
         
                            
 
@@ -141,11 +141,12 @@ async def sydney_reply(session: SydneySession):
                             if not replied:
                                 pre_reply = "嗯……对于这个问题很抱歉，让我们试试不同的话题，您还需要哪些帮助？"
                                 reply = await stream_conversation_replied(pre_reply, context, cookies, ask_string, proxy)
-                                
-                            secreply = await stream_conversation_replied(reply, context, cookies, ask_string, proxy)
-                            if "回复" not in secreply:
-                                reply = concat_reply(reply, secreply)
-                            reply = remove_extra_format(reply)
+
+                            else:    
+                                secreply = await stream_conversation_replied(reply, context, cookies, ask_string, proxy)
+                                if "回复" not in secreply:
+                                    reply = concat_reply(reply, secreply)
+                                reply = remove_extra_format(reply)
                             break
                         else:
                             replied = True
@@ -160,10 +161,10 @@ async def sydney_reply(session: SydneySession):
                     #     break 
                     message = response["item"]["messages"][-1]
                     if "suggestedResponses" in message:
-                        break                       
+                        break                     
                 
                 
-            print("reply = " + reply)
+            # print("reply = " + reply)
 
             reply += bot_statement            
             return {"content": reply}        
@@ -171,9 +172,10 @@ async def sydney_reply(session: SydneySession):
         print(e)
         if "CAPTCHA" in str(e):
             return {"content": "抱歉，暂时无法回复，该消息用来提醒主机端进行身份验证。"}
-        if ":443" in str(e):
+        if ":443" or "server" in str(e):
             return {"content": "抱歉，因为主机端网络问题连接失败，重新发送一次消息即可。"}
         reply = "抱歉，你的言论触发了必应过滤器。这条回复是预置的，仅用于提醒此情况下虽然召唤了bot也无法回复。"
+
         print("reply = " + reply)
         reply += bot_statement
         return {"content": reply}
