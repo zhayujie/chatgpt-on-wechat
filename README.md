@@ -5,7 +5,7 @@
 最新版本支持的功能如下：
 
 - [x] **多端部署：** 有多种部署方式可选择且功能完备，目前已支持个人微信，微信公众号和企业微信应用等部署方式
-- [x] **基础对话：** 私聊及群聊的消息智能回复，支持多轮会话上下文记忆，支持 GPT-3, GPT-3.5, GPT-4, 文心一言, 讯飞星火
+- [x] **基础对话：** 私聊及群聊的消息智能回复，支持多轮会话上下文记忆，支持 GPT-3, GPT-3.5, GPT-4, claude, 文心一言, 讯飞星火
 - [x] **语音识别：** 可识别语音消息，通过文字或语音回复，支持 azure, baidu, google, openai等多种语音模型
 - [x] **图片生成：** 支持图片生成 和 图生图（如照片修复），可选择 Dell-E, stable diffusion, replicate, midjourney模型
 - [x] **丰富插件：** 支持个性化插件扩展，已实现多角色切换、文字冒险、敏感词过滤、聊天记录总结等插件
@@ -27,6 +27,7 @@ Demo made by [Visionn](https://www.wangpc.cc/)
 <img width="240" src="./docs/images/contact.jpg">
 
 # 更新日志
+>**2023.09.01：** 接入讯飞星火，claude机器人
 
 >**2023.08.08：** 接入百度文心一言模型，通过 [插件](https://github.com/zhayujie/chatgpt-on-wechat/tree/master/plugins/linkai) 支持 Midjourney 绘图
 
@@ -157,7 +158,7 @@ pip3 install azure-cognitiveservices-speech
 
 **4.其他配置**
 
-+ `model`: 模型名称，目前支持 `gpt-3.5-turbo`, `text-davinci-003`, `gpt-4`, `gpt-4-32k`, `wenxin`  (其中gpt-4 api暂未完全开放，申请通过后可使用)
++ `model`: 模型名称，目前支持 `gpt-3.5-turbo`, `text-davinci-003`, `gpt-4`, `gpt-4-32k`, `wenxin` , `claude` ,  `xunfei`(其中gpt-4 api暂未完全开放，申请通过后可使用)
 + `temperature`,`frequency_penalty`,`presence_penalty`: Chat API接口参数，详情参考[OpenAI官方文档。](https://platform.openai.com/docs/api-reference/chat)
 + `proxy`：由于目前 `openai` 接口国内无法访问，需配置代理客户端的地址，详情参考  [#351](https://github.com/zhayujie/chatgpt-on-wechat/issues/351)
 + 对于图像生成，在满足个人或群组触发条件外，还需要额外的关键词前缀来触发，对应配置 `image_create_prefix `
@@ -174,6 +175,26 @@ pip3 install azure-cognitiveservices-speech
 + `use_linkai`: 是否使用LinkAI接口，开启后可国内访问，使用知识库和 `Midjourney` 绘画, 参考 [文档](https://link-ai.tech/platform/link-app/wechat)
 + `linkai_api_key`: LinkAI Api Key，可在 [控制台](https://chat.link-ai.tech/console/interface) 创建
 + `linkai_app_code`: LinkAI 应用code，选填
+
+**6.wenxin配置 (可选 model 为 wenxin 时生效)**
+
++ `baidu_wenxin_api_key`: 文心一言官网api key。
++ `baidu_wenxin_secret_key`: 文心一言官网secret key。
+
+
+**6.Claude配置 (可选 model 为 claude 时生效)**
+
++ `claude_api_cookie`: claude官网聊天界面复制完整 cookie 字符串。
++ `claude_uuid`: 可以指定对话id，默认新建对话实体。
+
+
+**7.xunfei配置 (可选 model 为 xunfei 时生效)**
+
++ `xunfei_app_id`: 讯飞星火app id。
++ `xunfei_api_key`: 讯飞星火 api key。
++ `xunfei_api_secret`: 讯飞星火 secret。
+
+
 
 **本说明文档可能会未及时更新，当前所有可选的配置项均在该[`config.py`](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/config.py)中列出。**
 
