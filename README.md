@@ -185,7 +185,6 @@ pip3 install azure-cognitiveservices-speech
 **6.Claude配置 (可选 model 为 claude 时生效)**
 
 + `claude_api_cookie`: claude官网聊天界面复制完整 cookie 字符串。
-+ `claude_uuid`: 可以指定对话id，默认新建对话实体。
 
 
 **7.xunfei配置 (可选 model 为 xunfei 时生效)**
