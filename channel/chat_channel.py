@@ -109,9 +109,10 @@ class ChatChannel(Channel):
                         flag = True
                     pattern = f"@{re.escape(self.name)}(\u2005|\u0020)"
                     subtract_res = re.sub(pattern, r"", content)
-                    for at in context["msg"].at_list:
-                        pattern = f"@{re.escape(at)}(\u2005|\u0020)"
-                        subtract_res = re.sub(pattern, r"", subtract_res)
+                    if isinstance(context["msg"].at_list, list):
+                        for at in context["msg"].at_list:
+                            pattern = f"@{re.escape(at)}(\u2005|\u0020)"
+                            subtract_res = re.sub(pattern, r"", subtract_res)
                     if subtract_res == content and context["msg"].self_display_name:
                         # 前缀移除后没有变化，使用群昵称再次移除
                         pattern = f"@{re.escape(context['msg'].self_display_name)}(\u2005|\u0020)"
