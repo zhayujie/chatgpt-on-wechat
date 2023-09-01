@@ -5,7 +5,7 @@
 最新版本支持的功能如下：
 
 - [x] **多端部署：** 有多种部署方式可选择且功能完备，目前已支持个人微信，微信公众号和企业微信应用等部署方式
-- [x] **基础对话：** 私聊及群聊的消息智能回复，支持多轮会话上下文记忆，支持 GPT-3, GPT-3.5, GPT-4, Claude, 文心一言, 讯飞星火
+- [x] **基础对话：** 私聊及群聊的消息智能回复，支持多轮会话上下文记忆，支持 GPT-3, GPT-3.5, GPT-4, claude, 文心一言, 讯飞星火
 - [x] **语音识别：** 可识别语音消息，通过文字或语音回复，支持 azure, baidu, google, openai等多种语音模型
 - [x] **图片生成：** 支持图片生成 和 图生图（如照片修复），可选择 Dell-E, stable diffusion, replicate, midjourney模型
 - [x] **丰富插件：** 支持个性化插件扩展，已实现多角色切换、文字冒险、敏感词过滤、聊天记录总结等插件
@@ -27,7 +27,7 @@ Demo made by [Visionn](https://www.wangpc.cc/)
 <img width="240" src="./docs/images/contact.jpg">
 
 # 更新日志
->**2023.09.01：** 接入讯飞星火，Claude机器人
+>**2023.09.01：** 接入讯飞星火，claude机器人
 
 >**2023.08.08：** 接入百度文心一言模型，通过 [插件](https://github.com/zhayujie/chatgpt-on-wechat/tree/master/plugins/linkai) 支持 Midjourney 绘图
 
