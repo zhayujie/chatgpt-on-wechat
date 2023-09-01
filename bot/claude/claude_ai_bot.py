@@ -42,7 +42,6 @@ class ClaudeAIBot(Bot, OpenAIImage):
             con_uuid = self.generate_uuid()
             self.create_new_chat(con_uuid)
 
-
     def get_organization_id(self):
         url = "https://claude.ai/api/organizations"
         headers = {
@@ -78,7 +77,6 @@ class ClaudeAIBot(Bot, OpenAIImage):
 
     def get_organization_id(self):
         url = "https://claude.ai/api/organizations"
-
         headers = {
             'User-Agent':
                 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/115.0',
@@ -97,7 +95,6 @@ class ClaudeAIBot(Bot, OpenAIImage):
             uuid = res[0]['uuid']
         except:
             print(response.text)
-
         return uuid
 
     def conversation_share_check(self,session_id):
@@ -145,7 +142,6 @@ class ClaudeAIBot(Bot, OpenAIImage):
             session_id = context["session_id"]
             session = self.sessions.session_query(query, session_id)
             con_uuid = self.conversation_share_check(session_id)
-
             model = conf().get("model") or "gpt-3.5-turbo"
             # remove system message
             if session.messages[0].get("role") == "system":
