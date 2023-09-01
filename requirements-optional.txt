@@ -28,3 +28,6 @@ chatgpt_tool_hub==0.4.6
 
 # xunfei spark
 websocket-client==1.2.0
+
+# claude bot
+curl_cffi

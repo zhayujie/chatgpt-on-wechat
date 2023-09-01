@@ -59,6 +59,11 @@ available_setting = {
     "xunfei_app_id": "",  # 讯飞应用ID
     "xunfei_api_key": "",  # 讯飞 API key
     "xunfei_api_secret": "",  # 讯飞 API secret
+    # claude 配置
+    "claude_api_cookie": "",
+    "claude_uuid": "",
+    # wework的通用配置
+    "wework_smart": True,  # 配置wework是否使用已登录的企业微信，False为多开
     # 语音设置
     "speech_recognition": False,  # 是否开启语音识别
     "group_speech_recognition": False,  # 是否开启群组语音识别
@@ -121,8 +126,6 @@ available_setting = {
     "linkai_api_key": "",
     "linkai_app_code": "",
     "linkai_api_base": "https://api.link-ai.chat",  # linkAI服务地址，若国内无法访问或延迟较高可改为 https://api.link-ai.tech
-    # wework的通用配置
-    "wework_smart": True  # 配置wework是否使用已登录的企业微信，False为多开
 }
 
 
