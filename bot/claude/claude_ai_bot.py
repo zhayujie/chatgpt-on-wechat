@@ -4,7 +4,7 @@ import json
 import uuid
 from curl_cffi import requests
 from bot.bot import Bot
-from bot.chatgpt.chat_gpt_session import ChatGPTSession
+from bot.claude.claude_ai_session import ClaudeAiSession
 from bot.openai.open_ai_image import OpenAIImage
 from bot.session_manager import SessionManager
 from bridge.context import Context, ContextType
@@ -16,9 +16,10 @@ from config import conf
 class ClaudeAIBot(Bot, OpenAIImage):
     def __init__(self):
         super().__init__()
-        self.sessions = SessionManager(ChatGPTSession, model=conf().get("model") or "gpt-3.5-turbo")
+        self.sessions = SessionManager(ClaudeAiSession, model=conf().get("model") or "gpt-3.5-turbo")
         self.claude_api_cookie = conf().get("claude_api_cookie")
         self.proxy = conf().get("proxy")
+        self.con_uuid_dic = {}
         if self.proxy:
             self.proxies = {
             "http": self.proxy,
@@ -27,8 +28,6 @@ class ClaudeAIBot(Bot, OpenAIImage):
         else:
             self.proxies = None
         self.org_uuid = self.get_organization_id()
-        self.con_uuid = None
-        self.get_uuid()
 
     def generate_uuid(self):
         random_uuid = uuid.uuid4()
@@ -40,8 +39,9 @@ class ClaudeAIBot(Bot, OpenAIImage):
         if conf().get("claude_uuid") != None:
             self.con_uuid = conf().get("claude_uuid")
         else:
-            self.con_uuid = self.generate_uuid()
-            self.create_new_chat()
+            con_uuid = self.generate_uuid()
+            self.create_new_chat(con_uuid)
+
 
     def get_organization_id(self):
         url = "https://claude.ai/api/organizations"
@@ -99,10 +99,16 @@ class ClaudeAIBot(Bot, OpenAIImage):
             print(response.text)
 
         return uuid
-        
-    def create_new_chat(self):
+
+    def conversation_share_check(self,session_id):
+        if session_id not in self.con_uuid_dic:
+            self.con_uuid_dic[session_id] = self.generate_uuid()
+            self.create_new_chat(self.con_uuid_dic[session_id])
+        return self.con_uuid_dic[session_id]
+
+    def create_new_chat(self, con_uuid):
         url = f"https://claude.ai/api/organizations/{self.org_uuid}/chat_conversations"
-        payload = json.dumps({"uuid": self.con_uuid, "name": ""})
+        payload = json.dumps({"uuid": con_uuid, "name": ""})
         headers = {
             'User-Agent':
                 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/115.0',
@@ -118,7 +124,7 @@ class ClaudeAIBot(Bot, OpenAIImage):
             'Sec-Fetch-Site': 'same-origin',
             'TE': 'trailers'
         }
-        response = requests.post( url, headers=headers, data=payload,impersonate="chrome110", proxies= self.proxies)
+        response = requests.post(url, headers=headers, data=payload,impersonate="chrome110", proxies= self.proxies)
         # Returns JSON of the newly created conversation information
         return response.json()
         
@@ -138,6 +144,8 @@ class ClaudeAIBot(Bot, OpenAIImage):
         try:
             session_id = context["session_id"]
             session = self.sessions.session_query(query, session_id)
+            con_uuid = self.conversation_share_check(session_id)
+
             model = conf().get("model") or "gpt-3.5-turbo"
             # remove system message
             if session.messages[0].get("role") == "system":
@@ -154,7 +162,7 @@ class ClaudeAIBot(Bot, OpenAIImage):
                     "model": "claude-2"
                 },
                 "organization_uuid": f"{self.org_uuid}",
-                "conversation_uuid": f"{self.con_uuid}",
+                "conversation_uuid": f"{con_uuid}",
                 "text": f"{query}",
                 "attachments": []
             })
@@ -190,13 +198,14 @@ class ClaudeAIBot(Bot, OpenAIImage):
 
                 reply_content = ''.join(completions)
                 logger.info(f"[CLAUDE] reply={reply_content}, total_tokens=invisible")
+
                 self.sessions.session_reply(reply_content, session_id, 100)
                 return Reply(ReplyType.TEXT, reply_content)
             else:
                 response = res.json()
                 error = response.get("error")
                 logger.error(f"[CLAUDE] chat failed, status_code={res.status_code}, "
-                             f"msg={error.get('message')}, type={error.get('type')}, detail: {res.text}, uuid: {self.con_uuid}")
+                             f"msg={error.get('message')}, type={error.get('type')}, detail: {res.text}, uuid: {con_uuid}")
 
                 if res.status_code >= 500:
                     # server error, need retry
