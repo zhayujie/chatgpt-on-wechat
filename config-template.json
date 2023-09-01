@@ -7,7 +7,6 @@
   "model": "claude",
   "channel_type": "wx",
   "claude_api_cookie": "",
-  "hot_reload": true,
   "single_chat_prefix": [
     "bot",
     "@bot"
