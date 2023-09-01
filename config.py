@@ -123,6 +123,9 @@ available_setting = {
     "linkai_api_base": "https://api.link-ai.chat",  # linkAI服务地址，若国内无法访问或延迟较高可改为 https://api.link-ai.tech
     # wework的通用配置
     "wework_smart": True  # 配置wework是否使用已登录的企业微信，False为多开
+    #claude 配置
+    "claude_api_cookie":"",
+    "claude_uuid":""
 }
 
 
