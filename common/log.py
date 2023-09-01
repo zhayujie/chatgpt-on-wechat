@@ -20,7 +20,7 @@ def _reset_logger(log):
     file_handle.setFormatter(
         logging.Formatter(
             "[%(levelname)s][%(asctime)s][%(filename)s:%(lineno)d] - %(message)s",
-              datefmt="%Y-%m-%d %H:%M:%S",
+            datefmt="%Y-%m-%d %H:%M:%S",
         )
     )
     log.addHandler(file_handle)
