@@ -157,7 +157,9 @@ class WeworkMessage(ChatMessage):
                     at_list = tmp_list
                     logger.debug(f"at_list: {at_list}")
                     logger.debug(f"nickname: {nickname}")
-                    self.is_at = nickname in at_list
+                    self.is_at = False
+                    if nickname in at_list or login_info['nickname'] in at_list or login_info['username'] in at_list:
+                        self.is_at = True
                     self.at_list = at_list
 
                     # 检查消息内容是否包含@用户名。处理复制粘贴的消息，这类消息可能不会触发@通知，但内容中可能包含 "@用户名"。
