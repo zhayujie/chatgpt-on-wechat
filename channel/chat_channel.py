@@ -103,6 +103,7 @@ class ChatChannel(Channel):
                     flag = True
                     if match_prefix:
                         content = content.replace(match_prefix, "", 1).strip()
+                logger.info(f'context["msg"]: {context["msg"].__str__()}')
                 if context["msg"].is_at and context["msg"].to_user_id != context["msg"].actual_user_id:
                     logger.info("[WX]receive group at")
                     if not conf().get("group_at_off", False):
