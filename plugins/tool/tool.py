@@ -10,7 +10,6 @@ from bridge.bridge import Bridge
 from bridge.context import ContextType
 from bridge.reply import Reply, ReplyType
 from common import const
-from common.log import logger
 from config import conf
 from plugins import *
 
@@ -119,15 +118,8 @@ class Tool(Plugin):
         return
 
     def _read_json(self) -> dict:
-        curdir = os.path.dirname(__file__)
-        config_path = os.path.join(curdir, "config.json")
-        tool_config = {"tools": [], "kwargs": {}}
-        if not os.path.exists(config_path):
-            return tool_config
-        else:
-            with open(config_path, "r") as f:
-                tool_config = json.load(f)
-        return tool_config
+        default_config = {"tools": [], "kwargs": {}}
+        return super().load_config() or default_config
 
     def _build_tool_kwargs(self, kwargs: dict):
         tool_model_name = kwargs.get("model_name")

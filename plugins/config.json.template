@@ -1,0 +1,38 @@
+{
+    "godcmd": {
+        "password": "",
+        "admin_users": []
+    },
+    "banwords": {
+        "action": "replace",
+        "reply_filter": true,
+        "reply_action": "ignore"
+    },
+    "tool": {
+        "tools": [
+            "python",
+            "url-get",
+            "terminal",
+            "meteo-weather"
+        ],
+        "kwargs": {
+            "top_k_results": 2,
+            "no_default": false,
+            "model_name": "gpt-3.5-turbo"
+        }
+    },
+    "linkai": {
+        "group_app_map": {
+            "测试群1": "default",
+            "测试群2": "Kv2fXJcH"
+        },
+        "midjourney": {
+            "enabled": true,
+            "auto_translate": true,
+            "img_proxy": true,
+            "max_tasks": 3,
+            "max_tasks_per_user": 1,
+            "use_image_create_prefix": true
+        }
+    }
+}

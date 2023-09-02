@@ -16,16 +16,17 @@ available_setting = {
     "open_ai_api_base": "https://api.openai.com/v1",
     "proxy": "",  # openai使用的代理
     # chatgpt模型， 当use_azure_chatgpt为true时，其名称为Azure上model deployment名称
-    "model": "gpt-3.5-turbo",
+    "model": "gpt-3.5-turbo",  # 还支持 gpt-3.5-turbo-16k, gpt-4, wenxin, xunfei
     "use_azure_chatgpt": False,  # 是否使用azure的chatgpt
     "azure_deployment_id": "",  # azure 模型部署名称
+    "azure_api_version": "",  # azure api版本
     # Bot触发配置
     "single_chat_prefix": ["bot", "@bot"],  # 私聊时文本需要包含该前缀才能触发机器人回复
     "single_chat_reply_prefix": "[bot] ",  # 私聊时自动回复的前缀，用于区分真人
-    "single_chat_reply_suffix": "",  # 私聊时自动回复的后缀，\n 可以换行    
-    "group_chat_prefix": ["@bot"],  # 群聊时包含该前缀则会触发机器人回复 
+    "single_chat_reply_suffix": "",  # 私聊时自动回复的后缀，\n 可以换行
+    "group_chat_prefix": ["@bot"],  # 群聊时包含该前缀则会触发机器人回复
     "group_chat_reply_prefix": "",  # 群聊时自动回复的前缀
-    "group_chat_reply_suffix": "",   # 群聊时自动回复的后缀，\n 可以换行
+    "group_chat_reply_suffix": "",  # 群聊时自动回复的后缀，\n 可以换行
     "group_chat_keyword": [],  # 群聊时包含该关键词则会触发机器人回复
     "group_at_off": False,  # 是否关闭群聊时@bot的触发
     "group_name_white_list": ["ChatGPT测试群", "ChatGPT测试群2"],  # 开启自动回复的群名称列表
@@ -37,7 +38,8 @@ available_setting = {
     "image_create_size": "256x256",  # 图片大小,可选有 256x256, 512x512, 1024x1024
     # chatgpt会话参数
     "expires_in_seconds": 3600,  # 无操作会话的过期时间
-    "character_desc": "你是ChatGPT, 一个由OpenAI训练的大型语言模型, 你旨在回答并解决人们的任何问题，并且可以使用多种语言与人交流。",  # 人格描述
+    # 人格描述
+    "character_desc": "你是ChatGPT, 一个由OpenAI训练的大型语言模型, 你旨在回答并解决人们的任何问题，并且可以使用多种语言与人交流。",
     "conversation_max_tokens": 1000,  # 支持上下文记忆的最多字符数
     # chatgpt限流配置
     "rate_limit_chatgpt": 20,  # chatgpt的调用频率限制
@@ -49,13 +51,26 @@ available_setting = {
     "presence_penalty": 0,
     "request_timeout": 60,  # chatgpt请求超时时间，openai接口默认设置为600，对于难问题一般需要较长时间
     "timeout": 120,  # chatgpt重试超时时间，在这个时间内，将会自动重试
+    # Baidu 文心一言参数
+    "baidu_wenxin_model": "eb-instant",  # 默认使用ERNIE-Bot-turbo模型
+    "baidu_wenxin_api_key": "",  # Baidu api key
+    "baidu_wenxin_secret_key": "",  # Baidu secret key
+    # 讯飞星火API
+    "xunfei_app_id": "",  # 讯飞应用ID
+    "xunfei_api_key": "",  # 讯飞 API key
+    "xunfei_api_secret": "",  # 讯飞 API secret
+    # claude 配置
+    "claude_api_cookie": "",
+    "claude_uuid": "",
+    # wework的通用配置
+    "wework_smart": True,  # 配置wework是否使用已登录的企业微信，False为多开
     # 语音设置
     "speech_recognition": True,  # 是否开启语音识别
     "group_speech_recognition": True,  # 是否开启群组语音识别
     "voice_reply_voice": True,  # 是否使用语音回复语音，需要设置对应语音合成引擎的api key
     "always_reply_voice": False,  # 是否一直使用语音回复
     "voice_to_text": "openai",  # 语音识别引擎，支持openai,baidu,google,azure
-    "text_to_voice": "baidu",  # 语音合成引擎，支持baidu,google,pytts(offline),azure
+    "text_to_voice": "baidu",  # 语音合成引擎，支持baidu,google,pytts(offline),azure,elevenlabs
     # baidu 语音api配置， 使用百度语音识别和语音合成时需要
     "baidu_app_id": "",
     "baidu_api_key": "",
@@ -65,6 +80,9 @@ available_setting = {
     # azure 语音api配置， 使用azure语音识别和语音合成时需要
     "azure_voice_api_key": "",
     "azure_voice_region": "japaneast",
+    # elevenlabs 语音api配置
+    "xi_api_key": "",    #获取ap的方法可以参考https://docs.elevenlabs.io/api-reference/quick-start/authentication
+    "xi_voice_id": "",   #ElevenLabs提供了9种英式、美式等英语发音id，分别是“Adam/Antoni/Arnold/Bella/Domi/Elli/Josh/Rachel/Sam”
     # 服务时间限制，目前支持itchat
     "chat_time_module": False,  # 是否开启服务时间限制
     "chat_start_time": "00:00",  # 服务开始时间
@@ -101,10 +119,13 @@ available_setting = {
     "appdata_dir": "",  # 数据目录
     # 插件配置
     "plugin_trigger_prefix": "$",  # 规范插件提供聊天相关指令的前缀，建议不要和管理员指令前缀"#"冲突
+    # 是否使用全局插件配置
+    "use_global_plugin_config": False,
     # 知识库平台配置
     "use_linkai": False,
     "linkai_api_key": "",
-    "linkai_app_code": ""
+    "linkai_app_code": "",
+    "linkai_api_base": "https://api.link-ai.chat",  # linkAI服务地址，若国内无法访问或延迟较高可改为 https://api.link-ai.tech
 }
 
 
@@ -228,3 +249,32 @@ def subscribe_msg():
     trigger_prefix = conf().get("single_chat_prefix", [""])[0]
     msg = conf().get("subscribe_msg", "")
     return msg.format(trigger_prefix=trigger_prefix)
+
+
+# global plugin config
+plugin_config = {}
+
+
+def write_plugin_config(pconf: dict):
+    """
+    写入插件全局配置
+    :param pconf: 全量插件配置
+    """
+    global plugin_config
+    for k in pconf:
+        plugin_config[k.lower()] = pconf[k]
+
+
+def pconf(plugin_name: str) -> dict:
+    """
+    根据插件名称获取配置
+    :param plugin_name: 插件名称
+    :return: 该插件的配置项
+    """
+    return plugin_config.get(plugin_name.lower())
+
+
+# 全局配置，用于存放全局生效的状态
+global_config = {
+    "admin_users": []
+}

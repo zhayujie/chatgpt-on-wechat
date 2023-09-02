@@ -53,10 +53,13 @@ def _check(func):
         if msgId in self.receivedMsgs:
             logger.info("Wechat message {} already received, ignore".format(msgId))
             return
-        self.receivedMsgs[msgId] = cmsg
+        self.receivedMsgs[msgId] = True
         create_time = cmsg.create_time  # 消息时间戳
         if conf().get("hot_reload") == True and int(create_time) < int(time.time()) - 60:  # 跳过1分钟前的历史消息
             logger.debug("[WX]history message {} skipped".format(msgId))
+            return
+        if cmsg.my_msg and not cmsg.is_group:
+            logger.debug("[WX]my message {} skipped".format(msgId))
             return
         return func(self, cmsg)
 
@@ -105,7 +108,7 @@ class WechatChannel(ChatChannel):
 
     def __init__(self):
         super().__init__()
-        self.receivedMsgs = ExpiredDict(60 * 60 * 24)
+        self.receivedMsgs = ExpiredDict(60 * 60)
 
     def startup(self):
         itchat.instance.receivingRetryCount = 600  # 修改断线超时时间
@@ -189,10 +192,14 @@ class WechatChannel(ChatChannel):
             logger.info("[WX] sendFile={}, receiver={}".format(reply.content, receiver))
         elif reply.type == ReplyType.IMAGE_URL:  # 从网络下载图片
             img_url = reply.content
+            logger.debug(f"[WX] start download image, img_url={img_url}")
             pic_res = requests.get(img_url, stream=True)
             image_storage = io.BytesIO()
+            size = 0
             for block in pic_res.iter_content(1024):
+                size += len(block)
                 image_storage.write(block)
+            logger.info(f"[WX] download image success, size={size}, img_url={img_url}")
             image_storage.seek(0)
             itchat.send_image(image_storage, toUserName=receiver)
             logger.info("[WX] sendImage url={}, receiver={}".format(img_url, receiver))
