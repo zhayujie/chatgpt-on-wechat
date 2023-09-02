@@ -213,6 +213,9 @@ class WeworkChannel(ChatChannel):
     @time_checker
     @_check
     def handle_single(self, cmsg: ChatMessage):
+        if cmsg.from_user_id == cmsg.to_user_id:
+            # ignore self reply
+            return
         if cmsg.ctype == ContextType.VOICE:
             if not conf().get("speech_recognition"):
                 return
