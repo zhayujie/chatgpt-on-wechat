@@ -24,7 +24,7 @@ wechatpy
 
 # wework
 pilk
-natchat
+ntwork
 
 # chatgpt-tool-hub plugin
 chatgpt_tool_hub==0.4.6
