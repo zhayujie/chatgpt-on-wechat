@@ -21,7 +21,10 @@ wechaty_puppet>=0.4.23
 # wechatmp wechatcom
 web.py
 wechatpy
+
+# wework
 pilk
+natchat
 
 # chatgpt-tool-hub plugin
 chatgpt_tool_hub==0.4.6
