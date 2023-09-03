@@ -70,10 +70,10 @@ class ClaudeAIBot(Bot, OpenAIImage):
             uuid = res[0]['uuid']
         except:
             if "App unavailable" in response.text:
-                logger.warn("The IP is not allowed to be used on Claude")
+                logger.error("IP error: The IP is not allowed to be used on Claude")
                 self.error = "ip所在地区不被claude支持"
             elif "Invalid authorization" in response.text:
-                logger.warn("Cookie error: Invalid authorization of claude, check cookie please.")
+                logger.error("Cookie error: Invalid authorization of claude, check cookie please.")
                 self.error = "无法通过claude身份验证，请检查cookie"
             return None
         return uuid
@@ -192,6 +192,7 @@ class ClaudeAIBot(Bot, OpenAIImage):
                 reply_content = ''.join(completions)
 
                 if "rate limi" in reply_content:
+                    logger.error("rate limit error: 对话达到系统速率限制，与cladue同步，请进入官网查看解除限制时间")
                     return Reply(ReplyType.ERROR, "对话达到系统速率限制，与cladue同步，请进入官网查看解除限制时间")
                 logger.info(f"[CLAUDE] reply={reply_content}, total_tokens=invisible")
                 self.sessions.session_reply(reply_content, session_id, 100)
