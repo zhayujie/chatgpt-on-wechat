@@ -192,7 +192,7 @@ class ClaudeAIBot(Bot, OpenAIImage):
                 reply_content = ''.join(completions)
 
                 if "rate limi" in reply_content:
-                    logger.error("rate limit error: 对话达到系统速率限制，与cladue同步，请进入官网查看解除限制时间")
+                    logger.error("rate limit error: The conversation has reached the system speed limit and is synchronized with Cladue. Please go to the official website to check the lifting time")
                     return Reply(ReplyType.ERROR, "对话达到系统速率限制，与cladue同步，请进入官网查看解除限制时间")
                 logger.info(f"[CLAUDE] reply={reply_content}, total_tokens=invisible")
                 self.sessions.session_reply(reply_content, session_id, 100)
