@@ -35,6 +35,7 @@ class ClaudeAIBot(Bot, OpenAIImage):
         random_uuid_str = str(random_uuid)
         formatted_uuid = f"{random_uuid_str[0:8]}-{random_uuid_str[9:13]}-{random_uuid_str[14:18]}-{random_uuid_str[19:23]}-{random_uuid_str[24:]}"
         return formatted_uuid
+        
     def reply(self, query, context: Context = None) -> Reply:
         if context.type == ContextType.TEXT:
             return self._chat(query, context)
