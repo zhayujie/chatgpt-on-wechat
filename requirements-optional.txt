@@ -21,9 +21,9 @@ wechaty_puppet>=0.4.23
 # wechatmp wechatcom
 web.py
 wechatpy
+pilk
 
 # chatgpt-tool-hub plugin
---extra-index-url https://pypi.python.org/simple
 chatgpt_tool_hub==0.4.6
 
 # xunfei spark
