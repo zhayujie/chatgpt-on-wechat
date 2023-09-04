@@ -99,21 +99,26 @@ class ChatChannel(Channel):
                 match_prefix = check_prefix(content, conf().get("group_chat_prefix"))
                 match_contain = check_contain(content, conf().get("group_chat_keyword"))
                 flag = False
-                if match_prefix is not None or match_contain is not None:
-                    flag = True
-                    if match_prefix:
-                        content = content.replace(match_prefix, "", 1).strip()
-                if context["msg"].is_at:
-                    logger.info("[WX]receive group at")
-                    if not conf().get("group_at_off", False):
+                if context["msg"].to_user_id != context["msg"].actual_user_id:
+                    if match_prefix is not None or match_contain is not None:
                         flag = True
-                    pattern = f"@{re.escape(self.name)}(\u2005|\u0020)"
-                    subtract_res = re.sub(pattern, r"", content)
-                    if subtract_res == content and context["msg"].self_display_name:
-                        # 前缀移除后没有变化，使用群昵称再次移除
-                        pattern = f"@{re.escape(context['msg'].self_display_name)}(\u2005|\u0020)"
+                        if match_prefix:
+                            content = content.replace(match_prefix, "", 1).strip()
+                    if context["msg"].is_at:
+                        logger.info("[WX]receive group at")
+                        if not conf().get("group_at_off", False):
+                            flag = True
+                        pattern = f"@{re.escape(self.name)}(\u2005|\u0020)"
                         subtract_res = re.sub(pattern, r"", content)
-                    content = subtract_res
+                        if isinstance(context["msg"].at_list, list):
+                            for at in context["msg"].at_list:
+                                pattern = f"@{re.escape(at)}(\u2005|\u0020)"
+                                subtract_res = re.sub(pattern, r"", subtract_res)
+                        if subtract_res == content and context["msg"].self_display_name:
+                            # 前缀移除后没有变化，使用群昵称再次移除
+                            pattern = f"@{re.escape(context['msg'].self_display_name)}(\u2005|\u0020)"
+                            subtract_res = re.sub(pattern, r"", content)
+                        content = subtract_res
                 if not flag:
                     if context["origin_ctype"] == ContextType.VOICE:
                         logger.info("[WX]receive group voice, but checkprefix didn't match")
@@ -197,7 +202,8 @@ class ChatChannel(Channel):
                         reply = self._generate_reply(new_context)
                     else:
                         return
-            elif context.type == ContextType.IMAGE:  # 图片消息，当前无默认逻辑
+            elif context.type == ContextType.IMAGE or context.type == ContextType.FUNCTION \
+                    or context.type == ContextType.FILE:  # 图片/文件消息及函数调用等，当前无默认逻辑
                 pass
             else:
                 logger.error("[WX] unknown context type: {}".format(context.type))
