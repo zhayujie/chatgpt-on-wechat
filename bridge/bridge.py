@@ -31,6 +31,8 @@ class Bridge(object):
             self.btype["chat"] = const.LINKAI
         if model_type in ["claude"]:
             self.btype["chat"] = const.CLAUDEAI
+        if model_type in ["chatgpt_hack"]:
+            self.btype["chat"] = const.CHATGPTHACKAI
         self.bots = {}
 
     def get_bot(self, typename):

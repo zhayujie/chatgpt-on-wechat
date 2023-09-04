@@ -1,9 +1,10 @@
 {
   "open_ai_api_key": "YOUR API KEY",
-  "model": "gpt-3.5-turbo",
+  "model": "",
   "channel_type": "wx",
   "proxy": "",
   "hot_reload": false,
+  "claude_uuid": "",
   "single_chat_prefix": [
     "bot",
     "@bot"
