@@ -27,6 +27,7 @@ class ClaudeAIBot(Bot, OpenAIImage):
         }
         else:
             self.proxies = None
+        self.error = ""
         self.org_uuid = self.get_organization_id()
 
     def generate_uuid(self):
@@ -34,32 +35,6 @@ class ClaudeAIBot(Bot, OpenAIImage):
         random_uuid_str = str(random_uuid)
         formatted_uuid = f"{random_uuid_str[0:8]}-{random_uuid_str[9:13]}-{random_uuid_str[14:18]}-{random_uuid_str[19:23]}-{random_uuid_str[24:]}"
         return formatted_uuid
-
-    def get_uuid(self):
-        if conf().get("claude_uuid") != None:
-            self.con_uuid = conf().get("claude_uuid")
-        else:
-            con_uuid = self.generate_uuid()
-            self.create_new_chat(con_uuid)
-
-    def get_organization_id(self):
-        url = "https://claude.ai/api/organizations"
-        headers = {
-            'User-Agent':
-                'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/115.0',
-            'Accept-Language': 'en-US,en;q=0.5',
-            'Referer': 'https://claude.ai/chats',
-            'Content-Type': 'application/json',
-            'Sec-Fetch-Dest': 'empty',
-            'Sec-Fetch-Mode': 'cors',
-            'Sec-Fetch-Site': 'same-origin',
-            'Connection': 'keep-alive',
-            'Cookie': f'{self.claude_api_cookie}'
-        }
-        response = requests.get(url, headers=headers,impersonate="chrome110",proxies=self.proxies)
-        res = json.loads(response.text)
-        uuid = res[0]['uuid']
-        return uuid
         
     def reply(self, query, context: Context = None) -> Reply:
         if context.type == ContextType.TEXT:
@@ -90,20 +65,38 @@ class ClaudeAIBot(Bot, OpenAIImage):
             'Cookie': f'{self.claude_api_cookie}'
         }
         try:
-            response = requests.get(url, headers=headers,impersonate="chrome110",proxies =self.proxies )
+            response = requests.get(url, headers=headers, impersonate="chrome110", proxies =self.proxies, timeout=400)
             res = json.loads(response.text)
             uuid = res[0]['uuid']
         except:
-            print(response.text)
+            if "App unavailable" in response.text:
+                logger.error("IP error: The IP is not allowed to be used on Claude")
+                self.error = "ip所在地区不被claude支持"
+            elif "Invalid authorization" in response.text:
+                logger.error("Cookie error: Invalid authorization of claude, check cookie please.")
+                self.error = "无法通过claude身份验证，请检查cookie"
+            return None
         return uuid
 
     def conversation_share_check(self,session_id):
+        if conf().get("claude_uuid") is not None and conf().get("claude_uuid") != "":
+            con_uuid = conf().get("claude_uuid")
+            return con_uuid
         if session_id not in self.con_uuid_dic:
             self.con_uuid_dic[session_id] = self.generate_uuid()
             self.create_new_chat(self.con_uuid_dic[session_id])
         return self.con_uuid_dic[session_id]
 
+    def check_cookie(self):
+        flag = self.get_organization_id()
+        return flag
+
     def create_new_chat(self, con_uuid):
+        """
+        新建claude对话实体
+        :param con_uuid: 对话id
+        :return:
+        """
         url = f"https://claude.ai/api/organizations/{self.org_uuid}/chat_conversations"
         payload = json.dumps({"uuid": con_uuid, "name": ""})
         headers = {
@@ -121,7 +114,7 @@ class ClaudeAIBot(Bot, OpenAIImage):
             'Sec-Fetch-Site': 'same-origin',
             'TE': 'trailers'
         }
-        response = requests.post(url, headers=headers, data=payload,impersonate="chrome110", proxies= self.proxies)
+        response = requests.post(url, headers=headers, data=payload, impersonate="chrome110", proxies=self.proxies, timeout=400)
         # Returns JSON of the newly created conversation information
         return response.json()
         
@@ -140,8 +133,12 @@ class ClaudeAIBot(Bot, OpenAIImage):
 
         try:
             session_id = context["session_id"]
+            if self.org_uuid is None:
+                return Reply(ReplyType.ERROR, self.error)
+
             session = self.sessions.session_query(query, session_id)
             con_uuid = self.conversation_share_check(session_id)
+
             model = conf().get("model") or "gpt-3.5-turbo"
             # remove system message
             if session.messages[0].get("role") == "system":
@@ -193,11 +190,18 @@ class ClaudeAIBot(Bot, OpenAIImage):
                         completions.append(data['completion'])
 
                 reply_content = ''.join(completions)
-                logger.info(f"[CLAUDE] reply={reply_content}, total_tokens=invisible")
 
+                if "rate limi" in reply_content:
+                    logger.error("rate limit error: The conversation has reached the system speed limit and is synchronized with Cladue. Please go to the official website to check the lifting time")
+                    return Reply(ReplyType.ERROR, "对话达到系统速率限制，与cladue同步，请进入官网查看解除限制时间")
+                logger.info(f"[CLAUDE] reply={reply_content}, total_tokens=invisible")
                 self.sessions.session_reply(reply_content, session_id, 100)
                 return Reply(ReplyType.TEXT, reply_content)
             else:
+                flag = self.check_cookie()
+                if flag == None:
+                    return Reply(ReplyType.ERROR, self.error)
+
                 response = res.json()
                 error = response.get("error")
                 logger.error(f"[CLAUDE] chat failed, status_code={res.status_code}, "
