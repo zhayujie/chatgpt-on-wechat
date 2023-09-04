@@ -22,10 +22,6 @@ wechaty_puppet>=0.4.23
 web.py
 wechatpy
 
-# wework
-pilk
-ntwork
-
 # chatgpt-tool-hub plugin
 chatgpt_tool_hub==0.4.6
 
