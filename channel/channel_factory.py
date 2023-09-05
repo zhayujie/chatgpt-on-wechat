@@ -37,4 +37,12 @@ def create_channel(channel_type):
         from channel.wework.wework_channel import WeworkChannel
 
         return WeworkChannel()
+    elif channel_type == "ntchat":
+        from channel.wechatnt.ntchat_channel import NtchatChannel
+
+        return NtchatChannel()
+    elif channel_type == "weworktop":
+        from channel.weworktop.weworktop_channel import WeworkTopChannel
+
+        return WeworkTopChannel()
     raise RuntimeError
