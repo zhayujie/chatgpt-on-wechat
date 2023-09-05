@@ -137,9 +137,7 @@ class ChatgptHackBot(Bot, OpenAIImage):
 
         try:
             session_id = context["session_id"]
-
             session = self.sessions.session_query(query, session_id)
-
             model = conf().get("model") or "gpt-3.5-turbo"
             # remove system message
             if session.messages[0].get("role") == "system":
