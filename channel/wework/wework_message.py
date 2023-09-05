@@ -151,7 +151,6 @@ class WeworkMessage(ChatMessage):
                     room_info = get_room_info(wework=wework, conversation_id=conversation_id)
                     self.other_user_nickname = room_info.get('nickname', None) if room_info else None
                     at_list = data.get('at_list', [])
-<<<<<<< HEAD
                     tmp_list = []
                     for at in at_list:
                         tmp_list.append(at['nickname'])
@@ -162,9 +161,6 @@ class WeworkMessage(ChatMessage):
                     if nickname in at_list or login_info['nickname'] in at_list or login_info['username'] in at_list:
                         self.is_at = True
                     self.at_list = at_list
-=======
-                    self.is_at = nickname in at_list
->>>>>>> dev_v2
 
                     # 检查消息内容是否包含@用户名。处理复制粘贴的消息，这类消息可能不会触发@通知，但内容中可能包含 "@用户名"。
                     content = data.get('content', '')
