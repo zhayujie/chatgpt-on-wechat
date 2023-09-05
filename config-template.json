@@ -1,10 +1,10 @@
 {
   "open_ai_api_key": "YOUR API KEY",
-  "model": "chatgpt_hack",
+  "model": "",
   "channel_type": "wx",
-  "proxy": "127.0.0.1:33210",
-  "hot_reload": true,
-  "chatgpt_hack_autho": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Ik1UaEVOVUpHTkVNMVFURTRNMEZCTWpkQ05UZzVNRFUxUlRVd1FVSkRNRU13UmtGRVFrRXpSZyJ9.eyJodHRwczovL2FwaS5vcGVuYWkuY29tL3Byb2ZpbGUiOnsiZW1haWwiOiJjaG9jb2xhdGVjaGVubm5AZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWV9LCJodHRwczovL2FwaS5vcGVuYWkuY29tL2F1dGgiOnsidXNlcl9pZCI6InVzZXItS1V6SmFSYUxTY3FWM0FpeWZNdnJwSUtHIn0sImlzcyI6Imh0dHBzOi8vYXV0aDAub3BlbmFpLmNvbS8iLCJzdWIiOiJnb29nbGUtb2F1dGgyfDEwMTA5OTc2MzIzOTI1Mjg1MTE3MCIsImF1ZCI6WyJodHRwczovL2FwaS5vcGVuYWkuY29tL3YxIiwiaHR0cHM6Ly9vcGVuYWkub3BlbmFpLmF1dGgwYXBwLmNvbS91c2VyaW5mbyJdLCJpYXQiOjE2OTM0NTM3MTQsImV4cCI6MTY5NDY2MzMxNCwiYXpwIjoiVGRKSWNiZTE2V29USHROOTVueXl3aDVFNHlPbzZJdEciLCJzY29wZSI6Im9wZW5pZCBlbWFpbCBwcm9maWxlIG1vZGVsLnJlYWQgbW9kZWwucmVxdWVzdCBvcmdhbml6YXRpb24ucmVhZCBvcmdhbml6YXRpb24ud3JpdGUgb2ZmbGluZV9hY2Nlc3MifQ.kGYRrn956ifLfKmNqG03ni-dURQfhWl-PmODcT70ycs52TLVm0NnpkzPtbWKmFzeS8eESaUDRBgs57IJHkPRaDOpxlhoRFftzCzSoaeKB-hVFHEbz7WYKtYwya8rdifjpwek8Ow9S26i2TOFPS_OyvRz2NgAm43DVCKeazBHgDDMGIvNI1mwr16qYR5g3xVOE5vcmk9XuK5dZF0BOHFpxkhX4tz6zZ430FA2iqDrXXQYOWQeaP44vcMFvfcbkKl3huJL-PsIUHrCWs_u1eAKMZQMn6FKbhQN-VcTbN91sS9TS_Cmwc38FhWdpZ32LvRW8Yb3EFJUbvQb4rgfSWCVVw",
+  "proxy": "",
+  "hot_reload": false,
+  "claude_uuid": "",
   "single_chat_prefix": [
     "bot",
     "@bot"
@@ -15,10 +15,10 @@
   ],
   "group_name_white_list": [
     "ChatGPT测试群",
-    "高中数学应用题"
+    "ChatGPT测试群2"
   ],
   "group_chat_in_one_session": [
-    "高中数学应用题"
+    "ChatGPT测试群"
   ],
   "image_create_prefix": [
     "画",
