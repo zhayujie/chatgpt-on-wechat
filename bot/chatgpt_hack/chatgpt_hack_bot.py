@@ -4,6 +4,8 @@ import json
 import uuid
 from curl_cffi import requests
 from bot.bot import Bot
+
+
 from bot.chatgpt_hack.chatgpt_hack_session import ChatgptHackSession
 from bot.openai.open_ai_image import OpenAIImage
 from bot.session_manager import SessionManager
@@ -19,7 +21,6 @@ class ChatgptHackBot(Bot, OpenAIImage):
         self.sessions = SessionManager(ChatgptHackSession, model=conf().get("model") or "gpt-3.5-turbo")
         self.proxy = conf().get("proxy")
         self.con_uuid_dic = {}
-        self.cookie = conf().get("chatgpt_hack_cookie")
         self.autho = conf().get("chatgpt_hack_autho")
         if self.proxy:
             self.proxies = {
@@ -38,7 +39,7 @@ class ChatgptHackBot(Bot, OpenAIImage):
             'authorization': self.autho,
             'cache-control': 'no-cache',
             'content-type': 'application/json',
-            'cookie': self.cookie,
+            'cookie': "",
             'origin': 'https://chat.openai.com',
             'pragma': 'no-cache',
             'referer': 'https://chat.openai.com',

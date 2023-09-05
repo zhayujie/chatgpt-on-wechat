@@ -63,7 +63,6 @@ available_setting = {
     "claude_api_cookie": "",
     "claude_uuid": "",
     #chatgpt_hack 配置
-    "chatgpt_hack_cookie": "",
     "chatgpt_hack_autho": "",
     # wework的通用配置
     "wework_smart": True,  # 配置wework是否使用已登录的企业微信，False为多开
