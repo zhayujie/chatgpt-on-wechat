@@ -4,7 +4,6 @@
   "channel_type": "wx",
   "proxy": "",
   "hot_reload": false,
-  "claude_uuid": "",
   "single_chat_prefix": [
     "bot",
     "@bot"
