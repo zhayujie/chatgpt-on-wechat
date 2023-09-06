@@ -136,5 +136,5 @@ class ChatgptHackBot(Bot, OpenAIImage):
         except Exception as e:
             logger.exception(e)
             time.sleep(2)
-            logger.warn(f"[CLAUDE] do retry, times={retry_count}")
+            logger.warn(f"[CHATGPTHACKAI] do retry, times={retry_count}")
             return self._chat(query, context, retry_count + 1)
