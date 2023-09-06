@@ -30,12 +30,12 @@ class ChatgptHackBot(Bot, OpenAIImage):
         self.paren_message_id = ""
         self.conversation_id = ""
         self.headers = {
-    'authority': 'chat.openai.com',
-    'accept': 'text/event-stream',
-    'accept-language': 'en-US',
-    'authorization': self.autho,
-    'content-type': 'application/json',
-}
+            'authority': 'chat.openai.com',
+            'accept': 'text/event-stream',
+            'accept-language': 'en-US',
+            'authorization': self.autho,
+            'content-type': 'application/json',
+        }
         self.payload = {"action":"next",
                                 "messages":[{"id":self.generate_uuid(),
                                              "author":{"role":"system"},
