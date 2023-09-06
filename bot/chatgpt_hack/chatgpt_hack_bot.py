@@ -29,24 +29,12 @@ class ChatgptHackBot(Bot, OpenAIImage):
         self.paren_message_id = ""
         self.conversation_id = ""
         self.headers = {
-            'authority': 'chat.openai.com',
-            'accept': 'text/event-stream',
-            'accept-language': 'en-US',
-            'authorization': self.autho,
-            'cache-control': 'no-cache',
-            'content-type': 'application/json',
-            'cookie': "",
-            'origin': 'https://chat.openai.com',
-            'pragma': 'no-cache',
-            'referer': 'https://chat.openai.com',
-            'sec-ch-ua': '"Chromium";v="116", "Not)A;Brand";v="24", "Microsoft Edge";v="116"',
-            'sec-ch-ua-mobile': '?0',
-            'sec-ch-ua-platform': '"Windows"',
-            'sec-fetch-dest': 'empty',
-            'sec-fetch-mode': 'cors',
-            'sec-fetch-site': 'same-origin',
-            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36 Edg/116.0.1938.69'
-        }
+    'authority': 'chat.openai.com',
+    'accept': 'text/event-stream',
+    'accept-language': 'en-US',
+    'authorization': self.autho,
+    'content-type': 'application/json',
+}
         self.payload = {"action":"next",
                                 "messages":[{"id":self.generate_uuid(),
                                              "author":{"role":"system"},
