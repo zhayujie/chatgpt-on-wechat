@@ -20,15 +20,13 @@ class ChatgptHackBot(Bot, OpenAIImage):
         self.url = "https://chat.openai.com/backend-api/conversation"
         self.sessions = SessionManager(ChatgptHackSession, model=conf().get("model") or "gpt-3.5-turbo")
         self.proxy = conf().get("proxy")
-        self.con_uuid_dic = {}
         self.autho = conf().get("chatgpt_hack_autho")
         if self.proxy:
             self.proxies = {
                 "http": self.proxy,
                 "https": self.proxy
             }
-        else:
-            self.proxies = None
+        else:self.proxies = None
         self.error = ""
         self.paren_message_id = ""
         self.conversation_id = ""
@@ -60,7 +58,6 @@ class ChatgptHackBot(Bot, OpenAIImage):
         return formatted_uuid
 
     def create_conversation(self,prompt):
-
         payload = {"action":"next",
                    "messages":[{"id":self.generate_uuid(),
                                 "author":{"role":"system"},
