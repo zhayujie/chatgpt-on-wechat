@@ -60,10 +60,10 @@ available_setting = {
     "xunfei_api_key": "",  # 讯飞 API key
     "xunfei_api_secret": "",  # 讯飞 API secret
     # claude 配置
-    "claude_api_cookie": "",
-    "claude_uuid": "",
+    "claude_api_cookie": "", # claude cookie
+    "claude_uuid": "", # 可选，指定对话uuid，默认新建
     #chatgpt_hack 配置
-    "chatgpt_hack_autho": "",
+    "chatgpt_hack_autho": "", #chatgpt 官网 Authorization 参数
     # wework的通用配置
     "wework_smart": True,  # 配置wework是否使用已登录的企业微信，False为多开
     # 语音设置
