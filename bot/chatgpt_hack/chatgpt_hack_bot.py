@@ -4,8 +4,6 @@ import json
 import uuid
 from curl_cffi import requests
 from bot.bot import Bot
-
-
 from bot.chatgpt_hack.chatgpt_hack_session import ChatgptHackSession
 from bot.openai.open_ai_image import OpenAIImage
 from bot.session_manager import SessionManager
