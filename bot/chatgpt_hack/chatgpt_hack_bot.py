@@ -49,6 +49,15 @@ class ChatgptHackBot(Bot, OpenAIImage):
             'sec-fetch-site': 'same-origin',
             'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36 Edg/116.0.1938.69'
         }
+        self.payload = {"action":"next",
+                                "messages":[{"id":self.generate_uuid(),
+                                             "author":{"role":"system"},
+                                             "content":{"content_type":"text","parts":[""]}}],
+                                "parent_message_id":self.generate_uuid(),
+                                "model":"text-davinci-002",
+                                "timezone_offset_min":-480,"suggestions":[],
+                                "history_and_training_disabled":False,
+                                "arkose_token":None}
         self.create_conversation(conf().get("character_desc", ""))
 
     def generate_uuid(self):
@@ -58,18 +67,9 @@ class ChatgptHackBot(Bot, OpenAIImage):
         return formatted_uuid
 
     def create_conversation(self,prompt):
-        payload = {"action":"next",
-                   "messages":[{"id":self.generate_uuid(),
-                                "author":{"role":"system"},
-                                "content":{"content_type":"text","parts":[""]}}],
-                   "parent_message_id":self.generate_uuid(),
-                   "model":"text-davinci-002",
-                   "timezone_offset_min":-480,"suggestions":[],
-                   "history_and_training_disabled":False,
-                   "arkose_token":None}
-        payload["messages"][0]["content"]["parts"] = [prompt]
+        self.payload["messages"][0]["content"]["parts"] = [prompt]
         try:
-            base_payload = json.dumps(payload)
+            base_payload = json.dumps(self.payload)
             r = requests.post(self.url, headers=self.headers, impersonate="chrome110", proxies =self.proxies, data = base_payload, verify = False)
             origin_res = r.text.encode('utf-8').decode('unicode_escape')
             res = json.loads(origin_res.split("data:")[-2].strip())
@@ -83,17 +83,13 @@ class ChatgptHackBot(Bot, OpenAIImage):
             return None,None
 
     def send_message(self,role, message, parent_message_id, conversation_id):
-        payload = json.dumps({"action":"next",
-                              "messages":[
-                                  {"id": self.generate_uuid(),
-                                   "author":{"role": role},
-                                   "content":{"content_type":"text","parts":[message]},"metadata":{}}],
-                              "conversation_id":conversation_id,
-                              "parent_message_id":parent_message_id,
-                              "model":"text-davinci-002-render-sha",
-                              "timezone_offset_min":-480,"suggestions":[],
-                              "history_and_training_disabled":False,
-                              "arkose_token":None})
+        self.payload["messages"][0]["id"] = self.generate_uuid()
+        self.payload["messages"][0]["author"]["role"] = role
+        self.payload["messages"][0]["content"]["parts"] = [message]
+        self.payload["conversation_id"] = conversation_id
+        self.payload["parent_message_id"] = parent_message_id
+
+        payload = json.dumps(self.payload)
         r = requests.post(self.url, headers=self.headers, impersonate="chrome110", proxies =self.proxies, data = payload)
         try:
             res = r.text.encode('utf-8').decode('unicode_escape').replace("\n","\\n")
