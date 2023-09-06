@@ -81,6 +81,7 @@ class ChatgptHackBot(Bot, OpenAIImage):
             self.paren_message_id = message_id
             self.conversation_id = con_id
         except Exception as file:
+            logger.error("[CHATGPTHACKAI] origin_error: {}".format(origin_res))
             logger.error("[CHATGPTHACKAI] faied to create new conversion!")
             return None,None
 
