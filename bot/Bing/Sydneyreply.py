@@ -26,7 +26,7 @@ class SydneyBot(Bot):
             if query in clear_memory_commands:
                 self.sessions.clear_session(session_id)
                 reply = Reply(ReplyType.INFO, "记忆已清除")
-            elif "clearall" in query:
+            elif query == "清除所有":
                 self.sessions.clear_all_session()
                 reply = Reply(ReplyType.INFO, "所有人记忆已清除")
             elif query == "#更新配置":

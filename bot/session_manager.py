@@ -14,7 +14,7 @@ class Session(object):
 
     # 重置会话
     def reset(self):
-        system_item = {"role": "system", "content": self.system_prompt}
+        system_item = {f"[user](#message)": self.system_prompt}
         self.messages = [system_item]
 
     def set_system_prompt(self, system_prompt):
