@@ -12,6 +12,7 @@ from bridge.reply import Reply, ReplyType
 from common.log import logger
 from config import conf
 
+
 class ChatgptHackBot(Bot, OpenAIImage):
     def __init__(self):
         super().__init__()
