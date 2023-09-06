@@ -9,7 +9,7 @@ services:
       OPEN_AI_API_KEY: 'YOUR API KEY'
       OPEN_AI_API_BASE: ''
       MODEL: 'gpt-3.5-turbo'
-      CHANNEL_TYPE: 'wx',
+      CHANNEL_TYPE: 'wx'
       PROXY: ''
       HOT_RELOAD: 'False'
       SINGLE_CHAT_PREFIX: '["bot", "@bot"]'
