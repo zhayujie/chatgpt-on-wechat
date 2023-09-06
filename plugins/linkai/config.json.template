@@ -1,7 +1,7 @@
 {
     "group_app_map": {
-        "测试群1": "default",
-        "测试群2": "Kv2fXJcH"
+        "测试群名1": "default",
+        "测试群名2": "Kv2fXJcH"
     },
     "midjourney": {
         "enabled": true,
