@@ -27,9 +27,9 @@ Demo made by [Visionn](https://www.wangpc.cc/)
 <img width="240" src="./docs/images/contact.jpg">
 
 # 更新日志
->**2023.09.06：** 增加 [chatgpt_hack](1401) 机器人，逆向免apikey同步openai官网聊天功能
+>**2023.09.06：** 增加 [chatgpt_hack](https://github.com/zhayujie/chatgpt-on-wechat/pull/1401) 机器人，逆向免apikey同步openai官网聊天功能
 
->**2023.09.01：** 增加 [企微个人号](#1385) 通道，[claude](1382)，讯飞星火模型
+>**2023.09.01：** 增加 [企微个人号](#1385) 通道，[claude](https://github.com/zhayujie/chatgpt-on-wechat/pull/1382)，讯飞星火模型
 
 >**2023.08.08：** 接入百度文心一言模型，通过 [插件](https://github.com/zhayujie/chatgpt-on-wechat/tree/master/plugins/linkai) 支持 Midjourney 绘图
 
