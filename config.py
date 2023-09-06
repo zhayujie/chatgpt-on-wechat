@@ -61,7 +61,7 @@ available_setting = {
     "xunfei_api_secret": "",  # 讯飞 API secret
     # claude 配置
     "claude_api_cookie": "", # claude cookie
-    "claude_uuid": "", # 可选，指定对话uuid，默认新建
+    "claude_uuid": "", # 指定对话uuid，默认新建
     #chatgpt_hack 配置
     "chatgpt_hack_autho": "", #chatgpt 官网 Authorization 参数
     # wework的通用配置
