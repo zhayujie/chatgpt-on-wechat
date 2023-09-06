@@ -109,6 +109,10 @@ class ChatChannel(Channel):
                         flag = True
                     pattern = f"@{re.escape(self.name)}(\u2005|\u0020)"
                     subtract_res = re.sub(pattern, r"", content)
+                    if isinstance(context["msg"].at_list, list):
+                        for at in context["msg"].at_list:
+                            pattern = f"@{re.escape(at)}(\u2005|\u0020)"
+                            subtract_res = re.sub(pattern, r"", subtract_res)
                     if subtract_res == content and context["msg"].self_display_name:
                         # 前缀移除后没有变化，使用群昵称再次移除
                         pattern = f"@{re.escape(context['msg'].self_display_name)}(\u2005|\u0020)"
@@ -197,7 +201,8 @@ class ChatChannel(Channel):
                         reply = self._generate_reply(new_context)
                     else:
                         return
-            elif context.type == ContextType.IMAGE:  # 图片消息，当前无默认逻辑
+            elif context.type == ContextType.IMAGE or context.type == ContextType.FUNCTION \
+                    or context.type == ContextType.FILE:  # 图片/文件消息及函数调用等，当前无默认逻辑
                 pass
             else:
                 logger.error("[WX] unknown context type: {}".format(context.type))
