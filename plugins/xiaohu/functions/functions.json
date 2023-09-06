@@ -1,0 +1,34 @@
+[
+  {
+        "name": "search",
+        "description": "默认搜索工具，谷歌和必应的搜索引擎，必须明确搜索才可以进行调用",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "提供需要搜索的关键词信息即可"
+                },
+                "count": {
+                    "type": "string",
+                    "description": "搜索页数,如无指定几页，默认2，最大值10"
+                }
+            },
+            "required": ["query", "count"]
+        }
+    },
+    {
+        "name": "get_url",
+        "description": "访问并获取URL的内容，必须带URL才可调用",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "url": {
+                    "type": "string",
+                    "description": "需要访问的指定URL"
+                }
+            },
+            "required": ["url"]
+        }
+    }
+]
