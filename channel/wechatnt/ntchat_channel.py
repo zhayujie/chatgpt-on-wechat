@@ -68,6 +68,11 @@ def get_wxid_by_name(room_members, group_wxid, name):
             if member['display_name'] == name or member['nickname'] == name:
                 return member['wxid']
     return None  # 如果没有找到对应的group_wxid或name，则返回None
+def get_wxid_by_name_only(room_members, name):
+    for member in room_members['member_list']:
+        if member['display_name'] == name or member['nickname'] == name:
+            return member['wxid']
+    return None  # 如果没有找到对应的group_wxid或name，则返回None
 
 
 def _check(func):
@@ -229,6 +234,10 @@ class NtchatChannel(ChatChannel):
                 with open(file_path, 'r', encoding='utf-8') as file:
                     room_members = json.load(file)
                 wxid = get_wxid_by_name(room_members, receiver, name)
+                if wxid is None:
+                    room_members = wechatnt.get_room_members(receiver)
+                    wxid = get_wxid_by_name_only(room_members, name)
+
                 wxid_list = [wxid]
                 wechatnt.send_room_at_msg(receiver, reply.content, wxid_list)
             else:
