@@ -4,6 +4,9 @@ from bot.Bing import sydney
 from apscheduler.schedulers.blocking import BlockingScheduler
 import asyncio
 import re
+import time
+# from bot.Bing.Sydneyreply import SydneyBot
+# from bot.bot import Bot 
 
 
 from contextlib import aclosing
@@ -37,7 +40,7 @@ def remove_extra_format(reply: str) -> str:
         result = result[1:-1]
     return result
 
-async def sydney_reply(session: SydneySession):   
+async def sydney_reply(session: SydneySession, retry_count=0):   
     # It uses the sydney module to generate a reply for the content based on the context and the method
     # It returns None if there is an error or a CAPTCHA, otherwise it posts the reply to Reddit
 
@@ -63,11 +66,13 @@ async def sydney_reply(session: SydneySession):
     # Set the proxy string to localhost
     proxy = conf().get("proxy", "")
     
-    async def stream_conversation_replied(reply, context, cookies, ask_string, proxy):
+    async def stream_conversation_replied(pre_reply, context, cookies, ask_string, proxy):
+        start_time = time.time()
+        elapsed_time = time.time() - start_time
         # reply = remove_extra_format(response["arguments"][0]["messages"][0]["adaptiveCards"][0]["body"][0]["text"])
         # print("Failed reply =" + reply)
         ask_string_extended = f"从你停下的地方继续，只输出内容的正文。"
-        context_extended = f"{context}\n\n[user](#message)\n{ask_string}\n[assistant](#message)\n{reply}"
+        context_extended = f"{context}\n\n[user](#message)\n{ask_string}\n[assistant](#message)\n{pre_reply}"
 
         secconversation = await sydney.create_conversation(cookies=cookies, proxy=proxy)                               
         async with aclosing(sydney.ask_stream(
@@ -94,7 +99,7 @@ async def sydney_reply(session: SydneySession):
                             # break
                             return reply
                         else:
-                            reply = ""                   
+                            reply = ""                  
                             reply +=  remove_extra_format(message["adaptiveCards"][0]["body"][0]["text"])
                             if "suggestedResponses" in message:
                                 return reply
@@ -103,7 +108,11 @@ async def sydney_reply(session: SydneySession):
                     #     break 
                     message = secresponse["item"]["messages"][-1]
                     if "suggestedResponses" in message:
-                        return reply 
+                        return reply
+        if "要和我对话请在发言中@我" or "自动回复机器人悉尼" not in reply:
+                reply += bot_statement
+        if elapsed_time >=20 and len(reply) <3:
+                return sydney_reply(session, retry_count + 1)   
     try:                
         # Get the absolute path of the JSON file
         file_path = os.path.abspath("./cookies.json")
@@ -119,6 +128,8 @@ async def sydney_reply(session: SydneySession):
 
 
     try:
+        start_time = time.time()
+        elapsed_time = time.time() - start_time
         replied = False
         
         # Use the aclosing context manager to ensure that the async generator is closed properly
@@ -167,19 +178,40 @@ async def sydney_reply(session: SydneySession):
                 
                 
             # print("reply = " + reply)
-            if "要和我对话请在发言中@我" not in reply:
-                reply += bot_statement            
-            return {"content": reply}        
+            if elapsed_time >=20 and len(reply) <3:
+                return sydney_reply(session, retry_count + 1)  
+            if "要和我对话请在发言中@我" or "自动回复机器人悉尼" not in reply:
+                reply += bot_statement
+            return {"content": reply}
+        
+
     except Exception as e:
         print(e)
+        need_retry = retry_count < 2
+        reply = {"content": "我现在有点累了，等会再来吧"}
         if "CAPTCHA" in str(e):
-            return {"content": "抱歉，暂时无法回复，该消息用来提醒主机端进行身份验证。"}
+            logger.warn("[SYDNEY] CAPTCHAError: {}".format(e))
+            reply = {"content": "抱歉，暂时无法回复，该消息用来提醒主机端进行身份验证。"}
+            need_retry = False
         if ":443" or "server" in str(e):
-            return {"content": "抱歉，因为主机端网络问题连接失败，重新发送一次消息即可。"}
-        reply = "抱歉，你的言论触发了必应过滤器。这条回复是预置的，仅用于提醒此情况下虽然召唤了bot也无法回复。"
+            logger.warn("[SYDNEY] ConnectionError: {}".format(e))
+            reply = {"content": "抱歉，因为主机端网络问题连接失败。"}
+            # ，重新发送一次消息即可
+            if need_retry:
+                    time.sleep(10)
+        else:
+                logger.exception("[SYDNEY] Exception: {}".format(e))
+                need_retry = False
+                
 
-        print("reply = " + reply)
-        reply += bot_statement
-        return {"content": reply}
+        if need_retry:
+            logger.warn("[SYDNEY] 第{}次重试".format(retry_count + 1))
+            return sydney_reply(session, retry_count + 1)
+        else:
+            print("reply = " + reply)
+            reply += bot_statement
+            return reply
+            # reply = "抱歉，你的言论触发了必应过滤器。这条回复是预置的，仅用于提醒此情况下虽然召唤了bot也无法回复。"
+
     # else:
     #     visual_search_url = ''
