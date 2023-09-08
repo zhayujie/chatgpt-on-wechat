@@ -4,6 +4,7 @@ import json
 import os
 import random
 import string
+import traceback
 from typing import Tuple
 
 import plugins
@@ -11,8 +12,12 @@ from bridge.bridge import Bridge
 from bridge.context import ContextType
 from bridge.reply import Reply, ReplyType
 from common import const
+from common.log import logger
 from config import conf, load_config, global_config
 from plugins import *
+from channel.wechatmp.userStorage import *
+from config import *
+from bot.chatgpt.chat_gpt_bot import *
 
 # 定义指令集
 COMMANDS = {
@@ -29,10 +34,6 @@ COMMANDS = {
         "alias": ["auth", "认证"],
         "args": ["口令"],
         "desc": "管理员认证",
-    },
-    "model": {
-        "alias": ["model", "模型"],
-        "desc": "查看和设置全局模型",
     },
     "set_openai_api_key": {
         "alias": ["set_openai_api_key"],
@@ -73,6 +74,10 @@ ADMIN_COMMANDS = {
     "stop": {
         "alias": ["stop", "暂停服务"],
         "desc": "暂停服务",
+    },
+    "setHost": {
+        "alias": ["setHost", "更改默认sd_Host"],
+        "desc": "更改默认sd_Host",
     },
     "reconf": {
         "alias": ["reconf", "重载配置"],
@@ -144,7 +149,7 @@ def get_help_text(isadmin, isgroup):
         help_text += f"{','.join(alias)} "
         if "args" in info:
             args = [a for a in info["args"]]
-            help_text += f"{' '.join(args)}"
+            help_text += f"{' '.join(args)}\n"
         help_text += f": {info['desc']}\n"
 
     # 插件指令
@@ -154,7 +159,7 @@ def get_help_text(isadmin, isgroup):
         if plugins[plugin].enabled and not plugins[plugin].hidden:
             namecn = plugins[plugin].namecn
             help_text += "\n%s:" % namecn
-            help_text += PluginManager().instances[plugin].get_help_text(verbose=False).strip()
+            help_text += PluginManager().instances[plugin].get_help_text(verbose=False).strip() + "\n"
 
     if ADMIN_COMMANDS and isadmin:
         help_text += "\n\n管理员指令：\n"
@@ -207,6 +212,10 @@ class Godcmd(Plugin):
         logger.info("[Godcmd] inited")
 
     def on_handle_context(self, e_context: EventContext):
+        curdir = os.path.dirname(__file__)
+        useConfig_path = os.path.join(curdir, "../../channel/wechatmp/user_storage.json")
+        storage = UserStorage(useConfig_path)  # 使用正确的路径和文件名
+        
         context_type = e_context["context"].type
         if context_type != ContextType.TEXT:
             if not self.isrunning:
@@ -226,6 +235,7 @@ class Godcmd(Plugin):
             # msg = e_context['context']['msg']
             channel = e_context["channel"]
             user = e_context["context"]["receiver"]
+            print(user+"830128301283082423")
             session_id = e_context["context"]["session_id"]
             isgroup = e_context["context"].get("isgroup", False)
             bottype = Bridge().get_bot_type("chat")
@@ -259,18 +269,6 @@ class Godcmd(Plugin):
                                 break
                         if not ok:
                             result = "插件不存在或未启用"
-                elif cmd == "model":
-                    if not isadmin and not self.is_admin_in_group(e_context["context"]):
-                        ok, result = False, "需要管理员权限执行"
-                    elif len(args) == 0:
-                        ok, result = True, "当前模型为: " + str(conf().get("model"))
-                    elif len(args) == 1:
-                        if args[0] not in const.MODEL_LIST:
-                            ok, result = False, "模型名称不存在"
-                        else:
-                            conf()["model"] = args[0]
-                            Bridge().reset_bot()
-                            ok, result = True, "模型设置为: " + str(conf().get("model"))
                 elif cmd == "id":
                     ok, result = True, user
                 elif cmd == "set_openai_api_key":
@@ -308,7 +306,7 @@ class Godcmd(Plugin):
                     except Exception as e:
                         ok, result = False, "你没有设置私有GPT模型"
                 elif cmd == "reset":
-                    if bottype in [const.OPEN_AI, const.CHATGPT, const.CHATGPTONAZURE, const.LINKAI, const.BAIDU, const.XUNFEI]:
+                    if bottype in [const.OPEN_AI, const.CHATGPT, const.CHATGPTONAZURE, const.LINKAI]:
                         bot.sessions.clear_session(session_id)
                         channel.cancel_session(session_id)
                         ok, result = True, "会话已重置"
@@ -329,10 +327,31 @@ class Godcmd(Plugin):
                             ok, result = True, "服务已恢复"
                         elif cmd == "reconf":
                             load_config()
-                            ok, result = True, "配置已重载"
+                            ok, result = True, "配置已重载"                         
+                        elif cmd == "setHost":
+                            if len(args) != 1:
+                                ok, result = False, "请提供正确的Host"
+                            else:
+                                # 设置配置文件路径
+                                config_path = os.path.join(curdir, "../pictureChange/config.json")
+                                
+                                # 加载配置文件
+                                with open(config_path, "r", encoding="utf-8") as config_file:
+                                    config_data = json.load(config_file)
+                                
+                                # 修改 host 的值
+                                config_data["start"]["host"] = args[0]
+                                
+                                # 保存修改后的配置
+                                with open(config_path, "w", encoding="utf-8") as config_file:
+                                    json.dump(config_data, config_file, indent=4, ensure_ascii=False)
+                                
+                                PluginManager().reload_plugin("pictureChange")
+                                print("Host已成功更新为:",args[0])
+                                
+                            ok, result = True, "Host已成功更新"
                         elif cmd == "resetall":
-                            if bottype in [const.OPEN_AI, const.CHATGPT, const.CHATGPTONAZURE, const.LINKAI,
-                                           const.BAIDU, const.XUNFEI]:
+                            if bottype in [const.OPEN_AI, const.CHATGPT, const.CHATGPTONAZURE, const.LINKAI]:
                                 channel.cancel_all_session()
                                 bot.sessions.clear_all_session()
                                 ok, result = True, "重置所有会话成功"
@@ -449,12 +468,3 @@ class Godcmd(Plugin):
             return True, "认证成功，请尽快设置口令"
         else:
             return False, "认证失败"
-
-    def get_help_text(self, isadmin=False, isgroup=False, **kwargs):
-        return get_help_text(isadmin, isgroup)
-
-
-    def is_admin_in_group(self, context):
-        if context["isgroup"]:
-            return context.kwargs.get("msg").actual_user_id in global_config["admin_users"]
-        return False
