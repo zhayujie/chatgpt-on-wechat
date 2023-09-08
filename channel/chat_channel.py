@@ -89,7 +89,7 @@ class ChatChannel(Channel):
                 return None
 
         # 消息内容匹配过程，并处理content
-        if ctype == ContextType.TEXT:
+        if ctype == ContextType.TEXT or context.type == ContextType.IMAGE:
             if first_in and "」\n- - - - - - -" in content:  # 初次匹配 过滤引用消息
                 logger.debug("[WX]reference query skipped")
                 return None
@@ -99,26 +99,19 @@ class ChatChannel(Channel):
                 match_prefix = check_prefix(content, conf().get("group_chat_prefix"))
                 match_contain = check_contain(content, conf().get("group_chat_keyword"))
                 flag = False
-                if context["msg"].to_user_id != context["msg"].actual_user_id:
-                    if match_prefix is not None or match_contain is not None:
+                if context.type == ContextType.IMAGE and cmsg.other_user_id in use_group:
+                    flag = True
+                if match_prefix is not None or match_contain is not None:
+                    flag = True
+                    if match_prefix:
+                        content = content.replace(match_prefix, "", 1).strip()
+                if context["msg"].is_at:
+                    logger.info("[WX]receive group at")
+                    if not conf().get("group_at_off", False):
                         flag = True
-                        if match_prefix:
-                            content = content.replace(match_prefix, "", 1).strip()
-                    if context["msg"].is_at:
-                        logger.info("[WX]receive group at")
-                        if not conf().get("group_at_off", False):
-                            flag = True
-                        pattern = f"@{re.escape(self.name)}(\u2005|\u0020)"
-                        subtract_res = re.sub(pattern, r"", content)
-                        if isinstance(context["msg"].at_list, list):
-                            for at in context["msg"].at_list:
-                                pattern = f"@{re.escape(at)}(\u2005|\u0020)"
-                                subtract_res = re.sub(pattern, r"", subtract_res)
-                        if subtract_res == content and context["msg"].self_display_name:
-                            # 前缀移除后没有变化，使用群昵称再次移除
-                            pattern = f"@{re.escape(context['msg'].self_display_name)}(\u2005|\u0020)"
-                            subtract_res = re.sub(pattern, r"", content)
-                        content = subtract_res
+                    pattern = f"@{re.escape(self.name)}(\u2005|\u0020)"
+                    content = re.sub(pattern, r"", content)
+
                 if not flag:
                     if context["origin_ctype"] == ContextType.VOICE:
                         logger.info("[WX]receive group voice, but checkprefix didn't match")
@@ -144,7 +137,7 @@ class ChatChannel(Channel):
         elif context.type == ContextType.VOICE:
             if "desire_rtype" not in context and conf().get("voice_reply_voice") and ReplyType.VOICE not in self.NOT_SUPPORT_REPLYTYPE:
                 context["desire_rtype"] = ReplyType.VOICE
-
+            
         return context
 
     def _handle(self, context: Context):
