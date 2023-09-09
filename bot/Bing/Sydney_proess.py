@@ -64,7 +64,7 @@ async def sydney_reply(session: SydneySession, retry_count=0):
     ask_string = preload_text
     print(ask_string)
     # Set the proxy string to localhost
-    proxy = conf().get("proxy", "")
+    proxy = conf().get("proxy", "") if proxy else None
     
     async def stream_conversation_replied(pre_reply, context, cookies, ask_string, proxy):
         start_time = time.time()
