@@ -64,7 +64,7 @@ async def sydney_reply(session: SydneySession, retry_count=0):
     ask_string = preload_text
     print(ask_string)
     # Set the proxy string to localhost
-    proxy = conf().get("proxy", "") if proxy else None
+    proxy = conf().get("proxy", "")
     
     async def stream_conversation_replied(pre_reply, context, cookies, ask_string, proxy):
         start_time = time.time()
@@ -109,7 +109,7 @@ async def sydney_reply(session: SydneySession, retry_count=0):
                     message = secresponse["item"]["messages"][-1]
                     if "suggestedResponses" in message:
                         return reply
-        if "要和我对话请在发言中@我" or "自动回复机器人悉尼" not in reply:
+        if "自动回复机器人悉尼" not in reply:
                 reply += bot_statement
         if elapsed_time >=20 and len(reply) <3:
                 return sydney_reply(session, retry_count + 1)   
@@ -180,7 +180,7 @@ async def sydney_reply(session: SydneySession, retry_count=0):
             # print("reply = " + reply)
             if elapsed_time >=20 and len(reply) <3:
                 return sydney_reply(session, retry_count + 1)  
-            if "要和我对话请在发言中@我" or "自动回复机器人悉尼" not in reply:
+            if "自动回复机器人悉尼" not in reply:
                 reply += bot_statement
             return {"content": reply}
         
