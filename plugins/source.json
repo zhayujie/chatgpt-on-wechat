@@ -16,5 +16,9 @@
       "url": "https://github.com/haikerapples/timetask.git",
       "desc": "一款定时任务系统的插件"
     }
+    "pictureChange": {
+      "url": "https://github.com/Yanyutin753/pictureChange.git",
+      "desc": "利用stable-diffusion和百度Ai进行图生图或者画图的插件"
+    }
   }
 }
