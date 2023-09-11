@@ -83,7 +83,7 @@ async def sydney_reply(session: SydneySession, retry_count=0):
             context=context_extended,                                
             proxy=proxy if proxy != "" else None,
             # image_url=visual_search_url,              
-            wss_url='wss://' + 'sydney.bing.com' + '/sydney/ChatHub',
+            wss_url='wss://' + 'sydneybot.mamba579jpy.workers.dev' + '/sydney/ChatHub',
             # 'sydney.bing.com'
             cookies=cookies
         )) as para:            
@@ -111,10 +111,8 @@ async def sydney_reply(session: SydneySession, retry_count=0):
                     message = secresponse["item"]["messages"][-1]
                     if "suggestedResponses" in message:
                         return reply
-            if "自动回复机器人悉尼" not in reply:
-                    reply += bot_statement
             if elapsed_time >=20 and len(reply) <3:
-                    return stream_conversation_replied(pre_reply, context, cookies, ask_string, proxy)   
+                    await sydney_reply(session, retry_count + 1)   
     try:                
         # Get the absolute path of the JSON file
         file_path = os.path.abspath("./cookies.json")
@@ -140,7 +138,7 @@ async def sydney_reply(session: SydneySession, retry_count=0):
                 prompt=ask_string,
                 context=context,                                
                 proxy=proxy if proxy else None,            
-                wss_url='wss://' + 'sydney.bing.com' + '/sydney/ChatHub',
+                wss_url='wss://' + 'sydneybot.mamba579jpy.workers.dev' + '/sydney/ChatHub',
                 # 'sydney.bing.com'
                 # sydneybot.mamba579jpy.workers.dev
                 cookies=cookies)) as agen:            
@@ -182,7 +180,7 @@ async def sydney_reply(session: SydneySession, retry_count=0):
                 
             # print("reply = " + reply)
             if elapsed_time >=20 and len(reply) <3:
-                return stream_conversation_replied(pre_reply, context, cookies, ask_string, proxy)  
+                await sydney_reply(session, retry_count + 1) 
             if "自动回复机器人悉尼" not in reply:
                 reply += bot_statement
             return {"content": reply}
@@ -209,7 +207,7 @@ async def sydney_reply(session: SydneySession, retry_count=0):
 
         if need_retry:
             logger.warn("[SYDNEY] 第{}次重试".format(retry_count + 1))
-            return stream_conversation_replied(pre_reply, context, cookies, ask_string, proxy)
+            await sydney_reply(session, retry_count + 1)
         else:
             print("reply = " + reply)
             reply += bot_statement
