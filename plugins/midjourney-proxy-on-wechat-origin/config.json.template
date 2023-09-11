@@ -1,0 +1,36 @@
+{
+    "mj_url": "",
+    "mj_api_secret": "",
+    "mj_tip": true,
+    "mj_admin_password": "",
+    "discordapp_proxy": "",
+    "daily_limit": 3,
+    "imagine_prefix": [
+        "/i",
+        "/mj"
+    ],
+    "fetch_prefix": [
+        "/f"
+    ],
+    "up_prefix": [
+        "/u"
+    ],
+    "pad_prefix": [
+        "/p"
+    ],
+    "blend_prefix": [
+        "/b"
+    ],
+    "describe_prefix": [
+        "/d"
+    ],
+    "queue_prefix": [
+        "/q"
+    ],
+    "end_prefix": [
+        "/e"
+    ],
+    "reroll_prefix": [
+        "/r"
+    ]
+}
