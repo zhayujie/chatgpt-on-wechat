@@ -210,7 +210,7 @@ async def sydney_reply(session: SydneySession, retry_count=0) -> dict:
             await sydney_reply(session, retry_count + 1)
         else:
             print("reply = " + reply)
-            reply += bot_statement
+            reply["content"] += bot_statement
             return reply
             # reply = "抱歉，你的言论触发了必应过滤器。这条回复是预置的，仅用于提醒此情况下虽然召唤了bot也无法回复。"
 
