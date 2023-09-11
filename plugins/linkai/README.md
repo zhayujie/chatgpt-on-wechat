@@ -4,15 +4,15 @@
 
 ## 插件配置
 
-将 `plugins/linkai` 目录下的 `config.json.template` 配置模板复制为最终生效的 `config.json`:
+将 `plugins/linkai` 目录下的 `config.json.template` 配置模板复制为最终生效的 `config.json`。 (如果未配置则会默认使用`config.json.template`模板中配置，功能默认关闭，可通过指令进行开启)。
 
 以下是配置项说明：
 
 ```bash
 {
     "group_app_map": {            # 群聊 和 应用编码 的映射关系
-        "测试群1": "default",      # 表示在名称为 "测试群1" 的群聊中将使用app_code 为 default 的应用
-        "测试群2": "Kv2fXJcH"
+        "测试群名称1": "default",      # 表示在名称为 "测试群名称1" 的群聊中将使用app_code 为 default 的应用
+        "测试群名称2": "Kv2fXJcH"
     },
     "midjourney": {
         "enabled": true,          # midjourney 绘画开关
@@ -51,6 +51,8 @@
 
 ### 2.Midjourney绘画功能
 
+若未配置 `plugins/linkai/config.json`，默认会关闭画图功能，直接使用 `$mj open` 可基于默认配置直接使用mj画图。
+
 指令格式：
 
 ```
@@ -69,7 +71,9 @@
 "$mjr 11055927171882"
 ```
 
-注：
-1. 开启 `use_image_create_prefix` 配置后可直接复用全局画图触发词，以"画"开头便可以生成图片。
-2. 提示词内容中包含敏感词或者参数格式错误可能导致绘画失败，生成失败不消耗积分
-3. 使用 `$mj open` 和 `$mj close` 指令可以快速打开和关闭绘图功能
+注意事项：
+1. 使用 `$mj open` 和 `$mj close` 指令可以快速打开和关闭绘图功能
+2. 海外环境部署请将 `img_proxy` 设置为 `False`
+3. 开启 `use_image_create_prefix` 配置后可直接复用全局画图触发词，以"画"开头便可以生成图片。
+4. 提示词内容中包含敏感词或者参数格式错误可能导致绘画失败，生成失败不消耗积分
+5. 若未收到图片可能有两种可能，一种是收到了图片但微信发送失败，可以在后台日志查看有没有获取到图片url，一般原因是受到了wx限制，可以稍后重试或更换账号尝试；另一种情况是图片提示词存在疑似违规，mj不会直接提示错误但会在画图后删掉原图导致程序无法获取，这种情况不消耗积分。

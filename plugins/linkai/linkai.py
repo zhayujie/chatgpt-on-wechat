@@ -18,6 +18,9 @@ class LinkAI(Plugin):
         super().__init__()
         self.handlers[Event.ON_HANDLE_CONTEXT] = self.on_handle_context
         self.config = super().load_config()
+        if not self.config:
+            # 未加载到配置，使用模板中的配置
+            self.config = self._load_config_template()
         if self.config:
             self.mj_bot = MJBot(self.config.get("midjourney"))
         logger.info("[LinkAI] inited")
@@ -70,7 +73,7 @@ class LinkAI(Plugin):
                 is_open = False
             conf()["use_linkai"] = is_open
             bridge.Bridge().reset_bot()
-            _set_reply_text(f"知识库功能已{tips_text}", e_context, level=ReplyType.INFO)
+            _set_reply_text(f"LinkAI对话功能{tips_text}", e_context, level=ReplyType.INFO)
             return
 
         if len(cmd) == 3 and cmd[1] == "app":
@@ -139,6 +142,17 @@ class LinkAI(Plugin):
         help_text += f"\n\"{trigger_prefix}mjv 11055927171882 2\"\n\"{trigger_prefix}mjr 11055927171882\""
         return help_text
 
+    def _load_config_template(self):
+        logger.debug("No LinkAI plugin config.json, use plugins/linkai/config.json.template")
+        try:
+            plugin_config_path = os.path.join(self.path, "config.json.template")
+            if os.path.exists(plugin_config_path):
+                with open(plugin_config_path, "r", encoding="utf-8") as f:
+                    plugin_conf = json.load(f)
+                    plugin_conf["midjourney"]["enabled"] = False
+                    return plugin_conf
+        except Exception as e:
+            logger.exception(e)
 
 # 静态方法
 def _is_admin(e_context: EventContext) -> bool:

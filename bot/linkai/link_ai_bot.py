@@ -23,6 +23,7 @@ class LinkAIBot(Bot, OpenAIImage):
     def __init__(self):
         super().__init__()
         self.sessions = SessionManager(ChatGPTSession, model=conf().get("model") or "gpt-3.5-turbo")
+        self.args = {}
 
     def reply(self, query, context: Context = None) -> Reply:
         if context.type == ContextType.TEXT:
@@ -72,7 +73,7 @@ class LinkAIBot(Bot, OpenAIImage):
             body = {
                 "app_code": app_code,
                 "messages": session.messages,
-                "model": model,     # 对话模型的名称, 支持 gpt-3.5-turbo, gpt-3.5-turbo-16k, gpt-4, wenxin
+                "model": model,     # 对话模型的名称, 支持 gpt-3.5-turbo, gpt-3.5-turbo-16k, gpt-4, wenxin, xunfei
                 "temperature": conf().get("temperature"),
                 "top_p": conf().get("top_p", 1),
                 "frequency_penalty": conf().get("frequency_penalty", 0.0),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
@@ -114,3 +115,68 @@ class LinkAIBot(Bot, OpenAIImage):
             time.sleep(2)
             logger.warn(f"[LINKAI] do retry, times={retry_count}")
             return self._chat(query, context, retry_count + 1)
+
+    def reply_text(self, session: ChatGPTSession, app_code="", retry_count=0) -> dict:
+        if retry_count >= 2:
+            # exit from retry 2 times
+            logger.warn("[LINKAI] failed after maximum number of retry times")
+            return {
+                "total_tokens": 0,
+                "completion_tokens": 0,
+                "content": "请再问我一次吧"
+            }
+
+        try:
+            body = {
+                "app_code": app_code,
+                "messages": session.messages,
+                "model": conf().get("model") or "gpt-3.5-turbo",  # 对话模型的名称, 支持 gpt-3.5-turbo, gpt-3.5-turbo-16k, gpt-4, wenxin, xunfei
+                "temperature": conf().get("temperature"),
+                "top_p": conf().get("top_p", 1),
+                "frequency_penalty": conf().get("frequency_penalty", 0.0),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
+                "presence_penalty": conf().get("presence_penalty", 0.0),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
+            }
+            if self.args.get("max_tokens"):
+                body["max_tokens"] = self.args.get("max_tokens")
+            headers = {"Authorization": "Bearer " +  conf().get("linkai_api_key")}
+
+            # do http request
+            base_url = conf().get("linkai_api_base", "https://api.link-ai.chat")
+            res = requests.post(url=base_url + "/v1/chat/completions", json=body, headers=headers,
+                                timeout=conf().get("request_timeout", 180))
+            if res.status_code == 200:
+                # execute success
+                response = res.json()
+                reply_content = response["choices"][0]["message"]["content"]
+                total_tokens = response["usage"]["total_tokens"]
+                logger.info(f"[LINKAI] reply={reply_content}, total_tokens={total_tokens}")
+                return {
+                    "total_tokens": total_tokens,
+                    "completion_tokens": response["usage"]["completion_tokens"],
+                    "content": reply_content,
+                }
+
+            else:
+                response = res.json()
+                error = response.get("error")
+                logger.error(f"[LINKAI] chat failed, status_code={res.status_code}, "
+                             f"msg={error.get('message')}, type={error.get('type')}")
+
+                if res.status_code >= 500:
+                    # server error, need retry
+                    time.sleep(2)
+                    logger.warn(f"[LINKAI] do retry, times={retry_count}")
+                    return self.reply_text(session, app_code, retry_count + 1)
+
+                return {
+                    "total_tokens": 0,
+                    "completion_tokens": 0,
+                    "content": "提问太快啦，请休息一下再问我吧"
+                }
+
+        except Exception as e:
+            logger.exception(e)
+            # retry
+            time.sleep(2)
+            logger.warn(f"[LINKAI] do retry, times={retry_count}")
+            return self.reply_text(session, app_code, retry_count + 1)
