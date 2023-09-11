@@ -40,7 +40,7 @@ def remove_extra_format(reply: str) -> str:
         result = result[1:-1]
     return result
 
-async def sydney_reply(session: SydneySession, retry_count=0):   
+async def sydney_reply(session: SydneySession, retry_count=0) -> dict:   
     # It uses the sydney module to generate a reply for the content based on the context and the method
     # It returns None if there is an error or a CAPTCHA, otherwise it posts the reply to Reddit
 
