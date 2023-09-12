@@ -1,5 +1,6 @@
 {
   "open_ai_api_key": "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",
+  "openai.api_base": "http://api.aihao123.cn/v1",
   "model": "gpt-3.5-turbo",
   "channel_type": "wx",
   "proxy": "",
@@ -12,11 +13,10 @@
     "@bot"
   ],
   "group_name_white_list": [
-    ""
+    "ALL_GROUP"
   ],
   "group_chat_in_one_session": [
-    "ChatGPT测试群",
-    "小伙伴"
+    "ALL_GROUP"
   ],
   "image_create_prefix": [
     "画",
