@@ -109,11 +109,11 @@
       ]
     },
     {
-      "title": "内容总结",
-      "description": "Summarize every text I provided into 100 words, making it easy to read and comprehend. The summary should be concise, clear, and capture the main points of the text. Avoid using complex sentence structures or technical jargon. Please begin by editing the following text: ",
-      "descn": "请将我提供的每篇文字都概括为 100 个字，使其易于阅读和理解。避免使用复杂的句子结构或技术术语。",
-      "wrapper": "文章内容是:\n\"%s\"",
-      "remark": "将文本内容总结为 100 字。",
+      "title": "summarize",
+      "description": "As an expert in summarization, outlining, and structuring, please create a detailed, logically structured, and informative summary of the book, I will give you the book's name after this message.The summary should be clear, concise, and easy to understand while covering as much content as possible.\nOrganize the summary using these guidelines:\nUse section headers for major parts, subheaders for chapters, and bulleted lists for key points within chapters. Include chapter names with their respective bulleted content. Ensure bulleted points within chapters are informative and specific. Use clear, concise language, avoiding jargon or complex phrasing. Maintain logical flow and coherence throughout the summary. After completing the summary, provide a list of 5 book recommendations, including a brief explanation for each recommendation, highlighting its relevance and unique insights. Answer in the same language as user required.",
+      "descn": "作为总结、概述和结构设计方面的专家，请为这本书创建一个详细的、逻辑上结构化的、内容丰富的摘要，我将在此信息之后为您提供这本书的名称。摘要应清晰、简洁且易于理解,同时应涵盖尽可能多的内容。\n使用以下指导原则组织摘要：\n使用章节标题表示主要部件,使用章节子标题,使用项目符号列表表示章节内的关键点。包含章节名称及其各自的项目符号内容。确保章节中的项目符号要点内容丰富且具体。使用清晰简洁的语言，避免行话或复杂的措辞。在整个摘要中保持逻辑流程和一致性。完成总结后，提供一份5本书的建议清单，包括每项建议的简要说明，突出其相关性和独特见解。以用户要求的相同语言回答。",
+      "wrapper": "%s",
+      "remark": "summarize using the header, plot",
       "tags": [
         "write"
       ]
