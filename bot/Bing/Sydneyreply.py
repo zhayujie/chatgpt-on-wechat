@@ -36,14 +36,18 @@ class SydneyBot(Bot):
                 return reply
             session = self.sessions.session_query(query, session_id)
             logger.debug("[SYDNEY] session query={}".format(session.messages))
-            reply_content = asyncio.run(Sydney_proess.sydney_reply(session))
-            logger.debug(
-                "[SYDNEY] new_query={}, session_id={}, reply_cont={}".format(
-                    session.messages,
-                    session_id,
-                    reply_content["content"],
+            try:
+                reply_content = asyncio.run(Sydney_proess.sydney_reply(session))
+                self.sessions.session_reply(reply_content["content"], session_id)
+                logger.debug(
+                    "[SYDNEY] new_query={}, session_id={}, reply_cont={}".format(
+                        session.messages,
+                        session_id,
+                        reply_content["content"],
+                    )
                 )
-            )
-            self.sessions.session_reply(reply_content["content"], session_id)
+            except Exception:
+                reply_content = asyncio.run(Sydney_proess.sydney_reply(session))
+                self.sessions.session_reply(reply_content["content"], session_id)
             reply = Reply(ReplyType.TEXT, reply_content["content"])
             return reply
