@@ -39,16 +39,16 @@ def get_room_info(wework, conversation_id):
 
 def cdn_download(wework, message, file_name):
     data = message["data"]
-    url = data["cdn"]["url"]
-    auth_key = data["cdn"]["auth_key"]
     aes_key = data["cdn"]["aes_key"]
     file_size = data["cdn"]["size"]
+    file_type = 2
+    file_id = data["cdn"]["file_id"]
 
     # 获取当前工作目录，然后与文件名拼接得到保存路径
     current_dir = os.getcwd()
     save_path = os.path.join(current_dir, "tmp", file_name)
 
-    result = wework.wx_cdn_download(url, auth_key, aes_key, file_size, save_path)
+    result = wework.c2c_cdn_download(file_id, aes_key, file_size, file_type, save_path)
     logger.debug(result)
 
 
