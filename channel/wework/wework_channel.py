@@ -16,6 +16,7 @@ from channel.wework.wework_message import WeworkMessage
 from common.singleton import singleton
 from common.log import logger
 from common.time_check import time_checker
+from common.utils import compress_imgfile, fsize
 from config import conf
 from channel.wework.run import wework
 from channel.wework import run
@@ -38,12 +39,25 @@ def download_and_compress_image(url, filename, quality=30):
         os.makedirs(directory)
 
     # 下载图片
-    response = requests.get(url)
-    image = Image.open(io.BytesIO(response.content))
+    pic_res = requests.get(url, stream=True)
+    image_storage = io.BytesIO()
+    for block in pic_res.iter_content(1024):
+        image_storage.write(block)
 
-    # 压缩图片
-    image_path = os.path.join(directory, f"{filename}.jpg")
-    image.save(image_path, "JPEG", quality=quality)
+    # 检查图片大小并可能进行压缩
+    sz = fsize(image_storage)
+    if sz >= 10 * 1024 * 1024:  # 如果图片大于 10 MB
+        logger.info("[wework] image too large, ready to compress, sz={}".format(sz))
+        image_storage = compress_imgfile(image_storage, 10 * 1024 * 1024 - 1)
+        logger.info("[wework] image compressed, sz={}".format(fsize(image_storage)))
+
+    # 将内存缓冲区的指针重置到起始位置
+    image_storage.seek(0)
+
+    # 读取并保存图片
+    image = Image.open(image_storage)
+    image_path = os.path.join(directory, f"{filename}.png")
+    image.save(image_path, "png")
 
     return image_path
 
@@ -213,6 +227,9 @@ class WeworkChannel(ChatChannel):
     @time_checker
     @_check
     def handle_single(self, cmsg: ChatMessage):
+        if cmsg.from_user_id == cmsg.to_user_id:
+            # ignore self reply
+            return
         if cmsg.ctype == ContextType.VOICE:
             if not conf().get("speech_recognition"):
                 return
