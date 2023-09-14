@@ -69,6 +69,12 @@ def c2c_download_and_convert(wework, message, file_name):
     wav_file = base_name + ".wav"
     pilk.silk_to_wav(save_path, wav_file, rate=24000)
 
+    # 删除SILK文件
+    try:
+        os.remove(save_path)
+    except Exception as e:
+        pass
+
 
 class WeworkMessage(ChatMessage):
     def __init__(self, wework_msg, wework, is_group=False):
