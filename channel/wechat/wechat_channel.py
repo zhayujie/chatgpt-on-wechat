@@ -208,3 +208,7 @@ class WechatChannel(ChatChannel):
             image_storage.seek(0)
             itchat.send_image(image_storage, toUserName=receiver)
             logger.info("[WX] sendImage, receiver={}".format(receiver))
+        elif reply.type == ReplyType.FILE:  # 新增文件回复类型
+            file_storage = reply.content
+            itchat.send_file(file_storage, toUserName=receiver)
+            logger.info("[WX] sendFile, receiver={}".format(receiver))
