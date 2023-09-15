@@ -75,6 +75,12 @@ class Keyword(Plugin):
                 reply = Reply()
                 reply.type = ReplyType.FILE
                 reply.content = file_path
+            
+            elif (reply_text.startswith("http://") or reply_text.startswith("https://")) and any(reply_text.endswith(ext) for ext in [".mp4"]):
+            # 如果是以 http:// 或 https:// 开头，且".mp4"结尾，则下载视频到tmp目录并发送给用户
+                reply = Reply()
+                reply.type = ReplyType.VIDEO_URL
+                reply.content = reply_text
                 
             else:
             # 否则认为是普通文本
