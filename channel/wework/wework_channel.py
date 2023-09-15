@@ -319,5 +319,8 @@ class WeworkChannel(ChatChannel):
                 wework.send_video(receiver, video_path)
             logger.info("[WX] sendVideo, receiver={}".format(receiver))
         elif reply.type == ReplyType.VOICE:
+            current_dir = os.getcwd()
+            voice_file = reply.content.split("/")[-1]
+            reply.content = os.path.join(current_dir, "tmp", voice_file)
             wework.send_file(receiver, reply.content)
             logger.info("[WX] sendFile={}, receiver={}".format(reply.content, receiver))
