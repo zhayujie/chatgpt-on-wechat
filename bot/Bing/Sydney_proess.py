@@ -201,6 +201,11 @@ async def sydney_reply(session: SydneySession, retry_count=0) -> dict:
             # ，重新发送一次消息即可
             if need_retry:
                     time.sleep(10)
+        if "throttled" in str(e):
+            logger.warn("[SYDNEY] ConnectionError: {}".format(e))
+            reply = {"content": "抱歉，你的言论触发了必应过滤器。这条回复是预置的，仅用于提醒此情况下虽然召唤了bot也无法回复。"}
+            if need_retry:
+                time.sleep(10)
         else:
                 logger.exception("[SYDNEY] Exception: {}".format(e))
                 need_retry = False
