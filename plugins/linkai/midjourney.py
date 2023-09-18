@@ -115,6 +115,9 @@ class MJBot:
 
         if len(cmd) == 2 and (cmd[1] == "open" or cmd[1] == "close"):
             # midjourney 开关指令
+            if not _is_admin(e_context):
+                _set_reply_text("需要管理员权限执行", e_context, level=ReplyType.ERROR)
+                return
             is_open = True
             tips_text = "开启"
             if cmd[1] == "close":
