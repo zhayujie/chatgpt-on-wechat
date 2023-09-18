@@ -27,11 +27,12 @@ Demo made by [Visionn](https://www.wangpc.cc/)
 <img width="240" src="./docs/images/contact.jpg">
 
 # 更新日志
->**2023.09.01：** 增加 [企微个人号](#1385) 通道，[claude](1388)，讯飞星火模型
+
+>**2023.09.01：** 增加 [企微个人号](https://github.com/zhayujie/chatgpt-on-wechat/pull/1385) 通道，[claude](https://github.com/zhayujie/chatgpt-on-wechat/pull/1382) 模型
 
 >**2023.08.08：** 接入百度文心一言模型，通过 [插件](https://github.com/zhayujie/chatgpt-on-wechat/tree/master/plugins/linkai) 支持 Midjourney 绘图
 
->**2023.06.12：** 接入 [LinkAI](https://chat.link-ai.tech/console) 平台，可在线创建个人知识库，并接入微信、公众号及企业微信中，打造专属客服机器人。使用参考 [接入文档](https://link-ai.tech/platform/link-app/wechat)。
+>**2023.06.12：** 接入 [LinkAI](https://chat.link-ai.tech/console) 平台，可在线创建领域知识库，并接入微信、公众号及企业微信中，打造专属客服机器人。使用参考 [接入文档](https://link-ai.tech/platform/link-app/wechat)。
 
 >**2023.04.26：** 支持企业微信应用号部署，兼容插件，并支持语音图片交互，私人助理理想选择，[使用文档](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/channel/wechatcom/README.md)。(contributed by [@lanvent](https://github.com/lanvent) in [#944](https://github.com/zhayujie/chatgpt-on-wechat/pull/944))
 
