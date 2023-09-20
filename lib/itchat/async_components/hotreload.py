@@ -75,7 +75,9 @@ async def load_login_status(self, fileDir,
                     update_local_friends(self, [contact])
         if msgList:
             msgList = produce_msg(self, msgList)
-            for msg in msgList: self.msgList.put(msg)
+            for msg in msgList: 
+                if msg['MsgType'] != 37:
+                    self.msgList.put(msg)
         await self.start_receiving(exitCallback)
         logger.debug('loading login status succeeded.')
         if hasattr(loginCallback, '__call__'):
