@@ -16,7 +16,7 @@ dulwich
 # wechaty
 wechaty>=0.10.7
 wechaty_puppet>=0.4.23
-# pysilk_mod>=1.6.0 # needed by send voice only in wechaty
+pysilk_mod>=1.6.0 # needed by send voice only in wechaty
 
 # wechatmp wechatcom
 web.py

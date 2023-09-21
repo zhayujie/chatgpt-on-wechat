@@ -65,12 +65,12 @@ available_setting = {
     # wework的通用配置
     "wework_smart": True,  # 配置wework是否使用已登录的企业微信，False为多开
     # 语音设置
-    "speech_recognition": False,  # 是否开启语音识别
-    "group_speech_recognition": False,  # 是否开启群组语音识别
-    "voice_reply_voice": False,  # 是否使用语音回复语音，需要设置对应语音合成引擎的api key
-    "always_reply_voice": False,  # 是否一直使用语音回复
-    "voice_to_text": "openai",  # 语音识别引擎，支持openai,baidu,google,azure
-    "text_to_voice": "baidu",  # 语音合成引擎，支持baidu,google,pytts(offline),azure,elevenlabs
+    "speech_recognition": True,  # 是否开启语音识别
+    "group_speech_recognition": True,  # 是否开启群组语音识别
+    "voice_reply_voice": True,  # 是否使用语音回复语音，需要设置对应语音合成引擎的api key
+    "always_reply_voice": True,  # 是否一直使用语音回复
+    "voice_to_text": "azure",  # 语音识别引擎，支持openai,baidu,google,azure
+    "text_to_voice": "azure",  # 语音合成引擎，支持baidu,google,pytts(offline),azure,elevenlabs
     # baidu 语音api配置， 使用百度语音识别和语音合成时需要
     "baidu_app_id": "",
     "baidu_api_key": "",
@@ -78,8 +78,8 @@ available_setting = {
     # 1536普通话(支持简单的英文识别) 1737英语 1637粤语 1837四川话 1936普通话远场
     "baidu_dev_pid": "1536",
     # azure 语音api配置， 使用azure语音识别和语音合成时需要
-    "azure_voice_api_key": "",
-    "azure_voice_region": "japaneast",
+    "azure_voice_api_key":"8712c1ca52c945cfa43a3f2cd1042c02",
+    "azure_voice_region": "eastasia",
     # elevenlabs 语音api配置
     "xi_api_key": "",    #获取ap的方法可以参考https://docs.elevenlabs.io/api-reference/quick-start/authentication
     "xi_voice_id": "",   #ElevenLabs提供了9种英式、美式等英语发音id，分别是“Adam/Antoni/Arnold/Bella/Domi/Elli/Josh/Rachel/Sam”
@@ -276,5 +276,5 @@ def pconf(plugin_name: str) -> dict:
 
 # 全局配置，用于存放全局生效的状态
 global_config = {
-    "admin_users": []
+    "admin_users": ['光']
 }
