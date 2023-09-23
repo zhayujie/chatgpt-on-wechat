@@ -94,7 +94,7 @@ class WechatMPChannel(ChatChannel):
                     # support: <2M, <60s, mp3/wma/wav/amr
                     try:
                         with open(path, "rb") as f:
-                            response = self.client.media.upload("voice", f)
+                            response = self.client.material.add("voice", f)
                             logger.debug("[wechatmp] upload voice response: {}".format(response))
                             f_size = os.fstat(f.fileno()).st_size
                             time.sleep(1.0 + 2 * f_size / 1024 / 1024)
