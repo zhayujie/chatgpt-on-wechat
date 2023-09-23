@@ -10,6 +10,7 @@ import requests
 import web
 from wechatpy.crypto import WeChatCrypto
 from wechatpy.exceptions import WeChatClientException
+from collections import defaultdict
 
 from bridge.context import *
 from bridge.reply import *
@@ -46,7 +47,7 @@ class WechatMPChannel(ChatChannel):
             self.crypto = WeChatCrypto(token, aes_key, appid)
         if self.passive_reply:
             # Cache the reply to the user's first message
-            self.cache_dict = dict()
+            self.cache_dict = defaultdict(list)
             # Record whether the current message is being processed
             self.running = set()
             # Count the request from wechat official server by message_id
@@ -82,7 +83,7 @@ class WechatMPChannel(ChatChannel):
             if reply.type == ReplyType.TEXT or reply.type == ReplyType.INFO or reply.type == ReplyType.ERROR:
                 reply_text = reply.content
                 logger.info("[wechatmp] text cached, receiver {}\n{}".format(receiver, reply_text))
-                self.cache_dict[receiver] = ("text", reply_text)
+                self.cache_dict[receiver].append(("text", reply_text))
             elif reply.type == ReplyType.VOICE:
                 try:
                     voice_file_path = reply.content
@@ -99,7 +100,7 @@ class WechatMPChannel(ChatChannel):
                     return
                 media_id = response["media_id"]
                 logger.info("[wechatmp] voice uploaded, receiver {}, media_id {}".format(receiver, media_id))
-                self.cache_dict[receiver] = ("voice", media_id)
+                self.cache_dict[receiver].append(("voice", media_id))
 
             elif reply.type == ReplyType.IMAGE_URL:  # 从网络下载图片
                 img_url = reply.content
@@ -119,7 +120,7 @@ class WechatMPChannel(ChatChannel):
                     return
                 media_id = response["media_id"]
                 logger.info("[wechatmp] image uploaded, receiver {}, media_id {}".format(receiver, media_id))
-                self.cache_dict[receiver] = ("image", media_id)
+                self.cache_dict[receiver].append(("image", media_id))
             elif reply.type == ReplyType.IMAGE:  # 从文件读取图片
                 image_storage = reply.content
                 image_storage.seek(0)
@@ -134,7 +135,7 @@ class WechatMPChannel(ChatChannel):
                     return
                 media_id = response["media_id"]
                 logger.info("[wechatmp] image uploaded, receiver {}, media_id {}".format(receiver, media_id))
-                self.cache_dict[receiver] = ("image", media_id)
+                self.cache_dict[receiver].append(("image", media_id))
         else:
             if reply.type == ReplyType.TEXT or reply.type == ReplyType.INFO or reply.type == ReplyType.ERROR:
                 reply_text = reply.content
