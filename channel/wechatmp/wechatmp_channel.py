@@ -85,22 +85,26 @@ class WechatMPChannel(ChatChannel):
                 logger.info("[wechatmp] text cached, receiver {}\n{}".format(receiver, reply_text))
                 self.cache_dict[receiver].append(("text", reply_text))
             elif reply.type == ReplyType.VOICE:
-                try:
-                    voice_file_path = reply.content
-                    with open(voice_file_path, "rb") as f:
-                        # support: <2M, <60s, mp3/wma/wav/amr
-                        response = self.client.material.add("voice", f)
-                        logger.debug("[wechatmp] upload voice response: {}".format(response))
-                        # 根据文件大小估计一个微信自动审核的时间，审核结束前返回将会导致语音无法播放，这个估计有待验证
-                        f_size = os.fstat(f.fileno()).st_size
-                        time.sleep(1.0 + 2 * f_size / 1024 / 1024)
-                        # todo check media_id
-                except WeChatClientException as e:
-                    logger.error("[wechatmp] upload voice failed: {}".format(e))
-                    return
-                media_id = response["media_id"]
-                logger.info("[wechatmp] voice uploaded, receiver {}, media_id {}".format(receiver, media_id))
-                self.cache_dict[receiver].append(("voice", media_id))
+                voice_file_path = reply.content
+                duration, files = split_audio(voice_file_path, 60 * 1000)
+                if len(files) > 1:
+                    logger.info("[wechatmp] voice too long {}s > 60s , split into {} parts".format(duration / 1000.0, len(files)))
+
+                for path in files:
+                    # support: <2M, <60s, mp3/wma/wav/amr
+                    try:
+                        with open(path, "rb") as f:
+                            response = self.client.media.upload("voice", f)
+                            logger.debug("[wechatmp] upload voice response: {}".format(response))
+                            f_size = os.fstat(f.fileno()).st_size
+                            time.sleep(1.0 + 2 * f_size / 1024 / 1024)
+                            # todo check media_id
+                    except WeChatClientException as e:
+                        logger.error("[wechatmp] upload voice failed: {}".format(e))
+                        return
+                    media_id = response["media_id"]
+                    logger.info("[wechatmp] voice uploaded, receiver {}, media_id {}".format(receiver, media_id))
+                    self.cache_dict[receiver].append(("voice", media_id))
 
             elif reply.type == ReplyType.IMAGE_URL:  # 从网络下载图片
                 img_url = reply.content
