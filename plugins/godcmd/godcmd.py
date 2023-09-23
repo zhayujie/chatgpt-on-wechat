@@ -4,6 +4,7 @@ import json
 import os
 import random
 import string
+import logging
 from typing import Tuple
 
 import plugins
@@ -339,8 +340,12 @@ class Godcmd(Plugin):
                             else:
                                 ok, result = False, "当前对话机器人不支持重置会话"
                         elif cmd == "debug":
-                            logger.setLevel("DEBUG")
-                            ok, result = True, "DEBUG模式已开启"
+                            if logger.getEffectiveLevel() == logging.DEBUG:  # 判断当前日志模式是否DEBUG
+                                logger.setLevel(logging.INFO)
+                                ok, result = True, "DEBUG模式已关闭"
+                            else:
+                                logger.setLevel(logging.DEBUG)
+                                ok, result = True, "DEBUG模式已开启"
                         elif cmd == "plist":
                             plugins = PluginManager().list_plugins()
                             ok = True
