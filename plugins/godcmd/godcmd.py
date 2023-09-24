@@ -6,6 +6,7 @@ import random
 import string
 from typing import Tuple
 
+import bridge.bridge
 import plugins
 from bridge.bridge import Bridge
 from bridge.context import ContextType
@@ -310,6 +311,8 @@ class Godcmd(Plugin):
                 elif cmd == "reset":
                     if bottype in [const.OPEN_AI, const.CHATGPT, const.CHATGPTONAZURE, const.LINKAI, const.BAIDU, const.XUNFEI]:
                         bot.sessions.clear_session(session_id)
+                        if Bridge().chat_bots.get(bottype):
+                            Bridge().chat_bots.get(bottype).sessions.clear_session(session_id)
                         channel.cancel_session(session_id)
                         ok, result = True, "会话已重置"
                     else:
