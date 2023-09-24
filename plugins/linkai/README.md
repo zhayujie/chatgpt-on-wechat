@@ -6,11 +6,11 @@
 
 将 `plugins/linkai` 目录下的 `config.json.template` 配置模板复制为最终生效的 `config.json`。 (如果未配置则会默认使用`config.json.template`模板中配置，但功能默认关闭，需要可通过指令进行开启)。
 
-以下是配置项说明：
+以下是插件配置项说明：
 
 ```bash
 {
-    "group_app_map": {            # 群聊 和 应用编码 的映射关系
+    "group_app_map": {               # 群聊 和 应用编码 的映射关系
         "测试群名称1": "default",      # 表示在名称为 "测试群名称1" 的群聊中将使用app_code 为 default 的应用
         "测试群名称2": "Kv2fXJcH"
     },
@@ -29,8 +29,14 @@
         "max_file_size": 15000        # 文件的大小限制，单位KB，超过该大小直接忽略
     }
 }
-
 ```
+
+根目录 `config.json` 中配置，`API_KEY` 在 [控制台](https://chat.link-ai.tech/console/interface) 中创建并复制过来:
+
+```bash
+"linkai_api_key": "Link_xxxxxxxxx"
+```
+
 注意：
 
  - 配置项中 `group_app_map` 部分是用于映射群聊与LinkAI平台上的应用， `midjourney` 部分是 mj 画图的配置，`summary` 部分是文档总结及对话功能的配置。三部分的配置相互独立，可按需开启
@@ -39,7 +45,7 @@
 
 ## 插件使用
 
-> 使用插件中的知识库管理功能需要首先开启`linkai`对话，依赖全局 `config.json` 中的 `use_linkai` 和 `linkai_api_key` 配置；而midjourney绘画和summary文档总结对话功能则只需填写 `linkai_api_key` 配置，`use_linkai` 无论是否关闭均可使用。具体可参考 [详细文档](https://link-ai.tech/platform/link-app/wechat)。
+> 使用插件中的知识库管理功能需要首先开启`linkai`对话，依赖全局 `config.json` 中的 `use_linkai` 和 `linkai_api_key` 配置；而midjourney绘画 和 summary文档总结对话功能则只需填写 `linkai_api_key` 配置，`use_linkai` 无论是否关闭均可使用。具体可参考 [详细文档](https://link-ai.tech/platform/link-app/wechat)。
 
 完成配置后运行项目，会自动运行插件，输入 `#help linkai` 可查看插件功能。
 
@@ -88,17 +94,16 @@
 
 #### 配置
 
-该功能依赖 LinkAI的知识库及对话功能，需要在项目根目录的config.json中设置 `linkai_api_key`， 同时上述插件配置说明，添加 `summary` 部分的配置，设置 `enabled` 为 true。
+该功能依赖 LinkAI的知识库及对话功能，需要在项目根目录的config.json中设置 `linkai_api_key`， 同时根据上述插件配置说明，添加 `summary` 部分的配置，设置 `enabled` 为 true。
 
 如果不想创建 `plugins/linkai/config.json` 配置，可以直接通过 `$linkai sum open` 指令开启该功能。
 
 #### 使用
 
-功能开启后，向机器人发送 **文件** 或 **分享链接卡片** 即可生成摘要，输入 "开启对话" 后，可以与文件或链接的内容进行多轮对话，输入 "退出对话"
- 可关闭与内容的对话。
+功能开启后，向机器人发送 **文件** 或 **分享链接卡片** 即可生成摘要，进一步可以与文件或链接的内容进行多轮对话。
 
 #### 限制
 
- 1. 文件目前 支持 `txt`, `docx`, `pdf`, `md`, `csv`格式，文件大小由 `max_file_size` 限制，最大不超过15M，文件字数由 `max_summary_words` 配置限制，最多可支持百万字的文件，但不建议上传字数过多的文件，一是token消耗过大，而是摘要很难概括到全部内容，但可以通过对话了解细节。
+ 1. 文件目前 支持 `txt`, `docx`, `pdf`, `md`, `csv`格式，文件大小由 `max_file_size` 限制，最大不超过15M，文件字数由 `max_summary_words` 配置限制，最多可支持百万字的文件。但不建议上传字数过多的文件，一是token消耗过大，二是摘要很难覆盖到全部内容，但可以通过多轮对话来了解细节。
  2. 分享链接 目前仅支持 公众号文章，后续会支持更多文章类型及视频链接等
  3. 总结及对话的 费用与 LinkAI 3.5-4K 模型的计费方式相同，按文档内容的tokens进行计算
