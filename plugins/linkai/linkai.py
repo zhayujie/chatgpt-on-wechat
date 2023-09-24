@@ -61,7 +61,8 @@ class LinkAI(Plugin):
             _set_reply_text(res.get("summary") + "\n\n💬 发送 \"开启对话\" 可以开启与文件内容的对话", e_context, level=ReplyType.TEXT)
             return
 
-        if context.type == ContextType.SHARING and self._is_summary_open(context):
+        if (context.type == ContextType.SHARING and self._is_summary_open(context)) or \
+                (context.type == ContextType.TEXT and LinkSummary().check_url(context.content)):
             if not LinkSummary().check_url(context.content):
                 return
             _send_info(e_context, "正在为你加速生成摘要，请稍后")

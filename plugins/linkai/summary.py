@@ -65,13 +65,9 @@ class LinkSummary:
 
     def check_file(self, file_path: str, sum_config: dict) -> bool:
         file_size = os.path.getsize(file_path) // 1000
-        with open(file_path, 'r') as f:
-            content = f.read()
-            word_count = len(content)
 
-        if (sum_config.get("max_file_size") and file_size > sum_config.get("max_file_size")) or file_size > 15000\
-                or (sum_config.get("max_summary_words") and word_count > sum_config.get("max_summary_words")):
-            logger.warn(f"[LinkSum] file size exceeds limit, No processing, file_size={file_size}KB, word_count={word_count}")
+        if (sum_config.get("max_file_size") and file_size > sum_config.get("max_file_size")) or file_size > 15000:
+            logger.warn(f"[LinkSum] file size exceeds limit, No processing, file_size={file_size}KB")
             return True
 
         suffix = file_path.split(".")[-1]
@@ -83,9 +79,11 @@ class LinkSummary:
         return True
 
     def check_url(self, url: str):
-        support_list = ["mp.weixin.qq.com"]
+        if not url:
+            return False
+        support_list = ["http://mp.weixin.qq.com", "https://mp.weixin.qq.com"]
         for support_url in support_list:
-            if support_url in url:
+            if url.strip().startswith(support_url):
                 return True
         logger.warn("[LinkSum] unsupported url")
         return False

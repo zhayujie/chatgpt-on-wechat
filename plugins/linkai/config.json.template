@@ -14,7 +14,6 @@
     "summary": {
         "enabled": true,
         "group_enabled": true,
-        "max_summary_words": 50000,
         "max_file_size": 15000
     }
 }
