@@ -32,6 +32,7 @@ class Bridge(object):
         if model_type in ["claude"]:
             self.btype["chat"] = const.CLAUDEAI
         self.bots = {}
+        self.chat_bots = {}
 
     def get_bot(self, typename):
         if self.bots.get(typename) is None:
@@ -60,6 +61,11 @@ class Bridge(object):
 
     def fetch_translate(self, text, from_lang="", to_lang="en") -> Reply:
         return self.get_bot("translate").translate(text, from_lang, to_lang)
+
+    def find_chat_bot(self, bot_type: str):
+        if self.chat_bots.get(bot_type) is None:
+            self.chat_bots[bot_type] = create_bot(bot_type)
+        return self.chat_bots.get(bot_type)
 
     def reset_bot(self):
         """

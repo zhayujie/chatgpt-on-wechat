@@ -1,10 +1,10 @@
 ## 插件说明
 
-基于 LinkAI 提供的知识库、Midjourney绘画等能力对机器人的功能进行增强。平台地址: https://chat.link-ai.tech/console
+基于 LinkAI 提供的知识库、Midjourney绘画、文档对话等能力对机器人的功能进行增强。平台地址: https://chat.link-ai.tech/console
 
 ## 插件配置
 
-将 `plugins/linkai` 目录下的 `config.json.template` 配置模板复制为最终生效的 `config.json`。 (如果未配置则会默认使用`config.json.template`模板中配置，功能默认关闭，可通过指令进行开启)。
+将 `plugins/linkai` 目录下的 `config.json.template` 配置模板复制为最终生效的 `config.json`。 (如果未配置则会默认使用`config.json.template`模板中配置，但功能默认关闭，需要可通过指令进行开启)。
 
 以下是配置项说明：
 
@@ -21,19 +21,25 @@
         "max_tasks": 3,           # 支持同时提交的总任务个数
         "max_tasks_per_user": 1,  # 支持单个用户同时提交的任务个数
         "use_image_create_prefix": true   # 是否使用全局的绘画触发词，如果开启将同时支持由`config.json`中的 image_create_prefix 配置触发
+    },
+    "summary": {
+        "enabled": true,              # 文档总结和对话功能开关
+        "group_enabled": true,        # 是否支持群聊开启
+        "max_summary_words": 50000,   # 文章的最大字数，超过字数则直接忽略
+        "max_file_size": 15000        # 文件的大小限制，单位KB，超过该大小直接忽略
     }
 }
 
 ```
 注意：
 
- - 配置项中 `group_app_map` 部分是用于映射群聊与LinkAI平台上的应用， `midjourney` 部分是 mj 画图的配置，可根据需要进行填写，未填写配置时默认不开启相应功能
+ - 配置项中 `group_app_map` 部分是用于映射群聊与LinkAI平台上的应用， `midjourney` 部分是 mj 画图的配置，`summary` 部分是文档总结及对话功能的配置。三部分的配置相互独立，可按需开启
  - 实际 `config.json` 配置中应保证json格式，不应携带 '#' 及后面的注释
  - 如果是`docker`部署，可通过映射 `plugins/config.json` 到容器中来完成插件配置，参考[文档](https://github.com/zhayujie/chatgpt-on-wechat#3-%E6%8F%92%E4%BB%B6%E4%BD%BF%E7%94%A8)
 
 ## 插件使用
 
-> 使用插件中的知识库管理功能需要首先开启`linkai`对话，依赖全局 `config.json` 中的 `use_linkai` 和 `linkai_api_key` 配置；而midjourney绘画功能则只需填写 `linkai_api_key` 配置，`use_linkai` 无论是否关闭均可使用。具体可参考 [详细文档](https://link-ai.tech/platform/link-app/wechat)。
+> 使用插件中的知识库管理功能需要首先开启`linkai`对话，依赖全局 `config.json` 中的 `use_linkai` 和 `linkai_api_key` 配置；而midjourney绘画和summary文档总结对话功能则只需填写 `linkai_api_key` 配置，`use_linkai` 无论是否关闭均可使用。具体可参考 [详细文档](https://link-ai.tech/platform/link-app/wechat)。
 
 完成配置后运行项目，会自动运行插件，输入 `#help linkai` 可查看插件功能。
 
@@ -77,3 +83,22 @@
 3. 开启 `use_image_create_prefix` 配置后可直接复用全局画图触发词，以"画"开头便可以生成图片。
 4. 提示词内容中包含敏感词或者参数格式错误可能导致绘画失败，生成失败不消耗积分
 5. 若未收到图片可能有两种可能，一种是收到了图片但微信发送失败，可以在后台日志查看有没有获取到图片url，一般原因是受到了wx限制，可以稍后重试或更换账号尝试；另一种情况是图片提示词存在疑似违规，mj不会直接提示错误但会在画图后删掉原图导致程序无法获取，这种情况不消耗积分。
+
+### 3.文档总结对话功能
+
+#### 配置
+
+该功能依赖 LinkAI的知识库及对话功能，需要在项目根目录的config.json中设置 `linkai_api_key`， 同时上述插件配置说明，添加 `summary` 部分的配置，设置 `enabled` 为 true。
+
+如果不想创建 `plugins/linkai/config.json` 配置，可以直接通过 `$linkai sum open` 指令开启该功能。
+
+#### 使用
+
+功能开启后，向机器人发送 **文件** 或 **分享链接卡片** 即可生成摘要，输入 "开启对话" 后，可以与文件或链接的内容进行多轮对话，输入 "退出对话"
+ 可关闭与内容的对话。
+
+#### 限制
+
+ 1. 文件目前 支持 `txt`, `docx`, `pdf`, `md`, `csv`格式，文件大小由 `max_file_size` 限制，最大不超过15M，文件字数由 `max_summary_words` 配置限制，最多可支持百万字的文件，但不建议上传字数过多的文件，一是token消耗过大，而是摘要很难概括到全部内容，但可以通过对话了解细节。
+ 2. 分享链接 目前仅支持 公众号文章，后续会支持更多文章类型及视频链接等
+ 3. 总结及对话的 费用与 LinkAI 3.5-4K 模型的计费方式相同，按文档内容的tokens进行计算
