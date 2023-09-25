@@ -8,6 +8,7 @@ from .summary import LinkSummary
 from bridge import bridge
 from common.expired_dict import ExpiredDict
 from common import const
+import os
 
 
 @plugins.register(
@@ -59,6 +60,7 @@ class LinkAI(Plugin):
                 return
             USER_FILE_MAP[_find_user_id(context) + "-sum_id"] = res.get("summary_id")
             _set_reply_text(res.get("summary") + "\n\n💬 发送 \"开启对话\" 可以开启与文件内容的对话", e_context, level=ReplyType.TEXT)
+            os.remove(file_path)
             return
 
         if (context.type == ContextType.SHARING and self._is_summary_open(context)) or \
@@ -281,4 +283,5 @@ def _find_sum_id(context):
 def _find_file_id(context):
     return USER_FILE_MAP.get(_find_user_id(context) + "-file_id")
 
-USER_FILE_MAP = ExpiredDict(60 * 60)
+
+USER_FILE_MAP = ExpiredDict(conf().get("expires_in_seconds") or 60 * 60)
