@@ -85,5 +85,5 @@ class LinkSummary:
         for support_url in support_list:
             if url.strip().startswith(support_url):
                 return True
-        logger.warn("[LinkSum] unsupported url")
+        logger.debug("[LinkSum] unsupported url, no need to process")
         return False

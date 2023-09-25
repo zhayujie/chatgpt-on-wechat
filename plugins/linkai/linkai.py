@@ -171,8 +171,11 @@ class LinkAI(Plugin):
             if cmd[2] == "close":
                 tips_text = "关闭"
                 is_open = False
-            self.sum_config["enabled"] = is_open
-            _set_reply_text(f"文章总结功能{tips_text}", e_context, level=ReplyType.INFO)
+            if not self.sum_config:
+                _set_reply_text(f"插件未启用summary功能，请参考以下链添加插件配置\n\nhttps://github.com/zhayujie/chatgpt-on-wechat/blob/master/plugins/linkai/README.md", e_context, level=ReplyType.INFO)
+            else:
+                self.sum_config["enabled"] = is_open
+                _set_reply_text(f"文章总结功能{tips_text}", e_context, level=ReplyType.INFO)
         else:
             _set_reply_text(f"指令错误，请输入{_get_trigger_prefix()}linkai help 获取帮助", e_context,
                             level=ReplyType.INFO)

@@ -93,7 +93,7 @@
 
 #### 配置
 
-该功能依赖 LinkAI的知识库及对话功能，需要在项目根目录的config.json中设置 `linkai_api_key`， 同时根据上述插件配置说明，添加 `summary` 部分的配置，设置 `enabled` 为 true。
+该功能依赖 LinkAI的知识库及对话功能，需要在项目根目录的config.json中设置 `linkai_api_key`， 同时根据上述插件配置说明，在插件config.json添加 `summary` 部分的配置，设置 `enabled` 为 true。
 
 如果不想创建 `plugins/linkai/config.json` 配置，可以直接通过 `$linkai sum open` 指令开启该功能。
 
