@@ -160,6 +160,7 @@ class LinkAI(Plugin):
             # 保存插件配置
             super().save_config(self.config)
             _set_reply_text(f"应用设置成功: {app_code}", e_context, level=ReplyType.INFO)
+            return
 
         if len(cmd) == 3 and cmd[1] == "sum" and (cmd[2] == "open" or cmd[2] == "close"):
             # 知识库开关指令
@@ -176,10 +177,11 @@ class LinkAI(Plugin):
             else:
                 self.sum_config["enabled"] = is_open
                 _set_reply_text(f"文章总结功能{tips_text}", e_context, level=ReplyType.INFO)
-        else:
-            _set_reply_text(f"指令错误，请输入{_get_trigger_prefix()}linkai help 获取帮助", e_context,
-                            level=ReplyType.INFO)
             return
+
+        _set_reply_text(f"指令错误，请输入{_get_trigger_prefix()}linkai help 获取帮助", e_context,
+                        level=ReplyType.INFO)
+        return
 
     def _is_summary_open(self, context) -> bool:
         if not self.sum_config or not self.sum_config.get("enabled"):
