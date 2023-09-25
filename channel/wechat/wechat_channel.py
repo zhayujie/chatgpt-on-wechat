@@ -210,3 +210,24 @@ class WechatChannel(ChatChannel):
             image_storage.seek(0)
             itchat.send_image(image_storage, toUserName=receiver)
             logger.info("[WX] sendImage, receiver={}".format(receiver))
+        elif reply.type == ReplyType.FILE:  # 新增文件回复类型
+            file_storage = reply.content
+            itchat.send_file(file_storage, toUserName=receiver)
+            logger.info("[WX] sendFile, receiver={}".format(receiver))
+        elif reply.type == ReplyType.VIDEO:  # 新增视频回复类型
+            video_storage = reply.content
+            itchat.send_video(video_storage, toUserName=receiver)
+            logger.info("[WX] sendFile, receiver={}".format(receiver))
+        elif reply.type == ReplyType.VIDEO_URL:  # 新增视频URL回复类型
+            video_url = reply.content
+            logger.debug(f"[WX] start download video, video_url={video_url}")
+            video_res = requests.get(video_url, stream=True)
+            video_storage = io.BytesIO()
+            size = 0
+            for block in video_res.iter_content(1024):
+                size += len(block)
+                video_storage.write(block)
+            logger.info(f"[WX] download video success, size={size}, video_url={video_url}")
+            video_storage.seek(0)
+            itchat.send_video(video_storage, toUserName=receiver)
+            logger.info("[WX] sendVideo url={}, receiver={}".format(video_url, receiver))
