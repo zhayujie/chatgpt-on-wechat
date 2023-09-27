@@ -205,6 +205,8 @@ class ChatChannel(Channel):
             elif context.type == ContextType.IMAGE:  # 图片消息，当前仅做下载保存到本地的逻辑
                 cmsg = context["msg"]
                 cmsg.prepare()
+            elif context.type == ContextType.SHARING:  # 分享信息，当前无默认逻辑
+                pass
             elif context.type == ContextType.FUNCTION or context.type == ContextType.FILE:  # 文件消息及函数调用等，当前无默认逻辑
                 pass
             else:
