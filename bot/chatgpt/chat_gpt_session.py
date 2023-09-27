@@ -55,11 +55,16 @@ class ChatGPTSession(Session):
 # refer to https://github.com/openai/openai-cookbook/blob/main/examples/How_to_count_tokens_with_tiktoken.ipynb
 def num_tokens_from_messages(messages, model):
     """Returns the number of tokens used by a list of messages."""
+
+    if model in ["wenxin", "xunfei"]:
+        return num_tokens_by_character(messages)
+
     import tiktoken
 
     if model in ["gpt-3.5-turbo-0301", "gpt-35-turbo"]:
         return num_tokens_from_messages(messages, model="gpt-3.5-turbo")
-    elif model in ["gpt-4-0314", "gpt-4-0613", "gpt-4-32k", "gpt-4-32k-0613", "gpt-3.5-turbo-0613", "gpt-3.5-turbo-16k", "gpt-3.5-turbo-16k-0613", "gpt-35-turbo-16k"]:
+    elif model in ["gpt-4-0314", "gpt-4-0613", "gpt-4-32k", "gpt-4-32k-0613", "gpt-3.5-turbo-0613",
+                   "gpt-3.5-turbo-16k", "gpt-3.5-turbo-16k-0613", "gpt-35-turbo-16k"]:
         return num_tokens_from_messages(messages, model="gpt-4")
 
     try:
@@ -85,3 +90,11 @@ def num_tokens_from_messages(messages, model):
                 num_tokens += tokens_per_name
     num_tokens += 3  # every reply is primed with <|start|>assistant<|message|>
     return num_tokens
+
+
+def num_tokens_by_character(messages):
+    """Returns the number of tokens used by a list of messages."""
+    tokens = 0
+    for msg in messages:
+        tokens += len(msg["content"])
+    return tokens
