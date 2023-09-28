@@ -28,7 +28,7 @@ Demo made by [Visionn](https://www.wangpc.cc/)
 
 # 更新日志
 
->**2023.09.01：** 增加 [企微个人号](https://github.com/zhayujie/chatgpt-on-wechat/pull/1385) 通道，[claude](https://github.com/zhayujie/chatgpt-on-wechat/pull/1382) 模型
+>**2023.09.26：** 插件增加 文件/文章链接 一键总结和对话的功能，使用参考：插件说明
 
 >**2023.08.08：** 接入百度文心一言模型，通过 [插件](https://github.com/zhayujie/chatgpt-on-wechat/tree/master/plugins/linkai) 支持 Midjourney 绘图
 

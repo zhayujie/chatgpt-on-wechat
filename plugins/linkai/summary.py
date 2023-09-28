@@ -13,7 +13,7 @@ class LinkSummary:
             "file": open(file_path, "rb"),
             "name": file_path.split("/")[-1],
         }
-        res = requests.post(url=self.base_url() + "/v1/summary/file", headers=self.headers(), files=file_body, timeout=(5, 180))
+        res = requests.post(url=self.base_url() + "/v1/summary/file", headers=self.headers(), files=file_body, timeout=(5, 300))
         return self._parse_summary_res(res)
 
     def summary_url(self, url: str):
@@ -68,7 +68,7 @@ class LinkSummary:
 
         if (sum_config.get("max_file_size") and file_size > sum_config.get("max_file_size")) or file_size > 15000:
             logger.warn(f"[LinkSum] file size exceeds limit, No processing, file_size={file_size}KB")
-            return True
+            return False
 
         suffix = file_path.split(".")[-1]
         support_list = ["txt", "csv", "docx", "pdf", "md"]
