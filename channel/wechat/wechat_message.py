@@ -34,6 +34,9 @@ class WechatMessage(ChatMessage):
                     self.actual_user_nickname = re.findall(r"\"(.*?)\"", itchat_msg["Content"])[-1]
                 elif "加入群聊" in itchat_msg["Content"]:
                     self.actual_user_nickname = re.findall(r"\"(.*?)\"", itchat_msg["Content"])[0]
+            elif "你已添加了" in itchat_msg["Content"]:  #通过好友请求
+                self.ctype = ContextType.ACCEPT_FRIEND
+                self.content = itchat_msg["Content"]
             elif "拍了拍我" in itchat_msg["Content"]:
                 self.ctype = ContextType.PATPAT
                 self.content = itchat_msg["Content"]
