@@ -56,7 +56,7 @@ class LinkAI(Plugin):
             _send_info(e_context, "正在为你加速生成摘要，请稍后")
             res = LinkSummary().summary_file(file_path)
             if not res:
-                _set_reply_text("总结出现异常，请稍后再试吧", e_context)
+                _set_reply_text("因为神秘力量无法获取文章内容，请稍后再试吧", e_context, level=ReplyType.TEXT)
                 return
             USER_FILE_MAP[_find_user_id(context) + "-sum_id"] = res.get("summary_id")
             _set_reply_text(res.get("summary") + "\n\n💬 发送 \"开启对话\" 可以开启与文件内容的对话", e_context, level=ReplyType.TEXT)
@@ -70,7 +70,7 @@ class LinkAI(Plugin):
             _send_info(e_context, "正在为你加速生成摘要，请稍后")
             res = LinkSummary().summary_url(context.content)
             if not res:
-                _set_reply_text("总结出现异常，请稍后再试吧", e_context)
+                _set_reply_text("因为神秘力量无法获取文章内容，请稍后再试吧~", e_context, level=ReplyType.TEXT)
                 return
             _set_reply_text(res.get("summary") + "\n\n💬 发送 \"开启对话\" 可以开启与文章内容的对话", e_context, level=ReplyType.TEXT)
             USER_FILE_MAP[_find_user_id(context) + "-sum_id"] = res.get("summary_id")
