@@ -262,7 +262,11 @@ def _is_admin(e_context: EventContext) -> bool:
     """
     context = e_context["context"]
     if context["isgroup"]:
-        return context.kwargs.get("msg").actual_user_id in global_config["admin_users"]
+        actual_user_id= context.kwargs.get("msg").actual_user_id
+        for admin_user in global_config["admin_users"]:
+            if actual_user_id and actual_user_id in admin_user:
+                return True
+        return False
     else:
         return context["receiver"] in global_config["admin_users"]
 
