@@ -43,7 +43,7 @@ class WechatMessage(ChatMessage):
                 raise NotImplementedError("Unsupported note message: " + itchat_msg["Content"])
         elif itchat_msg["Type"] == ATTACHMENT:
             self.ctype = ContextType.FILE
-            self.content = TmpDir().path() + itchat_msg["FileName"]
+            self.content = TmpDir().path() + itchat_msg["FileName"]  # content直接存临时目录路径
             self._prepare_fn = lambda: itchat_msg.download(self.content)
         elif itchat_msg["Type"] == SHARING:
             self.ctype = ContextType.SHARING

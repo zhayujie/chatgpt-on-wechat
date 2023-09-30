@@ -197,7 +197,7 @@ class LinkAIBot(Bot, OpenAIImage):
                 plugin_config = pconf("linkai")
                 if plugin_config.get("knowledge_base") and plugin_config.get("knowledge_base").get("search_miss_text_enabled"):
                     search_miss_similarity = plugin_config.get("knowledge_base").get("search_miss_similarity")
-                    search_miss_text =  plugin_config.get("knowledge_base").get("search_miss_text")
+                    search_miss_text = plugin_config.get("knowledge_base").get("search_miss_suffix")
                     if not search_hit:
                         return search_miss_text
                     if search_miss_similarity and float(search_miss_similarity) > first_similarity:
