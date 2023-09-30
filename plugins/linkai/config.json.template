@@ -15,5 +15,10 @@
         "enabled": true,
         "group_enabled": true,
         "max_file_size": 5000
+    },
+    "knowledge_base": {
+        "search_miss_text_enabled": false,
+        "search_miss_similarity": 0.8,
+        "search_miss_suffix": "\n-------------\n回复仅供参考，请以官方文档为准"
     }
 }
