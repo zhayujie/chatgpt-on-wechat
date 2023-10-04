@@ -84,7 +84,7 @@ async def sydney_reply(session: SydneySession, retry_count=0) -> dict:
             context=context_extended,                                
             proxy=proxy if proxy != "" else None,
             # image_url=visual_search_url,              
-            wss_url='wss://' + 'sydneybot.mamba579jpy.workers.dev' + '/sydney/ChatHub',
+            wss_url='wss://' + 'sydney.bing.com' + '/sydney/ChatHub',
             # 'sydney.bing.com'
             cookies=cookies
         )) as para:            
@@ -137,7 +137,7 @@ async def sydney_reply(session: SydneySession, retry_count=0) -> dict:
                 prompt=ask_string,
                 context=context,                                
                 proxy=proxy if proxy else None,            
-                wss_url='wss://' + 'sydneybot.mamba579jpy.workers.dev' + '/sydney/ChatHub',
+                wss_url='wss://' + 'sydney.bing.com' + '/sydney/ChatHub',
                 # 'sydney.bing.com'
                 # sydneybot.mamba579jpy.workers.dev
                 cookies=cookies)) as agen:            
