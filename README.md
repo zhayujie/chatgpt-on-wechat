@@ -28,8 +28,6 @@
 
 >**2023.09.26：** 插件增加 文件/文章链接 一键总结和对话的功能，使用参考：[插件说明](https://github.com/zhayujie/chatgpt-on-wechat/tree/master/plugins/linkai#3%E6%96%87%E6%A1%A3%E6%80%BB%E7%BB%93%E5%AF%B9%E8%AF%9D%E5%8A%9F%E8%83%BD)
 
->**2023.09.01：** 增加 [企微个人号](https://github.com/zhayujie/chatgpt-on-wechat/pull/1385) 通道，[claude](https://github.com/zhayujie/chatgpt-on-wechat/pull/1382) 模型
-
 >**2023.08.08：** 接入百度文心一言模型，通过 [插件](https://github.com/zhayujie/chatgpt-on-wechat/tree/master/plugins/linkai) 支持 Midjourney 绘图
 
 >**2023.06.12：** 接入 [LinkAI](https://chat.link-ai.tech/console) 平台，可在线创建领域知识库，并接入微信、公众号及企业微信中，打造专属客服机器人。使用参考 [接入文档](https://link-ai.tech/platform/link-app/wechat)。

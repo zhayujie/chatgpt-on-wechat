@@ -25,7 +25,7 @@
     "summary": {
         "enabled": true,              # 文档总结和对话功能开关
         "group_enabled": true,        # 是否支持群聊开启
-        "max_file_size": 10000        # 文件的大小限制，单位KB，默认为10M，超过该大小直接忽略
+        "max_file_size": 5000        # 文件的大小限制，单位KB，默认为5M，超过该大小直接忽略
     }
 }
 ```
