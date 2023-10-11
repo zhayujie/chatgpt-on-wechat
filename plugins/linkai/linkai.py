@@ -186,7 +186,7 @@ class LinkAI(Plugin):
     def _is_summary_open(self, context) -> bool:
         if not self.sum_config or not self.sum_config.get("enabled"):
             return False
-        if not context.kwargs.get("isgroup") and not self.sum_config.get("group_enabled"):
+        if context.kwargs.get("isgroup") and not self.sum_config.get("group_enabled"):
             return False
         return True
 
