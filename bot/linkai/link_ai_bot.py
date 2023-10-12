@@ -12,7 +12,7 @@ from bot.session_manager import SessionManager
 from bridge.context import Context, ContextType
 from bridge.reply import Reply, ReplyType
 from common.log import logger
-from config import conf
+from config import conf, pconf
 
 
 class LinkAIBot(Bot, OpenAIImage):
@@ -79,7 +79,10 @@ class LinkAIBot(Bot, OpenAIImage):
                 "frequency_penalty": conf().get("frequency_penalty", 0.0),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
                 "presence_penalty": conf().get("presence_penalty", 0.0),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
             }
-            logger.info(f"[LINKAI] query={query}, app_code={app_code}, mode={body.get('model')}")
+            file_id = context.kwargs.get("file_id")
+            if file_id:
+                body["file_id"] = file_id
+            logger.info(f"[LINKAI] query={query}, app_code={app_code}, mode={body.get('model')}, file_id={file_id}")
             headers = {"Authorization": "Bearer " + linkai_api_key}
 
             # do http request
@@ -91,6 +94,9 @@ class LinkAIBot(Bot, OpenAIImage):
                 response = res.json()
                 reply_content = response["choices"][0]["message"]["content"]
                 total_tokens = response["usage"]["total_tokens"]
+                suffix = self._fecth_knowledge_search_suffix(response)
+                if suffix:
+                    reply_content += suffix
                 logger.info(f"[LINKAI] reply={reply_content}, total_tokens={total_tokens}")
                 self.sessions.session_reply(reply_content, session_id, total_tokens)
                 return Reply(ReplyType.TEXT, reply_content)
@@ -180,3 +186,21 @@ class LinkAIBot(Bot, OpenAIImage):
             time.sleep(2)
             logger.warn(f"[LINKAI] do retry, times={retry_count}")
             return self.reply_text(session, app_code, retry_count + 1)
+
+
+    def _fecth_knowledge_search_suffix(self, response) -> str:
+        try:
+            if response.get("knowledge_base"):
+                search_hit = response.get("knowledge_base").get("search_hit")
+                first_similarity = response.get("knowledge_base").get("first_similarity")
+                logger.info(f"[LINKAI] knowledge base, search_hit={search_hit}, first_similarity={first_similarity}")
+                plugin_config = pconf("linkai")
+                if plugin_config.get("knowledge_base") and plugin_config.get("knowledge_base").get("search_miss_text_enabled"):
+                    search_miss_similarity = plugin_config.get("knowledge_base").get("search_miss_similarity")
+                    search_miss_text = plugin_config.get("knowledge_base").get("search_miss_suffix")
+                    if not search_hit:
+                        return search_miss_text
+                    if search_miss_similarity and float(search_miss_similarity) > first_similarity:
+                        return search_miss_text
+        except Exception as e:
+            logger.exception(e)

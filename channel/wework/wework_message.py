@@ -8,6 +8,7 @@ import pilk
 from bridge.context import ContextType
 from channel.chat_message import ChatMessage
 from common.log import logger
+from ntwork.const import send_type
 
 
 def get_with_retry(get_func, max_retries=5, delay=5):
@@ -39,8 +40,6 @@ def get_room_info(wework, conversation_id):
 
 def cdn_download(wework, message, file_name):
     data = message["data"]
-    url = data["cdn"]["url"]
-    auth_key = data["cdn"]["auth_key"]
     aes_key = data["cdn"]["aes_key"]
     file_size = data["cdn"]["size"]
 
@@ -48,8 +47,32 @@ def cdn_download(wework, message, file_name):
     current_dir = os.getcwd()
     save_path = os.path.join(current_dir, "tmp", file_name)
 
-    result = wework.wx_cdn_download(url, auth_key, aes_key, file_size, save_path)
-    logger.debug(result)
+    # 下载保存图片到本地
+    if "url" in data["cdn"].keys() and "auth_key" in data["cdn"].keys():
+        url = data["cdn"]["url"]
+        auth_key = data["cdn"]["auth_key"]
+        # result = wework.wx_cdn_download(url, auth_key, aes_key, file_size, save_path)  # ntwork库本身接口有问题，缺失了aes_key这个参数
+        """
+        下载wx类型的cdn文件，以https开头
+        """
+        data = {
+            'url': url,
+            'auth_key': auth_key,
+            'aes_key': aes_key,
+            'size': file_size,
+            'save_path': save_path
+        }
+        result = wework._WeWork__send_sync(send_type.MT_WXCDN_DOWNLOAD_MSG, data)  # 直接用wx_cdn_download的接口内部实现来调用
+    elif "file_id" in data["cdn"].keys():
+        file_type = 2
+        file_id = data["cdn"]["file_id"]
+        result = wework.c2c_cdn_download(file_id, aes_key, file_size, file_type, save_path)
+    else:
+        logger.error(f"something is wrong, data: {data}")
+        return
+
+    # 输出下载结果
+    logger.debug(f"result: {result}")
 
 
 def c2c_download_and_convert(wework, message, file_name):
@@ -68,6 +91,12 @@ def c2c_download_and_convert(wework, message, file_name):
     base_name, _ = os.path.splitext(save_path)
     wav_file = base_name + ".wav"
     pilk.silk_to_wav(save_path, wav_file, rate=24000)
+
+    # 删除SILK文件
+    try:
+        os.remove(save_path)
+    except Exception as e:
+        pass
 
 
 class WeworkMessage(ChatMessage):

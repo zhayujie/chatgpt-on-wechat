@@ -4,8 +4,10 @@ import json
 import os
 import random
 import string
+import logging
 from typing import Tuple
 
+import bridge.bridge
 import plugins
 from bridge.bridge import Bridge
 from bridge.context import ContextType
@@ -201,6 +203,7 @@ class Godcmd(Plugin):
 
         self.password = gconf["password"]
         self.admin_users = gconf["admin_users"]  # 预存的管理员账号，这些账号不需要认证。itchat的用户名每次都会变，不可用
+        global_config["admin_users"] = self.admin_users
         self.isrunning = True  # 机器人是否运行中
 
         self.handlers[Event.ON_HANDLE_CONTEXT] = self.on_handle_context
@@ -310,6 +313,8 @@ class Godcmd(Plugin):
                 elif cmd == "reset":
                     if bottype in [const.OPEN_AI, const.CHATGPT, const.CHATGPTONAZURE, const.LINKAI, const.BAIDU, const.XUNFEI]:
                         bot.sessions.clear_session(session_id)
+                        if Bridge().chat_bots.get(bottype):
+                            Bridge().chat_bots.get(bottype).sessions.clear_session(session_id)
                         channel.cancel_session(session_id)
                         ok, result = True, "会话已重置"
                     else:
@@ -339,8 +344,12 @@ class Godcmd(Plugin):
                             else:
                                 ok, result = False, "当前对话机器人不支持重置会话"
                         elif cmd == "debug":
-                            logger.setLevel("DEBUG")
-                            ok, result = True, "DEBUG模式已开启"
+                            if logger.getEffectiveLevel() == logging.DEBUG:  # 判断当前日志模式是否DEBUG
+                                logger.setLevel(logging.INFO)
+                                ok, result = True, "DEBUG模式已关闭"
+                            else:
+                                logger.setLevel(logging.DEBUG)
+                                ok, result = True, "DEBUG模式已开启"
                         elif cmd == "plist":
                             plugins = PluginManager().list_plugins()
                             ok = True
