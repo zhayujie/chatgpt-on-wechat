@@ -5,6 +5,7 @@ import requests
 import threading
 import time
 from bridge.reply import Reply, ReplyType
+import aiohttp
 import asyncio
 from bridge.context import ContextType
 from plugins import EventContext, EventAction
@@ -318,12 +319,12 @@ class MJBot:
             if task.raw_prompt:
                 text += f"prompt: {task.raw_prompt}\n"
             text += f"- - - - - - - - -\n图片ID: {task.img_id}"
-            text += f"\n\n🔎使用 {trigger_prefix}mju 命令放大图片\n"
-            text += f"例如：\n{trigger_prefix}mju {task.img_id} 1"
-            text += f"\n\n🪄使用 {trigger_prefix}mjv 命令变换图片\n"
-            text += f"例如：\n{trigger_prefix}mjv {task.img_id} 1"
-            text += f"\n\n🔄使用 {trigger_prefix}mjr 命令重新生成图片\n"
-            text += f"例如：\n{trigger_prefix}mjr {task.img_id}"
+            text += f"\n\n🔎使用 {trigger_prefix}放大 命令放大图片\n"
+            text += f"例如：\n{trigger_prefix}放大 {task.img_id} 1"
+            text += f"\n\n🪄使用 {trigger_prefix}变换 命令变换图片\n"
+            text += f"例如：\n{trigger_prefix}变换 {task.img_id} 1"
+            text += f"\n\n🔄使用 {trigger_prefix}重新生成 命令重新生成图片\n"
+            text += f"例如：\n{trigger_prefix}重新生成 {task.img_id}"
             reply = Reply(ReplyType.INFO, text)
             _send(channel, reply, e_context["context"])
 
