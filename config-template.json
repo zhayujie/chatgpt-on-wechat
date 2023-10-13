@@ -20,9 +20,7 @@
     "ChatGPT测试群"
   ],
   "image_create_prefix": [
-    "画",
-    "看",
-    "找"
+    "画"
   ],
   "speech_recognition": false,
   "group_speech_recognition": false,
