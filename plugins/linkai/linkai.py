@@ -290,7 +290,8 @@ def _find_sum_id(context):
     return USER_FILE_MAP.get(_find_user_id(context) + "-sum_id")
 
 def _find_file_id(context):
-    return USER_FILE_MAP.get(_find_user_id(context) + "-file_id")
+    user_id = _find_user_id(context)
+    if user_id:
+        return USER_FILE_MAP.get(user_id + "-file_id")
 
-
-USER_FILE_MAP = ExpiredDict(conf().get("expires_in_seconds") or 60 * 60)
+USER_FILE_MAP = ExpiredDict(conf().get("expires_in_seconds") or 60 * 30)
