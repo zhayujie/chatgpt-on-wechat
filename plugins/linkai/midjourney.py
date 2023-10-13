@@ -387,9 +387,9 @@ class MJBot:
         help_text = "🎨利用Midjourney进行画图\n\n"
         if not verbose:
             return help_text
-        help_text += f" - 生成: {trigger_prefix}mj 描述词1, 描述词2.. \n - 放大: {trigger_prefix}mju 图片ID 图片序号\n - 变换: mjv 图片ID 图片序号\n - 重置: mjr 图片ID"
-        help_text += f"\n\n例如：\n\"{trigger_prefix}mj a little cat, white --ar 9:16\"\n\"{trigger_prefix}mju 11055927171882 2\""
-        help_text += f"\n\"{trigger_prefix}mjv 11055927171882 2\"\n\"{trigger_prefix}mjr 11055927171882\""
+        help_text += f" - 生成: {trigger_prefix}mj 描述词1, 描述词2.. \n - 放大: {trigger_prefix}放大 图片ID 图片序号\n - 变换: 变换 图片ID 图片序号\n - 重置: 重新生成 图片ID"
+        help_text += f"\n\n例如：\n\"{trigger_prefix}mj a little cat, white --ar 9:16\"\n\"{trigger_prefix}放大 11055927171882 2\""
+        help_text += f"\n\"{trigger_prefix}变换 11055927171882 2\"\n\"{trigger_prefix}重新生成 11055927171882\""
         return help_text
 
     def find_tasks_by_user_id(self, user_id) -> list:
