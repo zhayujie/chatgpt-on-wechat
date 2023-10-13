@@ -94,9 +94,13 @@ class LinkAIBot(Bot, OpenAIImage):
                 response = res.json()
                 reply_content = response["choices"][0]["message"]["content"]
                 total_tokens = response["usage"]["total_tokens"]
-                suffix = self._fecth_knowledge_search_suffix(response)
-                if suffix:
-                    reply_content += suffix
+                agent_suffix = self._fetch_agent_suffix(response)
+                if agent_suffix:
+                    reply_content += agent_suffix
+                if not agent_suffix:
+                    knowledge_suffix = self._fetch_knowledge_search_suffix(response)
+                    if knowledge_suffix:
+                        reply_content += knowledge_suffix
                 logger.info(f"[LINKAI] reply={reply_content}, total_tokens={total_tokens}")
                 self.sessions.session_reply(reply_content, session_id, total_tokens)
                 return Reply(ReplyType.TEXT, reply_content)
@@ -188,19 +192,36 @@ class LinkAIBot(Bot, OpenAIImage):
             return self.reply_text(session, app_code, retry_count + 1)
 
 
-    def _fecth_knowledge_search_suffix(self, response) -> str:
+    def _fetch_knowledge_search_suffix(self, response) -> str:
         try:
             if response.get("knowledge_base"):
                 search_hit = response.get("knowledge_base").get("search_hit")
                 first_similarity = response.get("knowledge_base").get("first_similarity")
                 logger.info(f"[LINKAI] knowledge base, search_hit={search_hit}, first_similarity={first_similarity}")
                 plugin_config = pconf("linkai")
-                if plugin_config.get("knowledge_base") and plugin_config.get("knowledge_base").get("search_miss_text_enabled"):
+                if plugin_config and plugin_config.get("knowledge_base") and plugin_config.get("knowledge_base").get("search_miss_text_enabled"):
                     search_miss_similarity = plugin_config.get("knowledge_base").get("search_miss_similarity")
                     search_miss_text = plugin_config.get("knowledge_base").get("search_miss_suffix")
                     if not search_hit:
                         return search_miss_text
                     if search_miss_similarity and float(search_miss_similarity) > first_similarity:
                         return search_miss_text
+        except Exception as e:
+            logger.exception(e)
+
+    def _fetch_agent_suffix(self, response):
+        try:
+            if response.get("agent") and response.get("agent").get("chain"):
+                chain = response.get("agent").get("chain")
+                suffix = "\n\n---------\n🧠思考过程"
+                for turn in chain:
+                    suffix += "\n\n"
+                    if turn.get("thought"):
+                        suffix += f"{turn.get('thought')}"
+                    if turn.get('plugin_name'):
+                        suffix += f"\n{turn.get('plugin_icon')} 使用 {turn.get('plugin_name')}"
+                        if turn.get('plugin_input'):
+                            suffix += f"，输入 {turn.get('plugin_input')}"
+                return suffix
         except Exception as e:
             logger.exception(e)
