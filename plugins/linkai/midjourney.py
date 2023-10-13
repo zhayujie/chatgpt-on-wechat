@@ -89,11 +89,11 @@ class MJBot:
             cmd_list = context.content.split(maxsplit=1)
             if cmd_list[0].lower() == f"{trigger_prefix}mj":
                 return TaskType.GENERATE
-            elif cmd_list[0].lower() == f"{trigger_prefix}mju":
+            elif cmd_list[0].lower() == f"{trigger_prefix}放大":
                 return TaskType.UPSCALE
-            elif cmd_list[0].lower() == f"{trigger_prefix}mjv":
+            elif cmd_list[0].lower() == f"{trigger_prefix}变换":
                 return TaskType.VARIATION
-            elif cmd_list[0].lower() == f"{trigger_prefix}mjr":
+            elif cmd_list[0].lower() == f"{trigger_prefix}重新生成":
                 return TaskType.RESET
         elif context.type == ContextType.IMAGE_CREATE and self.config.get("use_image_create_prefix") and self.config.get("enabled"):
             return TaskType.GENERATE
