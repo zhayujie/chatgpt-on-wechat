@@ -8,6 +8,7 @@ from bridge.reply import Reply, ReplyType
 import asyncio
 from bridge.context import ContextType
 from plugins import EventContext, EventAction
+from .utils import Util
 
 INVALID_REQUEST = 410
 NOT_FOUND_ORIGIN_IMAGE = 461
@@ -113,6 +114,9 @@ class MJBot:
             return
 
         if len(cmd) == 2 and (cmd[1] == "open" or cmd[1] == "close"):
+            if not Util.is_admin(e_context):
+                Util.set_reply_text("需要管理员权限执行", e_context, level=ReplyType.ERROR)
+                return
             # midjourney 开关指令
             is_open = True
             tips_text = "开启"

@@ -1,7 +1,6 @@
 import plugins
 from bridge.context import ContextType
 from bridge.reply import Reply, ReplyType
-from config import global_config
 from plugins import *
 from .midjourney import MJBot
 from .summary import LinkSummary
@@ -9,7 +8,7 @@ from bridge import bridge
 from common.expired_dict import ExpiredDict
 from common import const
 import os
-
+from .utils import Util
 
 @plugins.register(
     name="linkai",
@@ -129,7 +128,7 @@ class LinkAI(Plugin):
 
         if len(cmd) == 2 and (cmd[1] == "open" or cmd[1] == "close"):
             # 知识库开关指令
-            if not _is_admin(e_context):
+            if not Util.is_admin(e_context):
                 _set_reply_text("需要管理员权限执行", e_context, level=ReplyType.ERROR)
                 return
             is_open = True
@@ -147,7 +146,7 @@ class LinkAI(Plugin):
             if not context.kwargs.get("isgroup"):
                 _set_reply_text("该指令需在群聊中使用", e_context, level=ReplyType.ERROR)
                 return
-            if not _is_admin(e_context):
+            if not Util.is_admin(e_context):
                 _set_reply_text("需要管理员权限执行", e_context, level=ReplyType.ERROR)
                 return
             app_code = cmd[2]
@@ -164,7 +163,7 @@ class LinkAI(Plugin):
 
         if len(cmd) == 3 and cmd[1] == "sum" and (cmd[2] == "open" or cmd[2] == "close"):
             # 知识库开关指令
-            if not _is_admin(e_context):
+            if not Util.is_admin(e_context):
                 _set_reply_text("需要管理员权限执行", e_context, level=ReplyType.ERROR)
                 return
             is_open = True
@@ -252,23 +251,6 @@ def _send_info(e_context: EventContext, content: str):
     reply = Reply(ReplyType.TEXT, content)
     channel = e_context["channel"]
     channel.send(reply, e_context["context"])
-
-# 静态方法
-def _is_admin(e_context: EventContext) -> bool:
-    """
-    判断消息是否由管理员用户发送
-    :param e_context: 消息上下文
-    :return: True: 是, False: 否
-    """
-    context = e_context["context"]
-    if context["isgroup"]:
-        actual_user_id= context.kwargs.get("msg").actual_user_id
-        for admin_user in global_config["admin_users"]:
-            if actual_user_id and actual_user_id in admin_user:
-                return True
-        return False
-    else:
-        return context["receiver"] in global_config["admin_users"]
 
 
 def _find_user_id(context):
