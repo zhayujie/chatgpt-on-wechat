@@ -94,11 +94,11 @@ class LinkAIBot(Bot, OpenAIImage):
                 response = res.json()
                 reply_content = response["choices"][0]["message"]["content"]
                 total_tokens = response["usage"]["total_tokens"]
+                logger.info(f"[LINKAI] reply={reply_content}, total_tokens={total_tokens}")
+                self.sessions.session_reply(reply_content, session_id, total_tokens)
                 suffix = self._fecth_knowledge_search_suffix(response)
                 if suffix:
                     reply_content += suffix
-                logger.info(f"[LINKAI] reply={reply_content}, total_tokens={total_tokens}")
-                self.sessions.session_reply(reply_content, session_id, total_tokens)
                 return Reply(ReplyType.TEXT, reply_content)
 
             else:
