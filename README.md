@@ -16,7 +16,7 @@
 
 # 演示
 
-https://github.com/zhayujie/chatgpt-on-wechat/assets/26161723/43223fe4-3499-4193-aead-2f362b24e540
+https://github.com/zhayujie/chatgpt-on-wechat/assets/26161723/3a64fc6e-f550-4150-8654-669331ce07eb
 
 Demo made by [Visionn](https://www.wangpc.cc/)
 
