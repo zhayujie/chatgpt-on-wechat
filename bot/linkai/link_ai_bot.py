@@ -94,6 +94,9 @@ class LinkAIBot(Bot, OpenAIImage):
                 response = res.json()
                 reply_content = response["choices"][0]["message"]["content"]
                 total_tokens = response["usage"]["total_tokens"]
+                logger.info(f"[LINKAI] reply={reply_content}, total_tokens={total_tokens}")
+                self.sessions.session_reply(reply_content, session_id, total_tokens)
+    
                 agent_suffix = self._fetch_agent_suffix(response)
                 if agent_suffix:
                     reply_content += agent_suffix
@@ -101,8 +104,6 @@ class LinkAIBot(Bot, OpenAIImage):
                     knowledge_suffix = self._fetch_knowledge_search_suffix(response)
                     if knowledge_suffix:
                         reply_content += knowledge_suffix
-                logger.info(f"[LINKAI] reply={reply_content}, total_tokens={total_tokens}")
-                self.sessions.session_reply(reply_content, session_id, total_tokens)
                 return Reply(ReplyType.TEXT, reply_content)
 
             else:
