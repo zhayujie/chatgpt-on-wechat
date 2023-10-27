@@ -220,7 +220,7 @@ class LinkAI(Plugin):
 
     def get_help_text(self, verbose=False, **kwargs):
         trigger_prefix = _get_trigger_prefix()
-        help_text = "用于集成 LinkAI 提供的知识库、Midjourney绘画、文档总结对话等能力。\n\n"
+        help_text = "用于集成 LinkAI 提供的知识库、Midjourney绘画、文档总结、联网搜索等能力。\n\n"
         if not verbose:
             return help_text
         help_text += f'📖 知识库\n - 群聊中指定应用: {trigger_prefix}linkai app 应用编码\n'
