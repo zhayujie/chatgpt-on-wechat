@@ -211,17 +211,27 @@ class LinkAIBot(Bot, OpenAIImage):
 
     def _fetch_agent_suffix(self, response):
         try:
-            if response.get("agent") and response.get("agent").get("chain"):
+            plugin_list = []
+            logger.debug(f"[LinkAgent] res={response}")
+            if response.get("agent") and response.get("agent").get("chain") and response.get("agent").get("need_show_plugin"):
                 chain = response.get("agent").get("chain")
-                suffix = "\n\n---------\n🧠思考过程"
+                suffix = "\n\n- - - - - - - - - - - -"
+                i = 0
                 for turn in chain:
-                    suffix += "\n\n"
-                    if turn.get("thought"):
-                        suffix += f"{turn.get('thought')}"
-                    if turn.get('plugin_name'):
-                        suffix += f"\n{turn.get('plugin_icon')} 使用 {turn.get('plugin_name')}"
+                    plugin_name = turn.get('plugin_name')
+                    suffix += "\n"
+                    need_show_thought = response.get("agent").get("need_show_thought")
+                    if turn.get("thought") and plugin_name and need_show_thought:
+                        suffix += f"{turn.get('thought')}\n"
+                    if plugin_name:
+                        plugin_list.append(turn.get('plugin_name'))
+                        suffix += f"{turn.get('plugin_icon')} {turn.get('plugin_name')}"
                         if turn.get('plugin_input'):
-                            suffix += f"，输入 {turn.get('plugin_input')}"
+                            suffix += f"：{turn.get('plugin_input')}"
+                    if i < len(chain) - 1:
+                        suffix += "\n"
+                    i += 1
+                logger.info(f"[LinkAgent] use plugins: {plugin_list}")
                 return suffix
         except Exception as e:
             logger.exception(e)
