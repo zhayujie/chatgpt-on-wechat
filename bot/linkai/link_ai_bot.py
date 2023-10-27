@@ -96,9 +96,14 @@ class LinkAIBot(Bot, OpenAIImage):
                 total_tokens = response["usage"]["total_tokens"]
                 logger.info(f"[LINKAI] reply={reply_content}, total_tokens={total_tokens}")
                 self.sessions.session_reply(reply_content, session_id, total_tokens)
-                suffix = self._fecth_knowledge_search_suffix(response)
-                if suffix:
-                    reply_content += suffix
+    
+                agent_suffix = self._fetch_agent_suffix(response)
+                if agent_suffix:
+                    reply_content += agent_suffix
+                if not agent_suffix:
+                    knowledge_suffix = self._fetch_knowledge_search_suffix(response)
+                    if knowledge_suffix:
+                        reply_content += knowledge_suffix
                 return Reply(ReplyType.TEXT, reply_content)
 
             else:
@@ -188,7 +193,7 @@ class LinkAIBot(Bot, OpenAIImage):
             return self.reply_text(session, app_code, retry_count + 1)
 
 
-    def _fecth_knowledge_search_suffix(self, response) -> str:
+    def _fetch_knowledge_search_suffix(self, response) -> str:
         try:
             if response.get("knowledge_base"):
                 search_hit = response.get("knowledge_base").get("search_hit")
@@ -202,5 +207,32 @@ class LinkAIBot(Bot, OpenAIImage):
                         return search_miss_text
                     if search_miss_similarity and float(search_miss_similarity) > first_similarity:
                         return search_miss_text
+        except Exception as e:
+            logger.exception(e)
+
+    def _fetch_agent_suffix(self, response):
+        try:
+            plugin_list = []
+            logger.debug(f"[LinkAgent] res={response}")
+            if response.get("agent") and response.get("agent").get("chain") and response.get("agent").get("need_show_plugin"):
+                chain = response.get("agent").get("chain")
+                suffix = "\n\n- - - - - - - - - - - -"
+                i = 0
+                for turn in chain:
+                    plugin_name = turn.get('plugin_name')
+                    suffix += "\n"
+                    need_show_thought = response.get("agent").get("need_show_thought")
+                    if turn.get("thought") and plugin_name and need_show_thought:
+                        suffix += f"{turn.get('thought')}\n"
+                    if plugin_name:
+                        plugin_list.append(turn.get('plugin_name'))
+                        suffix += f"{turn.get('plugin_icon')} {turn.get('plugin_name')}"
+                        if turn.get('plugin_input'):
+                            suffix += f"：{turn.get('plugin_input')}"
+                    if i < len(chain) - 1:
+                        suffix += "\n"
+                    i += 1
+                logger.info(f"[LinkAgent] use plugins: {plugin_list}")
+                return suffix
         except Exception as e:
             logger.exception(e)
