@@ -14,8 +14,9 @@ class BaiduWenxinSession(Session):
     def __init__(self, session_id, system_prompt=None, model="gpt-3.5-turbo"):
         super().__init__(session_id, system_prompt)
         self.model = model
-        # 百度文心不支持system prompt
-        # self.reset()
+        # 只有讯飞星火V3.0才开始支持system prompt
+        if system_prompt:
+            self.reset()
 
     def discard_exceeding(self, max_tokens, cur_tokens=None):
         precise = True

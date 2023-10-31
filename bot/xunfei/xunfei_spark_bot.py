@@ -40,10 +40,10 @@ class XunFeiBot(Bot):
         self.app_id = conf().get("xunfei_app_id")
         self.api_key = conf().get("xunfei_api_key")
         self.api_secret = conf().get("xunfei_api_secret")
-        # 默认使用v2.0版本，1.5版本可设置为 general
-        self.domain = "generalv2"
-        # 默认使用v2.0版本，1.5版本可设置为 "ws://spark-api.xf-yun.com/v1.1/chat"
-        self.spark_url = "ws://spark-api.xf-yun.com/v2.1/chat"
+        # 默认使用v3.0版本，v2.0版本可设置为 generalv2，1.5版本可设置为 general
+        self.domain = "generalv3"
+        # 默认使用v3.0版本，v2.0版本可设置为 "ws://spark-api.xf-yun.com/v2.1/chat"，1.5版本可设置为 "ws://spark-api.xf-yun.com/v1.1/chat"
+        self.spark_url = "ws://spark-api.xf-yun.com/v3.1/chat"
         self.host = urlparse(self.spark_url).netloc
         self.path = urlparse(self.spark_url).path
         # 和wenxin使用相同的session机制
@@ -55,7 +55,9 @@ class XunFeiBot(Bot):
             session_id = context["session_id"]
             request_id = self.gen_request_id(session_id)
             reply_map[request_id] = ""
-            session = self.sessions.session_query(query, session_id)
+            # 只有V3.0版本才开始支持system_prompt，所以如果选择V2.0或者V1.5版本，需要将system_prompt设置为None
+            system_prompt = "你是讯飞星火认知大模型V3.0，一个以中文为核心的新一代认知智能大模型，你旨在回答并解决人们的任何问题，并且可以与人进行自然的对话互动。"
+            session = self.sessions.session_query(query, session_id, system_prompt)
             threading.Thread(target=self.create_web_socket, args=(session.messages, request_id)).start()
             depth = 0
             time.sleep(0.1)

@@ -19,7 +19,16 @@ class Session(object):
 
     def set_system_prompt(self, system_prompt):
         self.system_prompt = system_prompt
-        self.reset()
+        # self.reset()
+        flag = False
+        for message in self.messages:
+            if message["role"] == "system":
+                message["content"] = system_prompt
+                flag = True
+                break
+        if not flag:  # 如果没有system message，就添加一个
+            system_item = {"role": "system", "content": self.system_prompt}
+            self.messages.insert(0, system_item)
 
     def add_query(self, query):
         user_item = {"role": "user", "content": query}
@@ -56,13 +65,13 @@ class SessionManager(object):
 
         if session_id not in self.sessions:
             self.sessions[session_id] = self.sessioncls(session_id, system_prompt, **self.session_args)
-        elif system_prompt is not None:  # 如果有新的system_prompt，更新并重置session
+        elif system_prompt is not None:  # 如果有新的system_prompt，更新session的system_prompt
             self.sessions[session_id].set_system_prompt(system_prompt)
         session = self.sessions[session_id]
         return session
 
-    def session_query(self, query, session_id):
-        session = self.build_session(session_id)
+    def session_query(self, query, session_id, system_prompt=None):
+        session = self.build_session(session_id, system_prompt)
         session.add_query(query)
         try:
             max_tokens = conf().get("conversation_max_tokens", 1000)
