@@ -53,8 +53,8 @@ class LinkAIVoice(Voice):
             url = conf().get("linkai_api_base", "https://api.link-ai.chat") + "/v1/audio/speech"
             headers = {"Authorization": "Bearer " + conf().get("linkai_api_key")}
             model = const.TTS_1
-            if not conf().get("text_to_voice") or conf().get("text_to_voice") in [const.TTS_1, const.TTS_1_HD]:
-                model = conf().get("text_to_voice") or const.TTS_1
+            if not conf().get("text_to_voice") or conf().get("text_to_voice") in ["openai", const.TTS_1, const.TTS_1_HD]:
+                model = conf().get("text_to_voice_model") or const.TTS_1
             data = {
                 "model": model,
                 "input": text,
