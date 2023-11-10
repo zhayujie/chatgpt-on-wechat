@@ -56,7 +56,8 @@ class LinkAI(Plugin):
                 _send_info(e_context, "正在为你加速生成摘要，请稍后")
             res = LinkSummary().summary_file(file_path)
             if not res:
-                _set_reply_text("因为神秘力量无法获取内容，请稍后再试吧", e_context, level=ReplyType.TEXT)
+                if context.type != ContextType.IMAGE:
+                    _set_reply_text("因为神秘力量无法获取内容，请稍后再试吧", e_context, level=ReplyType.TEXT)
                 return
             summary_text = res.get("summary")
             if context.type != ContextType.IMAGE:
