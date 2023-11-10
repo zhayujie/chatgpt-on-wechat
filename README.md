@@ -10,7 +10,7 @@
 - [x] **图片生成：** 支持图片生成 和 图生图（如照片修复），可选择 Dall-E, stable diffusion, replicate, midjourney模型
 - [x] **丰富插件：** 支持个性化插件扩展，已实现多角色切换、文字冒险、敏感词过滤、聊天记录总结、文档总结和对话等插件
 - [X] **Tool工具：** 与操作系统和互联网交互，支持最新信息搜索、数学计算、天气和资讯查询、网页总结，基于 [chatgpt-tool-hub](https://github.com/goldfishh/chatgpt-tool-hub) 实现
-- [x] **知识库：** 通过上传知识库文件自定义专属机器人，可作为数字分身、领域知识库、智能客服使用，基于 [LinkAI](https://chat.link-ai.tech/console) 实现
+- [x] **知识库：** 通过上传知识库文件自定义专属机器人，可作为数字分身、领域知识库、智能客服使用，基于 [LinkAI](https://link-ai.tech/console) 实现
 
 > 欢迎接入更多应用，参考 [Terminal代码](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/channel/terminal/terminal_channel.py)实现接收和发送消息逻辑即可接入。 同时欢迎增加新的插件，参考 [插件说明文档](https://github.com/zhayujie/chatgpt-on-wechat/tree/master/plugins)。
 
@@ -36,7 +36,7 @@ Demo made by [Visionn](https://www.wangpc.cc/)
 
 >**2023.08.08：** 接入百度文心一言模型，通过 [插件](https://github.com/zhayujie/chatgpt-on-wechat/tree/master/plugins/linkai) 支持 Midjourney 绘图
 
->**2023.06.12：** 接入 [LinkAI](https://chat.link-ai.tech/console) 平台，可在线创建领域知识库，并接入微信、公众号及企业微信中，打造专属客服机器人。使用参考 [接入文档](https://link-ai.tech/platform/link-app/wechat)。
+>**2023.06.12：** 接入 [LinkAI](https://link-ai.tech/console) 平台，可在线创建领域知识库，并接入微信、公众号及企业微信中，打造专属客服机器人。使用参考 [接入文档](https://link-ai.tech/platform/link-app/wechat)。
 
 >**2023.04.26：** 支持企业微信应用号部署，兼容插件，并支持语音图片交互，私人助理理想选择，[使用文档](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/channel/wechatcom/README.md)。(contributed by [@lanvent](https://github.com/lanvent) in [#944](https://github.com/zhayujie/chatgpt-on-wechat/pull/944))
 
@@ -178,7 +178,7 @@ pip3 install azure-cognitiveservices-speech
 **5.LinkAI配置 (可选)**
 
 + `use_linkai`: 是否使用LinkAI接口，开启后可国内访问，使用知识库和 `Midjourney` 绘画, 参考 [文档](https://link-ai.tech/platform/link-app/wechat)
-+ `linkai_api_key`: LinkAI Api Key，可在 [控制台](https://chat.link-ai.tech/console/interface) 创建
++ `linkai_api_key`: LinkAI Api Key，可在 [控制台](https://link-ai.tech/console/interface) 创建
 + `linkai_app_code`: LinkAI 应用code，选填
 
 **本说明文档可能会未及时更新，当前所有可选的配置项均在该[`config.py`](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/config.py)中列出。**
@@ -271,7 +271,7 @@ volumes:
 
 FAQs： <https://github.com/zhayujie/chatgpt-on-wechat/wiki/FAQs>
 
-或直接在线咨询 [项目小助手](https://chat.link-ai.tech/app/Kv2fXJcH)  (beta版本，语料完善中，回复仅供参考)
+或直接在线咨询 [项目小助手](https://link-ai.tech/app/Kv2fXJcH)  (beta版本，语料完善中，回复仅供参考)
 
 ## 联系
 
