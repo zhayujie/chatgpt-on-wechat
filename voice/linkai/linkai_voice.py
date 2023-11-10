@@ -1,18 +1,15 @@
 """
 google voice service
 """
-import json
-import os
 import random
-
-import openai
 import requests
-
+from voice import audio_convert
 from bridge.reply import Reply, ReplyType
 from common.log import logger
 from config import conf
 from voice.voice import Voice
 from common import const
+import os
 import datetime
 
 class LinkAIVoice(Voice):
@@ -27,6 +24,10 @@ class LinkAIVoice(Voice):
             model = None
             if not conf().get("text_to_voice") or conf().get("voice_to_text") == "openai":
                 model = const.WHISPER_1
+            if voice_file.endswith(".amr"):
+                mp3_file = os.path.splitext(voice_file)[0] + ".mp3"
+                audio_convert.any_to_mp3(voice_file, mp3_file)
+                voice_file = mp3_file
             file = open(voice_file, "rb")
             file_body = {
                 "file": file
