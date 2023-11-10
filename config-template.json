@@ -1,8 +1,11 @@
 {
-  "open_ai_api_key": "your_api_here",
-  "model": "sydney",
   "channel_type": "wx",
-  "proxy": "http://127.0.0.1:10809",
+  "open_ai_api_key": "YOUR API KEY",
+  "model": "sydney",
+  "text_to_image": "dall-e-2",
+  "voice_to_text": "openai",
+  "text_to_voice": "openai",
+  "proxy": "",
   "hot_reload": false,
   "single_chat_prefix": [
     "bot",
@@ -19,13 +22,12 @@
     "AI测试"
   ],
   "image_create_prefix": [
-    "画",
-    "看",
-    "找"
+    "画"
   ],
-  "speech_recognition": false,
+  "speech_recognition": true,
   "group_speech_recognition": false,
   "voice_reply_voice": false,
+  "tts_voice_id": "alloy",
   "conversation_max_tokens": 1000,
   "expires_in_seconds": 3600,
   "character_desc": "",

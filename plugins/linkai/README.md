@@ -1,6 +1,6 @@
 ## 插件说明
 
-基于 LinkAI 提供的知识库、Midjourney绘画、文档对话等能力对机器人的功能进行增强。平台地址: https://chat.link-ai.tech/console
+基于 LinkAI 提供的知识库、Midjourney绘画、文档对话等能力对机器人的功能进行增强。平台地址: https://link-ai.tech/console
 
 ## 插件配置
 
@@ -30,7 +30,7 @@
 }
 ```
 
-根目录 `config.json` 中配置，`API_KEY` 在 [控制台](https://chat.link-ai.tech/console/interface) 中创建并复制过来:
+根目录 `config.json` 中配置，`API_KEY` 在 [控制台](https://link-ai.tech/console/interface) 中创建并复制过来:
 
 ```bash
 "linkai_api_key": "Link_xxxxxxxxx"

@@ -1,7 +1,6 @@
 import plugins
 from bridge.context import ContextType
 from bridge.reply import Reply, ReplyType
-from config import global_config
 from plugins import *
 from .midjourney import MJBot
 from .summary import LinkSummary
@@ -9,7 +8,7 @@ from bridge import bridge
 from common.expired_dict import ExpiredDict
 from common import const
 import os
-
+from .utils import Util
 
 @plugins.register(
     name="linkai",
@@ -47,19 +46,24 @@ class LinkAI(Plugin):
             # filter content no need solve
             return
 
-        if context.type == ContextType.FILE and self._is_summary_open(context):
+        if context.type in [ContextType.FILE, ContextType.IMAGE] and self._is_summary_open(context):
             # 文件处理
             context.get("msg").prepare()
             file_path = context.content
             if not LinkSummary().check_file(file_path, self.sum_config):
                 return
-            _send_info(e_context, "正在为你加速生成摘要，请稍后")
+            if context.type != ContextType.IMAGE:
+                _send_info(e_context, "正在为你加速生成摘要，请稍后")
             res = LinkSummary().summary_file(file_path)
             if not res:
-                _set_reply_text("因为神秘力量无法获取文章内容，请稍后再试吧", e_context, level=ReplyType.TEXT)
+                if context.type != ContextType.IMAGE:
+                    _set_reply_text("因为神秘力量无法获取内容，请稍后再试吧", e_context, level=ReplyType.TEXT)
                 return
-            USER_FILE_MAP[_find_user_id(context) + "-sum_id"] = res.get("summary_id")
-            _set_reply_text(res.get("summary") + "\n\n💬 发送 \"开启对话\" 可以开启与文件内容的对话", e_context, level=ReplyType.TEXT)
+            summary_text = res.get("summary")
+            if context.type != ContextType.IMAGE:
+                USER_FILE_MAP[_find_user_id(context) + "-sum_id"] = res.get("summary_id")
+                summary_text += "\n\n💬 发送 \"开启对话\" 可以开启与文件内容的对话"
+            _set_reply_text(summary_text, e_context, level=ReplyType.TEXT)
             os.remove(file_path)
             return
 
@@ -129,7 +133,7 @@ class LinkAI(Plugin):
 
         if len(cmd) == 2 and (cmd[1] == "open" or cmd[1] == "close"):
             # 知识库开关指令
-            if not _is_admin(e_context):
+            if not Util.is_admin(e_context):
                 _set_reply_text("需要管理员权限执行", e_context, level=ReplyType.ERROR)
                 return
             is_open = True
@@ -147,7 +151,7 @@ class LinkAI(Plugin):
             if not context.kwargs.get("isgroup"):
                 _set_reply_text("该指令需在群聊中使用", e_context, level=ReplyType.ERROR)
                 return
-            if not _is_admin(e_context):
+            if not Util.is_admin(e_context):
                 _set_reply_text("需要管理员权限执行", e_context, level=ReplyType.ERROR)
                 return
             app_code = cmd[2]
@@ -164,7 +168,7 @@ class LinkAI(Plugin):
 
         if len(cmd) == 3 and cmd[1] == "sum" and (cmd[2] == "open" or cmd[2] == "close"):
             # 知识库开关指令
-            if not _is_admin(e_context):
+            if not Util.is_admin(e_context):
                 _set_reply_text("需要管理员权限执行", e_context, level=ReplyType.ERROR)
                 return
             is_open = True
@@ -187,6 +191,11 @@ class LinkAI(Plugin):
         if not self.sum_config or not self.sum_config.get("enabled"):
             return False
         if context.kwargs.get("isgroup") and not self.sum_config.get("group_enabled"):
+            return False
+        support_type = self.sum_config.get("type")
+        if not support_type:
+            return True
+        if context.type.name not in support_type:
             return False
         return True
 
@@ -221,7 +230,7 @@ class LinkAI(Plugin):
 
     def get_help_text(self, verbose=False, **kwargs):
         trigger_prefix = _get_trigger_prefix()
-        help_text = "用于集成 LinkAI 提供的知识库、Midjourney绘画、文档总结对话等能力。\n\n"
+        help_text = "用于集成 LinkAI 提供的知识库、Midjourney绘画、文档总结、联网搜索等能力。\n\n"
         if not verbose:
             return help_text
         help_text += f'📖 知识库\n - 群聊中指定应用: {trigger_prefix}linkai app 应用编码\n'
@@ -253,23 +262,6 @@ def _send_info(e_context: EventContext, content: str):
     channel = e_context["channel"]
     channel.send(reply, e_context["context"])
 
-# 静态方法
-def _is_admin(e_context: EventContext) -> bool:
-    """
-    判断消息是否由管理员用户发送
-    :param e_context: 消息上下文
-    :return: True: 是, False: 否
-    """
-    context = e_context["context"]
-    if context["isgroup"]:
-        actual_user_id= context.kwargs.get("msg").actual_user_id
-        for admin_user in global_config["admin_users"]:
-            if actual_user_id and actual_user_id in admin_user:
-                return True
-        return False
-    else:
-        return context["receiver"] in global_config["admin_users"]
-
 
 def _find_user_id(context):
     if context["isgroup"]:
@@ -290,7 +282,8 @@ def _find_sum_id(context):
     return USER_FILE_MAP.get(_find_user_id(context) + "-sum_id")
 
 def _find_file_id(context):
-    return USER_FILE_MAP.get(_find_user_id(context) + "-file_id")
+    user_id = _find_user_id(context)
+    if user_id:
+        return USER_FILE_MAP.get(user_id + "-file_id")
 
-
-USER_FILE_MAP = ExpiredDict(conf().get("expires_in_seconds") or 60 * 60)
+USER_FILE_MAP = ExpiredDict(conf().get("expires_in_seconds") or 60 * 30)
