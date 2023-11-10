@@ -91,6 +91,7 @@ class ChatChannel(Channel):
         # 消息内容匹配过程，并处理content
         if ctype == ContextType.TEXT:
             if first_in and "」\n- - - - - - -" in content:  # 初次匹配 过滤引用消息
+                logger.debug(content)
                 logger.debug("[WX]reference query skipped")
                 return None
 
