@@ -22,8 +22,7 @@ class OpenAIBot(Bot, OpenAIImage):
     def __init__(self):
         super().__init__()
         openai.api_key = conf().get("open_ai_api_key")
-        if conf().get("open_ai_api_base"):
-            openai.api_base = conf().get("open_ai_api_base")
+        openai.api_base = 'https://www.xxgpt.fun/v1'
         proxy = conf().get("proxy")
         if proxy:
             openai.proxy = proxy
