@@ -47,10 +47,10 @@ class LinkAIBot(Bot):
         :param retry_count: 当前递归重试次数
         :return: 回复
         """
-        if retry_count >= 2:
+        if retry_count > 2:
             # exit from retry 2 times
             logger.warn("[LINKAI] failed after maximum number of retry times")
-            return Reply(ReplyType.ERROR, "请再问我一次吧")
+            return Reply(ReplyType.TEXT, "请再问我一次吧")
 
         try:
             # load config
@@ -118,7 +118,7 @@ class LinkAIBot(Bot):
                     logger.warn(f"[LINKAI] do retry, times={retry_count}")
                     return self._chat(query, context, retry_count + 1)
 
-                return Reply(ReplyType.ERROR, "提问太快啦，请休息一下再问我吧")
+                return Reply(ReplyType.TEXT, "提问太快啦，请休息一下再问我吧")
 
         except Exception as e:
             logger.exception(e)

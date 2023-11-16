@@ -25,9 +25,12 @@ class LinkAIVoice(Voice):
             if not conf().get("text_to_voice") or conf().get("voice_to_text") == "openai":
                 model = const.WHISPER_1
             if voice_file.endswith(".amr"):
-                mp3_file = os.path.splitext(voice_file)[0] + ".mp3"
-                audio_convert.any_to_mp3(voice_file, mp3_file)
-                voice_file = mp3_file
+                try:
+                    mp3_file = os.path.splitext(voice_file)[0] + ".mp3"
+                    audio_convert.any_to_mp3(voice_file, mp3_file)
+                    voice_file = mp3_file
+                except Exception as e:
+                    logger.warn(f"[LinkVoice] amr file transfer failed, directly send amr voice file: {format(e)}")
             file = open(voice_file, "rb")
             file_body = {
                 "file": file
@@ -46,7 +49,7 @@ class LinkAIVoice(Voice):
             logger.info(f"[LinkVoice] voiceToText success, text={text}, file name={voice_file}")
         except Exception as e:
             logger.error(e)
-            reply = Reply(ReplyType.ERROR, "我暂时还无法听清您的语音，请稍后再试吧~")
+            return None
         return reply
 
     def textToVoice(self, text):
@@ -75,5 +78,5 @@ class LinkAIVoice(Voice):
                 return None
         except Exception as e:
             logger.error(e)
-            reply = Reply(ReplyType.ERROR, "遇到了一点小问题，请稍后再问我吧")
-        return reply
+            # reply = Reply(ReplyType.ERROR, "遇到了一点小问题，请稍后再问我吧")
+            return None
