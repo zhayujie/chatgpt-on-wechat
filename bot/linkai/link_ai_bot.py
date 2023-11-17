@@ -7,13 +7,12 @@ import requests
 
 from bot.bot import Bot
 from bot.chatgpt.chat_gpt_session import ChatGPTSession
-from bot.openai.open_ai_image import OpenAIImage
 from bot.session_manager import SessionManager
 from bridge.context import Context, ContextType
 from bridge.reply import Reply, ReplyType
 from common.log import logger
 from config import conf, pconf
-
+import threading
 
 class LinkAIBot(Bot):
     # authentication failed
@@ -64,7 +63,7 @@ class LinkAIBot(Bot):
             session_id = context["session_id"]
 
             session = self.sessions.session_query(query, session_id)
-            model = conf().get("model") or "gpt-3.5-turbo"
+            model = conf().get("model")
             # remove system message
             if session.messages[0].get("role") == "system":
                 if app_code or model == "wenxin":
@@ -104,6 +103,10 @@ class LinkAIBot(Bot):
                     knowledge_suffix = self._fetch_knowledge_search_suffix(response)
                     if knowledge_suffix:
                         reply_content += knowledge_suffix
+                # image process
+                if response["choices"][0].get("img_urls"):
+                    thread = threading.Thread(target=self._send_image, args=(context.get("channel"), context, response["choices"][0].get("img_urls")))
+                    thread.start()
                 return Reply(ReplyType.TEXT, reply_content)
 
             else:
@@ -262,3 +265,14 @@ class LinkAIBot(Bot):
                 return suffix
         except Exception as e:
             logger.exception(e)
+
+
+    def _send_image(self, channel, context, image_urls):
+        if not image_urls:
+            return
+        try:
+            for url in image_urls:
+                reply = Reply(ReplyType.IMAGE_URL, url)
+                channel.send(reply, context)
+        except Exception as e:
+            logger.error(e)
