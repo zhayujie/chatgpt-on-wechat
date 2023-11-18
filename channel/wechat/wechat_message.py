@@ -7,7 +7,6 @@ from common.tmp_dir import TmpDir
 from lib import itchat
 from lib.itchat.content import *
 
-
 class WechatMessage(ChatMessage):
     def __init__(self, itchat_msg, is_group=False):
         super().__init__(itchat_msg)
@@ -35,6 +34,9 @@ class WechatMessage(ChatMessage):
                     self.actual_user_nickname = re.findall(r"\"(.*?)\"", itchat_msg["Content"])[-1]
                 elif "加入群聊" in itchat_msg["Content"]:
                     self.actual_user_nickname = re.findall(r"\"(.*?)\"", itchat_msg["Content"])[0]
+            elif "你已添加了" in itchat_msg["Content"]:  #通过好友请求
+                self.ctype = ContextType.ACCEPT_FRIEND
+                self.content = itchat_msg["Content"]
             elif "拍了拍我" in itchat_msg["Content"]:
                 self.ctype = ContextType.PATPAT
                 self.content = itchat_msg["Content"]
@@ -42,6 +44,14 @@ class WechatMessage(ChatMessage):
                     self.actual_user_nickname = re.findall(r"\"(.*?)\"", itchat_msg["Content"])[0]
             else:
                 raise NotImplementedError("Unsupported note message: " + itchat_msg["Content"])
+        elif itchat_msg["Type"] == ATTACHMENT:
+            self.ctype = ContextType.FILE
+            self.content = TmpDir().path() + itchat_msg["FileName"]  # content直接存临时目录路径
+            self._prepare_fn = lambda: itchat_msg.download(self.content)
+        elif itchat_msg["Type"] == SHARING:
+            self.ctype = ContextType.SHARING
+            self.content = itchat_msg.get("Url")
+
         else:
             raise NotImplementedError("Unsupported message type: Type:{} MsgType:{}".format(itchat_msg["Type"], itchat_msg["MsgType"]))
 

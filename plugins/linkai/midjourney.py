@@ -5,10 +5,10 @@ import requests
 import threading
 import time
 from bridge.reply import Reply, ReplyType
-import aiohttp
 import asyncio
 from bridge.context import ContextType
 from plugins import EventContext, EventAction
+from .utils import Util
 
 INVALID_REQUEST = 410
 NOT_FOUND_ORIGIN_IMAGE = 461
@@ -49,7 +49,7 @@ task_name_mapping = {
 
 
 class MJTask:
-    def __init__(self, id, user_id: str, task_type: TaskType, raw_prompt=None, expires: int = 60 * 30,
+    def __init__(self, id, user_id: str, task_type: TaskType, raw_prompt=None, expires: int = 60 * 6,
                  status=Status.PENDING):
         self.id = id
         self.user_id = user_id
@@ -96,7 +96,7 @@ class MJBot:
                 return TaskType.VARIATION
             elif cmd_list[0].lower() == f"{trigger_prefix}mjr":
                 return TaskType.RESET
-        elif context.type == ContextType.IMAGE_CREATE and self.config.get("use_image_create_prefix"):
+        elif context.type == ContextType.IMAGE_CREATE and self.config.get("use_image_create_prefix") and self.config.get("enabled"):
             return TaskType.GENERATE
 
     def process_mj_task(self, mj_type: TaskType, e_context: EventContext):
@@ -114,6 +114,9 @@ class MJBot:
             return
 
         if len(cmd) == 2 and (cmd[1] == "open" or cmd[1] == "close"):
+            if not Util.is_admin(e_context):
+                Util.set_reply_text("需要管理员权限执行", e_context, level=ReplyType.ERROR)
+                return
             # midjourney 开关指令
             is_open = True
             tips_text = "开启"
