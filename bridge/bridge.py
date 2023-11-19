@@ -35,6 +35,8 @@ class Bridge(object):
                 self.btype["text_to_voice"] = const.LINKAI
         if model_type in ["claude"]:
             self.btype["chat"] = const.CLAUDEAI
+        if model_type in ["tongyi"]:
+            self.btype["chat"] = const.TONGYI
         self.bots = {}
         self.chat_bots = {}
 
