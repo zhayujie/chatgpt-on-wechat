@@ -43,4 +43,8 @@ def create_bot(bot_type):
     elif bot_type == const.CLAUDEAI:
         from bot.claude.claude_ai_bot import ClaudeAIBot
         return ClaudeAIBot()
+
+    elif bot_type == const.TONGYI:
+        from bot.tongyi.tongyi_qwen_bot import TongyiQwenBot
+        return TongyiQwenBot()
     raise RuntimeError
