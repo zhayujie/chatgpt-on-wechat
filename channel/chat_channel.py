@@ -99,6 +99,7 @@ class ChatChannel(Channel):
                 # 校验关键字
                 match_prefix = check_prefix(content, conf().get("group_chat_prefix"))
                 match_contain = check_contain(content, conf().get("group_chat_keyword"))
+                group_name_black_list = config.get("group_name_black_list", [])
                 flag = False
                 if context["msg"].to_user_id != context["msg"].actual_user_id:
                     if match_prefix is not None or match_contain is not None:
@@ -107,6 +108,10 @@ class ChatChannel(Channel):
                             content = content.replace(match_prefix, "", 1).strip()
                     if context["msg"].is_at:
                         logger.info("[WX]receive group at")
+                        if context["msg"].actual_user_nickname in group_name_black_list:
+                            print('黑名单2',context["msg"].actual_user_nickname)
+                            logger.info("[WX]Is In BlackList")
+                            return None
                         if not conf().get("group_at_off", False):
                             flag = True
                         pattern = f"@{re.escape(self.name)}(\u2005|\u0020)"
