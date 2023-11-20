@@ -109,7 +109,6 @@ class ChatChannel(Channel):
                     if context["msg"].is_at:
                         logger.info("[WX]receive group at")
                         if context["msg"].actual_user_nickname in group_name_black_list:
-                            print('黑名单2',context["msg"].actual_user_nickname)
                             logger.info("[WX]Is In BlackList")
                             return None
                         if not conf().get("group_at_off", False):
