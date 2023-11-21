@@ -5,10 +5,10 @@ import requests
 import threading
 import time
 from bridge.reply import Reply, ReplyType
-import aiohttp
 import asyncio
 from bridge.context import ContextType
 from plugins import EventContext, EventAction
+from .utils import Util
 
 INVALID_REQUEST = 410
 NOT_FOUND_ORIGIN_IMAGE = 461
@@ -49,7 +49,7 @@ task_name_mapping = {
 
 
 class MJTask:
-    def __init__(self, id, user_id: str, task_type: TaskType, raw_prompt=None, expires: int = 60 * 30,
+    def __init__(self, id, user_id: str, task_type: TaskType, raw_prompt=None, expires: int = 60 * 6,
                  status=Status.PENDING):
         self.id = id
         self.user_id = user_id
@@ -68,8 +68,7 @@ class MJTask:
 # midjourney bot
 class MJBot:
     def __init__(self, config):
-        self.base_url = "https://api.link-ai.chat/v1/img/midjourney"
-
+        self.base_url = conf().get("linkai_api_base", "https://api.link-ai.chat") + "/v1/img/midjourney"
         self.headers = {"Authorization": "Bearer " + conf().get("linkai_api_key")}
         self.config = config
         self.tasks = {}
@@ -97,7 +96,7 @@ class MJBot:
                 return TaskType.VARIATION
             elif cmd_list[0].lower() == f"{trigger_prefix}mjr":
                 return TaskType.RESET
-        elif context.type == ContextType.IMAGE_CREATE and self.config.get("use_image_create_prefix"):
+        elif context.type == ContextType.IMAGE_CREATE and self.config.get("use_image_create_prefix") and self.config.get("enabled"):
             return TaskType.GENERATE
 
     def process_mj_task(self, mj_type: TaskType, e_context: EventContext):
@@ -115,6 +114,9 @@ class MJBot:
             return
 
         if len(cmd) == 2 and (cmd[1] == "open" or cmd[1] == "close"):
+            if not Util.is_admin(e_context):
+                Util.set_reply_text("需要管理员权限执行", e_context, level=ReplyType.ERROR)
+                return
             # midjourney 开关指令
             is_open = True
             tips_text = "开启"
@@ -310,7 +312,7 @@ class MJBot:
         # send img
         reply = Reply(ReplyType.IMAGE_URL, task.img_url)
         channel = e_context["channel"]
-        channel._send(reply, e_context["context"])
+        _send(channel, reply, e_context["context"])
 
         # send info
         trigger_prefix = conf().get("plugin_trigger_prefix", "$")
@@ -327,7 +329,7 @@ class MJBot:
             text += f"\n\n🔄使用 {trigger_prefix}mjr 命令重新生成图片\n"
             text += f"例如：\n{trigger_prefix}mjr {task.img_id}"
             reply = Reply(ReplyType.INFO, text)
-            channel._send(reply, e_context["context"])
+            _send(channel, reply, e_context["context"])
 
         self._print_tasks()
         return
@@ -404,6 +406,19 @@ class MJBot:
                 if task.user_id == user_id:
                     result.append(task)
         return result
+
+
+def _send(channel, reply: Reply, context, retry_cnt=0):
+    try:
+        channel.send(reply, context)
+    except Exception as e:
+        logger.error("[WX] sendMsg error: {}".format(str(e)))
+        if isinstance(e, NotImplementedError):
+            return
+        logger.exception(e)
+        if retry_cnt < 2:
+            time.sleep(3 + 3 * retry_cnt)
+            channel.send(reply, context, retry_cnt + 1)
 
 
 def check_prefix(content, prefix_list):

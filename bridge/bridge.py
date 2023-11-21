@@ -18,16 +18,25 @@ class Bridge(object):
             "text_to_voice": conf().get("text_to_voice", "google"),
             "translate": conf().get("translate", "baidu"),
         }
-        model_type = conf().get("model")
+        model_type = conf().get("model") or const.GPT35
         if model_type in ["text-davinci-003"]:
             self.btype["chat"] = const.OPEN_AI
         if conf().get("use_azure_chatgpt", False):
             self.btype["chat"] = const.CHATGPTONAZURE
-        if model_type in ["wenxin"]:
+        if model_type in ["wenxin", "wenxin-4"]:
             self.btype["chat"] = const.BAIDU
+        if model_type in ["xunfei"]:
+            self.btype["chat"] = const.XUNFEI
         if conf().get("use_linkai") and conf().get("linkai_api_key"):
             self.btype["chat"] = const.LINKAI
+            if not conf().get("voice_to_text") or conf().get("voice_to_text") in ["openai"]:
+                self.btype["voice_to_text"] = const.LINKAI
+            if not conf().get("text_to_voice") or conf().get("text_to_voice") in ["openai", const.TTS_1, const.TTS_1_HD]:
+                self.btype["text_to_voice"] = const.LINKAI
+        if model_type in ["claude"]:
+            self.btype["chat"] = const.CLAUDEAI
         self.bots = {}
+        self.chat_bots = {}
 
     def get_bot(self, typename):
         if self.bots.get(typename) is None:
@@ -56,6 +65,11 @@ class Bridge(object):
 
     def fetch_translate(self, text, from_lang="", to_lang="en") -> Reply:
         return self.get_bot("translate").translate(text, from_lang, to_lang)
+
+    def find_chat_bot(self, bot_type: str):
+        if self.chat_bots.get(bot_type) is None:
+            self.chat_bots[bot_type] = create_bot(bot_type)
+        return self.chat_bots.get(bot_type)
 
     def reset_bot(self):
         """

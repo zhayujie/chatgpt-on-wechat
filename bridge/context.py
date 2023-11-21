@@ -7,9 +7,15 @@ class ContextType(Enum):
     TEXT = 1  # 文本消息
     VOICE = 2  # 音频消息
     IMAGE = 3  # 图片消息
+    FILE = 4  # 文件信息
+    VIDEO = 5  # 视频信息
+    SHARING = 6  # 分享信息
+
     IMAGE_CREATE = 10  # 创建图片命令
+    ACCEPT_FRIEND = 19 # 同意好友请求
     JOIN_GROUP = 20  # 加入群聊
     PATPAT = 21  # 拍了拍
+    FUNCTION = 22  # 函数调用
 
     def __str__(self):
         return self.name

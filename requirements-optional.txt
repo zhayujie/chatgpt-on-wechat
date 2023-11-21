@@ -16,13 +16,17 @@ dulwich
 # wechaty
 wechaty>=0.10.7
 wechaty_puppet>=0.4.23
-pysilk_mod>=1.6.0 # needed by send voice
+# pysilk_mod>=1.6.0 # needed by send voice only in wechaty
 
 # wechatmp wechatcom
 web.py
 wechatpy
 
 # chatgpt-tool-hub plugin
-
---extra-index-url https://pypi.python.org/simple
 chatgpt_tool_hub==0.4.6
+
+# xunfei spark
+websocket-client==1.2.0
+
+# claude bot
+curl_cffi

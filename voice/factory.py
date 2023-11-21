@@ -29,4 +29,12 @@ def create_voice(voice_type):
         from voice.azure.azure_voice import AzureVoice
 
         return AzureVoice()
+    elif voice_type == "elevenlabs":
+        from voice.elevent.elevent_voice import ElevenLabsVoice
+
+        return ElevenLabsVoice()
+
+    elif voice_type == "linkai":
+        from voice.linkai.linkai_voice import LinkAIVoice
+        return LinkAIVoice()
     raise RuntimeError
