@@ -118,9 +118,10 @@ available_setting = {
 
     # 飞书配置
     "feishu_port": 80,  # 飞书bot监听端口
-    "feishu_app_id": "",
-    "feishu_app_secret": "",
-    "feishu_token": "",
+    "feishu_app_id": "",  # 飞书机器人应用APP Id
+    "feishu_app_secret": "",  # 飞书机器人APP secret
+    "feishu_token": "",  # 飞书 verification token
+    "feishu_bot_name": "",  # 飞书机器人的名字
 
     # chatgpt指令自定义触发词
     "clear_memory_commands": ["#清除记忆"],  # 重置会话指令，必须以#开头
