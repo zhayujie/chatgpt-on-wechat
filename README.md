@@ -28,6 +28,8 @@ Demo made by [Visionn](https://www.wangpc.cc/)
 
 # 更新日志
 
+>**2023.11.10：** [1.5.2版本](https://github.com/zhayujie/chatgpt-on-wechat/releases/tag/1.5.2)，新增飞书通道、图像识别对话、黑名单配置
+
 >**2023.11.10：** [1.5.0版本](https://github.com/zhayujie/chatgpt-on-wechat/releases/tag/1.5.0)，新增 `gpt-4-turbo`, `dall-e-3`, `tts` 模型接入，完善图像理解&生成、语音识别&生成的多模态能力
 
 >**2023.10.16：** 支持通过意图识别使用LinkAI联网搜索、数学计算、网页访问等插件，参考[插件文档](https://docs.link-ai.tech/platform/plugins)
