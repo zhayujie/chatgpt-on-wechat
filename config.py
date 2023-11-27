@@ -115,6 +115,14 @@ available_setting = {
     "wechatcomapp_secret": "",  # 企业微信app的secret
     "wechatcomapp_agent_id": "",  # 企业微信app的agent_id
     "wechatcomapp_aes_key": "",  # 企业微信app的aes_key
+
+    # 飞书配置
+    "feishu_port": 80,  # 飞书bot监听端口
+    "feishu_app_id": "",  # 飞书机器人应用APP Id
+    "feishu_app_secret": "",  # 飞书机器人APP secret
+    "feishu_token": "",  # 飞书 verification token
+    "feishu_bot_name": "",  # 飞书机器人的名字
+
     # chatgpt指令自定义触发词
     "clear_memory_commands": ["#清除记忆"],  # 重置会话指令，必须以#开头
     # channel配置
