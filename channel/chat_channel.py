@@ -94,11 +94,11 @@ class ChatChannel(Channel):
                 logger.debug("[WX]reference query skipped")
                 return None
 
+            nick_name_black_list = conf().get("nick_name_black_list", [])
             if context.get("isgroup", False):  # 群聊
                 # 校验关键字
                 match_prefix = check_prefix(content, conf().get("group_chat_prefix"))
                 match_contain = check_contain(content, conf().get("group_chat_keyword"))
-                nick_name_black_list = conf().get("nick_name_black_list", [])
                 flag = False
                 if context["msg"].to_user_id != context["msg"].actual_user_id:
                     if match_prefix is not None or match_contain is not None:
@@ -106,11 +106,13 @@ class ChatChannel(Channel):
                         if match_prefix:
                             content = content.replace(match_prefix, "", 1).strip()
                     if context["msg"].is_at:
-                        logger.info("[WX]receive group at")
                         nick_name = context["msg"].actual_user_nickname
                         if nick_name and nick_name in nick_name_black_list:
-                            logger.info(f"[WX] Nickname {nick_name} in In BlackList, ignore")
+                            # 黑名单过滤
+                            logger.warning(f"[WX] Nickname {nick_name} in In BlackList, ignore")
                             return None
+
+                        logger.info("[WX]receive group at")
                         if not conf().get("group_at_off", False):
                             flag = True
                         pattern = f"@{re.escape(self.name)}(\u2005|\u0020)"
@@ -129,6 +131,12 @@ class ChatChannel(Channel):
                         logger.info("[WX]receive group voice, but checkprefix didn't match")
                     return None
             else:  # 单聊
+                nick_name = context["msg"].from_user_nickname
+                if nick_name and nick_name in nick_name_black_list:
+                    # 黑名单过滤
+                    logger.warning(f"[WX] Nickname '{nick_name}' in In BlackList, ignore")
+                    return None
+
                 match_prefix = check_prefix(content, conf().get("single_chat_prefix", [""]))
                 if match_prefix is not None:  # 判断如果匹配到自定义前缀，则返回过滤掉前缀+空格后的内容
                     content = content.replace(match_prefix, "", 1).strip()
