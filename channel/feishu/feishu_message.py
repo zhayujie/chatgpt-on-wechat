@@ -4,7 +4,7 @@ import json
 import requests
 from common.log import logger
 from common.tmp_dir import TmpDir
-from utils import file_util
+from common import utils
 
 
 class FeishuMessage(ChatMessage):
@@ -28,7 +28,7 @@ class FeishuMessage(ChatMessage):
             file_key = content.get("file_key")
             file_name = content.get("file_name")
 
-            self.content = TmpDir().path() + file_key + "." + file_util.get_path_suffix(file_name)
+            self.content = TmpDir().path() + file_key + "." + utils.get_path_suffix(file_name)
 
             def _download_file():
                 # 如果响应状态码是200，则将响应内容写入本地文件

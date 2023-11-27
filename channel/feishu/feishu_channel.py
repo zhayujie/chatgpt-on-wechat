@@ -19,7 +19,7 @@ from config import conf
 from common.expired_dict import ExpiredDict
 from bridge.context import ContextType
 from channel.chat_channel import ChatChannel, check_prefix
-from utils import file_util
+from common import utils
 import json
 import os
 
@@ -118,7 +118,7 @@ class FeiShuChanel(ChatChannel):
     def _upload_image_url(self, img_url, access_token):
         logger.debug(f"[WX] start download image, img_url={img_url}")
         response = requests.get(img_url)
-        suffix = file_util.get_path_suffix(img_url)
+        suffix = utils.get_path_suffix(img_url)
         temp_name = str(uuid.uuid4()) + "." + suffix
         if response.status_code == 200:
             # 将图片内容保存为临时文件
