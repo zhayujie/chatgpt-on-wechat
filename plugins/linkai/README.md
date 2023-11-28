@@ -1,6 +1,6 @@
 ## 插件说明
 
-基于 LinkAI 提供的知识库、Midjourney绘画、文档对话等能力对机器人的功能进行增强。平台地址: https://chat.link-ai.tech/console
+基于 LinkAI 提供的知识库、Midjourney绘画、文档对话等能力对机器人的功能进行增强。平台地址: https://link-ai.tech/console
 
 ## 插件配置
 
@@ -25,12 +25,13 @@
     "summary": {
         "enabled": true,              # 文档总结和对话功能开关
         "group_enabled": true,        # 是否支持群聊开启
-        "max_file_size": 5000        # 文件的大小限制，单位KB，默认为5M，超过该大小直接忽略
+        "max_file_size": 5000,        # 文件的大小限制，单位KB，默认为5M，超过该大小直接忽略
+        "type": ["FILE", "SHARING", "IMAGE"]  # 支持总结的类型，分别表示 文件、分享链接、图片，其中文件和链接默认打开，图片默认关闭
     }
 }
 ```
 
-根目录 `config.json` 中配置，`API_KEY` 在 [控制台](https://chat.link-ai.tech/console/interface) 中创建并复制过来:
+根目录 `config.json` 中配置，`API_KEY` 在 [控制台](https://link-ai.tech/console/interface) 中创建并复制过来:
 
 ```bash
 "linkai_api_key": "Link_xxxxxxxxx"
@@ -99,7 +100,7 @@
 
 #### 使用
 
-功能开启后，向机器人发送 **文件** 或 **分享链接卡片** 即可生成摘要，进一步可以与文件或链接的内容进行多轮对话。
+功能开启后，向机器人发送 **文件**、 **分享链接卡片**、**图片** 即可生成摘要，进一步可以与文件或链接的内容进行多轮对话。如果需要关闭某种类型的内容总结，设置 `summary`配置中的type字段即可。
 
 #### 限制
 

@@ -15,6 +15,10 @@
     "timetask": {
       "url": "https://github.com/haikerapples/timetask.git",
       "desc": "一款定时任务系统的插件"
+    },
+    "Apilot": {
+      "url": "https://github.com/6vision/Apilot.git",
+      "desc": "通过api直接查询早报、热榜、快递、天气等实用信息的插件"
     }
   }
 }

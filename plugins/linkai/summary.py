@@ -13,7 +13,8 @@ class LinkSummary:
             "file": open(file_path, "rb"),
             "name": file_path.split("/")[-1],
         }
-        res = requests.post(url=self.base_url() + "/v1/summary/file", headers=self.headers(), files=file_body, timeout=(5, 300))
+        url = self.base_url() + "/v1/summary/file"
+        res = requests.post(url, headers=self.headers(), files=file_body, timeout=(5, 300))
         return self._parse_summary_res(res)
 
     def summary_url(self, url: str):
@@ -71,7 +72,7 @@ class LinkSummary:
             return False
 
         suffix = file_path.split(".")[-1]
-        support_list = ["txt", "csv", "docx", "pdf", "md"]
+        support_list = ["txt", "csv", "docx", "pdf", "md", "jpg", "jpeg", "png"]
         if suffix not in support_list:
             logger.warn(f"[LinkSum] unsupported file, suffix={suffix}, support_list={support_list}")
             return False
@@ -90,5 +91,4 @@ class LinkSummary:
         for support_url in support_list:
             if url.strip().startswith(support_url):
                 return True
-        logger.debug(f"[LinkSum] unsupported url, no need to process, url={url}")
         return False

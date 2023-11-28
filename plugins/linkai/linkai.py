@@ -46,19 +46,24 @@ class LinkAI(Plugin):
             # filter content no need solve
             return
 
-        if context.type == ContextType.FILE and self._is_summary_open(context):
+        if context.type in [ContextType.FILE, ContextType.IMAGE] and self._is_summary_open(context):
             # 文件处理
             context.get("msg").prepare()
             file_path = context.content
             if not LinkSummary().check_file(file_path, self.sum_config):
                 return
-            _send_info(e_context, "正在为你加速生成摘要，请稍后")
+            if context.type != ContextType.IMAGE:
+                _send_info(e_context, "正在为你加速生成摘要，请稍后")
             res = LinkSummary().summary_file(file_path)
             if not res:
-                _set_reply_text("因为神秘力量无法获取文章内容，请稍后再试吧", e_context, level=ReplyType.TEXT)
+                if context.type != ContextType.IMAGE:
+                    _set_reply_text("因为神秘力量无法获取内容，请稍后再试吧", e_context, level=ReplyType.TEXT)
                 return
-            USER_FILE_MAP[_find_user_id(context) + "-sum_id"] = res.get("summary_id")
-            _set_reply_text(res.get("summary") + "\n\n💬 发送 \"开启对话\" 可以开启与文件内容的对话", e_context, level=ReplyType.TEXT)
+            summary_text = res.get("summary")
+            if context.type != ContextType.IMAGE:
+                USER_FILE_MAP[_find_user_id(context) + "-sum_id"] = res.get("summary_id")
+                summary_text += "\n\n💬 发送 \"开启对话\" 可以开启与文件内容的对话"
+            _set_reply_text(summary_text, e_context, level=ReplyType.TEXT)
             os.remove(file_path)
             return
 
@@ -187,6 +192,9 @@ class LinkAI(Plugin):
             return False
         if context.kwargs.get("isgroup") and not self.sum_config.get("group_enabled"):
             return False
+        support_type = self.sum_config.get("type") or ["FILE", "SHARING"]
+        if context.type.name not in support_type:
+            return False
         return True
 
     # LinkAI 对话任务处理
@@ -220,7 +228,7 @@ class LinkAI(Plugin):
 
     def get_help_text(self, verbose=False, **kwargs):
         trigger_prefix = _get_trigger_prefix()
-        help_text = "用于集成 LinkAI 提供的知识库、Midjourney绘画、文档总结对话等能力。\n\n"
+        help_text = "用于集成 LinkAI 提供的知识库、Midjourney绘画、文档总结、联网搜索等能力。\n\n"
         if not verbose:
             return help_text
         help_text += f'📖 知识库\n - 群聊中指定应用: {trigger_prefix}linkai app 应用编码\n'
