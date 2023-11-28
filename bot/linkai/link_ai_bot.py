@@ -362,7 +362,7 @@ class LinkAISessionManager(SessionManager):
         try:
             max_tokens = conf().get("conversation_max_tokens", 2500)
             tokens_cnt = session.discard_exceeding(max_tokens, total_tokens)
-            logger.info(f"[LinkAI] chat history discard, before tokens={total_tokens}, now tokens={tokens_cnt}")
+            logger.debug(f"[LinkAI] chat history, before tokens={total_tokens}, now tokens={tokens_cnt}")
         except Exception as e:
             logger.warning("Exception when counting tokens precisely for session: {}".format(str(e)))
         return session
