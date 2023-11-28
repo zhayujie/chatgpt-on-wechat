@@ -1,4 +1,4 @@
-openai>=0.27.8
+openai==0.27.8
 HTMLParser>=0.0.2
 PyQRCode>=1.2.1
 qrcode>=7.4.2
