@@ -25,7 +25,7 @@ from lib import itchat
 from lib.itchat.content import *
 
 
-@itchat.msg_register([TEXT, VOICE, PICTURE, NOTE])
+@itchat.msg_register([TEXT, VOICE, PICTURE, NOTE, ATTACHMENT, SHARING])
 def handler_single_msg(msg):
     try:
         cmsg = WechatMessage(msg, False)
@@ -36,7 +36,7 @@ def handler_single_msg(msg):
     return None
 
 
-@itchat.msg_register([TEXT, VOICE, PICTURE, NOTE], isGroupChat=True)
+@itchat.msg_register([TEXT, VOICE, PICTURE, NOTE, ATTACHMENT, SHARING], isGroupChat=True)
 def handler_group_msg(msg):
     try:
         cmsg = WechatMessage(msg, True)
@@ -142,6 +142,9 @@ class WechatChannel(ChatChannel):
     @time_checker
     @_check
     def handle_single(self, cmsg: ChatMessage):
+        # filter system message
+        if cmsg.other_user_id in ["weixin"]:
+            return
         if cmsg.ctype == ContextType.VOICE:
             if conf().get("speech_recognition") != True:
                 return
@@ -167,11 +170,13 @@ class WechatChannel(ChatChannel):
             logger.debug("[WX]receive voice for group msg: {}".format(cmsg.content))
         elif cmsg.ctype == ContextType.IMAGE:
             logger.debug("[WX]receive image for group msg: {}".format(cmsg.content))
-        elif cmsg.ctype in [ContextType.JOIN_GROUP, ContextType.PATPAT]:
+        elif cmsg.ctype in [ContextType.JOIN_GROUP, ContextType.PATPAT, ContextType.ACCEPT_FRIEND]:
             logger.debug("[WX]receive note msg: {}".format(cmsg.content))
         elif cmsg.ctype == ContextType.TEXT:
             # logger.debug("[WX]receive group msg: {}, cmsg={}".format(json.dumps(cmsg._rawmsg, ensure_ascii=False), cmsg))
             pass
+        elif cmsg.ctype == ContextType.FILE:
+            logger.debug(f"[WX]receive attachment msg, file_name={cmsg.content}")
         else:
             logger.debug("[WX]receive group msg: {}".format(cmsg.content))
         context = self._compose_context(cmsg.ctype, cmsg.content, isgroup=True, msg=cmsg)
@@ -208,3 +213,24 @@ class WechatChannel(ChatChannel):
             image_storage.seek(0)
             itchat.send_image(image_storage, toUserName=receiver)
             logger.info("[WX] sendImage, receiver={}".format(receiver))
+        elif reply.type == ReplyType.FILE:  # 新增文件回复类型
+            file_storage = reply.content
+            itchat.send_file(file_storage, toUserName=receiver)
+            logger.info("[WX] sendFile, receiver={}".format(receiver))
+        elif reply.type == ReplyType.VIDEO:  # 新增视频回复类型
+            video_storage = reply.content
+            itchat.send_video(video_storage, toUserName=receiver)
+            logger.info("[WX] sendFile, receiver={}".format(receiver))
+        elif reply.type == ReplyType.VIDEO_URL:  # 新增视频URL回复类型
+            video_url = reply.content
+            logger.debug(f"[WX] start download video, video_url={video_url}")
+            video_res = requests.get(video_url, stream=True)
+            video_storage = io.BytesIO()
+            size = 0
+            for block in video_res.iter_content(1024):
+                size += len(block)
+                video_storage.write(block)
+            logger.info(f"[WX] download video success, size={size}, video_url={video_url}")
+            video_storage.seek(0)
+            itchat.send_video(video_storage, toUserName=receiver)
+            logger.info("[WX] sendVideo url={}, receiver={}".format(video_url, receiver))

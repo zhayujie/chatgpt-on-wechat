@@ -1,6 +1,6 @@
 import io
 import os
-
+from urllib.parse import urlparse
 from PIL import Image
 
 
@@ -49,3 +49,8 @@ def split_string_by_utf8_length(string, max_length, max_split=0):
         result.append(encoded[start:end].decode("utf-8"))
         start = end
     return result
+
+
+def get_path_suffix(path):
+    path = urlparse(path).path
+    return os.path.splitext(path)[-1].lstrip('.')

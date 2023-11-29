@@ -5,8 +5,8 @@ import signal
 import sys
 
 from channel import channel_factory
-from common.log import logger
-from config import conf, load_config
+from common import const
+from config import load_config
 from plugins import *
 
 
@@ -43,7 +43,7 @@ def run():
             # os.environ['WECHATY_PUPPET_SERVICE_ENDPOINT'] = '127.0.0.1:9001'
 
         channel = channel_factory.create_channel(channel_name)
-        if channel_name in ["wx", "wxy", "terminal", "wechatmp", "wechatmp_service", "wechatcom_app", "wework"]:
+        if channel_name in ["wx", "wxy", "terminal", "wechatmp", "wechatmp_service", "wechatcom_app", "wework", const.FEISHU]:
             PluginManager().load_plugins()
 
         # startup channel
