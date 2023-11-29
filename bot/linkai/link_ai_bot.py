@@ -5,6 +5,7 @@ import time
 
 import requests
 
+import config
 from bot.bot import Bot
 from bot.chatgpt.chat_gpt_session import ChatGPTSession
 from bot.session_manager import SessionManager
@@ -60,7 +61,8 @@ class LinkAIBot(Bot):
                 logger.info(f"[LINKAI] won't set appcode because a plugin ({context['generate_breaked_by']}) affected the context")
                 app_code = None
             else:
-                app_code = context.kwargs.get("app_code") or conf().get("linkai_app_code")
+                plugin_app_code = self._find_group_mapping_code(context)
+                app_code = context.kwargs.get("app_code") or plugin_app_code or conf().get("linkai_app_code")
             linkai_api_key = conf().get("linkai_api_key")
 
             session_id = context["session_id"]
@@ -164,6 +166,18 @@ class LinkAIBot(Bot):
         except Exception as e:
             logger.exception(e)
 
+    def _find_group_mapping_code(self, context):
+        try:
+            if context.kwargs.get("isgroup"):
+                group_name = context.kwargs.get("msg").from_user_nickname
+                if config.plugin_config and config.plugin_config.get("linkai"):
+                    linkai_config = config.plugin_config.get("linkai")
+                    group_mapping = linkai_config.get("group_app_map")
+                    if group_mapping and group_name:
+                        return group_mapping.get(group_name)
+        except Exception as e:
+            logger.exception(e)
+            return None
 
     def _build_vision_msg(self, query: str, path: str):
         try:
