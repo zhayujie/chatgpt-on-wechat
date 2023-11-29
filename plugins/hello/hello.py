@@ -22,6 +22,7 @@ class Hello(Plugin):
         super().__init__()
         self.handlers[Event.ON_HANDLE_CONTEXT] = self.on_handle_context
         logger.info("[Hello] inited")
+        self.config = super().load_config()
 
     def on_handle_context(self, e_context: EventContext):
         if e_context["context"].type not in [
@@ -30,7 +31,8 @@ class Hello(Plugin):
             ContextType.PATPAT,
         ]:
             return
-
+        if not self.config or not self.config.get("use_character_desc"):
+            e_context["context"]["generate_breaked_by"] = EventAction.BREAK
         if e_context["context"].type == ContextType.JOIN_GROUP:
             if "group_welcome_msg" in conf():
                 reply = Reply()

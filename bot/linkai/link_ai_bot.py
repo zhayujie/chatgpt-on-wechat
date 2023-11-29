@@ -370,12 +370,9 @@ class LinkAISessionManager(SessionManager):
 
 class LinkAISession(ChatGPTSession):
     def calc_tokens(self):
-        try:
-            cur_tokens = super().calc_tokens()
-        except Exception as e:
-            logger.debug("Exception when counting tokens precisely for query: {}".format(e))
-            cur_tokens = len(str(self.messages))
-        return cur_tokens
+        if not self.messages:
+            return 0
+        return len(str(self.messages))
 
     def discard_exceeding(self, max_tokens, cur_tokens=None):
         cur_tokens = self.calc_tokens()
