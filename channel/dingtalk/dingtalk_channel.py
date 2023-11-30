@@ -97,7 +97,7 @@ class DingTalkChanel(ChatChannel,dingtalk_stream.ChatbotHandler):
                 self.handle_single(dingtalk_msg)
             else:
                 self.handle_single(dingtalk_msg)   
-
+            return AckMessage.STATUS_OK, 'OK'
         except Exception as e:
             logger.error(e)
             return self.FAILED_MSG
@@ -109,7 +109,7 @@ class DingTalkChanel(ChatChannel,dingtalk_stream.ChatbotHandler):
         incoming_message = context.kwargs['msg'].incoming_message
         self.reply_text(reply.content, incoming_message)
        
-        return AckMessage.STATUS_OK, 'OK'
+        
 
 class dingtalkController:
     # 类常量
