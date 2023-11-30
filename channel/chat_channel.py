@@ -105,6 +105,8 @@ class ChatChannel(Channel):
                         flag = True
                         if match_prefix:
                             content = content.replace(match_prefix, "", 1).strip()
+                        if match_contain:
+                            content = content.replace(match_contain, "").strip()
                     if context["msg"].is_at:
                         nick_name = context["msg"].actual_user_nickname
                         if nick_name and nick_name in nick_name_black_list:
@@ -388,5 +390,5 @@ def check_contain(content, keyword_list):
         return None
     for ky in keyword_list:
         if content.find(ky) != -1:
-            return True
+            return ky
     return None

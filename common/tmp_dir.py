@@ -15,4 +15,4 @@ class TmpDir(object):
             os.makedirs(self.tmpFilePath)
 
     def path(self):
-        return str(self.tmpFilePath) + "/"
+        return str(self.tmpFilePath.resolve()) + "/"
