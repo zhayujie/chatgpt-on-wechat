@@ -56,7 +56,7 @@ class OpenaiVoice(Voice):
             # logger.info(f"[OPENAI] text_to_Voice success")
             # reply = Reply(ReplyType.VOICE, file_name)
 
-            speech_file_path = TmpDir().path() + "reply-" + datetime.datetime.now().strftime('%Y%m%d%H%M%S') + str(random.randint(0, 1000)) + ".mp3"
+            speech_file_path = TmpDir().path() + "reply-" + str(int(time.time())) + "-" + str(hash(text) & 0x7FFFFFFF) + ".mp3"
             logger.info("[Openai] using huya aigc for create speach")
             model = conf().get("text_to_voice_model") or const.TTS_1
             voice = conf().get("tts_voice_id") or "alloy"
