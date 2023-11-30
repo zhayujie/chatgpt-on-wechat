@@ -52,5 +52,13 @@ class OpenAIImage(object):
             else:
                 return False, "画图出现问题，请休息一下再问我吧"
         except Exception as e:
-            logger.exception(e)
-            return False, "画图出现问题，请休息一下再问我吧"
+            logger.warn(e)
+            if retry_count < 1:
+                time.sleep(5)
+                logger.warn("[OPEN_AI] ImgCreate failed, 第{}次重试".format(retry_count + 1))
+                return self.create_img(query, retry_count + 1)
+            else:
+                if "txt2img" in str(e):  # 专门针对公司hyaigc基建接口的错误处理
+                    import json
+                    return False, json.loads(e.args[0].replace("txt2img", "").strip())["error"]["message"]
+                return False, "画图出现问题，请休息一下再问我吧"
