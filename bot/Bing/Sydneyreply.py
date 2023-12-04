@@ -16,7 +16,7 @@ class SydneyBot(Bot):
         super().__init__()
         self.sessions = SessionManager(SydneySession, model=conf().get("model") or "gpt-3.5-turbo")
         
-    def reply(self, query, context: Context = None):
+    def reply(self, query, context: Context = None) -> Reply:
         if context.type == ContextType.TEXT:
             logger.info("[SYDNEY] query={}".format(query))
 
@@ -50,4 +50,14 @@ class SydneyBot(Bot):
                 reply_content = asyncio.run(Sydney_proess.sydney_reply(session))
                 self.sessions.session_reply(reply_content["content"], session_id)
             reply = Reply(ReplyType.TEXT, reply_content["content"])
+            return reply
+        elif context.type == ContextType.IMAGE_CREATE:
+            ok, res = self.create_img(query, 0)
+            if ok:
+                reply = Reply(ReplyType.IMAGE_URL, res)
+            else:
+                reply = Reply(ReplyType.ERROR, res)
+            return reply
+        else:
+            reply = Reply(ReplyType.ERROR, "Bot不支持处理{}类型的消息".format(context.type))
             return reply
