@@ -18,7 +18,7 @@ class Bridge(object):
             "text_to_voice": conf().get("text_to_voice", "google"),
             "translate": conf().get("translate", "baidu"),
         }
-        model_type = conf().get("model")
+        model_type = conf().get("model") or const.GPT35
         if model_type in ["sydney"]:
             self.btype["chat"] = const.SYDNEY
         if model_type in ["text-davinci-003"]:

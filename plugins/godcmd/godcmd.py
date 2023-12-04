@@ -266,14 +266,16 @@ class Godcmd(Plugin):
                     if not isadmin and not self.is_admin_in_group(e_context["context"]):
                         ok, result = False, "需要管理员权限执行"
                     elif len(args) == 0:
-                        ok, result = True, "当前模型为: " + str(conf().get("model"))
+                        model = conf().get("model") or const.GPT35
+                        ok, result = True, "当前模型为: " + str(model)
                     elif len(args) == 1:
                         if args[0] not in const.MODEL_LIST:
                             ok, result = False, "模型名称不存在"
                         else:
                             conf()["model"] = self.model_mapping(args[0])
                             Bridge().reset_bot()
-                            ok, result = True, "模型设置为: " + str(conf().get("model"))
+                            model = conf().get("model") or const.GPT35
+                            ok, result = True, "模型设置为: " + str(model)
                 elif cmd == "id":
                     ok, result = True, user
                 elif cmd == "set_openai_api_key":
