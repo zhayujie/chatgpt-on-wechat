@@ -94,7 +94,7 @@ class LinkAIBot(Bot):
             file_id = context.kwargs.get("file_id")
             if file_id:
                 body["file_id"] = file_id
-            logger.info(f"[LINKAI] query={query}, app_code={app_code}, mode={body.get('model')}, file_id={file_id}")
+            logger.info(f"[LINKAI] query={query}, app_code={app_code}, model={body.get('model')}, file_id={file_id}")
             headers = {"Authorization": "Bearer " + linkai_api_key}
 
             # do http request
@@ -120,6 +120,8 @@ class LinkAIBot(Bot):
                 if response["choices"][0].get("img_urls"):
                     thread = threading.Thread(target=self._send_image, args=(context.get("channel"), context, response["choices"][0].get("img_urls")))
                     thread.start()
+                    if response["choices"][0].get("text_content"):
+                        reply_content = response["choices"][0].get("text_content")
                 return Reply(ReplyType.TEXT, reply_content)
 
             else:
