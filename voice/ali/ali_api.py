@@ -7,9 +7,9 @@ wechat：cheung-z-x
 Description:
 
 """
+
 import json
 import time
-
 import requests
 import datetime
 import hashlib
@@ -23,12 +23,22 @@ from common.tmp_dir import TmpDir
 
 
 def text_to_speech_aliyun(url, text, appkey, token):
-    # 请求的headers
+    """
+    使用阿里云的文本转语音服务将文本转换为语音。
+
+    参数:
+    - url (str): 阿里云文本转语音服务的端点URL。
+    - text (str): 要转换为语音的文本。
+    - appkey (str): 您的阿里云appkey。
+    - token (str): 阿里云API的认证令牌。
+
+    返回值:
+    - str: 成功时输出音频文件的路径，否则为None。
+    """
     headers = {
         "Content-Type": "application/json",
     }
 
-    # 请求的payload
     data = {
         "text": text,
         "appkey": appkey,
@@ -36,20 +46,15 @@ def text_to_speech_aliyun(url, text, appkey, token):
         "format": "wav"
     }
 
-    # 发送POST请求
     response = requests.post(url, headers=headers, data=json.dumps(data))
 
-    # 检查响应状态码和内容类型
     if response.status_code == 200 and response.headers['Content-Type'] == 'audio/mpeg':
-        # 构造唯一的文件名
         output_file = TmpDir().path() + "reply-" + str(int(time.time())) + "-" + str(hash(text) & 0x7FFFFFFF) + ".wav"
 
-        # 将响应内容写入文件
         with open(output_file, 'wb') as file:
             file.write(response.content)
         logger.debug(f"音频文件保存成功，文件名：{output_file}")
     else:
-        # 打印错误信息
         logger.debug("响应状态码: {}".format(response.status_code))
         logger.debug("响应内容: {}".format(response.text))
         output_file = None
@@ -58,28 +63,55 @@ def text_to_speech_aliyun(url, text, appkey, token):
 
 
 class AliyunTokenGenerator:
+    """
+    用于生成阿里云服务认证令牌的类。
+
+    属性:
+    - access_key_id (str): 您的阿里云访问密钥ID。
+    - access_key_secret (str): 您的阿里云访问密钥秘密。
+    """
+
     def __init__(self, access_key_id, access_key_secret):
         self.access_key_id = access_key_id
         self.access_key_secret = access_key_secret
 
     def sign_request(self, parameters):
-        # 将参数排序
+        """
+        为阿里云服务签名请求。
+
+        参数:
+        - parameters (dict): 请求的参数字典。
+
+        返回值:
+        - str: 请求的签名签章。
+        """
+        # 将参数按照字典顺序排序
         sorted_params = sorted(parameters.items())
 
-        # 构造待签名的字符串
+        # 构造待签名的查询字符串
         canonicalized_query_string = ''
         for (k, v) in sorted_params:
             canonicalized_query_string += '&' + self.percent_encode(k) + '=' + self.percent_encode(v)
 
+        # 构造用于签名的字符串
         string_to_sign = 'GET&%2F&' + self.percent_encode(canonicalized_query_string[1:])  # 使用GET方法
 
-        # 计算签名
+        # 使用HMAC算法计算签名
         h = hmac.new((self.access_key_secret + "&").encode('utf-8'), string_to_sign.encode('utf-8'), hashlib.sha1)
         signature = base64.encodebytes(h.digest()).strip()
 
         return signature
 
     def percent_encode(self, encode_str):
+        """
+        对字符串进行百分比编码。
+
+        参数:
+        - encode_str (str): 要编码的字符串。
+
+        返回值:
+        - str: 编码后的字符串。
+        """
         encode_str = str(encode_str)
         res = urllib.parse.quote(encode_str, '')
         res = res.replace('+', '%20')
@@ -88,6 +120,12 @@ class AliyunTokenGenerator:
         return res
 
     def get_token(self):
+        """
+        获取阿里云服务的令牌。
+
+        返回值:
+        - str: 获取到的令牌。
+        """
         # 设置请求参数
         params = {
             'Format': 'JSON',
