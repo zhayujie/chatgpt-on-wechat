@@ -49,12 +49,15 @@ class Hello(Plugin):
             return
         
         if e_context["context"].type == ContextType.EXIT_GROUP:
-            e_context["context"].type = ContextType.TEXT
-            msg: ChatMessage = e_context["context"]["msg"]
-            e_context["context"].content = f'请你随机使用一种风格跟其他群用户说他违反规则"{msg.actual_user_nickname}"退出群聊。'
-            e_context.action = EventAction.BREAK  # 事件结束，进入默认处理逻辑
+            if conf().get("group_chat_exit_group", []) == True:
+                e_context["context"].type = ContextType.TEXT
+                msg: ChatMessage = e_context["context"]["msg"]
+                e_context["context"].content = f'请你随机使用一种风格跟其他群用户说他违反规则"{msg.actual_user_nickname}"退出群聊。'
+                e_context.action = EventAction.BREAK  # 事件结束，进入默认处理逻辑
+                return
+            e_context.action = EventAction.BREAK
             return
-
+            
         if e_context["context"].type == ContextType.PATPAT:
             e_context["context"].type = ContextType.TEXT
             msg: ChatMessage = e_context["context"]["msg"]
