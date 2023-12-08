@@ -20,14 +20,14 @@ from config import conf, load_config
 class TongyiQwenBot(Bot):
     def __init__(self):
         super().__init__()
-        self.access_key_id = conf().get("tongyi_access_key_id")
-        self.access_key_secret = conf().get("tongyi_access_key_secret")
-        self.agent_key = conf().get("tongyi_agent_key")
-        self.app_id = conf().get("tongyi_app_id")
-        self.node_id = conf().get("tongyi_node_id")
+        self.access_key_id = conf().get("qwen_access_key_id")
+        self.access_key_secret = conf().get("qwen_access_key_secret")
+        self.agent_key = conf().get("qwen_agent_key")
+        self.app_id = conf().get("qwen_app_id")
+        self.node_id = conf().get("qwen_node_id") or ""
         self.api_key_client = broadscope_bailian.AccessTokenClient(access_key_id=self.access_key_id, access_key_secret=self.access_key_secret)
         self.api_key_expired_time = self.set_api_key()
-        self.sessions = SessionManager(BaiduWenxinSession, model=conf().get("model") or "tongyi")
+        self.sessions = SessionManager(BaiduWenxinSession, model=conf().get("model") or "qwen")
         self.temperature = conf().get("temperature", 0.2) # 值在[0,1]之间，越大表示回复越具有不确定性
         self.top_p = conf().get("top_p", 1)
 
