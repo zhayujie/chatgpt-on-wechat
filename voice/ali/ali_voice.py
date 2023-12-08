@@ -18,6 +18,7 @@ from common.log import logger
 from voice.voice import Voice
 from voice.ali.ali_api import AliyunTokenGenerator
 from voice.ali.ali_api import text_to_speech_aliyun
+from config import conf
 
 
 class AliVoice(Voice):
@@ -32,10 +33,11 @@ class AliVoice(Voice):
                 config = json.load(fr)
             self.token = None
             self.token_expire_time = 0
+            # 默认复用阿里云千问的 access_key 和 access_secret
             self.api_url = config.get("api_url")
-            self.appkey = config.get("appkey")
-            self.access_key_id = config.get("access_key_id")
-            self.access_key_secret = config.get("access_key_secret")
+            self.app_key = config.get("app_key")
+            self.access_key_id = conf().get("qwen_access_key_id") or config.get("access_key_id")
+            self.access_key_secret = conf().get("qwen_access_key_secret") or config.get("access_key_secret")
         except Exception as e:
             logger.warn("AliVoice init failed: %s, ignore " % e)
 
@@ -51,7 +53,7 @@ class AliVoice(Voice):
                       r'äöüÄÖÜáéíóúÁÉÍÓÚàèìòùÀÈÌÒÙâêîôûÂÊÎÔÛçÇñÑ，。！？,.]', '', text)
         # 提取有效的token
         token_id = self.get_valid_token()
-        fileName = text_to_speech_aliyun(self.api_url, text, self.appkey, token_id)
+        fileName = text_to_speech_aliyun(self.api_url, text, self.app_key, token_id)
         if fileName:
             logger.info("[Ali] textToVoice text={} voice file name={}".format(text, fileName))
             reply = Reply(ReplyType.VOICE, fileName)
