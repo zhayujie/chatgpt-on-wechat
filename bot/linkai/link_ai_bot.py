@@ -32,6 +32,9 @@ class LinkAIBot(Bot):
         if context.type == ContextType.TEXT:
             return self._chat(query, context)
         elif context.type == ContextType.IMAGE_CREATE:
+            if not conf().get("text_to_image"):
+                logger.warn("[LinkAI] text_to_image is not enabled, ignore the IMAGE_CREATE request")
+                return Reply(ReplyType.TEXT, "")
             ok, res = self.create_img(query, 0)
             if ok:
                 reply = Reply(ReplyType.IMAGE_URL, res)
