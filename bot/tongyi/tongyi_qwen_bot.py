@@ -10,7 +10,7 @@ import broadscope_bailian
 from broadscope_bailian import ChatQaMessage
 
 from bot.bot import Bot
-from bot.baidu.baidu_wenxin_session import BaiduWenxinSession
+from bot.tongyi.ali_qwen_session import AliQwenSession
 from bot.session_manager import SessionManager
 from bridge.context import ContextType
 from bridge.reply import Reply, ReplyType
@@ -27,7 +27,7 @@ class TongyiQwenBot(Bot):
         self.node_id = conf().get("qwen_node_id") or ""
         self.api_key_client = broadscope_bailian.AccessTokenClient(access_key_id=self.access_key_id, access_key_secret=self.access_key_secret)
         self.api_key_expired_time = self.set_api_key()
-        self.sessions = SessionManager(BaiduWenxinSession, model=conf().get("model") or "qwen")
+        self.sessions = SessionManager(AliQwenSession, model=conf().get("model") or "qwen")
         self.temperature = conf().get("temperature", 0.2) # 值在[0,1]之间，越大表示回复越具有不确定性
         self.top_p = conf().get("top_p", 1)
 
@@ -76,7 +76,7 @@ class TongyiQwenBot(Bot):
             reply = Reply(ReplyType.ERROR, "Bot不支持处理{}类型的消息".format(context.type))
             return reply
 
-    def reply_text(self, session: BaiduWenxinSession, retry_count=0) -> dict:
+    def reply_text(self, session: AliQwenSession, retry_count=0) -> dict:
         """
         call bailian's ChatCompletion to get the answer
         :param session: a conversation session
@@ -140,6 +140,7 @@ class TongyiQwenBot(Bot):
         history = []
         user_content = ''
         assistant_content = ''
+        system_content = ''
         for message in messages:
             role = message.get('role')
             if role == 'user':
@@ -149,8 +150,16 @@ class TongyiQwenBot(Bot):
                 history.append(ChatQaMessage(user_content, assistant_content))
                 user_content = ''
                 assistant_content = ''
+            elif role =='system':
+                system_content += message.get('content')
         if user_content == '':
             raise Exception('no user message')
+        if system_content != '':
+            # NOTE 模拟系统消息，测试发现人格描述以"你需要扮演ChatGPT"开头能够起作用，而以"你是ChatGPT"开头模型会直接否认
+            system_qa = ChatQaMessage(system_content, '好的，我会严格按照你的设定回答问题')
+            history.insert(0, system_qa)
+        logger.debug("[TONGYI] converted qa messages: {}".format([item.to_dict() for item in history]))
+        logger.debug("[TONGYI] user content as prompt: {}".format(user_content))
         return user_content, history
 
     def get_completion_content(self, response, node_id):
