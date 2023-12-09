@@ -103,8 +103,8 @@ class TongyiQwenBot(Bot):
         try:
             prompt, history = self.convert_messages_format(session.messages)
             self.update_api_key_if_expired()
-            # NOTE 阿里百炼的call()函数参数比较奇怪, top_k参数表示top_p, top_p参数表示temperature, 可以参考文档 https://help.aliyun.com/document_detail/2587502.htm
-            response = broadscope_bailian.Completions().call(app_id=self.app_id(), prompt=prompt, history=history, top_k=self.top_p(), top_p=self.temperature())
+            # NOTE 阿里百炼的call()函数未提供temperature参数，考虑到temperature和top_p参数作用相同，取两者较小的值作为top_p参数传入，详情见文档 https://help.aliyun.com/document_detail/2587502.htm
+            response = broadscope_bailian.Completions().call(app_id=self.app_id(), prompt=prompt, history=history, top_p=min(self.temperature(), self.top_p()))
             completion_content = self.get_completion_content(response, self.node_id())
             completion_tokens, total_tokens = self.calc_tokens(session.messages, completion_content)
             return {
@@ -181,6 +181,8 @@ class TongyiQwenBot(Bot):
         return user_content, history
 
     def get_completion_content(self, response, node_id):
+        if not response['Success']:
+            return f"[ERROR]\n{response['Code']}:{response['Message']}"
         text = response['Data']['Text']
         if node_id == '':
             return text
