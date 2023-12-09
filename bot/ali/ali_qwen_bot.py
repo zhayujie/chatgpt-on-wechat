@@ -10,7 +10,7 @@ import broadscope_bailian
 from broadscope_bailian import ChatQaMessage
 
 from bot.bot import Bot
-from bot.tongyi.ali_qwen_session import AliQwenSession
+from bot.ali.ali_qwen_session import AliQwenSession
 from bot.session_manager import SessionManager
 from bridge.context import ContextType
 from bridge.reply import Reply, ReplyType
@@ -18,7 +18,7 @@ from common.log import logger
 from common import const
 from config import conf, load_config
 
-class TongyiQwenBot(Bot):
+class AliQwenBot(Bot):
     def __init__(self):
         super().__init__()
         self.api_key_expired_time = self.set_api_key()
@@ -51,7 +51,7 @@ class TongyiQwenBot(Bot):
     def reply(self, query, context=None):
         # acquire reply content
         if context.type == ContextType.TEXT:
-            logger.info("[TONGYI] query={}".format(query))
+            logger.info("[QWEN] query={}".format(query))
 
             session_id = context["session_id"]
             reply = None
@@ -68,11 +68,11 @@ class TongyiQwenBot(Bot):
             if reply:
                 return reply
             session = self.sessions.session_query(query, session_id)
-            logger.debug("[TONGYI] session query={}".format(session.messages))
+            logger.debug("[QWEN] session query={}".format(session.messages))
 
             reply_content = self.reply_text(session)
             logger.debug(
-                "[TONGYI] new_query={}, session_id={}, reply_cont={}, completion_tokens={}".format(
+                "[QWEN] new_query={}, session_id={}, reply_cont={}, completion_tokens={}".format(
                     session.messages,
                     session_id,
                     reply_content["content"],
@@ -86,7 +86,7 @@ class TongyiQwenBot(Bot):
                 reply = Reply(ReplyType.TEXT, reply_content["content"])
             else:
                 reply = Reply(ReplyType.ERROR, reply_content["content"])
-                logger.debug("[TONGYI] reply {} used 0 tokens.".format(reply_content))
+                logger.debug("[QWEN] reply {} used 0 tokens.".format(reply_content))
             return reply
 
         else:
@@ -116,31 +116,31 @@ class TongyiQwenBot(Bot):
             need_retry = retry_count < 2
             result = {"completion_tokens": 0, "content": "我现在有点累了，等会再来吧"}
             if isinstance(e, openai.error.RateLimitError):
-                logger.warn("[TONGYI] RateLimitError: {}".format(e))
+                logger.warn("[QWEN] RateLimitError: {}".format(e))
                 result["content"] = "提问太快啦，请休息一下再问我吧"
                 if need_retry:
                     time.sleep(20)
             elif isinstance(e, openai.error.Timeout):
-                logger.warn("[TONGYI] Timeout: {}".format(e))
+                logger.warn("[QWEN] Timeout: {}".format(e))
                 result["content"] = "我没有收到你的消息"
                 if need_retry:
                     time.sleep(5)
             elif isinstance(e, openai.error.APIError):
-                logger.warn("[TONGYI] Bad Gateway: {}".format(e))
+                logger.warn("[QWEN] Bad Gateway: {}".format(e))
                 result["content"] = "请再问我一次"
                 if need_retry:
                     time.sleep(10)
             elif isinstance(e, openai.error.APIConnectionError):
-                logger.warn("[TONGYI] APIConnectionError: {}".format(e))
+                logger.warn("[QWEN] APIConnectionError: {}".format(e))
                 need_retry = False
                 result["content"] = "我连接不到你的网络"
             else:
-                logger.exception("[TONGYI] Exception: {}".format(e))
+                logger.exception("[QWEN] Exception: {}".format(e))
                 need_retry = False
                 self.sessions.clear_session(session.session_id)
 
             if need_retry:
-                logger.warn("[TONGYI] 第{}次重试".format(retry_count + 1))
+                logger.warn("[QWEN] 第{}次重试".format(retry_count + 1))
                 return self.reply_text(session, retry_count + 1)
             else:
                 return result
@@ -176,8 +176,8 @@ class TongyiQwenBot(Bot):
             # NOTE 模拟系统消息，测试发现人格描述以"你需要扮演ChatGPT"开头能够起作用，而以"你是ChatGPT"开头模型会直接否认
             system_qa = ChatQaMessage(system_content, '好的，我会严格按照你的设定回答问题')
             history.insert(0, system_qa)
-        logger.debug("[TONGYI] converted qa messages: {}".format([item.to_dict() for item in history]))
-        logger.debug("[TONGYI] user content as prompt: {}".format(user_content))
+        logger.debug("[QWEN] converted qa messages: {}".format([item.to_dict() for item in history]))
+        logger.debug("[QWEN] user content as prompt: {}".format(user_content))
         return user_content, history
 
     def get_completion_content(self, response, node_id):
