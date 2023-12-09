@@ -15,21 +15,38 @@ from bot.session_manager import SessionManager
 from bridge.context import ContextType
 from bridge.reply import Reply, ReplyType
 from common.log import logger
+from common import const
 from config import conf, load_config
 
 class TongyiQwenBot(Bot):
     def __init__(self):
         super().__init__()
-        self.access_key_id = conf().get("qwen_access_key_id")
-        self.access_key_secret = conf().get("qwen_access_key_secret")
-        self.agent_key = conf().get("qwen_agent_key")
-        self.app_id = conf().get("qwen_app_id")
-        self.node_id = conf().get("qwen_node_id") or ""
-        self.api_key_client = broadscope_bailian.AccessTokenClient(access_key_id=self.access_key_id, access_key_secret=self.access_key_secret)
         self.api_key_expired_time = self.set_api_key()
-        self.sessions = SessionManager(AliQwenSession, model=conf().get("model") or "qwen")
-        self.temperature = conf().get("temperature", 0.2) # 值在[0,1]之间，越大表示回复越具有不确定性
-        self.top_p = conf().get("top_p", 1)
+        self.sessions = SessionManager(AliQwenSession, model=conf().get("model", const.QWEN))
+
+    def api_key_client(self):
+        return broadscope_bailian.AccessTokenClient(access_key_id=self.access_key_id(), access_key_secret=self.access_key_secret())
+
+    def access_key_id(self):
+        return conf().get("qwen_access_key_id")
+
+    def access_key_secret(self):
+        return conf().get("qwen_access_key_secret")
+
+    def agent_key(self):
+        return conf().get("qwen_agent_key")
+
+    def app_id(self):
+        return conf().get("qwen_app_id")
+
+    def node_id(self):
+        return conf().get("qwen_node_id", "")
+
+    def temperature(self):
+        return conf().get("temperature", 0.2 )
+
+    def top_p(self):
+        return conf().get("top_p", 1)
 
     def reply(self, query, context=None):
         # acquire reply content
@@ -87,8 +104,8 @@ class TongyiQwenBot(Bot):
             prompt, history = self.convert_messages_format(session.messages)
             self.update_api_key_if_expired()
             # NOTE 阿里百炼的call()函数参数比较奇怪, top_k参数表示top_p, top_p参数表示temperature, 可以参考文档 https://help.aliyun.com/document_detail/2587502.htm
-            response = broadscope_bailian.Completions().call(app_id=self.app_id, prompt=prompt, history=history, top_k=self.top_p, top_p=self.temperature)
-            completion_content = self.get_completion_content(response, self.node_id)
+            response = broadscope_bailian.Completions().call(app_id=self.app_id(), prompt=prompt, history=history, top_k=self.top_p(), top_p=self.temperature())
+            completion_content = self.get_completion_content(response, self.node_id())
             completion_tokens, total_tokens = self.calc_tokens(session.messages, completion_content)
             return {
                 "total_tokens": total_tokens,
@@ -129,9 +146,10 @@ class TongyiQwenBot(Bot):
                 return result
 
     def set_api_key(self):
-        api_key, expired_time = self.api_key_client.create_token(agent_key=self.agent_key)
+        api_key, expired_time = self.api_key_client().create_token(agent_key=self.agent_key())
         broadscope_bailian.api_key = api_key
         return expired_time
+
     def update_api_key_if_expired(self):
         if time.time() > self.api_key_expired_time:
             self.api_key_expired_time = self.set_api_key()
