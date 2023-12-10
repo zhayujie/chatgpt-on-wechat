@@ -90,7 +90,7 @@ class AliQwenBot(Bot, OpenAIImage):
                 logger.debug("[QWEN] reply {} used 0 tokens.".format(reply_content))
             return reply
         elif context.type == ContextType.IMAGE_CREATE and conf().get("text_to_image", False):
-            ok, retstring = self.create_img(query, 0)
+            ok, retstring = self.create_img(query, 0, context=context)
             reply = None
             if ok:
                 reply = Reply(ReplyType.IMAGE_URL, retstring)
