@@ -12,6 +12,7 @@ from broadscope_bailian import ChatQaMessage
 from bot.bot import Bot
 from bot.ali.ali_qwen_session import AliQwenSession
 from bot.openai.open_ai_image import OpenAIImage
+from bot.openai.open_ai_vision import OpenAIVision
 from bot.session_manager import SessionManager
 from bridge.context import ContextType
 from bridge.reply import Reply, ReplyType
@@ -19,7 +20,7 @@ from common.log import logger
 from common import const
 from config import conf, load_config
 
-class AliQwenBot(Bot, OpenAIImage):
+class AliQwenBot(Bot, OpenAIImage, OpenAIVision):
     def __init__(self):
         super().__init__()
         self.api_key_expired_time = self.set_api_key()
@@ -71,7 +72,7 @@ class AliQwenBot(Bot, OpenAIImage):
             session = self.sessions.session_query(query, session_id)
             logger.debug("[QWEN] session query={}".format(session.messages))
 
-            reply_content = self.reply_text(session)
+            reply_content = self.reply_text(session_id, session)
             logger.debug(
                 "[QWEN] new_query={}, session_id={}, reply_cont={}, completion_tokens={}".format(
                     session.messages,
@@ -101,7 +102,7 @@ class AliQwenBot(Bot, OpenAIImage):
             reply = Reply(ReplyType.ERROR, "Bot不支持处理{}类型的消息".format(context.type))
             return reply
 
-    def reply_text(self, session: AliQwenSession, retry_count=0) -> dict:
+    def reply_text(self, session_id: str, session: AliQwenSession, retry_count=0) -> dict:
         """
         call bailian's ChatCompletion to get the answer
         :param session: a conversation session
@@ -109,6 +110,9 @@ class AliQwenBot(Bot, OpenAIImage):
         :return: {}
         """
         try:
+            res = self.do_vision_completion_if_need(session_id, session.messages[-1]['content'])
+            if res:
+                return res
             prompt, history = self.convert_messages_format(session.messages)
             self.update_api_key_if_expired()
             # NOTE 阿里百炼的call()函数未提供temperature参数，考虑到temperature和top_p参数作用相同，取两者较小的值作为top_p参数传入，详情见文档 https://help.aliyun.com/document_detail/2587502.htm
@@ -149,7 +153,7 @@ class AliQwenBot(Bot, OpenAIImage):
 
             if need_retry:
                 logger.warn("[QWEN] 第{}次重试".format(retry_count + 1))
-                return self.reply_text(session, retry_count + 1)
+                return self.reply_text(session_id, session, retry_count + 1)
             else:
                 return result
 
