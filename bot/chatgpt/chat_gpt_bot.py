@@ -1,5 +1,6 @@
 # encoding:utf-8
 
+import base64
 import time
 
 import openai
@@ -14,6 +15,7 @@ from bridge.context import ContextType
 from bridge.reply import Reply, ReplyType
 from common.log import logger
 from common.token_bucket import TokenBucket
+from common import memory, utils, const
 from config import conf, load_config
 
 
@@ -75,7 +77,7 @@ class ChatGPTBot(Bot, OpenAIImage):
             #     # reply in stream
             #     return self.reply_text_stream(query, new_query, session_id)
 
-            reply_content = self.reply_text(session, api_key, args=new_args)
+            reply_content = self.reply_text(session_id, session, api_key, args=new_args)
             logger.debug(
                 "[CHATGPT] new_query={}, session_id={}, reply_cont={}, completion_tokens={}".format(
                     session.messages,
@@ -106,7 +108,7 @@ class ChatGPTBot(Bot, OpenAIImage):
             reply = Reply(ReplyType.ERROR, "Bot不支持处理{}类型的消息".format(context.type))
             return reply
 
-    def reply_text(self, session: ChatGPTSession, api_key=None, args=None, retry_count=0) -> dict:
+    def reply_text(self, session_id: str, session: ChatGPTSession, api_key=None, args=None, retry_count=0) -> dict:
         """
         call openai's ChatCompletion to get the answer
         :param session: a conversation session
@@ -120,6 +122,18 @@ class ChatGPTBot(Bot, OpenAIImage):
             # if api_key == None, the default openai.api_key will be used
             if args is None:
                 args = self.args
+            img_cache = memory.USER_IMAGE_CACHE.get(session_id)
+            if img_cache and conf().get("image_recognition"):
+                query = session.messages[-1]['content']
+                response, err = self.vision_completion(query, img_cache)
+                if err:
+                    return {"completion_tokens": 0, "content": f"识别图片异常, {err}"}
+                memory.USER_IMAGE_CACHE[session_id] = None
+                return {
+                    "total_tokens": response["usage"]["total_tokens"],
+                    "completion_tokens": response["usage"]["completion_tokens"],
+                    "content": response['choices'][0]["message"]["content"],
+                }
             response = openai.ChatCompletion.create(api_key=api_key, messages=session.messages, **args)
             # logger.debug("[CHATGPT] response={}".format(response))
             # logger.info("[ChatGPT] reply={}, total_tokens={}".format(response.choices[0]['message']['content'], response["usage"]["total_tokens"]))
@@ -158,10 +172,54 @@ class ChatGPTBot(Bot, OpenAIImage):
 
             if need_retry:
                 logger.warn("[CHATGPT] 第{}次重试".format(retry_count + 1))
-                return self.reply_text(session, api_key, args, retry_count + 1)
+                return self.reply_text(session_id, session, api_key, args, retry_count + 1)
             else:
                 return result
 
+    def vision_completion(self, query: str, img_cache: dict):
+        msg = img_cache.get("msg")
+        path = img_cache.get("path")
+        msg.prepare()
+        logger.info(f"[CHATGPT] query with images, path={path}")
+        payload = {
+            "model": const.GPT4_VISION_PREVIEW,
+            "messages": self.build_vision_msg(query, path),
+            "temperature": conf().get("temperature"),
+            "top_p": conf().get("top_p", 1),
+            "frequency_penalty": conf().get("frequency_penalty", 0.0),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
+            "presence_penalty": conf().get("presence_penalty", 0.0),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
+        }
+        headers = {"Authorization": "Bearer " + conf().get("open_ai_api_key", "")}
+        # do http request
+        base_url = conf().get("open_ai_api_base", "https://api.openai.com/v1")
+        res = requests.post(url=base_url + "/chat/completions", json=payload, headers=headers,
+                            timeout=conf().get("request_timeout", 180))
+        if res.status_code == 200:
+            return res.json(), None
+        else:
+            logger.error(f"[CHATGPT] vision completion, status_code={res.status_code}, response={res.text}")
+            return None, res.text
+
+    def build_vision_msg(self, query: str, path: str):
+        suffix = utils.get_path_suffix(path)
+        with open(path, "rb") as file:
+            base64_str = base64.b64encode(file.read()).decode('utf-8')
+        messages = [{
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": query
+                },
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/{suffix};base64,{base64_str}"
+                    }
+                }
+            ]
+        }]
+        return messages
 
 class AzureChatGPTBot(ChatGPTBot):
     def __init__(self):
