@@ -11,6 +11,7 @@ from broadscope_bailian import ChatQaMessage
 
 from bot.bot import Bot
 from bot.ali.ali_qwen_session import AliQwenSession
+from bot.openai.open_ai_image import OpenAIImage
 from bot.session_manager import SessionManager
 from bridge.context import ContextType
 from bridge.reply import Reply, ReplyType
@@ -18,7 +19,7 @@ from common.log import logger
 from common import const
 from config import conf, load_config
 
-class AliQwenBot(Bot):
+class AliQwenBot(Bot, OpenAIImage):
     def __init__(self):
         super().__init__()
         self.api_key_expired_time = self.set_api_key()
@@ -88,7 +89,14 @@ class AliQwenBot(Bot):
                 reply = Reply(ReplyType.ERROR, reply_content["content"])
                 logger.debug("[QWEN] reply {} used 0 tokens.".format(reply_content))
             return reply
-
+        elif context.type == ContextType.IMAGE_CREATE and conf().get("text_to_image", False):
+            ok, retstring = self.create_img(query, 0)
+            reply = None
+            if ok:
+                reply = Reply(ReplyType.IMAGE_URL, retstring)
+            else:
+                reply = Reply(ReplyType.ERROR, retstring)
+            return reply
         else:
             reply = Reply(ReplyType.ERROR, "Bot不支持处理{}类型的消息".format(context.type))
             return reply
