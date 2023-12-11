@@ -1,10 +1,9 @@
 # access LinkAI knowledge base platform
 # docs: https://link-ai.tech/platform/link-app/wechat
 
+import re
 import time
-
 import requests
-
 import config
 from bot.bot import Bot
 from bot.chatgpt.chat_gpt_session import ChatGPTSession
@@ -125,6 +124,7 @@ class LinkAIBot(Bot):
                     thread.start()
                     if response["choices"][0].get("text_content"):
                         reply_content = response["choices"][0].get("text_content")
+                reply_content = self._process_url(reply_content)
                 return Reply(ReplyType.TEXT, reply_content)
 
             else:
@@ -355,6 +355,14 @@ class LinkAIBot(Bot):
         except Exception as e:
             logger.exception(e)
 
+    def _process_url(self, text):
+        try:
+            url_pattern = re.compile(r'\[(.*?)\]\((http[s]?://.*?)\)')
+            def replace_markdown_url(match):
+                return f"{match.group(2)}"
+            return url_pattern.sub(replace_markdown_url, text)
+        except Exception as e:
+            logger.error(e)
 
     def _send_image(self, channel, context, image_urls):
         if not image_urls:
