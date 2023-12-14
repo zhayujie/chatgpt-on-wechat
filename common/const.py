@@ -7,6 +7,7 @@ XUNFEI = "xunfei"
 CHATGPTONAZURE = "chatGPTOnAzure"
 LINKAI = "linkai"
 CLAUDEAI = "claude"
+QWEN = "qwen"
 
 # model
 GPT35 = "gpt-3.5-turbo"
@@ -17,6 +18,6 @@ WHISPER_1 = "whisper-1"
 TTS_1 = "tts-1"
 TTS_1_HD = "tts-1-hd"
 
-MODEL_LIST = ["sydney", "gpt-3.5-turbo", "gpt-3.5-turbo-16k", "gpt-4", "wenxin", "wenxin-4", "xunfei", "claude", "gpt-4-turbo", GPT4_TURBO_PREVIEW]
+MODEL_LIST = ["sydney", "gpt-3.5-turbo", "gpt-3.5-turbo-16k", "gpt-4", "wenxin", "wenxin-4", "xunfei", "claude", "gpt-4-turbo", GPT4_TURBO_PREVIEW, QWEN]
 # channel
 FEISHU = "feishu"

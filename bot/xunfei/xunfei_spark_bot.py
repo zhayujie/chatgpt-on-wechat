@@ -40,10 +40,13 @@ class XunFeiBot(Bot):
         self.app_id = conf().get("xunfei_app_id")
         self.api_key = conf().get("xunfei_api_key")
         self.api_secret = conf().get("xunfei_api_secret")
-        # 默认使用v3.0版本，2.0版本可设置为generalv2，  1.5版本可设置为 general
-        self.domain = "generalv2"
-        # 默认使用v3.0版本，1.5版本可设置为 "ws://spark-api.xf-yun.com/v1.1/chat"，
-        # 2.0版本可设置为 "ws://spark-api.xf-yun.com/v2.1/chat"
+        # 默认使用v2.0版本: "generalv2"
+        # v1.5版本为 "general"
+        # v3.0版本为: "generalv3"
+        self.domain = "generalv3"
+        # 默认使用v2.0版本: "ws://spark-api.xf-yun.com/v2.1/chat"
+        # v1.5版本为: "ws://spark-api.xf-yun.com/v1.1/chat"
+        # v3.0版本为: "ws://spark-api.xf-yun.com/v3.1/chat"
         self.spark_url = "ws://spark-api.xf-yun.com/v3.1/chat"
         self.host = urlparse(self.spark_url).netloc
         self.path = urlparse(self.spark_url).path
