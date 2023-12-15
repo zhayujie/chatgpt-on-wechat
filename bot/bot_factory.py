@@ -47,4 +47,9 @@ def create_bot(bot_type):
     elif bot_type == const.QWEN:
         from bot.tongyi.tongyi_qwen_bot import TongyiQwenBot
         return TongyiQwenBot()
+
+    elif bot_type == const.GEMINI:
+        from bot.gemini.google_gemini_bot import GoogleGeminiBot
+        return GoogleGeminiBot()
+
     raise RuntimeError
