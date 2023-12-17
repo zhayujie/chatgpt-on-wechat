@@ -1,10 +1,10 @@
 # access LinkAI knowledge base platform
 # docs: https://link-ai.tech/platform/link-app/wechat
 
+import re
 import time
-
 import requests
-
+import config
 from bot.bot import Bot
 from bot.chatgpt.chat_gpt_session import ChatGPTSession
 from bot.session_manager import SessionManager
@@ -31,6 +31,9 @@ class LinkAIBot(Bot):
         if context.type == ContextType.TEXT:
             return self._chat(query, context)
         elif context.type == ContextType.IMAGE_CREATE:
+            if not conf().get("text_to_image"):
+                logger.warn("[LinkAI] text_to_image is not enabled, ignore the IMAGE_CREATE request")
+                return Reply(ReplyType.TEXT, "")
             ok, res = self.create_img(query, 0)
             if ok:
                 reply = Reply(ReplyType.IMAGE_URL, res)
@@ -60,7 +63,8 @@ class LinkAIBot(Bot):
                 logger.info(f"[LINKAI] won't set appcode because a plugin ({context['generate_breaked_by']}) affected the context")
                 app_code = None
             else:
-                app_code = context.kwargs.get("app_code") or conf().get("linkai_app_code")
+                plugin_app_code = self._find_group_mapping_code(context)
+                app_code = context.kwargs.get("app_code") or plugin_app_code or conf().get("linkai_app_code")
             linkai_api_key = conf().get("linkai_api_key")
 
             session_id = context["session_id"]
@@ -92,7 +96,7 @@ class LinkAIBot(Bot):
             file_id = context.kwargs.get("file_id")
             if file_id:
                 body["file_id"] = file_id
-            logger.info(f"[LINKAI] query={query}, app_code={app_code}, mode={body.get('model')}, file_id={file_id}")
+            logger.info(f"[LINKAI] query={query}, app_code={app_code}, model={body.get('model')}, file_id={file_id}")
             headers = {"Authorization": "Bearer " + linkai_api_key}
 
             # do http request
@@ -118,6 +122,9 @@ class LinkAIBot(Bot):
                 if response["choices"][0].get("img_urls"):
                     thread = threading.Thread(target=self._send_image, args=(context.get("channel"), context, response["choices"][0].get("img_urls")))
                     thread.start()
+                    if response["choices"][0].get("text_content"):
+                        reply_content = response["choices"][0].get("text_content")
+                reply_content = self._process_url(reply_content)
                 return Reply(ReplyType.TEXT, reply_content)
 
             else:
@@ -164,6 +171,18 @@ class LinkAIBot(Bot):
         except Exception as e:
             logger.exception(e)
 
+    def _find_group_mapping_code(self, context):
+        try:
+            if context.kwargs.get("isgroup"):
+                group_name = context.kwargs.get("msg").from_user_nickname
+                if config.plugin_config and config.plugin_config.get("linkai"):
+                    linkai_config = config.plugin_config.get("linkai")
+                    group_mapping = linkai_config.get("group_app_map")
+                    if group_mapping and group_name:
+                        return group_mapping.get(group_name)
+        except Exception as e:
+            logger.exception(e)
+            return None
 
     def _build_vision_msg(self, query: str, path: str):
         try:
@@ -336,6 +355,14 @@ class LinkAIBot(Bot):
         except Exception as e:
             logger.exception(e)
 
+    def _process_url(self, text):
+        try:
+            url_pattern = re.compile(r'\[(.*?)\]\((http[s]?://.*?)\)')
+            def replace_markdown_url(match):
+                return f"{match.group(2)}"
+            return url_pattern.sub(replace_markdown_url, text)
+        except Exception as e:
+            logger.error(e)
 
     def _send_image(self, channel, context, image_urls):
         if not image_urls:
@@ -362,7 +389,7 @@ class LinkAISessionManager(SessionManager):
         try:
             max_tokens = conf().get("conversation_max_tokens", 2500)
             tokens_cnt = session.discard_exceeding(max_tokens, total_tokens)
-            logger.info(f"[LinkAI] chat history discard, before tokens={total_tokens}, now tokens={tokens_cnt}")
+            logger.debug(f"[LinkAI] chat history, before tokens={total_tokens}, now tokens={tokens_cnt}")
         except Exception as e:
             logger.warning("Exception when counting tokens precisely for session: {}".format(str(e)))
         return session
@@ -370,12 +397,9 @@ class LinkAISessionManager(SessionManager):
 
 class LinkAISession(ChatGPTSession):
     def calc_tokens(self):
-        try:
-            cur_tokens = super().calc_tokens()
-        except Exception as e:
-            logger.debug("Exception when counting tokens precisely for query: {}".format(e))
-            cur_tokens = len(str(self.messages))
-        return cur_tokens
+        if not self.messages:
+            return 0
+        return len(str(self.messages))
 
     def discard_exceeding(self, max_tokens, cur_tokens=None):
         cur_tokens = self.calc_tokens()

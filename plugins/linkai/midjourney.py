@@ -88,6 +88,8 @@ class MJBot:
         context = e_context['context']
         if context.type == ContextType.TEXT:
             cmd_list = context.content.split(maxsplit=1)
+            if not cmd_list:
+                return None
             if cmd_list[0].lower() == f"{trigger_prefix}mj":
                 return TaskType.GENERATE
             elif cmd_list[0].lower() == f"{trigger_prefix}mju":
