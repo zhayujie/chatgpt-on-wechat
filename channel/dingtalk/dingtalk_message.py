@@ -30,7 +30,8 @@ class DingTalkMessage(ChatMessage):
         
         self.from_user_id = event.sender_id
         self.to_user_id = event.chatbot_user_id
-
+        self.other_user_nickname = event.conversation_title
+        
         user_id = event.sender_id
         nickname =event.sender_nick
 
