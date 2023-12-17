@@ -4,6 +4,8 @@ import json
 import logging
 import os
 import pickle
+import random
+
 
 from common.log import logger
 
@@ -16,7 +18,7 @@ available_setting = {
     "open_ai_api_base": "https://api.openai.com/v1",
     "proxy": "",  # openai使用的代理
     # chatgpt模型， 当use_azure_chatgpt为true时，其名称为Azure上model deployment名称
-    "model": "gpt-3.5-turbo",  # 还支持 gpt-4, gpt-4-turbo, wenxin, xunfei, qwen
+    "model": "gpt-3.5-turbo",  # 还支持 gpt-4, gpt-4-turbo, wenxin, xunfei
     "use_azure_chatgpt": False,  # 是否使用azure的chatgpt
     "azure_deployment_id": "",  # azure 模型部署名称
     "azure_api_version": "",  # azure api版本
@@ -57,7 +59,7 @@ available_setting = {
     "request_timeout": 180,  # chatgpt请求超时时间，openai接口默认设置为600，对于难问题一般需要较长时间
     "timeout": 120,  # chatgpt重试超时时间，在这个时间内，将会自动重试
     # Baidu 文心一言参数
-    "baidu_wenxin_model": "eb-instant",  # 默认使用ERNIE-Bot-turbo模型
+    "baidu_wenxin_model": "ERNIE-Bot-turbo",  # 默认使用ERNIE-Bot-turbo模型
     "baidu_wenxin_api_key": "",  # Baidu api key
     "baidu_wenxin_secret_key": "",  # Baidu secret key
     # 讯飞星火API
@@ -67,14 +69,6 @@ available_setting = {
     # claude 配置
     "claude_api_cookie": "",
     "claude_uuid": "",
-    # 通义千问API, 获取方式查看文档 https://help.aliyun.com/document_detail/2587494.html
-    "qwen_access_key_id": "",
-    "qwen_access_key_secret": "",
-    "qwen_agent_key": "",
-    "qwen_app_id": "",
-    "qwen_node_id": "",  # 流程编排模型用到的id，如果没有用到qwen_node_id，请务必保持为空字符串
-    # Google Gemini Api Key
-    "gemini_api_key": "",
     # wework的通用配置
     "wework_smart": True,  # 配置wework是否使用已登录的企业微信，False为多开
     # 语音设置
@@ -207,7 +201,8 @@ class Config(dict):
 
 
 config = Config()
-
+def proxy_url(proxy_value):
+    return proxy_value
 
 def load_config():
     global config
@@ -221,7 +216,7 @@ def load_config():
 
     # 将json字符串反序列化为dict类型
     config = Config(json.loads(config_str))
-
+    # proxy_url(Config(json.loads(config_str)).proxy)
     # override config with environment variables.
     # Some online deployment platforms (e.g. Railway) deploy project from github directly. So you shouldn't put your secrets like api key in a config file, instead use environment variables to override the default config.
     for name, value in os.environ.items():
@@ -297,6 +292,21 @@ def pconf(plugin_name: str) -> dict:
     return plugin_config.get(plugin_name.lower())
 
 
+###key pool
+api_keys_file_keys_drew = 'keys_drew.txt'
+
+
+def get_random_key():
+    with open(api_keys_file_keys_drew, 'r') as file:
+        keys = [key.strip() for key in file.readlines() if key.strip()]
+    return random.choice(keys) if keys else None
+
+def remove_invalid_key(key_to_remove):
+    with open(api_keys_file_keys_drew, 'r') as file:
+        keys = [key.strip() for key in file.readlines() if key.strip() and key.strip() != key_to_remove]
+    with open(api_keys_file_keys_drew, 'w') as file:
+        for key in keys:
+            file.write(key + "\n")
 # 全局配置，用于存放全局生效的状态
 global_config = {
     "admin_users": []
