@@ -125,8 +125,8 @@ available_setting = {
     "feishu_bot_name": "",  # 飞书机器人的名字
     
     # 钉钉配置
-    "dingtalk_app_id": "",  # 钉钉机器人应用APP Id
-    "dingtalk_app_secret": "",  # 钉钉机器人APP secret
+    "dingtalk_client_id": "",  # 钉钉机器人Client ID 
+    "dingtalk_client_secret": "",  # 钉钉机器人Client Secret 
     
     # chatgpt指令自定义触发词
     "clear_memory_commands": ["#清除记忆"],  # 重置会话指令，必须以#开头
