@@ -1,10 +1,10 @@
-       
+
 
 import time
 import requests
 from common.log import logger
 from common.token_bucket import TokenBucket
-from config import conf,get_random_key,remove_invalid_key
+from config import conf, get_random_key, remove_invalid_key
 
 
 class OpenAIImage(object):
@@ -25,14 +25,18 @@ class OpenAIImage(object):
                 "n": 1,
                 "model": conf().get("text_to_image") or "dall-e-2",
             }
-            proxy= conf().get("proxy")+'/v1/images/generations'
+            proxy = conf().get("proxy") + '/v1/images/generations'
             response = requests.post(proxy, headers=headers, json=data)
             response.raise_for_status()
             image_url = response.json()["data"][0]["url"]
             logger.info("[OPEN_AI] image_url={}".format(image_url))
             return True, image_url
         except requests.exceptions.HTTPError as e:
-            if e.response.status_code == 429:
+            if e.response.status_code == 400:
+                # remove_invalid_key(self.api_key)
+              #发现400 是openai 拒绝  提示词有问题 如：涉黄
+                return False, "富强 民主 文明 和谐\n自由 平等 公正 法治\n爱国 敬业 诚信 友善"
+            elif e.response.status_code == 429:
                 if retry_count < 1:
                     time.sleep(2)
                     logger.warn("[OPEN_AI] ImgCreate RateLimit exceed, 第{}次重试".format(retry_count + 1))
@@ -40,17 +44,16 @@ class OpenAIImage(object):
                 elif not (e.response.status_code == 429 and response.json().get('error', {}).get('code') == 'rate_limit_exceeded'):
                     remove_invalid_key(self.api_key)
                     return False, "key无效，画图失败，请重试"
-
                 else:
                     time.sleep(10)
                     return self.create_img(query, retry_count + 1)
-                    return False, "任务中，请任务完成后重试"
-                    
-                    
-                    
             else:
                 logger.exception(e)
-                return False, "提示词不合适"
+                remove_invalid_key(self.api_key)
+                time.sleep(10)
+                return self.create_img(query, retry_count + 1)
         except Exception as e:
+            remove_invalid_key(self.api_key)
+            time.sleep(10)
             logger.exception(e)
-            return False, "提示词不合适"
+            return False, "提示词不合适~" + str(e)
