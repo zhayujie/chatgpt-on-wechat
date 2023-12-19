@@ -30,3 +30,9 @@ websocket-client==1.2.0
 
 # claude bot
 curl_cffi
+
+# tongyi qwen
+broadscope_bailian
+
+# google
+google-generativeai
