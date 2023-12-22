@@ -19,6 +19,10 @@
     "Apilot": {
       "url": "https://github.com/6vision/Apilot.git",
       "desc": "通过api直接查询早报、热榜、快递、天气等实用信息的插件"
+    },
+    "Countdown": {
+      "url": "https://github.com/6vision/Apilot.git",
+      "desc": "通过api直接查询早报、热榜、快递、天气等实用信息的插件"
     }
   }
 }
