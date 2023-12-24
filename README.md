@@ -1,8 +1,10 @@
-#此版本结束
-1.加入key 池
-2.修改绘画逻辑 支持中转
-3.增加绘画回复与计时
-4.修改文本回复逻辑  支持中转
+# 此版本结束
+
+
+- 1.加入key 池
+- 2.修改绘画逻辑 支持中转
+- 3.增加绘画回复与计时
+- 4.修改文本回复逻辑  支持中转
 
 
 # 简介
@@ -31,6 +33,7 @@ Demo made by [Visionn](https://www.wangpc.cc/)
 
 添加小助手微信：xiaoqisugart   进群，请备注 "GPT"  否则不通过   回复GPT 进群
 
+![打赏](https://github.com/Captain-wang-s/chatgpt-on-wechat/assets/62700303/b872a746-33e0-4245-b507-7c0f19e9e3f9)
 
 
 # 更新日志
