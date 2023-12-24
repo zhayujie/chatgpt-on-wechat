@@ -31,9 +31,19 @@ Demo made by [Visionn](https://www.wangpc.cc/)
 
 # 交流群
 
-添加小助手微信：xiaoqisugart   进群，请备注 "GPT"  否则不通过   回复GPT 进群
 
-![打赏](https://github.com/Captain-wang-s/chatgpt-on-wechat/assets/62700303/b872a746-33e0-4245-b507-7c0f19e9e3f9)
+觉得新功能好用，打赏一下：
+
+<img width="240" src="https://github.com/Captain-wang-s/chatgpt-on-wechat/assets/62700303/b872a746-33e0-4245-b507-7c0f19e9e3f9">
+
+
+进群请添加小助手微信：xiaoqisugart   
+请备注 "GPT"  否则不通过   
+回复GPT 进群
+
+<img width="240" src="https://github.com/Captain-wang-s/chatgpt-on-wechat/assets/62700303/0d31c934-a676-4e22-99da-d2abd0458e49">
+
+
 
 
 # 更新日志
