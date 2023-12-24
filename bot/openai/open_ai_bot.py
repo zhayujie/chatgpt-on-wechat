@@ -5,6 +5,11 @@ import time
 import openai
 import openai.error
 
+    
+import requests
+import logging
+import time
+
 from bot.bot import Bot
 from bot.openai.open_ai_image import OpenAIImage
 from bot.openai.open_ai_session import OpenAISession
@@ -84,42 +89,98 @@ class OpenAIBot(Bot, OpenAIImage):
                     reply = Reply(ReplyType.ERROR, retstring)
                 return reply
 
+    # def reply_text(self, session: OpenAISession, retry_count=0):
+    #     try:
+    #         api_key = get_random_key()
+    #         response = openai.Completion.create(prompt=str(session),api_key, **self.args)
+    #         res_content = response.choices[0]["text"].strip().replace("<|endoftext|>", "")
+    #         total_tokens = response["usage"]["total_tokens"]
+    #         completion_tokens = response["usage"]["completion_tokens"]
+    #         logger.info("[OPEN_AI] reply={}".format(res_content))
+    #         return {
+    #             "total_tokens": total_tokens,
+    #             "completion_tokens": completion_tokens,
+    #             "content": res_content,
+    #         }
+    #     except Exception as e:
+    #         need_retry = retry_count < 2
+    #         result = {"completion_tokens": 0, "content": e}
+    #         if isinstance(e, openai.error.RateLimitError):
+    #             logger.warn("[OPEN_AI] RateLimitError: {}".format(e))
+    #             result["content"] = "提问太快啦，请休息一下再问我吧"
+    #             if need_retry:
+    #                 time.sleep(20)
+    #         elif isinstance(e, openai.error.Timeout):
+    #             logger.warn("[OPEN_AI] Timeout: {}".format(e))
+    #             result["content"] = "我没有收到你的消息"
+    #             if need_retry:
+    #                 time.sleep(5)
+    #         elif isinstance(e, openai.error.APIConnectionError):
+    #             logger.warn("[OPEN_AI] APIConnectionError: {}".format(e))
+    #             need_retry = False
+    #             result["content"] = "我连接不到你的网络"
+    #         else:
+    #             logger.warn("[OPEN_AI] Exception: {}".format(e))
+    #             need_retry = False
+    #             self.sessions.clear_session(session.session_id)
+
+    #         if need_retry:
+    #             logger.warn("[OPEN_AI] 第{}次重试".format(retry_count + 1))
+    #             return self.reply_text(session, retry_count + 1)
+    #         else:
+    #             return result
+    
     def reply_text(self, session: OpenAISession, retry_count=0):
         try:
-            response = openai.Completion.create(prompt=str(session), **self.args)
-            res_content = response.choices[0]["text"].strip().replace("<|endoftext|>", "")
-            total_tokens = response["usage"]["total_tokens"]
-            completion_tokens = response["usage"]["completion_tokens"]
+            api_key = get_random_key()
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {api_key}"
+            }
+            
+            # Get session history and summarize
+            history = session.get_history()
+            summary = " ".join([msg.content for msg in history])
+            summary = summary[:200]  # Ensure the summary is within 200 characters
+            
+            payload = {
+                "prompt": summary,
+                **self.args
+            }
+            proxy_new= self.proxy+'/v1/engines/davinci-codex/completions'
+            response = requests.post(proxy_new, headers=headers, json=payload)
+            response.raise_for_status()
+            result = response.json()
+            
+
+    
+            # Process the API response
+            res_content = result["choices"][0]["text"].strip().replace("...", "")
+            total_tokens = result["usage"]["total_tokens"]
+            completion_tokens = result["usage"]["completion_tokens"]
             logger.info("[OPEN_AI] reply={}".format(res_content))
+            
+            # Return the result
             return {
                 "total_tokens": total_tokens,
                 "completion_tokens": completion_tokens,
                 "content": res_content,
             }
         except Exception as e:
-            need_retry = retry_count < 2
-            result = {"completion_tokens": 0, "content": "我现在有点累了，等会再来吧"}
-            if isinstance(e, openai.error.RateLimitError):
-                logger.warn("[OPEN_AI] RateLimitError: {}".format(e))
-                result["content"] = "提问太快啦，请休息一下再问我吧"
-                if need_retry:
-                    time.sleep(20)
-            elif isinstance(e, openai.error.Timeout):
-                logger.warn("[OPEN_AI] Timeout: {}".format(e))
-                result["content"] = "我没有收到你的消息"
-                if need_retry:
-                    time.sleep(5)
-            elif isinstance(e, openai.error.APIConnectionError):
-                logger.warn("[OPEN_AI] APIConnectionError: {}".format(e))
-                need_retry = False
-                result["content"] = "我连接不到你的网络"
+            # Handle exceptions such as API errors or network issues
+            logger.error("尝试从OpenAI获取回复时出错：{}".format(e))
+            if retry_count < self.max_retries:
+                logger.info("正在重试... (尝试次数 {})".format(retry_count + 1))
+                time.sleep(retry_count + 1)  # Exponential backoff
+                return self.reply_text(session, retry_count=retry_count + 1)
             else:
-                logger.warn("[OPEN_AI] Exception: {}".format(e))
-                need_retry = False
-                self.sessions.clear_session(session.session_id)
-
-            if need_retry:
-                logger.warn("[OPEN_AI] 第{}次重试".format(retry_count + 1))
-                return self.reply_text(session, retry_count + 1)
-            else:
-                return result
+                logger.error("已达到最大重试次数，放弃重试。")
+                return {
+                    "total_tokens": 0,
+                    "completion_tokens": 0,
+                    "content": "对不起，我现在处理您的请求有些困难。",
+                }
+    
+    # ... 可能还有其他的类或函数定义 ...
+    
+        
