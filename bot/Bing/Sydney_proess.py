@@ -68,8 +68,6 @@ async def sydney_reply(session: SydneySession, retry_count=0) -> dict:
     proxy = conf().get("proxy", "")
     
     async def stream_conversation_replied(pre_reply, context, cookies, ask_string, proxy):
-        start_time = time.time()
-        elapsed_time = time.time() - start_time
         # reply = remove_extra_format(response["arguments"][0]["messages"][0]["adaptiveCards"][0]["body"][0]["text"])
         # print("Failed reply =" + reply)
         ask_string_extended = f"从你停下的地方继续，只输出内容的正文。"
@@ -112,8 +110,7 @@ async def sydney_reply(session: SydneySession, retry_count=0) -> dict:
                     message = secresponse["item"]["messages"][-1]
                     if "suggestedResponses" in message:
                         return reply
-            if elapsed_time >=20 and len(reply) <3:
-                    await sydney_reply(session, retry_count + 1)   
+   
     try:                
         # Get the absolute path of the JSON file
         file_path = os.path.abspath("./cookies.json")
@@ -123,12 +120,9 @@ async def sydney_reply(session: SydneySession, retry_count=0) -> dict:
         conversation = await sydney.create_conversation(cookies=cookies, proxy=proxy)
     except Exception as e:
         print(e)
-        return {"content": "抱歉，因为主机端网络问题连接失败，重新发送一次消息即可。"} 
+        await sydney_reply(session, retry_count+1)   
         
-                           
-
-    start_time = time.time()
-    elapsed_time = 0
+                
     try:
         replied = False
         # Use the aclosing context manager to ensure that the async generator is closed properly
@@ -177,11 +171,8 @@ async def sydney_reply(session: SydneySession, retry_count=0) -> dict:
                     if "suggestedResponses" in message:
                         break                     
                 
-                elapsed_time = time.time() - start_time
                 
             # print("reply = " + reply)
-            if elapsed_time >=20 and len(reply) <3:
-                reply = {"content": "抱歉，因为主机端网络问题连接失败，重新发送一次消息即可"} 
             if "自动回复机器人悉尼" not in reply:
                 reply += bot_statement
             return {"content": reply}
