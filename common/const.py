@@ -8,6 +8,7 @@ CHATGPTONAZURE = "chatGPTOnAzure"
 LINKAI = "linkai"
 CLAUDEAI = "claude"
 QWEN = "qwen"
+GEMINI = "gemini"
 
 # model
 GPT35 = "gpt-3.5-turbo"
