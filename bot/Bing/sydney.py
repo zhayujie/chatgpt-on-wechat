@@ -12,7 +12,9 @@ import urllib.parse
 
 import aiohttp
 
-_DEBUG = True
+import binascii
+
+_DEBUG = False
 
 _PROXY = urllib.request.getproxies().get("https")
 
@@ -156,16 +158,20 @@ _ALLOWED_MESSAGE_TYPES = [
     "GenerateContentQuery",
     "SearchQuery"
 ]
+        
+def sec_ms_gec():
+    random_bytes = os.urandom(32)
+    return binascii.hexlify(random_bytes).decode()
 
 _HEADERS = {
     "accept": "application/json",
     "accept-language": "en-US,en;q=0.9",
     "content-type": "application/json",
-    "sec-ch-ua": '"Not_A Brand";v="99", Microsoft Edge";v="110", "Chromium";v="110"',
+    "sec-ch-ua": '"Microsoft Edge";v="113", "Chromium";v="113", "Not-A.Brand";v="24"',
     "sec-ch-ua-arch": '"x86"',
     "sec-ch-ua-bitness": '"64"',
-    "sec-ch-ua-full-version": '"109.0.1518.78"',
-    "sec-ch-ua-full-version-list": '"Chromium";v="110.0.5481.192", "Not A(Brand";v="24.0.0.0", "Microsoft Edge";v="110.0.1587.69"',
+    "sec-ch-ua-full-version": '"113.0.1774.50"',
+    "sec-ch-ua-full-version-list": '"Microsoft Edge";v="113.0.1774.50", "Chromium";v="113.0.5672.127", "Not-A.Brand";v="24.0.0.0"',
     "sec-ch-ua-mobile": "?0",
     "sec-ch-ua-model": "",
     "sec-ch-ua-platform": '"Windows"',
@@ -173,9 +179,12 @@ _HEADERS = {
     "sec-fetch-dest": "empty",
     "sec-fetch-mode": "cors",
     "sec-fetch-site": "same-origin",
+    "sec-ms-gec": sec_ms_gec(),
+    "sec-ms-gec-version": "1-115.0.1866.1",
     "x-ms-client-request-id": str(uuid.uuid4()),
     "x-ms-useragent": "azsdk-js-api-client-factory/1.0.0-beta.1 core-rest-pipeline/1.10.0 OS/Win32",
-    "Referer": "https://www.bing.com/search?q=Bing+AI&showconv=1&FORM=hpcodx",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.50",
+    "Referer": "https://www.bing.com/search?q=Bing+AI&showconv=1",
     "Referrer-Policy": "origin-when-cross-origin",
     "x-forwarded-for": _FORWARDED_IP,
 }
@@ -199,6 +208,19 @@ _HEADERS_INIT_CONVER = {
     "x-edge-shopping-flag": "1",
     "x-forwarded-for": _FORWARDED_IP,
 }
+
+_HEADERS_INIT_CREATIMG = {
+    "authority":                 "www.bing.com",
+    "accept":                    "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+    "accept-language":           "en-US,en;q=0.9",
+    "cache-control":             "no-cache",
+    "referer":                   "https://www.bing.com/search?q=Bing+AI&showconv=1",
+    "upgrade-insecure-requests": "1",
+    "user-agent":                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36 Edg/112.0.1722.46",
+    "x-forwarded-for":           _FORWARDED_IP,
+    "Sec-Fetch-Dest":            "iframe",
+}
+
 
 
 def _print(msg):
@@ -423,3 +445,4 @@ async def upload_image(filename=None, img_base64=None, proxy=None):
 
         async with session.post(url, data=data, proxy=proxy) as resp:
             return (await resp.json())["blobId"]
+    
