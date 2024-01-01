@@ -40,5 +40,8 @@ def create_channel(channel_type):
     elif channel_type == const.FEISHU:
         from channel.feishu.feishu_channel import FeiShuChanel
         return FeiShuChanel()
+    elif channel_type == const.DINGTALK:
+        from channel.dingtalk.dingtalk_channel import DingTalkChanel
+        return DingTalkChanel()
 
     raise RuntimeError
