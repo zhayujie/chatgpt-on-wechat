@@ -14,7 +14,7 @@ import aiohttp
 
 import binascii
 
-_DEBUG = False
+_DEBUG = True
 
 _PROXY = urllib.request.getproxies().get("https")
 
@@ -288,7 +288,7 @@ async def ask_stream(
         cookies: list[dict] | None = None,
         no_search: bool = False,
 ):
-    timeout = aiohttp.ClientTimeout(total=900)
+    timeout = aiohttp.ClientTimeout(total=180)
     formatted_cookies = {}
     if cookies:
         for cookie in cookies:
