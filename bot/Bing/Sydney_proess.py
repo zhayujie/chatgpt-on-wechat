@@ -1,3 +1,4 @@
+""" A Discard version of sydney output process now the process code has been moved to sydneyreply"""
 import os
 import json
 from bot.Bing import sydney
