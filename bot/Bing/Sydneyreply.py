@@ -345,7 +345,7 @@ class SydneyBot(Bot):
             # Check if the size is larger than 1MB
             if original_size > 1024 * 1024:
                 # Calculate the compression ratio
-                ratio = (1024 * 1024) / original_size
+                ratio = (1024 * 1024) / original_size * 0.5
 
                 # Resize the image proportionally
                 width, height = image.size
@@ -353,22 +353,15 @@ class SydneyBot(Bot):
                 new_height = int(height * ratio)
                 image = image.resize((new_width, new_height))
 
-                # Save the image to a buffer object
-                buffered = BytesIO()
-                fmt = ''
-                if image_path.lower().endswith('.png'):
-                    fmt = 'PNG'
-                elif image_path.lower().endswith('.jpg') or image_path.lower().endswith('.jpeg'):
-                    fmt = 'JPEG'
-                elif image_path.lower().endswith('.gif'):
-                    fmt = 'GIF'
-                image.save(buffered, format=fmt)
+                # Save the image with the reduced quality
+                image.save(image_path)
 
-                # Encode the buffer object as a base64 string
-                img_str = base64.b64encode(buffered.getvalue())
-
-                # Return the base64 string
-                return img_str
+                # Read the file and encode it as a base64 string
+                with open(image_path, "rb") as file:
+                    base64_str = base64.b64encode(file.read())
+                    img_url = base64_str
+                    # logger.info(img_url)
+                    return img_url
 
             else:
                 # If the size is not larger than 1MB, just read the file and encode it as a base64 string
@@ -379,7 +372,7 @@ class SydneyBot(Bot):
                     return img_url
 
         except Exception as e:
-            logger.error(e)      
+            logger.error(e)     
 
     def process_url(self, text):
         try:
