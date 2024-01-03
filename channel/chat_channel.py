@@ -157,7 +157,7 @@ class ChatChannel(Channel):
         elif context.type == ContextType.VOICE:
             if "desire_rtype" not in context and conf().get("voice_reply_voice") and ReplyType.VOICE not in self.NOT_SUPPORT_REPLYTYPE:
                 context["desire_rtype"] = ReplyType.VOICE
-
+        logger.info(context)
         return context
 
     def _handle(self, context: Context):
@@ -219,6 +219,7 @@ class ChatChannel(Channel):
                     "path": context.content,
                     "msg": context.get("msg")
                 }
+                logger.info(memory.USER_IMAGE_CACHE[context["session_id"]])
             elif context.type == ContextType.SHARING:  # 分享信息，当前无默认逻辑
                 pass
             elif context.type == ContextType.FUNCTION or context.type == ContextType.FILE:  # 文件消息及函数调用等，当前无默认逻辑
