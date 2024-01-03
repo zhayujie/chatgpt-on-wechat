@@ -14,7 +14,7 @@ import aiohttp
 
 import binascii
 
-_DEBUG = True
+_DEBUG = False
 
 _PROXY = urllib.request.getproxies().get("https")
 
@@ -309,7 +309,7 @@ async def ask_stream(
                 proxy=proxy
         ) as wss:
             await wss.send_str(_format({'protocol': 'json', 'version': 1}))
-            await wss.receive(timeout=900)
+            await wss.receive(timeout=180)
             await wss.send_str(_format({"type": 6}))
             option_sets = getattr(_OptionSets, conversation_style.upper()).value.copy()
             if no_search:
@@ -381,13 +381,15 @@ async def ask_stream(
             while True:
                 if wss.closed:
                     break
-                msg = await wss.receive(timeout=900)
-
-                if not msg.data:
+                try:
+                    
+                    msg = await wss.receive(timeout=180)
+                except Exception as e:
                     retry_count -= 1
                     if retry_count == 0:
                         raise Exception("No response from server")
                     continue
+
 
                 if isinstance(msg.data, str):
                     objects = msg.data.split(_DELIMITER)
@@ -444,5 +446,8 @@ async def upload_image(filename=None, img_base64=None, proxy=None):
         data.add_field('imageBase64', image_base64.decode('utf-8'), content_type="application/octet-stream")
 
         async with session.post(url, data=data, proxy=proxy) as resp:
+            print(resp.status)
+            print(resp.headers)
+            print(await resp.text())
             return (await resp.json())["blobId"]
     
