@@ -20,6 +20,8 @@ from config import conf
 from common import memory, utils
 import base64
 from bot.session_manager import SessionManager
+from PIL import Image
+from io import BytesIO
 
 class SydneySessionManager(SessionManager):
     def session_msg_query(self, query, session_id):
@@ -28,7 +30,7 @@ class SydneySessionManager(SessionManager):
         return messages
 
 
-async def stream_conversation_replied(conversation, pre_reply, context, cookies, ask_string, proxy):
+async def stream_conversation_replied(conversation, pre_reply, context, cookies, ask_string, proxy, imgurl):
     conversation = await sydney.create_conversation(cookies=cookies, proxy=proxy)
     ask_string_extended = f"从你停下的地方继续回答，100字以内，只输出内容的正文。"
     context_extended = f"{context}\n\n[user](#message)\n{ask_string}\n[assistant](#message)\n{pre_reply}"
@@ -40,9 +42,11 @@ async def stream_conversation_replied(conversation, pre_reply, context, cookies,
         proxy= proxy if proxy != "" else None,
         wss_url='wss://' + 'sydney.bing.com' + '/sydney/ChatHub',
         # 'sydney.bing.com'
-        cookies=cookies
+        cookies=cookies,
+        image_url= imgurl
     )) as generator:
         async for secresponse in generator:
+            imgurl = None
             if secresponse["type"] == 1 and "messages" in secresponse["arguments"][0]:
                 message = secresponse["arguments"][0]["messages"][0]
                 msg_type = message.get("messageType")
@@ -172,13 +176,20 @@ class SydneyBot(Bot):
             session_message = session.messages
             logger.debug(f"[SYDNEY] session={session_message}, session_id={session_id}")
 
-            #image process
-            # img_cache = memory.USER_IMAGE_CACHE.get(session_id)
-            # if img_cache:
-            #     img_url = self.process_image_msg(session_id, img_cache)
-            #     if img_url:
-            #         imgurl = img_url
-            #         print(imgurl)
+            imgurl = None
+            # image process
+            img_cache = memory.USER_IMAGE_CACHE.get(session_id)
+            if img_cache:
+                img_url = ""
+                img_url = self.process_image_msg(session_id, img_cache)
+                # logger.info(img_url)
+                if img_url:
+                    try:
+                        imgurlsuffix = await sydney.upload_image(img_base64=img_url, proxy=proxy)
+                        imgurl = "https://www.bing.com/images/blob?bcid=" + imgurlsuffix
+                        logger.info(imgurl)
+                    except Exception as e:
+                        logger.info(e, imgurl)
 
 
             #remove system message
@@ -194,8 +205,8 @@ class SydneyBot(Bot):
             logger.info(ask_string)
 
             file_id = context.kwargs.get("file_id")
-            # if file_id:
-            #     context["file"] = file_id
+            if file_id:
+                context["file"] = file_id
             logger.info(f"[SYDNEY] query={query}, file_id={file_id}")
             
             bot_statement = "\n\n我是自动回复机器人悉尼。\n要和我对话请在发言中@我。"
@@ -233,7 +244,8 @@ class SydneyBot(Bot):
                 conversation= conversation,
                 prompt= ask_string,
                 context= persona, 
-                proxy= proxy if proxy else None,
+                proxy= proxy,
+                image_url= imgurl,
                 wss_url='wss://' + 'sydney.bing.com' + '/sydney/ChatHub',
                 cookies= cookies
             )) as generator:
@@ -250,11 +262,11 @@ class SydneyBot(Bot):
                                     pre_reply = "好的，我会满足你的要求并且只回复100字以内的内容，主人。"
                                     # OK, I'll try to meet your requirements and I'll tell you right away.
                                     try:
-                                        reply = await stream_conversation_replied(conversation, pre_reply, persona, cookies, ask_string, proxy)
+                                        reply = await stream_conversation_replied(conversation, pre_reply, persona, cookies, ask_string, proxy, imgurl)
                                     except Exception as e:
                                         logger.error(e)
                                 else:    
-                                    secreply = await stream_conversation_replied(conversation, reply, persona, cookies, ask_string, proxy)
+                                    secreply = await stream_conversation_replied(conversation, reply, persona, cookies, ask_string, proxy, imgurl)
                                     if "回复" not in secreply:
                                         reply = concat_reply(reply, secreply)
                                     reply = remove_extra_format(reply)
@@ -283,6 +295,7 @@ class SydneyBot(Bot):
                 if "自动回复机器人悉尼" not in reply:
                     reply += bot_statement
                 # logger.info(f"[SYDNEY] reply={reply}")
+                imgurl =None
                 return reply
 
                 
@@ -321,15 +334,52 @@ class SydneyBot(Bot):
         except Exception as e:
             logger.exception(e)
 
-    def build_vision_msg(self, path: str):
+    def build_vision_msg(self, image_path: str):
         try:
-            suffix = utils.get_path_suffix(path)
-            with open(path, "rb") as file:
-                base64_str = base64.b64encode(file.read()).decode('utf-8')
-                img_url = f"{base64_str}.{suffix}"
-                return img_url
+            # Load the image from the path
+            image = Image.open(image_path)
+
+            # Get the original size in bytes
+            original_size = os.path.getsize(image_path)
+
+            # Check if the size is larger than 1MB
+            if original_size > 1024 * 1024:
+                # Calculate the compression ratio
+                ratio = (1024 * 1024) / original_size
+
+                # Resize the image proportionally
+                width, height = image.size
+                new_width = int(width * ratio)
+                new_height = int(height * ratio)
+                image = image.resize((new_width, new_height))
+
+                # Save the image to a buffer object
+                buffered = BytesIO()
+                fmt = ''
+                if image_path.lower().endswith('.png'):
+                    fmt = 'PNG'
+                elif image_path.lower().endswith('.jpg') or image_path.lower().endswith('.jpeg'):
+                    fmt = 'JPEG'
+                elif image_path.lower().endswith('.gif'):
+                    fmt = 'GIF'
+                image.save(buffered, format=fmt)
+
+                # Encode the buffer object as a base64 string
+                img_str = base64.b64encode(buffered.getvalue())
+
+                # Return the base64 string
+                return img_str
+
+            else:
+                # If the size is not larger than 1MB, just read the file and encode it as a base64 string
+                with open(image_path, "rb") as file:
+                    base64_str = base64.b64encode(file.read())
+                    img_url = base64_str
+                    # logger.info(img_url)
+                    return img_url
+
         except Exception as e:
-            logger.exception(e)   
+            logger.error(e)      
 
     def process_url(self, text):
         try:
@@ -350,6 +400,7 @@ class SydneyBot(Bot):
         except Exception as e:
             logger.error(e)
     
+
     async def reply_text(self, session: SydneySession, retry_count =0) -> dict:
         if retry_count >= 2:
             #exit from retry 2 times
@@ -478,5 +529,3 @@ class SydneyBot(Bot):
             time.sleep(2)
             logger.warn(f"[SYDNEY] do retry, times={retry_count}")
             return self.failed_reply_text(session, retry_count + 1)
-
- 
