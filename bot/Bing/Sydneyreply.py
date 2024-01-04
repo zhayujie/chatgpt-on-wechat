@@ -197,14 +197,15 @@ class SydneyBot(Bot):
             webPageinfo = ""
             webPagecache = memory.USER_WEBPAGE_CACHE.get(session_id)
             if webPagecache:
-                webPageinfo = f"{webPagecache}\n"
+                webPageinfo = f"\n[user](#webpage_context)\n{webPagecache}\n"
 
             # file process
             fileinfo = ""
             fileCache = memory.USER_FILE_CACHE.get(session_id)
             if fileCache:
                 fileinfo = await self.process_file_msg(session_id, fileCache)
-                 
+
+            ask_string = ""
             if webPageinfo:
                 ask_string += webPageinfo
             if fileinfo:
@@ -222,8 +223,7 @@ class SydneyBot(Bot):
             # if session_message[0].get("role") == "system":
             #     if plugin != None:
             #         session_message.pop(0)
-            
-            ask_string = ""                  
+
             for singleTalk in session_message:
                 for keyPerson, message in singleTalk.items():
                     ask_string += f"\n{keyPerson}\n{message}\n\n"
