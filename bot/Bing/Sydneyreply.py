@@ -203,8 +203,18 @@ class SydneyBot(Bot):
             fileinfo = ""
             fileCache = memory.USER_FILE_CACHE.get(session_id)
             if fileCache:
-                fileinfo = await self.process_file_msg(session_id, fileCache) 
-             
+                fileinfo = await self.process_file_msg(session_id, fileCache)
+                 
+            if webPageinfo:
+                ask_string += webPageinfo
+            if fileinfo:
+                if "文本扫描" in fileinfo:
+                    return fileinfo
+                try:
+                    ask_string += fileinfo
+                except Exception:
+                    reply = "不支持该文件类型"
+                    return reply
 
 
             #remove system message
@@ -217,16 +227,6 @@ class SydneyBot(Bot):
             for singleTalk in session_message:
                 for keyPerson, message in singleTalk.items():
                     ask_string += f"\n{keyPerson}\n{message}\n\n"
-            if webPageinfo:
-                ask_string += webPageinfo
-            if fileinfo:
-                if "文本扫描" in fileinfo:
-                    return fileinfo
-                try:
-                    ask_string += fileinfo
-                except Exception:
-                    reply = "不支持该文件类型"
-                    return reply
             logger.info(ask_string)
 
             # file_id = context.kwargs.get("file_id")
