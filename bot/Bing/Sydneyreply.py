@@ -191,7 +191,11 @@ class SydneyBot(Bot):
                     except Exception as e:
                         logger.info(e, imgurl)
 
-
+            # webPage fetch
+            webPageinfo = ""
+            webPagecache = memory.USER_WEBPAGE_CACHE.get(session_id)
+            if webPagecache:
+                webPageinfo = f"{webPagecache}\n"
             #remove system message
             # plugin = None
             # if session_message[0].get("role") == "system":
@@ -199,6 +203,8 @@ class SydneyBot(Bot):
             #         session_message.pop(0)
             
             ask_string = ""
+            if webPageinfo:
+                ask_string += webPageinfo
             for singleTalk in session_message:
                 for keyPerson, message in singleTalk.items():
                     ask_string += f"\n{keyPerson}\n{message}\n\n"

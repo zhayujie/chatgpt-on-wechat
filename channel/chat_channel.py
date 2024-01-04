@@ -12,6 +12,11 @@ from common.dequeue import Dequeue
 from common import memory
 from plugins import *
 
+from bs4 import BeautifulSoup
+import aiohttp
+import requests
+from config import conf
+import asyncio
 try:
     from voice.audio_convert import any_to_wav
 except Exception as e:
@@ -221,9 +226,25 @@ class ChatChannel(Channel):
                 }
                 logger.info(memory.USER_IMAGE_CACHE[context["session_id"]])
             elif context.type == ContextType.SHARING:  # 分享信息，当前无默认逻辑
-                pass
+                logger.info(context.content)
+                html = requests.get(context.content, proxies= {'https': conf().get('proxy') if conf().get('proxy') != '' else None}, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) '
+                                   'Gecko/20100101 Firefox/113.0'})
+                soup = BeautifulSoup(html.content, features= "html.parser")
+                for script in soup(["script", "style"]):
+                    script.extract()
+                text = soup.get_text()
+                lines = (line.strip() for line in text.splitlines())
+                chunks = (phrase.strip() for line in lines for phrase in line.split(" "))
+                text = '\n'.join(chunk for chunk in chunks if chunk)
+                memory.USER_WEBPAGE_CACHE[context["session_id"]]= {json.dumps(text, ensure_ascii= False)}  
+
             elif context.type == ContextType.FUNCTION or context.type == ContextType.FILE:  # 文件消息及函数调用等，当前无默认逻辑
-                pass
+                # logger.info(context.content)
+                memory.USER_FILE_CACHE[context["session_id"]] = {
+                    "path": context.content,
+                    "msg": context.get("msg")
+                }
+                logger.info(memory.USER_FILE_CACHE[context["session_id"]])
             else:
                 logger.warning("[WX] unknown context type: {}".format(context.type))
                 return
