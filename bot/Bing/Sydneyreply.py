@@ -22,6 +22,8 @@ import base64
 from bot.session_manager import SessionManager
 from PIL import Image
 from io import BytesIO
+import pathlib
+from bot.Bing.documentRead import *
 
 class SydneySessionManager(SessionManager):
     def session_msg_query(self, query, session_id):
@@ -196,24 +198,41 @@ class SydneyBot(Bot):
             webPagecache = memory.USER_WEBPAGE_CACHE.get(session_id)
             if webPagecache:
                 webPageinfo = f"{webPagecache}\n"
+
+            # file process
+            fileinfo = ""
+            fileCache = memory.USER_FILE_CACHE.get(session_id)
+            if fileCache:
+                fileinfo = await self.process_file_msg(session_id, fileCache) 
+             
+
+
             #remove system message
             # plugin = None
             # if session_message[0].get("role") == "system":
             #     if plugin != None:
             #         session_message.pop(0)
             
-            ask_string = ""
-            if webPageinfo:
-                ask_string += webPageinfo
+            ask_string = ""                  
             for singleTalk in session_message:
                 for keyPerson, message in singleTalk.items():
                     ask_string += f"\n{keyPerson}\n{message}\n\n"
+            if webPageinfo:
+                ask_string += webPageinfo
+            if fileinfo:
+                if "文本扫描" in fileinfo:
+                    return fileinfo
+                try:
+                    ask_string += fileinfo
+                except Exception:
+                    reply = "不支持该文件类型"
+                    return reply
             logger.info(ask_string)
 
-            file_id = context.kwargs.get("file_id")
-            if file_id:
-                context["file"] = file_id
-            logger.info(f"[SYDNEY] query={query}, file_id={file_id}")
+            # file_id = context.kwargs.get("file_id")
+            # if file_id:
+            #     context["file"] = file_id
+            # logger.info(f"[SYDNEY] query={query}, file_id={file_id}")
             
             bot_statement = "\n\n我是自动回复机器人悉尼。\n要和我对话请在发言中@我。"
 
@@ -339,6 +358,18 @@ class SydneyBot(Bot):
             return messages
         except Exception as e:
             logger.exception(e)
+    
+    async def process_file_msg(self, session_id, file_cache):
+        try:
+            msg = file_cache.get("msg")
+            path = file_cache.get("path")
+            msg.prepare()
+            logger.info(f"[SYDNEY] query with files, path={path}")              
+            messages = await self.build_docx_msg(path)
+            memory.USER_FILE_CACHE[session_id] = None
+            return messages
+        except Exception as e:
+            logger.exception(e)
 
     def build_vision_msg(self, image_path: str):
         try:
@@ -379,6 +410,27 @@ class SydneyBot(Bot):
 
         except Exception as e:
             logger.error(e)     
+    
+    async def build_docx_msg(self, file_path):
+        loop_local = asyncio.get_event_loop()
+        ext = pathlib.Path(file_path).suffix
+        try:
+            if ext == ".pptx":
+                text = await loop_local.run_in_executor(None, read_pptx_text, file_path)
+                docxMessage = f'[user](#pptx_slide_context)\n```\n{text}\n```\n\n'
+            elif ext == ".pdf":
+                text = await loop_local.run_in_executor(None, read_pdf_text, file_path)
+                docxMessage = f'[user](#pdf_document_context)\n```\n{text}\n```\n\n'
+            elif ext == ".docx":
+                text = await loop_local.run_in_executor(None, read_docx_text, file_path)
+                docxMessage = f'[user](#docx_document_context)\n```\n{text}\n```\n\n'
+            else:
+                logger.error("Unsupported file type")
+                return Reply(ReplyType.TEXT, "Unsupported file type")
+            return docxMessage
+        except Exception as e:
+            logger.error(e)
+            return "该文件不支持文本扫描"
 
     def process_url(self, text):
         try:
