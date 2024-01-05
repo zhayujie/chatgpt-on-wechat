@@ -209,13 +209,10 @@ class SydneyBot(Bot):
             if webPageinfo:
                 ask_string += webPageinfo
             if fileinfo:
-                if "文本扫描" in fileinfo:
+                if "文化水平低" or "这篇文章我看不懂咧" in fileinfo:
                     return fileinfo
-                try:
+                else:
                     ask_string += fileinfo
-                except Exception:
-                    reply = "不支持该文件类型"
-                    return reply
 
 
             #remove system message
@@ -426,11 +423,13 @@ class SydneyBot(Bot):
                 docxMessage = f'[user](#docx_document_context)\n```\n{text}\n```\n\n'
             else:
                 logger.error("Unsupported file type")
-                return Reply(ReplyType.TEXT, "Unsupported file type")
+                return f"我文化水平低,只认得docx,pdf,pptx类型的文档 \U0001F605"
+            if len(text.split()) < 2:
+                return f"我阅读能力差,这篇文章我看不懂咧 \U0001F605" 
             return docxMessage
         except Exception as e:
             logger.error(e)
-            return "该文件不支持文本扫描"
+            
 
     def process_url(self, text):
         try:
