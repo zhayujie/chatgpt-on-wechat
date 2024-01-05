@@ -33,15 +33,14 @@ class StoryTeller:
 - 描述时要控制好节奏，不要让我感到无聊或者迷失。
 - 仔细描述各个人物的心情和周边环境，让我能够感同身受，产生共鸣。
 - 一次只需写四到六句话，不要过长或者过短，保持适当的段落长度。
-- 尽量使用有趣的词汇和修辞手法，避免重复和陈词滥调，提高文采和吸引力。
-            开头是，"""
+- 尽量使用有趣的词汇和修辞手法，避免重复和陈词滥调，提高文采和吸引力。\n开头是:"""
                 + self.story
                 + " "
                 + user_action
             )
             self.first_interact = False
         else:
-            prompt = user_action + """继续你的文字冒险游戏，一次只需要续写四到六句话，描述接下来发生的事情。你需要注意以下几点：
+            prompt = f"""继续你的文字冒险游戏，一次只需要续写四到六句话，描述接下来发生的事情,{user_action}。你需要注意以下几点：
 - 续写时要保持好故事的连贯性和逻辑性，不要出现突兀或者不合理的情节。
 - 描述时要注意时间的流逝，总共就只讲5分钟内发生的事情，不要跳跃或者拖沓。
 - 尽量设置一些有趣的转折和冲突，让我感到惊喜和紧张，激发我的好奇心和探索欲。
@@ -104,7 +103,7 @@ class Dungeon(Plugin):
                 e_context.action = EventAction.BREAK  # 事件结束，不跳过处理context的默认逻辑
 
     def get_help_text(self, **kwargs):
-        help_text = "可以和机器人一起玩文字冒险游戏。\n"
+        help_text = "可以和Sydney一起玩文字冒险游戏。\n"
         if kwargs.get("verbose") != True:
             return help_text
         trigger_prefix = conf().get("plugin_trigger_prefix", "$")
