@@ -341,12 +341,12 @@ class SydneyBot(Bot):
             if "throttled" in str(e) or "Throttled" in str(e):
                 logger.warn("[SYDNEY] ConnectionError: {}".format(e))
                 return "我累了，今日使用次数已达到上限，请明天再来！"
-            if ":443" or "server" in str(e):
+            if ":443" in str(e) or "server" in str(e):
                 logger.warn("[SYDNEY] serverError: {}".format(e))
-                return "我的CPU烧了，请联系我的主人"
+                return "我的CPU烧了，请联系我的主人。"
             if "CAPTCHA" in str(e):
                 logger.warn("[SYDNEY] CAPTCHAError: {}".format(e))
-                return "我走丢了，请联系我的主人"
+                return "我走丢了，请联系我的主人。"
             reply = await self._chat(query, session, context, retry_count + 1)
             return reply
             
