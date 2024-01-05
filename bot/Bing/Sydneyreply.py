@@ -438,14 +438,14 @@ class SydneyBot(Bot):
             logger.error(e)
             
 
-    def process_url(self, text):
-        try:
-            url_pattern = re.compile(r'\[(.*?)\]\((http[s]?://.*?)\)')
-            def replace_markdown_url(match):
-                return f"{match.group(2)}"
-            return url_pattern.sub(replace_markdown_url, text)
-        except Exception as e:
-            logger.error(e)
+    # def process_url(self, text):
+    #     try:
+    #         url_pattern = re.compile(r'\[(.*?)\]\((http[s]?://.*?)\)')
+    #         def replace_markdown_url(match):
+    #             return f"{match.group(2)}"
+    #         return url_pattern.sub(replace_markdown_url, text)
+    #     except Exception as e:
+    #         logger.error(e)
 
     def send_image(self, channel, context, image_urls):
         if not image_urls:
