@@ -338,7 +338,7 @@ class SydneyBot(Bot):
             time.sleep(2)
             logger.warn(f"[SYDNEY] do retry, times={retry_count}")
             # self._chat(query, context, retry_count + 1)
-            if "throttled" or "Throttled" in str(e):
+            if "throttled" in str(e) or "Throttled" in str(e):
                 logger.warn("[SYDNEY] ConnectionError: {}".format(e))
                 return "我累了，今日使用次数已达到上限，请明天再来！"
             if ":443" or "server" in str(e):
@@ -349,9 +349,7 @@ class SydneyBot(Bot):
                 return "我走丢了，请联系我的主人"
             reply = await self._chat(query, session, context, retry_count + 1)
             return reply
-            # return Reply(ReplyType.TEXT, "我脑壳短路了，让我再想一哈")
-            # self.sessions.session_reply(reply_content, session_id)
-            # return Reply(ReplyType.TEXT, reply_content)
+            
             
     def process_image_msg(self, session_id, img_cache):
         try:
