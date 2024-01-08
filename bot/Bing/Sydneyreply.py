@@ -341,6 +341,8 @@ class SydneyBot(Bot):
                 if reply:    
                     if "自动回复机器人悉尼" not in reply:
                         reply += bot_statement
+                else:
+                    reply = await self._chat(query, session, context, retry_count + 1)
                 # logger.info(f"[SYDNEY] reply={reply}")
                 imgurl =None
                 return reply
