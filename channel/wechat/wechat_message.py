@@ -27,13 +27,21 @@ class WechatMessage(ChatMessage):
             self._prepare_fn = lambda: itchat_msg.download(self.content)
         elif itchat_msg["Type"] == NOTE and itchat_msg["MsgType"] == 10000:
             if is_group and ("加入群聊" in itchat_msg["Content"] or "加入了群聊" in itchat_msg["Content"]):
-                self.ctype = ContextType.JOIN_GROUP
-                self.content = itchat_msg["Content"]
                 # 这里只能得到nickname， actual_user_id还是机器人的id
                 if "加入了群聊" in itchat_msg["Content"]:
+                    self.ctype = ContextType.JOIN_GROUP
+                    self.content = itchat_msg["Content"]
                     self.actual_user_nickname = re.findall(r"\"(.*?)\"", itchat_msg["Content"])[-1]
                 elif "加入群聊" in itchat_msg["Content"]:
+                    self.ctype = ContextType.JOIN_GROUP
+                    self.content = itchat_msg["Content"]
                     self.actual_user_nickname = re.findall(r"\"(.*?)\"", itchat_msg["Content"])[0]
+
+            elif is_group and ("移出了群聊" in itchat_msg["Content"]):
+                self.ctype = ContextType.EXIT_GROUP
+                self.content = itchat_msg["Content"]
+                self.actual_user_nickname = re.findall(r"\"(.*?)\"", itchat_msg["Content"])[0]
+                    
             elif "你已添加了" in itchat_msg["Content"]:  #通过好友请求
                 self.ctype = ContextType.ACCEPT_FRIEND
                 self.content = itchat_msg["Content"]
@@ -90,5 +98,5 @@ class WechatMessage(ChatMessage):
         if self.is_group:
             self.is_at = itchat_msg["IsAt"]
             self.actual_user_id = itchat_msg["ActualUserName"]
-            if self.ctype not in [ContextType.JOIN_GROUP, ContextType.PATPAT]:
+            if self.ctype not in [ContextType.JOIN_GROUP, ContextType.PATPAT, ContextType.EXIT_GROUP]:
                 self.actual_user_nickname = itchat_msg["ActualNickName"]

@@ -1,7 +1,7 @@
 """
 channel factory
 """
-
+from common import const
 
 def create_channel(channel_type):
     """
@@ -35,6 +35,13 @@ def create_channel(channel_type):
         return WechatComAppChannel()
     elif channel_type == "wework":
         from channel.wework.wework_channel import WeworkChannel
-
         return WeworkChannel()
+
+    elif channel_type == const.FEISHU:
+        from channel.feishu.feishu_channel import FeiShuChanel
+        return FeiShuChanel()
+    elif channel_type == const.DINGTALK:
+        from channel.dingtalk.dingtalk_channel import DingTalkChanel
+        return DingTalkChanel()
+
     raise RuntimeError

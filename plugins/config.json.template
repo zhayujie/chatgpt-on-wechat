@@ -33,6 +33,12 @@
             "max_tasks": 3,
             "max_tasks_per_user": 1,
             "use_image_create_prefix": true
+        },
+        "summary": {
+            "enabled": true,
+            "group_enabled": true,
+            "max_file_size": 5000,
+            "type": ["FILE", "SHARING"]
         }
     }
 }
