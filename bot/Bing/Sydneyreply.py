@@ -337,13 +337,10 @@ class SydneyBot(Bot):
                         #     break 
                         message = response["item"]["messages"][-1]
                         if "suggestedResponses" in message:
-                            break           
-                if reply:    
-                    if "自动回复机器人悉尼" not in reply:
+                            break      
+                #this will be wrapped out exception if no reply returned, and in the exception the ask process will try again
+                if "自动回复机器人悉尼" not in reply:
                         reply += bot_statement
-                else:
-                    reply = await self._chat(query, session, context, retry_count + 1)
-                # logger.info(f"[SYDNEY] reply={reply}")
                 imgurl =None
                 return reply
 
