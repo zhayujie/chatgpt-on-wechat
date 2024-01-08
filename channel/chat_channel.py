@@ -228,7 +228,7 @@ class ChatChannel(Channel):
             elif context.type == ContextType.SHARING:  # 分享信息，当前无默认逻辑
                 logger.info(context.content)
                 html = requests.get(context.content, proxies= {'https': conf().get('proxy') if conf().get('proxy') != '' else None}, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) '
-                                   'Gecko/20100101 Firefox/113.0'})
+                                'Gecko/20100101 Firefox/113.0'})
                 soup = BeautifulSoup(html.content, features= "html.parser")
                 for script in soup(["script", "style"]):
                     script.extract()
