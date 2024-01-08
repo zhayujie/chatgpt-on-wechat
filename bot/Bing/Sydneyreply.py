@@ -100,17 +100,14 @@ class SydneyBot(Bot):
         self.args = {}
         self.current_responding_task = None
     
-    def stop_responding_task(self):
-        if self.current_responding_task is not None:
-            self.current_responding_task.cancel()
-            logger.info('Stopped current responding task.')
+    # def stop_responding_task(self):
+    #     if self.current_responding_task is not None:
+    #         self.current_responding_task.cancel()
+    #         logger.info('Stopped current responding task.')
+
     #todo rajayoux stop current processing
-    def send_responsed(self, session, context):
-        self.current_responding_task = asyncio.ensure_future(self.send_message(session = session, context =context))
-        logger.info(self.current_responding_task)
-    
-    async def send_message(self, session, query: str = None, context: Context = None):
-        await self._chat(session, query, context)
+    # async def send_message(self, session, query: str = None, context: Context = None):
+    #     await self._chat(session, query, context)
 
 
     def reply(self, query, context: Context = None) -> Reply:
@@ -129,11 +126,19 @@ class SydneyBot(Bot):
                 elif query == "清除所有":
                     self.sessions.clear_all_session()
                     reply = Reply(ReplyType.INFO, "所有人记忆已清除")
-                try:
-                    self.send_responsed(session, context)
-                except Exception as e:
-                    logger.warn(e)
-                asyncio.run(self.stop_responding_task())
+                #TODO need to fix when an async thread is in processing user can't stop the process midway, this will pollute message of the chat history, it also leads misunderstanding in the next talk      
+                # try:
+                #     # Create and set a new event loop for this thread
+                #     loop = asyncio.new_event_loop()
+                #     asyncio.set_event_loop(loop)
+                #     # Use the loop to run async tasks
+                #     current_responding_task = asyncio.ensure_future(self.send_message(session, context))
+                #     loop.run_until_complete(current_responding_task)
+                #     # Close the loop when done
+                #     loop.close()
+                # except Exception as e:
+                #     logger.warn(e)
+                # self.stop_responding_task()
             elif query == "#更新配置":
                 load_config()
                 reply = Reply(ReplyType.INFO, "配置已更新")
