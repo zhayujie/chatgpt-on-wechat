@@ -98,28 +98,48 @@ class SydneyBot(Bot):
         super().__init__()
         self.sessions = SessionManager(SydneySession, model=conf().get("model") or "gpt-3.5-turbo")
         self.args = {}
-        
+        self.current_responding_task = None
+    
+    def stop_responding_task(self):
+        if self.current_responding_task is not None:
+            self.current_responding_task.cancel()
+            logger.info('Stopped current responding task.')
+    #todo rajayoux stop current processing
+    def send_responsed(self, session, context):
+        self.current_responding_task = asyncio.ensure_future(self.send_message(session = session, context =context))
+        logger.info(self.current_responding_task)
+    
+    async def send_message(self, session, query: str = None, context: Context = None):
+        await self._chat(session, query, context)
+
+
     def reply(self, query, context: Context = None) -> Reply:
         if context.type == ContextType.TEXT:
             logger.info("[SYDNEY] query={}".format(query))
 
             session_id = context["session_id"]
+            session = self.sessions.session_query(query, session_id)
+            logger.debug("[SYDNEY] session query={}".format(session.messages))
             reply = None
-            clear_memory_commands = conf().get("clear_memory_commands", ["#清除记忆"])
-            if query in clear_memory_commands:
-                self.sessions.clear_session(session_id)
-                reply = Reply(ReplyType.INFO, "记忆已清除")
-            elif query == "清除所有":
-                self.sessions.clear_all_session()
-                reply = Reply(ReplyType.INFO, "所有人记忆已清除")
+            # clear_memory_commands = conf().get("clear_memory_commands", ["#清除记忆"])
+            if query == "清除记忆" or query == "清除所有":
+                if query == "清除记忆":
+                    self.sessions.clear_session(session_id)
+                    reply = Reply(ReplyType.INFO, "记忆已清除")
+                elif query == "清除所有":
+                    self.sessions.clear_all_session()
+                    reply = Reply(ReplyType.INFO, "所有人记忆已清除")
+                try:
+                    self.send_responsed(session, context)
+                except Exception as e:
+                    logger.warn(e)
+                asyncio.run(self.stop_responding_task())
             elif query == "#更新配置":
                 load_config()
                 reply = Reply(ReplyType.INFO, "配置已更新")
 
             if reply:
                 return reply
-            session = self.sessions.session_query(query, session_id)
-            logger.debug("[SYDNEY] session query={}".format(session.messages))
             try:
                 reply_content = asyncio.run(self._chat(session, query, context))
                 self.sessions.session_reply(reply_content, session_id)
@@ -313,9 +333,9 @@ class SydneyBot(Bot):
                         message = response["item"]["messages"][-1]
                         if "suggestedResponses" in message:
                             break           
-                    
-                if "自动回复机器人悉尼" not in reply:
-                    reply += bot_statement
+                if reply:    
+                    if "自动回复机器人悉尼" not in reply:
+                        reply += bot_statement
                 # logger.info(f"[SYDNEY] reply={reply}")
                 imgurl =None
                 return reply
@@ -341,9 +361,10 @@ class SydneyBot(Bot):
             if "throttled" in str(e) or "Throttled" in str(e):
                 logger.warn("[SYDNEY] ConnectionError: {}".format(e))
                 return "我累了，今日使用次数已达到上限，请明天再来！"
-            if ":443" in str(e) or "server" in str(e):
-                logger.warn("[SYDNEY] serverError: {}".format(e))
-                return "我的CPU烧了，请联系我的主人。"
+            # Just need a try again when this happens 
+            # if ":443" in str(e) or "server" in str(e): 
+            #     logger.warn("[SYDNEY] serverError: {}".format(e))
+            #     return "我的CPU烧了，请联系我的主人。"
             if "CAPTCHA" in str(e):
                 logger.warn("[SYDNEY] CAPTCHAError: {}".format(e))
                 return "我走丢了，请联系我的主人。"
