@@ -217,6 +217,7 @@ class SydneyBot(Bot):
                         logger.info(imgurl)
                     except Exception as e:
                         logger.info(e, imgurl)
+                        return f"你的图片太牛逼了，所以服务器拒绝了你的请求。\U0001F605"
 
             # webPage fetch
             webPageinfo = ""

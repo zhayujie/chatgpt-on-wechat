@@ -12,6 +12,10 @@
 
 > 欢迎接入更多应用，参考 [Terminal代码](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/channel/terminal/terminal_channel.py)实现接收和发送消息逻辑即可接入。 同时欢迎增加新的插件，参考 [插件说明文档](https://github.com/zhayujie/chatgpt-on-wechat/tree/master/plugins)。
 
+
+# Knowing issues
+> when uploading a local storage image, server will response unexpected error with json data, which indicates unstable performance of image recognition, so it's a server exception.
+
 # 计划的更新
 > 向聊天中发送“内容正在生成中”， 如果当前生成内容的时间超过了30s。
 > when one reply is in processing user can stop the generation of content immediately by sending a message, and the stopped reply won't be stored in the chat history
