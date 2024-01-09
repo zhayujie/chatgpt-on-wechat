@@ -324,6 +324,7 @@ class SydneyBot(Bot):
                                 reply = ""                   
                                 reply = ''.join([remove_extra_format(message["adaptiveCards"][0]["body"][0]["text"]) for message in response["arguments"][0]["messages"]])
                                 if "suggestedResponses" in message:
+                                    imgurl =None
                                     break
                         
                         elif msg_type == "GenerateContentQuery":
@@ -338,11 +339,11 @@ class SydneyBot(Bot):
                         #     break 
                         message = response["item"]["messages"][-1]
                         if "suggestedResponses" in message:
+                            imgurl =None
                             break      
                 #this will be wrapped out exception if no reply returned, and in the exception the ask process will try again
                 if "自动回复机器人悉尼" not in reply:
-                        reply += bot_statement
-                imgurl =None
+                    reply += bot_statement
                 return reply
 
                 
@@ -374,6 +375,7 @@ class SydneyBot(Bot):
                 logger.warn("[SYDNEY] CAPTCHAError: {}".format(e))
                 return "我走丢了，请联系我的主人。"
             reply = await self._chat(query, session, context, retry_count + 1)
+            imgurl =None
             return reply
             
             
