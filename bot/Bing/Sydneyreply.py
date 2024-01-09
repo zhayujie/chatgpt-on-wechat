@@ -98,18 +98,8 @@ class SydneyBot(Bot):
         super().__init__()
         self.sessions = SessionManager(SydneySession, model=conf().get("model") or "gpt-3.5-turbo")
         self.args = {}
-        self.current_responding_task = None
-    
-    # def stop_responding_task(self):
-    #     if self.current_responding_task is not None:
-    #         self.current_responding_task.cancel()
-    #         logger.info('Stopped current responding task.')
-
-    #todo rajayoux stop current processing
-    # async def send_message(self, session, query: str = None, context: Context = None):
-    #     await self._chat(session, query, context)
-
-
+        self.reply_content= None
+        
     def reply(self, query, context: Context = None) -> Reply:
         if context.type == ContextType.TEXT:
             logger.info("[SYDNEY] query={}".format(query))
@@ -127,18 +117,6 @@ class SydneyBot(Bot):
                     self.sessions.clear_all_session()
                     reply = Reply(ReplyType.INFO, "所有人记忆已清除")
                 #TODO need to fix when an async thread is in processing user can't stop the process midway, this will pollute message of the chat history, it also leads misunderstanding in the next talk      
-                # try:
-                #     # Create and set a new event loop for this thread
-                #     loop = asyncio.new_event_loop()
-                #     asyncio.set_event_loop(loop)
-                #     # Use the loop to run async tasks
-                #     current_responding_task = asyncio.ensure_future(self.send_message(session, context))
-                #     loop.run_until_complete(current_responding_task)
-                #     # Close the loop when done
-                #     loop.close()
-                # except Exception as e:
-                #     logger.warn(e)
-                # self.stop_responding_task()
             elif query == "#更新配置":
                 load_config()
                 reply = Reply(ReplyType.INFO, "配置已更新")
@@ -146,13 +124,13 @@ class SydneyBot(Bot):
             if reply:
                 return reply
             try:
-                reply_content = asyncio.run(self._chat(session, query, context))
-                self.sessions.session_reply(reply_content, session_id)
-                return Reply(ReplyType.TEXT, reply_content)
+                self.reply_content = asyncio.run(self._chat(session, query, context))
+                self.sessions.session_reply(self.reply_content, session_id)
+                return Reply(ReplyType.TEXT, self.reply_content)
                 
             except Exception as e:
                 logger.error(e)
-                return Reply(ReplyType.TEXT, "我脑壳短路了，让我休息哈再问我")
+                return Reply(ReplyType.TEXT, "我脑壳短路了，让我休息哈再问我。")
             # reply_content = asyncio.run(Sydney_proess.sydney_reply(session))
             #     self.sessions.session_reply(reply_content["content"], session_id)
             # logger.debug("[SYDNEY] session query={}".format(session.messages))
@@ -185,7 +163,13 @@ class SydneyBot(Bot):
     async def _chat(self, session, query, context, retry_count= 0) -> Reply:
         """
         merge from SydneyProcess
-            """
+        """
+        # if query == "清除记忆" or query == "清除所有":
+        #     try:
+        #         asyncio.ensure_future(self._chat(session, query, context)).cancel()
+        #     except Exception as e:
+        #         logger.error(e)
+        #     return "记忆已清除，但是你打断了本仙女的发言!"
         if retry_count > 2:
             logger.warn("[SYDNEY] failed after maximum number of retry times")
             await Reply(ReplyType.TEXT, "请再问我一次吧")
