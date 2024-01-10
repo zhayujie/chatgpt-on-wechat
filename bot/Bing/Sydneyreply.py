@@ -224,6 +224,7 @@ Only the final, integrated output response is provided. Emoji is recommended but
             session_message = session.messages
             logger.debug(f"[SYDNEY] session={session_message}, session_id={session_id}")
 
+            imgurl = None
             # image process
             img_cache = memory.USER_IMAGE_CACHE.get(session_id)
             if img_cache:
