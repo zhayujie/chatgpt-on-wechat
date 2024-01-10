@@ -169,7 +169,7 @@ class SydneyBot(Bot):
         try:        
             reply_content = await self.current_responding_task
         except asyncio.CancelledError:
-            return "记忆已清除，但是你打断了本仙女的发言!"
+            return "记忆已清除，但是你打断了本仙女的思考!"
         return reply_content
         
 
