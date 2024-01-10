@@ -146,6 +146,8 @@ class SydneyBot(Bot):
                 return reply
             try:
                 self.reply_content = asyncio.run(self.handle_async_response(session, query, context))
+                # if self.current_responding_task is not None:
+                #     return  [Reply(ReplyType.INFO, "本仙女看到你的消息啦！"), self.reply_content]
                 self.sessions.session_reply(self.reply_content, session_id)
                 return Reply(ReplyType.TEXT, self.reply_content)
                 
@@ -169,6 +171,7 @@ class SydneyBot(Bot):
         try:        
             reply_content = await self.current_responding_task
         except asyncio.CancelledError:
+            self.current_responding_task = None
             return "记忆已清除，但是你打断了本仙女的思考!"
         return reply_content
         
