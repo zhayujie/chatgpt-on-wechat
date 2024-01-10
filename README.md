@@ -18,7 +18,7 @@
 
 # 计划的更新
 > 向聊天中发送“内容正在生成中”， 如果当前生成内容的时间超过了30s。
-> when one reply is in processing user can stop the generation of content immediately by sending a message, and the stopped reply won't be stored in the chat history
+> ~~when one reply is in processing user can stop the generation of content immediately by sending a message, and the stopped reply won't be stored in the chat history~~
 
 
 # 演示
@@ -30,7 +30,7 @@
 
 
 # 更新日志
-
+>**2023.11.11：** when one reply is in processing user can stop the generation of content immediately by sending a message, and the stopped reply won't be stored in the chat history.
 
 # 快速开始
 
