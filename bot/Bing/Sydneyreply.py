@@ -224,7 +224,6 @@ Only the final, integrated output response is provided. Emoji is recommended but
             session_message = session.messages
             logger.debug(f"[SYDNEY] session={session_message}, session_id={session_id}")
 
-            imgurl = None
             # image process
             img_cache = memory.USER_IMAGE_CACHE.get(session_id)
             if img_cache:
@@ -261,12 +260,12 @@ Only the final, integrated output response is provided. Emoji is recommended but
                 else:
                     preContext += fileinfo
 
-
             #remove system message
             # plugin = None
-            # if session_message[0].get("role") == "system":
-            #     if plugin != None:
+            # if session_message[0].get("role") == "[system](#additional_instructions)":
+            #     if plugin == None:
             #         session_message.pop(0)
+                    
             rest_messages = ""
             for singleTalk in session_message[:-1]:  # Iterate through all but the last message
                 for keyPerson, message in singleTalk.items():
@@ -288,14 +287,6 @@ Only the final, integrated output response is provided. Emoji is recommended but
             bot_statement = "\n\n我是自动回复机器人悉尼。\n要和我对话请在发言中@我。"
 
             
-            
-            # Get the absolute path of the JSON file
-            file_path = os.path.abspath("./cookies.json")
-            # Load the JSON file using the absolute path
-            cookies = json.loads(open(file_path, encoding="utf-8").read())
-            # Create a sydney conversation object using the cookies and the proxy
-            conversation = await sydney.create_conversation(cookies=cookies, proxy=proxy)
-            # if conversation.status_code == 200:
             replied = False
             async with aclosing(sydney.ask_stream(
                 conversation= conversation,
@@ -346,9 +337,7 @@ Only the final, integrated output response is provided. Emoji is recommended but
                                 self.send_image(context.get("channel"), context, response["choices"][0].get("img_urls"))
 
 
-                    if response["type"] == 2:
-                        # if reply is not None:
-                        #     break 
+                    if response["type"] == 2: 
                         message = response["item"]["messages"][-1]
                         if "suggestedResponses" in message:
                             imgurl =None
@@ -357,18 +346,8 @@ Only the final, integrated output response is provided. Emoji is recommended but
                 if "自动回复机器人悉尼" not in reply:
                     reply += bot_statement
                 return reply
-
                 
-            # else:
-            #     logger.error(f"[SYDNEY] create conversation failed, status_code={conversation.status_code}")
-
-            #     if conversation.status_code >= 500:
-            #         # server error, need retry
-            #         time.sleep(2)
-            #         logger.warn(f"[SYDNEY] do retry, times={retry_count}")
-            #         await self._chat(query, context, retry_count +1)
-                
-            #     await Reply(ReplyType.TEXT, "提问太快啦，请休息一下再问我吧")
+                # await Reply(ReplyType.TEXT, "提问太快啦，请休息一下再问我吧")
 
         except Exception as e:
             logger.exception(e)
