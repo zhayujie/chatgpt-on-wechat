@@ -147,24 +147,7 @@ class SydneyBot(Bot):
             except Exception as e:
                 logger.error(e)
                 return Reply(ReplyType.TEXT, "我脑壳短路了，让我休息哈再问我。")
-            # reply_content = asyncio.run(Sydney_proess.sydney_reply(session))
-            #     self.sessions.session_reply(reply_content["content"], session_id)
-            # logger.debug("[SYDNEY] session query={}".format(session.messages))
-            # try:
-            #     reply_content = asyncio.run(Sydney_proess.sydney_reply(session))
-            #     self.sessions.session_reply(reply_content["content"], session_id)
-            #     logger.debug(
-            #         "[SYDNEY] new_query={}, session_id={}, reply_cont={}".format(
-            #             session.messages,
-            #             session_id,
-            #             reply_content["content"],
-            #         )
-            #     )
-            # except Exception:
-            #     reply_content = asyncio.run(Sydney_proess.sydney_reply(session))
-            #     self.sessions.session_reply(reply_content["content"], session_id)
-            # reply = Reply(ReplyType.TEXT, reply_content["content"])
-            # return reply
+            
         elif context.type == ContextType.IMAGE_CREATE:
             ok, res = self.create_img(query, 0)
             if ok:
