@@ -115,6 +115,7 @@ class SydneyBot(Bot):
         self.sessions = SessionManager(SydneySession, model=conf().get("model") or "gpt-3.5-turbo")
         self.args = {}
         self.reply_content= None
+        self.current_responding_task = None
         
     def reply(self, query, context: Context = None) -> Reply:
         if context.type == ContextType.TEXT:
@@ -128,11 +129,15 @@ class SydneyBot(Bot):
             if query == "清除记忆" or query == "清除所有":
                 if query == "清除记忆":
                     self.sessions.clear_session(session_id)
-                    reply = Reply(ReplyType.INFO, "记忆已清除")
+                    # reply = Reply(ReplyType.INFO, "记忆已清除")
                 elif query == "清除所有":
                     self.sessions.clear_all_session()
-                    reply = Reply(ReplyType.INFO, "所有人记忆已清除")
-                #TODO need to fix when an async thread is in processing user can't stop the process midway, this will pollute message of the chat history, it also leads misunderstanding in the next talk      
+                    # reply = Reply(ReplyType.INFO, "所有人记忆已清除")
+                
+                #Done need to fix when an async thread is in processing user can't stop the process midway, this will pollute message of the chat history, it also leads misunderstanding in the next talk      
+                if self.current_responding_task is not None:
+                    self.current_responding_task.cancel()
+                    return 
             elif query == "#更新配置":
                 load_config()
                 reply = Reply(ReplyType.INFO, "配置已更新")
@@ -140,7 +145,7 @@ class SydneyBot(Bot):
             if reply:
                 return reply
             try:
-                self.reply_content = asyncio.run(self._chat(session, query, context))
+                self.reply_content = asyncio.run(self.handle_async_response(session, query, context))
                 self.sessions.session_reply(self.reply_content, session_id)
                 return Reply(ReplyType.TEXT, self.reply_content)
                 
@@ -159,16 +164,19 @@ class SydneyBot(Bot):
             reply = Reply(ReplyType.ERROR, "Bot不支持处理{}类型的消息".format(context.type))
             return reply
     
+    async def handle_async_response(self, session, query, context):
+        self.current_responding_task = asyncio.ensure_future(self._chat(session, query, context))
+        try:        
+            reply_content = await self.current_responding_task
+        except asyncio.CancelledError:
+            return "记忆已清除，但是你打断了本仙女的发言!"
+        return reply_content
+        
+
     async def _chat(self, session, query, context, retry_count= 0) -> Reply:
         """
         merge from SydneyProcess
         """
-        # if query == "清除记忆" or query == "清除所有":
-        #     try:
-        #         asyncio.ensure_future(self._chat(session, query, context)).cancel()
-        #     except Exception as e:
-        #         logger.error(e)
-        #     return "记忆已清除，但是你打断了本仙女的发言!"
         if retry_count > 2:
             logger.warn("[SYDNEY] failed after maximum number of retry times")
             await Reply(ReplyType.TEXT, "请再问我一次吧")
