@@ -126,6 +126,7 @@ class SydneyBot(Bot):
             logger.debug("[SYDNEY] session query={}".format(session.messages))
             reply = None
             # clear_memory_commands = conf().get("clear_memory_commands", ["#清除记忆"])
+            #todo passive reply, if user asks the bot is alive then reply to him the message is in process
             if query == "清除记忆" or query == "清除所有":
                 if query == "清除记忆":
                     self.sessions.clear_session(session_id)
