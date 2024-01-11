@@ -17,7 +17,7 @@
 
 > when uploading a local storage image, server will response unexpected error with json data, which indicates unstable performance of image recognition, so it's a server exception.
 
-# 计划的更新
+# Planned updates
 
 > 向聊天中发送“内容正在生成中”， 如果当前生成内容的时间超过了30s。
 
@@ -34,7 +34,7 @@
 
 
 
-# 更新日志
+# Update logs
 
 >**2023.11.11：** when one reply is in processing user can stop the generation of content immediately by sending a message, and the stopped reply won't be stored in the chat history.
 
