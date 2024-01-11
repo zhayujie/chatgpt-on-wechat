@@ -24,6 +24,7 @@ from PIL import Image
 from io import BytesIO
 import pathlib
 from bot.Bing.documentRead import *
+import urllib.parse
 
 class SydneySessionManager(SessionManager):
     def session_msg_query(self, query, session_id):
@@ -118,7 +119,7 @@ class SydneyBot(Bot):
         self.current_responding_task = None
         
     def reply(self, query, context: Context = None) -> Reply:
-        if context.type == ContextType.TEXT:
+        if context.type == ContextType.TEXT or context.type == ContextType.IMAGE_CREATE:
             logger.info("[SYDNEY] query={}".format(query))
 
             session_id = context["session_id"]
@@ -130,10 +131,10 @@ class SydneyBot(Bot):
             if query == "清除记忆" or query == "清除所有":
                 if query == "清除记忆":
                     self.sessions.clear_session(session_id)
-                    # reply = Reply(ReplyType.INFO, "记忆已清除")
+                    reply = Reply(ReplyType.INFO, "记忆已清除")
                 elif query == "清除所有":
                     self.sessions.clear_all_session()
-                    # reply = Reply(ReplyType.INFO, "所有人记忆已清除")
+                    reply = Reply(ReplyType.INFO, "所有人记忆已清除")
                 
                 #Done need to fix when an async thread is in processing user can't stop the process midway, this will pollute message of the chat history, it also leads misunderstanding in the next talk      
                 if self.current_responding_task is not None:
@@ -161,7 +162,7 @@ class SydneyBot(Bot):
             except Exception as e:
                 logger.error(e)
                 return Reply(ReplyType.TEXT, "我脑壳短路了，让我休息哈再问我。\U0001F64F")
-        #todo IMAGE_CREATE    
+        # #todo IMAGE_CREATE    
         # elif context.type == ContextType.IMAGE_CREATE:
         #     ok, res = self.create_img(query, 0)
         #     if ok:
@@ -169,9 +170,9 @@ class SydneyBot(Bot):
         #     else:
         #         reply = Reply(ReplyType.ERROR, res)
         #     return reply
-        else:
-            reply = Reply(ReplyType.ERROR, "Bot不支持处理{}类型的消息".format(context.type))
-            return reply
+        # else:
+        #     reply = Reply(ReplyType.ERROR, "Bot不支持处理{}类型的消息".format(context.type))
+        #     return reply
     
     async def handle_async_response(self, session, query, context):
         self.current_responding_task = asyncio.ensure_future(self._chat(session, query, context))
@@ -294,6 +295,7 @@ Only the final, integrated output response is provided. Emoji is recommended but
                 conversation= conversation,
                 prompt= ask_string,
                 context= preContext, 
+                conversation_style= "creative",
                 proxy= proxy,
                 image_url= imgurl,
                 wss_url='wss://' + 'sydney.bing.com' + '/sydney/ChatHub',
@@ -327,7 +329,8 @@ Only the final, integrated output response is provided. Emoji is recommended but
                             else:
                                 replied = True
                                 reply = ""                   
-                                reply = ''.join([remove_extra_format(message["adaptiveCards"][0]["body"][0]["text"]) for message in response["arguments"][0]["messages"]])
+                                reply = ''.join([remove_extra_format(message["text"]) for message in response["arguments"][0]["messages"]])
+                                # reply = ''.join([remove_extra_format(message["adaptiveCards"][0]["body"][0]["text"]) for message in response["arguments"][0]["messages"]])
                                 if "suggestedResponses" in message:
                                     imgurl =None
                                     break
@@ -335,8 +338,25 @@ Only the final, integrated output response is provided. Emoji is recommended but
                         elif msg_type == "GenerateContentQuery":
                             if message['contentType'] == 'IMAGE':
                                 replied = True
-                                # needs approve
-                                self.send_image(context.get("channel"), context, response["choices"][0].get("img_urls"))
+                                #todo needs approve
+                                # try:
+                                # image = sydney.GenerateImageResult()
+                                url = "https://www.bing.com/images/create?" + urllib.parse.urlencode({
+                                    "partner": "sydney",
+                                    "re": "1",
+                                    "showselective": "1",
+                                    "sude": "1",
+                                    "kseed": "8500",
+                                    "SFX": "4",
+                                    "q": urllib.parse.quote(message["text"]),  # Ensure proper URL encoding
+                                    "iframeid": message["messageId"],
+                                })
+                                generative_image = sydney.GenerativeImage(message["text"], url)
+                                image = await sydney.generate_image(proxy, generative_image, cookies)
+                                logger(image)
+                                # except Exception as e:
+                                #     logger.error(e)
+                                # self.send_image(context.get("channel"), context, response["choices"][0].get("img_urls"))
 
 
                     if response["type"] == 2: 
