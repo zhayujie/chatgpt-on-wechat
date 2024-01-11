@@ -24,13 +24,16 @@ _BASE_OPTION_SETS = [
     "disable_emoji_spoken_text",
     "responsible_ai_policy_235",
     "enablemm",
-    "iycapbing",
-    "iyxapbing",
     "dv3sugg",
-    "iyoloxap",
-    "iyoloneutral",
+    "iyxapbing",
+    "iycapbing",
+    "gptvprvc",
+    "fluxpcalc",
+    "eredirecturl",
     "gencontentv3",
+    "fluxv14l",
     "nojbf",
+    "soedgeca",
 ]
 
 
@@ -331,7 +334,7 @@ async def ask_stream(
                 'arguments': [
                     {
                         'optionsSets': option_sets,
-                        'source': 'cib',
+                        'source': 'edge_coauthor_prod',
                         'allowedMessageTypes': _ALLOWED_MESSAGE_TYPES,
                         'sliceIds': _SLICE_IDS,
                         "verbosity": "verbose",
