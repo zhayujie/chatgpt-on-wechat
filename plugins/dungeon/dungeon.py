@@ -79,7 +79,7 @@ class Dungeon(Plugin):
         sessionid = e_context["context"]["session_id"]
         logger.debug("[Dungeon] on_handle_context. content: %s" % clist)
         trigger_prefix = conf().get("plugin_trigger_prefix", "$")
-        if clist[0] == f"{trigger_prefix}停止冒险":
+        if clist[0] == f"{trigger_prefix}停止冒险" or clist[0] == "清除记忆":
             if sessionid in self.games:
                 self.games[sessionid].reset()
                 del self.games[sessionid]
