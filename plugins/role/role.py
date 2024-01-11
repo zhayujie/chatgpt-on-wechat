@@ -108,13 +108,14 @@ class Role(Plugin):
         customize = False
         sessionid = e_context["context"]["session_id"]
         trigger_prefix = conf().get("plugin_trigger_prefix", "$")
-        if clist[0] == f"{trigger_prefix}停止扮演" or clist[0] == f"{trigger_prefix}Stop":
+        if clist[0] == f"{trigger_prefix}停止扮演" or clist[0] == f"{trigger_prefix}Stop" or clist[0] == "清除记忆":
             if sessionid in self.roleplays:
                 self.roleplays[sessionid].reset()
                 del self.roleplays[sessionid]
             reply = Reply(ReplyType.INFO, "角色扮演结束!")
             e_context["reply"] = reply
-            e_context.action = EventAction.BREAK_PASS
+            if clist[0] == f"{trigger_prefix}停止扮演" or clist[0] == f"{trigger_prefix}Stop":
+                e_context.action = EventAction.BREAK_PASS
             return
         elif clist[0] == f"{trigger_prefix}角色":
             desckey = "descn"
