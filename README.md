@@ -36,7 +36,9 @@
 
 # Update logs
 
->**2023.11.11：** when one reply is in processing user can stop the generation of content immediately by sending a message, and the stopped reply won't be stored in the chat history.
+>**2024.1.10：** when one reply is in processing user can stop the generation of content immediately by sending a message, and the stopped reply won't be stored in the chat history.
+
+>**2024.1.11：** add emoji in tip message, add tip message to tell if the reply is in process.
 
 # 快速开始
 
