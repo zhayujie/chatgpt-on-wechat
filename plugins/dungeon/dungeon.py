@@ -85,7 +85,8 @@ class Dungeon(Plugin):
                 del self.games[sessionid]
                 reply = Reply(ReplyType.INFO, "冒险结束!")
                 e_context["reply"] = reply
-                e_context.action = EventAction.BREAK_PASS
+                if clist[0] == f"{trigger_prefix}停止冒险":
+                    e_context.action = EventAction.BREAK_PASS
         elif clist[0] == f"{trigger_prefix}开始冒险" or sessionid in self.games:
             if sessionid not in self.games or clist[0] == f"{trigger_prefix}开始冒险":
                 if len(clist) > 1:
