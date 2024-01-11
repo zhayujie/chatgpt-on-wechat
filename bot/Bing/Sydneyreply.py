@@ -97,17 +97,17 @@ def remove_extra_format(reply: str) -> str:
     return result
 
 def except_chinese_char(string):
-  import unicodedata
-  # loop through each character in the string
-  for char in string:
-    # get the general category of the character
-    category = unicodedata.category(char)
-    # check if the category is Lo or Nl
-    if category == 'Lo' or category == 'Nl':
-      # return True if a Chinese character is found
-      return False
-  # return False if no Chinese character is found
-  return True
+    import unicodedata
+    # loop through each character in the string
+    for char in string:
+        # get the general category of the character
+        category = unicodedata.category(char)
+        # check if the category is Lo or Nl
+        if category == 'Lo' or category == 'Nl':
+        # return True if a Chinese character is found
+            return False
+    # return False if no Chinese character is found
+    return True
 
 class SydneyBot(Bot):
     def __init__(self) -> None:
@@ -139,10 +139,16 @@ class SydneyBot(Bot):
                 if self.current_responding_task is not None:
                     self.current_responding_task.cancel()
                     return 
-            elif query == "#更新配置":
+            elif query == "更新配置":
                 load_config()
                 reply = Reply(ReplyType.INFO, "配置已更新")
-
+            elif query in ("在？","在","在吗？","在嘛？","在么？","在吗","在嘛","在么"):
+                if self.current_responding_task is None:
+                    return Reply(ReplyType.TEXT, "有什么问题吗？\U0001F337")
+                elif self.current_responding_task is not None:
+                    return Reply(ReplyType.TEXT, "请耐心等待，本仙女正在思考问题呢。\U0001F9DA")
+                else:
+                    return Reply(ReplyType.TEXT, "出错了")
             if reply:
                 return reply
             try:
@@ -154,7 +160,7 @@ class SydneyBot(Bot):
                 
             except Exception as e:
                 logger.error(e)
-                return Reply(ReplyType.TEXT, "我脑壳短路了，让我休息哈再问我。")
+                return Reply(ReplyType.TEXT, "我脑壳短路了，让我休息哈再问我。\U0001F64F")
             
         elif context.type == ContextType.IMAGE_CREATE:
             ok, res = self.create_img(query, 0)
@@ -172,8 +178,8 @@ class SydneyBot(Bot):
         try:        
             reply_content = await self.current_responding_task
         except asyncio.CancelledError:
-            self.current_responding_task = None
-            return "记忆已清除，但是你打断了本仙女的思考!"
+            return "记忆已清除，但是你打断了本仙女的思考! \U0001F643"
+        self.current_responding_task = None
         return reply_content
         
 
@@ -353,14 +359,14 @@ Only the final, integrated output response is provided. Emoji is recommended but
             # self._chat(query, context, retry_count + 1)
             if "throttled" in str(e) or "Throttled" in str(e):
                 logger.warn("[SYDNEY] ConnectionError: {}".format(e))
-                return "我累了，今日使用次数已达到上限，请明天再来！"
+                return "我累了，今日使用次数已达到上限，请明天再来！\U0001F916"
             # Just need a try again when this happens 
             # if ":443" in str(e) or "server" in str(e): 
             #     logger.warn("[SYDNEY] serverError: {}".format(e))
             #     return "我的CPU烧了，请联系我的主人。"
             if "CAPTCHA" in str(e):
                 logger.warn("[SYDNEY] CAPTCHAError: {}".format(e))
-                return "我走丢了，请联系我的主人。"
+                return "我走丢了，请联系我的主人。\U0001F300"
             reply = await self._chat(query, session, context, retry_count + 1)
             imgurl =None
             return reply
