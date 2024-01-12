@@ -144,7 +144,7 @@ class SydneyBot(Bot):
             elif query == "更新配置":
                 load_config()
                 reply = Reply(ReplyType.INFO, "配置已更新")
-            elif query in ("在？","在","在吗？","在嘛？","在么？","在吗","在嘛","在么","在吗?","在嘛?","在么?"):
+            elif query in ("zai","Zai","在？","在","在吗？","在嘛？","在么？","在吗","在嘛","在么","在吗?","在嘛?","在么?"):
                 if self.current_responding_task is None:
                     return Reply(ReplyType.TEXT, "有什么问题吗？\U0001F337")
                 elif self.current_responding_task is not None:
@@ -233,7 +233,7 @@ Only the final, integrated output response is provided. Emoji is recommended but
             rest_messages = ""
             for singleTalk in session_message[:-1]:  # Iterate through all but the last message
                 for keyPerson, message in singleTalk.items():
-                    if message in ("在？","在","在吗？","在嘛？","在么？","在吗","在嘛","在么","在吗?","在嘛?","在么?","清除记忆","清除所有") and keyPerson == "[user](#message)":
+                    if message in ("zai","Zai","在？","在","在吗？","在嘛？","在么？","在吗","在嘛","在么","在吗?","在嘛?","在么?","清除记忆","清除所有") and keyPerson == "[user](#message)":
                         continue  # Skip this message if it matches
                     rest_messages += f"\n{keyPerson}\n{message}\n"
 
