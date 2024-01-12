@@ -233,6 +233,8 @@ Only the final, integrated output response is provided. Emoji is recommended but
             rest_messages = ""
             for singleTalk in session_message[:-1]:  # Iterate through all but the last message
                 for keyPerson, message in singleTalk.items():
+                    if message in ("在？","在","在吗？","在嘛？","在么？","在吗","在嘛","在么","在吗?","在嘛?","在么?","清除记忆","清除所有") and keyPerson == "[user](#message)":
+                        continue  # Skip this message if it matches
                     rest_messages += f"\n{keyPerson}\n{message}\n"
 
             last_message = session_message[-1].get("[user](#message)", "")  # Extract the last user message
