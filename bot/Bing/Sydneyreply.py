@@ -227,6 +227,20 @@ Only the final, integrated output response is provided. Emoji is recommended but
             session_message = session.messages
             logger.debug(f"[SYDNEY] session={session_message}, session_id={session_id}")
 
+
+            ask_string = ""
+
+            rest_messages = ""
+            for singleTalk in session_message[:-1]:  # Iterate through all but the last message
+                for keyPerson, message in singleTalk.items():
+                    rest_messages += f"\n{keyPerson}\n{message}\n"
+
+            last_message = session_message[-1].get("[user](#message)", "")  # Extract the last user message
+
+            # rest_messages = rest_messages.strip("\n")  # Remove any extra newlines
+            preContext += rest_messages
+            ask_string += last_message
+
             imgurl = None
             # image process
             img_cache = memory.USER_IMAGE_CACHE.get(session_id)
@@ -255,7 +269,7 @@ Only the final, integrated output response is provided. Emoji is recommended but
             if fileCache:
                 fileinfo = await self.process_file_msg(session_id, fileCache)
 
-            ask_string = ""
+            
             if webPageinfo:
                 preContext += webPageinfo
             if fileinfo:
@@ -269,17 +283,8 @@ Only the final, integrated output response is provided. Emoji is recommended but
             # if session_message[0].get("role") == "[system](#additional_instructions)":
             #     if plugin == None:
             #         session_message.pop(0)
-                    
-            rest_messages = ""
-            for singleTalk in session_message[:-1]:  # Iterate through all but the last message
-                for keyPerson, message in singleTalk.items():
-                    rest_messages += f"\n{keyPerson}\n{message}\n"
-
-            last_message = session_message[-1].get("[user](#message)", "")  # Extract the last user message
-
-            # rest_messages = rest_messages.strip("\n")  # Remove any extra newlines
-            preContext += rest_messages
-            ask_string += last_message
+            
+            
             # logger.info(ask_string)
             logger.info(preContext)
 
@@ -368,6 +373,8 @@ Only the final, integrated output response is provided. Emoji is recommended but
                 #this will be wrapped out exception if no reply returned, and in the exception the ask process will try again
                 if "自动回复机器人悉尼" not in reply:
                     reply += bot_statement
+                fileinfo = ""
+                webPageinfo = ""
                 return reply
                 
                 # await Reply(ReplyType.TEXT, "提问太快啦，请休息一下再问我吧")
