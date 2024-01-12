@@ -33,7 +33,7 @@ class SydneySessionManager(SessionManager):
         return messages
 
 
-async def stream_conversation_replied(conversation, pre_reply, context, cookies, ask_string, proxy, imgurl):
+async def stream_conversation_replied(pre_reply, context, cookies, ask_string, proxy, imgurl):
     conversation = await sydney.create_conversation(cookies=cookies, proxy=proxy)
     ask_string_extended = f"从你停下的地方继续回答，100字以内，只输出内容的正文。"
     if except_chinese_char(pre_reply):
@@ -52,8 +52,8 @@ async def stream_conversation_replied(conversation, pre_reply, context, cookies,
         image_url= imgurl
     )) as generator:
         async for secresponse in generator:
-            imgurl = None
             if secresponse["type"] == 1 and "messages" in secresponse["arguments"][0]:
+                imgurl = None
                 message = secresponse["arguments"][0]["messages"][0]
                 msg_type = message.get("messageType")
                 if msg_type is None:
@@ -67,7 +67,7 @@ async def stream_conversation_replied(conversation, pre_reply, context, cookies,
                         return reply
                     else:
                         reply = ""                  
-                        reply = ''.join([remove_extra_format(message["adaptiveCards"][0]["body"][0]["text"]) for message in secresponse["arguments"][0]["messages"]])
+                        reply = ''.join([remove_extra_format(message["text"]) for message in secresponse["arguments"][0]["messages"]])
                         if "suggestedResponses" in message:
                             return reply
             if secresponse["type"] == 2:
