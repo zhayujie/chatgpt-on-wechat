@@ -3,8 +3,8 @@
 使用说明(默认trigger_prefix为$)：  
 ```text
 #help tool: 查看tool帮助信息，可查看已加载工具列表  
-$tool 工具名 命令: [pure模式]：根据给出的{命令}使用指定 一个 可用工具尽力为你得到结果。
-$tool 命令: [多工具模式]：根据给出的{命令}使用 一些 可用工具尽力为你得到结果。  
+$tool 工具名 命令: （pure模式）根据给出的{命令}使用指定 一个 可用工具尽力为你得到结果。
+$tool 命令: （多工具模式）根据给出的{命令}使用 一些 可用工具尽力为你得到结果。  
 $tool reset: 重置工具。  
 ```
 ### 本插件所有工具同步存放至专用仓库：[chatgpt-tool-hub](https://github.com/goldfishh/chatgpt-tool-hub)
@@ -15,7 +15,7 @@ $tool reset: 重置工具。
 3. 替换visual-dl（更名为visual）实现，目前识别图片链接效果较好。
 4. 修复了0.4版本大部分工具返回结果不可靠问题
 
-新版本工具名共19个，不一一列举，相应工具需要环境参数见`tool.py`里的`_build_tool_kwargs`函数
+新版本工具名共19个，不一一列举，相应工具需要的环境参数见`tool.py`里的`_build_tool_kwargs`函数
 
 ## 使用说明
 使用该插件后将默认使用4个工具, 无需额外配置长期生效：
@@ -30,9 +30,12 @@ $tool reset: 重置工具。
 #### 2.2 browser
 ###### 浏览器，功能与2.1类似，但能更好模拟，不会被识别为爬虫影响获取网站内容
 
-> 注1：url-get默认配置、browser已能自动下载好依赖
+> 注1：url-get默认配置、browser需额外配置，browser依赖google-chrome，你需要提前安装好
 
 > 注2：（可通过`browser_use_summary`或 `url_get_use_summary`开关）当检测到长文本时会进入summary tool总结长文本，tokens可能会大量消耗！
+
+这是debian端安装google-chrome教程，其他系统请自行查找
+> https://www.linuxjournal.com/content/how-can-you-install-google-browser-debian
 
 ### 3. terminal
 ###### 在你运行的电脑里执行shell命令，可以配合你想要chatgpt生成的代码使用，给予自然语言控制手段
@@ -111,6 +114,21 @@ $tool reset: 重置工具。
 
 > 安装教程：https://docs.searxng.org/admin/installation.html
 
+### 14. email *
+###### 发送邮件
+
+### 15. sms *
+###### 发送短信
+
+### 16. stt *
+###### speak to text 语音识别
+
+### 17. tts *
+###### text to speak 文生语音
+
+### 18. wechat *
+###### 向好友、群组发送微信
+
 ---
 
 ###### 注1：带*工具需要获取api-key才能使用(在config.json内的kwargs添加项)，部分工具需要外网支持  
@@ -120,7 +138,7 @@ $tool reset: 重置工具。
 ###### 默认工具无需配置，其它工具需手动配置，以增加morning-news和bing-search两个工具为例：
 ```json
 {
-  "tools": ["bing-search", "news", "你想要添加的其他工具"],  // 填入你想用到的额外工具名，这里加入了工具"bing-search"和工具"news"(news工具会自动加载morning-news、finance-news等子工具)
+  "tools": ["bing-search", "morning-news", "你想要添加的其他工具"],  // 填入你想用到的额外工具名，这里加入了工具"bing-search"和工具"morning-news"
   "kwargs": {
       "debug": true, // 当你遇到问题求助时，需要配置
       "request_timeout": 120,  // openai接口超时时间

@@ -23,8 +23,6 @@ class Tool(Plugin):
         super().__init__()
         self.handlers[Event.ON_HANDLE_CONTEXT] = self.on_handle_context
 
-        self.tool_config = self._read_json()
-        self.app_kwargs = self._build_tool_kwargs(self.tool_config.get("kwargs", {}))
         self.app = self._reset_app()
 
         logger.info("[tool] inited")
@@ -35,10 +33,12 @@ class Tool(Plugin):
         if not verbose:
             return help_text
         help_text += "\n使用说明：\n"
-        help_text += f"{trigger_prefix}tool " + "命令: 根据给出的{命令}使用一些可用工具尽力为你得到结果。\n"
+        help_text += f"{trigger_prefix}tool " + "命令: 根据给出的{命令}模型来选择使用哪些工具尽力为你得到结果。\n"
+        help_text += f"{trigger_prefix}tool 工具名 " + "命令: 根据给出的{命令}使用指定工具尽力为你得到结果。\n"
         help_text += f"{trigger_prefix}tool reset: 重置工具。\n\n"
+
         help_text += f"已加载工具列表: \n"
-        for idx, tool in enumerate(self.app.get_tool_list()):
+        for idx, tool in enumerate(main_tool_register.get_registered_tool_names()):
             if idx != 0:
                 help_text += ", "
             help_text += f"{tool}"
@@ -79,8 +79,6 @@ class Tool(Plugin):
             elif len(content_list) > 1:
                 if content_list[1].strip() == "reset":
                     logger.debug("[tool]: reset config")
-                    self.tool_config = self._read_json()
-                    self.app_kwargs = self._build_tool_kwargs(self.tool_config.get("kwargs", {}))
                     self.app = self._reset_app()
                     reply.content = "重置工具成功"
                     e_context["reply"] = reply
@@ -237,6 +235,9 @@ class Tool(Plugin):
         return valid_list
 
     def _reset_app(self) -> App:
+        self.tool_config = self._read_json()
+        self.app_kwargs = self._build_tool_kwargs(self.tool_config.get("kwargs", {}))
+
         app = AppFactory()
         app.init_env(**self.app_kwargs)
         # filter not support tool
