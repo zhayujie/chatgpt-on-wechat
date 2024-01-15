@@ -1,3 +1,12 @@
+# 此版本新增功能
+
+
+- 1.加入key 池
+- 2.修改绘画逻辑 支持中转
+- 3.增加绘画回复与计时
+- 4.修改文本回复逻辑  支持中转
+
+
 # 简介
 
 > ChatGPT近期以强大的对话和信息整合能力风靡全网，可以写代码、改论文、讲故事，几乎无所不能，这让人不禁有个大胆的想法，能否用他的对话模型把我们的微信打造成一个智能机器人，可以在与好友对话中给出意想不到的回应，而且再也不用担心女朋友影响我们 ~~打游戏~~ 工作了。
@@ -22,9 +31,20 @@ Demo made by [Visionn](https://www.wangpc.cc/)
 
 # 交流群
 
-添加小助手微信进群，请备注 "wechat"：
 
-<img width="240" src="./docs/images/contact.jpg">
+觉得新功能好用，打赏一下：
+
+<img width="240" src="https://github.com/Captain-wang-s/chatgpt-on-wechat/assets/62700303/b872a746-33e0-4245-b507-7c0f19e9e3f9">
+
+
+进群请添加小助手微信：xiaoqisugart   
+请备注 "GPT"  否则不通过   
+回复GPT 进群
+
+<img width="240" src="https://github.com/Captain-wang-s/chatgpt-on-wechat/assets/62700303/0d31c934-a676-4e22-99da-d2abd0458e49">
+
+
+
 
 # 更新日志
 
