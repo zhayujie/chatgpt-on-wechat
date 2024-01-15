@@ -15,7 +15,7 @@ class DingTalkMessage(ChatMessage):
         msg_type = event.message_type
         self.incoming_message =event
         self.sender_staff_id = event.sender_staff_id
-        
+        self.other_user_id = event.conversation_id
         self.create_time = event.create_at
         if event.conversation_type=="1":
             self.is_group = False
@@ -27,7 +27,11 @@ class DingTalkMessage(ChatMessage):
             self.ctype = ContextType.TEXT
             
             self.content = event.text.content.strip()
-        
+        elif msg_type == "audio":
+            
+            # 钉钉支持直接识别语音，所以此处将直接提取文字，当文字处理
+            self.content = event.extensions['content']['recognition'].strip()
+            self.ctype = ContextType.TEXT
         self.from_user_id = event.sender_id
         self.to_user_id = event.chatbot_user_id
         self.other_user_nickname = event.conversation_title
