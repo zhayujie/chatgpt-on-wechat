@@ -51,10 +51,14 @@ class FeiShuChanel(ChatChannel):
         web.httpserver.runsimple(app.wsgifunc(), ("0.0.0.0", port))
 
     def send(self, reply: Reply, context: Context):
-        msg = context["msg"]
+        msg = context.get("msg")
         is_group = context["isgroup"]
+        if msg:
+            access_token = msg.access_token
+        else:
+            access_token = self.fetch_access_token()
         headers = {
-            "Authorization": "Bearer " + msg.access_token,
+            "Authorization": "Bearer " + access_token,
             "Content-Type": "application/json",
         }
         msg_type = "text"
@@ -63,7 +67,7 @@ class FeiShuChanel(ChatChannel):
         content_key = "text"
         if reply.type == ReplyType.IMAGE_URL:
             # 图片上传
-            reply_content = self._upload_image_url(reply.content, msg.access_token)
+            reply_content = self._upload_image_url(reply.content, access_token)
             if not reply_content:
                 logger.warning("[FeiShu] upload file failed")
                 return
@@ -79,7 +83,7 @@ class FeiShuChanel(ChatChannel):
             res = requests.post(url=url, headers=headers, json=data, timeout=(5, 10))
         else:
             url = "https://open.feishu.cn/open-apis/im/v1/messages"
-            params = {"receive_id_type": context.get("receive_id_type")}
+            params = {"receive_id_type": context.get("receive_id_type") or "open_id"}
             data = {
                 "receive_id": context.get("receiver"),
                 "msg_type": msg_type,
