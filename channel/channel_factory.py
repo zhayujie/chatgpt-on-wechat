@@ -36,6 +36,9 @@ def create_channel(channel_type) -> Channel:
     elif channel_type == const.FEISHU:
         from channel.feishu.feishu_channel import FeiShuChanel
         ch = FeiShuChanel()
+    elif channel_type == const.DINGTALK:
+        from channel.dingtalk.dingtalk_channel import DingTalkChanel
+        ch = DingTalkChanel()
     else:
         raise RuntimeError
     ch.channel_type = channel_type
