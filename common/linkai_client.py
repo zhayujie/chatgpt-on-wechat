@@ -24,5 +24,5 @@ class ChatClient(LinkAIClient):
 
 def start(channel):
     client = ChatClient(api_key=conf().get("linkai_api_key"),
-                        host="testclient.link-ai.tech", channel=channel)
+                        host="link-ai.chat", channel=channel)
     client.start()
