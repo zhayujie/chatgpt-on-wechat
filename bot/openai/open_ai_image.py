@@ -12,7 +12,6 @@ from config import conf
 class OpenAIImage(object):
     def __init__(self):
         openai.api_key = conf().get("open_ai_api_key")
-        openai.api_base = conf().get("open_ai_api_base")
         if conf().get("rate_limit_dalle"):
             self.tb4dalle = TokenBucket(conf().get("rate_limit_dalle", 50))
 
@@ -23,7 +22,6 @@ class OpenAIImage(object):
             logger.info("[OPEN_AI] image_query={}".format(query))
             response = openai.Image.create(
                 api_key=api_key,
-                api_base=api_base,
                 prompt=query,  # 图片描述
                 n=1,  # 每次生成图片的数量
                 model=conf().get("text_to_image") or "dall-e-2",
