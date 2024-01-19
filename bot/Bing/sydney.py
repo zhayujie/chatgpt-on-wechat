@@ -19,26 +19,22 @@ _DEBUG = False
 _PROXY = urllib.request.getproxies().get("https")
 
 _BASE_OPTION_SETS = [
-    "nlu_direct_response_filter",
-    "deepleo",
-    "disable_emoji_spoken_text",
-    "responsible_ai_policy_235",
-    "enablemm",
-    "dv3sugg",
+    "flux_365_copilot",
+    "deepleo_harmony_365_copilot",
     "iyxapbing",
     "iycapbing",
-    "gptvprvc",
-    "fluxpcalc",
-    "eredirecturl",
-    "gencontentv3",
-    "fluxv14l",
+    "dgencontentv3",
+    "nointernalsugg",
     "nojbf",
-    "soedgeca",
+    "disable_telemetry",
+    "machine_affinity",
+    "streamf",
 ]
 
 
 class _OptionSets(Enum):
-    CREATIVE = _BASE_OPTION_SETS + ["h3imaginative"]
+    GPT4TURBO = _BASE_OPTION_SETS + ["dlgpt4t", "fluxsydney"] #todo gpt4turbo returns a {"type":3,"invocationId":"0","error":"Failed to invoke 'Chat' due to an error on the server."}
+    CREATIVE = _BASE_OPTION_SETS + ["soedgeca"]
     BALANCED = _BASE_OPTION_SETS + ["galileo"]
     PRECISE = _BASE_OPTION_SETS + ["h3precise"]
 
@@ -338,7 +334,7 @@ async def ask_stream(
                         'allowedMessageTypes': _ALLOWED_MESSAGE_TYPES,
                         'sliceIds': _SLICE_IDS,
                         "verbosity": "verbose",
-                        "scenario": "SERP",
+                        "scenario": "Underside",
                         'traceId': os.urandom(16).hex(),
                         'requestId': message_id,
                         'isStartOfSession': True,
@@ -350,7 +346,7 @@ async def ask_stream(
                             "author": "user",
                             "inputMethod": "Keyboard",
                             "text": prompt,
-                            "messageType": random.choice(["Chat", "SearchQuery"]),
+                            "messageType": random.choice(["Chat", "SearchQuery","CurrentWebpageContextRequest"]),
                             "requestId": message_id,
                             "messageId": message_id,
                             "imageUrl": image_url or None,
@@ -368,7 +364,7 @@ async def ask_stream(
                                 "description": context,
                                 "contextType": "WebPage",
                                 "messageType": "Context",
-                                "messageId": "discover-web--page-ping-mriduna-----",
+                                # "messageId": "discover-web--page-ping-mriduna-----",
                             },
                         ]
                     }
