@@ -45,6 +45,7 @@ async def stream_conversation_replied(pre_reply, context, cookies, ask_string, p
         conversation= conversation,
         prompt= ask_string_extended,
         context= context_extended,
+        conversation_style= "creative",
         proxy= proxy if proxy != "" else None,
         wss_url='wss://' + 'sydney.bing.com' + '/sydney/ChatHub',
         # 'sydney.bing.com'
@@ -260,15 +261,15 @@ Only the final, integrated output response is provided. Emoji is recommended but
                         return f"你的图片太牛逼了，所以服务器拒绝了你的请求。\U0001F605"
 
             # webPage fetch
-            webPageinfo = ""
             webPagecache = memory.USER_WEBPAGE_CACHE.get(session_id)
             if webPagecache:
+                webPageinfo = ""
                 webPageinfo = f"\n[user](#webpage_context)\n{webPagecache}\n"
 
             # file process
-            fileinfo = ""
             fileCache = memory.USER_FILE_CACHE.get(session_id)
             if fileCache:
+                fileinfo = ""
                 fileinfo = await self.process_file_msg(session_id, fileCache)
 
             
@@ -375,8 +376,8 @@ Only the final, integrated output response is provided. Emoji is recommended but
                 #this will be wrapped out exception if no reply returned, and in the exception the ask process will try again
                 if "自动回复机器人悉尼" not in reply:
                     reply += bot_statement
-                fileinfo = ""
-                webPageinfo = ""
+                # fileinfo = ""
+                # webPageinfo = ""
                 return reply
                 
                 # await Reply(ReplyType.TEXT, "提问太快啦，请休息一下再问我吧")
