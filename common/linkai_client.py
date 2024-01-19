@@ -4,6 +4,7 @@ from common.log import logger
 from linkai import LinkAIClient, PushMsg
 from config import conf
 
+chat_client: LinkAIClient
 
 class ChatClient(LinkAIClient):
     def __init__(self, api_key, host, channel):
@@ -23,6 +24,7 @@ class ChatClient(LinkAIClient):
 
 
 def start(channel):
-    client = ChatClient(api_key=conf().get("linkai_api_key"),
+    global chat_client
+    chat_client = ChatClient(api_key=conf().get("linkai_api_key"),
                         host="link-ai.chat", channel=channel)
-    client.start()
+    chat_client.start()

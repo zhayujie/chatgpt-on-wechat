@@ -360,7 +360,9 @@ class LinkAIBot(Bot):
                         suffix += f"{turn.get('thought')}\n"
                     if plugin_name:
                         plugin_list.append(turn.get('plugin_name'))
-                        suffix += f"{turn.get('plugin_icon')} {turn.get('plugin_name')}"
+                        if turn.get('plugin_icon'):
+                            suffix += f"{turn.get('plugin_icon')} "
+                        suffix += f"{turn.get('plugin_name')}"
                         if turn.get('plugin_input'):
                             suffix += f"：{turn.get('plugin_input')}"
                     if i < len(chain) - 1:
@@ -385,11 +387,14 @@ class LinkAIBot(Bot):
             return
         try:
             for url in image_urls:
-                reply = Reply(ReplyType.IMAGE_URL, url)
+                if url.endswith(".mp4"):
+                    reply_type = ReplyType.VIDEO_URL
+                else:
+                    reply_type = ReplyType.IMAGE_URL
+                reply = Reply(reply_type, url)
                 channel.send(reply, context)
         except Exception as e:
             logger.error(e)
-
 
 class LinkAISessionManager(SessionManager):
     def session_msg_query(self, query, session_id):
