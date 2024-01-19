@@ -265,21 +265,23 @@ Only the final, integrated output response is provided. Emoji is recommended but
             if webPagecache:
                 webPageinfo = ""
                 webPageinfo = f"\n[user](#webpage_context)\n{webPagecache}\n"
+                if webPageinfo:
+                    preContext += webPageinfo
 
             # file process
             fileCache = memory.USER_FILE_CACHE.get(session_id)
             if fileCache:
                 fileinfo = ""
                 fileinfo = await self.process_file_msg(session_id, fileCache)
+                if fileinfo:
+                    if "文化水平低" or "这篇文章我看不懂咧" in fileinfo:
+                        return fileinfo
+                    else:
+                        preContext += fileinfo
 
             
-            if webPageinfo:
-                preContext += webPageinfo
-            if fileinfo:
-                if "文化水平低" or "这篇文章我看不懂咧" in fileinfo:
-                    return fileinfo
-                else:
-                    preContext += fileinfo
+            
+            
 
             #remove system message
             # plugin = None
