@@ -15,7 +15,7 @@ class OpenAIImage(object):
         if conf().get("rate_limit_dalle"):
             self.tb4dalle = TokenBucket(conf().get("rate_limit_dalle", 50))
 
-    def create_img(self, query, retry_count=0, api_key=None):
+    def create_img(self, query, retry_count=0, api_key=None, api_base=None):
         try:
             if conf().get("rate_limit_dalle") and not self.tb4dalle.get_token():
                 return False, "请求太快了，请休息一下再问我吧"

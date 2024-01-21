@@ -16,7 +16,6 @@ import threading
 from common import memory, utils
 import base64
 
-
 class LinkAIBot(Bot):
     # authentication failed
     AUTH_FAILED_CODE = 401
@@ -83,7 +82,6 @@ class LinkAIBot(Bot):
             if session_message[0].get("role") == "system":
                 if app_code or model == "wenxin":
                     session_message.pop(0)
-
             body = {
                 "app_code": app_code,
                 "messages": session_message,
@@ -92,7 +90,25 @@ class LinkAIBot(Bot):
                 "top_p": conf().get("top_p", 1),
                 "frequency_penalty": conf().get("frequency_penalty", 0.0),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
                 "presence_penalty": conf().get("presence_penalty", 0.0),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
+                "session_id": session_id,
+                "channel_type": conf().get("channel_type")
             }
+            try:
+                from linkai import LinkAIClient
+                client_id = LinkAIClient.fetch_client_id()
+                if client_id:
+                    body["client_id"] = client_id
+                    # start: client info deliver
+                    if context.kwargs.get("msg"):
+                        body["session_id"] = context.kwargs.get("msg").from_user_id
+                        if context.kwargs.get("msg").is_group:
+                            body["is_group"] = True
+                            body["group_name"] = context.kwargs.get("msg").from_user_nickname
+                            body["sender_name"] = context.kwargs.get("msg").actual_user_nickname
+                        else:
+                            body["sender_name"] = context.kwargs.get("msg").from_user_nickname
+            except Exception as e:
+                pass
             file_id = context.kwargs.get("file_id")
             if file_id:
                 body["file_id"] = file_id
@@ -230,7 +246,7 @@ class LinkAIBot(Bot):
             }
             if self.args.get("max_tokens"):
                 body["max_tokens"] = self.args.get("max_tokens")
-            headers = {"Authorization": "Bearer " +  conf().get("linkai_api_key")}
+            headers = {"Authorization": "Bearer " + conf().get("linkai_api_key")}
 
             # do http request
             base_url = conf().get("linkai_api_base", "https://api.link-ai.chat")
@@ -344,7 +360,9 @@ class LinkAIBot(Bot):
                         suffix += f"{turn.get('thought')}\n"
                     if plugin_name:
                         plugin_list.append(turn.get('plugin_name'))
-                        suffix += f"{turn.get('plugin_icon')} {turn.get('plugin_name')}"
+                        if turn.get('plugin_icon'):
+                            suffix += f"{turn.get('plugin_icon')} "
+                        suffix += f"{turn.get('plugin_name')}"
                         if turn.get('plugin_input'):
                             suffix += f"：{turn.get('plugin_input')}"
                     if i < len(chain) - 1:
@@ -369,11 +387,14 @@ class LinkAIBot(Bot):
             return
         try:
             for url in image_urls:
-                reply = Reply(ReplyType.IMAGE_URL, url)
+                if url.endswith(".mp4"):
+                    reply_type = ReplyType.VIDEO_URL
+                else:
+                    reply_type = ReplyType.IMAGE_URL
+                reply = Reply(reply_type, url)
                 channel.send(reply, context)
         except Exception as e:
             logger.error(e)
-
 
 class LinkAISessionManager(SessionManager):
     def session_msg_query(self, query, session_id):
