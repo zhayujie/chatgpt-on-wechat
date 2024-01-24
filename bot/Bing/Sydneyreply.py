@@ -262,6 +262,10 @@ Only the final, integrated output response is provided. Emoji is recommended but
 
             # webPage fetch
             webPagecache = memory.USER_WEBPAGE_CACHE.get(session_id)
+            try:
+                preContext += webPageinfo
+            except Exception:
+                pass
             if webPagecache:
                 webPageinfo = ""
                 webPageinfo = f"\n[user](#webpage_context)\n{webPagecache}\n"
@@ -270,6 +274,10 @@ Only the final, integrated output response is provided. Emoji is recommended but
 
             # file process
             fileCache = memory.USER_FILE_CACHE.get(session_id)
+            try:
+                preContext += fileinfo
+            except Exception:
+                pass
             if fileCache:
                 fileinfo = ""
                 fileinfo = await self.process_file_msg(session_id, fileCache)
