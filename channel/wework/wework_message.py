@@ -64,7 +64,10 @@ def cdn_download(wework, message, file_name):
         }
         result = wework._WeWork__send_sync(send_type.MT_WXCDN_DOWNLOAD_MSG, data)  # 直接用wx_cdn_download的接口内部实现来调用
     elif "file_id" in data["cdn"].keys():
-        file_type = 2
+        if message["type"] == 11042:
+            file_type = 2
+        elif message["type"] == 11045:
+            file_type = 5
         file_id = data["cdn"]["file_id"]
         result = wework.c2c_cdn_download(file_id, aes_key, file_size, file_type, save_path)
     else:

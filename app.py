@@ -8,6 +8,7 @@ from channel import channel_factory
 from common import const
 from config import load_config
 from plugins import *
+import threading
 
 
 def sigterm_handler_wrap(_signo):
@@ -46,8 +47,16 @@ def run():
         if channel_name in ["wx", "wxy", "terminal", "wechatmp", "wechatmp_service", "wechatcom_app", "wework", const.FEISHU,const.DINGTALK]:
             PluginManager().load_plugins()
 
+        if conf().get("use_linkai"):
+            try:
+                from common import linkai_client
+                threading.Thread(target=linkai_client.start, args=(channel, )).start()
+            except Exception as e:
+                pass
+
         # startup channel
         channel.startup()
+
     except Exception as e:
         logger.error("App startup failed!")
         logger.exception(e)
