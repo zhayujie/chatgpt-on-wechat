@@ -171,12 +171,21 @@ class AzureChatGPTBot(ChatGPTBot):
         self.args["deployment_id"] = conf().get("azure_deployment_id")
 
     def create_img(self, query, retry_count=0, api_key=None):
+        '''
+        按照azure DALL-E的示例，直接调用openai.Image对象的create方法，解决原代码使用azure openai画画的报错问题。
         api_version = "2022-08-03-preview"
         url = "{}dalle/text-to-image?api-version={}".format(openai.api_base, api_version)
         api_key = api_key or openai.api_key
         headers = {"api-key": api_key, "Content-Type": "application/json"}
+        '''
         try:
             body = {"caption": query, "resolution": conf().get("image_create_size", "256x256")}
+            response = openai.Image.create(
+                prompt='{}'.format(body["caption"]),
+                size='{}'.format(body["resolution"]),
+                n=1
+            )
+            '''    
             submission = requests.post(url, headers=headers, json=body)
             operation_location = submission.headers["Operation-Location"]
             retry_after = submission.headers["Retry-after"]
@@ -187,6 +196,7 @@ class AzureChatGPTBot(ChatGPTBot):
                 time.sleep(int(retry_after))
                 response = requests.get(operation_location, headers=headers)
                 status = response.json()["status"]
+            '''
             image_url = response.json()["result"]["contentUrl"]
             return True, image_url
         except Exception as e:
