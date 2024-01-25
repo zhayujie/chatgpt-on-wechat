@@ -387,11 +387,7 @@ class LinkAIBot(Bot):
         if not image_urls:
             return
         try:
-            i = 0
             for url in image_urls:
-                if i >= 3:
-                    continue
-                i += 1
                 if url.endswith(".mp4"):
                     reply_type = ReplyType.VIDEO_URL
                 elif url.endswith(".pdf") or url.endswith(".doc") or url.endswith(".docx"):
