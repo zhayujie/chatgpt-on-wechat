@@ -389,7 +389,7 @@ class LinkAIBot(Bot):
         try:
             i = 0
             for url in image_urls:
-                if i >= 1:
+                if i >= 3:
                     continue
                 i += 1
                 if url.endswith(".mp4"):
