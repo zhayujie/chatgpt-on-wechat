@@ -24,7 +24,7 @@ SaaS服务、私有化部署、稳定托管接入 等多种模式。
 >
 > 目前已在私域运营、智能客服、企业效率助手等场景积累了丰富的 AI 解决方案， 在电商、文教、健康、新消费等各行业沉淀了 AI 落地的最佳实践，致力于打造助力中小企业拥抱 AI 的一站式平台。
 
-企业服务和商务咨询可联系产品顾问：
+企业服务和商用咨询可联系产品顾问：
 
 <img width="240" src="https://img-1317903499.cos.ap-guangzhou.myqcloud.com/docs/product-manager-qrcode.jpg">
 
@@ -200,7 +200,6 @@ python3 app.py                                    # windows环境下该命令通
 使用nohup命令在后台运行程序：
 
 ```bash
-touch nohup.out                                   # 首次运行需要新建日志文件  
 nohup python3 app.py & tail -f nohup.out          # 在后台运行程序并通过日志输出二维码
 ```
 扫码登录后程序即可运行于服务器后台，此时可通过 `ctrl+c` 关闭日志，不会影响后台程序的运行。使用 `ps -ef | grep app.py | grep -v grep` 命令可查看运行于后台的进程，如果想要重新启动程序可以先 `kill` 掉对应的进程。日志关闭后如果想要再次打开只需输入 `tail -f nohup.out`。此外，`scripts` 目录下有一键运行、关闭程序的脚本供使用。
