@@ -18,7 +18,7 @@ web.py
 wechatpy
 
 # chatgpt-tool-hub plugin
-chatgpt_tool_hub==0.4.6
+chatgpt_tool_hub==0.5.0
 
 # xunfei spark
 websocket-client==1.2.0
