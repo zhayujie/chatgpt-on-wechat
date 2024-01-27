@@ -348,8 +348,8 @@ Only the final, integrated output response is provided. Emoji is recommended but
                             else:
                                 replied = True
                                 reply = ""                   
-                                reply = ''.join([remove_extra_format(message["text"]) for message in response["arguments"][0]["messages"]])
-                                # reply = ''.join([remove_extra_format(message["adaptiveCards"][0]["body"][0]["text"]) for message in response["arguments"][0]["messages"]])
+                                # reply = ''.join([remove_extra_format(message["text"]) for message in response["arguments"][0]["messages"]])
+                                reply = ''.join([remove_extra_format(message["adaptiveCards"][0]["body"][0]["text"]) for message in response["arguments"][0]["messages"]])
                                 if "suggestedResponses" in message:
                                     imgurl =None
                                     break
