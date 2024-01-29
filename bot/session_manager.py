@@ -15,7 +15,10 @@ class Session(object):
     # 重置会话
     def reset(self):
         system_item = {f"[system](#additional_instructions)": self.system_prompt}
-        self.messages = [system_item]
+        if self.system_prompt is None:
+            self.messages = []
+        else:
+            self.message = [system_item]
 
     def set_system_prompt(self, system_prompt):
         self.system_prompt = system_prompt
@@ -26,7 +29,7 @@ class Session(object):
         self.messages.append(user_item)
 
     def add_reply(self, reply):
-        assistant_item = {"[assistant](#message)": reply}
+        assistant_item = {"[sydney](#message)": reply}
         self.messages.append(assistant_item)
 
     def discard_exceeding(self, max_tokens=None, cur_tokens=None):
