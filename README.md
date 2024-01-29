@@ -20,6 +20,8 @@
 
 > add suffix handle of the context that bot output, such as clipping the introduction of the bot and endwords.
 
+> add exception handle when get none context from webpageinfo.
+
 > ~~向聊天中发送“内容正在生成中”， 如果当前生成内容的时间超过了 30s。~~(updated by user sends instruction to the bot and if in reply the bot will response a tip message)
 
 > ~~let's see if the tip message from bot will pollute the conversation.~~(updated by removing tip message from precontext)
