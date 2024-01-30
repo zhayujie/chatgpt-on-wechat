@@ -33,4 +33,5 @@
   "use_linkai": true,
   "linkai_api_key": "Link_idfLTygMrrO3fzlARLaROKSyjZQTWF747uhohI0e0M",
   "linkai_app_code": "TQdsDtCm"
+"linkai_api_base": "https://api.link-ai.chat"
 }
