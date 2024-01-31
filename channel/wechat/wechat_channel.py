@@ -251,20 +251,25 @@ class WechatChannel(ChatChannel):
 def _send_login_success():
     try:
         from common.linkai_client import chat_client
-        chat_client.send_login_success()
+        if chat_client.client_id:
+            chat_client.send_login_success()
     except Exception as e:
         pass
 
 def _send_logout():
     try:
         from common.linkai_client import chat_client
-        chat_client.send_logout()
+        time.sleep(2)
+        if chat_client.client_id:
+            chat_client.send_logout()
     except Exception as e:
         pass
 
 def _send_qr_code(qrcode_list: list):
     try:
         from common.linkai_client import chat_client
-        chat_client.send_qrcode(qrcode_list)
+        time.sleep(2)
+        if chat_client.client_id:
+            chat_client.send_qrcode(qrcode_list)
     except Exception as e:
         pass

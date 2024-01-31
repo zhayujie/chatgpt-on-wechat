@@ -107,7 +107,11 @@ class LinkAIBot(Bot):
                             body["group_name"] = context.kwargs.get("msg").from_user_nickname
                             body["sender_name"] = context.kwargs.get("msg").actual_user_nickname
                         else:
-                            body["sender_name"] = context.kwargs.get("msg").from_user_nickname
+                            if body.get("channel_type") in ["wechatcom_app"]:
+                                body["sender_name"] = context.kwargs.get("msg").from_user_id
+                            else:
+                                body["sender_name"] = context.kwargs.get("msg").from_user_nickname
+
             except Exception as e:
                 pass
             file_id = context.kwargs.get("file_id")
