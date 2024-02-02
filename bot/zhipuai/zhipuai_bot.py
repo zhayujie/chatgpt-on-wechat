@@ -21,9 +21,9 @@ class ZHIPUAIBot(Bot, ZhipuAIImage):
         super().__init__()
         self.sessions = SessionManager(ZhipuAISession, model=conf().get("model") or "ZHIPU_AI")
         self.args = {
-            "model": "glm-4",  # 对话模型的名称,可选择 glm-3.5-turbo
+            "model": conf().get("model") or "glm-4",  # 对话模型的名称
             "temperature": conf().get("temperature", 0.9),  # 值在(0,1)之间(智谱AI 的温度不能取 0 或者 1)
-            "top_p": conf().get("top_p", 0.7),
+            "top_p": conf().get("top_p", 0.7),  # 值在(0,1)之间(智谱AI 的 top_p 不能取 0 或者 1)
         }
         self.client = ZhipuAI(api_key=conf().get("zhipu_ai_api_key"))
 
