@@ -52,4 +52,8 @@ def create_bot(bot_type):
         from bot.gemini.google_gemini_bot import GoogleGeminiBot
         return GoogleGeminiBot()
 
+    elif bot_type == const.DIFY:
+        from bot.dify.dify_bot import DifyBot
+        return DifyBot()
+
     raise RuntimeError

@@ -75,6 +75,10 @@ available_setting = {
     "qwen_node_id": "",  # 流程编排模型用到的id，如果没有用到qwen_node_id，请务必保持为空字符串
     # Google Gemini Api Key
     "gemini_api_key": "",
+    # dify配置
+    "dify_api_base": "https://api.dify.ai/v1",
+    "dify_api_key": "app-xxx",
+    "dify_agent": True, # dify助手类型，如果是基础助手请设置为False，智能助手请设置为True，默认为True
     # wework的通用配置
     "wework_smart": True,  # 配置wework是否使用已登录的企业微信，False为多开
     # 语音设置
