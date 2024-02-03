@@ -73,7 +73,6 @@ class Midjourney(Plugin):
             self.proxies = None
         # 根据channel_type 动态创建通道
         self.channel_type = conf().get("channel_type")
-        self.channel_type = conf().get("channel_type")
         self.channel = channel_factory.create_channel(self.channel_type)
         self.task_id_dict = ExpiredDict(conf().get("expires_in_seconds",60 * 60))
         self.task_msg_dict = ExpiredDict(conf().get("expires_in_seconds",60 * 60))

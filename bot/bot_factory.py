@@ -2,7 +2,6 @@
 channel factory
 """
 from common import const
-from common.log import logger
 
 
 def create_bot(bot_type):
@@ -56,6 +55,10 @@ def create_bot(bot_type):
     elif bot_type == const.GEMINI:
         from bot.gemini.google_gemini_bot import GoogleGeminiBot
         return GoogleGeminiBot()
+
+    elif bot_type == const.DIFY:
+        from bot.dify.dify_bot import DifyBot
+        return DifyBot()
 
     elif bot_type == const.ZHIPU_AI:
         from bot.zhipuai.zhipuai_bot import ZHIPUAIBot
