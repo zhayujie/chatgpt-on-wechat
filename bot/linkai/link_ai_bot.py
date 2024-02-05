@@ -107,7 +107,11 @@ class LinkAIBot(Bot):
                             body["group_name"] = context.kwargs.get("msg").from_user_nickname
                             body["sender_name"] = context.kwargs.get("msg").actual_user_nickname
                         else:
-                            body["sender_name"] = context.kwargs.get("msg").from_user_nickname
+                            if body.get("channel_type") in ["wechatcom_app"]:
+                                body["sender_name"] = context.kwargs.get("msg").from_user_id
+                            else:
+                                body["sender_name"] = context.kwargs.get("msg").from_user_nickname
+
             except Exception as e:
                 pass
             file_id = context.kwargs.get("file_id")
@@ -396,7 +400,7 @@ class LinkAIBot(Bot):
                 i += 1
                 if url.endswith(".mp4"):
                     reply_type = ReplyType.VIDEO_URL
-                elif url.endswith(".pdf") or url.endswith(".doc") or url.endswith(".docx"):
+                elif url.endswith(".pdf") or url.endswith(".doc") or url.endswith(".docx") or url.endswith(".csv"):
                     reply_type = ReplyType.FILE
                     url = _download_file(url)
                     if not url:

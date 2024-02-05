@@ -15,6 +15,7 @@ import requests
 from bridge.context import *
 from bridge.reply import *
 from channel.chat_channel import ChatChannel
+from channel import chat_channel
 from channel.wechat.wechat_message import *
 from common.expired_dict import ExpiredDict
 from common.log import logger
@@ -112,30 +113,39 @@ class WechatChannel(ChatChannel):
         self.auto_login_times = 0
 
     def startup(self):
-        itchat.instance.receivingRetryCount = 600  # 修改断线超时时间
-        # login by scan QRCode
-        hotReload = conf().get("hot_reload", False)
-        status_path = os.path.join(get_appdata_dir(), "itchat.pkl")
-        itchat.auto_login(
-            enableCmdQR=2,
-            hotReload=hotReload,
-            statusStorageDir=status_path,
-            qrCallback=qrCallback,
-            exitCallback=self.exitCallback,
-            loginCallback=self.loginCallback
-        )
-        self.user_id = itchat.instance.storageClass.userName
-        self.name = itchat.instance.storageClass.nickName
-        logger.info("Wechat login success, user_id: {}, nickname: {}".format(self.user_id, self.name))
-        # start message listener
-        itchat.run()
+        try:
+            itchat.instance.receivingRetryCount = 600  # 修改断线超时时间
+            # login by scan QRCode
+            hotReload = conf().get("hot_reload", False)
+            status_path = os.path.join(get_appdata_dir(), "itchat.pkl")
+            itchat.auto_login(
+                enableCmdQR=2,
+                hotReload=hotReload,
+                statusStorageDir=status_path,
+                qrCallback=qrCallback,
+                exitCallback=self.exitCallback,
+                loginCallback=self.loginCallback
+            )
+            self.user_id = itchat.instance.storageClass.userName
+            self.name = itchat.instance.storageClass.nickName
+            logger.info("Wechat login success, user_id: {}, nickname: {}".format(self.user_id, self.name))
+            # start message listener
+            itchat.run()
+        except Exception as e:
+            logger.error(e)
 
     def exitCallback(self):
-        _send_logout()
-        time.sleep(3)
-        self.auto_login_times += 1
-        if self.auto_login_times < 100:
-            self.startup()
+        try:
+            from common.linkai_client import chat_client
+            if chat_client.client_id and conf().get("use_linkai"):
+                _send_logout()
+                time.sleep(2)
+                self.auto_login_times += 1
+                if self.auto_login_times < 100:
+                    chat_channel.handler_pool._shutdown = False
+                    self.startup()
+        except Exception as e:
+            pass
 
     def loginCallback(self):
         logger.debug("Login success")
@@ -251,20 +261,23 @@ class WechatChannel(ChatChannel):
 def _send_login_success():
     try:
         from common.linkai_client import chat_client
-        chat_client.send_login_success()
+        if chat_client.client_id:
+            chat_client.send_login_success()
     except Exception as e:
         pass
 
 def _send_logout():
     try:
         from common.linkai_client import chat_client
-        chat_client.send_logout()
+        if chat_client.client_id:
+            chat_client.send_logout()
     except Exception as e:
         pass
 
 def _send_qr_code(qrcode_list: list):
     try:
         from common.linkai_client import chat_client
-        chat_client.send_qrcode(qrcode_list)
+        if chat_client.client_id:
+            chat_client.send_qrcode(qrcode_list)
     except Exception as e:
         pass

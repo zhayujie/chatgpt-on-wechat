@@ -56,4 +56,5 @@ def create_bot(bot_type):
         from bot.zhipuai.zhipuai_bot import ZHIPUAIBot
         return ZHIPUAIBot()
 
+
     raise RuntimeError

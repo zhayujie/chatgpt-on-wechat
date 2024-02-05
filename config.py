@@ -159,7 +159,6 @@ available_setting = {
     # 智谱AI 平台配置
     "zhipu_ai_api_key": "",
     "zhipu_ai_api_base": "https://open.bigmodel.cn/api/paas/v4",
-
 }
 
 

@@ -10,6 +10,7 @@ QWEN = "qwen"
 GEMINI = "gemini"
 ZHIPU_AI = "glm-4"
 
+
 # model
 GPT35 = "gpt-3.5-turbo"
 GPT4 = "gpt-4"
