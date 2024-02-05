@@ -400,7 +400,7 @@ class LinkAIBot(Bot):
                 i += 1
                 if url.endswith(".mp4"):
                     reply_type = ReplyType.VIDEO_URL
-                elif url.endswith(".pdf") or url.endswith(".doc") or url.endswith(".docx"):
+                elif url.endswith(".pdf") or url.endswith(".doc") or url.endswith(".docx") or url.endswith(".csv"):
                     reply_type = ReplyType.FILE
                     url = _download_file(url)
                     if not url:
