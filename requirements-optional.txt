@@ -38,5 +38,5 @@ linkai
 # dingtalk
 dingtalk_stream
 
-# zhipu
-zhipuai
+# zhipuai
+zhipuai>=2.0.1

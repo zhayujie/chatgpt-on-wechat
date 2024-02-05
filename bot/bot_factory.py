@@ -52,8 +52,9 @@ def create_bot(bot_type):
         from bot.gemini.google_gemini_bot import GoogleGeminiBot
         return GoogleGeminiBot()
 
-    elif bot_type == const.CHATGLM:
-        from bot.zhipu.chat_glm_bot import ChatGLMBot
-        return ChatGLMBot()
+    elif bot_type == const.ZHIPU_AI:
+        from bot.zhipuai.zhipuai_bot import ZHIPUAIBot
+        return ZHIPUAIBot()
+
 
     raise RuntimeError
