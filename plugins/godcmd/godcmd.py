@@ -475,3 +475,11 @@ class Godcmd(Plugin):
         if model == "gpt-4-turbo":
             return const.GPT4_TURBO_PREVIEW
         return model
+
+    def reload(self):
+        gconf = plugin_config[self.name]
+        if gconf:
+            if gconf.get("password"):
+                self.password = gconf["password"]
+            if gconf.get("admin_users"):
+                self.admin_users = gconf["admin_users"]
