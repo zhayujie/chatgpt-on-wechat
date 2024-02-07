@@ -5,8 +5,7 @@ import threading
 import requests
 
 from bot.bot import Bot
-from bot.openai.open_ai_image import OpenAIImage
-from bot.ali.ali_qwen_session import AliQwenSession
+from bot.dify.dify_session import DifySession, DifySessionManager
 from bot.session_manager import SessionManager
 from bridge.context import ContextType, Context
 from bridge.reply import Reply, ReplyType
@@ -14,11 +13,10 @@ from common.log import logger
 from common import const
 from config import conf, load_config
 
-class DifyBot(Bot, OpenAIImage):
+class DifyBot(Bot):
     def __init__(self):
         super().__init__()
-        # 复用千问的Session
-        self.sessions = SessionManager(AliQwenSession, model=conf().get("model", const.DIFY))
+        self.sessions = DifySessionManager(DifySession, model=conf().get("model", const.DIFY))
 
     def reply(self, query, context: Context=None):
         # acquire reply content
@@ -40,10 +38,10 @@ class DifyBot(Bot, OpenAIImage):
                 reply = Reply(ReplyType.INFO, "配置已更新")
             if reply:
                 return reply
-            session = self.sessions.session_query(query, session_id)
-            logger.debug("[DIFY] session query={}".format(session.messages))
+            session = self.sessions.get_session(session_id)
+            logger.debug(f"[DIFY] session={session} query={query}")
 
-            reply, err = self._reply(session, context)
+            reply, err = self._reply(query, session, context)
             if err != None:
                 reply = Reply(ReplyType.ERROR, err)
             return reply
@@ -59,41 +57,37 @@ class DifyBot(Bot, OpenAIImage):
             'Authorization': f"Bearer {conf().get('dify_api_key', '')}"
         }
 
-    def _get_payload(self, session, response_mode):
+    def _get_payload(self, query, session: DifySession, response_mode):
         return {
             'inputs': {},
-            "query": session['query'],
+            "query": query,
             "response_mode": response_mode,
-            "conversation_id": session['conversation_id'],
-            "user": session['user']
+            "conversation_id": session.get_conversation_id(),
+            "user": session.get_user()
         }
 
-    def _reply(self, session: AliQwenSession, context: Context):
+    def _reply(self, query: str, session: DifySession, context: Context):
         try:
             base_url = self._get_api_base_url()
             chat_url = f'{base_url}/chat-messages'
             headers = self._get_headers()
             is_dify_agent = conf().get('dify_agent', True)
             response_mode = 'streaming' if is_dify_agent else 'blocking'
-            dify_session = {'user': session.session_id, 'conversation_id': '', 'query': session.messages[-1]['content']}
-            payload = self._get_payload(dify_session, response_mode)
+            payload = self._get_payload(query, session, response_mode)
             response = requests.post(chat_url, headers=headers, json=payload, stream=is_dify_agent)
             if response.status_code != 200:
                 error_info = f"[DIFY] response text={response.text} status_code={response.status_code}"
                 logger.warn(error_info)
                 return None, error_info
 
-            # {
-            #   'event': 'message', 
-            #   'task_id': 'xxxx', 
-            #   'id': 'xxx', 
-            #   'answer': 'xxx',
-            #   'metadata': {}, 
-            #   'created_at': 1703326868, 
-            #   'conversation_id': '4ba26448-a003-478d-b364-e918e37e42bb'
-            # }
+
             if is_dify_agent:
-                msgs = self._handle_sse_response(response)
+                # response:
+                # data: {"event": "agent_thought", "id": "8dcf3648-fbad-407a-85dd-73a6f43aeb9f", "task_id": "9cf1ddd7-f94b-459b-b942-b77b26c59e9b", "message_id": "1fb10045-55fd-4040-99e6-d048d07cbad3", "position": 1, "thought": "", "observation": "", "tool": "", "tool_input": "", "created_at": 1705639511, "message_files": [], "conversation_id": "c216c595-2d89-438c-b33c-aae5ddddd142"}
+                # data: {"event": "agent_thought", "id": "8dcf3648-fbad-407a-85dd-73a6f43aeb9f", "task_id": "9cf1ddd7-f94b-459b-b942-b77b26c59e9b", "message_id": "1fb10045-55fd-4040-99e6-d048d07cbad3", "position": 1, "thought": "", "observation": "", "tool": "dalle3", "tool_input": "{\"dalle3\": {\"prompt\": \"cute Japanese anime girl with white hair, blue eyes, bunny girl suit\"}}", "created_at": 1705639511, "message_files": [], "conversation_id": "c216c595-2d89-438c-b33c-aae5ddddd142"}
+                # data: {"event": "agent_message", "id": "1fb10045-55fd-4040-99e6-d048d07cbad3", "task_id": "9cf1ddd7-f94b-459b-b942-b77b26c59e9b", "message_id": "1fb10045-55fd-4040-99e6-d048d07cbad3", "answer": "I have created an image of a cute Japanese", "created_at": 1705639511, "conversation_id": "c216c595-2d89-438c-b33c-aae5ddddd142"}
+                # data: {"event": "message_end", "task_id": "9cf1ddd7-f94b-459b-b942-b77b26c59e9b", "id": "1fb10045-55fd-4040-99e6-d048d07cbad3", "message_id": "1fb10045-55fd-4040-99e6-d048d07cbad3", "conversation_id": "c216c595-2d89-438c-b33c-aae5ddddd142", "metadata": {"usage": {"prompt_tokens": 305, "prompt_unit_price": "0.001", "prompt_price_unit": "0.001", "prompt_price": "0.0003050", "completion_tokens": 97, "completion_unit_price": "0.002", "completion_price_unit": "0.001", "completion_price": "0.0001940", "total_tokens": 184, "total_price": "0.0002290", "currency": "USD", "latency": 1.771092874929309}}}
+                msgs, conversation_id = self._handle_sse_response(response)
                 channel = context.get("channel")
                 is_group = context.get("isgroup", False)
                 for msg in msgs[:-1]:
@@ -113,11 +107,31 @@ class DifyBot(Bot, OpenAIImage):
                     reply = Reply(ReplyType.TEXT, final_msg['content'])
                 elif final_msg['type'] == 'message_file':
                     reply = Reply(ReplyType.IMAGE_URL, final_msg['content']['url'])
+                # 设置dify conversation_id, 依靠dify管理上下文
+                if session.get_conversation_id() == '':
+                    session.set_conversation_id(conversation_id)
                 return reply, None
             else:
+                # response: 
+                # {
+                #     "event": "message",
+                #     "message_id": "9da23599-e713-473b-982c-4328d4f5c78a",
+                #     "conversation_id": "45701982-8118-4bc5-8e9b-64562b4555f2",
+                #     "mode": "chat",
+                #     "answer": "xxx",
+                #     "metadata": {
+                #         "usage": {
+                #         },
+                #         "retriever_resources": []
+                #     },
+                #     "created_at": 1705407629
+                # }
                 rsp_data = response.json()
                 logger.debug("[DIFY] usage ".format(rsp_data['metadata']['usage']))
                 reply = Reply(ReplyType.TEXT, rsp_data['answer'])
+                # 设置dify conversation_id, 依靠dify管理上下文
+                if session.get_conversation_id() == '':
+                    session.set_conversation_id(rsp_data['conversation_id'])
                 return reply, None
         except Exception as e:
             error_info = f"[DIFY] Exception: {e}"
@@ -144,6 +158,8 @@ class DifyBot(Bot, OpenAIImage):
                 event = self._parse_sse_event(decoded_line)
                 if event:
                     events.append(event)
+
+        conversation_id = events[0]['conversation_id']
 
         merged_message = []
         accumulated_agent_message = ''
@@ -172,7 +188,7 @@ class DifyBot(Bot, OpenAIImage):
             else:
                 logger.warn("[DIFY] unknown event: {}".format(event))
 
-        return merged_message
+        return merged_message, conversation_id
 
     def _append_agent_message(self, accumulated_agent_message,  merged_message):
         if accumulated_agent_message:
@@ -180,6 +196,7 @@ class DifyBot(Bot, OpenAIImage):
                 'type': 'agent_message',
                 'content': accumulated_agent_message,
             })
+
     def _append_message_file(self, event: dict, merged_message: list):
         if event.get('type') != 'image':
             logger.warn("[DIFY] unsupported message file type: {}".format(event))
