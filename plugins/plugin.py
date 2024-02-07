@@ -46,3 +46,6 @@ class Plugin:
 
     def get_help_text(self, **kwargs):
         return "暂无帮助信息"
+
+    def reload(self):
+        pass

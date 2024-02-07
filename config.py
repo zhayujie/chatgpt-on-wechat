@@ -148,7 +148,12 @@ available_setting = {
     "plugin_trigger_prefix": "$",  # 规范插件提供聊天相关指令的前缀，建议不要和管理员指令前缀"#"冲突
     # 是否使用全局插件配置
     "use_global_plugin_config": False,
-    # 知识库平台配置
+    "max_media_send_count": 3,     # 单次最大发送媒体资源的个数
+    "media_send_interval": 1,  # 发送图片的事件间隔，单位秒
+    # 智谱AI 平台配置
+    "zhipu_ai_api_key": "",
+    "zhipu_ai_api_base": "https://open.bigmodel.cn/api/paas/v4",
+    # LinkAI平台配置
     "use_linkai": False,
     "linkai_api_key": "",
     "linkai_app_code": "",

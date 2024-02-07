@@ -13,17 +13,12 @@ langid # language detect
 #install plugin
 dulwich
 
-# wechaty
-wechaty>=0.10.7
-wechaty_puppet>=0.4.23
-# pysilk_mod>=1.6.0 # needed by send voice only in wechaty
-
-# wechatmp wechatcom
+# wechatmp && wechatcom
 web.py
 wechatpy
 
 # chatgpt-tool-hub plugin
-chatgpt_tool_hub==0.4.6
+chatgpt_tool_hub==0.5.0
 
 # xunfei spark
 websocket-client==1.2.0
@@ -36,3 +31,12 @@ broadscope_bailian
 
 # google
 google-generativeai
+
+# linkai
+linkai
+
+# dingtalk
+dingtalk_stream
+
+# zhipuai
+zhipuai>=2.0.1
