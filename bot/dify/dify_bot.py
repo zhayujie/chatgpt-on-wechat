@@ -6,7 +6,6 @@ import requests
 
 from bot.bot import Bot
 from bot.dify.dify_session import DifySession, DifySessionManager
-from bot.session_manager import SessionManager
 from bridge.context import ContextType, Context
 from bridge.reply import Reply, ReplyType
 from common.log import logger
@@ -38,7 +37,9 @@ class DifyBot(Bot):
                 reply = Reply(ReplyType.INFO, "配置已更新")
             if reply:
                 return reply
-            session = self.sessions.get_session(session_id)
+            # TODO: 适配除微信以外的其他channel
+            user = context["msg"].other_user_nickname
+            session = self.sessions.get_session(session_id, user)
             logger.debug(f"[DIFY] session={session} query={query}")
 
             reply, err = self._reply(query, session, context)
@@ -80,7 +81,6 @@ class DifyBot(Bot):
                 logger.warn(error_info)
                 return None, error_info
 
-
             if is_dify_agent:
                 # response:
                 # data: {"event": "agent_thought", "id": "8dcf3648-fbad-407a-85dd-73a6f43aeb9f", "task_id": "9cf1ddd7-f94b-459b-b942-b77b26c59e9b", "message_id": "1fb10045-55fd-4040-99e6-d048d07cbad3", "position": 1, "thought": "", "observation": "", "tool": "", "tool_input": "", "created_at": 1705639511, "message_files": [], "conversation_id": "c216c595-2d89-438c-b33c-aae5ddddd142"}
@@ -89,6 +89,7 @@ class DifyBot(Bot):
                 # data: {"event": "message_end", "task_id": "9cf1ddd7-f94b-459b-b942-b77b26c59e9b", "id": "1fb10045-55fd-4040-99e6-d048d07cbad3", "message_id": "1fb10045-55fd-4040-99e6-d048d07cbad3", "conversation_id": "c216c595-2d89-438c-b33c-aae5ddddd142", "metadata": {"usage": {"prompt_tokens": 305, "prompt_unit_price": "0.001", "prompt_price_unit": "0.001", "prompt_price": "0.0003050", "completion_tokens": 97, "completion_unit_price": "0.002", "completion_price_unit": "0.001", "completion_price": "0.0001940", "total_tokens": 184, "total_price": "0.0002290", "currency": "USD", "latency": 1.771092874929309}}}
                 msgs, conversation_id = self._handle_sse_response(response)
                 channel = context.get("channel")
+                # TODO: 适配除微信以外的其他channel
                 is_group = context.get("isgroup", False)
                 for msg in msgs[:-1]:
                     if msg['type'] == 'agent_message':

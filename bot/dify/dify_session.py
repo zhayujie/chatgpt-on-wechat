@@ -4,9 +4,9 @@ from config import conf
 
 
 class DifySession(object):
-    def __init__(self, session_id, conversation_id=''):
+    def __init__(self, session_id: str, user: str, conversation_id: str=''):
         self.__session_id = session_id
-        self.__user = session_id # 直接把session_id作为user
+        self.__user = user
         self.__conversation_id = conversation_id
 
     def get_session_id(self):
@@ -32,20 +32,20 @@ class DifySessionManager(object):
         self.sessioncls = sessioncls
         self.session_kwargs = session_kwargs
 
-    def _build_session(self, session_id):
+    def _build_session(self, session_id: str, user: str):
         """
         如果session_id不在sessions中，创建一个新的session并添加到sessions中
         """
         if session_id is None:
-            return self.sessioncls(session_id)
+            return self.sessioncls(session_id, user)
 
         if session_id not in self.sessions:
-            self.sessions[session_id] = self.sessioncls(session_id)
+            self.sessions[session_id] = self.sessioncls(session_id, user)
         session = self.sessions[session_id]
         return session
 
-    def get_session(self, session_id):
-        session = self._build_session(session_id)
+    def get_session(self, session_id, user):
+        session = self._build_session(session_id, user)
         return session
 
     def clear_session(self, session_id):
