@@ -312,8 +312,7 @@ Emoji is recommended but in a way such as using this code '\U0001F605' to expres
             async with aclosing(sydney.ask_stream(
                 conversation= conversation,
                 prompt= ask_string,
-                context= preContext, 
-                conversation_style= "creative",
+                context= preContext,
                 proxy= proxy,
                 image_url= imgurl,
                 wss_url='wss://' + 'sydney.bing.com' + '/sydney/ChatHub',
