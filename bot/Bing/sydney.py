@@ -299,7 +299,7 @@ async def ask_stream(
         conversation: dict,
         prompt: str,
         context: str,
-        conversation_style: str = "creativeclassic",
+        conversation_style: str = "creative",
         locale: str = "zh-CN",
         proxy=_PROXY,
         image_url=None,
