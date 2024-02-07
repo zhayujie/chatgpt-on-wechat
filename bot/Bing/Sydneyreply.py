@@ -311,8 +311,7 @@ Only the final, integrated output response is provided. Emoji is recommended but
             async with aclosing(sydney.ask_stream(
                 conversation= conversation,
                 prompt= ask_string,
-                context= preContext, 
-                conversation_style= "creative",
+                context= preContext,
                 proxy= proxy,
                 image_url= imgurl,
                 wss_url='wss://' + 'sydney.bing.com' + '/sydney/ChatHub',

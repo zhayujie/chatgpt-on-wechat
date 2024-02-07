@@ -34,12 +34,15 @@ _BASE_OPTION_SETS = [
     "fluxprod",
     "eredirecturl",
     "deuct3",
+    # may related to image search
+    "gptvnodesc",
+    "gptvnoex",
 ]
 
 
 class _OptionSets(Enum):
-    CREATIVE = _BASE_OPTION_SETS
-    CREATIVECLASSIC = _BASE_OPTION_SETS
+    CREATIVE = _BASE_OPTION_SETS + ["h3imaginative"]
+    CREATIVECLASSIC = _BASE_OPTION_SETS + ["h3imaginative"]
     BALANCED = _BASE_OPTION_SETS + ["galileo"]
     PRECISE = _BASE_OPTION_SETS + ["h3precise"]
 
@@ -296,7 +299,7 @@ async def ask_stream(
         conversation: dict,
         prompt: str,
         context: str,
-        conversation_style: str = "creative",
+        conversation_style: str = "creativeclassic",
         locale: str = "zh-CN",
         proxy=_PROXY,
         image_url=None,
@@ -329,7 +332,7 @@ async def ask_stream(
             await wss.send_str(_format({"type": 6}))
             option_sets = getattr(_OptionSets, conversation_style.upper()).value.copy()
             if no_search:
-                prompt = prompt + ' #no_search'
+                option_sets += 'nosearchall'
 
             struct = {
                 'arguments': [
