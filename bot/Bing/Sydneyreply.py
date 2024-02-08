@@ -337,11 +337,11 @@ Emoji is recommended but in a way such as using this code '\U0001F605' to expres
                                         reply = await stream_conversation_replied(pre_reply, preContext, cookies, ask_string, proxy, imgurl)
                                     except Exception as e:
                                         logger.error(e)
-                                else:    
-                                    secreply = await stream_conversation_replied(reply, preContext, cookies, ask_string, proxy, imgurl)
-                                    if "回复" not in secreply:
-                                        reply = concat_reply(reply, secreply)
-                                    reply = remove_extra_format(reply)
+                                # else:    
+                                #     secreply = await stream_conversation_replied(reply, preContext, cookies, ask_string, proxy, imgurl)
+                                #     if "回复" not in secreply:
+                                #         reply = concat_reply(reply, secreply)
+                                #     reply = remove_extra_format(reply)
                                 break
                             else:
                                 replied = True
