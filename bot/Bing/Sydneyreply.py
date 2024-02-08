@@ -125,6 +125,26 @@ def cut_botstatement(data, text_to_cut):
     pattern = re.compile(text_to_cut)
     return [{key: re.sub(pattern, "", value) for key, value in item.items()} for item in data]
 
+def detect_chinese_char_pair(context, threshold=5):
+    # create a dictionary to store the frequency of each pair of consecutive chinese characters
+    freq = {}
+    # loop through the context with a sliding window of size 2
+    for i in range(len(context) - 1):
+        # get the current pair of characters
+        pair = context[i:i+2]
+        # check if both characters are chinese characters using the unicode range
+        if '\u4e00' <= pair[0] <= '\u9fff' and '\u4e00' <= pair[1] <= '\u9fff':
+            # increment the frequency of the pair or set it to 1 if not seen before
+            freq[pair] = freq.get(pair, 0) + 1
+    # loop through the frequency dictionary
+    for pair, count in freq.items():
+        # check if the count is greater than or equal to the threshold
+        if count >= threshold:
+            # return True and the pair
+            return True, pair
+    # return False and None if no pair meets the threshold
+    return False, None
+
 class SydneyBot(Bot):
     def __init__(self) -> None:
         super().__init__()
@@ -397,6 +417,10 @@ Emoji is recommended but in a way such as using this code '\U0001F605' to expres
                         if "suggestedResponses" in message:
                             imgurl =None
                             break      
+                result, pair = detect_chinese_char_pair(reply, 10)
+                if result:
+                    logger.info(f"a pair of consective characters detected over 10 times. It is {pair}")
+                    reply = await self._chat(query, session, context, retry_count + 1)
                 #this will be wrapped out exception if no reply returned, and in the exception the ask process will try again
                 if "自动回复机器人悉尼" not in reply:
                     reply += bot_statement
