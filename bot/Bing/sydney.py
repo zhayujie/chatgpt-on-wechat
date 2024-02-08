@@ -263,9 +263,12 @@ async def create_conversation(
             cookies=formatted_cookies,
             headers=_HEADERS_INIT_CONVER,
     ) as session:
-        response = await session.get(
-            url="https://edgeservices.bing.com/edgesvc/turing/conversation/create",
-            proxy=proxy,
+        response = await asyncio.wait_for(
+            session.get(
+                url="https://edgeservices.bing.com/edgesvc/turing/conversation/create",
+                proxy=proxy,
+            ),
+            timeout= 10
         )
     if response.status != 200:
         text = await response.text()
@@ -307,7 +310,7 @@ async def ask_stream(
         cookies: list[dict] | None = None,
         no_search: bool = False,
 ):
-    timeout = aiohttp.ClientTimeout(total=180)
+    timeout = aiohttp.ClientTimeout(total=900)
     formatted_cookies = {}
     if cookies:
         for cookie in cookies:
@@ -315,20 +318,19 @@ async def ask_stream(
     async with aiohttp.ClientSession(timeout=timeout, cookies=formatted_cookies) as session:
         conversation_id = conversation["conversationId"]
         client_id = conversation["clientId"]
-        sec_access_token = conversation["sec_access_token"] if 'sec_access_token' in conversation else None
-        conversation_signature = conversation["conversationSignature"] \
-            if 'conversationSignature' in conversation else None
+        # sec_access_token = conversation["sec_access_token"] if 'sec_access_token' in conversation else None
+        conversation_signature = conversation["conversationSignature"] if 'conversationSignature' in conversation else None
         message_id = str(uuid.uuid4())
 
         async with session.ws_connect(
-                wss_url + (
-                        '?sec_access_token=' + urllib.parse.quote_plus(sec_access_token) if sec_access_token else ''),
+                wss_url,
+                # wss_url + ('?sec_access_token=' + urllib.parse.quote_plus(sec_access_token) if sec_access_token else ''),
                 autoping=False,
                 headers=_HEADERS,
                 proxy=proxy
         ) as wss:
             await wss.send_str(_format({'protocol': 'json', 'version': 1}))
-            await wss.receive(timeout=180)
+            await wss.receive(timeout=900)
             await wss.send_str(_format({"type": 6}))
             option_sets = getattr(_OptionSets, conversation_style.upper()).value.copy()
             if no_search:
@@ -354,7 +356,7 @@ async def ask_stream(
                             "author": "user",
                             "inputMethod": "Keyboard",
                             "text": prompt,
-                            "messageType": random.choice(["Chat", "SearchQuery", "CurrentWebpageContextRequest"]),
+                            "messageType": random.choice(["Chat", "CurrentWebpageContextRequest"]),
                             "requestId": message_id,
                             "messageId": message_id,
                             "imageUrl": image_url or None,
@@ -401,15 +403,13 @@ async def ask_stream(
             while True:
                 if wss.closed:
                     break
-                try:
-                    
-                    msg = await wss.receive(timeout=180)
-                except Exception as e:
+                msg = await wss.receive(timeout=900)
+
+                if not msg.data:
                     retry_count -= 1
                     if retry_count == 0:
                         raise Exception("No response from server")
                     continue
-
 
                 if isinstance(msg.data, str):
                     objects = msg.data.split(_DELIMITER)
@@ -466,9 +466,9 @@ async def upload_image(filename=None, img_base64=None, proxy=None):
         data.add_field('imageBase64', image_base64.decode('utf-8'), content_type="application/octet-stream")
 
         async with session.post(url, data=data, proxy=proxy) as resp:
-            print(resp.status)
-            print(resp.headers)
-            print(await resp.text())
+            # print(resp.status)
+            # print(resp.headers)
+            # print(await resp.text())
             return (await resp.json())["blobId"]
     
 import re
