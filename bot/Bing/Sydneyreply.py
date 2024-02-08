@@ -227,6 +227,11 @@ Emoji is recommended but in a way such as using this code '\U0001F605' to expres
 
             session_id = context["session_id"]
             session_message = session.messages
+            # Create a regular expression pattern that matches the text we want to cut.
+            pattern = re.compile(r"我是自动回复机器人悉尼。\n要和我对话请在发言中@我。")
+
+            # Use the re.sub() method to replace the matched text with an empty string.
+            session_message = re.sub(pattern, "", session_message)
             logger.debug(f"[SYDNEY] session={session_message}, session_id={session_id}")
 
 
