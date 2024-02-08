@@ -111,6 +111,20 @@ def except_chinese_char(string):
     # return False if no Chinese character is found
     return True
 
+def cut_botstatement(data, text_to_cut):
+    """Cuts the specified text from each dictionary in the given list.
+
+    Args:
+        data: A list of dictionaries.
+        text_to_cut: The text to cut from each dictionary.
+
+    Returns:
+        A new list of dictionaries with the specified text removed.
+    """
+
+    pattern = re.compile(text_to_cut)
+    return [{key: re.sub(pattern, "", value) for key, value in item.items()} for item in data]
+
 class SydneyBot(Bot):
     def __init__(self) -> None:
         super().__init__()
@@ -125,7 +139,7 @@ class SydneyBot(Bot):
 
             session_id = context["session_id"]
             session = self.sessions.session_query(query, session_id)
-            logger.info("[SYDNEY] session query={}".format(session.messages))
+            # logger.info("[SYDNEY] session query={}".format(session.messages))
             reply = None
             # clear_memory_commands = conf().get("clear_memory_commands", ["#清除记忆"])
             #todo passive reply, if user asks the bot is alive then reply to him the message is in process
@@ -226,13 +240,10 @@ Emoji is recommended but in a way such as using this code '\U0001F605' to expres
             conversation = await sydney.create_conversation(cookies=cookies, proxy=proxy)
 
             session_id = context["session_id"]
-            session_message = session.messages
-            # Create a regular expression pattern that matches the text we want to cut.
-            pattern = re.compile(r"我是自动回复机器人悉尼。\n要和我对话请在发言中@我。")
-
-            # Use the re.sub() method to replace the matched text with an empty string.
-            session_message = re.sub(pattern, "", session_message)
-            logger.debug(f"[SYDNEY] session={session_message}, session_id={session_id}")
+            presession_message = session.messages
+            
+            session_message = cut_botstatement(presession_message, "\n\n我是自动回复机器人悉尼。\n要和我对话请在发言中@我。")
+            logger.info(f"[SYDNEY] session={session_message}, session_id={session_id}")
 
 
             ask_string = ""
