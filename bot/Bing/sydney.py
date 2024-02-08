@@ -146,18 +146,18 @@ class _LocationHint(Enum):
         ],
     }
 
-from dataclasses import dataclass
+# from dataclasses import dataclass
 
-@dataclass
-class GenerativeImage:
-    text: str
-    url: str
+# @dataclass
+# class GenerativeImage:
+#     text: str
+#     url: str
 
-@dataclass
-class GenerateImageResult:
-    generative_image: GenerativeImage
-    image_urls: list[str]
-    # duration: float  # Representing time.Duration in Python
+# @dataclass
+# class GenerateImageResult:
+#     generative_image: GenerativeImage
+#     image_urls: list[str]
+#     # duration: float  # Representing time.Duration in Python
 
 _DELIMITER = '\x1e'
 _FORWARDED_IP = f"1.0.0.{random.randint(0, 255)}"
@@ -478,56 +478,56 @@ async def upload_image(filename=None, img_base64=None, proxy=None):
             # print(await resp.text())
             return (await resp.json())["blobId"]
     
-import re
-import asyncio
-async def generate_image(
-    proxy: str | None = _PROXY,
-    generative_image: GenerativeImage | None = None,
-    cookies: list[dict] | None = None,
-) -> (GenerateImageResult, Exception | None):
+# import re
+# import asyncio
+# async def generate_image(
+#     proxy: str | None = _PROXY,
+#     generative_image: GenerativeImage | None = None,
+#     cookies: list[dict] | None = None,
+# ) -> (GenerateImageResult, Exception | None):
 
-    formatted_cookies = {}
-    if cookies:
-        for cookie in cookies:
-            formatted_cookies[cookie["name"]] = cookie["value"]
+#     formatted_cookies = {}
+#     if cookies:
+#         for cookie in cookies:
+#             formatted_cookies[cookie["name"]] = cookie["value"]
 
-    async with aiohttp.ClientSession(
-        headers=_HEADERS_INIT_CREATIMG, cookies=formatted_cookies
-    ) as session:
-        try:
-            async with session.get(generative_image.url, proxy=proxy) as resp:
-                resp.raise_for_status()
-                text = await resp.text()
+#     async with aiohttp.ClientSession(
+#         headers=_HEADERS_INIT_CREATIMG, cookies=formatted_cookies
+#     ) as session:
+#         try:
+#             async with session.get(generative_image.url, proxy=proxy) as resp:
+#                 resp.raise_for_status()
+#                 text = await resp.text()
 
-                # Extract result ID
-                matches = re.findall(
-                    r"/images/create/async/results/(.*?)\?", text
-                )
-                if not matches or len(matches) < 2:
-                    return None, Exception("Cannot find image creation result")
-                result_id = matches[1]
+#                 # Extract result ID
+#                 matches = re.findall(
+#                     r"/images/create/async/results/(.*?)\?", text
+#                 )
+#                 if not matches or len(matches) < 2:
+#                     return None, Exception("Cannot find image creation result")
+#                 result_id = matches[1]
 
-                # Await image creation
-                result_url = f"https://www.bing.com/images/create/async/results/{result_id}?q={urllib.parse.quote(generative_image.text)}&partner=sydney&showselective=1&IID=images.as"
-                for _ in range(15):
-                    await asyncio.sleep(3)
-                    async with session.get(result_url, proxy=proxy) as result_resp:
-                        result_resp.raise_for_status()
-                        text = await result_resp.text()
+#                 # Await image creation
+#                 result_url = f"https://www.bing.com/images/create/async/results/{result_id}?q={urllib.parse.quote(generative_image.text)}&partner=sydney&showselective=1&IID=images.as"
+#                 for _ in range(15):
+#                     await asyncio.sleep(3)
+#                     async with session.get(result_url, proxy=proxy) as result_resp:
+#                         result_resp.raise_for_status()
+#                         text = await result_resp.text()
 
-                        # Check for rejection
-                        if "Please try again or come back later" in text:
-                            return None, Exception("Prompt rejected by Bing")
+#                         # Check for rejection
+#                         if "Please try again or come back later" in text:
+#                             return None, Exception("Prompt rejected by Bing")
 
-                        # Extract image URLs
-                        image_urls = re.findall(r'<img class="mimg".*?src="(.*?)"', text)
-                        if image_urls:
-                            return GenerateImageResult(
-                                generate_image=generative_image,
-                                image_urls=image_urls,
-                            ), None
+#                         # Extract image URLs
+#                         image_urls = re.findall(r'<img class="mimg".*?src="(.*?)"', text)
+#                         if image_urls:
+#                             return GenerateImageResult(
+#                                 generate_image=generative_image,
+#                                 image_urls=image_urls,
+#                             ), None
 
-        except aiohttp.ClientError as err:
-            return None, err
+#         except aiohttp.ClientError as err:
+#             return None, err
 
-    return None, Exception("Image creation timeout")
+#     return None, Exception("Image creation timeout")
