@@ -225,8 +225,9 @@ class SydneyBot(Bot):
         merge from SydneyProcess
         """
         if retry_count > 2:
+            #todo delete the sydney tip message and the previous user message in this situation
             logger.warn("[SYDNEY] failed after maximum number of retry times")
-            return "请再问我一次吧!\n(内容迭代重试次数过多)"
+            return "请再问我一次吧!\n(内容迭代重试次数过多)" 
         
         preContext = '''
 [system](#additional_instructions)
