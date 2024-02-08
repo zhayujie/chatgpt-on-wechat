@@ -220,13 +220,13 @@ class SydneyBot(Bot):
         return reply_content
         
 
-    async def _chat(self, session, query, context, retry_count= 0) -> Reply:
+    async def _chat(self, session, query, context, retry_count= 0):
         """
         merge from SydneyProcess
         """
         if retry_count > 2:
             logger.warn("[SYDNEY] failed after maximum number of retry times")
-            await Reply(ReplyType.TEXT, "请再问我一次吧")
+            return "请再问我一次吧!\n(内容迭代重试次数过多)"
         
         preContext = '''
 [system](#additional_instructions)
@@ -359,8 +359,7 @@ Emoji is recommended but in a way such as using this code '\U0001F605' to expres
                         message = response["arguments"][0]["messages"][0]  # Get the first message from the arguments
                         msg_type = message.get("messageType")
                         content_origin = message.get("contentOrigin")
-
-                        if msg_type is None:                       
+                        if msg_type is None:
                             if content_origin == "Apology": 
                             # Check if the message content origin is Apology, which means sydney failed to generate a reply                                                         
                                 if not replied:
@@ -378,12 +377,22 @@ Emoji is recommended but in a way such as using this code '\U0001F605' to expres
                                 #     if "回复" not in secreply:
                                 #         reply = concat_reply(reply, secreply)
                                 #     reply = remove_extra_format(reply)
+                                else:
+                                    result, pair = detect_chinese_char_pair(reply, 12)
+                                    if result:
+                                        logger.info(f"a pair of consective characters detected over 12 times. It is {pair}")
+                                        reply = await self._chat(query, session, context, retry_count + 1)
                                 break
                             else:
                                 replied = True
                                 reply = ""                   
-                                # reply = ''.join([remove_extra_format(message["text"]) for message in response["arguments"][0]["messages"]])
-                                reply = ''.join([remove_extra_format(message["adaptiveCards"][0]["body"][0]["text"]) for message in response["arguments"][0]["messages"]])
+                                reply = ''.join([remove_extra_format(message["text"]) for message in response["arguments"][0]["messages"]])
+                                # reply = ''.join([remove_extra_format(message["adaptiveCards"][0]["body"][0]["text"]) for message in response["arguments"][0]["messages"]])
+                                result, pair = detect_chinese_char_pair(reply, 12)
+                                if result:
+                                    logger.info(f"a pair of consective characters detected over 12 times. It is {pair}")
+                                    reply = await self._chat(query, session, context, retry_count + 1)
+                                    break
                                 if "suggestedResponses" in message:
                                     imgurl =None
                                     break
@@ -417,10 +426,6 @@ Emoji is recommended but in a way such as using this code '\U0001F605' to expres
                         if "suggestedResponses" in message:
                             imgurl =None
                             break      
-                result, pair = detect_chinese_char_pair(reply, 10)
-                if result:
-                    logger.info(f"a pair of consective characters detected over 10 times. It is {pair}")
-                    reply = await self._chat(query, session, context, retry_count + 1)
                 #this will be wrapped out exception if no reply returned, and in the exception the ask process will try again
                 if "自动回复机器人悉尼" not in reply:
                     reply += bot_statement
