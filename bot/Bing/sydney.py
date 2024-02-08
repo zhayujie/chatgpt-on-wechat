@@ -263,13 +263,20 @@ async def create_conversation(
             cookies=formatted_cookies,
             headers=_HEADERS_INIT_CONVER,
     ) as session:
-        response = await asyncio.wait_for(
-            session.get(
+        timeout = aiohttp.ClientTimeout(total=10)
+        try:
+            response = await session.get(
                 url="https://edgeservices.bing.com/edgesvc/turing/conversation/create",
                 proxy=proxy,
-            ),
-            timeout= 10
-        )
+                timeout=timeout,
+            )
+        except asyncio.TimeoutError:
+            print("Request timedout, retrying...")
+            response = await session.get(
+                url="https://edgeservices.bing.com/edgesvc/turing/conversation/create",
+                proxy=proxy,
+                timeout=timeout,
+            )
     if response.status != 200:
         text = await response.text()
         raise Exception(f"Authentication failed {text}")
@@ -318,13 +325,13 @@ async def ask_stream(
     async with aiohttp.ClientSession(timeout=timeout, cookies=formatted_cookies) as session:
         conversation_id = conversation["conversationId"]
         client_id = conversation["clientId"]
-        # sec_access_token = conversation["sec_access_token"] if 'sec_access_token' in conversation else None
+        sec_access_token = conversation["sec_access_token"] if 'sec_access_token' in conversation else None
         conversation_signature = conversation["conversationSignature"] if 'conversationSignature' in conversation else None
         message_id = str(uuid.uuid4())
 
         async with session.ws_connect(
-                wss_url,
-                # wss_url + ('?sec_access_token=' + urllib.parse.quote_plus(sec_access_token) if sec_access_token else ''),
+                # wss_url,
+                wss_url + ('?sec_access_token=' + urllib.parse.quote_plus(sec_access_token) if sec_access_token else ''),
                 autoping=False,
                 headers=_HEADERS,
                 proxy=proxy
