@@ -14,30 +14,42 @@ import aiohttp
 
 import binascii
 
-_DEBUG = False
+import asyncio
+
+_DEBUG = True
 
 _PROXY = urllib.request.getproxies().get("https")
 
-_BASE_OPTION_SETS = [
-    "fluxcopilot",
-    "nojbf",
-    "iyxapbing",
-    "iycapbing",
-    "dgencontentv3",
-    "nointernalsugg",
-    "disable_telemetry",
-    "machine_affinity",
-    "streamf",
-    "codeint",
-    "langdtwb",
-    "fdwtlst",
-    "fluxprod",
-    "eredirecturl",
-    "deuct3",
-    # may related to image search
-    "gptvnodesc",
-    "gptvnoex",
+_BASE_OPTION_SETS = [		
+	"fluxsydney",
+	"iyxapbing",
+	"iycapbing",
+	"clgalileoall",
+	"gencontentv3",
+	"nojbf"
 ]
+# [
+#     "fluxcopilot",
+#     "nojbf",
+#     "iyxapbing",
+#     "iycapbing",
+#     "dgencontentv3",
+#     "nointernalsugg",
+#     "disable_telemetry",
+#     "machine_affinity",
+#     "streamf",
+#     "codeint",
+#     "langdtwb",
+#     "fdwtlst",
+#     "fluxprod",
+#     "eredirecturl",
+#     "deuct3",
+#     # may related to image search
+#     "gptvnodesc",
+#     "gptvnoex",
+# ]
+
+
 
 
 class _OptionSets(Enum):
