@@ -32,3 +32,4 @@ plugins/banwords/lib/__pycache__
 !plugins/linkai
 cookies.json
 client_config.json
+bot/Bing/botPreset.txt
