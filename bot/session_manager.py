@@ -29,7 +29,7 @@ class Session(object):
         self.messages.append(user_item)
 
     def add_reply(self, reply):
-        assistant_item = {"[sydney](#message)": reply}
+        assistant_item = {"[assistant](#message)": reply}
         self.messages.append(assistant_item)
 
     def discard_exceeding(self, max_tokens=None, cur_tokens=None):
