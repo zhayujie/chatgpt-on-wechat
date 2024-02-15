@@ -174,7 +174,7 @@ class SydneyBot(Bot):
 
             session_id = context["session_id"]
             session = self.sessions.session_query(query, session_id)
-            # logger.info("[SYDNEY] session query={}".format(session.messages))
+            logger.info("[SYDNEY] session query={}".format(session.messages))
             reply = None
             # clear_memory_commands = conf().get("clear_memory_commands", ["#清除记忆"])
             #todo passive reply, if user asks the bot is alive then reply to him the message is in process
@@ -187,14 +187,23 @@ class SydneyBot(Bot):
                     self.sessions.clear_all_session()
                     reply = Reply(ReplyType.INFO, "所有人记忆已清除")
                 self.bot_statemented = False
-                #Done need to fix when an async thread is in processing user can't stop the process midway, this will pollute message of the chat history, it also leads misunderstanding in the next talk      
+                #Done. need to fix when an async thread is in processing user can't stop the process midway, this will pollute message of the chat history, it also leads misunderstanding in the next talk      
                 if self.current_responding_task is not None:
                     self.current_responding_task.cancel()
-                    return 
+                    return
+            elif query == "撤销" or query == "撤回":
+                session.messages.pop()
+                # has_assistant_message = any("[assistant](#message)" in item.keys() for item in session.messages)
+                users_arr = [obj for obj in session.messages if "[user](#message)" in obj.keys()]
+                if len(users_arr) < 1:
+                    return Reply(ReplyType.INFO, "没有可撤回的消息!")
+                session.messages = session.messages[:session.messages.index(users_arr[-1])]
+                reply = Reply(ReplyType.INFO, f"该条消息已撤销!\n\n({clip_message(users_arr[-1]['[user](#message)'])})")
             elif query == "更新配置":
                 load_config()
                 reply = Reply(ReplyType.INFO, "配置已更新")
             elif query in ("zai","Zai","在？","在","在吗？","在嘛？","在么？","在吗","在嘛","在么","在吗?","在嘛?","在么?"):
+                session.messages.pop()
                 if self.current_responding_task is None:
                     return Reply(ReplyType.TEXT, "有什么问题吗？\U0001F337")
                 elif self.current_responding_task is not None:
@@ -261,7 +270,7 @@ class SydneyBot(Bot):
             presession_message = session.messages
             
             session_message = cut_botstatement(presession_message, "\n\n我是自动回复机器人悉尼。\n要和我对话请在发言中@我。")
-            # logger.info(f"[SYDNEY] session={session_message}, session_id={session_id}")
+            logger.info(f"[SYDNEY] session={session_message}, session_id={session_id}")
 
             imgurl = None
             # image process
@@ -309,8 +318,6 @@ class SydneyBot(Bot):
             rest_messages = ""
             for singleTalk in session_message[:-1]:  # Iterate through all but the last message
                 for keyPerson, message in singleTalk.items():
-                    if message in ("zai","Zai","在？","在","在吗？","在嘛？","在么？","在吗","在嘛","在么","在吗?","在嘛?","在么?","清除记忆","清除所有") and keyPerson == "[user](#message)":
-                        continue  # Skip this message if it matches
                     rest_messages += f"\n{keyPerson}\n{message}\n"
 
 
