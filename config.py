@@ -150,6 +150,9 @@ available_setting = {
     "use_global_plugin_config": False,
     "max_media_send_count": 3,     # 单次最大发送媒体资源的个数
     "media_send_interval": 1,  # 发送图片的事件间隔，单位秒
+    # 智谱AI 平台配置
+    "zhipu_ai_api_key": "",
+    "zhipu_ai_api_base": "https://open.bigmodel.cn/api/paas/v4",
     # LinkAI平台配置
     "use_linkai": False,
     "linkai_api_key": "",
