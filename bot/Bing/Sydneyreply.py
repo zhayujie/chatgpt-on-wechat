@@ -396,31 +396,32 @@ class SydneyBot(Bot):
                                     imgurl =None
                                     break
                         
-                        elif msg_type == "GenerateContentQuery":
-                            if message['contentType'] == 'IMAGE':
-                                replied = True
-                                #todo needs approve
-                                # try:
-                                # image = sydney.GenerateImageResult()
-                                url = "https://www.bing.com/images/create?" + urllib.parse.urlencode({
-                                    "partner": "sydney",
-                                    "re": "1",
-                                    "showselective": "1",
-                                    "sude": "1",
-                                    "kseed": "8500",
-                                    "SFX": "4",
-                                    "q": urllib.parse.quote(message["text"]),  # Ensure proper URL encoding
-                                    "iframeid": message["messageId"],
-                                })
-                                generative_image = sydney.GenerativeImage(message["text"], url)
-                                image = await sydney.generate_image(proxy, generative_image, cookies)
-                                logger(image)
-                                # except Exception as e:
-                                #     logger.error(e)
-                                # self.send_image(context.get("channel"), context, response["choices"][0].get("img_urls"))
+                        #todo image create
+                        # elif msg_type == "GenerateContentQuery":
+                        #     if message['contentType'] == 'IMAGE':
+                        #         replied = True
+                        #         #todo needs approve
+                        #         # try:
+                        #         # image = sydney.GenerateImageResult()
+                        #         url = "https://www.bing.com/images/create?" + urllib.parse.urlencode({
+                        #             "partner": "sydney",
+                        #             "re": "1",
+                        #             "showselective": "1",
+                        #             "sude": "1",
+                        #             "kseed": "8500",
+                        #             "SFX": "4",
+                        #             "q": urllib.parse.quote(message["text"]),  # Ensure proper URL encoding
+                        #             "iframeid": message["messageId"],
+                        #         })
+                        #         generative_image = sydney.GenerativeImage(message["text"], url)
+                        #         image = await sydney.generate_image(proxy, generative_image, cookies)
+                        #         logger(image)
+                        #         # except Exception as e:
+                        #         #     logger.error(e)
+                        #         # self.send_image(context.get("channel"), context, response["choices"][0].get("img_urls"))
 
 
-                    if response["type"] == 2: 
+                    if response["type"] == 2: #todo add suggestions in the ending of the bot message
                         result, pair = detect_chinese_char_pair(reply, 25)
                         if result:
                             logger.info(f"a pair of consective characters detected over 25 times. It is {pair}")
@@ -430,8 +431,6 @@ class SydneyBot(Bot):
                         if "suggestedResponses" in message:
                             imgurl =None
                             break
-                
-                #handle generated output of the bot
                 
 
                 result, pair = detect_chinese_char_pair(reply, 25)
