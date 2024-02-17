@@ -11,9 +11,7 @@ from typing import Union
 import urllib.parse
 
 import aiohttp
-
 import binascii
-
 import asyncio
 
 _DEBUG = True
@@ -21,7 +19,14 @@ _DEBUG = True
 _PROXY = urllib.request.getproxies().get("https")
 
 _BASE_OPTION_SETS = [
-    "fluxsydney",
+    # "fluxsydney",
+	# "iyxapbing",
+	# "iycapbing",
+	# "clgalileoall",
+	# "gencontentv3",
+	# "nojbf"
+
+    "fluxcopilot",
     "nojbf",
     "iyxapbing",
     "iycapbing",
@@ -35,22 +40,10 @@ _BASE_OPTION_SETS = [
     "fdwtlst",
     "fluxprod",
     "eredirecturl",
-    "deuct3",
     # may related to image search
     "gptvnodesc",
     "gptvnoex",
 ]
-
-# [		
-# 	"fluxsydney",
-# 	"iyxapbing",
-# 	"iycapbing",
-# 	"clgalileoall",
-# 	"gencontentv3",
-# 	"nojbf"
-# ]
-
-
 
 
 
@@ -59,6 +52,12 @@ class _OptionSets(Enum):
     CREATIVECLASSIC = _BASE_OPTION_SETS + ["h3imaginative"]
     BALANCED = _BASE_OPTION_SETS + ["galileo"]
     PRECISE = _BASE_OPTION_SETS + ["h3precise"]
+    DESIGNER = _BASE_OPTION_SETS + ["ai_persona_designer_gpt"] + ["h3imaginative"]
+    #todo
+    # case "Designer":
+	# 	optionsSet = append(optionsSet, "ai_persona_designer_gpt")
+	# 	options.ConversationStyle = "Creative"
+	# 	gptId = "designer"
 
 
 _SLICE_IDS = [
@@ -160,19 +159,6 @@ class _LocationHint(Enum):
         ],
     }
 
-# from dataclasses import dataclass
-
-# @dataclass
-# class GenerativeImage:
-#     text: str
-#     url: str
-
-# @dataclass
-# class GenerateImageResult:
-#     generative_image: GenerativeImage
-#     image_urls: list[str]
-#     # duration: float  # Representing time.Duration in Python
-
 _DELIMITER = '\x1e'
 _FORWARDED_IP = f"1.0.0.{random.randint(0, 255)}"
 
@@ -198,7 +184,7 @@ def sec_ms_gec():
 
 _HEADERS = {
     "accept": "application/json",
-    "accept-language": "en-US,en;q=0.9",
+    "accept-language": "zh-CN,en;q=0.9",
     "content-type": "application/json",
     "sec-ch-ua": '"Microsoft Edge";v="113", "Chromium";v="113", "Not-A.Brand";v="24"',
     "sec-ch-ua-arch": '"x86"',
@@ -225,7 +211,7 @@ _HEADERS = {
 _HEADERS_INIT_CONVER = {
     "authority": "www.bing.com",
     "accept": "application/json",
-    "accept-language": "en-US,en;q=0.9",
+    "accept-language": "zh-CN,en;q=0.9",
     "cache-control": "max-age=0",
     "sec-ch-ua": '"Chromium";v="110", "Not A(Brand";v="24", "Microsoft Edge";v="110"',
     "sec-ch-ua-arch": '"x86"',
@@ -293,16 +279,37 @@ async def create_conversation(
             )
     if response.status != 200:
         text = await response.text()
-        raise Exception(f"Authentication failed {text}")
+        raise Exception(f"Authentication failed {text}") #todo get raised exception and return it to the bot message text
     try:
         conversation = await response.json()
     except:
         text = await response.text()
         raise Exception(text)
-    if conversation["result"]["value"] == "UnauthorizedRequest":
-        raise Exception(conversation["result"]["message"])
+    if conversation["result"]["value"] != "Success":
+        raise Exception("failed to create the conversation: message: " + conversation["result"]["message"])
     if 'X-Sydney-Encryptedconversationsignature' in response.headers:
         conversation['sec_access_token'] = response.headers['X-Sydney-Encryptedconversationsignature']
+    
+    #todo Iterates over "set-cookie" headers, parses values, and logs modified cookies.
+    # if 'set-cookie' in response.headers:
+    #     modified_cookies = {}
+    #     for cookie_header in response.headers['set-cookie']:
+    #         # Split by semicolon and select first part before semicolon
+    #         cookie_parts = cookie_header.split(';')[0].split('=')
+    #         if len(cookie_parts) == 2:
+    #             cookie_name, cookie_value = cookie_parts
+    #             # Parse cookies from string (assuming appropriate function exists)
+    #             parsed_cookie = parse_cookie(cookie_header)
+    #             if parsed_cookie:
+    #                 modified_cookies[cookie_name] = parsed_cookie
+
+    #     # Log modified cookies for further action
+    #     for cookie_name, cookie_value in modified_cookies.items():
+    #         print(f"Modified cookie: {cookie_name} = {cookie_value}")
+
+    #     # Update session cookies with modified values (if applicable)
+    #     # ... (update logic based on framework/library)
+
     return conversation
 
 
@@ -458,6 +465,7 @@ async def upload_image(filename=None, img_base64=None, proxy=None):
     async with aiohttp.ClientSession(
             headers={"Referer": "https://www.bing.com/search?q=Bing+AI&showconv=1&FORM=hpcodx"}
     ) as session:
+        timeout = aiohttp.ClientTimeout(total=90)
         url = "https://www.bing.com/images/kblob"
 
         payload = {
@@ -485,13 +493,23 @@ async def upload_image(filename=None, img_base64=None, proxy=None):
         data = aiohttp.FormData()
         data.add_field('knowledgeRequest', json.dumps(payload), content_type="application/json")
         data.add_field('imageBase64', image_base64.decode('utf-8'), content_type="application/octet-stream")
+        try:
+            async with session.post(url, data=data, proxy=proxy, timeout= timeout) as resp:
+                return (await resp.json())["blobId"]
+        except asyncio.TimeoutError:
+            raise Exception("Timedout please try again!")
 
-        async with session.post(url, data=data, proxy=proxy) as resp:
-            # print(resp.status)
-            # print(resp.headers)
-            # print(await resp.text())
-            return (await resp.json())["blobId"]
-    
+#todo image create
+# @dataclass
+# class GenerativeImage:
+#     text: str
+#     url: str
+
+# @dataclass
+# class GenerateImageResult:
+#     generative_image: GenerativeImage
+#     image_urls: list[str]
+#     # duration: float  # Representing time.Duration in Python
 # import re
 # import asyncio
 # async def generate_image(
