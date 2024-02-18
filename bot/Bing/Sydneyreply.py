@@ -171,19 +171,21 @@ class SydneyBot(Bot):
 
     def reply(self, query, context: Context = None) -> Reply:
         if context.type == ContextType.TEXT or context.type == ContextType.IMAGE_CREATE:
-            logger.info("[SYDNEY] query={}".format(query))
+            # logger.info("[SYDNEY] query={}".format(query))
             if query == self.lastquery:
                 return Reply(ReplyType.TEXT, "请耐心等待，本仙女早就看到你的消息啦!\n请不要重复提问哦!\U0001F9DA")
             else:
                 self.lastquery = query
+            
             session_id = context["session_id"]
             session = self.sessions.session_query(query, session_id)
             logger.info("[SYDNEY] session query={}".format(session.messages))
+            if  "你的言论触发了必应过滤器" in session.messages[-1]['[assistant](#message)']:
+                session.messages.pop()
             reply = None
             # clear_memory_commands = conf().get("clear_memory_commands", ["#清除记忆"])
-            #todo passive reply, if user asks the bot is alive then reply to him the message is in process
             if query == "清除记忆" or query == "清除所有":
-                #todo when say this instruction, stop any plugin and clear the session
+                #done when say this instruction, stop any plugin and clear the session
                 if query == "清除记忆":
                     self.sessions.clear_session(session_id)
                     reply = Reply(ReplyType.INFO, "记忆已清除")
@@ -207,6 +209,7 @@ class SydneyBot(Bot):
                 load_config()
                 reply = Reply(ReplyType.INFO, "配置已更新")
             elif query in ("zai","Zai","在？","在","在吗？","在嘛？","在么？","在吗","在嘛","在么","在吗?","在嘛?","在么?"):
+                #done passive reply, if user asks the bot is alive then reply to him the message is in process
                 session.messages.pop()
                 if self.current_responding_task is None:
                     return Reply(ReplyType.TEXT, "有什么问题吗？\U0001F337")
