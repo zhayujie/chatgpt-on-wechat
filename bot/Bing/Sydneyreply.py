@@ -260,8 +260,8 @@ class SydneyBot(Bot):
         """
         merge from SydneyProcess
         """
-        if retry_count > 3: #means already tried 4 times
-            #todo delete the sydney tip message and the previous user message in this situation
+        if retry_count > 2: #means already tried 3 times
+            #done delete the sydney tip message and the previous user message in this situation
             logger.warn("[SYDNEY] failed after maximum number of retry times")
             query = clip_message(query)
             self.psvmsg = True
@@ -287,6 +287,7 @@ class SydneyBot(Bot):
             # logger.info(f"[SYDNEY] session={session_message}, session_id={session_id}")
 
             imgurl = None
+            imgfailedmsg = None
             # image process
             img_cache = memory.USER_IMAGE_CACHE.get(session_id)
             if img_cache:
@@ -300,7 +301,7 @@ class SydneyBot(Bot):
                         logger.info(imgurl)
                     except Exception as e:
                         logger.info(e, imgurl)
-                        return f"你的图片太牛逼了，所以服务器拒绝了你的请求。\U0001F605"
+                        imgfailedmsg = f"\n\n以上仅对文字内容进行回复，因为你的图片太牛逼了，所以服务器拒绝了你的图片接收。\U0001F605"
 
             # webPage fetch
             webPagecache = memory.USER_WEBPAGE_CACHE.get(session_id)
@@ -404,7 +405,9 @@ class SydneyBot(Bot):
                                     logger.info(f"a pair of consective characters detected over 20 times. It is {pair}")
                                     reply = await self._chat(session, query, context, retry_count + 1)
                                     break
-                                if "suggestedResponses" in message:
+                                if "suggestedResponses" in message: #todo add suggestions 
+                                    # suggested_responses = list(
+                                    #     map(lambda x: x["text"], message["suggestedResponses"]))
                                     imgurl =None
                                     break
                         
@@ -452,6 +455,8 @@ class SydneyBot(Bot):
                 if ("自动回复机器人悉尼" not in reply) and (not self.bot_statemented):
                     self.bot_statemented = True
                     reply += bot_statement
+                if imgfailedmsg:
+                    reply += imgfailedmsg
                 # fileinfo = ""
                 # webPageinfo = ""
                 return reply
