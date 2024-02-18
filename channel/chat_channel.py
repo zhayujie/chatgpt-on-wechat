@@ -193,6 +193,7 @@ class ChatChannel(Channel):
             logger.debug("[WX] ready to handle context: type={}, content={}".format(context.type, context.content))
             if context.type == ContextType.TEXT or context.type == ContextType.IMAGE_CREATE:  # 文字和图片消息
                 context["channel"] = e_context["channel"]
+                self._send_reply(context, Reply(ReplyType.TEXT, "消息收到啦！💌\n正在思考中!💭"))
                 reply = super().build_reply_content(context.content, context)
             elif context.type == ContextType.VOICE:  # 语音消息
                 cmsg = context["msg"]
@@ -222,6 +223,7 @@ class ChatChannel(Channel):
                     else:
                         return
             elif context.type == ContextType.IMAGE:  # 图片消息，当前仅做下载保存到本地的逻辑
+                self._send_reply(context, Reply(ReplyType.TEXT, "图片我看到啦！📸\n请向我提问吧!💕"))
                 memory.USER_IMAGE_CACHE[context["session_id"]] = {
                     "path": context.content,
                     "msg": context.get("msg")
@@ -229,6 +231,7 @@ class ChatChannel(Channel):
                 logger.info(memory.USER_IMAGE_CACHE[context["session_id"]])
             elif context.type == ContextType.SHARING:  # 分享信息，当前无默认逻辑
                 logger.info(context.content)
+                self._send_reply(context, Reply(ReplyType.TEXT, "链接我看到啦！🔗\n请向我提问吧!💕"))
                 html = requests.get(context.content, proxies= {'https': conf().get('proxy') if conf().get('proxy') != '' else None}, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) '
                                 'Gecko/20100101 Firefox/113.0'})
                 soup = BeautifulSoup(html.content, features= "html.parser")
@@ -242,6 +245,7 @@ class ChatChannel(Channel):
 
             elif context.type == ContextType.FUNCTION or context.type == ContextType.FILE:  # 文件消息及函数调用等，当前无默认逻辑
                 # logger.info(context.content)
+                self._send_reply(context, Reply(ReplyType.TEXT, "文件我看到啦！📂\n请向我提问吧!💕"))
                 memory.USER_FILE_CACHE[context["session_id"]] = {
                     "path": context.content,
                     "msg": context.get("msg")
@@ -364,7 +368,6 @@ class ChatChannel(Channel):
                         if not context_queue.empty():
                             context = context_queue.get()
                             logger.debug("[WX] consume context: {}".format(context))
-                            self._send_reply(context, Reply(ReplyType.TEXT, "消息收到啦！\n正在思考中。。。")) #a tip message when bot received the user message 
                             future: Future = handler_pool.submit(self._handle, context)
                             future.add_done_callback(self._thread_pool_callback(session_id, context=context))
                             if session_id not in self.futures:
