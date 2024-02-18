@@ -179,9 +179,6 @@ class SydneyBot(Bot):
             
             session_id = context["session_id"]
             session = self.sessions.session_query(query, session_id)
-            logger.info("[SYDNEY] session query={}".format(session.messages))
-            if  "你的言论触发了必应过滤器" in session.messages[-1]['[assistant](#message)']:
-                session.messages.pop()
             reply = None
             # clear_memory_commands = conf().get("clear_memory_commands", ["#清除记忆"])
             if query == "清除记忆" or query == "清除所有":
@@ -220,10 +217,13 @@ class SydneyBot(Bot):
             if reply:
                 return reply
             try:
+                logger.info("[SYDNEY] session query={}".format(session.messages))
                 self.reply_content = asyncio.run(self.handle_async_response(session, query, context))
+                if "你的言论触发了必应过滤器" in self.reply_content:
+                    return Reply(ReplyType.TEXT, self.reply_content)
                 # if self.current_responding_task is not None:
                 #     return  [Reply(ReplyType.INFO, "本仙女看到你的消息啦！"), self.reply_content]
-                self.sessions.session_reply(self.reply_content, session_id)
+                self.sessions.session_reply(self.reply_content, session_id) #load in to the session messages
                 return Reply(ReplyType.TEXT, self.reply_content)
                 
             except Exception as e:
@@ -255,7 +255,7 @@ class SydneyBot(Bot):
         """
         merge from SydneyProcess
         """
-        if retry_count > 5:
+        if retry_count > 3:
             #todo delete the sydney tip message and the previous user message in this situation
             logger.warn("[SYDNEY] failed after maximum number of retry times")
             query = clip_message(query)
@@ -278,7 +278,7 @@ class SydneyBot(Bot):
             presession_message = session.messages
             
             session_message = cut_botstatement(presession_message, "\n\n我是自动回复机器人悉尼。\n要和我对话请在发言中@我。")
-            logger.info(f"[SYDNEY] session={session_message}, session_id={session_id}")
+            # logger.info(f"[SYDNEY] session={session_message}, session_id={session_id}")
 
             imgurl = None
             # image process
@@ -393,7 +393,12 @@ class SydneyBot(Bot):
                                 reply = ''.join([remove_extra_format(message["adaptiveCards"][0]["body"][0]["text"]) for message in response["arguments"][0]["messages"]])
                                 if "Bing" in reply or "必应" in reply:
                                     logger.info(f"Jailbreak failed!")
-                                    reply = await self._chat(query, session, context, retry_count + 1)
+                                    reply = await self._chat(session, query, context, retry_count + 1)
+                                    break
+                                result, pair = detect_chinese_char_pair(reply, 9)
+                                if result:
+                                    logger.info(f"a pair of consective characters detected over 9 times. It is {pair}")
+                                    reply = await self._chat(session, query, context, retry_count + 1)
                                     break
                                 if "suggestedResponses" in message:
                                     imgurl =None
@@ -425,21 +430,16 @@ class SydneyBot(Bot):
 
 
                     if response["type"] == 2: #todo add suggestions in the ending of the bot message
-                        result, pair = detect_chinese_char_pair(reply, 25)
-                        if result:
-                            logger.info(f"a pair of consective characters detected over 25 times. It is {pair}")
-                            reply = await self._chat(query, session, context, retry_count + 1)
-                            break
                         message = response["item"]["messages"][-1]
                         if "suggestedResponses" in message:
                             imgurl =None
                             break
                 
 
-                result, pair = detect_chinese_char_pair(reply, 25)
-                if result:
-                    logger.info(f"a pair of consective characters detected over 25 times. It is {pair}")
-                    reply = await self._chat(query, session, context, retry_count + 1)
+                # result, pair = detect_chinese_char_pair(reply, 9)
+                # if result:
+                #     logger.info(f"a pair of consective characters detected over 9 times. It is {pair}")
+                #     reply = await self._chat(session, query, context, retry_count + 1)
                 
                 replyparagraphs = reply.split("\n")  # Split into individual paragraphs
                 reply = "\n".join([p for p in replyparagraphs if "disclaimer" not in p.lower()]) 
@@ -457,7 +457,6 @@ class SydneyBot(Bot):
             #retry
             time.sleep(2)
             logger.warn(f"[SYDNEY] do retry, times={retry_count}")
-            # self._chat(query, context, retry_count + 1)
             if "throttled" in str(e) or "Throttled" in str(e):
                 logger.warn("[SYDNEY] ConnectionError: {}".format(e))
                 return "我累了，今日使用次数已达到上限，请明天再来！\U0001F916"
@@ -468,7 +467,7 @@ class SydneyBot(Bot):
             if "CAPTCHA" in str(e):
                 logger.warn("[SYDNEY] CAPTCHAError: {}".format(e))
                 return "我走丢了，请联系我的主人。\U0001F300"
-            reply = await self._chat(query, session, context, retry_count + 1)
+            reply = await self._chat(session, query, context, retry_count + 1)
             imgurl =None
             return reply
             
