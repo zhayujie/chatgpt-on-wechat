@@ -364,6 +364,7 @@ class ChatChannel(Channel):
                         if not context_queue.empty():
                             context = context_queue.get()
                             logger.debug("[WX] consume context: {}".format(context))
+                            self._send_reply(context, Reply(ReplyType.TEXT, "消息收到啦！\n正在思考中。。。")) #a tip message when bot received the user message 
                             future: Future = handler_pool.submit(self._handle, context)
                             future.add_done_callback(self._thread_pool_callback(session_id, context=context))
                             if session_id not in self.futures:
