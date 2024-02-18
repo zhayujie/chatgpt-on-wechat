@@ -6,4 +6,4 @@ class SydneySession(Session):
         super().__init__(session_id, system_prompt)
         self.model = model
         self.reset()
-     
+    
