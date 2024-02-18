@@ -159,6 +159,7 @@ def is_chinese(text):
         if '\u4e00' <= char <= '\u9fff':
             return True
     return False
+
 class SydneyBot(Bot):
     def __init__(self) -> None:
         super().__init__()
@@ -220,6 +221,8 @@ class SydneyBot(Bot):
                 logger.info("[SYDNEY] session query={}".format(session.messages))
                 self.reply_content = asyncio.run(self.handle_async_response(session, query, context))
                 if "你的言论触发了必应过滤器" in self.reply_content:
+                    return Reply(ReplyType.TEXT, self.reply_content)
+                if "记忆已清除，但是你打断了本仙女的思考! " in self.reply_content:
                     return Reply(ReplyType.TEXT, self.reply_content)
                 # if self.current_responding_task is not None:
                 #     return  [Reply(ReplyType.INFO, "本仙女看到你的消息啦！"), self.reply_content]
@@ -326,8 +329,6 @@ class SydneyBot(Bot):
             rest_messages = ""
             for singleTalk in session_message[:-1]:  # Iterate through all but the last message
                 for keyPerson, message in singleTalk.items():
-                    if ("记忆已清除，但是你打断了本仙女的思考! ") in message and keyPerson == "[assistant](#message)":
-                        continue  # Skip this message if it matches
                     rest_messages += f"\n{keyPerson}\n{message}\n"
 
 
@@ -466,7 +467,7 @@ class SydneyBot(Bot):
             #     return "我的CPU烧了，请联系我的主人。"
             if "CAPTCHA" in str(e):
                 logger.warn("[SYDNEY] CAPTCHAError: {}".format(e))
-                return "我走丢了，请联系我的主人。\U0001F300"
+                return "我走丢了，请联系我的主人。(CAPTCHA!)\U0001F300"
             reply = await self._chat(session, query, context, retry_count + 1)
             imgurl =None
             return reply
