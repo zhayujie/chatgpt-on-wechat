@@ -255,7 +255,7 @@ class SydneyBot(Bot):
         """
         merge from SydneyProcess
         """
-        if retry_count > 3:
+        if retry_count > 3: #means already tried 4 times
             #todo delete the sydney tip message and the previous user message in this situation
             logger.warn("[SYDNEY] failed after maximum number of retry times")
             query = clip_message(query)
