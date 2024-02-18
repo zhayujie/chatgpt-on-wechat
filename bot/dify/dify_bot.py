@@ -168,6 +168,7 @@ class DifyBot(Bot):
             event_name = event['event']
             if event_name == 'agent_message':
                 accumulated_agent_message += event['answer']
+                logger.debug("[DIFY] accumulated_agent_message: {}".format(accumulated_agent_message))
             elif event_name == 'agent_thought':
                 self._append_agent_message(accumulated_agent_message, merged_message)
                 accumulated_agent_message = ''
