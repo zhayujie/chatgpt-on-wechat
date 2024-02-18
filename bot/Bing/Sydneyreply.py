@@ -226,10 +226,8 @@ class SydneyBot(Bot):
                 if self.psvmsg:
                     self.psvmsg = False
                     return Reply(ReplyType.TEXT, self.reply_content)
-                #todo a seen messsage
-                # if self.current_responding_task is not None:
-                #     return  [Reply(ReplyType.INFO, "本仙女看到你的消息啦！"), self.reply_content]
-                self.sessions.session_reply(self.reply_content, session_id) #load in to the session messages
+                #done in chat_channel handle func, do sent a tip messsage after seeing user message
+                self.sessions.session_reply(self.reply_content, session_id) #load into the session messages
                 return Reply(ReplyType.TEXT, self.reply_content)
                 
             except Exception as e:
@@ -355,7 +353,7 @@ class SydneyBot(Bot):
             #     context["file"] = file_id
             # logger.info(f"[SYDNEY] query={query}, file_id={file_id}")
             
-            bot_statement = "\n\n我是自动回复机器人悉尼。\n要和我对话请在发言中@我。"
+            bot_statement = "\n\n我是你的智能助手悉尼。\n要和我对话请在发言中@我。"
 
             
             replied = False
@@ -401,9 +399,9 @@ class SydneyBot(Bot):
                                     logger.info(f"Jailbreak failed!")
                                     reply = await self._chat(session, query, context, retry_count + 1)
                                     break
-                                result, pair = detect_chinese_char_pair(reply, 9)
+                                result, pair = detect_chinese_char_pair(reply, 20)
                                 if result:
-                                    logger.info(f"a pair of consective characters detected over 9 times. It is {pair}")
+                                    logger.info(f"a pair of consective characters detected over 20 times. It is {pair}")
                                     reply = await self._chat(session, query, context, retry_count + 1)
                                     break
                                 if "suggestedResponses" in message:
