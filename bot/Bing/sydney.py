@@ -279,7 +279,7 @@ async def create_conversation(
             )
     if response.status != 200:
         text = await response.text()
-        raise Exception(f"Authentication failed {text}") #todo get raised exception and return it to the bot message text
+        raise Exception(f"Authentication failed {text}") 
     try:
         conversation = await response.json()
     except:
