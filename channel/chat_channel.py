@@ -151,6 +151,10 @@ class ChatChannel(Channel):
                     pass
                 else:
                     return None
+                
+                # if skip_reply(content, conf().get("single_chat_keywords", [])): #todo future, check keyword in single chat
+                #     return None
+                
             content = content.strip()
             img_match_prefix = check_prefix(content, conf().get("image_create_prefix"))
             if img_match_prefix:
@@ -242,7 +246,7 @@ class ChatChannel(Channel):
                 chunks = (phrase.strip() for line in lines for phrase in line.split(" "))
                 text = '\n'.join(chunk for chunk in chunks if chunk)
                 memory.USER_WEBPAGE_CACHE[context["session_id"]]= json.dumps(text, ensure_ascii= False)  
-            elif  context.type == ContextType.FILE:  # 文件消息及函数调用等，当前无默认逻辑
+            elif context.type == ContextType.FILE:  # 文件消息及函数调用等，当前无默认逻辑
                 # logger.info(context.content)
                 self._send_reply(context, Reply(ReplyType.TEXT, "文件我看到啦！📂\n请向我提问吧!💕"))
                 memory.USER_FILE_CACHE[context["session_id"]] = {
@@ -411,6 +415,13 @@ def check_prefix(content, prefix_list):
             return prefix
     return None
 
+def skip_reply(content, keywords):
+    if not keywords:
+        return False
+    for keyword in keywords:
+        if keyword in content:
+            return False
+    return True
 
 def check_contain(content, keyword_list):
     if not keyword_list:
