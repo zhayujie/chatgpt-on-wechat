@@ -403,9 +403,9 @@ class SydneyBot(Bot):
                                     logger.info(f"Jailbreak failed!")
                                     reply = await self._chat(session, query, context, retry_count + 1)
                                     break
-                                result, pair = detect_chinese_char_pair(reply, 20)
+                                result, pair = detect_chinese_char_pair(reply, 25)
                                 if result:
-                                    logger.info(f"a pair of consective characters detected over 20 times. It is {pair}")
+                                    logger.info(f"a pair of consective characters detected over 25 times. It is {pair}")
                                     reply = await self._chat(session, query, context, retry_count + 1)
                                     break
                                 if "suggestedResponses" in message: #done add suggestions 
