@@ -168,8 +168,9 @@ class SydneyBot(Bot):
         self.reply_content= None
         self.current_responding_task = None
         self.bot_statemented = False
-        self.lastquery = str(None)
+        self.lastquery = None
         self.psvmsg = False
+        self.suggestions = None
 
     def reply(self, query, context: Context = None) -> Reply:
         if context.type == ContextType.TEXT or context.type == ContextType.IMAGE_CREATE:
@@ -228,6 +229,8 @@ class SydneyBot(Bot):
                     return Reply(ReplyType.TEXT, self.reply_content)
                 #done in chat_channel handle func, do sent a tip messsage after seeing user message
                 self.sessions.session_reply(self.reply_content, session_id) #load into the session messages
+                if self.suggestions != None:
+                    self.reply_content = self.reply_content + "\n\n-----------------------------\n" + self.suggestions
                 return Reply(ReplyType.TEXT, self.reply_content)
                 
             except Exception as e:
@@ -405,9 +408,11 @@ class SydneyBot(Bot):
                                     logger.info(f"a pair of consective characters detected over 20 times. It is {pair}")
                                     reply = await self._chat(session, query, context, retry_count + 1)
                                     break
-                                if "suggestedResponses" in message: #todo add suggestions 
-                                    # suggested_responses = list(
-                                    #     map(lambda x: x["text"], message["suggestedResponses"]))
+                                if "suggestedResponses" in message: #done add suggestions 
+                                    suggested_responses = list(
+                                        map(lambda x: x["text"], message["suggestedResponses"]))
+                                    self.suggestions = "\n".join(suggested_responses)
+                                    # logger.info(self.suggestions)
                                     imgurl =None
                                     break
                         
@@ -452,7 +457,7 @@ class SydneyBot(Bot):
                 reply = "\n".join([p for p in replyparagraphs if "disclaimer" not in p.lower()]) 
                 
                 #this will be wrapped out exception if no reply returned, and in the exception the ask process will try again
-                if ("自动回复机器人悉尼" not in reply) and (not self.bot_statemented):
+                if ("我是你的智能助手悉尼" not in reply) and (not self.bot_statemented):
                     self.bot_statemented = True
                     reply += bot_statement
                 if imgfailedmsg:
