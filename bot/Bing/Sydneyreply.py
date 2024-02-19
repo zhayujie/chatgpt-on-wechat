@@ -198,14 +198,14 @@ class SydneyBot(Bot):
                 if self.current_responding_task is not None:
                     self.current_responding_task.cancel()
                     return
-            elif query == "撤销" or query == "撤回":
+            elif query == "撤销" or query == "撤回" or query == "revoke" or query == "Revoke":#todo cancel the current process as well
                 session.messages.pop()
                 # has_assistant_message = any("[assistant](#message)" in item.keys() for item in session.messages)
                 users_arr = [obj for obj in session.messages if "[user](#message)" in obj.keys()]
                 if len(users_arr) < 1:
                     passivereply = Reply(ReplyType.INFO, "没有可撤回的消息!")
                 session.messages = session.messages[:session.messages.index(users_arr[-1])]
-                passivereply = Reply(ReplyType.INFO, f"该条消息已撤销!\n\n({clip_message(users_arr[-1]['[user](#message)'])}...)")
+                passivereply = Reply(ReplyType.INFO, f"该条消息已撤销!\nThe previous message is cancelled. \n\n({clip_message(users_arr[-1]['[user](#message)'])}...)")
             elif query == "更新配置":
                 load_config()
                 passivereply = Reply(ReplyType.INFO, "配置已更新")
