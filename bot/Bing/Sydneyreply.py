@@ -303,8 +303,7 @@ class SydneyBot(Bot):
                         imgurl = "https://www.bing.com/images/blob?bcid=" + imgurlsuffix
                         logger.info(imgurl)
                     except Exception as e:
-                        logger.info(e, imgurl)
-                        imgfailedmsg = f"\n\n以上仅对文字内容进行回复，因为你的图片太牛逼了，所以服务器拒绝了你的图片接收。\U0001F605"
+                        imgfailedmsg = f"\n\n以上仅对文字内容进行回复，因为你的图片太牛逼了，所以服务器拒绝了你的图片接收。\n({e.args[0]})\U0001F605"
 
             # webPage fetch
             webPagecache = memory.USER_WEBPAGE_CACHE.get(session_id)
