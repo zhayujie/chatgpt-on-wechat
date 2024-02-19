@@ -168,8 +168,8 @@ class Config(dict):
             d = {}
         for k, v in d.items():
             self[k] = v
-        # user_datas: 用户数据，key为用户名，value为用户数据，也是dict
-        self.user_datas = {}
+        # user_data: 用户数据，key为用户名，value为用户数据，也是dict
+        self.user_data = {}
 
     def __getitem__(self, key):
         if key not in available_setting:
@@ -191,28 +191,28 @@ class Config(dict):
 
     # Make sure to return a dictionary to ensure atomic
     def get_user_data(self, user) -> dict:
-        if self.user_datas.get(user) is None:
-            self.user_datas[user] = {}
-        return self.user_datas[user]
+        if self.user_data.get(user) is None:
+            self.user_data[user] = {}
+        return self.user_data[user]
 
-    def load_user_datas(self):
+    def load_user_data(self):
         try:
-            with open(os.path.join(get_appdata_dir(), "user_datas.pkl"), "rb") as f:
-                self.user_datas = pickle.load(f)
-                logger.info("[Config] User datas loaded.")
+            with open(os.path.join(get_appdata_dir(), "user_data.pkl"), "rb") as f:
+                self.user_data = pickle.load(f)
+                logger.info("[Config] User data loaded.")
         except FileNotFoundError as e:
-            logger.info("[Config] User datas file not found, ignore.")
+            logger.info("[Config] User data file not found, ignore.")
         except Exception as e:
-            logger.info("[Config] User datas error: {}".format(e))
-            self.user_datas = {}
+            logger.info("[Config] User data error: {}".format(e))
+            self.user_data = {}
 
-    def save_user_datas(self):
+    def save_user_data(self):
         try:
-            with open(os.path.join(get_appdata_dir(), "user_datas.pkl"), "wb") as f:
-                pickle.dump(self.user_datas, f)
-                logger.info("[Config] User datas saved.")
+            with open(os.path.join(get_appdata_dir(), "user_data.pkl"), "wb") as f:
+                pickle.dump(self.user_data, f)
+                logger.info("[Config] User data saved.")
         except Exception as e:
-            logger.info("[Config] User datas error: {}".format(e))
+            logger.info("[Config] User data error: {}".format(e))
 
 
 config = Config()
@@ -253,7 +253,7 @@ def load_config():
 
     logger.info("[INIT] load config: {}".format(config))
 
-    config.load_user_datas()
+    config.load_user_data()
 
 
 def get_root():
