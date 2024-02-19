@@ -255,6 +255,8 @@ class ChatChannel(Channel):
                 }
                 logger.info(memory.USER_FILE_CACHE[context["session_id"]])
             # elif context.type == ContextType.FUNCTION:
+            elif context.type == ContextType.PATPAT:
+                self._send_reply(context, Reply(ReplyType.TEXT, "我在这呢！💕"))
             else:
                 logger.warning("[WX] unknown context type: {}".format(context.type))
                 return
