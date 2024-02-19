@@ -199,7 +199,7 @@ class ChatChannel(Channel):
                 context["channel"] = e_context["channel"]
                 #todo make the certain instruction loaded in the config.json instead writing it in the code
                 if context.content not in \
-                ("zai","Zai","在？","在","在吗？","在嘛？","在么？","在吗","在嘛","在么","在吗?","在嘛?","在么?"):
+                ("zai","Zai","在？","在","在吗？","在嘛？","在么？","在吗","在嘛","在么","在吗?","在嘛?","在么?", "撤回", "撤销", "revoke", "Revoke", "清楚记忆", "清除所有"):
                     self._send_reply(context, Reply(ReplyType.TEXT, "消息收到啦！💌\n正在思考中!💭"))
                 reply = super().build_reply_content(context.content, context)
             elif context.type == ContextType.VOICE:  # 语音消息
