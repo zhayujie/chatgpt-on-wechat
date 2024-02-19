@@ -242,8 +242,7 @@ class ChatChannel(Channel):
                 chunks = (phrase.strip() for line in lines for phrase in line.split(" "))
                 text = '\n'.join(chunk for chunk in chunks if chunk)
                 memory.USER_WEBPAGE_CACHE[context["session_id"]]= json.dumps(text, ensure_ascii= False)  
-
-            elif context.type == ContextType.FUNCTION or context.type == ContextType.FILE:  # 文件消息及函数调用等，当前无默认逻辑
+            elif  context.type == ContextType.FILE:  # 文件消息及函数调用等，当前无默认逻辑
                 # logger.info(context.content)
                 self._send_reply(context, Reply(ReplyType.TEXT, "文件我看到啦！📂\n请向我提问吧!💕"))
                 memory.USER_FILE_CACHE[context["session_id"]] = {
@@ -251,6 +250,7 @@ class ChatChannel(Channel):
                     "msg": context.get("msg")
                 }
                 logger.info(memory.USER_FILE_CACHE[context["session_id"]])
+            # elif context.type == ContextType.FUNCTION:
             else:
                 logger.warning("[WX] unknown context type: {}".format(context.type))
                 return
