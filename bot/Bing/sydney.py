@@ -14,7 +14,7 @@ import aiohttp
 import binascii
 import asyncio
 
-_DEBUG = True
+_DEBUG = False
 
 _PROXY = urllib.request.getproxies().get("https")
 
@@ -27,6 +27,7 @@ _BASE_OPTION_SETS = [
 	# "nojbf"
 
     "fluxcopilot",
+    # no jailbreak filter
     "nojbf",
     "iyxapbing",
     "iycapbing",
@@ -35,6 +36,7 @@ _BASE_OPTION_SETS = [
     "disable_telemetry",
     "machine_affinity",
     "streamf",
+    # code interpreter
     "codeint",
     "langdtwb",
     "fdwtlst",
