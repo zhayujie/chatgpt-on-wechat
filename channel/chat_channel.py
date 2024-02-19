@@ -197,7 +197,10 @@ class ChatChannel(Channel):
             logger.debug("[WX] ready to handle context: type={}, content={}".format(context.type, context.content))
             if context.type == ContextType.TEXT or context.type == ContextType.IMAGE_CREATE:  # 文字和图片消息
                 context["channel"] = e_context["channel"]
-                self._send_reply(context, Reply(ReplyType.TEXT, "消息收到啦！💌\n正在思考中!💭"))
+                #todo make the certain instruction loaded in the config.json instead writing it in the code
+                if context.content not in \
+                ("zai","Zai","在？","在","在吗？","在嘛？","在么？","在吗","在嘛","在么","在吗?","在嘛?","在么?"):
+                    self._send_reply(context, Reply(ReplyType.TEXT, "消息收到啦！💌\n正在思考中!💭"))
                 reply = super().build_reply_content(context.content, context)
             elif context.type == ContextType.VOICE:  # 语音消息
                 cmsg = context["msg"]
@@ -255,8 +258,6 @@ class ChatChannel(Channel):
                 }
                 logger.info(memory.USER_FILE_CACHE[context["session_id"]])
             # elif context.type == ContextType.FUNCTION:
-            elif context.type == ContextType.PATPAT:
-                self._send_reply(context, Reply(ReplyType.TEXT, "我在这呢！💕"))
             else:
                 logger.warning("[WX] unknown context type: {}".format(context.type))
                 return
