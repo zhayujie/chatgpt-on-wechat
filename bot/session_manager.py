@@ -67,13 +67,12 @@ class SessionManager(object):
     def session_query(self, query, session_id):
         session = self.build_session(session_id)
         session.add_query(query)
-        #no need to calculate tokens for sydneybot
-        # try:
-        #     max_tokens = conf().get("conversation_max_tokens", 1000)
-        #     total_tokens = session.discard_exceeding(max_tokens, None)
-        #     logger.debug("prompt tokens used={}".format(total_tokens))
-        # except Exception as e:
-        #     logger.warning("Exception when counting tokens precisely for prompt: {}".format(str(e)))
+        try:
+            max_tokens = conf().get("conversation_max_tokens", 1000)
+            total_tokens = session.discard_exceeding(max_tokens, None)
+            logger.debug("prompt tokens used={}".format(total_tokens))
+        except Exception as e:
+            logger.warning("Exception when counting tokens precisely for prompt: {}".format(str(e)))
         return session
 
     def session_reply(self, reply, session_id, total_tokens=None):
