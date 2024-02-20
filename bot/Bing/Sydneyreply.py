@@ -181,6 +181,7 @@ class SydneyBot(Bot):
 
             #avoid responding the same question
             if query == self.lastquery:
+                session.messages.pop()
                 passivereply = Reply(ReplyType.TEXT, "请耐心等待，本仙女早就看到你的消息啦!\n请不要重复提问哦!\U0001F9DA")
             else:
                 self.lastquery = query
@@ -230,7 +231,11 @@ class SydneyBot(Bot):
                 #done in chat_channel handle func, do sent a tip messsage after seeing user message
                 self.sessions.session_reply(self.reply_content, session_id) #load into the session messages
                 if self.suggestions != None:
-                    self.reply_content = self.reply_content + "\n\n-----------------------------\n" + self.suggestions
+                    self.reply_content = self.reply_content + "\n\n----------回复建议------------\n" + self.suggestions
+                if not self.bot_statemented:
+                    credit = conf().get("sydney_credit")
+                    self.reply_content += credit
+                    self.bot_statemented = True
                 return Reply(ReplyType.TEXT, self.reply_content)
                 
             except Exception as e:
@@ -455,8 +460,7 @@ class SydneyBot(Bot):
                 reply = "\n".join([p for p in replyparagraphs if "disclaimer" not in p.lower()]) 
                 
                 #this will be wrapped out exception if no reply returned, and in the exception the ask process will try again
-                if ("我是你的智能助手悉尼" not in reply) and (not self.bot_statemented):
-                    self.bot_statemented = True
+                if (bot_statement not in reply) and (not self.bot_statemented):
                     reply += bot_statement
                 if imgfailedmsg:
                     reply += imgfailedmsg
