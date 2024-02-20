@@ -198,15 +198,17 @@ class SydneyBot(Bot):
                 #done when an async thread is in processing user can stop the process midway      
                 if self.current_responding_task is not None:
                     self.current_responding_task.cancel()
-                    return
             elif query == "撤销" or query == "撤回" or query == "revoke" or query == "Revoke":#todo cancel the current process as well
                 session.messages.pop()
                 # has_assistant_message = any("[assistant](#message)" in item.keys() for item in session.messages)
                 users_arr = [obj for obj in session.messages if "[user](#message)" in obj.keys()]
                 if len(users_arr) < 1:
                     passivereply = Reply(ReplyType.INFO, "没有可撤回的消息!")
+                    return passivereply
                 session.messages = session.messages[:session.messages.index(users_arr[-1])]
                 passivereply = Reply(ReplyType.INFO, f"该条消息已撤销!\nThe previous message is cancelled. \n\n({clip_message(users_arr[-1]['[user](#message)'])}...)")
+                if self.current_responding_task is not None:
+                    self.current_responding_task.cancel()
             elif query == "更新配置":
                 load_config()
                 passivereply = Reply(ReplyType.INFO, "配置已更新")
@@ -240,6 +242,7 @@ class SydneyBot(Bot):
                 
             except Exception as e:
                 logger.error(e)
+                session.messages.pop()
                 return Reply(ReplyType.TEXT, "我脑壳短路了，让我休息哈再问我。\U0001F64F")
         # #todo IMAGE_CREATE    
         # elif context.type == ContextType.IMAGE_CREATE:
@@ -259,7 +262,7 @@ class SydneyBot(Bot):
             reply_content = await self.current_responding_task
         except asyncio.CancelledError:
             self.psvmsg = True
-            return "记忆已清除，但是你打断了本仙女的思考! \U0001F643"
+            return "但是你打断了本仙女的思考! \U0001F643"
         self.current_responding_task = None
         return reply_content
         
@@ -404,13 +407,11 @@ class SydneyBot(Bot):
                                 reply = ''.join([remove_extra_format(message["adaptiveCards"][0]["body"][0]["text"]) for message in response["arguments"][0]["messages"]])
                                 if "Bing" in reply or "必应" in reply:
                                     logger.info(f"Jailbreak failed!")
-                                    reply = await self._chat(session, query, context, retry_count + 1)
-                                    break
+                                    raise Exception
                                 result, pair = detect_chinese_char_pair(reply, 25)
                                 if result:
                                     logger.info(f"a pair of consective characters detected over 25 times. It is {pair}")
-                                    reply = await self._chat(session, query, context, retry_count + 1)
-                                    break
+                                    raise Exception
                                 if "suggestedResponses" in message: #done add suggestions 
                                     suggested_responses = list(
                                         map(lambda x: x["text"], message["suggestedResponses"]))
@@ -474,7 +475,7 @@ class SydneyBot(Bot):
             time.sleep(2)
             #todo reply a retrying message
             logger.warn(f"[SYDNEY] do retry, times={retry_count}")
-            context.get("channel").send(Reply(ReplyType.TEXT), f"[SYDNEY] do retry, times={retry_count}")
+            context.get("channel").send(Reply(ReplyType.INFO, f"该消息的回复正在重试中!\n({clip_message(query)}...)\n\n当前次数为: {retry_count}"), context)
             if "throttled" in str(e) or "Throttled" in str(e):
                 logger.warn("[SYDNEY] ConnectionError: {}".format(e))
                 return "我累了，今日使用次数已达到上限，请明天再来！\U0001F916"
