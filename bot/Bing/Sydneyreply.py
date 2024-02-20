@@ -198,7 +198,7 @@ class SydneyBot(Bot):
                 #done when an async thread is in processing user can stop the process midway      
                 if self.current_responding_task is not None:
                     self.current_responding_task.cancel()
-            elif query == "撤销" or query == "撤回" or query == "revoke" or query == "Revoke":#todo cancel the current process as well
+            elif query == "撤销" or query == "撤回" or query == "revoke" or query == "Revoke":#done cancel the current process as well
                 session.messages.pop()
                 # has_assistant_message = any("[assistant](#message)" in item.keys() for item in session.messages)
                 users_arr = [obj for obj in session.messages if "[user](#message)" in obj.keys()]
@@ -445,7 +445,7 @@ class SydneyBot(Bot):
                         #         # self.send_image(context.get("channel"), context, response["choices"][0].get("img_urls"))
 
 
-                    if response["type"] == 2: #todo add suggestions in the ending of the bot message
+                    if response["type"] == 2: 
                         message = response["item"]["messages"][-1]
                         if "suggestedResponses" in message:
                             imgurl =None
@@ -473,7 +473,7 @@ class SydneyBot(Bot):
             logger.exception(e)
             #retry
             time.sleep(2)
-            #todo reply a retrying message
+            #done reply a retrying message
             logger.warn(f"[SYDNEY] do retry, times={retry_count}")
             context.get("channel").send(Reply(ReplyType.INFO, f"该消息的回复正在重试中!\n({clip_message(query)}...)\n\n当前次数为: {retry_count}"), context)
             if "throttled" in str(e) or "Throttled" in str(e):
