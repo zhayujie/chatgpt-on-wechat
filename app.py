@@ -18,7 +18,7 @@ def sigterm_handler_wrap(_signo):
     def func(_signo, _stack_frame):
         logger.info("signal {} received, exiting...".format(_signo))
         conf().save_user_datas()
-        if callable(old_handler):  #  check old_handler
+        if callable(old_handler):  # check old_handler
             return old_handler(_signo, _stack_frame)
         sys.exit(0)
 
@@ -28,7 +28,7 @@ def sigterm_handler_wrap(_signo):
 def start_channel(channel_name: str):
     channel = channel_factory.create_channel(channel_name)
     if channel_name in ["wx", "wxy", "terminal", "wechatmp", "wechatmp_service", "wechatcom_app", "wework",
-                        const.FEISHU, const.DINGTALK]:
+                        "wechatcom_service", const.FEISHU, const.DINGTALK]:
         PluginManager().load_plugins()
 
     if conf().get("use_linkai"):

@@ -13,9 +13,11 @@ import requests
 from common import const
 import datetime, random
 
+
 class OpenaiVoice(Voice):
     def __init__(self):
         openai.api_key = conf().get("open_ai_api_key")
+        openai.api_base = conf().get("open_ai_api_base") or "https://api.openai.com/v1"
 
     def voiceToText(self, voice_file):
         logger.debug("[Openai] voice file name={}".format(voice_file))
@@ -29,7 +31,6 @@ class OpenaiVoice(Voice):
             reply = Reply(ReplyType.ERROR, "我暂时还无法听清您的语音，请稍后再试吧~")
         finally:
             return reply
-
 
     def textToVoice(self, text):
         try:
@@ -45,7 +46,8 @@ class OpenaiVoice(Voice):
                 'voice': conf().get("tts_voice_id") or "alloy"
             }
             response = requests.post(url, headers=headers, json=data)
-            file_name = "tmp/" + datetime.datetime.now().strftime('%Y%m%d%H%M%S') + str(random.randint(0, 1000)) + ".mp3"
+            file_name = "tmp/" + datetime.datetime.now().strftime('%Y%m%d%H%M%S') + str(
+                random.randint(0, 1000)) + ".mp3"
             logger.debug(f"[OPENAI] text_to_Voice file_name={file_name}, input={text}")
             with open(file_name, 'wb') as f:
                 f.write(response.content)
