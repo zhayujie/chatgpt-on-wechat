@@ -92,7 +92,7 @@ class LinkAIBot(Bot):
                 "frequency_penalty": conf().get("frequency_penalty", 0.0),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
                 "presence_penalty": conf().get("presence_penalty", 0.0),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
                 "session_id": session_id,
-                "channel_type": conf().get("channel_type")
+                "channel_type": conf().get("channel_type", "wx")
             }
             try:
                 from linkai import LinkAIClient
