@@ -49,7 +49,7 @@ apt-get install libavcodec-extra
 - 在程序根目录`config.json`中增加配置（**去掉注释**），`wechatcomapp_aes_key`是当前页面的`wechatcomapp_aes_key`
 
 ```python
-    "channel_type": "wechatcom_app",
+    "channel_type": "wechatcom_service",
     "wechatcom_corp_id": "",  # 企业微信公司的corpID
     "wechatcomapp_token": "",  # 企业微信app的token
     "wechatcomapp_port": 9898,  # 企业微信app的服务端口, 不需要端口转发
