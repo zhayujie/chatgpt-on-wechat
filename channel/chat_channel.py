@@ -197,9 +197,9 @@ class ChatChannel(Channel):
             logger.debug("[WX] ready to handle context: type={}, content={}".format(context.type, context.content))
             if context.type == ContextType.TEXT or context.type == ContextType.IMAGE_CREATE:  # 文字和图片消息
                 context["channel"] = e_context["channel"]
-                #todo make the certain instruction loaded in the config.json instead writing it in the code
-                if context.content not in \
-                ("zai","Zai","在？","在","在吗？","在嘛？","在么？","在吗","在嘛","在么","在吗?","在嘛?","在么?", "撤回", "撤销", "revoke", "Revoke", "清楚记忆", "清除所有"):
+                #done make the certain instruction loaded in the config.json instead writing it in the code
+                sydneykeywords = conf().get("sydney_keywords")
+                if context.content not in sydneykeywords:
                     self._send_reply(context, Reply(ReplyType.TEXT, "消息收到啦！💌\n正在思考中!💭"))
                 reply = super().build_reply_content(context.content, context)
             elif context.type == ContextType.VOICE:  # 语音消息
@@ -230,12 +230,15 @@ class ChatChannel(Channel):
                     else:
                         return
             elif context.type == ContextType.IMAGE:  # 图片消息，当前仅做下载保存到本地的逻辑
+                send_interval = conf().get("sydney_image_send_interval")
                 self._send_reply(context, Reply(ReplyType.TEXT, "图片我看到啦！📸\n请向我提问吧!💕"))
                 memory.USER_IMAGE_CACHE[context["session_id"]] = {
                     "path": context.content,
                     "msg": context.get("msg")
                 }
                 logger.info(memory.USER_IMAGE_CACHE[context["session_id"]])
+                if send_interval:
+                    time.sleep(send_interval)
             elif context.type == ContextType.SHARING:  # 分享信息，当前无默认逻辑
                 logger.info(context.content)
                 self._send_reply(context, Reply(ReplyType.TEXT, "链接我看到啦！🔗\n请向我提问吧!💕"))
