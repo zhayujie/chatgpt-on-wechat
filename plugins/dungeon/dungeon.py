@@ -104,7 +104,7 @@ class Dungeon(Plugin):
                 e_context.action = EventAction.BREAK  # 事件结束，不跳过处理context的默认逻辑
 
     def get_help_text(self, **kwargs):
-        help_text = "可以和Sydney一起玩文字冒险游戏。\n"
+        help_text = "可以和机器人一起玩文字冒险游戏。\n"
         if kwargs.get("verbose") != True:
             return help_text
         trigger_prefix = conf().get("plugin_trigger_prefix", "$")
