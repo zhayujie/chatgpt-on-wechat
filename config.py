@@ -159,7 +159,12 @@ available_setting = {
     "linkai_api_key": "",
     "linkai_app_code": "",
     "linkai_api_base": "https://api.link-ai.chat",  # linkAI服务地址，若国内无法访问或延迟较高可改为 https://api.link-ai.tech
+    # Sydneybot Config
+    "sydney_image_send_interval": 1,
+    "sydney_keywords": ["zai","Zai","在？","在","在吗？","在嘛？","在么？","在吗","在嘛","在么","在吗?","在嘛?","在么?", "撤回", "撤销", "revoke", "Revoke", "清楚记忆", "清除所有"],
+    "sydney_statement": "\n\n我是你的智能助手悉尼。\n要和我对话请在发言中@我。\n--------------------------------\n(开发者有话说：)\n如果你觉得Sydney还不错，Sydney同时还支持私人定制，让她变成你设定的个人角色，欢迎添加我微信咨询更多:\nnope_nope_nope_nope(直接搜索该昵称即可)\n\n#MITLicense\n#RajayouxAllRightsReserved!"
 }
+#todo sydney donate function by sending a payment image after statement， reply contact card
 
 
 class Config(dict):
