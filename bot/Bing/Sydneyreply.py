@@ -167,10 +167,10 @@ class SydneyBot(Bot):
         self.args = {}
         self.reply_content= None
         self.current_responding_task = None
-        self.bot_statemented = False
         self.lastquery = None
         self.psvmsg = False
         self.suggestions = None
+        self.lastsession_id = None
 
     def reply(self, query, context: Context = None) -> Reply:
         if context.type == ContextType.TEXT or context.type == ContextType.IMAGE_CREATE:
@@ -180,11 +180,12 @@ class SydneyBot(Bot):
             passivereply = None
 
             #avoid responding the same question
-            if query == self.lastquery:
+            if query == self.lastquery and session_id == self.lastsession_id:
                 session.messages.pop()
                 passivereply = Reply(ReplyType.TEXT, "请耐心等待，本仙女早就看到你的消息啦!\n请不要重复提问哦!\U0001F9DA")
             else:
                 self.lastquery = query
+                self.lastsession_id = session_id
             
             if query == "清除记忆" or query == "清除所有":
                 #when say this instruction, stop any plugin and clear the session messages
@@ -194,7 +195,6 @@ class SydneyBot(Bot):
                 elif query == "清除所有":
                     self.sessions.clear_all_session()
                     passivereply = Reply(ReplyType.INFO, "所有人记忆已清除")
-                self.bot_statemented = False
                 #done when an async thread is in processing user can stop the process midway      
                 if self.current_responding_task is not None:
                     self.current_responding_task.cancel()
@@ -234,12 +234,11 @@ class SydneyBot(Bot):
                 self.sessions.session_reply(self.reply_content, session_id) #load into the session messages
                 if self.suggestions != None:
                     self.reply_content = self.reply_content + "\n\n----------回复建议------------\n" + self.suggestions
-                if not self.bot_statemented:
+                if len(session.messages) == 2:#done locate the first time message by the session_messages
                     credit = conf().get("sydney_credit")
                     self.reply_content += credit
                     qrpayimg = open('F:\GitHub\chatgpt-on-wechat\wechatdDonate.jpg', 'rb')
                     qridimg = open('F:\GitHub\chatgpt-on-wechat\wechatID.jpg', 'rb')
-                    self.bot_statemented = True
                     context.get("channel").send(Reply(ReplyType.TEXT, self.reply_content), context)
                     context.get("channel").send(Reply(ReplyType.IMAGE, qridimg), context)
                     return Reply(ReplyType.IMAGE, qrpayimg)
@@ -466,7 +465,7 @@ class SydneyBot(Bot):
                 reply = "\n".join([p for p in replyparagraphs if "disclaimer" not in p.lower()]) 
                 
                 #this will be wrapped out exception if no reply returned, and in the exception the ask process will try again
-                if (bot_statement not in reply) and (not self.bot_statemented):
+                if (bot_statement not in reply) and (len(session.messages) == 1):
                     reply += bot_statement
                 if imgfailedmsg:
                     reply += imgfailedmsg
