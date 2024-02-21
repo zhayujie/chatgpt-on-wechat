@@ -225,7 +225,7 @@ class SydneyBot(Bot):
                 return passivereply
             
             try:
-                logger.info("[SYDNEY] session query={}".format(session.messages))
+                logger.info("[SYDNEY] session query={}, bot_statement hasn't been cut...".format(session.messages))
                 self.reply_content = asyncio.run(self.handle_async_response(session, query, context))
                 if self.psvmsg:
                     self.psvmsg = False
@@ -237,7 +237,12 @@ class SydneyBot(Bot):
                 if not self.bot_statemented:
                     credit = conf().get("sydney_credit")
                     self.reply_content += credit
+                    qrpayimg = open('F:\GitHub\chatgpt-on-wechat\wechatdDonate.jpg', 'rb')
+                    qridimg = open('F:\GitHub\chatgpt-on-wechat\wechatID.jpg', 'rb')
                     self.bot_statemented = True
+                    context.get("channel").send(Reply(ReplyType.TEXT, self.reply_content), context)
+                    context.get("channel").send(Reply(ReplyType.IMAGE, qridimg), context)
+                    return Reply(ReplyType.IMAGE, qrpayimg)
                 return Reply(ReplyType.TEXT, self.reply_content)
                 
             except Exception as e:
