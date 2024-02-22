@@ -246,7 +246,6 @@ class SydneyBot(Bot):
                 
             except Exception as e:
                 logger.error(e)
-                session.messages.pop()
                 if len(session.messages) == 2:
                     context.get("channel").send(Reply(ReplyType.IMAGE, qridimg), context)
                     return Reply(ReplyType.IMAGE, qrpayimg)
@@ -533,7 +532,7 @@ class SydneyBot(Bot):
             # Check if the size is larger than 1MB
             if original_size > 1024 * 1024:
                 # Calculate the compression ratio
-                ratio = (1024 * 1024) / original_size * 0.5
+                ratio = (1024 * 1024) / original_size * 0.4
 
                 # Resize the image proportionally
                 width, height = image.size
