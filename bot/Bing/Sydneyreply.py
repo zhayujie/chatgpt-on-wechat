@@ -412,7 +412,7 @@ class SydneyBot(Bot):
                                 reply = ""
                                 # reply = ''.join([remove_extra_format(message["text"]) for message in response["arguments"][0]["messages"]])
                                 reply = ''.join([remove_extra_format(message["adaptiveCards"][0]["body"][0]["text"]) for message in response["arguments"][0]["messages"]])
-                                if "Bing" in reply or "必应" in reply:
+                                if "Bing" in reply or "必应" in reply or "Copilot" in reply:
                                     logger.info(f"Jailbreak failed!")
                                     raise Exception
                                 result, pair = detect_chinese_char_pair(reply, 25)
