@@ -14,7 +14,9 @@ import aiohttp
 import binascii
 import asyncio
 
-_DEBUG = False
+from config import conf
+
+_DEBUG = conf().get("sydney_debug")
 
 _PROXY = urllib.request.getproxies().get("https")
 
