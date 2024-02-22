@@ -247,6 +247,9 @@ class SydneyBot(Bot):
             except Exception as e:
                 logger.error(e)
                 session.messages.pop()
+                if len(session.messages) == 2:
+                    context.get("channel").send(Reply(ReplyType.IMAGE, qridimg), context)
+                    return Reply(ReplyType.IMAGE, qrpayimg)
                 return Reply(ReplyType.TEXT, "我脑壳短路了，让我休息哈再问我。\U0001F64F")
         # #todo IMAGE_CREATE    
         # elif context.type == ContextType.IMAGE_CREATE:
