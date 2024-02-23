@@ -38,8 +38,8 @@ class DifyBot(Bot):
             if reply:
                 return reply
             # TODO: 适配除微信以外的其他channel
-            user = context["msg"].other_user_nickname
-            session = self.sessions.get_session(session_id, user)
+            # user = context["msg"].other_user_nickname
+            session = self.sessions.get_session(session_id, 'hfy')
             logger.debug(f"[DIFY] session={session} query={query}")
 
             reply, err = self._reply(query, session, context)
@@ -160,15 +160,17 @@ class DifyBot(Bot):
                 if event:
                     events.append(event)
 
-        conversation_id = events[0]['conversation_id']
-
         merged_message = []
         accumulated_agent_message = ''
+        conversation_id = None
         for event in events:
             event_name = event['event']
             if event_name == 'agent_message':
                 accumulated_agent_message += event['answer']
                 logger.debug("[DIFY] accumulated_agent_message: {}".format(accumulated_agent_message))
+                # 保存conversation_id
+                if not conversation_id:
+                    conversation_id = event['conversation_id']
             elif event_name == 'agent_thought':
                 self._append_agent_message(accumulated_agent_message, merged_message)
                 accumulated_agent_message = ''
@@ -189,7 +191,10 @@ class DifyBot(Bot):
                 break
             else:
                 logger.warn("[DIFY] unknown event: {}".format(event))
-
+        
+        if not conversation_id:
+            raise Exception("conversation_id not found")
+        
         return merged_message, conversation_id
 
     def _append_agent_message(self, accumulated_agent_message,  merged_message):
