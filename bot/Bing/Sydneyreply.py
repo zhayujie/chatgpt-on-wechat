@@ -182,7 +182,7 @@ class SydneyBot(Bot):
             #avoid responding the same question
             if query == self.lastquery and session_id == self.lastsession_id:
                 session.messages.pop()
-                passivereply = Reply(ReplyType.TEXT, "请耐心等待，本仙女早就看到你的消息啦!\n请不要重复提问哦!\U0001F9DA")
+                passivereply = Reply(ReplyType.TEXT, f"请耐心等待，本仙女早就看到你的消息啦!\n请不要重复提问哦!\U0001F9DA \n\n重复的提问:{clip_message(self.lastquery)}...")
             else:
                 self.lastquery = query
                 self.lastsession_id = session_id
@@ -229,6 +229,10 @@ class SydneyBot(Bot):
                 self.reply_content = asyncio.run(self.handle_async_response(session, query, context))
                 if self.psvmsg:
                     self.psvmsg = False
+                    curtusers_arr = [obj for obj in session.messages if "[user](#message)" in obj.keys()]
+                    if len(curtusers_arr) > 1:
+                        second_last_usermsg = curtusers_arr[-2]
+                        self.lastquery = list(second_last_usermsg.values())[-1]
                     return Reply(ReplyType.TEXT, self.reply_content)
                 #done in chat_channel handle func, do sent a tip messsage after seeing user message
                 self.sessions.session_reply(self.reply_content, session_id) #load into the session messages
@@ -249,7 +253,7 @@ class SydneyBot(Bot):
                 if len(session.messages) == 2:
                     context.get("channel").send(Reply(ReplyType.IMAGE, qridimg), context)
                     return Reply(ReplyType.IMAGE, qrpayimg)
-                return Reply(ReplyType.TEXT, "我脑壳短路了，让我休息哈再问我。\U0001F64F")
+                return Reply(ReplyType.TEXT, f"我脑壳短路了，让我休息哈再问我。\U0001F64F \n\nDebugger info:\n{e}")
         # #todo IMAGE_CREATE    
         # elif context.type == ContextType.IMAGE_CREATE:
         #     ok, res = self.create_img(query, 0)
@@ -282,6 +286,10 @@ class SydneyBot(Bot):
             logger.warn("[SYDNEY] failed after maximum number of retry times")
             query = clip_message(query)
             self.psvmsg = True
+            # if len(session.messages) < 2:
+            #     self.lastquery = None
+            # else:
+            #     self.lastquery = session.messages[-2]['[user](#message)']
             return f"({query}...)\n抱歉，你的言论触发了必应过滤器，请换一种方式提问吧。\n\n这条回复是预置的，仅用于提醒此情况下虽然召唤了bot也无法回复。\n" 
         
         sydney_prompt = conf().get("character_desc")
@@ -481,7 +489,7 @@ class SydneyBot(Bot):
             time.sleep(2)
             #done reply a retrying message
             logger.warn(f"[SYDNEY] do retry, times={retry_count}")
-            context.get("channel").send(Reply(ReplyType.INFO, f"该消息的回复正在重试中!\n({clip_message(query)}...)\n\n当前次数为: {retry_count}"), context)
+            context.get("channel").send(Reply(ReplyType.INFO, f"该消息的回复正在重试中!\n({clip_message(query)}...)\n\n当前次数为: {retry_count} \n\nDebugger info:\n{e}"), context)
             if "throttled" in str(e) or "Throttled" in str(e):
                 logger.warn("[SYDNEY] ConnectionError: {}".format(e))
                 return "我累了，今日使用次数已达到上限，请明天再来！\U0001F916"
