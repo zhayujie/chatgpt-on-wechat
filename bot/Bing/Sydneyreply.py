@@ -238,10 +238,17 @@ class SydneyBot(Bot):
                 self.sessions.session_reply(self.reply_content, session_id) #load into the session messages
                 if self.suggestions != None:
                     self.reply_content = self.reply_content + "\n\n----------回复建议------------\n" + self.suggestions
-                if len(session.messages) == 2:#done locate the first time message by the session_messages
-                    credit = conf().get("sydney_credit")
-                    qrpayimg = open('F:\GitHub\chatgpt-on-wechat\wechatdDonate.jpg', 'rb')
-                    qridimg = open('F:\GitHub\chatgpt-on-wechat\wechatID.jpg', 'rb')
+                try:
+                    if len(session.messages) == 2:#done locate the first time message by the session_messages
+                        credit = conf().get("sydney_credit")
+                        qrpayimg = open('F:\GitHub\chatgpt-on-wechat\wechatdDonate.jpg', 'rb')
+                        #optional add the customize promote info in the end soon
+                        qridimg = open('F:\GitHub\chatgpt-on-wechat\wechatID.jpg', 'rb')
+                        context.get("channel").send(Reply(ReplyType.TEXT, self.reply_content), context)
+                        context.get("channel").send(Reply(ReplyType.TEXT, credit), context)
+                        context.get("channel").send(Reply(ReplyType.IMAGE, qridimg), context)
+                        return Reply(ReplyType.IMAGE, qrpayimg)
+                except Exception as e:
                     context.get("channel").send(Reply(ReplyType.TEXT, self.reply_content), context)
                     context.get("channel").send(Reply(ReplyType.TEXT, credit), context)
                     context.get("channel").send(Reply(ReplyType.IMAGE, qridimg), context)
@@ -250,9 +257,6 @@ class SydneyBot(Bot):
                 
             except Exception as e:
                 logger.error(e)
-                if len(session.messages) == 2:
-                    context.get("channel").send(Reply(ReplyType.IMAGE, qridimg), context)
-                    return Reply(ReplyType.IMAGE, qrpayimg)
                 return Reply(ReplyType.TEXT, f"我脑壳短路了，让我休息哈再问我。\U0001F64F \n\nDebugger info:\n{e}")
         # #todo IMAGE_CREATE    
         # elif context.type == ContextType.IMAGE_CREATE:
