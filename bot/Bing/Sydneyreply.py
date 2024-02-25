@@ -238,21 +238,21 @@ class SydneyBot(Bot):
                 self.sessions.session_reply(self.reply_content, session_id) #load into the session messages
                 if self.suggestions != None:
                     self.reply_content = self.reply_content + "\n\n----------回复建议------------\n" + self.suggestions
-                try:
                     if len(session.messages) == 2:#done locate the first time message by the session_messages
-                        credit = conf().get("sydney_credit")
-                        qrpayimg = open('F:\GitHub\chatgpt-on-wechat\wechatdDonate.jpg', 'rb')
-                        #optional add the customize promote info in the end soon
-                        qridimg = open('F:\GitHub\chatgpt-on-wechat\wechatID.jpg', 'rb')
-                        context.get("channel").send(Reply(ReplyType.TEXT, self.reply_content), context)
-                        context.get("channel").send(Reply(ReplyType.TEXT, credit), context)
-                        context.get("channel").send(Reply(ReplyType.IMAGE, qridimg), context)
-                        return Reply(ReplyType.IMAGE, qrpayimg)
-                except Exception as e:
-                    context.get("channel").send(Reply(ReplyType.TEXT, self.reply_content), context)
-                    context.get("channel").send(Reply(ReplyType.TEXT, credit), context)
-                    context.get("channel").send(Reply(ReplyType.IMAGE, qridimg), context)
-                    return Reply(ReplyType.IMAGE, qrpayimg)
+                        try:
+                            credit = conf().get("sydney_credit")
+                            qrpayimg = open('F:\GitHub\chatgpt-on-wechat\wechatdDonate.jpg', 'rb')
+                            #optional add the customize promote info in the end soon
+                            qridimg = open('F:\GitHub\chatgpt-on-wechat\wechatID.jpg', 'rb')
+                            context.get("channel").send(Reply(ReplyType.TEXT, self.reply_content), context)
+                            context.get("channel").send(Reply(ReplyType.TEXT, credit), context)
+                            context.get("channel").send(Reply(ReplyType.IMAGE, qridimg), context)
+                            return Reply(ReplyType.IMAGE, qrpayimg)
+                        except Exception as e:
+                            context.get("channel").send(Reply(ReplyType.TEXT, self.reply_content), context)
+                            context.get("channel").send(Reply(ReplyType.TEXT, credit), context)
+                            context.get("channel").send(Reply(ReplyType.IMAGE, qridimg), context)
+                            return Reply(ReplyType.IMAGE, qrpayimg)
                 return Reply(ReplyType.TEXT, self.reply_content)
                 
             except Exception as e:
@@ -469,14 +469,9 @@ class SydneyBot(Bot):
                             imgurl =None
                             break
                 
-
-                # result, pair = detect_chinese_char_pair(reply, 9)
-                # if result:
-                #     logger.info(f"a pair of consective characters detected over 9 times. It is {pair}")
-                #     reply = await self._chat(session, query, context, retry_count + 1)
-                
-                replyparagraphs = reply.split("\n")  # Split into individual paragraphs
-                reply = "\n".join([p for p in replyparagraphs if "disclaimer" not in p.lower()]) 
+                #optional ignore disclaimer
+                # replyparagraphs = reply.split("\n")  # Split into individual paragraphs
+                # reply = "\n".join([p for p in replyparagraphs if "disclaimer" not in p.lower()]) 
                 
                 #this will be wrapped out exception if no reply returned, and in the exception the ask process will try again
                 if (bot_statement not in reply) and (len(session.messages) == 1):
