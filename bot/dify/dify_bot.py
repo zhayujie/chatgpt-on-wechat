@@ -38,8 +38,8 @@ class DifyBot(Bot):
             if reply:
                 return reply
             # TODO: 适配除微信以外的其他channel
-            # user = context["msg"].other_user_nickname
-            session = self.sessions.get_session(session_id, 'hfy')
+            user = context["msg"].other_user_nickname
+            session = self.sessions.get_session(session_id, user)
             logger.debug(f"[DIFY] session={session} query={query}")
 
             reply, err = self._reply(query, session, context)
