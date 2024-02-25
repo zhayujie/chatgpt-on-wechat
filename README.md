@@ -228,7 +228,7 @@ wget https://open-1317903499.cos.ap-guangzhou.myqcloud.com/docker-compose.yml
 在 `docker-compose.yml` 所在目录下执行以下命令启动容器：
 
 ```bash
-sudo docker compose up -d
+sudo docker-compose up -d
 ```
 
 运行 `sudo docker ps` 能查看到 NAMES 为 chatgpt-on-wechat 的容器即表示运行成功。
