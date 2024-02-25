@@ -241,18 +241,19 @@ class SydneyBot(Bot):
                     if len(session.messages) == 2:#done locate the first time message by the session_messages
                         try:
                             credit = conf().get("sydney_credit")
-                            qrpayimg = open('F:\GitHub\chatgpt-on-wechat\wechatdDonate.jpg', 'rb')
+                            self.reply_content += credit
+                            # qrpayimg = open('F:\GitHub\chatgpt-on-wechat\wechatdDonate.jpg', 'rb')
                             #optional add the customize promote info in the end soon
                             qridimg = open('F:\GitHub\chatgpt-on-wechat\wechatID.jpg', 'rb')
                             context.get("channel").send(Reply(ReplyType.TEXT, self.reply_content), context)
-                            context.get("channel").send(Reply(ReplyType.TEXT, credit), context)
-                            context.get("channel").send(Reply(ReplyType.IMAGE, qridimg), context)
-                            return Reply(ReplyType.IMAGE, qrpayimg)
+                            # context.get("channel").send(Reply(ReplyType.TEXT, credit), context)
+                            # context.get("channel").send(Reply(ReplyType.IMAGE, qrpayimg), context)
+                            return Reply(ReplyType.IMAGE, qridimg)
                         except Exception as e:
                             context.get("channel").send(Reply(ReplyType.TEXT, self.reply_content), context)
-                            context.get("channel").send(Reply(ReplyType.TEXT, credit), context)
-                            context.get("channel").send(Reply(ReplyType.IMAGE, qridimg), context)
-                            return Reply(ReplyType.IMAGE, qrpayimg)
+                            # context.get("channel").send(Reply(ReplyType.TEXT, credit), context)
+                            # context.get("channel").send(Reply(ReplyType.IMAGE, qrpayimg), context)
+                            return Reply(ReplyType.IMAGE, qridimg)
                 return Reply(ReplyType.TEXT, self.reply_content)
                 
             except Exception as e:
