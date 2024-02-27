@@ -40,13 +40,10 @@ class Blackroom(Plugin):
 
         
     def on_handle_context(self, e_context: EventContext):
-<<<<<<< HEAD
         if e_context['context'].type not in [ContextType.TEXT]:
             return
-=======
->>>>>>> c6017c27f626436a509cb0adcdc3ea6e1fe9571c
+
         context = e_context['context']
-        
         msg: ChatMessage = context['msg']
         isgroup = e_context["context"].get("isgroup")
         nickname = msg.actual_user_nickname  # 获取nickname
@@ -104,7 +101,7 @@ class Blackroom(Plugin):
             reply.type = ReplyType.INFO
             reply.content = result
             e_context["reply"] = reply
-            e_context.action = EventAction.CONTINUE  # 事件结束，并跳过处理context的默认逻辑
+            e_context.action = EventAction.CONTINUE  
 
     def is_admin_in_group(self, context):
         if context["isgroup"]:
