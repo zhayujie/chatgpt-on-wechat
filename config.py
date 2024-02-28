@@ -165,7 +165,9 @@ available_setting = {
     "sydney_statement": "\n\n我是你的智能助手悉尼。\n要和我对话请在发言中@我。\n--------------------------------\n(开发者有话说：)\n如果你觉得Sydney还不错，Sydney同时还支持私人定制，让她变成你设定的个人角色，欢迎添加我微信咨询更多:\nnope_nope_nope_nope(直接搜索该昵称即可)\n\n#MITLicense\n#RajayouxAllRightsReserved!",
     "sydney_credit": "\n-----------开发者留言------------\n\n---------该消息仅出现一次----------\n如果你觉得Sydney还不错，Sydney同时还支持私人定制，让她变成你设定的个人角色，欢迎添加我微信咨询更多:\nnope_nope_nope_nope\n(直接搜索该昵称即可)\n\n#MITLicense\n#RajayouxAllRightsReserved!",
     "sydney_debug" : False,
-    "customerSet": [{"session_id": "promptsetting", "botstatement": "bottail"}]
+    "customerSet": [{"session_id": "promptsetting", "botstatement": "bottail"}],
+    "nosearch": True,
+    "enablesuggest": False
 }
 
 
