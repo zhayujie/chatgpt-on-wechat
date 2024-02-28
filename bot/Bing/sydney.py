@@ -414,7 +414,7 @@ async def ask_stream(
                                 "description": context,
                                 "contextType": "WebPage",
                                 "messageType": "Context",
-                                # "messageId": "discover-web--page-ping-mriduna-----",
+                                "messageId": "discover-web--page-ping-mriduna-----",
                             },
                         ],
                         'gptId': "copilot",
