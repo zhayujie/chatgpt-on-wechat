@@ -15,10 +15,7 @@ class Session(object):
     # 重置会话
     def reset(self):
         system_item = {f"[system](#additional_instructions)": self.system_prompt}
-        if self.system_prompt is None:
-            self.messages = []
-        else:
-            self.message = [system_item]
+        self.message = [system_item]
 
     def set_system_prompt(self, system_prompt):
         self.system_prompt = system_prompt
