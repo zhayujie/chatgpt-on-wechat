@@ -28,7 +28,7 @@ _BASE_OPTION_SETS = [
 	# "gencontentv3",
 	# "nojbf"
 
-    "fluxcopilot",
+    "fluxsydney",
     # no jailbreak filter
     "nojbf",
     "iyxapbing",
@@ -414,10 +414,10 @@ async def ask_stream(
                                 "description": context,
                                 "contextType": "WebPage",
                                 "messageType": "Context",
-                                # "messageId": "discover-web--page-ping-mriduna-----",
+                                "messageId": "discover-web--page-ping-mriduna-----",
                             },
                         ],
-                        'gptId': "copilot",
+                        'gptId': "sydney",
                     }
                 ],
                 'invocationId': '0',
