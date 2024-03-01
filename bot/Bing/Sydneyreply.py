@@ -525,9 +525,10 @@ class SydneyBot(Bot):
                         prompt=query,
                         conversation_style="creative",
                         search_result=nosearch,
-                        locale="en-US",
+                        locale="zh-TW",
                         webpage_context=preContext,
-                        attachment=imgurl
+                        attachment=imgurl,
+                        no_link=False
                 ):
                     if not final:
                         if not wrote:
@@ -535,8 +536,17 @@ class SydneyBot(Bot):
                             print(response, end="", flush=True)
                         else:
                             reply += response[wrote:]
+                            # logger.info(reply)
                             print(response[wrote:], end="", flush=True)
                         wrote = len(response)
+                        if "Bing" in reply or "必应" in reply or "Copilot" in reply:
+                            logger.info(f"Jailbreak failed!")
+                            raise Exception("Jailbreak failed!")
+                        maxedtime = 15
+                        result, pair = detect_chinese_char_pair(reply, maxedtime)
+                        if result:
+                            # logger.info(f"a pair of consective characters detected over {maxedtime} times. It is {pair}")
+                            raise Exception(f"a pair of consective characters detected over {maxedtime} times. It is {pair}")
                 print()
                 # preContext = None
                 await self.bot.close()
@@ -547,6 +557,7 @@ class SydneyBot(Bot):
             return reply
         
         except Exception as e:
+            self.bot.close()
             logger.exception(e)
             #retry
             time.sleep(2)
