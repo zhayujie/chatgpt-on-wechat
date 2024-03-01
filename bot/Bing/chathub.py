@@ -84,7 +84,8 @@ class ChatHub:
             # Use for attachment
             attachment: dict = None,
             remove_options: list = None,
-            add_options: list = None
+            add_options: list = None,
+            no_link: bool = False
     ) -> Generator[bool, Union[dict, str], None]:
         """ """
         if self.encrypted_conversation_signature is not None:
@@ -157,12 +158,13 @@ class ChatHub:
                 if obj is None or not obj:
                     continue
                 response = json.loads(obj)
+                # print(response)
                 if response.get("type") == 1 and response["arguments"][0].get("messages"):
                     if (response["arguments"][0]["messages"][0]["contentOrigin"] != "Apology") and not raw:
                         try:
                             resp_txt = result_text + response["arguments"][0][
                                 "messages"
-                            ][0]["adaptiveCards"][0]["body"][0].get("text", "")
+                            ][0]["adaptiveCards"][0]["body"][0]["text"]
                             resp_txt_no_link = result_text + response["arguments"][0][
                                 "messages"
                             ][0].get("text", "")
@@ -173,26 +175,29 @@ class ChatHub:
                                         resp_txt
                                         + response["arguments"][0]["messages"][0][
                                             "adaptiveCards"
-                                        ][0]["body"][0]["inlines"][0].get("text")
+                                        ][0]["body"][0]["text"]
                                         + "\n"
                                 )
                                 result_text = (
                                         result_text
                                         + response["arguments"][0]["messages"][0][
                                             "adaptiveCards"
-                                        ][0]["body"][0]["inlines"][0].get("text")
+                                        ][0]["body"][0]["text"]
                                         + "\n"
                                 )
                         except KeyError:
                             pass
                     if not raw:
-                        yield False, resp_txt
+                        if no_link:
+                            yield False, resp_txt_no_link
+                        else:
+                            yield False, resp_txt
                 elif response.get("type") == 2:
                     if response["item"]["result"].get("error"):
                         await self.close()
                         raise ResponseError(
                             f"{response['item']['result']['value']}: {response['item']['result']['message']} \n"
-                            f"Full exception: {response}",
+                            # f"Full exception: {response}", too long
                         )
                     if response["item"]["messages"][-1]["contentOrigin"] == "Apology" and resp_txt:
                         response["item"]["messages"][-1]["text"] = resp_txt_no_link
