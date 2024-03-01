@@ -169,6 +169,7 @@ class SydneyBot(Bot):
         self.current_responding_task = None
         self.lastquery = None
         self.psvmsg = False
+        self.enablesuggest = None
         self.suggestions = None
         self.lastsession_id = None
 
@@ -236,7 +237,7 @@ class SydneyBot(Bot):
                     return Reply(ReplyType.TEXT, self.reply_content)
                 #done in chat_channel handle func, do sent a tip messsage after seeing user message
                 self.sessions.session_reply(self.reply_content, session_id) #load into the session messages
-                if self.suggestions != None:
+                if self.suggestions != None and self.enablesuggest:
                     self.reply_content = self.reply_content + "\n\n----------回复建议------------\n" + self.suggestions
                 if len(session.messages) == 2:#done locate the first time message by the session_messages
                     try:
@@ -298,21 +299,18 @@ class SydneyBot(Bot):
             return f"({query}...)\n抱歉，你的言论触发了必应过滤器，请换一种方式提问吧。\n\n这条回复是预置的，仅用于提醒此情况下虽然召唤了bot也无法回复。\n" 
         
         sydney_prompt = None
-        nosearch = None
-        bot_statement = None
-        enablesuggest = None
         for customerdic in conf().get("customerSet"):
             for key, customPrompt in customerdic.items():
                 if key == context["session_id"]:
                     sydney_prompt = customPrompt
                     bot_statement = customerdic["botstatement"]
                     nosearch = customerdic["nosearch"]
-                    enablesuggest= customerdic["enablesuggest"]
+                    self.enablesuggest= customerdic["enablesuggest"]
         if sydney_prompt == None:
             sydney_prompt = conf().get("character_desc")
             bot_statement = conf().get("sydney_statement")
             nosearch = False
-            enablesuggest = True
+            self.enablesuggest = True
                 
         preContext = "\n[system](#additional_instructions)\n" + sydney_prompt
 
@@ -321,7 +319,7 @@ class SydneyBot(Bot):
         try:
             proxy = conf().get("proxy", "")                
             # Get the absolute path of the JSON file
-            file_path = os.path.abspath("./cookies.json")
+            file_path = os.path.abspath("F:/Github/cookies.json")
             # Load the JSON file using the absolute path
             cookies = json.loads(open(file_path, encoding="utf-8").read())
             # Create a sydney conversation object using the cookies and the proxy
@@ -450,7 +448,7 @@ class SydneyBot(Bot):
                                 if "suggestedResponses" in message: #done add suggestions 
                                     suggested_responses = list(
                                         map(lambda x: x["text"], message["suggestedResponses"]))
-                                    if enablesuggest == True:
+                                    if self.enablesuggest:
                                         self.suggestions = "\n".join(suggested_responses)
                                     # logger.info(self.suggestions)
                                     imgurl =None
