@@ -15,14 +15,21 @@ import binascii
 import asyncio
 
 from config import conf
-from bot.Bing import sydneyconst
 
 _DEBUG = conf().get("sydney_debug")
 
 _PROXY = urllib.request.getproxies().get("https")
 
 _BASE_OPTION_SETS = [
+    # "fluxsydney",
+	# "iyxapbing",
+	# "iycapbing",
+	# "clgalileoall",
+	# "gencontentv3",
+	# "nojbf"
+
     "fluxcopilot",
+    # no jailbreak filter
     "nojbf",
     "iyxapbing",
     "iycapbing",
@@ -31,12 +38,15 @@ _BASE_OPTION_SETS = [
     "disable_telemetry",
     "machine_affinity",
     "streamf",
+    # code interpreter
     "codeint",
     "langdtwb",
     "fdwtlst",
     "fluxprod",
     "eredirecturl",
-    "deuct3"
+    # may related to image search
+    "gptvnodesc",
+    "gptvnoex",
 ]
 
 
@@ -160,8 +170,8 @@ class _LocationHint(Enum):
         ],
     }
 
-_DELIMITER = sydneyconst.DELIMITER
-_FORWARDED_IP = sydneyconst.FORWARDED_IP
+_DELIMITER = '\x1e'
+_FORWARDED_IP = f"1.0.0.{random.randint(0, 255)}"
 
 _ALLOWED_MESSAGE_TYPES = [
     "ActionRequest",
@@ -183,9 +193,51 @@ def sec_ms_gec():
     random_bytes = os.urandom(32)
     return binascii.hexlify(random_bytes).decode()
 
-_HEADERS = sydneyconst.SYDNEY_HEADER
+_HEADERS = {
+    "accept": "application/json",
+    "accept-language": "en-US,en;q=0.9",
+    "content-type": "application/json",
+    "sec-ch-ua": '"Microsoft Edge";v="113", "Chromium";v="113", "Not-A.Brand";v="24"',
+    "sec-ch-ua-arch": '"x86"',
+    "sec-ch-ua-bitness": '"64"',
+    "sec-ch-ua-full-version": '"113.0.1774.50"',
+    "sec-ch-ua-full-version-list": '"Microsoft Edge";v="113.0.1774.50", "Chromium";v="113.0.5672.127", "Not-A.Brand";v="24.0.0.0"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-model": "",
+    "sec-ch-ua-platform": '"Windows"',
+    "sec-ch-ua-platform-version": '"15.0.0"',
+    "sec-fetch-dest": "empty",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-site": "same-origin",
+    "sec-ms-gec": sec_ms_gec(),
+    "sec-ms-gec-version": "1-115.0.1866.1",
+    "x-ms-client-request-id": str(uuid.uuid4()),
+    "x-ms-useragent": "azsdk-js-api-client-factory/1.0.0-beta.1 core-rest-pipeline/1.10.0 OS/Win32",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.50",
+    "Referer": "https://www.bing.com/search?q=Bing+AI&showconv=1",
+    "Referrer-Policy": "origin-when-cross-origin",
+    "x-forwarded-for": _FORWARDED_IP,
+}
 
-_HEADERS_INIT_CONVER = sydneyconst.SYDNEY_INIT_HEADER
+_HEADERS_INIT_CONVER = {
+    "authority": "www.bing.com",
+    "accept": "application/json",
+    "accept-language": "zh-CN,en;q=0.9",
+    "cache-control": "max-age=0",
+    "sec-ch-ua": '"Chromium";v="110", "Not A(Brand";v="24", "Microsoft Edge";v="110"',
+    "sec-ch-ua-arch": '"x86"',
+    "sec-ch-ua-bitness": '"64"',
+    "sec-ch-ua-full-version": '"110.0.1587.69"',
+    "sec-ch-ua-full-version-list": '"Chromium";v="110.0.5481.192", "Not A(Brand";v="24.0.0.0", "Microsoft Edge";v="110.0.1587.69"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-model": '""',
+    "sec-ch-ua-platform": '"Windows"',
+    "sec-ch-ua-platform-version": '"15.0.0"',
+    "upgrade-insecure-requests": "1",
+    "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36 Edg/112.0.1722.46",
+    "x-edge-shopping-flag": "1",
+    "x-forwarded-for": _FORWARDED_IP,
+}
 
 _HEADERS_INIT_CREATIMG = {
     "authority":                 "www.bing.com",
@@ -225,18 +277,14 @@ async def create_conversation(
         timeout = aiohttp.ClientTimeout(total=10)
         try:
             response = await session.get(
-                url=os.environ.get("BING_PROXY_URL")
-                    or f"https://edgeservices.bing.com/edgesvc/turing/conversation/create"
-                       f"?bundleVersion={sydneyconst.BUNDLE_VERSION}",
+                url="https://edgeservices.bing.com/edgesvc/turing/conversation/create",
                 proxy=proxy,
                 timeout=timeout,
             )
         except asyncio.TimeoutError:
             print("Request timedout, retrying...")
             response = await session.get(
-                url=os.environ.get("BING_PROXY_URL")
-                    or f"https://edgeservices.bing.com/edgesvc/turing/conversation/create"
-                       f"?bundleVersion={sydneyconst.BUNDLE_VERSION}",
+                url="https://edgeservices.bing.com/edgesvc/turing/conversation/create",
                 proxy=proxy,
                 timeout=timeout,
             )
@@ -427,7 +475,7 @@ async def ask_stream(
 
 async def upload_image(filename=None, img_base64=None, proxy=None):
     async with aiohttp.ClientSession(
-            headers=sydneyconst.IMAGE_HEADER
+            headers={"Referer": "https://www.bing.com/search?q=Bing+AI&showconv=1&FORM=hpcodx"}
     ) as session:
         timeout = aiohttp.ClientTimeout(total=90)
         url = "https://www.bing.com/images/kblob"
