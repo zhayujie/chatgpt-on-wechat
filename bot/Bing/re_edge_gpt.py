@@ -195,7 +195,8 @@ class Chatbot:
             locale: str = guess_locale(),
             remove_options: list = None,
             add_options: list = None,
-            attachment: dict | None = None
+            attachment: dict | None = None,
+            no_link: bool = False
     ) -> Generator[bool, dict | str, None]:
         """
         Ask a question to the bot
@@ -210,7 +211,8 @@ class Chatbot:
                 locale=locale,
                 remove_options=remove_options,
                 add_options=add_options,
-                attachment=attachment
+                attachment=attachment,
+                no_link=no_link
         ):
             yield response
 
