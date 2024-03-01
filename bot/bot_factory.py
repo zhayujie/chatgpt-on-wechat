@@ -56,5 +56,8 @@ def create_bot(bot_type):
         from bot.zhipuai.zhipuai_bot import ZHIPUAIBot
         return ZHIPUAIBot()
 
+    elif bot_type == const.MISTRAL:
+        from bot.mistral.mistralai_bot import MistralAIBot
+        return MistralAIBot()
 
     raise RuntimeError
