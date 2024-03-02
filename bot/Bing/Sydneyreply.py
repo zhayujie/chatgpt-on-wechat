@@ -379,6 +379,7 @@ class SydneyBot(Bot):
                     rest_messages += f"\n{keyPerson}\n{message}\n"
 
             # rest_messages = rest_messages.strip("\n")  # Remove any extra newlines
+            #todo for continous chats in a single convid
             preContext += rest_messages
             
             #remove system message
@@ -517,8 +518,15 @@ class SydneyBot(Bot):
                         await self.bot.close()
                         return response_text
             
-            async def reedgegpt_chat_stream():
+            async def reedgegpt_chat_stream():#todo reply the current resp_text per 30s in a whole reply process
+                #todo add nosearchall option for different groups or conversations, current ON
+                #todo for continous chats in a single convid
+                # session_grp = list
+                # if session_id not in session_grp:
+                #     self.bot = await Chatbot.create(proxy=proxy, cookies=cookies, mode="sydney")
+                #     session_grp += list(session_id)
                 self.bot = await Chatbot.create(proxy=proxy, cookies=cookies, mode="sydney")
+                logger.info(f"Convid:{self.bot.chat_hub.conversation_id}")
                 wrote = 0
                 reply = ""
                 async for final, response in self.bot.ask_stream(
@@ -541,11 +549,13 @@ class SydneyBot(Bot):
                         wrote = len(response)
                         if "Bing" in reply or "必应" in reply or "Copilot" in reply:
                             logger.info(f"Jailbreak failed!")
+                            self.bot.close()
                             raise Exception("Jailbreak failed!")
                         maxedtime = 15
                         result, pair = detect_chinese_char_pair(reply, maxedtime)
                         if result:
                             # logger.info(f"a pair of consective characters detected over {maxedtime} times. It is {pair}")
+                            self.bot.close()
                             raise Exception(f"a pair of consective characters detected over {maxedtime} times. It is {pair}")
                 print()
                 # preContext = None
@@ -557,16 +567,10 @@ class SydneyBot(Bot):
             return reply
         
         except Exception as e:
-            self.bot.close()
-            logger.exception(e)
-            #retry
-            time.sleep(2)
-            #done reply a retrying message
-            logger.warn(f"[SYDNEY] do retry, times={retry_count}")
-            context.get("channel").send(Reply(ReplyType.INFO, f"该消息的回复正在重试中!\n({clip_message(query)}...)\n\n当前次数为: {retry_count} \n\nDebugger info:\n{e}"), context)
-            if "throttled" in str(e) or "Throttled" in str(e):
+            logger.error(e)
+            if "throttled" in str(e) or "Throttled" in str(e) or "Authentication" in str(e):
                 logger.warn("[SYDNEY] ConnectionError: {}".format(e))
-                return "我累了，今日使用次数已达到上限，请明天再来！\U0001F916"
+                return "我累了，请联系我的主人帮我给新的饼干(Cookies)！\U0001F916"
             # Just need a try again when this happens 
             # if ":443" in str(e) or "server" in str(e): 
             #     logger.warn("[SYDNEY] serverError: {}".format(e))
@@ -574,6 +578,12 @@ class SydneyBot(Bot):
             if "CAPTCHA" in str(e):
                 logger.warn("[SYDNEY] CAPTCHAError: {}".format(e))
                 return "我走丢了，请联系我的主人。(CAPTCHA!)\U0001F300"
+
+            self.bot.close()
+            time.sleep(2)
+            #done reply a retrying message
+            logger.warn(f"[SYDNEY] do retry, times={retry_count}")
+            context.get("channel").send(Reply(ReplyType.INFO, f"该消息的回复正在重试中!\n({clip_message(query)}...)\n\n当前次数为: {retry_count} \n\nDebugger info:\n{e}"), context)
             reply = await self._chat(session, query, context, retry_count + 1)
             imgurl =None
             return reply
