@@ -65,5 +65,5 @@ async def upload_image(conversation_id: str, cookies: dict, filename: str = None
         data.add_field('imageBase64', image_base64, content_type="application/octet-stream")
         async with session.post(url, data=data, proxy=proxy) as resp:
             if not resp.status == 200:
-                raise Exception("Upload image failed")
+                raise Exception("Upload image failed, it might because the size is too large.")
             return (await resp.json())["blobId"]
