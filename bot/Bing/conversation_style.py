@@ -23,7 +23,8 @@ class ConversationStyle(Enum):
         "fdwtlst",
         "fluxprod",
         "eredirecturl",
-        "deuct3"
+        "deuct3",
+        "nosearchall"
     ]
     balanced = [
         "fluxcopilot",
