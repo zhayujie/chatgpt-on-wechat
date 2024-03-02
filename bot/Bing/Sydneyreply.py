@@ -579,7 +579,7 @@ class SydneyBot(Bot):
                 logger.warn("[SYDNEY] CAPTCHAError: {}".format(e))
                 return "我走丢了，请联系我的主人。(CAPTCHA!)\U0001F300"
 
-            self.bot.close()
+            await self.bot.close()
             time.sleep(2)
             #done reply a retrying message
             logger.warn(f"[SYDNEY] do retry, times={retry_count}")
