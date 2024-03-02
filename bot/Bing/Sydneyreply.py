@@ -266,8 +266,9 @@ class SydneyBot(Bot):
                 
             except Exception as e:
                 logger.error(e)
-                context.get("channel").send(Reply(ReplyType.TEXT, f"我脑壳短路了一下，Sorry。\U0001F64F \n\nDebugger info:\n{e}"), context)
-                return Reply(ReplyType.TEXT, self.reply_content)
+                # context.get("channel").send(Reply(ReplyType.TEXT, f"我脑壳短路了一下，Sorry。\U0001F64F \n\nDebugger info:\n{e}"), context)
+                return Reply(ReplyType.TEXT, f"我脑壳短路了一下，Sorry。\U0001F64F \n\nDebugger info:\n{e}")
+                # return Reply(ReplyType.TEXT, self.reply_content)
         # #todo IMAGE_CREATE    
         # elif context.type == ContextType.IMAGE_CREATE:
         #     ok, res = self.create_img(query, 0)
@@ -551,13 +552,13 @@ class SydneyBot(Bot):
                         wrote = len(response)
                         if "Bing" in reply or "必应" in reply or "Copilot" in reply:
                             logger.info(f"Jailbreak failed!")
-                            self.bot.close()
+                            await self.bot.close()
                             raise Exception("Jailbreak failed!")
-                        maxedtime = 15
+                        maxedtime = 20
                         result, pair = detect_chinese_char_pair(reply, maxedtime)
                         if result:
                             # logger.info(f"a pair of consective characters detected over {maxedtime} times. It is {pair}")
-                            self.bot.close()
+                            await self.bot.close()
                             raise Exception(f"a pair of consective characters detected over {maxedtime} times. It is {pair}")
                 print()
                 # preContext = None
