@@ -233,6 +233,8 @@ class SydneyBot(Bot):
             try:
                 logger.info("[SYDNEY] session query={}, bot_statement hasn't been cut...".format(session.messages))
                 self.reply_content = asyncio.run(self.handle_async_response(session, query, context))
+                if self.reply_content == "":
+                    return Reply(ReplyType.TEXT, self.reply_content)
                 if self.psvmsg:
                     self.psvmsg = False
                     curtusers_arr = [obj for obj in session.messages if "[user](#message)" in obj.keys()]
@@ -525,10 +527,10 @@ class SydneyBot(Bot):
                 # if session_id not in session_grp:
                 #     self.bot = await Chatbot.create(proxy=proxy, cookies=cookies, mode="sydney")
                 #     session_grp += list(session_id)
+                reply = ""
                 self.bot = await Chatbot.create(proxy=proxy, cookies=cookies, mode="sydney")
                 logger.info(f"Convid:{self.bot.chat_hub.conversation_id}")
                 wrote = 0
-                reply = ""
                 async for final, response in self.bot.ask_stream(
                         prompt=query,
                         conversation_style="creative",
@@ -570,14 +572,16 @@ class SydneyBot(Bot):
             logger.error(e)
             if "throttled" in str(e) or "Throttled" in str(e) or "Authentication" in str(e):
                 logger.warn("[SYDNEY] ConnectionError: {}".format(e))
-                return "我累了，请联系我的主人帮我给新的饼干(Cookies)！\U0001F916"
+                context.get("channel").send(Reply(ReplyType.INFO, "我累了，请联系我的主人帮我给新的饼干(Cookies)！\U0001F916"), context)
+                return ""
             # Just need a try again when this happens 
             # if ":443" in str(e) or "server" in str(e): 
             #     logger.warn("[SYDNEY] serverError: {}".format(e))
             #     return "我的CPU烧了，请联系我的主人。"
             if "CAPTCHA" in str(e):
                 logger.warn("[SYDNEY] CAPTCHAError: {}".format(e))
-                return "我走丢了，请联系我的主人。(CAPTCHA!)\U0001F300"
+                context.get("channel").send(Reply(ReplyType.INFO, "我走丢了，请联系我的主人。(CAPTCHA!)\U0001F300"), context)
+                return ""
 
             await self.bot.close()
             time.sleep(2)
