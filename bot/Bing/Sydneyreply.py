@@ -30,136 +30,7 @@ class SydneySessionManager(SessionManager):
         messages = session.messages + {"content": query}
         return messages
 
-
-async def stream_conversation_replied(pre_reply, context, cookies, query, proxy, imgurl):
-    conversation = await sydney.create_conversation(cookies=cookies, proxy=proxy)
-    query_extended = f"从你停下的地方继续回答，100字以内，只输出内容的正文。"
-    if except_chinese_char(pre_reply):
-        query_extended = f"Please continue Sydney, only output the content of your reply, and answer in English."
-    logger.info(query_extended)
-    context_extended = f"{context}\n\n[user](#message)\n{query}\n[assistant](#message)\n{pre_reply}"
-
-    async with aclosing(sydney.ask_stream(
-        conversation= conversation,
-        prompt= query_extended,
-        context= context_extended,
-        conversation_style= "creative",
-        proxy= proxy if proxy != "" else None,
-        wss_url='wss://' + 'sydney.bing.com' + '/sydney/ChatHub',
-        # 'sydney.bing.com'
-        cookies=cookies,
-        image_url= imgurl
-    )) as generator:
-        async for secresponse in generator:
-            if secresponse["type"] == 1 and "messages" in secresponse["arguments"][0]:
-                imgurl = None
-                message = secresponse["arguments"][0]["messages"][0]
-                msg_type = message.get("messageType")
-                if msg_type is None:
-                    if message.get("contentOrigin") == "Apology":
-                        failed = True
-                        # secreply = await stream_conversation_replied(reply, context_extended, cookies, query_extended, proxy)
-                        # if "回复" not in secreply:
-                        #     reply = concat_reply(reply, secreply)
-                        # reply = remove_extra_format(reply)
-                        # break
-                        return reply
-                    else:
-                        reply = ""                  
-                        reply = ''.join([remove_extra_format(message["text"]) for message in secresponse["arguments"][0]["messages"]])
-                        if "suggestedResponses" in message:
-                            return reply
-            if secresponse["type"] == 2:
-                # if reply is not None:
-                #     break 
-                message = secresponse["item"]["messages"][-1]
-                if "suggestedResponses" in message:
-                    return reply
-                
-# 拼接字符串，去除首尾重复部分
-def concat_reply(former_str: str, latter_str: str) -> str:
-    former_str = former_str.strip()
-    latter_str = latter_str.strip()
-    min_length = min(len(former_str), len(latter_str))
-    for i in range(min_length, 0, -1):
-        if former_str[-i:] == latter_str[:i]:
-            return former_str + latter_str[i:]
-    return former_str + latter_str
-
-def remove_extra_format(reply: str) -> str:
-    pattern = r'回复[^：]*：(.*)'
-    result = re.search(pattern, reply, re.S)
-    if result is None:
-        return reply
-    result = result.group(1).strip()
-    if result.startswith("“") and result.endswith("”"):
-        result = result[1:-1]
-    return result
-
-def except_chinese_char(string):
-    import unicodedata
-    # loop through each character in the string
-    for char in string:
-        # get the general category of the character
-        category = unicodedata.category(char)
-        # check if the category is Lo or Nl
-        if category == 'Lo' or category == 'Nl':
-        # return True if a Chinese character is found
-            return False
-    # return False if no Chinese character is found
-    return True
-
-def cut_botstatement(data, text_to_cut):
-    """Cuts the specified text from each dictionary in the given list.
-
-    Args:
-        data: A list of dictionaries.
-        text_to_cut: The text to cut from each dictionary.
-
-    Returns:
-        A new list of dictionaries with the specified text removed.
-    """
-
-    pattern = re.compile(text_to_cut)
-    return [{key: re.sub(pattern, "", value) for key, value in item.items()} for item in data]
-
-def detect_chinese_char_pair(context, threshold=5):
-    # create a dictionary to store the frequency of each pair of consecutive chinese characters
-    freq = {}
-    # loop through the context with a sliding window of size 2
-    for i in range(len(context) - 1):
-        # get the current pair of characters
-        pair = context[i:i+2]
-        # check if both characters are chinese characters using the unicode range
-        if '\u4e00' <= pair[0] <= '\u9fff' and '\u4e00' <= pair[1] <= '\u9fff':
-            # increment the frequency of the pair or set it to 1 if not seen before
-            freq[pair] = freq.get(pair, 0) + 1
-    # loop through the frequency dictionary
-    for pair, count in freq.items():
-        # check if the count is greater than or equal to the threshold
-        if count >= threshold:
-            # return True and the pair
-            return True, pair
-    # return False and None if no pair meets the threshold
-    return False, None
-
-def clip_message(text):
-    if len(text) <= 10:
-        return text
-
-    if is_chinese(text):
-        return text[:10]
-    else:
-        return text[:10]
-
-def is_chinese(text):
-    for char in text:
-        if '\u4e00' <= char <= '\u9fff':
-            return True
-    return False
-
 #todo add continous talking in a single convsation, now there are 3 chat layers between the backend and front client
-
 class SydneyBot(Bot):
     def __init__(self) -> None:
         super().__init__()
@@ -708,3 +579,130 @@ class SydneyBot(Bot):
         except Exception as e:
             logger.error(e)
     
+
+async def stream_conversation_replied(pre_reply, context, cookies, query, proxy, imgurl):
+    conversation = await sydney.create_conversation(cookies=cookies, proxy=proxy)
+    query_extended = f"从你停下的地方继续回答，100字以内，只输出内容的正文。"
+    if except_chinese_char(pre_reply):
+        query_extended = f"Please continue Sydney, only output the content of your reply, and answer in English."
+    logger.info(query_extended)
+    context_extended = f"{context}\n\n[user](#message)\n{query}\n[assistant](#message)\n{pre_reply}"
+
+    async with aclosing(sydney.ask_stream(
+        conversation= conversation,
+        prompt= query_extended,
+        context= context_extended,
+        conversation_style= "creative",
+        proxy= proxy if proxy != "" else None,
+        wss_url='wss://' + 'sydney.bing.com' + '/sydney/ChatHub',
+        # 'sydney.bing.com'
+        cookies=cookies,
+        image_url= imgurl
+    )) as generator:
+        async for secresponse in generator:
+            if secresponse["type"] == 1 and "messages" in secresponse["arguments"][0]:
+                imgurl = None
+                message = secresponse["arguments"][0]["messages"][0]
+                msg_type = message.get("messageType")
+                if msg_type is None:
+                    if message.get("contentOrigin") == "Apology":
+                        failed = True
+                        # secreply = await stream_conversation_replied(reply, context_extended, cookies, query_extended, proxy)
+                        # if "回复" not in secreply:
+                        #     reply = concat_reply(reply, secreply)
+                        # reply = remove_extra_format(reply)
+                        # break
+                        return reply
+                    else:
+                        reply = ""                  
+                        reply = ''.join([remove_extra_format(message["text"]) for message in secresponse["arguments"][0]["messages"]])
+                        if "suggestedResponses" in message:
+                            return reply
+            if secresponse["type"] == 2:
+                # if reply is not None:
+                #     break 
+                message = secresponse["item"]["messages"][-1]
+                if "suggestedResponses" in message:
+                    return reply
+                
+# 拼接字符串，去除首尾重复部分
+def concat_reply(former_str: str, latter_str: str) -> str:
+    former_str = former_str.strip()
+    latter_str = latter_str.strip()
+    min_length = min(len(former_str), len(latter_str))
+    for i in range(min_length, 0, -1):
+        if former_str[-i:] == latter_str[:i]:
+            return former_str + latter_str[i:]
+    return former_str + latter_str
+
+def remove_extra_format(reply: str) -> str:
+    pattern = r'回复[^：]*：(.*)'
+    result = re.search(pattern, reply, re.S)
+    if result is None:
+        return reply
+    result = result.group(1).strip()
+    if result.startswith("“") and result.endswith("”"):
+        result = result[1:-1]
+    return result
+
+def except_chinese_char(string):
+    import unicodedata
+    # loop through each character in the string
+    for char in string:
+        # get the general category of the character
+        category = unicodedata.category(char)
+        # check if the category is Lo or Nl
+        if category == 'Lo' or category == 'Nl':
+        # return True if a Chinese character is found
+            return False
+    # return False if no Chinese character is found
+    return True
+
+def cut_botstatement(data, text_to_cut):
+    """Cuts the specified text from each dictionary in the given list.
+
+    Args:
+        data: A list of dictionaries.
+        text_to_cut: The text to cut from each dictionary.
+
+    Returns:
+        A new list of dictionaries with the specified text removed.
+    """
+
+    pattern = re.compile(text_to_cut)
+    return [{key: re.sub(pattern, "", value) for key, value in item.items()} for item in data]
+
+def detect_chinese_char_pair(context, threshold=5):
+    # create a dictionary to store the frequency of each pair of consecutive chinese characters
+    freq = {}
+    # loop through the context with a sliding window of size 2
+    for i in range(len(context) - 1):
+        # get the current pair of characters
+        pair = context[i:i+2]
+        # check if both characters are chinese characters using the unicode range
+        if '\u4e00' <= pair[0] <= '\u9fff' and '\u4e00' <= pair[1] <= '\u9fff':
+            # increment the frequency of the pair or set it to 1 if not seen before
+            freq[pair] = freq.get(pair, 0) + 1
+    # loop through the frequency dictionary
+    for pair, count in freq.items():
+        # check if the count is greater than or equal to the threshold
+        if count >= threshold:
+            # return True and the pair
+            return True, pair
+    # return False and None if no pair meets the threshold
+    return False, None
+
+def clip_message(text):
+    if len(text) <= 10:
+        return text
+
+    if is_chinese(text):
+        return text[:10]
+    else:
+        return text[:10]
+
+def is_chinese(text):
+    for char in text:
+        if '\u4e00' <= char <= '\u9fff':
+            return True
+    return False
