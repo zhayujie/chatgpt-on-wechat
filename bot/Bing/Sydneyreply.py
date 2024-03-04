@@ -168,7 +168,7 @@ class SydneyBot(Bot):
         self.reply_content= None
         self.current_responding_task = None
         self.lastquery = None
-        self.psvmsg = False
+        self.failedmsg = False
         self.enablesuggest = None
         self.suggestions = None
         self.lastsession_id = None
@@ -178,11 +178,11 @@ class SydneyBot(Bot):
 
     def reply(self, query, context: Context = None) -> Reply:
         if context.type == ContextType.TEXT or context.type == ContextType.IMAGE_CREATE:
-            # logger.info("[SYDNEY] query={}".format(query))
+            logger.info("[SYDNEY] query={}".format(query))
             session_id = context["session_id"]
             session = self.sessions.session_query(query, session_id)
-            passivereply = None
 
+            passivereply = None
             #avoid responding the same question
             if query == self.lastquery and session_id == self.lastsession_id:
                 session.messages.pop()
@@ -201,8 +201,6 @@ class SydneyBot(Bot):
                     passivereply = Reply(ReplyType.INFO, "所有人记忆已清除")
                 #done when an async thread is in processing user can stop the process midway      
                 if self.current_responding_task is not None:
-                    asyncio.run(self.bot.close())
-                    logger.info("Conv Closed Successful!")
                     self.current_responding_task.cancel()
             elif query == "撤销" or query == "撤回" or query == "revoke" or query == "Revoke":#done cancel the current process as well
                 session.messages.pop()
@@ -214,8 +212,6 @@ class SydneyBot(Bot):
                 session.messages = session.messages[:session.messages.index(users_arr[-1])]
                 passivereply = Reply(ReplyType.INFO, f"该条消息已撤销!\nThe previous message is cancelled. \n\n({clip_message(users_arr[-1]['[user](#message)'])}...)")
                 if self.current_responding_task is not None:
-                    asyncio.run(self.bot.close())
-                    logger.info("Conv Closed Successful!")
                     self.current_responding_task.cancel()
             elif query == "更新配置":
                 load_config()
@@ -227,28 +223,29 @@ class SydneyBot(Bot):
                     passivereply = Reply(ReplyType.TEXT, "有什么问题吗？\U0001F337")
                 else:
                     passivereply = Reply(ReplyType.TEXT, "请耐心等待，本仙女正在思考问题呢。\U0001F9DA")
-                
-
             if passivereply:
                 return passivereply
             
             try:
-                logger.info("[SYDNEY] session query={}, bot_statement hasn't been cut...".format(session.messages))
+                # logger.info("[SYDNEY] session query={}, bot_statement hasn't been cut...".format(session.messages))
                 self.reply_content = asyncio.run(self.handle_async_response(session, query, context))
-                if self.reply_content == "":
-                    return Reply(ReplyType.TEXT, self.reply_content)
-                if self.psvmsg:
-                    self.psvmsg = False
-                    curtusers_arr = [obj for obj in session.messages if "[user](#message)" in obj.keys()]
-                    if len(curtusers_arr) > 1:
-                        second_last_usermsg = curtusers_arr[-2]
-                        self.lastquery = list(second_last_usermsg.values())[-1]
-                    return Reply(ReplyType.TEXT, self.reply_content)
-                #done in chat_channel handle func, do sent a tip messsage after seeing user message
+                if self.reply_content: 
+                    if self.failedmsg:
+                        self.failedmsg = False
+                        #match the lastquery
+                        curtusers_arr = [obj for obj in session.messages if "[user](#message)" in obj.keys()]
+                        if len(curtusers_arr) > 1:
+                            second_last_usermsg = curtusers_arr[-2]
+                            self.lastquery = list(second_last_usermsg.values())[-1]
+                        # return Reply(ReplyType.TEXT, self.reply_content)
+                else:
+                    raise Exception
+                #when no exception
                 self.sessions.session_reply(self.reply_content, session_id) #load into the session messages
+                #optional, current not use the suggestion responses
                 if self.suggestions != None and self.enablesuggest:
                     self.reply_content = self.reply_content + "\n\n----------回复建议------------\n" + self.suggestions
-                if len(session.messages) == 2:#done locate the first time message by the session_messages
+                if len(session.messages) == 2: #done, locate the first time message and send promote info
                     try:
                         credit = conf().get("sydney_credit")
                         self.reply_content += credit
@@ -259,7 +256,7 @@ class SydneyBot(Bot):
                         # context.get("channel").send(Reply(ReplyType.TEXT, credit), context)
                         # context.get("channel").send(Reply(ReplyType.IMAGE, qrpayimg), context)
                         return Reply(ReplyType.IMAGE, qridimg)
-                    except Exception as e:
+                    except Exception:
                         context.get("channel").send(Reply(ReplyType.TEXT, self.reply_content), context)
                         # context.get("channel").send(Reply(ReplyType.TEXT, credit), context)
                         # context.get("channel").send(Reply(ReplyType.IMAGE, qrpayimg), context)
@@ -272,6 +269,7 @@ class SydneyBot(Bot):
                 # context.get("channel").send(Reply(ReplyType.TEXT, f"我脑壳短路了一下，Sorry。\U0001F64F \n\nDebugger info:\n{e}"), context)
                 return Reply(ReplyType.TEXT, f"我脑壳短路了一下，Sorry。\U0001F64F \n\nDebugger info:\n{e}")
                 # return Reply(ReplyType.TEXT, self.reply_content)
+            
         # #todo IMAGE_CREATE    
         # elif context.type == ContextType.IMAGE_CREATE:
         #     ok, res = self.create_img(query, 0)
@@ -289,26 +287,27 @@ class SydneyBot(Bot):
         try:        
             reply_content = await self.current_responding_task
         except asyncio.CancelledError:
-            self.psvmsg = True
-            
+            self.failedmsg = True
+            await self.bot.close()
+            logger.info("Conv Closed Successful!")
             context.get("channel").send(Reply(ReplyType.INFO, "但是你打断了本仙女的思考! \U0001F643"), context)
-            return ""
+            return 
         self.current_responding_task = None
         return reply_content
         
 
     async def _chat(self, session, query, context, retry_count= 0):
-        if retry_count > 2: #means already tried 3 times
-            #done delete the sydney tip message and the previous user message in this situation
+        if retry_count > 2: 
+            #delete the sydney tip message and the previous user message in this situation
             logger.warn("[SYDNEY] failed after maximum number of retry times")
             query = clip_message(query)
-            self.psvmsg = True
+            self.failedmsg = True
             # if len(session.messages) < 2:
             #     self.lastquery = None
             # else:
             #     self.lastquery = session.messages[-2]['[user](#message)']
-            return f"({query}...)\n抱歉，你的言论触发了必应过滤器，请换一种方式提问吧。\n\n这条回复是预置的，仅用于提醒此情况下虽然召唤了bot也无法回复。\n" 
-        
+            return f"(#{query}...)\n抱歉，请换一种方式提问吧!" 
+        #get customer settings
         sydney_prompt = None
         for customerdic in conf().get("customerSet"):
             for key, customPrompt in customerdic.items():
@@ -327,18 +326,16 @@ class SydneyBot(Bot):
 
         try:
             proxy = conf().get("proxy", "")                
-            # Get the absolute path of the JSON file
             file_path = os.path.abspath("./cookies.json")
-            # Load the JSON file using the absolute path
             cookies = json.loads(open(file_path, encoding="utf-8").read())
-            # Create a sydney conversation object using the cookies and the proxy
             session_id = context["session_id"]
             presession_message = session.messages
             session_message = cut_botstatement(presession_message, bot_statement)
-            # logger.info(f"[SYDNEY] session={session_message}, session_id={session_id}")
+            logger.info(f"[SYDNEY] session={session_message}, session_id={session_id}")
+
+            # image upload process
             imgurl = None
             imgfailedmsg = None
-            # image process
             img_cache = memory.USER_IMAGE_CACHE.get(session_id)
             if img_cache:
                 base64_img = ""
@@ -366,7 +363,9 @@ class SydneyBot(Bot):
                     if webPageinfo:
                         preContext += webPageinfo #preContext += webPageinfo
 
-            # file process #todo fileunzip info unsaved in the second message, different with webpage process
+            # file process
+            #todo fileunzip info unsaved in the second message, different with webpage process
+            #todo merge file process from plugins\linkai\linkai.py
             fileCache = memory.USER_FILE_CACHE.get(session_id)
             try:
                 preContext += fileinfo
@@ -380,6 +379,7 @@ class SydneyBot(Bot):
                         else:
                             preContext += fileinfo
 
+            #load chat history from session_message
             rest_messages = ""
             for singleTalk in session_message[:-1]:  # Iterate through all but the last message
                 for keyPerson, message in singleTalk.items():
@@ -389,6 +389,7 @@ class SydneyBot(Bot):
             #todo for continous chats in a single convid
             preContext += rest_messages
             
+            #todo add plugins
             #remove system message
             # plugin = None
             # if session_message[0].get("role") == "[system](#additional_instructions)":
@@ -396,13 +397,14 @@ class SydneyBot(Bot):
             #         session_message.pop(0)
             
             logger.info(preContext)
-            logger.info(query)
+            # logger.info(query)
             # file_id = context.kwargs.get("file_id")
             # if file_id:
             #     context["file"] = file_id
             # logger.info(f"[SYDNEY] query={query}, file_id={file_id}")
             
-            async def reedgegpt_chat_stream():#todo reply the current resp_text per 30s in a whole reply process
+            async def reedgegpt_chat_stream():
+                #todo reply the current resp_text per 30s in a whole reply process
                 #todo add nosearchall option for different groups or conversations, current ON
                 #todo for continous chats in a single convid
                 # session_grp = list
@@ -432,13 +434,11 @@ class SydneyBot(Bot):
                             print(response[wrote:], end="", flush=True)
                         wrote = len(response)
                         if "Bing" in reply or "必应" in reply or "Copilot" in reply:
-                            logger.info(f"Jailbreak failed!")
                             await self.bot.close()
                             raise Exception("Jailbreak failed!")
                         maxedtime = 20
                         result, pair = detect_chinese_char_pair(reply, maxedtime)
                         if result:
-                            # logger.info(f"a pair of consective characters detected over {maxedtime} times. It is {pair}")
                             await self.bot.close()
                             raise Exception(f"a pair of consective characters detected over {maxedtime} times. It is {pair}")
                 print()
@@ -579,16 +579,15 @@ class SydneyBot(Bot):
             
         except Exception as e:
             logger.error(e)
+            await self.bot.close()
             if "throttled" in str(e) or "Throttled" in str(e) or "Authentication" in str(e):
                 logger.warn("[SYDNEY] ConnectionError: {}".format(e))
                 context.get("channel").send(Reply(ReplyType.INFO, "我累了，请联系我的主人帮我给新的饼干(Cookies)！\U0001F916"), context)
-                return ""
+                return 
             if "CAPTCHA" in str(e):
                 logger.warn("[SYDNEY] CAPTCHAError: {}".format(e))
                 context.get("channel").send(Reply(ReplyType.INFO, "我走丢了，请联系我的主人。(CAPTCHA!)\U0001F300"), context)
-                return ""
-
-            await self.bot.close()
+                return 
             time.sleep(2)
             #done reply a retrying message
             logger.warn(f"[SYDNEY] do retry, times={retry_count}")
