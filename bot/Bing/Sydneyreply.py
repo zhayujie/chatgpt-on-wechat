@@ -264,7 +264,7 @@ class SydneyBot(Bot):
                         # context.get("channel").send(Reply(ReplyType.TEXT, credit), context)
                         # context.get("channel").send(Reply(ReplyType.IMAGE, qrpayimg), context)
                         return Reply(ReplyType.IMAGE, qridimg)
-                self.reply_content = self.process_url(self.reply_content)
+                # self.reply_content = self.process_url(self.reply_content)
                 return Reply(ReplyType.TEXT, self.reply_content)
                 
             except Exception as e:
@@ -448,6 +448,8 @@ class SydneyBot(Bot):
                     # preContext = ""
                     # logger.info(f"Sydney_ChatLayer:\n{self.sydney_chatlayer}")
                 await self.bot.close()
+                if (bot_statement not in reply) and (len(session.messages) == 1):
+                        reply += bot_statement
                 return reply
             
 
