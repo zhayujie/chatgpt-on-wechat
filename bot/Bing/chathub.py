@@ -71,6 +71,7 @@ class ChatHub:
         else:
             self.encrypted_conversation_signature = None
         self.conversation = conversation
+        self.apologied = False
 
     async def ask_stream(
             self,
@@ -208,6 +209,7 @@ class ChatHub:
                             "Preserved the message from being deleted",
                             file=sys.stderr,
                         )
+                        self.apologied = True
                     await wss.close()
                     if not self.aio_session.closed:
                         await self.aio_session.close()

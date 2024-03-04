@@ -44,6 +44,7 @@ class SydneyBot(Bot):
         self.suggestions = None
         self.lastsession_id = None
         self.bot = Chatbot
+        self.apologymsg = ""
         #todo for continous chat per convid
         # self.sydney_chatlayer = ""
 
@@ -136,6 +137,10 @@ class SydneyBot(Bot):
                         # context.get("channel").send(Reply(ReplyType.IMAGE, qrpayimg), context)
                         return Reply(ReplyType.IMAGE, qridimg)
                 # self.reply_content = self.process_url(self.reply_content)
+                if self.apologymsg != "" and self.bot.chat_hub.apologied:
+                    context.get("channel").send(Reply(ReplyType.TEXT, self.reply_content), context)
+                    self.bot.chat_hub.apologied = False
+                    return Reply(ReplyType.INFO, self.apologymsg)
                 return Reply(ReplyType.TEXT, self.reply_content)
                 
             except Exception as e:
@@ -315,6 +320,8 @@ class SydneyBot(Bot):
                         if result:
                             await self.bot.close()
                             raise Exception(f"a pair of consective characters detected over {maxedtime} times. It is {pair}")
+                    if self.bot.chat_hub.apologied:
+                                self.apologymsg = "可恶!我的发言又被该死的微软掐断了"
                 print()
                 #todo for continous chat per convid
                 #if ....
