@@ -178,7 +178,7 @@ class SydneyBot(Bot):
 
     def reply(self, query, context: Context = None) -> Reply:
         if context.type == ContextType.TEXT or context.type == ContextType.IMAGE_CREATE:
-            logger.info("[SYDNEY] query={}".format(query))
+            # logger.info("[SYDNEY] query={}".format(query))
             session_id = context["session_id"]
             session = self.sessions.session_query(query, session_id)
 
@@ -229,17 +229,20 @@ class SydneyBot(Bot):
             try:
                 # logger.info("[SYDNEY] session query={}, bot_statement hasn't been cut...".format(session.messages))
                 self.reply_content = asyncio.run(self.handle_async_response(session, query, context))
-                if self.reply_content: 
+                if self.reply_content:
+                    # logger.info(self.lastquery) 
                     if self.failedmsg:
+                        # logger.info(self.lastquery)
                         self.failedmsg = False
                         #match the lastquery
                         curtusers_arr = [obj for obj in session.messages if "[user](#message)" in obj.keys()]
                         if len(curtusers_arr) > 1:
-                            second_last_usermsg = curtusers_arr[-2]
+                            second_last_usermsg = curtusers_arr[-1]
                             self.lastquery = list(second_last_usermsg.values())[-1]
-                        # return Reply(ReplyType.TEXT, self.reply_content)
+                            # logger.info(self.lastquery)
+                        return Reply(ReplyType.TEXT, self.reply_content)
                 else:
-                    raise Exception
+                    return Reply(ReplyType.TEXT, self.reply_content)
                 #when no exception
                 self.sessions.session_reply(self.reply_content, session_id) #load into the session messages
                 #optional, current not use the suggestion responses
@@ -290,8 +293,8 @@ class SydneyBot(Bot):
             self.failedmsg = True
             await self.bot.close()
             logger.info("Conv Closed Successful!")
-            context.get("channel").send(Reply(ReplyType.INFO, "但是你打断了本仙女的思考! \U0001F643"), context)
-            return 
+            # context.get("channel").send(Reply(ReplyType.INFO, "你打断了本仙女的思考! \U0001F643"), context)
+            return "你打断了本仙女的思考! \U0001F643"
         self.current_responding_task = None
         return reply_content
         
