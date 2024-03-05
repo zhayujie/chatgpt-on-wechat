@@ -39,6 +39,8 @@ class DifyBot(Bot):
                 return reply
             # TODO: 适配除微信以外的其他channel
             user = context["msg"].other_user_nickname
+            logger.debug(f"[DIFY] other_user_nickname={user}")
+            user = user if user else "default" # 防止用户名为None，当被邀请进的群未设置群名称时用户名为None
             session = self.sessions.get_session(session_id, user)
             logger.debug(f"[DIFY] session={session} query={query}")
 
