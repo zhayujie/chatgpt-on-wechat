@@ -140,7 +140,7 @@ class SydneyBot(Bot):
                 if self.apologymsg != "" and self.bot.chat_hub.apologied:
                     context.get("channel").send(Reply(ReplyType.TEXT, self.reply_content), context)
                     self.bot.chat_hub.apologied = False
-                    return Reply(ReplyType.INFO, self.apologymsg)
+                    return Reply(ReplyType.TEXT, self.apologymsg)
                 return Reply(ReplyType.TEXT, self.reply_content)
                 
             except Exception as e:
@@ -201,7 +201,7 @@ class SydneyBot(Bot):
             nosearch = False
             self.enablesuggest = True
                 
-        preContext = "[system](#additional_instructions)\n" + sydney_prompt
+        preContext = sydney_prompt
 
         try:
             proxy = conf().get("proxy", "")                
@@ -219,7 +219,7 @@ class SydneyBot(Bot):
             if img_cache:
                 base64_img = ""
                 base64_img = self.process_image_msg(session_id, img_cache)
-                # logger.info(img_url)
+                # logger.info(imgurl)
                 imgurl = {"base64_image": base64_img}
                 "this is old sydneyqtv1 image process"
                 # if img_url:
@@ -513,9 +513,9 @@ class SydneyBot(Bot):
             original_size = os.path.getsize(image_path)
 
             # Check if the size is larger than 1MB
-            if original_size > 1024 * 1024:
+            if original_size > 800 * 800:
                 # Calculate the compression ratio
-                ratio = (1024 * 1024) / original_size * 0.4
+                ratio = (800 * 800) / original_size * 0.5
 
                 # Resize the image proportionally
                 width, height = image.size
