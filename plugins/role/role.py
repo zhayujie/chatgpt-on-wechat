@@ -99,7 +99,7 @@ class Role(Plugin):
         if e_context["context"].type != ContextType.TEXT:
             return
         btype = Bridge().get_bot_type("chat")
-        if btype not in [const.OPEN_AI, const.CHATGPT, const.CHATGPTONAZURE, const.LINKAI]:
+        if btype not in [const.SYDNEY, const.OPEN_AI, const.CHATGPT, const.CHATGPTONAZURE, const.LINKAI]:
             return
         bot = Bridge().get_bot("chat")
         content = e_context["context"].content[:]
@@ -108,13 +108,14 @@ class Role(Plugin):
         customize = False
         sessionid = e_context["context"]["session_id"]
         trigger_prefix = conf().get("plugin_trigger_prefix", "$")
-        if clist[0] == f"{trigger_prefix}停止扮演":
+        if clist[0] == f"{trigger_prefix}停止扮演" or clist[0] == f"{trigger_prefix}Stop" or clist[0] == "清除记忆":
             if sessionid in self.roleplays:
                 self.roleplays[sessionid].reset()
                 del self.roleplays[sessionid]
             reply = Reply(ReplyType.INFO, "角色扮演结束!")
             e_context["reply"] = reply
-            e_context.action = EventAction.BREAK_PASS
+            if clist[0] == f"{trigger_prefix}停止扮演" or clist[0] == f"{trigger_prefix}Stop":
+                e_context.action = EventAction.BREAK_PASS
             return
         elif clist[0] == f"{trigger_prefix}角色":
             desckey = "descn"
@@ -122,7 +123,7 @@ class Role(Plugin):
             desckey = "description"
         elif clist[0] == f"{trigger_prefix}设定扮演":
             customize = True
-        elif clist[0] == f"{trigger_prefix}角色类型":
+        elif clist[0] == f"{trigger_prefix}角色类型" or clist[0] == f"{trigger_prefix}Type":
             if len(clist) > 1:
                 tag = clist[1].strip()
                 help_text = "角色列表：\n"

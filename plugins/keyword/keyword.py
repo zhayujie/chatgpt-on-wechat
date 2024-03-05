@@ -43,7 +43,7 @@ class Keyword(Plugin):
         except Exception as e:
             logger.warn("[keyword] init failed, ignore or see https://github.com/zhayujie/chatgpt-on-wechat/tree/master/plugins/keyword .")
             raise e
-
+    #todo future reply handle rajayoux
     def on_handle_context(self, e_context: EventContext):
         if e_context["context"].type != ContextType.TEXT:
             return

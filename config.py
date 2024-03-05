@@ -22,6 +22,7 @@ available_setting = {
     "azure_api_version": "",  # azure api版本
     # Bot触发配置
     "single_chat_prefix": ["bot", "@bot"],  # 私聊时文本需要包含该前缀才能触发机器人回复
+    "single_chat_keywords": ["新年"], 
     "single_chat_reply_prefix": "[bot] ",  # 私聊时自动回复的前缀，用于区分真人
     "single_chat_reply_suffix": "",  # 私聊时自动回复的后缀，\n 可以换行
     "group_chat_prefix": ["@bot"],  # 群聊时包含该前缀则会触发机器人回复
@@ -83,7 +84,7 @@ available_setting = {
     "voice_reply_voice": False,  # 是否使用语音回复语音，需要设置对应语音合成引擎的api key
     "always_reply_voice": False,  # 是否一直使用语音回复
     "voice_to_text": "openai",  # 语音识别引擎，支持openai,baidu,google,azure
-    "text_to_voice": "openai",  # 语音合成引擎，支持openai,baidu,google,pytts(offline),azure,elevenlabs
+    "text_to_voice": "edge",  # 语音合成引擎，支持openai,baidu,google,pytts(offline),azure,elevenlabs
     "text_to_voice_model": "tts-1",
     "tts_voice_id": "alloy",
     # baidu 语音api配置， 使用百度语音识别和语音合成时需要
@@ -158,6 +159,15 @@ available_setting = {
     "linkai_api_key": "",
     "linkai_app_code": "",
     "linkai_api_base": "https://api.link-ai.chat",  # linkAI服务地址，若国内无法访问或延迟较高可改为 https://api.link-ai.tech
+    # Sydneybot Config
+    "sydney_image_send_interval": 1,
+    "sydney_keywords": ["zai","Zai","在？","在","在吗？","在嘛？","在么？","在吗","在嘛","在么","在吗?","在嘛?","在么?", "撤回", "撤销", "revoke", "Revoke", "清楚记忆", "清除所有"],
+    "sydney_statement": "\n\n我是你的智能助手悉尼。\n要和我对话请在发言中@我。\n--------------------------------\n(开发者有话说：)\n如果你觉得Sydney还不错，Sydney同时还支持私人定制，让她变成你设定的个人角色，欢迎添加我微信咨询更多:\nnope_nope_nope_nope(直接搜索该昵称即可)\n\n#MITLicense\n#RajayouxAllRightsReserved!",
+    "sydney_credit": "\n-----------开发者留言------------\n\n---------该消息仅出现一次----------\n如果你觉得Sydney还不错，Sydney同时还支持私人定制，让她变成你设定的个人角色，欢迎添加我微信咨询更多:\nnope_nope_nope_nope\n(直接搜索该昵称即可)\n\n#MITLicense\n#RajayouxAllRightsReserved!",
+    "sydney_debug" : False,
+    "customerSet": [{"session_id": "promptsetting", "botstatement": "bottail"}],
+    "nosearch": True,
+    "enablesuggest": False
 }
 
 

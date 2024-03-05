@@ -65,6 +65,14 @@ COMMANDS = {
         "alias": ["reset", "重置会话"],
         "desc": "重置会话",
     },
+    "voiceoff":{
+        "alias": ["voiceoff"],
+        "desc": "toggleVoiceoutput",
+    },
+    "voiceon":{
+        "alias": ["voiceon"],
+        "desc": "toggleVoiceoutput",
+    }
 }
 
 ADMIN_COMMANDS = {
@@ -313,7 +321,7 @@ class Godcmd(Plugin):
                     except Exception as e:
                         ok, result = False, "你没有设置私有GPT模型"
                 elif cmd == "reset":
-                    if bottype in [const.OPEN_AI, const.CHATGPT, const.CHATGPTONAZURE, const.LINKAI, const.BAIDU, const.XUNFEI, const.QWEN, const.GEMINI]:
+                    if bottype in [const.SYDNEY, const.OPEN_AI, const.CHATGPT, const.CHATGPTONAZURE, const.LINKAI, const.BAIDU, const.XUNFEI, const.QWEN, const.GEMINI]:
                         bot.sessions.clear_session(session_id)
                         if Bridge().chat_bots.get(bottype):
                             Bridge().chat_bots.get(bottype).sessions.clear_session(session_id)
@@ -321,6 +329,16 @@ class Godcmd(Plugin):
                         ok, result = True, "会话已重置"
                     else:
                         ok, result = False, "当前对话机器人不支持重置会话"
+                elif cmd == "voiceoff":
+                    tts = conf().get("always_reply_voice")
+                    if tts:
+                        tts = conf().__setitem__("always_reply_voice", False)
+                        ok, result = True, "全局语音输出已关闭"
+                elif cmd == "voiceon":
+                    tts = conf().get("always_reply_voice")
+                    if not tts:
+                        tts = conf().__setitem__("always_reply_voice", True)
+                        ok, result = True, "全局语音输出已开启"
                 logger.debug("[Godcmd] command: %s by %s" % (cmd, user))
             elif any(cmd in info["alias"] for info in ADMIN_COMMANDS.values()):
                 if isadmin:
@@ -339,7 +357,7 @@ class Godcmd(Plugin):
                             ok, result = True, "配置已重载"
                         elif cmd == "resetall":
                             if bottype in [const.OPEN_AI, const.CHATGPT, const.CHATGPTONAZURE, const.LINKAI,
-                                           const.BAIDU, const.XUNFEI, const.QWEN, const.GEMINI]:
+                            const.SYDNEY, const.BAIDU, const.XUNFEI, const.QWEN, const.GEMINI]:
                                 channel.cancel_all_session()
                                 bot.sessions.clear_all_session()
                                 ok, result = True, "重置所有会话成功"

@@ -29,15 +29,22 @@ class StoryTeller:
             user_action = user_action + "。"
         if self.first_interact:
             prompt = (
-                """现在来充当一个文字冒险游戏，描述时候注意节奏，不要太快，仔细描述各个人物的心情和周边环境。一次只需写四到六句话。
-            开头是，"""
+                """你将扮演一个文字冒险游戏的作者，你的任务是用生动的语言和我互动，一起创造一个引人入胜的故事。你需要注意以下几点：
+- 描述时要控制好节奏，不要让我感到无聊或者迷失。
+- 仔细描述各个人物的心情和周边环境，让我能够感同身受，产生共鸣。
+- 一次只需写四到六句话，不要过长或者过短，保持适当的段落长度。
+- 尽量使用有趣的词汇和修辞手法，避免重复和陈词滥调，提高文采和吸引力。\n开头是:"""
                 + self.story
                 + " "
                 + user_action
             )
             self.first_interact = False
         else:
-            prompt = """继续，一次只需要续写四到六句话，总共就只讲5分钟内发生的事情。""" + user_action
+            prompt = f"""继续你的文字冒险游戏，一次只需要续写四到六句话，描述接下来发生的事情,{user_action}。你需要注意以下几点：
+- 续写时要保持好故事的连贯性和逻辑性，不要出现突兀或者不合理的情节。
+- 描述时要注意时间的流逝，总共就只讲5分钟内发生的事情，不要跳跃或者拖沓。
+- 尽量设置一些有趣的转折和冲突，让我感到惊喜和紧张，激发我的好奇心和探索欲。
+- 适当地使用对话和心理描写，让人物的性格和情感更加鲜明和真实。""" 
         return prompt
 
 
@@ -64,7 +71,7 @@ class Dungeon(Plugin):
         if e_context["context"].type != ContextType.TEXT:
             return
         bottype = Bridge().get_bot_type("chat")
-        if bottype not in [const.OPEN_AI, const.CHATGPT, const.CHATGPTONAZURE, const.LINKAI]:
+        if bottype not in [const.SYDNEY, const.OPEN_AI, const.CHATGPT, const.CHATGPTONAZURE, const.LINKAI]:
             return
         bot = Bridge().get_bot("chat")
         content = e_context["context"].content[:]
@@ -72,13 +79,14 @@ class Dungeon(Plugin):
         sessionid = e_context["context"]["session_id"]
         logger.debug("[Dungeon] on_handle_context. content: %s" % clist)
         trigger_prefix = conf().get("plugin_trigger_prefix", "$")
-        if clist[0] == f"{trigger_prefix}停止冒险":
+        if clist[0] == f"{trigger_prefix}停止冒险" or clist[0] == "清除记忆":
             if sessionid in self.games:
                 self.games[sessionid].reset()
                 del self.games[sessionid]
                 reply = Reply(ReplyType.INFO, "冒险结束!")
                 e_context["reply"] = reply
-                e_context.action = EventAction.BREAK_PASS
+                if clist[0] == f"{trigger_prefix}停止冒险":
+                    e_context.action = EventAction.BREAK_PASS
         elif clist[0] == f"{trigger_prefix}开始冒险" or sessionid in self.games:
             if sessionid not in self.games or clist[0] == f"{trigger_prefix}开始冒险":
                 if len(clist) > 1:

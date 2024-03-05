@@ -121,8 +121,7 @@ class LinkAIBot(Bot):
             headers = {"Authorization": "Bearer " + linkai_api_key}
 
             # do http request
-            base_url = conf().get("linkai_api_base", "https://api.link-ai.chat")
-            res = requests.post(url=base_url + "/v1/chat/completions", json=body, headers=headers,
+            res = requests.post(url=self.base_url + "/chat/completions", json=body, headers=headers,
                                 timeout=conf().get("request_timeout", 180))
             if res.status_code == 200:
                 # execute success

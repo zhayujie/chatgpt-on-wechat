@@ -17,6 +17,12 @@ def create_bot(bot_type):
         from bot.baidu.baidu_wenxin import BaiduWenxinBot
         return BaiduWenxinBot()
 
+    elif bot_type == const.SYDNEY:
+        #jailbreak bing
+        from bot.Bing.Sydneyreply import SydneyBot
+
+        return SydneyBot()
+
     elif bot_type == const.CHATGPT:
         # ChatGPT 网页端web接口
         from bot.chatgpt.chat_gpt_bot import ChatGPTBot

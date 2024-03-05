@@ -1,4 +1,8 @@
+#sydney (await async)
+aiohttp
+
 openai==0.27.8
+
 HTMLParser>=0.0.2
 PyQRCode>=1.2.1
 qrcode>=7.4.2
@@ -6,4 +10,21 @@ requests>=2.28.2
 chardet>=5.1.0
 Pillow
 pre-commit
+
+numpy<=1.24.2
+#install plugin
+dulwich
+
+# wechaty
+wechaty>=0.10.7
+wechaty_puppet>=0.4.23
+pysilk_mod>=1.6.0 # needed by send voice
+
+# wechatmp wechatcom
 web.py
+wechatpy
+
+# chatgpt-tool-hub plugin
+
+--extra-index-url https://pypi.python.org/simple
+chatgpt_tool_hub==0.4.6

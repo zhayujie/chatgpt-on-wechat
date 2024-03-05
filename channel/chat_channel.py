@@ -13,6 +13,11 @@ from common.dequeue import Dequeue
 from common import memory
 from plugins import *
 
+from bs4 import BeautifulSoup
+import aiohttp
+import requests
+from config import conf
+import asyncio
 try:
     from voice.audio_convert import any_to_wav
 except Exception as e:
@@ -146,6 +151,10 @@ class ChatChannel(Channel):
                     pass
                 else:
                     return None
+                
+                # if skip_reply(content, conf().get("single_chat_keywords", [])): #todo future, check keyword in single chat
+                #     return None
+                
             content = content.strip()
             img_match_prefix = check_prefix(content, conf().get("image_create_prefix"))
             if img_match_prefix:
@@ -159,7 +168,7 @@ class ChatChannel(Channel):
         elif context.type == ContextType.VOICE:
             if "desire_rtype" not in context and conf().get("voice_reply_voice") and ReplyType.VOICE not in self.NOT_SUPPORT_REPLYTYPE:
                 context["desire_rtype"] = ReplyType.VOICE
-
+        # logger.info(context) show incoming message info
         return context
 
     def _handle(self, context: Context):
@@ -188,6 +197,10 @@ class ChatChannel(Channel):
             logger.debug("[WX] ready to handle context: type={}, content={}".format(context.type, context.content))
             if context.type == ContextType.TEXT or context.type == ContextType.IMAGE_CREATE:  # 文字和图片消息
                 context["channel"] = e_context["channel"]
+                #done make the certain instruction loaded in the config.json instead writing it in the code
+                sydneykeywords = conf().get("sydney_keywords")
+                if context.content not in sydneykeywords:
+                    self._send_reply(context, Reply(ReplyType.TEXT, "消息收到啦！💌\n正在思考中!💭"))
                 reply = super().build_reply_content(context.content, context)
             elif context.type == ContextType.VOICE:  # 语音消息
                 cmsg = context["msg"]
@@ -217,14 +230,37 @@ class ChatChannel(Channel):
                     else:
                         return
             elif context.type == ContextType.IMAGE:  # 图片消息，当前仅做下载保存到本地的逻辑
+                send_interval = conf().get("sydney_image_send_interval")
+                self._send_reply(context, Reply(ReplyType.TEXT, "图片我看到啦！📸\n请向我提问吧!💕"))
                 memory.USER_IMAGE_CACHE[context["session_id"]] = {
                     "path": context.content,
                     "msg": context.get("msg")
                 }
+                logger.info(memory.USER_IMAGE_CACHE[context["session_id"]])
+                if send_interval:
+                    time.sleep(send_interval)
             elif context.type == ContextType.SHARING:  # 分享信息，当前无默认逻辑
-                pass
-            elif context.type == ContextType.FUNCTION or context.type == ContextType.FILE:  # 文件消息及函数调用等，当前无默认逻辑
-                pass
+                logger.info(context.content)
+                self._send_reply(context, Reply(ReplyType.TEXT, "链接我看到啦！🔗\n请向我提问吧!💕"))
+                html = requests.get(context.content, proxies= {'https': conf().get('proxy') if conf().get('proxy') != '' else None}, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) '
+                                'Gecko/20100101 Firefox/113.0'})
+                soup = BeautifulSoup(html.content, features= "html.parser")
+                for script in soup(["script", "style"]):
+                    script.extract()
+                text = soup.get_text()
+                lines = (line.strip() for line in text.splitlines())
+                chunks = (phrase.strip() for line in lines for phrase in line.split(" "))
+                text = '\n'.join(chunk for chunk in chunks if chunk)
+                memory.USER_WEBPAGE_CACHE[context["session_id"]]= json.dumps(text, ensure_ascii= False)  
+            elif context.type == ContextType.FILE:  # 文件消息及函数调用等，当前无默认逻辑
+                # logger.info(context.content)
+                self._send_reply(context, Reply(ReplyType.TEXT, "文件我看到啦！📂\n请向我提问吧!💕"))
+                memory.USER_FILE_CACHE[context["session_id"]] = {
+                    "path": context.content,
+                    "msg": context.get("msg")
+                }
+                logger.info(memory.USER_FILE_CACHE[context["session_id"]])
+            # elif context.type == ContextType.FUNCTION:
             else:
                 logger.warning("[WX] unknown context type: {}".format(context.type))
                 return
@@ -260,6 +296,7 @@ class ChatChannel(Channel):
                     reply.content = reply_text
                 elif reply.type == ReplyType.ERROR or reply.type == ReplyType.INFO:
                     reply.content = "[" + str(reply.type) + "]\n" + reply.content
+                #todo replytype pre handle rajayoux
                 elif reply.type == ReplyType.IMAGE_URL or reply.type == ReplyType.VOICE or reply.type == ReplyType.IMAGE or reply.type == ReplyType.FILE or reply.type == ReplyType.VIDEO or reply.type == ReplyType.VIDEO_URL:
                     pass
                 else:
@@ -384,6 +421,13 @@ def check_prefix(content, prefix_list):
             return prefix
     return None
 
+def skip_reply(content, keywords):
+    if not keywords:
+        return False
+    for keyword in keywords:
+        if keyword in content:
+            return False
+    return True
 
 def check_contain(content, keyword_list):
     if not keyword_list:

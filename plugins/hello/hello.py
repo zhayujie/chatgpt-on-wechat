@@ -32,6 +32,13 @@ class Hello(Plugin):
             ContextType.EXIT_GROUP
         ]:
             return
+        if e_context["context"].type == ContextType.ACCEPT_FRIEND:
+            reply = Reply()
+            reply.type = ReplyType.TEXT
+            msg: ChatMessage = e_context["context"]["msg"]
+            reply.content = f"你好主人!直接与我对话即可!\n如果你想知道我能做什么，只要输入#help 就可以看到我的功能列表。"
+            e_context["reply"] = reply
+            e_context.action = EventAction.BREAK_PASS  # 事件结束，并跳过处理context的默认逻辑
         if e_context["context"].type == ContextType.JOIN_GROUP:
             if "group_welcome_msg" in conf():
                 reply = Reply()
@@ -57,11 +64,11 @@ class Hello(Plugin):
                 return
             e_context.action = EventAction.BREAK
             return
-            
+        #temp change this since sydneybot doesn't need to use this way introduce itself, but instead, sydney will reply she's active or not and if the last message from the user is in process
         if e_context["context"].type == ContextType.PATPAT:
             e_context["context"].type = ContextType.TEXT
             msg: ChatMessage = e_context["context"]["msg"]
-            e_context["context"].content = f"请你随机使用一种风格介绍你自己，并告诉用户输入#help可以查看帮助信息。"
+            e_context["context"].content = f"在"
             e_context.action = EventAction.BREAK  # 事件结束，进入默认处理逻辑
             if not self.config or not self.config.get("use_character_desc"):
                 e_context["context"]["generate_breaked_by"] = EventAction.BREAK

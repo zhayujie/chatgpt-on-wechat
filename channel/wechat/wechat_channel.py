@@ -206,6 +206,7 @@ class WechatChannel(ChatChannel):
         if context:
             self.produce(context)
 
+    #todo replytype handle rajayoux
     # 统一的发送函数，每个Channel自行实现，根据reply的type字段发送不同类型的消息
     def send(self, reply: Reply, context: Context):
         receiver = context["receiver"]

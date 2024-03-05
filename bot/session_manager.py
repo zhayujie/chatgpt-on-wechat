@@ -14,19 +14,19 @@ class Session(object):
 
     # 重置会话
     def reset(self):
-        system_item = {"role": "system", "content": self.system_prompt}
-        self.messages = [system_item]
+        system_item = {f"[system](#additional_instructions)": self.system_prompt}
+        self.message = [system_item]
 
     def set_system_prompt(self, system_prompt):
         self.system_prompt = system_prompt
         self.reset()
 
     def add_query(self, query):
-        user_item = {"role": "user", "content": query}
+        user_item = {f"[user](#message)": query}
         self.messages.append(user_item)
 
     def add_reply(self, reply):
-        assistant_item = {"role": "assistant", "content": reply}
+        assistant_item = {"[assistant](#message)": reply}
         self.messages.append(assistant_item)
 
     def discard_exceeding(self, max_tokens=None, cur_tokens=None):

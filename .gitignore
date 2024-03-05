@@ -30,4 +30,8 @@ plugins/banwords/lib/__pycache__
 !plugins/role
 !plugins/keyword
 !plugins/linkai
+cookies.json
 client_config.json
+bot/Bing/botPreset.txt
+wechatdDonate.jpg
+wechatID.jpg
