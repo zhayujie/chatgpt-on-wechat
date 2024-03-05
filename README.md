@@ -17,17 +17,6 @@ https://github.com/zhayujie/chatgpt-on-wechat/assets/26161723/d5154020-36e3-41db
 
 Demo made by [Visionn](https://www.wangpc.cc/)
 
-# 商业支持
-
-> 我们还提供企业级的 **AI应用平台**，包含知识库、Agent插件、应用管理等能力，支持多平台聚合的应用接入、客户端管理、对话管理，以及提供
-SaaS服务、私有化部署、稳定托管接入 等多种模式。
->
-> 目前已在私域运营、智能客服、企业效率助手等场景积累了丰富的 AI 解决方案， 在电商、文教、健康、新消费等各行业沉淀了 AI 落地的最佳实践，致力于打造助力中小企业拥抱 AI 的一站式平台。
-
-企业服务和商用咨询可联系产品顾问：
-
-<img width="240" src="https://img-1317903499.cos.ap-guangzhou.myqcloud.com/docs/product-manager-qrcode.jpg">
-
 # 开源社区
 
 添加小助手微信加入开源项目交流群：
