@@ -112,7 +112,7 @@ class SydneyBot(Bot):
                             second_last_usermsg = curtusers_arr[-1]
                             self.lastquery = list(second_last_usermsg.values())[-1]
                             # logger.info(self.lastquery)
-                        return Reply(ReplyType.TEXT, self.reply_content)
+                        return Reply(ReplyType.INFO, self.reply_content)
                 else:
                     return Reply(ReplyType.TEXT, self.reply_content)
                 #when no exception
@@ -120,7 +120,9 @@ class SydneyBot(Bot):
                 #optional, current not use the suggestion responses
                 if self.suggestions != None and self.enablesuggest:
                     self.reply_content = self.reply_content + "\n\n----------回复建议------------\n" + self.suggestions
-                if len(session.messages) == 2: #done, locate the first time message and send promote info
+                if len(session.messages) == 0:
+                    #done, locate the first time message and send promote info
+                    #do this when not using voice reply
                     try:
                         credit = conf().get("sydney_credit")
                         self.reply_content += credit
@@ -138,9 +140,13 @@ class SydneyBot(Bot):
                         return Reply(ReplyType.IMAGE, qridimg)
                 # self.reply_content = self.process_url(self.reply_content)
                 if self.apologymsg != "" and self.bot.chat_hub.apologied:
-                    context.get("channel").send(Reply(ReplyType.TEXT, self.reply_content), context)
+                    #when not using voice reply
+                    # context.get("channel").send(Reply(ReplyType.TEXT, self.reply_content), context)
+                    # self.bot.chat_hub.apologied = False
+                    # return Reply(ReplyType.INFO, self.apologymsg)
+                    context.get("channel").send(Reply(ReplyType.TEXT, self.apologymsg), context)
                     self.bot.chat_hub.apologied = False
-                    return Reply(ReplyType.TEXT, self.apologymsg)
+                    return Reply(ReplyType.TEXT, self.reply_content)
                 return Reply(ReplyType.TEXT, self.reply_content)
                 
             except Exception as e:
