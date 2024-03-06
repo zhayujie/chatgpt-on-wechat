@@ -27,7 +27,18 @@ try:
 except Exception as e:
     pass
 
-#FIXME rajayoux if future update it needs to use wechaty then this code should from channel.chat_channel import handler_pool, and then add the handler_pool to self, and also packages the wechaty uses need a 3.9.2 specifically python version to run.  
+#FIXME rajayoux if future update it needs to use wechaty then this code should from channel.chat_channel import handler_pool, and then add the handler_pool to self, and also packages the wechaty uses need a 3.9.2 specifically python version to run.
+# And even though I paid effort to fix this there still needs more try methods, and I have to set up another padlocal protocal to avoid this, see <https://wechaty.js.org/docs/puppet-services/padlocal>, according to this exception:
+'''
+Traceback (most recent call last):
+  File "E:\env309\lib\site-packages\wechaty\wechaty.py", line 445, in start
+    await self.puppet.start()
+  File "E:\env309\lib\site-packages\wechaty_puppet_service\puppet.py", line 911, in start
+    self._init_puppet()
+  File "E:\env309\lib\site-packages\wechaty_puppet_service\puppet.py", line 876, in _init_puppet
+    raise WechatyPuppetGrpcError(
+wechaty_puppet.exceptions.WechatyPuppetGrpcError: WechatyPuppetGrpcError('can"t fetch endpoint from chatie server. You can try it later, or make sure that your pc can connect to heroku server ', None, None)
+'''
 @singleton
 class WechatyChannel(ChatChannel):
     NOT_SUPPORT_REPLYTYPE = []
