@@ -117,9 +117,10 @@ class ChatHub:
                     **attachment, conversation_id=self.conversation_id, cookies=cookies)
             else:
                 response = await upload_image(
-                    **attachment, conversation_id=self.conversation_id, cookies=cookies)
+                    **attachment, conversation_id=self.conversation_id, cookies=cookies, proxy=self.proxy)
             if response:
                 image_url = f"https://www.bing.com/images/blob?bcid={response}"
+                print(image_url)
         # Construct a ChatHub request
         if remove_options is not None:
             for option in remove_options:
@@ -160,6 +161,7 @@ class ChatHub:
                     continue
                 response = json.loads(obj)
                 # print(response)
+                #todo if the msg directly return type 2 especially when uploading img, then return a tip msg
                 if response.get("type") == 1 and response["arguments"][0].get("messages"):
                     if (response["arguments"][0]["messages"][0]["contentOrigin"] != "Apology") and not raw:
                         try:
