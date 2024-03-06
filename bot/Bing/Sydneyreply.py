@@ -478,8 +478,6 @@ class SydneyBot(Bot):
             
         except Exception as e:
             logger.error(e)
-            if not self.bot.chat_hub.aio_session.closed:
-                await self.bot.chat_hub.aio_session.close()
             if "throttled" in str(e) or "Throttled" in str(e) or "Authentication" in str(e):
                 logger.warn("[SYDNEY] ConnectionError: {}".format(e))
                 context.get("channel").send(Reply(ReplyType.INFO, "我累了，请联系我的主人帮我给新的饼干(Cookies)！\U0001F916"), context)
@@ -488,6 +486,8 @@ class SydneyBot(Bot):
                 logger.warn("[SYDNEY] CAPTCHAError: {}".format(e))
                 context.get("channel").send(Reply(ReplyType.INFO, "我走丢了，请联系我的主人。(CAPTCHA!)\U0001F300"), context)
                 return 
+            if not self.bot.chat_hub.aio_session.closed:
+                await self.bot.chat_hub.aio_session.close()
             time.sleep(2)
             #done reply a retrying message
             logger.warn(f"[SYDNEY] do retry, times={retry_count}")
