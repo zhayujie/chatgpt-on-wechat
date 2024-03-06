@@ -167,7 +167,8 @@ available_setting = {
     "sydney_debug" : False,
     "customerSet": [{"session_id": "promptsetting", "botstatement": "bottail"}],
     "nosearch": True,
-    "enablesuggest": False
+    "enablesuggest": False,
+    "voicespecies": ""
 }
 
 

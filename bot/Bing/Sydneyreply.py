@@ -58,7 +58,7 @@ class SydneyBot(Bot):
             #avoid responding the same question
             if query == self.lastquery and session_id == self.lastsession_id:
                 session.messages.pop()
-                passivereply = Reply(ReplyType.TEXT, f"请耐心等待，本仙女早就看到你的消息啦!\n请不要重复提问哦!\U0001F9DA \n\n重复的提问:{clip_message(self.lastquery)}...")
+                passivereply = Reply(ReplyType.INFO, f"请耐心等待，本仙女早就看到你的消息啦!\n请不要重复提问哦!\U0001F9DA \n\n重复的提问:{clip_message(self.lastquery)}...")
             else:
                 self.lastquery = query
                 self.lastsession_id = session_id
@@ -152,7 +152,7 @@ class SydneyBot(Bot):
             except Exception as e:
                 logger.error(e)
                 # context.get("channel").send(Reply(ReplyType.TEXT, f"我脑壳短路了一下，Sorry。\U0001F64F \n\nDebugger info:\n{e}"), context)
-                return Reply(ReplyType.TEXT, f"我脑壳短路了一下，Sorry。\U0001F64F \n\nDebugger info:\n{e}")
+                return Reply(ReplyType.INFO, f"我脑壳短路了一下，Sorry。\U0001F64F \n\nDebugger info:\n{e}")
                 # return Reply(ReplyType.TEXT, self.reply_content)
             
         # #todo IMAGE_CREATE    
@@ -173,7 +173,9 @@ class SydneyBot(Bot):
             reply_content = await self.current_responding_task
         except asyncio.CancelledError:
             self.failedmsg = True
-            await self.bot.close()
+            # await self.bot.close()
+            if not self.bot.chat_hub.aio_session.closed:
+                await self.bot.chat_hub.aio_session.close()
             logger.info("Conv Closed Successful!")
             # context.get("channel").send(Reply(ReplyType.INFO, "你打断了本仙女的思考! \U0001F643"), context)
             return "你打断了本仙女的思考! \U0001F643"
@@ -201,11 +203,13 @@ class SydneyBot(Bot):
                     bot_statement = customerdic["botstatement"]
                     nosearch = customerdic["nosearch"]
                     self.enablesuggest= customerdic["enablesuggest"]
-        if sydney_prompt == None:
+                    conf().__setitem__("voicespecies", "zh-CN-liaoning-XiaobeiNeural")
+        if not sydney_prompt:
             sydney_prompt = conf().get("character_desc")
             bot_statement = conf().get("sydney_statement")
             nosearch = False
             self.enablesuggest = True
+            conf().__setitem__("voicespecies", "zh-CN-YunxiaNeural") #zh-CN-XiaoxiaoNeural optional, more matual
                 
         preContext = sydney_prompt
 
@@ -311,20 +315,25 @@ class SydneyBot(Bot):
                 ):
                     if not final:
                         if not wrote:
-                            reply += response
+                            reply += str(response)
                             print(response, end="", flush=True)
                         else:
-                            reply += response[wrote:]
+                            reply += (response[wrote:])
                             # logger.info(reply)
                             print(response[wrote:], end="", flush=True)
                         wrote = len(response)
                         if "Bing" in reply or "必应" in reply or "Copilot" in reply:
-                            await self.bot.close()
+                            if not self.bot.chat_hub.aio_session.closed:
+                                await self.bot.chat_hub.aio_session.close()
                             raise Exception("Jailbreak failed!")
-                        maxedtime = 20
+                        maxedtime = 8
                         result, pair = detect_chinese_char_pair(reply, maxedtime)
                         if result:
-                            await self.bot.close()
+                            if not self.bot.chat_hub.aio_session.closed:
+                                await self.bot.chat_hub.aio_session.close()
+                            print()
+                            logger.info(f"a pair of consective characters detected over {maxedtime} times. It is {pair}")
+                            return reply
                             raise Exception(f"a pair of consective characters detected over {maxedtime} times. It is {pair}")
                     if self.bot.chat_hub.apologied:
                                 self.apologymsg = "可恶!我的发言又被该死的微软掐断了"
@@ -334,7 +343,8 @@ class SydneyBot(Bot):
                     # self.sydney_chatlayer += preContext + f"\n[User]\n{query}\n[Assistant]\n{reply}"
                     # preContext = ""
                     # logger.info(f"Sydney_ChatLayer:\n{self.sydney_chatlayer}")
-                await self.bot.close()
+                if not self.bot.chat_hub.aio_session.closed:
+                        await self.bot.chat_hub.aio_session.close()
                 if (bot_statement not in reply) and (len(session.messages) == 1):
                         reply += bot_statement
                 return reply
@@ -468,7 +478,8 @@ class SydneyBot(Bot):
             
         except Exception as e:
             logger.error(e)
-            await self.bot.close()
+            if not self.bot.chat_hub.aio_session.closed:
+                await self.bot.chat_hub.aio_session.close()
             if "throttled" in str(e) or "Throttled" in str(e) or "Authentication" in str(e):
                 logger.warn("[SYDNEY] ConnectionError: {}".format(e))
                 context.get("channel").send(Reply(ReplyType.INFO, "我累了，请联系我的主人帮我给新的饼干(Cookies)！\U0001F916"), context)

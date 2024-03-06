@@ -7,6 +7,7 @@ from bridge.reply import Reply, ReplyType
 from common.log import logger
 from common.tmp_dir import TmpDir
 from voice.voice import Voice
+from config import conf
 
 
 class EdgeVoice(Voice):
@@ -32,7 +33,8 @@ class EdgeVoice(Voice):
         zh-TW-HsiaoYuNeural
         zh-TW-YunJheNeural
         '''
-        self.voice = "zh-CN-liaoning-XiaobeiNeural"
+        self.voice = conf().get("voicespecies")
+        # self.voice = "zh-CN-liaoning-XiaobeiNeural"
 
     def voiceToText(self, voice_file):
         pass
@@ -42,9 +44,10 @@ class EdgeVoice(Voice):
         await communicate.save(fileName)
 
     def textToVoice(self, text):
+        self.voice = conf().get("voicespecies")
         fileName = TmpDir().path() + "reply-" + str(int(time.time())) + "-" + str(hash(text) & 0x7FFFFFFF) + ".mp3"
 
         asyncio.run(self.gen_voice(text, fileName))
-
-        logger.info("[EdgeTTS] textToVoice text={} voice file name={}".format(text, fileName))
+        logger.info(f"[EdgeTTS] textToVoice voicespecies: {self.voice}")
+        logger.debug("[EdgeTTS] textToVoice text={} voice file name={}".format(text, fileName))
         return Reply(ReplyType.VOICE, fileName)
