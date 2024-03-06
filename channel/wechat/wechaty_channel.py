@@ -27,7 +27,7 @@ try:
 except Exception as e:
     pass
 
-
+#FIXME rajayoux if future update it needs to use wechaty then this code should from channel.chat_channel import handler_pool, and then add the handler_pool to self, and also packages the wechaty uses need a 3.9.2 specifically python version to run.  
 @singleton
 class WechatyChannel(ChatChannel):
     NOT_SUPPORT_REPLYTYPE = []
