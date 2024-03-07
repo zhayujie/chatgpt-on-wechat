@@ -38,8 +38,15 @@ class DifyBot(Bot):
             if reply:
                 return reply
             # TODO: 适配除微信以外的其他channel
-            user = context["msg"].other_user_nickname
-            logger.debug(f"[DIFY] other_user_nickname={user}")
+            channel_type = conf().get("channel_type", "wx")
+            user = None
+            if channel_type == "wx":
+                user = context["msg"].other_user_nickname
+            elif channel_type == "wechatcom_app":
+                user = context["msg"].other_user_id
+            else:
+                return Reply(ReplyType.ERROR, f"unsupported channel type: {channel_type}, now dify only support wx and wechatcom_app channel")
+            logger.debug(f"[DIFY] dify_user={user}")
             user = user if user else "default" # 防止用户名为None，当被邀请进的群未设置群名称时用户名为None
             session = self.sessions.get_session(session_id, user)
             logger.debug(f"[DIFY] session={session} query={query}")
