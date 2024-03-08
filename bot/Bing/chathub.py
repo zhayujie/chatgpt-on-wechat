@@ -226,6 +226,8 @@ class ChatHub:
                         yield False, response
         
     async def close(self) -> None:
+        if not self.aio_session.closed:
+            await self.aio_session.close()
         await self.session.aclose()
 
     async def get_conversation(self) -> dict:
