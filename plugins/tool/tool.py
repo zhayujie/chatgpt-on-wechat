@@ -137,7 +137,7 @@ class Tool(Plugin):
 
         return {
             # 全局配置相关
-            "log": True,  # tool 日志开关
+            "log": False,  # tool 日志开关
             "debug": kwargs.get("debug", False),  # 输出更多日志
             "no_default": kwargs.get("no_default", False),  # 不要默认的工具，只加载自己导入的工具
             "think_depth": kwargs.get("think_depth", 2),  # 一个问题最多使用多少次工具

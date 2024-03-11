@@ -23,7 +23,6 @@ Demo made by [Visionn](https://www.wangpc.cc/)
 SaaS服务、私有化部署、稳定托管接入 等多种模式。
 >
 > 目前已在私域运营、智能客服、企业效率助手等场景积累了丰富的 AI 解决方案， 在电商、文教、健康、新消费等各行业沉淀了 AI 落地的最佳实践，致力于打造助力中小企业拥抱 AI 的一站式平台。
-
 企业服务和商用咨询可联系产品顾问：
 
 <img width="240" src="https://img-1317903499.cos.ap-guangzhou.myqcloud.com/docs/product-manager-qrcode.jpg">
