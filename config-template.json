@@ -1,42 +1,44 @@
 {
   "channel_type": "wx",
-  "model": "",
-  "open_ai_api_key": "YOUR API KEY",
-  "text_to_image": "dall-e-2",
-  "voice_to_text": "openai",
-  "text_to_voice": "openai",
+  "model": "gpt-4",
+  "open_ai_api_base": "openai-api-base(Azure openai endpoint)",
+  "open_ai_api_key": "key",
   "proxy": "",
-  "hot_reload": false,
-  "single_chat_prefix": [
-    "bot",
-    "@bot"
-  ],
-  "single_chat_reply_prefix": "[bot] ",
+  "use_azure_chatgpt": true,
+  "coze_discord_proxy": false,
+  "azure_deployment_id": "azure openai deployment name",
+  "azure_api_version": "2024-02-15-preview",
+  "text_to_image": "dall-e-3",
+  "image_create_size": "1024x1024",
+  "dalle3_image_style": "vivid",
+  "dalle3_image_quality": "hd",
+  "azure_openai_dalle_api_base": "[可选] azure openai 用于回复图片的资源 endpoint，默认使用 open_ai_api_base",
+  "azure_openai_dalle_api_key": "[可选] azure openai 用于回复图片的资源 key，默认使用 open_ai_api_key",
+  "azure_openai_dalle_deployment_id": "dall-e-3",
+  "speech_recognition": true,
+  "group_speech_recognition": false,
+  "voice_reply_voice": true,
+  "voice_to_text": "azure",
+  "text_to_voice": "azure",
+  "azure_voice_api_key": "azure speech key",
+  "azure_voice_region": "azure speech region",
+  "hot_reload": true,
+  "single_chat_reply_prefix": "",
   "group_chat_prefix": [
-    "@bot"
+    "Bot",
+    "@Bot"
   ],
   "group_name_white_list": [
-    "ChatGPT测试群",
-    "ChatGPT测试群2"
+    "ALL_GROUP"
+  ],
+  "group_chat_in_one_session": [
+    "ALL_GROUP"
   ],
   "image_create_prefix": [
     "画"
   ],
-  "image_create_size": "1024x1024",
-  "dalle3_image_style": "vivid",
-  "dalle3_image_quality": "hd",
-  "azure_openai_dalle_api_base": "YOUR DALLE ENDPOINT",
-  "azure_openai_dalle_api_key": "YOUR DALLE KEY",
-  "azure_openai_dalle_deployment_id": "YOUR DALLE DP",
-  "speech_recognition": true,
-  "group_speech_recognition": false,
-  "voice_reply_voice": false,
-  "conversation_max_tokens": 2500,
+  "conversation_max_tokens": 128000,
   "expires_in_seconds": 3600,
-  "character_desc": "你是ChatGPT, 一个由OpenAI训练的大型语言模型, 你旨在回答并解决人们的任何问题，并且可以使用多种语言与人交流。",
-  "temperature": 0.7,
-  "subscribe_msg": "感谢您的关注！\n这里是AI智能助手，可以自由对话。\n支持语音对话。\n支持图片输入。\n支持图片输出，画字开头的消息将按要求创作图片。\n支持tool、角色扮演和文字冒险等丰富的插件。\n输入{trigger_prefix}#help 查看详细指令。",
-  "use_linkai": false,
-  "linkai_api_key": "",
-  "linkai_app_code": ""
+  "character_desc": "",
+  "temperature": 0.7
 }
