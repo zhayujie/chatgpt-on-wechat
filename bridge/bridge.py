@@ -7,7 +7,7 @@ from common.singleton import singleton
 from config import conf
 from translate.factory import create_translator
 from voice.factory import create_voice
-
+import emoji
 
 @singleton
 class Bridge(object):
@@ -69,6 +69,8 @@ class Bridge(object):
         return self.get_bot("voice_to_text").voiceToText(voiceFile)
 
     def fetch_text_to_voice(self, text) -> Reply:
+        # 从文本中移除emoji
+        text = emoji.replace_emoji(text, replace="")
         return self.get_bot("text_to_voice").textToVoice(text)
 
     def fetch_translate(self, text, from_lang="", to_lang="en") -> Reply:

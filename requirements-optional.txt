@@ -1,6 +1,7 @@
 tiktoken>=0.3.2 # openai calculate token
 
 #voice
+emoji # remove emoji in speech reply
 pydub>=0.25.1 # need ffmpeg
 SpeechRecognition # google speech to text
 gTTS>=2.3.1 # google text to speech
