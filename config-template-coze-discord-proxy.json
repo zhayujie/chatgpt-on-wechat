@@ -1,0 +1,35 @@
+{
+  "channel_type": "wx",
+  "model": "gpt-4",
+  "open_ai_api_base": "http://<coze-discord-proxy>:7077/v1",
+  "open_ai_api_key": "<coze-discord-proxy-key>",
+  "coze_discord_proxy": true,
+  "coze_discord_proxy_parent_id": "<discord-parent-channel-id(where to create channel)>",
+  "text_to_image": "dall-e-3",
+  "speech_recognition": true,
+  "group_speech_recognition": true,
+  "voice_reply_voice": true,
+  "voice_to_text": "azure",
+  "text_to_voice": "azure",
+  "azure_voice_api_key": "<azure_voice_api_key>",
+  "azure_voice_region": "<azure_voice_region>",
+  "hot_reload": true,
+  "single_chat_reply_prefix": "",
+  "group_chat_prefix": [
+    "bot",
+    "@bot"
+  ],
+  "group_name_white_list": [
+    "ALL_GROUP"
+  ],
+  "group_chat_in_one_session": [
+    "ALL_GROUP"
+  ],
+  "image_create_prefix": [
+    "画","draw","Draw","DRAW"
+  ],
+  "conversation_max_tokens": 128000,
+  "expires_in_seconds": 3600,
+  "character_desc": "",
+  "temperature": 0.7
+}

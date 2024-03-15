@@ -1,25 +1,56 @@
 from common.expired_dict import ExpiredDict
 from common.log import logger
 from config import conf
-
+import requests
 
 class Session(object):
     def __init__(self, session_id, system_prompt=None):
         self.session_id = session_id
         self.messages = []
+        self.channelId = ""
         if system_prompt is None:
             self.system_prompt = conf().get("character_desc", "")
         else:
             self.system_prompt = system_prompt
+        if conf().get("coze_discord_proxy", False):
+            if self.channelId != "":
+                self.delete_discord_channel()
+            self.channelId = self.create_discord_channel(session_id)
 
+    # create a new discord channel
+    def create_discord_channel(self,session_id):
+        base_url = conf().get("open_ai_api_base")
+        # base_url 去掉最后的"v1"
+        base_url = base_url[:-2]
+        url = "{}api/channel/create".format(base_url)
+        parent_id = conf().get("coze_discord_proxy_parent_id", "")
+        data = {"parentId":parent_id, "name":session_id, "type": 0}        
+        headers = {'proxy-secret': conf().get("open_ai_api_key", ""), 'out-time': '1200'}
+        response = requests.post(url, json=data, headers=headers)
+        print(response.json())
+        channelId = response.json().get("data").get("id")   
+        return channelId
+    
+    def delete_discord_channel(self):
+        base_url = conf().get("open_ai_api_base")
+        # base_url 去掉最后的"v1"
+        base_url = base_url[:-2]
+        url_delete = "{}api/channel/del/{}".format(base_url, self.channelId)
+        headers = {'proxy-secret': conf().get("open_ai_api_key", ""), 'out-time': '1200'}
+        requests.get(url_delete, headers=headers)
+    
     # 重置会话
     def reset(self):
         system_item = {"role": "system", "content": self.system_prompt}
         self.messages = [system_item]
+        if conf().get("coze_discord_proxy", False):
+            self.delete_discord_channel()
+            self.channelId = self.create_discord_channel(self.session_id)
 
     def set_system_prompt(self, system_prompt):
         self.system_prompt = system_prompt
         self.reset()
+        print("=====reset in function set_system_prompt=====")
 
     def add_query(self, query):
         user_item = {"role": "user", "content": query}
@@ -85,7 +116,9 @@ class SessionManager(object):
 
     def clear_session(self, session_id):
         if session_id in self.sessions:
+            self.sessions[session_id].delete_discord_channel()
             del self.sessions[session_id]
 
     def clear_all_session(self):
-        self.sessions.clear()
+        for session_id in self.sessions:
+            self.clear_session(session_id)

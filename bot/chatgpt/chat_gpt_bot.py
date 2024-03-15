@@ -95,7 +95,14 @@ class ChatGPTBot(Bot, OpenAIImage):
             return reply
 
         elif context.type == ContextType.IMAGE_CREATE:
-            ok, retstring = self.create_img(query, 0)
+            session_id = context["session_id"]
+            session = self.sessions.session_query(query, session_id)
+            logger.debug("[CHATGPT] session query={}".format(session.messages))
+            logger.debug("[CHATGPT] session channelId={}".format(session.channelId))
+            if not conf().get("coze_discord_proxy", False):
+                ok, retstring = self.create_img(query, 0)
+            else:
+                ok, retstring = self.create_img(query,0, channelID = session.channelId)
             reply = None
             if ok:
                 reply = Reply(ReplyType.IMAGE_URL, retstring)
@@ -120,7 +127,10 @@ class ChatGPTBot(Bot, OpenAIImage):
             # if api_key == None, the default openai.api_key will be used
             if args is None:
                 args = self.args
-            response = openai.ChatCompletion.create(api_key=api_key, messages=session.messages, **args)
+            if conf().get("coze_discord_proxy", False):
+                response = openai.ChatCompletion.create(channelId=session.channelId, api_key=api_key, messages=session.messages, **args)
+            else:
+                response = openai.ChatCompletion.create(api_key=api_key, messages=session.messages, **args)
             # logger.debug("[CHATGPT] response={}".format(response))
             # logger.info("[ChatGPT] reply={}, total_tokens={}".format(response.choices[0]['message']['content'], response["usage"]["total_tokens"]))
             return {
