@@ -17,6 +17,7 @@ class ReplyType(Enum):
     TEXT_ = 11  # 强制文本
     VIDEO = 12
     MINIAPP = 13  # 小程序
+    JSON_MULTIPLE_RESP = 14  # JSON多条回复数据
 
     def __str__(self):
         return self.name

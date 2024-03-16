@@ -247,6 +247,13 @@ class ChatChannel(Channel):
                     reply.content = "不支持发送的消息类型: " + str(reply.type)
 
                 if reply.type == ReplyType.TEXT:
+                    try:
+                        json_object = json.loads(reply.content)
+                        if "type" in json_object[0] and "content" in json_object[0]:
+                            reply.type = ReplyType.JSON_MULTIPLE_RESP
+                            return self._decorate_reply(context, reply)
+                    except json.JSONDecodeError:
+                        pass
                     reply_text = reply.content
                     if desire_rtype == ReplyType.VOICE and ReplyType.VOICE not in self.NOT_SUPPORT_REPLYTYPE:
                         reply = super().build_text_to_voice(reply.content)
@@ -260,7 +267,7 @@ class ChatChannel(Channel):
                     reply.content = reply_text
                 elif reply.type == ReplyType.ERROR or reply.type == ReplyType.INFO:
                     reply.content = "[" + str(reply.type) + "]\n" + reply.content
-                elif reply.type == ReplyType.IMAGE_URL or reply.type == ReplyType.VOICE or reply.type == ReplyType.IMAGE or reply.type == ReplyType.FILE or reply.type == ReplyType.VIDEO or reply.type == ReplyType.VIDEO_URL:
+                elif reply.type == ReplyType.IMAGE_URL or reply.type == ReplyType.VOICE or reply.type == ReplyType.IMAGE or reply.type == ReplyType.FILE or reply.type == ReplyType.VIDEO or reply.type == ReplyType.VIDEO_URL or reply.type == ReplyType.CARD or reply.type == ReplyType.INVITE_ROOM or reply.type == ReplyType.MINIAPP or reply.type == ReplyType.JSON_MULTIPLE_RESP:
                     pass
                 else:
                     logger.error("[WX] unknown reply type: {}".format(reply.type))
@@ -271,6 +278,24 @@ class ChatChannel(Channel):
 
     def _send_reply(self, context: Context, reply: Reply):
         if reply and reply.type:
+            if reply.type == ReplyType.JSON_MULTIPLE_RESP:
+                for item in json.loads(reply.content):
+                    # 字符串转大写
+                    if item["type"] == "TEXT":
+                        self._send_reply(context, Reply(ReplyType.TEXT, item["content"]))
+                    elif item["type"] == "VOICE":
+                        self._send_reply(context, Reply(ReplyType.VOICE, item["content"]))
+                    elif item["type"] == "IMAGE_URL":
+                        self._send_reply(context, Reply(ReplyType.IMAGE_URL, item["content"]))
+                    elif item["type"] == "IMAGE":
+                        self._send_reply(context, Reply(ReplyType.IMAGE, item["content"]))
+                    elif item["type"] == "FILE":
+                        self._send_reply(context, Reply(ReplyType.FILE, item["content"]))
+                    elif item["type"] == "VIDEO_URL":
+                        self._send_reply(context, Reply(ReplyType.VIDEO_URL, item["content"]))
+                    else:
+                        logger.warning("[WX] unknown reply type: {}, content: {}".format(item["type"], item["content"]))
+                return
             e_context = PluginManager().emit_event(
                 EventContext(
                     Event.ON_SEND_REPLY,
