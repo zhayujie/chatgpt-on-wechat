@@ -280,7 +280,8 @@ class ChatChannel(Channel):
         if reply and reply.type:
             if reply.type == ReplyType.JSON_MULTIPLE_RESP:
                 for item in json.loads(reply.content):
-                    # 字符串转大写
+                    if item["content"] == "":
+                        continue
                     if item["type"] == "TEXT":
                         self._send_reply(context, Reply(ReplyType.TEXT, item["content"]))
                     elif item["type"] == "VOICE":

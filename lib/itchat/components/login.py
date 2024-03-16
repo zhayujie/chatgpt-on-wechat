@@ -147,9 +147,13 @@ def check_login(self, uuid=None):
     params = 'loginicon=true&uuid=%s&tip=1&r=%s&_=%s' % (
         uuid, int(-localTime / 1579), localTime)
     headers = {'User-Agent': config.USER_AGENT}
+    print("请求微信")
     r = self.s.get(url, params=params, headers=headers)
+    print("请求微信完成")
     regx = r'window.code=(\d+)'
+    print("正则查找数据")
     data = re.search(regx, r.text)
+    print("正则查找数据完成")
     if data and data.group(1) == '200':
         if process_login_info(self, r.text):
             return '200'
