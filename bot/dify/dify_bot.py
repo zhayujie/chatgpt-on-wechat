@@ -78,6 +78,7 @@ class DifyBot(Bot):
 
     def _reply(self, query: str, session: DifySession, context: Context):
         try:
+            session.count_user_message() # 限制一个conversation中消息数，防止conversation过长
             base_url = self._get_api_base_url()
             chat_url = f'{base_url}/chat-messages'
             headers = self._get_headers()

@@ -8,6 +8,7 @@ class DifySession(object):
         self.__session_id = session_id
         self.__user = user
         self.__conversation_id = conversation_id
+        self.__user_message_counter = 0
 
     def get_session_id(self):
         return self.__session_id
@@ -21,6 +22,14 @@ class DifySession(object):
     def set_conversation_id(self, conversation_id):
         self.__conversation_id = conversation_id
 
+    def count_user_message(self):
+        # TODO: config dify_convsersation_max_messages
+        if self.__user_message_counter > 5:
+            self.__user_message_counter = 0
+            # FIXME: dify目前不支持设置历史消息长度，暂时使用超过5条清空会话的策略，缺点是没有滑动窗口，会突然丢失历史消息
+            self.__conversation_id = ''
+        
+        self.__user_message_counter += 1
 
 class DifySessionManager(object):
     def __init__(self, sessioncls, **session_kwargs):
