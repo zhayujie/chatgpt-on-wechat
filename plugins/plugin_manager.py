@@ -99,7 +99,7 @@ class PluginManager:
                     try:
                         self.current_plugin_path = plugin_path
                         if plugin_path in self.loaded:
-                            if self.loaded[plugin_path] == None:
+                            if plugin_name.upper() != 'GODCMD':
                                 logger.info("reload module %s" % plugin_name)
                                 self.loaded[plugin_path] = importlib.reload(sys.modules[import_path])
                                 dependent_module_names = [name for name in sys.modules.keys() if name.startswith(import_path + ".")]
@@ -141,7 +141,7 @@ class PluginManager:
         failed_plugins = []
         for name, plugincls in self.plugins.items():
             if plugincls.enabled:
-                if name not in self.instances:
+                # if name not in self.instances:
                     try:
                         instance = plugincls()
                     except Exception as e:
