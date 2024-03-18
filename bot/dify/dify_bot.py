@@ -24,19 +24,6 @@ class DifyBot(Bot):
                 query = conf().get('image_create_prefix', ['画'])[0] + query
             logger.info("[DIFY] query={}".format(query))
             session_id = context["session_id"]
-            reply = None
-            clear_memory_commands = conf().get("clear_memory_commands", ["#清除记忆"])
-            if query in clear_memory_commands:
-                self.sessions.clear_session(session_id)
-                reply = Reply(ReplyType.INFO, "记忆已清除")
-            elif query == "#清除所有":
-                self.sessions.clear_all_session()
-                reply = Reply(ReplyType.INFO, "所有人记忆已清除")
-            elif query == "#更新配置":
-                load_config()
-                reply = Reply(ReplyType.INFO, "配置已更新")
-            if reply:
-                return reply
             # TODO: 适配除微信以外的其他channel
             channel_type = conf().get("channel_type", "wx")
             user = None
@@ -53,7 +40,7 @@ class DifyBot(Bot):
 
             reply, err = self._reply(query, session, context)
             if err != None:
-                reply = Reply(ReplyType.ERROR, err)
+                reply = Reply(ReplyType.TEXT, "我暂时遇到了一些问题，请您稍后重试~")
             return reply
         else:
             reply = Reply(ReplyType.ERROR, "Bot不支持处理{}类型的消息".format(context.type))
