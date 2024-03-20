@@ -170,11 +170,13 @@ class ChatChannel(Channel):
         reply = self._generate_reply(context)
 
         logger.debug("[WX] ready to decorate reply: {}".format(reply))
-        # reply的包装步骤
-        reply = self._decorate_reply(context, reply)
 
-        # reply的发送步骤
-        self._send_reply(context, reply)
+        # reply的包装步骤
+        if reply and reply.content:
+            reply = self._decorate_reply(context, reply)
+
+            # reply的发送步骤
+            self._send_reply(context, reply)
 
     def _generate_reply(self, context: Context, reply: Reply = Reply()) -> Reply:
         e_context = PluginManager().emit_event(
