@@ -90,7 +90,7 @@ pip3 install -r requirements-optional.txt # 国内可以在该命令末尾添加
   "single_chat_prefix": [""],                   # 私聊时文本需要包含该前缀才能触发机器人回复
   "single_chat_reply_prefix": "",               # 私聊时自动回复的前缀，用于区分真人
   "group_chat_prefix": ["@bot"],                # 群聊时包含该前缀则会触发机器人回复
-  "group_name_white_list": ["ALL_GROUP"],       # 机器人回复的群名称列表
+  "group_name_white_list": ["ALL_GROUP"]      # 机器人回复的群名称列表
 }
 
 ```
