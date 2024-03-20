@@ -1,7 +1,11 @@
 <div align="center">
 <h1>Dify on WeChat</h1>
-本项目为 [chatgpt-on-wechat](https://github.com/zhayujie/chatgpt-on-wechat) 下游分支，额外对接了LLMOps平台 [Dify](https://github.com/langgenius/dify)，支持Dify智能助手模型，调用工具和知识库。
+
+本项目为 [chatgpt-on-wechat](https://github.com/zhayujie/chatgpt-on-wechat)下游分支
+额外对接了LLMOps平台 [Dify](https://github.com/langgenius/dify)，支持Dify智能助手模型，调用工具和知识库。
+
 </div>
+
 
 
 ![image-1](./docs/images/image1.jpg)
@@ -20,9 +24,9 @@
 
 # Dify on WeChat 交流群
 
-添加我的微信加入群聊
+添加我的微信拉你进群
 
-<img width="240" src="./docs/images/image3.jpg">
+<img width="240" src="./docs/images/image3.png">
 
 
 
@@ -125,11 +129,11 @@ nohup python3 app.py & tail -f nohup.out          # 在后台运行程序并通�
 
 # 开发计划
 
-- [ ] **完善文档：**README文档下班抽空写的，写的比较简单，之后写详细一些
-- [ ] **Docker镜像构建：**目前只支持源码部署
-- [ ] **企业微信客服通道：**支持企业微信客服
-- [ ] **测试合并原项目PR：**原项目有很多比较好的PR没有通过，之后会把一些比较好的feature测试合并进这个仓库
-- [ ] **优化对接Dify：**目前对接dify的很多代码写的还很潦草，以后逐步优化
+- [ ] **完善文档：** README文档下班抽空写的，写的比较简单，之后写详细一些
+- [ ] **Docker镜像构建：** 目前只支持源码部署
+- [ ] **企业微信客服通道：** 支持企业微信客服
+- [ ] **测试合并原项目PR：** 原项目有很多比较好的PR没有通过，之后会把一些比较好的feature测试合并进这个仓库
+- [ ] **优化对接Dify：** 目前对接dify的很多代码写的还很潦草，以后逐步优化
 
 也请各位大佬多多提PR，我社畜打工人，精力实在有限~
 
