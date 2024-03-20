@@ -141,19 +141,21 @@ class PluginManager:
         failed_plugins = []
         for name, plugincls in self.plugins.items():
             if plugincls.enabled:
+                if 'GODCMD' in self.instances and name == 'GODCMD':
+                    continue
                 # if name not in self.instances:
-                    try:
-                        instance = plugincls()
-                    except Exception as e:
-                        logger.warn("Failed to init %s, diabled. %s" % (name, e))
-                        self.disable_plugin(name)
-                        failed_plugins.append(name)
-                        continue
-                    self.instances[name] = instance
-                    for event in instance.handlers:
-                        if event not in self.listening_plugins:
-                            self.listening_plugins[event] = []
-                        self.listening_plugins[event].append(name)
+                try:
+                    instance = plugincls()
+                except Exception as e:
+                    logger.warn("Failed to init %s, diabled. %s" % (name, e))
+                    self.disable_plugin(name)
+                    failed_plugins.append(name)
+                    continue
+                self.instances[name] = instance
+                for event in instance.handlers:
+                    if event not in self.listening_plugins:
+                        self.listening_plugins[event] = []
+                    self.listening_plugins[event].append(name)
         self.refresh_order()
         return failed_plugins
 
