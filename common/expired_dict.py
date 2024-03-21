@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-
+from config import conf
 
 class ExpiredDict(dict):
     def __init__(self, expires_in_seconds):
@@ -9,6 +9,8 @@ class ExpiredDict(dict):
     def __getitem__(self, key):
         value, expiry_time = super().__getitem__(key)
         if datetime.now() > expiry_time:
+            if conf().get("coze_discord_proxy", False):
+                value.delete_discord_channel()
             del self[key]
             raise KeyError("expired {}".format(key))
         self.__setitem__(key, value)

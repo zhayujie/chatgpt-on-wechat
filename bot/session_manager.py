@@ -116,7 +116,8 @@ class SessionManager(object):
 
     def clear_session(self, session_id):
         if session_id in self.sessions:
-            self.sessions[session_id].delete_discord_channel()
+            if conf().get("coze_discord_proxy", False):
+                self.sessions[session_id].delete_discord_channel()
             del self.sessions[session_id]
 
     def clear_all_session(self):
