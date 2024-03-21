@@ -5,6 +5,7 @@
   "open_ai_api_key": "<coze-discord-proxy-key>",
   "coze_discord_proxy": true,
   "coze_discord_proxy_parent_id": "<discord-parent-channel-id(where to create channel)>",
+  "concurrency_in_session": 1,
   "text_to_image": "dall-e-3",
   "speech_recognition": true,
   "group_speech_recognition": true,
