@@ -3,11 +3,13 @@
 import os
 import signal
 import sys
+import time
 
 from channel import channel_factory
-from common.log import logger
-from config import conf, load_config
+from common import const
+from config import load_config
 from plugins import *
+import threading
 
 
 def sigterm_handler_wrap(_signo):
@@ -21,6 +23,21 @@ def sigterm_handler_wrap(_signo):
         sys.exit(0)
 
     signal.signal(_signo, func)
+
+
+def start_channel(channel_name: str):
+    channel = channel_factory.create_channel(channel_name)
+    if channel_name in ["wx", "wxy", "terminal", "wechatmp", "wechatmp_service", "wechatcom_app", "wework",
+                        const.FEISHU, const.DINGTALK]:
+        PluginManager().load_plugins()
+
+    if conf().get("use_linkai"):
+        try:
+            from common import linkai_client
+            threading.Thread(target=linkai_client.start, args=(channel,)).start()
+        except Exception as e:
+            pass
+    channel.startup()
 
 
 def run():
@@ -40,14 +57,11 @@ def run():
 
         if channel_name == "wxy":
             os.environ["WECHATY_LOG"] = "warn"
-            # os.environ['WECHATY_PUPPET_SERVICE_ENDPOINT'] = '127.0.0.1:9001'
 
-        channel = channel_factory.create_channel(channel_name)
-        if channel_name in ["wx", "wxy", "terminal", "wechatmp", "wechatmp_service", "wechatcom_app", "wework"]:
-            PluginManager().load_plugins()
+        start_channel(channel_name)
 
-        # startup channel
-        channel.startup()
+        while True:
+            time.sleep(1)
     except Exception as e:
         logger.error("App startup failed!")
         logger.exception(e)
