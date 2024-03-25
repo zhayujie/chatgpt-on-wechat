@@ -41,3 +41,6 @@ dingtalk_stream
 
 # zhipuai
 zhipuai>=2.0.1
+
+#mistralai
+mistralai
