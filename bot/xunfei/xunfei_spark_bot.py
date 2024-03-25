@@ -47,7 +47,7 @@ class XunFeiBot(Bot):
         # 默认使用v2.0版本: "ws://spark-api.xf-yun.com/v2.1/chat"
         # v1.5版本为: "ws://spark-api.xf-yun.com/v1.1/chat"
         # v3.0版本为: "ws://spark-api.xf-yun.com/v3.1/chat"
-        # 升级到v3.5版本，同时升级到wss协议，避免请求时出现11200错误码
+        # v3.5版本为: "wss://spark-api.xf-yun.com/v3.5/chat"
         self.spark_url = "wss://spark-api.xf-yun.com/v3.5/chat"
         self.host = urlparse(self.spark_url).netloc
         self.path = urlparse(self.spark_url).path
