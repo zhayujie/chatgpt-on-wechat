@@ -2,6 +2,7 @@
 channel factory
 """
 from common import const
+from common.log import logger
 
 
 def create_bot(bot_type):
@@ -43,7 +44,9 @@ def create_bot(bot_type):
     elif bot_type == const.CLAUDEAI:
         from bot.claude.claude_ai_bot import ClaudeAIBot
         return ClaudeAIBot()
-
+    elif bot_type == const.CLAUDEAPI:
+        from bot.claudeapi.claude_api_bot import ClaudeAPIBot
+        return ClaudeAPIBot()
     elif bot_type == const.QWEN:
         from bot.ali.ali_qwen_bot import AliQwenBot
         return AliQwenBot()
