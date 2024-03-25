@@ -24,5 +24,9 @@
       "url": "https://github.com/fatwang2/sum4all.git",
       "desc": "总结一切的插件，支持视频、图片、链接、文件、搜索，支持多种大模型"
     },
+    "pictureChange": {
+      "url": "https://github.com/Yanyutin753/pictureChange.git",
+      "desc": "利用stable-diffusion和百度Ai进行图生图或者画图的插件"
+    }
   }
 }

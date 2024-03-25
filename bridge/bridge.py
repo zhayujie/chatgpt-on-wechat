@@ -18,6 +18,7 @@ class Bridge(object):
             "text_to_voice": conf().get("text_to_voice", "google"),
             "translate": conf().get("translate", "baidu"),
         }
+        # 这边取配置的模型
         model_type = conf().get("model") or const.GPT35
         if model_type in ["text-davinci-003"]:
             self.btype["chat"] = const.OPEN_AI
@@ -33,6 +34,8 @@ class Bridge(object):
             self.btype["chat"] = const.GEMINI
         if model_type in [const.ZHIPU_AI]:
             self.btype["chat"] = const.ZHIPU_AI
+        if model_type and model_type.startswith("claude-3"):
+            self.btype["chat"] = const.CLAUDEAPI
 
         if conf().get("use_linkai") and conf().get("linkai_api_key"):
             self.btype["chat"] = const.LINKAI
@@ -40,12 +43,12 @@ class Bridge(object):
                 self.btype["voice_to_text"] = const.LINKAI
             if not conf().get("text_to_voice") or conf().get("text_to_voice") in ["openai", const.TTS_1, const.TTS_1_HD]:
                 self.btype["text_to_voice"] = const.LINKAI
-
         if model_type in ["claude"]:
             self.btype["chat"] = const.CLAUDEAI
+
         self.bots = {}
         self.chat_bots = {}
-
+    # 模型对应的接口
     def get_bot(self, typename):
         if self.bots.get(typename) is None:
             logger.info("create bot {} for {}".format(self.btype[typename], typename))
