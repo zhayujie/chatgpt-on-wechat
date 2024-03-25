@@ -4,6 +4,7 @@ import threading
 import time
 from asyncio import CancelledError
 from concurrent.futures import Future, ThreadPoolExecutor
+from concurrent import futures
 
 from bridge.context import *
 from bridge.reply import *
@@ -17,6 +18,8 @@ try:
 except Exception as e:
     pass
 
+handler_pool = ThreadPoolExecutor(max_workers=8)  # 处理消息的线程池
+
 
 # 抽象类, 它包含了与消息通道无关的通用处理逻辑
 class ChatChannel(Channel):
@@ -25,7 +28,6 @@ class ChatChannel(Channel):
     futures = {}  # 记录每个session_id提交到线程池的future对象, 用于重置会话时把没执行的future取消掉，正在执行的不会被取消
     sessions = {}  # 用于控制并发，每个session_id同时只能有一个context在处理
     lock = threading.Lock()  # 用于控制对sessions的访问
-    handler_pool = ThreadPoolExecutor(max_workers=8)  # 处理消息的线程池
 
     def __init__(self):
         _thread = threading.Thread(target=self.consume)
@@ -168,11 +170,13 @@ class ChatChannel(Channel):
         reply = self._generate_reply(context)
 
         logger.debug("[WX] ready to decorate reply: {}".format(reply))
-        # reply的包装步骤
-        reply = self._decorate_reply(context, reply)
 
-        # reply的发送步骤
-        self._send_reply(context, reply)
+        # reply的包装步骤
+        if reply and reply.content:
+            reply = self._decorate_reply(context, reply)
+
+            # reply的发送步骤
+            self._send_reply(context, reply)
 
     def _generate_reply(self, context: Context, reply: Reply = Reply()) -> Reply:
         e_context = PluginManager().emit_event(
@@ -339,7 +343,7 @@ class ChatChannel(Channel):
                         if not context_queue.empty():
                             context = context_queue.get()
                             logger.debug("[WX] consume context: {}".format(context))
-                            future: Future = self.handler_pool.submit(self._handle, context)
+                            future: Future = handler_pool.submit(self._handle, context)
                             future.add_done_callback(self._thread_pool_callback(session_id, context=context))
                             if session_id not in self.futures:
                                 self.futures[session_id] = []

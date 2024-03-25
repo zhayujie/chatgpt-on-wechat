@@ -92,7 +92,8 @@ class LinkAIBot(Bot):
                 "frequency_penalty": conf().get("frequency_penalty", 0.0),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
                 "presence_penalty": conf().get("presence_penalty", 0.0),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
                 "session_id": session_id,
-                "channel_type": conf().get("channel_type")
+                "sender_id": session_id,
+                "channel_type": conf().get("channel_type", "wx")
             }
             try:
                 from linkai import LinkAIClient
@@ -400,7 +401,7 @@ class LinkAIBot(Bot):
                 i += 1
                 if url.endswith(".mp4"):
                     reply_type = ReplyType.VIDEO_URL
-                elif url.endswith(".pdf") or url.endswith(".doc") or url.endswith(".docx"):
+                elif url.endswith(".pdf") or url.endswith(".doc") or url.endswith(".docx") or url.endswith(".csv"):
                     reply_type = ReplyType.FILE
                     url = _download_file(url)
                     if not url:
