@@ -8,8 +8,8 @@ import anthropic
 
 from bot.bot import Bot
 from bot.openai.open_ai_image import OpenAIImage
-from bot.claudeapi.claude_api_session import ClaudeAPISession
 from bot.chatgpt.chat_gpt_session import ChatGPTSession
+from bot.gemini.google_gemini_bot import GoogleGeminiBot
 from bot.session_manager import SessionManager
 from bridge.context import ContextType
 from bridge.reply import Reply, ReplyType
@@ -78,15 +78,12 @@ class ClaudeAPIBot(Bot, OpenAIImage):
 
     def reply_text(self, session: ChatGPTSession, retry_count=0):
         try:
-            if session.messages[0].get("role") == "system":
-                system = session.messages[0].get("content")
-                session.messages.pop(0)
             actual_model = self._model_mapping(conf().get("model"))
             response = self.claudeClient.messages.create(
                 model=actual_model,
                 max_tokens=1024,
                 # system=conf().get("system"),
-                messages=session.messages
+                messages=GoogleGeminiBot.filter_messages(session.messages)
             )
             # response = openai.Completion.create(prompt=str(session), **self.args)
             res_content = response.content[0].text.strip().replace("<|endoftext|>", "")

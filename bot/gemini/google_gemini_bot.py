@@ -33,7 +33,7 @@ class GoogleGeminiBot(Bot):
             logger.info(f"[Gemini] query={query}")
             session_id = context["session_id"]
             session = self.sessions.session_query(query, session_id)
-            gemini_messages = self._convert_to_gemini_messages(self._filter_messages(session.messages))
+            gemini_messages = self._convert_to_gemini_messages(self.filter_messages(session.messages))
             genai.configure(api_key=self.api_key)
             model = genai.GenerativeModel('gemini-pro')
             response = model.generate_content(gemini_messages)
@@ -61,7 +61,8 @@ class GoogleGeminiBot(Bot):
             })
         return res
 
-    def _filter_messages(self, messages: list):
+    @staticmethod
+    def filter_messages(messages: list):
         res = []
         turn = "user"
         if not messages:
