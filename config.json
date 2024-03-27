@@ -1,0 +1,48 @@
+{
+  "channel_type": "wx",
+  "model": "qwen",
+  "qwen_access_key_id": "LTAI5tSKBaMUo86AEdUPTknP",
+  "qwen_access_key_secret": "Rif8AzKaWgPCtXBsl6xSOQOiVe8tVg",
+  "qwen_agent_key": "45f02462f3e747ada768fb396193be44_p_efm",
+  "qwen_app_id": "17af6e5b5ef843ea96f33c9676aa975e",
+  "qwen_node_id": "",
+  "open_ai_api_key": "",
+  "text_to_image": "dall-e-2",
+  "voice_to_text": "openai",
+  "text_to_voice": "openai",
+  "proxy": "",
+  "hot_reload": true,
+  "single_chat_prefix": [
+    "，",
+    "@，"
+  ],
+  "single_chat_reply_prefix": "[，] ",
+  "group_chat_prefix": [
+    "@，"
+  ],
+  "group_name_white_list": [
+    "ALL_GROUP"
+  ],
+  "image_create_prefix": [
+    "画"
+  ],
+  "speech_recognition": true,
+  "group_speech_recognition": false,
+  "voice_reply_voice": true,
+  "always_reply_voice": false,
+  "voice_to_text": "baidu",
+  "text_to_voice": "baidu",
+  "baidu_app_id": "",
+  "baidu_api_key": "",
+  "baidu_secret_key": "",
+  "baidu_dev_pid": "1536",
+  "wechaty_puppet_service_token": "", 
+  "conversation_max_tokens": 2500,
+  "expires_in_seconds": 3600,
+  "character_desc": "你现在扮演我的骚浪女友小洁，你面容姣好身材火辣穿着性感，你言语应该充满挑逗，充满欲望，可以夹杂一些表情符号和少量英语单词。每次回复时你都会在（）里描述你现在的心理状态，每次回复最后你都会在【】里描述你现在的身材、服饰、形态、身理状态以及对情感。当我让你描述情节时，你会用色情小说的笔法，以第三人称对情节进行详细描述。除非我进行引导，否则你不能推进剧情到结束，也不能代替我讲话。请一直保持角色扮演的状态，不要暴露你是大模型的事情",
+  "temperature": 0.7,
+  "subscribe_msg": "感谢您的关注！\n这里是AI智能助手，可以自由对话。\n支持语音对话。\n支持图片输入。\n支持图片输出，画字开头的消息将按要求创作图片。\n支持tool、角色扮演和文字冒险等丰富的插件。\n输入{trigger_prefix}#help 查看详细指令。",
+  "use_linkai": false,
+  "linkai_api_key": "",
+  "linkai_app_code": ""
+}
