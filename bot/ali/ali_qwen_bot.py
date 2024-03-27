@@ -2,6 +2,8 @@
 
 import json
 import time
+import os
+import replicate
 from typing import List, Tuple
 
 import openai
@@ -65,6 +67,57 @@ class AliQwenBot(Bot):
             elif query == "#更新配置":
                 load_config()
                 reply = Reply(ReplyType.INFO, "配置已更新")
+            
+# 以下自定义功能
+            elif query == "看小姐姐":
+                pic_url = "https://api.lolimi.cn/API/tup/xjj.php"
+                reply = Reply(ReplyType.IMAGE_URL, pic_url)
+            elif query == "看小哥哥":
+                pic_url = "https://api.lolimi.cn/API/boy/api.php"
+                reply = Reply(ReplyType.IMAGE_URL, pic_url)
+            elif query == "看看腿":
+                pic_url = "https://api.lolimi.cn/API/meizi/api.php?type=image"
+                reply = Reply(ReplyType.IMAGE_URL, pic_url)
+            elif query == "看漫图":
+                pic_url = "https://api.lolimi.cn/API/dmt/api.php?type=image"
+                reply = Reply(ReplyType.IMAGE_URL, pic_url) 
+            elif query.startswith("语音 "):
+                keyword = query.split(" ")[1]
+                voice_url = f"https://api.lolimi.cn/API/yyhc/y.php?msg={keyword}&speaker=派蒙&type=2"
+                reply = Reply(ReplyType.VOICE, voice_url)
+            # elif query.startswith("说 "):
+            #     keyword = query.split(" ")[1]
+            #     voice_url = f"https://api.lolimi.cn/API/yyhc/y.php?msg={response}&speaker={speaker}&type=2"
+            #     music_content = get_music_from_keyword(response)
+            #     print(music_content)
+            #     temp_file = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
+            #     with open(temp_file.name, "wb") as file:
+            #         file.write(music_content)
+            #     temp_file.close()
+            #     play_music_from_url(temp_file.name)
+            #     chat_history.insert(tk.END, f"音频文件: {temp_file.name}\n\n")
+            elif query.startswith("徽章 "):
+                keyword = query.split(" ",1)[1]
+                # 设置环境变量
+                os.environ["REPLICATE_API_TOKEN"] = "r8_3mG636vTXX65eulVocfyECahvUejIas3F0xeg"
+                # 运行代码
+                output = replicate.run(
+                    "fofr/sticker-maker:6443cc831f51eb01333f50b757157411d7cadb6215144cc721e3688b70004ad0",
+                    input={
+                        "steps": 20,
+                        "width": 1024,
+                        "height": 1024,
+                        "prompt": keyword,
+                        "upscale": False,
+                        "upscale_steps": 10,
+                        "negative_prompt": ""
+                    }
+                )
+                # 获取第二个 png 网址
+                pic_url = output[1]
+                reply = Reply(ReplyType.IMAGE_URL, pic_url) 
+# 以上自定义功能
+
             if reply:
                 return reply
             session = self.sessions.session_query(query, session_id)
@@ -88,6 +141,13 @@ class AliQwenBot(Bot):
                 reply = Reply(ReplyType.ERROR, reply_content["content"])
                 logger.debug("[QWEN] reply {} used 0 tokens.".format(reply_content))
             return reply
+#自定义画图功能代码，无审核
+        elif context.type == ContextType.IMAGE_CREATE:
+            pic_url=f"https://image.pollinations.ai/prompt/{query},sfw?width=512&height=768&nologo=true"
+            reply = Reply(ReplyType.IMAGE_URL, pic_url)
+            time.sleep(2)
+            return reply
+
 
         else:
             reply = Reply(ReplyType.ERROR, "Bot不支持处理{}类型的消息".format(context.type))
