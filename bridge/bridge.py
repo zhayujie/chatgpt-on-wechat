@@ -30,6 +30,8 @@ class Bridge(object):
             self.btype["chat"] = const.XUNFEI
         if model_type in [const.QWEN]:
             self.btype["chat"] = const.QWEN
+        if model_type in [const.QWEN_TURBO, const.QWEN_PLUS, const.QWEN_MAX]:
+            self.btype["chat"] = const.QWEN_DASHSCOPE
         if model_type in [const.GEMINI]:
             self.btype["chat"] = const.GEMINI
         if model_type in [const.ZHIPU_AI]:
