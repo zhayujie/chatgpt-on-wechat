@@ -162,7 +162,7 @@ class DifyBot(Bot):
         conversation_id = None
         for event in events:
             event_name = event['event']
-            if event_name == 'agent_message':
+            if event_name == 'agent_message' or event_name == 'message':
                 accumulated_agent_message += event['answer']
                 logger.debug("[DIFY] accumulated_agent_message: {}".format(accumulated_agent_message))
                 # 保存conversation_id
