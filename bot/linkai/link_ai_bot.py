@@ -7,7 +7,6 @@ import requests
 import config
 from bot.bot import Bot
 from bot.chatgpt.chat_gpt_session import ChatGPTSession
-from bot.gemini.google_gemini_bot import GoogleGeminiBot
 from bot.session_manager import SessionManager
 from bridge.context import Context, ContextType
 from bridge.reply import Reply, ReplyType
