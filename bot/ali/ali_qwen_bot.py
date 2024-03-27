@@ -17,30 +17,35 @@ from bridge.reply import Reply, ReplyType
 from common.log import logger
 from common import const
 from config import conf, load_config
+import dashscope
 
 class AliQwenBot(Bot):
     def __init__(self):
         super().__init__()
-        self.api_key_expired_time = self.set_api_key()
+        # self.api_key_expired_time = self.set_api_key()
         self.sessions = SessionManager(AliQwenSession, model=conf().get("model", const.QWEN))
 
-    def api_key_client(self):
-        return broadscope_bailian.AccessTokenClient(access_key_id=self.access_key_id(), access_key_secret=self.access_key_secret())
+    # def api_key_client(self):
+    #     return broadscope_bailian.AccessTokenClient(access_key_id=self.access_key_id(), access_key_secret=self.access_key_secret())
+    #
 
-    def access_key_id(self):
-        return conf().get("qwen_access_key_id")
+    def api_key(self):
+        return conf().get("qwen_api_key")
 
-    def access_key_secret(self):
-        return conf().get("qwen_access_key_secret")
-
-    def agent_key(self):
-        return conf().get("qwen_agent_key")
-
-    def app_id(self):
-        return conf().get("qwen_app_id")
-
-    def node_id(self):
-        return conf().get("qwen_node_id", "")
+    # def access_key_id(self):
+    #     return conf().get("qwen_access_key_id")
+    #
+    # def access_key_secret(self):
+    #     return conf().get("qwen_access_key_secret")
+    #
+    # def agent_key(self):
+    #     return conf().get("qwen_agent_key")
+    #
+    # def app_id(self):
+    #     return conf().get("qwen_app_id")
+    #
+    # def node_id(self):
+    #     return conf().get("qwen_node_id", "")
 
     def temperature(self):
         return conf().get("temperature", 0.2 )
@@ -101,11 +106,18 @@ class AliQwenBot(Bot):
         :return: {}
         """
         try:
-            prompt, history = self.convert_messages_format(session.messages)
-            self.update_api_key_if_expired()
+            # prompt, history = self.convert_messages_format(session.messages)
+            # self.update_api_key_if_expired()
             # NOTE 阿里百炼的call()函数未提供temperature参数，考虑到temperature和top_p参数作用相同，取两者较小的值作为top_p参数传入，详情见文档 https://help.aliyun.com/document_detail/2587502.htm
-            response = broadscope_bailian.Completions().call(app_id=self.app_id(), prompt=prompt, history=history, top_p=min(self.temperature(), self.top_p()))
-            completion_content = self.get_completion_content(response, self.node_id())
+            # response = broadscope_bailian.Completions().call(app_id=self.app_id(), prompt=prompt, history=history, top_p=min(self.temperature(), self.top_p()))
+
+            # SDK升级，采用更简洁高效的方式，见：https://github.com/zhayujie/chatgpt-on-wechat/issues/1836
+            # 接入文档：https://help.aliyun.com/zh/dashscope/developer-reference/api-details
+            # TODO 模型暂时默认取 qwen-turbo, 后面可在config.json['model']里配置
+            turbo = dashscope.Generation.Models.qwen_turbo
+            dashscope.api_key = self.api_key()
+            response = dashscope.Generation.call(turbo, messages=session.messages, result_format='message', top_p=min(self.temperature(), self.top_p()))
+            completion_content = self.get_completion_content(response)
             completion_tokens, total_tokens = self.calc_tokens(session.messages, completion_content)
             return {
                 "total_tokens": total_tokens,
@@ -145,66 +157,71 @@ class AliQwenBot(Bot):
             else:
                 return result
 
-    def set_api_key(self):
-        api_key, expired_time = self.api_key_client().create_token(agent_key=self.agent_key())
-        broadscope_bailian.api_key = api_key
-        return expired_time
+    # def set_api_key(self):
+    #     api_key, expired_time = self.api_key_client().create_token(agent_key=self.agent_key())
+    #     broadscope_bailian.api_key = api_key
+    #     return expired_time
 
     def update_api_key_if_expired(self):
         if time.time() > self.api_key_expired_time:
             self.api_key_expired_time = self.set_api_key()
 
-    def convert_messages_format(self, messages) -> Tuple[str, List[ChatQaMessage]]:
-        history = []
-        user_content = ''
-        assistant_content = ''
-        system_content = ''
-        for message in messages:
-            role = message.get('role')
-            if role == 'user':
-                user_content += message.get('content')
-            elif role == 'assistant':
-                assistant_content = message.get('content')
-                history.append(ChatQaMessage(user_content, assistant_content))
-                user_content = ''
-                assistant_content = ''
-            elif role =='system':
-                system_content += message.get('content')
-        if user_content == '':
-            raise Exception('no user message')
-        if system_content != '':
-            # NOTE 模拟系统消息，测试发现人格描述以"你需要扮演ChatGPT"开头能够起作用，而以"你是ChatGPT"开头模型会直接否认
-            system_qa = ChatQaMessage(system_content, '好的，我会严格按照你的设定回答问题')
-            history.insert(0, system_qa)
-        logger.debug("[QWEN] converted qa messages: {}".format([item.to_dict() for item in history]))
-        logger.debug("[QWEN] user content as prompt: {}".format(user_content))
-        return user_content, history
+    # def convert_messages_format(self, messages) -> Tuple[str, List[ChatQaMessage]]:
+    #     history = []
+    #     user_content = ''
+    #     assistant_content = ''
+    #     system_content = ''
+    #     for message in messages:
+    #         role = message.get('role')
+    #         if role == 'user':
+    #             user_content += message.get('content')
+    #         elif role == 'assistant':
+    #             assistant_content = message.get('content')
+    #             history.append(ChatQaMessage(user_content, assistant_content))
+    #             user_content = ''
+    #             assistant_content = ''
+    #         elif role =='system':
+    #             system_content += message.get('content')
+    #     if user_content == '':
+    #         raise Exception('no user message')
+    #     if system_content != '':
+    #         # NOTE 模拟系统消息，测试发现人格描述以"你需要扮演ChatGPT"开头能够起作用，而以"你是ChatGPT"开头模型会直接否认
+    #         system_qa = ChatQaMessage(system_content, '好的，我会严格按照你的设定回答问题')
+    #         history.insert(0, system_qa)
+    #     logger.debug("[QWEN] converted qa messages: {}".format([item.to_dict() for item in history]))
+    #     logger.debug("[QWEN] user content as prompt: {}".format(user_content))
+    #     return user_content, history
 
-    def get_completion_content(self, response, node_id):
-        if not response['Success']:
-            return f"[ERROR]\n{response['Code']}:{response['Message']}"
-        text = response['Data']['Text']
-        if node_id == '':
-            return text
-        # TODO: 当使用流程编排创建大模型应用时，响应结构如下，最终结果在['finalResult'][node_id]['response']['text']中，暂时先这么写
+    def get_completion_content(self, response):
+        if not response.status_code == 200:
+            return f"[ERROR]\n{response.status_code}:{response.message}"
+        text = response.output.choices[0]['message']['content']
+        # 响应结构如下
         # {
-        #     'Success': True,
-        #     'Code': None,
-        #     'Message': None,
-        #     'Data': {
-        #         'ResponseId': '9822f38dbacf4c9b8daf5ca03a2daf15',
-        #         'SessionId': 'session_id',
-        #         'Text': '{"finalResult":{"LLM_T7islK":{"params":{"modelId":"qwen-plus-v1","prompt":"${systemVars.query}${bizVars.Text}"},"response":{"text":"作为一个AI语言模型，我没有年龄，因为我没有生日。\n我只是一个程序，没有生命和身体。"}}}}',
-        #         'Thoughts': [],
-        #         'Debug': {},
-        #         'DocReferences': []
+        #     "status_code": 200,
+        #     "request_id": "2f661bdf-6780-9329-ba0b-cabcdc949959",
+        #     "code": "",
+        #     "message": "",
+        #     "output": {
+        #         "text": null,
+        #         "finish_reason": null,
+        #         "choices": [
+        #             {
+        #                 "finish_reason": "stop",
+        #                 "message": {
+        #                     "role": "assistant",
+        #                     "content": "当然可以。如果你不喜欢或者不打算使用糖，那么在炖煮过程中可以省略糖的部分。不过，糖在炖牛腩的过程中可以中和牛肉的腥味，并且能让菜肴色泽红亮，增加甜度，使得口感更加醇厚。如果不加糖，你可以在最后几分钟加入一些番茄酱或者醋来提升菜肴的风味。这样也能达到类似的效果。"
+        #                 }
+        #             }
+        #         ]
         #     },
-        #     'RequestId': '8e11d31551ce4c3f83f49e6e0dd998b0',
-        #     'Failed': None
+        #     "usage": {
+        #         "input_tokens": 376,
+        #         "output_tokens": 81,
+        #         "total_tokens": 457
+        #     }
         # }
-        text_dict = json.loads(text)
-        completion_content =  text_dict['finalResult'][node_id]['response']['text']
-        return completion_content
+        return text
 
     def calc_tokens(self, messages, completion_content):
         completion_tokens = len(completion_content)

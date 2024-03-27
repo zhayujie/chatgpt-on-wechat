@@ -67,14 +67,13 @@ available_setting = {
     # claude 配置
     "claude_api_cookie": "",
     "claude_uuid": "",
-    # claude api key
-    "claude_api_key":"",
-    # 通义千问API, 获取方式查看文档 https://help.aliyun.com/document_detail/2587494.html
-    "qwen_access_key_id": "",
-    "qwen_access_key_secret": "",
-    "qwen_agent_key": "",
-    "qwen_app_id": "",
-    "qwen_node_id": "",  # 流程编排模型用到的id，如果没有用到qwen_node_id，请务必保持为空字符串
+    # 通义千问API, 获取方式查看文档 https://help.aliyun.com/document_detail/2712195.html
+    "qwen_api_key": "",
+    # "qwen_access_key_id": "",
+    # "qwen_access_key_secret": "",
+    # "qwen_agent_key": "",
+    # "qwen_app_id": "",
+    # "qwen_node_id": "",  # 流程编排模型用到的id，如果没有用到qwen_node_id，请务必保持为空字符串
     # Google Gemini Api Key
     "gemini_api_key": "",
     # wework的通用配置

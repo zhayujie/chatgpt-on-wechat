@@ -31,6 +31,7 @@ anthropic
 
 # tongyi qwen
 broadscope_bailian
+dashscope
 
 # google
 google-generativeai
