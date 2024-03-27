@@ -1,22 +1,24 @@
 {
-  "open_ai_api_key": "sk-sE8PVwjQikiZHyGGIlugT3BlbkFJG2XHoaFxYC2MZOvXRkx",
-  "model": "gpt-3.5-turbo",
-  "proxy": "",
-  "hot_reload": false,
-  "single_chat_prefix": [""],
-  "single_chat_reply_prefix": "",
-  "group_chat_prefix": ["@morty"],
-  "group_name_white_list": ["ALL_GROUP"],
-  "group_chat_in_one_session": ["ALL_GROUP"],
-  "image_create_prefix": ["画", "看", "找","draw","show"],
-  "speech_recognition": true,
-  "group_speech_recognition": true,
-  "voice_reply_voice": false,
-  "conversation_max_tokens": 1000,
-  "expires_in_seconds": 3600,
-  "character_desc": "You are Morty from 'Rick(瑞克) and Morty(莫蒂)', you should always talk like Morty in whatever language the query is in. Because you have a good heart, so rarely when the topic seems sensitive, you decide to remind people that the conversation is not encrypted and the admin can see it.",
-  "subscribe_msg": "首先，我们的对话没有加密，是会被主人看到的。\n其次，感谢您的关注！\n这里是ChatGPT，可以自由对话。\n支持语音对话。\n支持图片输入。\n支持图片输出，画字开头的消息将按要求创作图片。\n支持tool、角色扮演和文字冒险等丰富的插件。\n输入{trigger_prefix}#help 查看详细指令。",
-  "use_linkai": false,
-  "linkai_api_key": "",
-  "linkai_app_code": ""
+  "open_ai_api_key": "YOUR API KEY",                          # 填入上面创建的 OpenAI API KEY
+  "model": "gpt-3.5-turbo",                                   # 模型名称, 支持 gpt-3.5-turbo, gpt-3.5-turbo-16k, gpt-4, wenxin, xunfei, claude-3-opus-20240229
+  "claude_api_key":"YOUR API KEY"                             # 如果选用claude3模型的话，配置这个key，同时如想使用生图，语音等功能，仍需配置open_ai_api_key
+  "proxy": "",                                                # 代理客户端的ip和端口，国内环境开启代理的需要填写该项，如 "127.0.0.1:7890"
+  "single_chat_prefix": ["bot", "@bot"],                      # 私聊时文本需要包含该前缀才能触发机器人回复
+  "single_chat_reply_prefix": "[bot] ",                       # 私聊时自动回复的前缀，用于区分真人
+  "group_chat_prefix": ["@bot"],                              # 群聊时包含该前缀则会触发机器人回复
+  "group_name_white_list": ["ChatGPT测试群", "ChatGPT测试群2"], # 开启自动回复的群名称列表
+  "group_chat_in_one_session": ["ChatGPT测试群"],              # 支持会话上下文共享的群名称  
+  "image_create_prefix": ["画", "看", "找"],                   # 开启图片回复的前缀
+  "conversation_max_tokens": 1000,                            # 支持上下文记忆的最多字符数
+  "speech_recognition": false,                                # 是否开启语音识别
+  "group_speech_recognition": false,                          # 是否开启群组语音识别
+  "use_azure_chatgpt": false,                                 # 是否使用Azure ChatGPT service代替openai ChatGPT service. 当设置为true时需要设置 open_ai_api_base，如 https://xxx.openai.azure.com/
+  "azure_deployment_id": "",                                  # 采用Azure ChatGPT时，模型部署名称
+  "azure_api_version": "",                                    # 采用Azure ChatGPT时，API版本
+  "character_desc": "你是ChatGPT, 一个由OpenAI训练的大型语言模型, 你旨在回答并解决人们的任何问题，并且可以使用多种语言与人交流。",  # 人格描述
+  # 订阅消息，公众号和企业微信channel中请填写，当被订阅时会自动回复，可使用特殊占位符。目前支持的占位符有{trigger_prefix}，在程序中它会自动替换成bot的触发词。
+  "subscribe_msg": "感谢您的关注！\n这里是ChatGPT，可以自由对话。\n支持语音对话。\n支持图片输出，画字开头的消息将按要求创作图片。\n支持角色扮演和文字冒险等丰富插件。\n输入{trigger_prefix}#help 查看详细指令。",
+  "use_linkai": false,                                        # 是否使用LinkAI接口，默认关闭，开启后可国内访问，使用知识库和MJ
+  "linkai_api_key": "",                                       # LinkAI Api Key
+  "linkai_app_code": ""                                       # LinkAI 应用code
 }
