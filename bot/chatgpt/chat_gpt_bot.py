@@ -187,8 +187,11 @@ class AzureChatGPTBot(ChatGPTBot):
                 operation_location = submission.headers['operation-location']
                 status = ""
                 while (status != "succeeded"):
+                    if retry_count > 3:
+                        return False, "图片生成失败"
                     response = requests.get(operation_location, headers=headers)
                     status = response.json()['status']
+                    retry_count += 1
                 image_url = response.json()['result']['data'][0]['url']
                 return True, image_url
             except Exception as e:
