@@ -130,9 +130,12 @@ class LinkAIBot(Bot):
                 response = res.json()
                 reply_content = response["choices"][0]["message"]["content"]
                 total_tokens = response["usage"]["total_tokens"]
-                logger.info(f"[LINKAI] reply={reply_content}, total_tokens={total_tokens}")
-                self.sessions.session_reply(reply_content, session_id, total_tokens, query=query)
-    
+                res_code = response.get('code')
+                logger.info(f"[LINKAI] reply={reply_content}, total_tokens={total_tokens}, res_code={res_code}")
+                if res_code == 429:
+                    logger.warn(f"[LINKAI] 用户访问超出限流配置，sender_id={body.get('sender_id')}")
+                else:
+                    self.sessions.session_reply(reply_content, session_id, total_tokens, query=query)
                 agent_suffix = self._fetch_agent_suffix(response)
                 if agent_suffix:
                     reply_content += agent_suffix
@@ -161,7 +164,10 @@ class LinkAIBot(Bot):
                     logger.warn(f"[LINKAI] do retry, times={retry_count}")
                     return self._chat(query, context, retry_count + 1)
 
-                return Reply(ReplyType.TEXT, "提问太快啦，请休息一下再问我吧")
+                error_reply = "提问太快啦，请休息一下再问我吧"
+                if res.status_code == 409:
+                    error_reply = "这个问题我还没有学会，请问我其它问题吧"
+                return Reply(ReplyType.TEXT, error_reply)
 
         except Exception as e:
             logger.exception(e)
