@@ -33,7 +33,7 @@ class GoogleGeminiBot(Bot):
             logger.info(f"[Gemini] query={query}")
             session_id = context["session_id"]
             session = self.sessions.session_query(query, session_id)
-            gemini_messages = self._convert_to_gemini_messages(self._filter_messages(session.messages))
+            gemini_messages = self._convert_to_gemini_messages(self.filter_messages(session.messages))
             genai.configure(api_key=self.api_key)
             model = genai.GenerativeModel('gemini-pro')
             response = model.generate_content(gemini_messages)
@@ -44,6 +44,7 @@ class GoogleGeminiBot(Bot):
         except Exception as e:
             logger.error("[Gemini] fetch reply error, may contain unsafe content")
             logger.error(e)
+            return Reply(ReplyType.ERROR, "invoke [Gemini] api failed!")
 
     def _convert_to_gemini_messages(self, messages: list):
         res = []
@@ -60,9 +61,12 @@ class GoogleGeminiBot(Bot):
             })
         return res
 
-    def _filter_messages(self, messages: list):
+    @staticmethod
+    def filter_messages(messages: list):
         res = []
         turn = "user"
+        if not messages:
+            return res
         for i in range(len(messages) - 1, -1, -1):
             message = messages[i]
             if message.get("role") != turn:
