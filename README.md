@@ -20,7 +20,57 @@
 - [ ] **钉钉** 待测试
 - [ ] **飞书** 待测试
 
+# 最新功能
+## 1. 支持COZE API
 
+![image-5](./docs/images/image5.jpg)
+
+![image-6](./docs/images/image6.jpg)
+
+
+
+### 1.1 如何快速启动coze微信机器人
+
+- 请参照**快速开始**步骤克隆源码并安装依赖，在准备完毕后，执行以下命令切换git仓库分支
+
+```sh
+git fetch --tags
+git switch coze-api-preview
+```
+
+- 按照下方coze api config.json示例文件进行配置
+
+```json
+{
+  "coze_api_base": "https://api.coze.cn/open_api/v2",  # coze base url
+  "coze_api_key": "xxx",                               # coze api key
+  "coze_bot_id": "xxx",                                # 根据url获取coze_bot_id https://www.coze.cn/space/{space_id}/bot/{bot_id}
+  "channel_type": "wx",                                # 通道类型，当前为个人微信
+  "model": "coze",                                     # 模型名称，当前对应coze平台
+  "single_chat_prefix": [""],                          # 私聊时文本需要包含该前缀才能触发机器人回复
+  "single_chat_reply_prefix": "",                      # 私聊时自动回复的前缀，用于区分真人
+  "group_chat_prefix": ["@bot"],                       # 群聊时包含该前缀则会触发机器人回复
+  "group_name_white_list": ["ALL_GROUP"]               # 机器人回复的群名称列表
+}
+```
+
+上述示例文件是个人微信对接coze的极简配置，详细配置说明需要查看config.py，注意**不要修改config.py中的值**，config.py只是校验是否是有效的key，最终**生效的配置请在config.json修改**。
+
+- 启动程序
+
+```
+python3 app.py                                    # windows环境下该命令通常为 python app.py
+```
+
+
+
+特别感谢 [**@绛烨**](https://github.com/jiangye520) 提供内测coze api key
+
+
+
+# 更新日志
+
+- 2024/03/31 支持coze api(内测版)
 
 # Dify on WeChat 交流群
 
