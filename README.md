@@ -35,7 +35,7 @@
 
 ```sh
 git fetch --tags
-git switch coze-api-preview
+git checkout coze-api-preview
 ```
 
 - 按照下方coze api config.json示例文件进行配置
