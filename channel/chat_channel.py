@@ -99,7 +99,7 @@ class ChatChannel(Channel):
             nick_name_black_list = conf().get("nick_name_black_list", [])
             if context.get("isgroup", False):  # 群聊
                 # 校验关键字
-                if check_prefix(content, conf().get("prefix_blacklist")):
+                if check_prefix(content, conf().get("prefix_blacklist")) is not None:
                     logger.warning(f"Prefix in BlackList, ignore")
                     return None
                 match_prefix = check_prefix(content, conf().get("group_chat_prefix"))
@@ -142,7 +142,7 @@ class ChatChannel(Channel):
                     logger.warning(f"[WX] Nickname '{nick_name}' in In BlackList, ignore")
                     return None
 
-                if check_prefix(content, conf().get("prefix_blacklist")):
+                if check_prefix(content, conf().get("prefix_blacklist")) is not None:
                     logger.warning(f"Prefix in BlackList, ignore")
                     return None
                 match_prefix = check_prefix(content, conf().get("single_chat_prefix", [""]))
