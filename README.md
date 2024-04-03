@@ -66,6 +66,7 @@ python3 app.py                                    # windows环境下该命令通
 
 # 更新日志
 
+- 2024/04/04 支持docker部署
 - 2024/03/31 支持coze api(内测版)
 
 # Dify on WeChat 交流群
@@ -136,7 +137,9 @@ pip3 install -r requirements-optional.txt # 国内可以在该命令末尾添加
   "single_chat_reply_prefix": "",               # 私聊时自动回复的前缀，用于区分真人
   "group_chat_prefix": ["@bot"],                # 群聊时包含该前缀则会触发机器人回复
   "group_name_white_list": ["ALL_GROUP"]        # 机器人回复的群名称列表
-}```
+}
+```
+
 上述示例文件是个人微信对接dify的极简配置，详细配置说明需要查看config.py，注意**不要修改config.py中的值**，config.py只是校验是否是有效的key，最终**生效的配置请在config.json修改**。
 
 ## 运行
@@ -166,14 +169,16 @@ nohup python3 app.py & tail -f nohup.out          # 在后台运行程序并通�
 
 ### 3.Docker部署
 
-暂是没有构建镜像，待更新~
-
+```bash
+cd dify-on-wechat/docker       # 进入docker目录
+docker compose up -d           # 启动docker容器
+docker logs -f dify-on-wechat  # 查看二维码并登录
+```
 
 
 # 开发计划
 
 - [ ] **完善文档：** README文档下班抽空写的，写的比较简单，之后写详细一些
-- [ ] **Docker镜像构建：** 目前只支持源码部署
 - [ ] **企业微信客服通道：** 支持企业微信客服
 - [ ] **测试合并原项目PR：** 原项目有很多比较好的PR没有通过，之后会把一些比较好的feature测试合并进这个仓库
 - [ ] **优化对接Dify：** 目前对接dify的很多代码写的还很潦草，以后逐步优化
