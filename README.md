@@ -31,26 +31,22 @@
 
 ### 1.1 如何快速启动coze微信机器人
 
-- 请参照**快速开始**步骤克隆源码并安装依赖，在准备完毕后，执行以下命令切换git仓库分支
-
-```sh
-git fetch --tags
-git checkout coze-api-preview
-```
+- 请参照**快速开始**步骤克隆源码并安装依赖
 
 - 按照下方coze api config.json示例文件进行配置
 以下是对默认配置的说明，可根据需要进行自定义修改（**如果复制下方的示例内容，请去掉注释**）
-```json
+```bash
+# coze config.json文件内容示例
 {
-  "coze_api_base": "https://api.coze.cn/open_api/v2",  // coze base url
-  "coze_api_key": "xxx",                               // coze api key
-  "coze_bot_id": "xxx",                                // 根据url获取coze_bot_id https://www.coze.cn/space/{space_id}/bot/{bot_id}
-  "channel_type": "wx",                                // 通道类型，当前为个人微信
-  "model": "coze",                                     // 模型名称，当前对应coze平台
-  "single_chat_prefix": [""],                          // 私聊时文本需要包含该前缀才能触发机器人回复
-  "single_chat_reply_prefix": "",                      // 私聊时自动回复的前缀，用于区分真人
-  "group_chat_prefix": ["@bot"],                       // 群聊时包含该前缀则会触发机器人回复
-  "group_name_white_list": ["ALL_GROUP"]               // 机器人回复的群名称列表
+  "coze_api_base": "https://api.coze.cn/open_api/v2",  # coze base url
+  "coze_api_key": "xxx",                               # coze api key
+  "coze_bot_id": "xxx",                                # 根据url获取coze_bot_id https://www.coze.cn/space/{space_id}/bot/{bot_id}
+  "channel_type": "wx",                                # 通道类型，当前为个人微信
+  "model": "coze",                                     # 模型名称，当前对应coze平台
+  "single_chat_prefix": [""],                          # 私聊时文本需要包含该前缀才能触发机器人回复
+  "single_chat_reply_prefix": "",                      # 私聊时自动回复的前缀，用于区分真人
+  "group_chat_prefix": ["@bot"],                       # 群聊时包含该前缀则会触发机器人回复
+  "group_name_white_list": ["ALL_GROUP"]               # 机器人回复的群名称列表
 }
 ```
 
@@ -128,22 +124,19 @@ pip3 install -r requirements-optional.txt # 国内可以在该命令末尾添加
 
 然后在`config.json`中填入配置，以下是对默认配置的说明，可根据需要进行自定义修改（**如果复制下方的示例内容，请去掉注释**）：
 
-```json
-// config.json文件内容示例
-{
-  "dify_api_base": "https://api.dify.ai/v1",    // dify base url
-  "dify_api_key": "app-xxx",                    // dify api key
-  "dify_agent": true,                           // dify助手类型，如果是基础助手请设置为false，智能助手请设置为true, 当前为true
-  "dify_convsersation_max_messages": 5,         // dify目前不支持设置历史消息长度，暂时使用超过最大消息数清空会话的策略，缺点是没有滑动窗口，会突然丢失历史消息, 当前为5
-  "channel_type": "wx",                         // 通道类型，当前为个人微信
-  "model": "dify",                              // 模型名称，当前对应dify平台
-  "single_chat_prefix": [""],                   // 私聊时文本需要包含该前缀才能触发机器人回复
-  "single_chat_reply_prefix": "",               // 私聊时自动回复的前缀，用于区分真人
-  "group_chat_prefix": ["@bot"],                // 群聊时包含该前缀则会触发机器人回复
-  "group_name_white_list": ["ALL_GROUP"]        // 机器人回复的群名称列表
-}
-
-```
+```bash
+# dify config.json文件内容示例
+{ "dify_api_base": "https://api.dify.ai/v1",    # dify base url
+  "dify_api_key": "app-xxx",                    # dify api key
+  "dify_agent": true,                           # dify助手类型，如果是基础助手请设置为false，智能助手请设置为true, 当前为true
+  "dify_convsersation_max_messages": 5,         # dify目前不支持设置历史消息长度，暂时使用超过最大消息数清空会话的策略，缺点是没有滑动窗口，会突然丢失历史消息, 当前为5
+  "channel_type": "wx",                         # 通道类型，当前为个人微信
+  "model": "dify",                              # 模型名称，当前对应dify平台
+  "single_chat_prefix": [""],                   # 私聊时文本需要包含该前缀才能触发机器人回复
+  "single_chat_reply_prefix": "",               # 私聊时自动回复的前缀，用于区分真人
+  "group_chat_prefix": ["@bot"],                # 群聊时包含该前缀则会触发机器人回复
+  "group_name_white_list": ["ALL_GROUP"]        # 机器人回复的群名称列表
+}```
 上述示例文件是个人微信对接dify的极简配置，详细配置说明需要查看config.py，注意**不要修改config.py中的值**，config.py只是校验是否是有效的key，最终**生效的配置请在config.json修改**。
 
 ## 运行
