@@ -15,7 +15,8 @@ on:
   create:
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  GITHUB_IMAGE_NAME: hanfangyuan4396/dify-on-wechat
+  DOCKERHUB_IMAGE_NAME: hanfangyuan/dify-on-wechat
 
 jobs:
   build-and-push-image:
@@ -47,8 +48,8 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
-            ${{ env.IMAGE_NAME }}
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+            ${{ env.DOCKERHUB_IMAGE_NAME }}
+            ${{ env.REGISTRY }}/${{ env.GITHUB_IMAGE_NAME }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v3
