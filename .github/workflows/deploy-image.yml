@@ -19,7 +19,7 @@ env:
 
 jobs:
   build-and-push-image:
-    if: github.repository == 'zhayujie/chatgpt-on-wechat'
+    if: github.repository == 'hanfangyuan4396/dify-on-wechat'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -61,7 +61,7 @@ jobs:
 
       - uses: actions/delete-package-versions@v4
         with:
-          package-name: 'chatgpt-on-wechat'
+          package-name: 'dify-on-wechat'
           package-type: 'container'
           min-versions-to-keep: 10
           delete-only-untagged-versions: 'true'

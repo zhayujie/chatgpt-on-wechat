@@ -1,8 +1,8 @@
 version: '2.0'
 services:
   chatgpt-on-wechat:
-    image: zhayujie/chatgpt-on-wechat
-    container_name: chatgpt-on-wechat
+    image: hanfangyuan4396/dify-on-wechat
+    container_name: dify-on-wechat
     security_opt:
       - seccomp:unconfined
     environment:

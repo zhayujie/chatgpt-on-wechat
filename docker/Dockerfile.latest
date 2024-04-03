@@ -1,12 +1,8 @@
 FROM python:3.10-slim-bullseye
 
-LABEL maintainer="foo@bar.com"
+LABEL maintainer="i@hanfangyuan.cn"
 ARG TZ='Asia/Shanghai'
 
-ARG CHATGPT_ON_WECHAT_VER
-
-RUN echo /etc/apt/sources.list
-# RUN sed -i 's/deb.debian.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list
 ENV BUILD_PREFIX=/app
 
 ADD . ${BUILD_PREFIX}
