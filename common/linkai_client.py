@@ -2,7 +2,7 @@ from bridge.context import Context, ContextType
 from bridge.reply import Reply, ReplyType
 from common.log import logger
 from linkai import LinkAIClient, PushMsg
-from config import conf, pconf, plugin_config, load_config
+from config import conf, pconf, plugin_config, available_setting
 from plugins import PluginManager
 
 
@@ -33,10 +33,9 @@ class ChatClient(LinkAIClient):
             return
 
         local_config = conf()
-        for key in local_config.keys():
-            if config.get(key) is not None:
+        for key in config.keys():
+            if key in available_setting and config.get(key) is not None:
                 local_config[key] = config.get(key)
-
         # 语音配置
         reply_voice_mode = config.get("reply_voice_mode")
         if reply_voice_mode:
