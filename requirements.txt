@@ -7,3 +7,4 @@ chardet>=5.1.0
 Pillow
 pre-commit
 web.py
+linkai>=0.0.3.7

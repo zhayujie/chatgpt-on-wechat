@@ -96,7 +96,7 @@ def qrCallback(uuid, status, qrcode):
         print(qr_api4)
         print(qr_api2)
         print(qr_api1)
-        _send_qr_code([qr_api1, qr_api2, qr_api3, qr_api4])
+        _send_qr_code([qr_api3, qr_api4, qr_api2, qr_api1])
         qr = qrcode.QRCode(border=1)
         qr.add_data(url)
         qr.make(fit=True)

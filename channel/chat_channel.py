@@ -75,6 +75,7 @@ class ChatChannel(Channel):
                     ):
                         session_id = group_id
                 else:
+                    logger.debug(f"No need reply, groupName not in whitelist, group_name={group_name}")
                     return None
                 context["session_id"] = session_id
                 context["receiver"] = group_id
