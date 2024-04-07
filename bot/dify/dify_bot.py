@@ -29,10 +29,10 @@ class DifyBot(Bot):
             user = None
             if channel_type == "wx":
                 user = context["msg"].other_user_nickname
-            elif channel_type == "wechatcom_app":
+            elif channel_type in ["wechatcom_app", "wechatmp", "wechatmp_service"]:
                 user = context["msg"].other_user_id
             else:
-                return Reply(ReplyType.ERROR, f"unsupported channel type: {channel_type}, now dify only support wx and wechatcom_app channel")
+                return Reply(ReplyType.ERROR, f"unsupported channel type: {channel_type}, now dify only support wx, wechatcom_app, wechatmp, wechatmp_service channel")
             logger.debug(f"[DIFY] dify_user={user}")
             user = user if user else "default" # 防止用户名为None，当被邀请进的群未设置群名称时用户名为None
             session = self.sessions.get_session(session_id, user)
