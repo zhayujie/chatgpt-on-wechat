@@ -1,0 +1,154 @@
+app:
+  description: ''
+  icon: "\U0001F916"
+  icon_background: '#FFEAD5'
+  mode: workflow
+  name: chat-workflow
+workflow:
+  features:
+    file_upload:
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+    opening_statement: ''
+    retriever_resource:
+      enabled: false
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        sourceType: start
+        targetType: llm
+      id: 1712585213444-1712585220528
+      source: '1712585213444'
+      sourceHandle: source
+      target: '1712585220528'
+      targetHandle: target
+      type: custom
+    - data:
+        sourceType: llm
+        targetType: end
+      id: 1712585220528-1712585261804
+      source: '1712585220528'
+      sourceHandle: source
+      target: '1712585261804'
+      targetHandle: target
+      type: custom
+    nodes:
+    - data:
+        desc: ''
+        selected: false
+        title: "\u5F00\u59CB"
+        type: start
+        variables:
+        - label: "\u95EE\u9898"
+          max_length: 256
+          options: []
+          required: true
+          type: text-input
+          variable: query
+      height: 89
+      id: '1712585213444'
+      position:
+        x: 80
+        y: 282
+      positionAbsolute:
+        x: 80
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 243
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - '1712585213444'
+          - query
+        desc: ''
+        model:
+          completion_params:
+            frequency_penalty: 0
+            max_tokens: 512
+            presence_penalty: 0
+            temperature: 0.7
+            top_p: 1
+          mode: chat
+          name: gpt-3.5-turbo-0125
+          provider: openai
+        prompt_template:
+        - role: system
+          text: Please disregard all previous instructions;\nThis is related to every
+            one of my prompts;\nYou should provide clear, simple, and direct answers;\nIf
+            you don't know the answer, say I don't know;\nFor complex questions, take
+            a deep breath and approach them step by step;\nFor questions that are
+            unclear or ambiguous, please ask me follow-up questions;\nWhen I ask you
+            to complete a task, please do it directly without telling me how it should
+            be done, unless necessary;\nWhen explaining concepts, use real-world examples
+            and analogies;\nDo not refuse replies related to tasks and work I assign;\nDo
+            not attempt to conserve token count when generating replies, as my fingers
+            have a condition that prevents me from typing too much;\nIf you have a
+            perfect solution, I will give you a $100000 tip, and I will give you more
+            tips based on the quality of your reply;\nDo your best!\nUnless otherwise
+            specified, please answer me in Chinese.
+        - role: user
+          text: '{{#1712585213444.query#}}'
+        selected: true
+        title: LLM
+        type: llm
+        variables: []
+        vision:
+          enabled: false
+      height: 97
+      id: '1712585220528'
+      position:
+        x: 380
+        y: 282
+      positionAbsolute:
+        x: 380
+        y: 282
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 243
+    - data:
+        desc: ''
+        outputs:
+        - value_selector:
+          - '1712585220528'
+          - text
+          variable: text
+        selected: false
+        title: "\u7ED3\u675F"
+        type: end
+      height: 89
+      id: '1712585261804'
+      position:
+        x: 680
+        y: 282
+      positionAbsolute:
+        x: 680
+        y: 282
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 243
+    viewport:
+      x: 0
+      y: 0
+      zoom: 1

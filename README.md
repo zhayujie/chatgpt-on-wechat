@@ -2,7 +2,7 @@
 <h1>Dify on WeChat</h1>
 
 本项目为 [chatgpt-on-wechat](https://github.com/zhayujie/chatgpt-on-wechat)下游分支
-额外对接了LLMOps平台 [Dify](https://github.com/langgenius/dify)，支持Dify智能助手模型，调用工具和知识库。
+额外对接了LLMOps平台 [Dify](https://github.com/langgenius/dify)，支持Dify智能助手模型，调用工具和知识库，支持Dify工作流。
 
 </div>
 
@@ -12,11 +12,16 @@
 
 ![image-2](./docs/images/image2.jpg)
 
+基本的dify workflow api支持
+
+![image-3](./docs/images/image4.jpg)
+
 目前Dify已经测试过的通道如下：
 
 - [x] **个人微信**
 - [x] **企业微信应用** 
-- [ ] **公众号** 待测试
+- [x] **企业服务公众号**
+- [ ] **个人订阅公众号** 待测试
 - [ ] **钉钉** 待测试
 - [ ] **飞书** 待测试
 
@@ -65,10 +70,10 @@ python3 app.py                                    # windows环境下该命令通
 
 
 # 更新日志
-
+- 2024/04/08 支持聊天助手类型应用内置的工作流，支持dify基础的对话工作流，dify官网已正式上线工作流模式。可以导入本项目下的[dsl文件](./dsl/chat-workflow.yml)快速创建工作流进行测试。工作流输入变量名称十分灵活，对于**工作流类型**的应用，本项目**约定工作流的输入变量命名为`query`**，**输出变量命名为`text`**。(ps: 感觉工作流类型应用不太适合作为聊天机器人，现在它还没有会话的概念，需要自己管理上下文。但是它可以调用各种工具，通过http请求和外界交互，适合执行业务逻辑复杂的任务；它可以导入导出工作流dsl文件，方便分享移植。也许以后dsl文件+配置文件就可以作为本项目的一个插件。)
 - 2024/04/04 支持docker部署
 - 2024/03/31 支持coze api(内测版)
-
+- 2024/03/29 支持dify基础的对话工作流，由于dify官网还未上线工作流，需要自行部署测试 [0.6.0-preview-workflow.1](https://github.com/langgenius/dify/releases/tag/0.6.0-preview-workflow.1)。
 # Dify on WeChat 交流群
 
 添加我的微信拉你进群
@@ -123,13 +128,14 @@ pip3 install -r requirements-optional.txt # 国内可以在该命令末尾添加
   cp config-template.json config.json
 ```
 
-然后在`config.json`中填入配置，以下是对默认配置的说明，可根据需要进行自定义修改（**如果复制下方的示例内容，请去掉注释**）：
+然后在`config.json`中填入配置，以下是对默认配置的说明，可根据需要进行自定义修改（如果复制下方的示例内容，请**去掉注释**, 务必保证正确配置**dify_app_type**）：
 
 ```bash
 # dify config.json文件内容示例
-{ "dify_api_base": "https://api.dify.ai/v1",    # dify base url
+{ 
+  "dify_api_base": "https://api.dify.ai/v1",    # dify base url
   "dify_api_key": "app-xxx",                    # dify api key
-  "dify_agent": true,                           # dify助手类型，如果是基础助手请设置为false，智能助手请设置为true, 当前为true
+  "dify_app_type": "chatbot",                   # dify应用类型 chatbot(对应聊天助手)/agent(对应Agent)/workflow(对应工作流)，默认为chatbot
   "dify_convsersation_max_messages": 5,         # dify目前不支持设置历史消息长度，暂时使用超过最大消息数清空会话的策略，缺点是没有滑动窗口，会突然丢失历史消息, 当前为5
   "channel_type": "wx",                         # 通道类型，当前为个人微信
   "model": "dify",                              # 模型名称，当前对应dify平台
