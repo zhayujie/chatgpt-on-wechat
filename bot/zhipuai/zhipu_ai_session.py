@@ -7,6 +7,8 @@ class ZhipuAISession(Session):
         super().__init__(session_id, system_prompt)
         self.model = model
         self.reset()
+        if not system_prompt:
+            logger.warn("[ZhiPu] `character_desc` can not be empty")
 
     def discard_exceeding(self, max_tokens, cur_tokens=None):
         precise = True
