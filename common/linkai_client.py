@@ -4,6 +4,7 @@ from common.log import logger
 from linkai import LinkAIClient, PushMsg
 from config import conf, pconf, plugin_config, available_setting
 from plugins import PluginManager
+import time
 
 
 chat_client: LinkAIClient
@@ -62,6 +63,9 @@ def start(channel):
                         host="link-ai.chat", channel=channel)
     chat_client.config = _build_config()
     chat_client.start()
+    time.sleep(1.5)
+    if chat_client.client_id:
+        logger.info("[LinkAI] 可前往控制台进行线上登录和配置：https://link-ai.tech/console/clients")
 
 
 def _build_config():
