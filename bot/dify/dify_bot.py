@@ -207,9 +207,19 @@ class DifyBot(Bot):
         event_prefix = "data: "
         if not event_str.startswith(event_prefix):
             return None
-        trimed_event_str = event_str[len(event_prefix):]
-        event = json.loads(trimed_event_str)
-        return event
+        trimmed_event_str = event_str[len(event_prefix):]
+
+        # Check if trimmed_event_str is not empty and is a valid JSON string
+        if trimmed_event_str:
+            try:
+                event = json.loads(trimmed_event_str)
+                return event
+            except json.JSONDecodeError:
+                logger.error(f"Failed to decode JSON from SSE event: {trimmed_event_str}")
+                return None
+        else:
+            logger.warn("Received an empty SSE event.")
+            return None
 
     # TODO: 异步返回events
     def _handle_sse_response(self, response: requests.Response):
