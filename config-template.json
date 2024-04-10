@@ -1,7 +1,7 @@
 {
   "dify_api_base": "https://api.dify.ai/v1",
   "dify_api_key": "app-xxx",
-  "dify_agent": true,
+  "dify_app_type": "chatbot",
   "dify_convsersation_max_messages": 5,
   "channel_type": "wx",
   "model": "dify",
