@@ -34,10 +34,7 @@ Dify接入微信的详细教程请查看我写的文章 [手摸手教你把 Dify
 ![plugin-suno-1](./docs/images/plugin-suno-1.jpg)
 ![plugin-suno-2](./docs/images/plugin-suno-2.jpg)
 
-<audio controls>
-  <source src="./docs/audios/chengdu-disney.mp3" type="audio/mpeg">
-  您的浏览器不支持 audio 元素。
-</audio>
+[点击试听生成的音乐](./docs/audios/chengdu-disney.mp3)
 
 
 ## 2. 支持Dify Chatflow & Workflow
