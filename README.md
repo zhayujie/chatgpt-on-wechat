@@ -85,6 +85,7 @@ python3 app.py                                    # windows环境下该命令通
 
 
 # 更新日志
+- 2024/04/14 Suno音乐插件，Dify on WeChat对接详细教程，config文件bug修复
 - 2024/04/08 支持聊天助手类型应用内置的Chatflow，支持dify基础的对话Workflow
 - 2024/04/04 支持docker部署
 - 2024/03/31 支持coze api(内测版)
