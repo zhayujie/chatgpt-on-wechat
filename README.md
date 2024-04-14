@@ -2,8 +2,10 @@
 <h1>Dify on WeChat</h1>
 
 本项目为 [chatgpt-on-wechat](https://github.com/zhayujie/chatgpt-on-wechat)下游分支
+
 额外对接了LLMOps平台 [Dify](https://github.com/langgenius/dify)，支持Dify智能助手模型，调用工具和知识库，支持Dify工作流。
 
+Dify接入微信的详细教程请查看我写的文章 [手摸手教你把 Dify 接入微信生态](https://docs.dify.ai/v/zh-hans/learn-more/use-cases/dify-on-wechat)
 </div>
 
 
@@ -26,7 +28,23 @@
 - [ ] **飞书** 待测试
 
 # 最新功能
-## 1. 支持COZE API
+## 1. Suno音乐插件
+使用 [Suno](https://github.com/hanfangyuan4396/suno) 插件生成音乐
+
+![plugin-suno-1](./docs/images/plugin-suno-1.jpg)
+![plugin-suno-2](./docs/images/plugin-suno-2.jpg)
+
+<audio controls>
+  <source src="./docs/audios/chengdu-disney.mp3" type="audio/mpeg">
+  您的浏览器不支持 audio 元素。
+</audio>
+
+
+## 2. 支持Dify Chatflow & Workflow
+dify官网已正式上线工作流模式，可以导入本项目下的[dsl文件](./dsl/chat-workflow.yml)快速创建工作流进行测试。工作流输入变量名称十分灵活，对于**工作流类型**的应用，本项目**约定工作流的输入变量命名为`query`**，**输出变量命名为`text`**。
+
+(ps: 感觉工作流类型应用不太适合作为聊天机器人，现在它还没有会话的概念，需要自己管理上下文。但是它可以调用各种工具，通过http请求和外界交互，适合执行业务逻辑复杂的任务；它可以导入导出工作流dsl文件，方便分享移植。也许以后dsl文件+配置文件就可以作为本项目的一个插件。)
+## 3. 支持COZE API
 
 ![image-5](./docs/images/image5.jpg)
 
@@ -34,7 +52,7 @@
 
 
 
-### 1.1 如何快速启动coze微信机器人
+### 3.1 如何快速启动coze微信机器人
 
 - 请参照**快速开始**步骤克隆源码并安装依赖
 
@@ -70,7 +88,7 @@ python3 app.py                                    # windows环境下该命令通
 
 
 # 更新日志
-- 2024/04/08 支持聊天助手类型应用内置的工作流，支持dify基础的对话工作流，dify官网已正式上线工作流模式。可以导入本项目下的[dsl文件](./dsl/chat-workflow.yml)快速创建工作流进行测试。工作流输入变量名称十分灵活，对于**工作流类型**的应用，本项目**约定工作流的输入变量命名为`query`**，**输出变量命名为`text`**。(ps: 感觉工作流类型应用不太适合作为聊天机器人，现在它还没有会话的概念，需要自己管理上下文。但是它可以调用各种工具，通过http请求和外界交互，适合执行业务逻辑复杂的任务；它可以导入导出工作流dsl文件，方便分享移植。也许以后dsl文件+配置文件就可以作为本项目的一个插件。)
+- 2024/04/08 支持聊天助手类型应用内置的Chatflow，支持dify基础的对话Workflow
 - 2024/04/04 支持docker部署
 - 2024/03/31 支持coze api(内测版)
 - 2024/03/29 支持dify基础的对话工作流，由于dify官网还未上线工作流，需要自行部署测试 [0.6.0-preview-workflow.1](https://github.com/langgenius/dify/releases/tag/0.6.0-preview-workflow.1)。
