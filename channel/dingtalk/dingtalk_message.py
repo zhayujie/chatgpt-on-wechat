@@ -32,13 +32,13 @@ class DingTalkMessage(ChatMessage):
             # 钉钉支持直接识别语音，所以此处将直接提取文字，当文字处理
             self.content = event.extensions['content']['recognition'].strip()
             self.ctype = ContextType.TEXT
-        self.from_user_id = event.sender_id
+        if self.is_group:
+            self.from_user_id = event.conversation_id
+            self.actual_user_id = event.sender_id
+        else:
+            self.from_user_id = event.sender_id
         self.to_user_id = event.chatbot_user_id
         self.other_user_nickname = event.conversation_title
         
         user_id = event.sender_id
         nickname =event.sender_nick
-
-        
-
-      

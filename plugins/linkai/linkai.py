@@ -10,6 +10,7 @@ from common import const
 import os
 from .utils import Util
 
+
 @plugins.register(
     name="linkai",
     desc="A plugin that supports knowledge base and midjourney drawing.",
@@ -32,7 +33,6 @@ class LinkAI(Plugin):
             self.sum_config = self.config.get("summary")
         logger.info(f"[LinkAI] inited, config={self.config}")
 
-
     def on_handle_context(self, e_context: EventContext):
         """
         消息处理逻辑
@@ -42,7 +42,8 @@ class LinkAI(Plugin):
             return
 
         context = e_context['context']
-        if context.type not in [ContextType.TEXT, ContextType.IMAGE, ContextType.IMAGE_CREATE, ContextType.FILE, ContextType.SHARING]:
+        if context.type not in [ContextType.TEXT, ContextType.IMAGE, ContextType.IMAGE_CREATE, ContextType.FILE,
+                                ContextType.SHARING]:
             # filter content no need solve
             return
 
@@ -76,7 +77,8 @@ class LinkAI(Plugin):
             if not res:
                 _set_reply_text("因为神秘力量无法获取文章内容，请稍后再试吧~", e_context, level=ReplyType.TEXT)
                 return
-            _set_reply_text(res.get("summary") + "\n\n💬 发送 \"开启对话\" 可以开启与文章内容的对话", e_context, level=ReplyType.TEXT)
+            _set_reply_text(res.get("summary") + "\n\n💬 发送 \"开启对话\" 可以开启与文章内容的对话", e_context,
+                            level=ReplyType.TEXT)
             USER_FILE_MAP[_find_user_id(context) + "-sum_id"] = res.get("summary_id")
             return
 
@@ -99,7 +101,8 @@ class LinkAI(Plugin):
                 _set_reply_text("开启对话失败，请稍后再试吧", e_context)
                 return
             USER_FILE_MAP[_find_user_id(context) + "-file_id"] = res.get("file_id")
-            _set_reply_text("💡你可以问我关于这篇文章的任何问题，例如：\n\n" + res.get("questions") + "\n\n发送 \"退出对话\" 可以关闭与文章的对话", e_context, level=ReplyType.TEXT)
+            _set_reply_text("💡你可以问我关于这篇文章的任何问题，例如：\n\n" + res.get(
+                "questions") + "\n\n发送 \"退出对话\" 可以关闭与文章的对话", e_context, level=ReplyType.TEXT)
             return
 
         if context.type == ContextType.TEXT and context.content == "退出对话" and _find_file_id(context):
@@ -117,11 +120,9 @@ class LinkAI(Plugin):
             e_context.action = EventAction.BREAK_PASS
             return
 
-
         if self._is_chat_task(e_context):
             # 文本对话任务处理
             self._process_chat_task(e_context)
-
 
     # 插件管理功能
     def _process_admin_cmd(self, e_context: EventContext):
@@ -177,7 +178,9 @@ class LinkAI(Plugin):
                 tips_text = "关闭"
                 is_open = False
             if not self.sum_config:
-                _set_reply_text(f"插件未启用summary功能，请参考以下链添加插件配置\n\nhttps://github.com/zhayujie/chatgpt-on-wechat/blob/master/plugins/linkai/README.md", e_context, level=ReplyType.INFO)
+                _set_reply_text(
+                    f"插件未启用summary功能，请参考以下链添加插件配置\n\nhttps://github.com/zhayujie/chatgpt-on-wechat/blob/master/plugins/linkai/README.md",
+                    e_context, level=ReplyType.INFO)
             else:
                 self.sum_config["enabled"] = is_open
                 _set_reply_text(f"文章总结功能{tips_text}", e_context, level=ReplyType.INFO)
@@ -254,6 +257,9 @@ class LinkAI(Plugin):
         except Exception as e:
             logger.exception(e)
 
+    def reload(self):
+        self.config = super().load_config()
+
 
 def _send_info(e_context: EventContext, content: str):
     reply = Reply(ReplyType.TEXT, content)
@@ -273,15 +279,19 @@ def _set_reply_text(content: str, e_context: EventContext, level: ReplyType = Re
     e_context["reply"] = reply
     e_context.action = EventAction.BREAK_PASS
 
+
 def _get_trigger_prefix():
     return conf().get("plugin_trigger_prefix", "$")
 
+
 def _find_sum_id(context):
     return USER_FILE_MAP.get(_find_user_id(context) + "-sum_id")
+
 
 def _find_file_id(context):
     user_id = _find_user_id(context)
     if user_id:
         return USER_FILE_MAP.get(user_id + "-file_id")
+
 
 USER_FILE_MAP = ExpiredDict(conf().get("expires_in_seconds") or 60 * 30)

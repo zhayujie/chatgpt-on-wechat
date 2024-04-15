@@ -2,13 +2,10 @@ from bot.session_manager import Session
 from common.log import logger
 
 
-class ZhipuAISession(Session):
-    def __init__(self, session_id, system_prompt=None, model="glm-4"):
-        super().__init__(session_id, system_prompt)
-        self.model = model
+class DashscopeSession(Session):
+    def __init__(self, session_id, system_prompt=None, model="qwen-turbo"):
+        super().__init__(session_id)
         self.reset()
-        if not system_prompt:
-            logger.warn("[ZhiPu] `character_desc` can not be empty")
 
     def discard_exceeding(self, max_tokens, cur_tokens=None):
         precise = True
@@ -43,10 +40,11 @@ class ZhipuAISession(Session):
         return cur_tokens
 
     def calc_tokens(self):
-        return num_tokens_from_messages(self.messages, self.model)
+        return num_tokens_from_messages(self.messages)
 
 
-def num_tokens_from_messages(messages, model):
+def num_tokens_from_messages(messages):
+    # 只是大概，具体计算规则：https://help.aliyun.com/zh/dashscope/developer-reference/token-api?spm=a2c4g.11186623.0.0.4d8b12b0BkP3K9
     tokens = 0
     for msg in messages:
         tokens += len(msg["content"])

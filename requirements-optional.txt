@@ -10,6 +10,7 @@ azure-cognitiveservices-speech # azure voice
 edge-tts # edge-tts
 numpy<=1.24.2
 langid # language detect
+elevenlabs==1.0.3 # elevenlabs TTS
 
 #install plugin
 dulwich
@@ -35,11 +36,11 @@ broadscope_bailian
 # google
 google-generativeai
 
-# linkai
-linkai>=0.0.3.5
-
 # dingtalk
 dingtalk_stream
 
 # zhipuai
 zhipuai>=2.0.1
+
+# tongyi qwen new sdk
+dashscope

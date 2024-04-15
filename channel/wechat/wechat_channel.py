@@ -96,7 +96,7 @@ def qrCallback(uuid, status, qrcode):
         print(qr_api4)
         print(qr_api2)
         print(qr_api1)
-        _send_qr_code([qr_api1, qr_api2, qr_api3, qr_api4])
+        _send_qr_code([qr_api3, qr_api4, qr_api2, qr_api1])
         qr = qrcode.QRCode(border=1)
         qr.add_data(url)
         qr.make(fit=True)
@@ -233,6 +233,7 @@ class WechatChannel(ChatChannel):
             logger.info("[WX] sendImage url={}, receiver={}".format(img_url, receiver))
         elif reply.type == ReplyType.IMAGE:  # 从文件读取图片
             image_storage = reply.content
+            image_storage.seek(0)
             itchat.send_image(image_storage, toUserName=receiver)
             logger.info("[WX] sendImage, receiver={}".format(receiver))
         elif reply.type == ReplyType.FILE:  # 新增文件回复类型
