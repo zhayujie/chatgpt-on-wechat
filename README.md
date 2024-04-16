@@ -24,6 +24,7 @@
 - [x] **企业微信应用** 
 - [x] **企业服务公众号**
 - [ ] **个人订阅公众号** 待测试
+- [ ] **企业微信客服** 待测试
 - [ ] **钉钉** 待测试
 - [ ] **飞书** 待测试
 
@@ -87,6 +88,7 @@ python3 app.py                                    # windows环境下该命令通
 
 
 # 更新日志
+- 2024/04/16 支持基本的企业微信客服通道，感谢[**@lei195827**](https://github.com/lei195827), [**@sisuad**](https://github.com/sisuad) 的贡献
 - 2024/04/14 Suno音乐插件，Dify on WeChat对接详细教程，config文件bug修复
 - 2024/04/08 支持聊天助手类型应用内置的Chatflow，支持dify基础的对话Workflow
 - 2024/04/04 支持docker部署
@@ -201,13 +203,16 @@ docker compose up -d           # 启动docker容器
 docker logs -f dify-on-wechat  # 查看二维码并登录
 ```
 
+# Contributors
+<a href="https://github.com/hanfangyuan4396/dify-on-wechat/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=hanfangyuan4396/dify-on-wechat" />
+</a>
 
 # 开发计划
 
-- [ ] **完善文档：** README文档下班抽空写的，写的比较简单，之后写详细一些
-- [ ] **企业微信客服通道：** 支持企业微信客服
 - [ ] **测试合并原项目PR：** 原项目有很多比较好的PR没有通过，之后会把一些比较好的feature测试合并进这个仓库
 - [ ] **优化对接Dify：** 目前对接dify的很多代码写的还很潦草，以后逐步优化
+- [ ] **支持：** 企业微信个人号 
 
 也请各位大佬多多提PR，我社畜打工人，精力实在有限~
 
