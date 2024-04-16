@@ -16,6 +16,7 @@ import datetime, random
 class OpenaiVoice(Voice):
     def __init__(self):
         openai.api_key = conf().get("open_ai_api_key")
+        openai.api_base = conf().get("open_ai_api_base") or "https://api.openai.com/v1"
 
     def voiceToText(self, voice_file):
         logger.debug("[Openai] voice file name={}".format(voice_file))
