@@ -14,6 +14,13 @@ elevenlabs==1.0.3 # elevenlabs TTS
 
 #install plugin
 dulwich
+python-docx
+markdown
+PyMuPDF
+openpyxl
+beautifulsoup4
+python-pptx
+Pillow
 
 # wechatmp && wechatcom
 web.py

@@ -32,5 +32,6 @@ plugins/banwords/lib/__pycache__
 !plugins/linkai
 !plugins/sum4all
 !plugins/timetask
+!plugins/timetask/taskFile
 !plugins/Apilot
 client_config.json

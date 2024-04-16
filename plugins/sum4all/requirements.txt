@@ -1,0 +1,7 @@
+python-docx
+markdown
+PyMuPDF
+openpyxl
+beautifulsoup4
+python-pptx
+Pillow

@@ -1,0 +1,31 @@
+{
+  "command_prefix": "$time",
+  "debug": false,
+  "time_check_rate": 1,
+  "move_historyTask_time": "04:00:00",
+  "is_open_route_everyReply": true,
+  "is_open_extension_function": true,
+  "is_need_title_whenNormalReply": true,
+  "is_need_currentTime_whenNormalReply": true,
+  "is_need_identifier_whenNormalReply": true,
+  "is_need_detailDeccription_whenNormalReply": true,
+  "extension_function":
+  [
+    {
+      "key_word": "早报",
+      "func_command_prefix":"$tool "
+    },
+    {
+      "key_word": "点歌",
+      "func_command_prefix": "$"
+    },
+    {
+      "key_word": "搜索",
+      "func_command_prefix": "$tool google "
+    },
+    {
+      "key_word": "GPT",
+      "func_command_prefix": "GPT"
+    }
+  ]
+}

@@ -1,0 +1,1192 @@
+{
+    "朝阳": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "北京",
+                "leader": "北京",
+                "city_id": "101010300"
+            },
+            {
+                "province": "吉林",
+                "leader": "长春",
+                "city_id": "101060110"
+            },
+            {
+                "province": "辽宁",
+                "leader": "朝阳",
+                "city_id": "101071201"
+            }
+        ]
+    },
+    "通州": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "北京",
+                "leader": "北京",
+                "city_id": "101010600"
+            },
+            {
+                "province": "江苏",
+                "leader": "南通",
+                "city_id": "101190509"
+            }
+        ]
+    },
+    "宝山": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "上海",
+                "leader": "上海",
+                "city_id": "101020300"
+            },
+            {
+                "province": "黑龙江",
+                "leader": "双鸭山",
+                "city_id": "101051309"
+            }
+        ]
+    },
+    "长宁": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "上海",
+                "leader": "长宁",
+                "city_id": "101021300"
+            },
+            {
+                "province": "四川",
+                "leader": "宜宾",
+                "city_id": "101271106"
+            }
+        ]
+    },
+    "普陀": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "上海",
+                "leader": "普陀",
+                "city_id": "101021500"
+            },
+            {
+                "province": "浙江",
+                "leader": "舟山",
+                "city_id": "101211105"
+            }
+        ]
+    },
+    "和平": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "天津",
+                "leader": "和平",
+                "city_id": "101030800"
+            },
+            {
+                "province": "辽宁",
+                "leader": "沈阳",
+                "city_id": "101070107"
+            },
+            {
+                "province": "广东",
+                "leader": "河源",
+                "city_id": "101281204"
+            }
+        ]
+    },
+    "河东": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "天津",
+                "leader": "河东",
+                "city_id": "101031200"
+            },
+            {
+                "province": "山东",
+                "leader": "临沂",
+                "city_id": "101120913"
+            }
+        ]
+    },
+    "江北": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "重庆",
+                "leader": "江北",
+                "city_id": "101043700"
+            },
+            {
+                "province": "浙江",
+                "leader": "宁波",
+                "city_id": "101210409"
+            }
+        ]
+    },
+    "甘南": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "黑龙江",
+                "leader": "齐齐哈尔",
+                "city_id": "101050204"
+            },
+            {
+                "province": "甘肃",
+                "leader": "甘南",
+                "city_id": "101161209"
+            }
+        ]
+    },
+    "东安": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "黑龙江",
+                "leader": "牡丹江",
+                "city_id": "101050308"
+            },
+            {
+                "province": "湖南",
+                "leader": "永州",
+                "city_id": "101251403"
+            }
+        ]
+    },
+    "西安": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "黑龙江",
+                "leader": "牡丹江",
+                "city_id": "101050311"
+            },
+            {
+                "province": "吉林",
+                "leader": "辽源",
+                "city_id": "101060705"
+            },
+            {
+                "province": "陕西",
+                "leader": "西安",
+                "city_id": "101110101"
+            }
+        ]
+    },
+    "向阳": {
+        "condition": 3,
+        "data": [
+            {
+                "province": "黑龙江",
+                "leader": "佳木斯",
+                "city_id": "101050408"
+            },
+            {
+                "province": "黑龙江",
+                "leader": "鹤岗",
+                "city_id": "101051204"
+            }
+        ]
+    },
+    "郊区": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "黑龙江",
+                "leader": "佳木斯",
+                "city_id": "101050411"
+            },
+            {
+                "province": "山西",
+                "leader": "阳泉",
+                "city_id": "101100305"
+            },
+            {
+                "province": "山西",
+                "leader": "长治",
+                "city_id": "101100512"
+            },
+            {
+                "province": "安徽",
+                "leader": "铜陵",
+                "city_id": "101221304"
+            }
+        ]
+    },
+    "西林": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "黑龙江",
+                "leader": "伊春",
+                "city_id": "101050808"
+            },
+            {
+                "province": "广西",
+                "leader": "百色",
+                "city_id": "101301009"
+            }
+        ]
+    },
+    "大同": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "黑龙江",
+                "leader": "大庆",
+                "city_id": "101050910"
+            },
+            {
+                "province": "山西",
+                "leader": "大同",
+                "city_id": "101100201"
+            }
+        ]
+    },
+    "新兴": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "黑龙江",
+                "leader": "七台河",
+                "city_id": "101051001"
+            },
+            {
+                "province": "广东",
+                "leader": "云浮",
+                "city_id": "101281403"
+            }
+        ]
+    },
+    "梨树": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "黑龙江",
+                "leader": "鸡西",
+                "city_id": "101051108"
+            },
+            {
+                "province": "吉林",
+                "leader": "四平",
+                "city_id": "101060403"
+            }
+        ]
+    },
+    "南山": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "黑龙江",
+                "leader": "鹤岗",
+                "city_id": "101051206"
+            },
+            {
+                "province": "广东",
+                "leader": "深圳",
+                "city_id": "101280604"
+            }
+        ]
+    },
+    "兴安": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "黑龙江",
+                "leader": "鹤岗",
+                "city_id": "101051207"
+            },
+            {
+                "province": "广西",
+                "leader": "桂林",
+                "city_id": "101300506"
+            }
+        ]
+    },
+    "东山": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "黑龙江",
+                "leader": "鹤岗",
+                "city_id": "101051208"
+            },
+            {
+                "province": "福建",
+                "leader": "漳州",
+                "city_id": "101230608"
+            }
+        ]
+    },
+    "兴山": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "黑龙江",
+                "leader": "鹤岗",
+                "city_id": "101051209"
+            },
+            {
+                "province": "湖北",
+                "leader": "宜昌",
+                "city_id": "101200904"
+            }
+        ]
+    },
+    "宽城": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "吉林",
+                "leader": "长春",
+                "city_id": "101060109"
+            },
+            {
+                "province": "河北",
+                "leader": "承德",
+                "city_id": "101090409"
+            }
+        ]
+    },
+    "昌邑": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "吉林",
+                "leader": "吉林",
+                "city_id": "101060207"
+            },
+            {
+                "province": "山东",
+                "leader": "潍坊",
+                "city_id": "101120606"
+            }
+        ]
+    },
+    "铁西": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "吉林",
+                "leader": "四平",
+                "city_id": "101060406"
+            },
+            {
+                "province": "辽宁",
+                "leader": "沈阳",
+                "city_id": "101070111"
+            },
+            {
+                "province": "辽宁",
+                "leader": "鞍山",
+                "city_id": "101070306"
+            }
+        ]
+    },
+    "铁东": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "吉林",
+                "leader": "四平",
+                "city_id": "101060407"
+            },
+            {
+                "province": "辽宁",
+                "leader": "鞍山",
+                "city_id": "101070305"
+            }
+        ]
+    },
+    "大安": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "吉林",
+                "leader": "白城",
+                "city_id": "101060603"
+            },
+            {
+                "province": "四川",
+                "leader": "自贡",
+                "city_id": "101270306"
+            }
+        ]
+    },
+    "龙山": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "吉林",
+                "leader": "辽源",
+                "city_id": "101060704"
+            },
+            {
+                "province": "湖南",
+                "leader": "湘西",
+                "city_id": "101251507"
+            }
+        ]
+    },
+    "中山": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "辽宁",
+                "leader": "大连",
+                "city_id": "101070208"
+            },
+            {
+                "province": "广东",
+                "leader": "中山",
+                "city_id": "101281701"
+            }
+        ]
+    },
+    "海城": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "辽宁",
+                "leader": "鞍山",
+                "city_id": "101070304"
+            },
+            {
+                "province": "广西",
+                "leader": "北海",
+                "city_id": "101301304"
+            }
+        ]
+    },
+    "平山": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "辽宁",
+                "leader": "本溪",
+                "city_id": "101070503"
+            },
+            {
+                "province": "河北",
+                "leader": "石家庄",
+                "city_id": "101090111"
+            }
+        ]
+    },
+    "东港": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "辽宁",
+                "leader": "丹东",
+                "city_id": "101070604"
+            },
+            {
+                "province": "山东",
+                "leader": "日照",
+                "city_id": "101121504"
+            }
+        ]
+    },
+    "太和": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "辽宁",
+                "leader": "锦州",
+                "city_id": "101070708"
+            },
+            {
+                "province": "安徽",
+                "leader": "阜阳",
+                "city_id": "101220806"
+            }
+        ]
+    },
+    "海州": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "辽宁",
+                "leader": "阜新",
+                "city_id": "101070903"
+            },
+            {
+                "province": "江苏",
+                "leader": "连云港",
+                "city_id": "101191006"
+            }
+        ]
+    },
+    "清河": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "辽宁",
+                "leader": "铁岭",
+                "city_id": "101071107"
+            },
+            {
+                "province": "河北",
+                "leader": "邢台",
+                "city_id": "101090914"
+            },
+            {
+                "province": "江苏",
+                "leader": "淮安",
+                "city_id": "101190907"
+            }
+        ]
+    },
+    "连山": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "辽宁",
+                "leader": "葫芦岛",
+                "city_id": "101071405"
+            },
+            {
+                "province": "广东",
+                "leader": "清远",
+                "city_id": "101281304"
+            }
+        ]
+    },
+    "新城": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "内蒙古",
+                "leader": "呼和浩特",
+                "city_id": "101080108"
+            },
+            {
+                "province": "陕西",
+                "leader": "西安",
+                "city_id": "101110108"
+            }
+        ]
+    },
+    "青山": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "内蒙古",
+                "leader": "包头",
+                "city_id": "101080210"
+            },
+            {
+                "province": "湖北",
+                "leader": "武汉",
+                "city_id": "101200112"
+            }
+        ]
+    },
+    "海南": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "内蒙古",
+                "leader": "乌海",
+                "city_id": "101080303"
+            },
+            {
+                "province": "青海",
+                "leader": "海南",
+                "city_id": "101150402"
+            }
+        ]
+    },
+    "长安": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "河北",
+                "leader": "石家庄",
+                "city_id": "101090119"
+            },
+            {
+                "province": "陕西",
+                "leader": "西安",
+                "city_id": "101110102"
+            }
+        ]
+    },
+    "桥西": {
+        "condition": 3,
+        "data": [
+            {
+                "province": "河北",
+                "leader": "石家庄",
+                "city_id": "101090120"
+            },
+            {
+                "province": "河北",
+                "leader": "张家口",
+                "city_id": "101090316"
+            },
+            {
+                "province": "河北",
+                "leader": "邢台",
+                "city_id": "101090919"
+            }
+        ]
+    },
+    "新华": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "河北",
+                "leader": "石家庄",
+                "city_id": "101090121"
+            },
+            {
+                "province": "河北",
+                "leader": "沧州",
+                "city_id": "101090715"
+            },
+            {
+                "province": "河南",
+                "leader": "平顶山",
+                "city_id": "101180509"
+            }
+        ]
+    },
+    "桥东": {
+        "condition": 3,
+        "data": [
+            {
+                "province": "河北",
+                "leader": "张家口",
+                "city_id": "101090315"
+            },
+            {
+                "province": "河北",
+                "leader": "邢台",
+                "city_id": "101090903"
+            }
+        ]
+    },
+    "开平": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "河北",
+                "leader": "唐山",
+                "city_id": "101090516"
+            },
+            {
+                "province": "广东",
+                "leader": "江门",
+                "city_id": "101281103"
+            }
+        ]
+    },
+    "矿区": {
+        "condition": 3,
+        "data": [
+            {
+                "province": "山西",
+                "leader": "大同",
+                "city_id": "101100209"
+            },
+            {
+                "province": "山西",
+                "leader": "阳泉",
+                "city_id": "101100304"
+            }
+        ]
+    },
+    "山阳": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "陕西",
+                "leader": "商洛",
+                "city_id": "101110608"
+            },
+            {
+                "province": "河南",
+                "leader": "焦作",
+                "city_id": "101181111"
+            }
+        ]
+    },
+    "市中": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "山东",
+                "leader": "济南",
+                "city_id": "101120108"
+            },
+            {
+                "province": "山东",
+                "leader": "枣庄",
+                "city_id": "101121406"
+            },
+            {
+                "province": "四川",
+                "leader": "内江",
+                "city_id": "101271206"
+            },
+            {
+                "province": "四川",
+                "leader": "乐山",
+                "city_id": "101271410"
+            }
+        ]
+    },
+    "栖霞": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "山东",
+                "leader": "烟台",
+                "city_id": "101120507"
+            },
+            {
+                "province": "江苏",
+                "leader": "南京",
+                "city_id": "101190112"
+            }
+        ]
+    },
+    "河口": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "山东",
+                "leader": "东营",
+                "city_id": "101121202"
+            },
+            {
+                "province": "云南",
+                "leader": "红河",
+                "city_id": "101290313"
+            }
+        ]
+    },
+    "沙湾": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "新疆",
+                "leader": "塔城",
+                "city_id": "101131107"
+            },
+            {
+                "province": "四川",
+                "leader": "乐山",
+                "city_id": "101271411"
+            }
+        ]
+    },
+    "城关": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "西藏",
+                "leader": "拉萨",
+                "city_id": "101140109"
+            },
+            {
+                "province": "甘肃",
+                "leader": "兰州",
+                "city_id": "101160105"
+            }
+        ]
+    },
+    "大通": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "青海",
+                "leader": "西宁",
+                "city_id": "101150102"
+            },
+            {
+                "province": "安徽",
+                "leader": "淮南",
+                "city_id": "101220404"
+            }
+        ]
+    },
+    "城中": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "青海",
+                "leader": "西宁",
+                "city_id": "101150106"
+            },
+            {
+                "province": "广西",
+                "leader": "柳州",
+                "city_id": "101300303"
+            }
+        ]
+    },
+    "安宁": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "甘肃",
+                "leader": "兰州",
+                "city_id": "101160108"
+            },
+            {
+                "province": "云南",
+                "leader": "昆明",
+                "city_id": "101290112"
+            }
+        ]
+    },
+    "金川": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "甘肃",
+                "leader": "金昌",
+                "city_id": "101160603"
+            },
+            {
+                "province": "四川",
+                "leader": "阿坝",
+                "city_id": "101271907"
+            }
+        ]
+    },
+    "东乡": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "甘肃",
+                "leader": "临夏",
+                "city_id": "101161106"
+            },
+            {
+                "province": "江西",
+                "leader": "抚州",
+                "city_id": "101240411"
+            }
+        ]
+    },
+    "襄城": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "河南",
+                "leader": "许昌",
+                "city_id": "101180403"
+            },
+            {
+                "province": "湖北",
+                "leader": "襄阳",
+                "city_id": "101200209"
+            }
+        ]
+    },
+    "鼓楼": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "河南",
+                "leader": "开封",
+                "city_id": "101180808"
+            },
+            {
+                "province": "江苏",
+                "leader": "南京",
+                "city_id": "101190111"
+            },
+            {
+                "province": "江苏",
+                "leader": "徐州",
+                "city_id": "101190808"
+            },
+            {
+                "province": "福建",
+                "leader": "福州",
+                "city_id": "101230106"
+            }
+        ]
+    },
+    "鹤山": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "河南",
+                "leader": "鹤壁",
+                "city_id": "101181204"
+            },
+            {
+                "province": "广东",
+                "leader": "江门",
+                "city_id": "101281108"
+            }
+        ]
+    },
+    "云龙": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "江苏",
+                "leader": "徐州",
+                "city_id": "101190809"
+            },
+            {
+                "province": "云南",
+                "leader": "大理",
+                "city_id": "101290202"
+            }
+        ]
+    },
+    "华容": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "湖北",
+                "leader": "鄂州",
+                "city_id": "101200303"
+            },
+            {
+                "province": "湖南",
+                "leader": "岳阳",
+                "city_id": "101251002"
+            }
+        ]
+    },
+    "西湖": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "浙江",
+                "leader": "杭州",
+                "city_id": "101210113"
+            },
+            {
+                "province": "江西",
+                "leader": "南昌",
+                "city_id": "101240107"
+            }
+        ]
+    },
+    "象山": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "浙江",
+                "leader": "宁波",
+                "city_id": "101210406"
+            },
+            {
+                "province": "广西",
+                "leader": "桂林",
+                "city_id": "101300516"
+            }
+        ]
+    },
+    "台江": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "福建",
+                "leader": "福州",
+                "city_id": "101230109"
+            },
+            {
+                "province": "贵州",
+                "leader": "黔东南",
+                "city_id": "101260510"
+            }
+        ]
+    },
+    "永定": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "福建",
+                "leader": "龙岩",
+                "city_id": "101230706"
+            },
+            {
+                "province": "湖南",
+                "leader": "张家界",
+                "city_id": "101251105"
+            }
+        ]
+    },
+    "昌江": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "江西",
+                "leader": "景德镇",
+                "city_id": "101240804"
+            },
+            {
+                "province": "海南",
+                "leader": "昌江",
+                "city_id": "101310206"
+            }
+        ]
+    },
+    "资阳": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "湖南",
+                "leader": "益阳",
+                "city_id": "101250706"
+            },
+            {
+                "province": "四川",
+                "leader": "资阳",
+                "city_id": "101271301"
+            }
+        ]
+    },
+    "白云": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "贵州",
+                "leader": "贵阳",
+                "city_id": "101260102"
+            },
+            {
+                "province": "广东",
+                "leader": "广州",
+                "city_id": "101280110"
+            }
+        ]
+    },
+    "钟山": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "贵州",
+                "leader": "六盘水",
+                "city_id": "101260805"
+            },
+            {
+                "province": "广西",
+                "leader": "贺州",
+                "city_id": "101300704"
+            }
+        ]
+    },
+    "东兴": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "四川",
+                "leader": "内江",
+                "city_id": "101271202"
+            },
+            {
+                "province": "广西",
+                "leader": "防城港",
+                "city_id": "101301403"
+            }
+        ]
+    },
+    "九龙": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "四川",
+                "leader": "甘孜",
+                "city_id": "101271805"
+            },
+            {
+                "province": "香港",
+                "leader": "香港",
+                "city_id": "101320102"
+            }
+        ]
+    },
+    "南沙": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "广东",
+                "leader": "广州",
+                "city_id": "101280112"
+            },
+            {
+                "province": "海南",
+                "leader": "三沙",
+                "city_id": "101310304"
+            }
+        ]
+    },
+    "兴宁": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "广东",
+                "leader": "梅州",
+                "city_id": "101280402"
+            },
+            {
+                "province": "广西",
+                "leader": "南宁",
+                "city_id": "101300102"
+            }
+        ]
+    },
+    "五华": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "广东",
+                "leader": "梅州",
+                "city_id": "101280408"
+            },
+            {
+                "province": "云南",
+                "leader": "昆明",
+                "city_id": "101290102"
+            }
+        ]
+    },
+    "金平": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "广东",
+                "leader": "汕头",
+                "city_id": "101280506"
+            },
+            {
+                "province": "云南",
+                "leader": "红河",
+                "city_id": "101290312"
+            }
+        ]
+    },
+    "江城": {
+        "condition": 2,
+        "data": [
+            {
+                "province": "广东",
+                "leader": "阳江",
+                "city_id": "101281805"
+            },
+            {
+                "province": "云南",
+                "leader": "普洱",
+                "city_id": "101290907"
+            }
+        ]
+    }
+}

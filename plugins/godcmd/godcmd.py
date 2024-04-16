@@ -276,6 +276,16 @@ class Godcmd(Plugin):
                             Bridge().reset_bot()
                             model = conf().get("model") or const.GPT35
                             ok, result = True, "模型设置为: " + str(model)
+                    else:
+                        # 如果大于>1,那么直接以该模型去提问，提问完再改回来
+                        conf()["model"] = self.model_mapping(args[0])
+                        Bridge().reset_bot()
+                        reply = channel.build_reply_content(args[1], e_context["context"])
+                        e_context["reply"] = reply
+                        e_context.action = EventAction.BREAK_PASS
+                        conf()["model"] = const.GPT35
+                        Bridge().reset_bot()
+                        return
                 elif cmd == "id":
                     ok, result = True, user
                 elif cmd == "set_openai_api_key":
@@ -338,8 +348,18 @@ class Godcmd(Plugin):
                             load_config()
                             ok, result = True, "配置已重载"
                         elif cmd == "resetall":
-                            if bottype in [const.OPEN_AI, const.CHATGPT, const.CHATGPTONAZURE, const.LINKAI,
-                                           const.BAIDU, const.XUNFEI, const.QWEN, const.GEMINI, const.ZHIPU_AI, const.MOONSHOT]:
+                            if bottype in [
+                                const.OPEN_AI,
+                                const.CHATGPT,
+                                const.CHATGPTONAZURE,
+                                const.LINKAI,
+                                const.BAIDU,
+                                const.XUNFEI,
+                                const.QWEN,
+                                const.GEMINI,
+                                const.ZHIPU_AI,
+                                const.MOONSHOT,
+                            ]:
                                 channel.cancel_all_session()
                                 bot.sessions.clear_all_session()
                                 ok, result = True, "重置所有会话成功"
@@ -435,7 +455,7 @@ class Godcmd(Plugin):
             reply.content = result
             e_context["reply"] = reply
 
-            e_context.action = EventAction.BREAK_PASS  # 事件结束，并跳过处理context的默认逻辑
+            e_context.action = EventAction.BREAK_PASS  # 事件结束，并跳过处理context的默认逻辑，相当于赋值一个标志
         elif not self.isrunning:
             e_context.action = EventAction.BREAK_PASS
 
@@ -464,12 +484,10 @@ class Godcmd(Plugin):
     def get_help_text(self, isadmin=False, isgroup=False, **kwargs):
         return get_help_text(isadmin, isgroup)
 
-
     def is_admin_in_group(self, context):
         if context["isgroup"]:
             return context.kwargs.get("msg").actual_user_id in global_config["admin_users"]
         return False
-
 
     def model_mapping(self, model) -> str:
         if model == "gpt-4-turbo":
