@@ -63,8 +63,31 @@ class DifyBot(Bot):
             "user": session.get_user()
         }
 
+    # def _reply(self, query: str, session: DifySession, context: Context):
+    #     try:
+    #         session.count_user_message() # 限制一个conversation中消息数，防止conversation过长
+    #         dify_app_type = conf().get('dify_app_type', 'chatbot')
+    #         if dify_app_type == 'chatbot':
+    #             return self._handle_chatbot(query, session)
+    #         elif dify_app_type == 'agent':
+    #             return self._handle_agent(query, session, context)
+    #         elif dify_app_type == 'workflow':
+    #             return self._handle_workflow(query, session)
+    #         else:
+    #             return None, "dify_app_type must be agent, chatbot or workflow"
+
+    #     except Exception as e:
+    #         error_info = f"[DIFY] Exception: {e}"
+    #         logger.exception(error_info)
+    #         return None, error_info
+
     def _reply(self, query: str, session: DifySession, context: Context):
         try:
+            # 首先发送一条消息，告知用户正在生成总结
+            initial_reply = Reply(ReplyType.TEXT, "🎉正在为您查询，请稍候...")
+            channel = context.get("channel")
+            channel.send(initial_reply, context)
+
             session.count_user_message() # 限制一个conversation中消息数，防止conversation过长
             dify_app_type = conf().get('dify_app_type', 'chatbot')
             if dify_app_type == 'chatbot':
@@ -80,6 +103,7 @@ class DifyBot(Bot):
             error_info = f"[DIFY] Exception: {e}"
             logger.exception(error_info)
             return None, error_info
+
 
     def _handle_chatbot(self, query: str, session: DifySession):
         # TODO: 获取response部分抽取为公共函数
