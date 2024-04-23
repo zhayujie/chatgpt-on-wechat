@@ -2,6 +2,7 @@ import requests
 from config import conf
 from common.log import logger
 import os
+import html
 
 
 class LinkSummary:
@@ -18,6 +19,7 @@ class LinkSummary:
         return self._parse_summary_res(res)
 
     def summary_url(self, url: str):
+        url = html.unescape(url)
         body = {
             "url": url
         }
