@@ -29,7 +29,7 @@ class DifyBot(Bot):
             user = None
             if channel_type == "wx":
                 user = context["msg"].other_user_nickname if context.get("msg") else "default"
-            elif channel_type in ["wechatcom_app", "wechatmp", "wechatmp_service"]:
+            elif channel_type in ["wechatcom_app", "wechatmp", "wechatmp_service", "wechatcom_service"]:
                 user = context["msg"].other_user_id if context.get("msg") else "default"
             else:
                 return Reply(ReplyType.ERROR, f"unsupported channel type: {channel_type}, now dify only support wx, wechatcom_app, wechatmp, wechatmp_service channel")
@@ -46,7 +46,7 @@ class DifyBot(Bot):
             reply = Reply(ReplyType.ERROR, "Bot不支持处理{}类型的消息".format(context.type))
             return reply
 
-    def _get_api_base_url(self):
+    def _get_api_base_url(self) -> str:
         return conf().get("dify_api_base", "https://api.dify.ai/v1")
 
     def _get_headers(self):
@@ -109,7 +109,9 @@ class DifyBot(Bot):
         #     "created_at": 1705407629
         # }
         rsp_data = response.json()
-        logger.debug("[DIFY] usage ".format(rsp_data['metadata']['usage']))
+        logger.debug("[DIFY] usage {}".format(rsp_data.get('metadata', {}).get('usage', 0)))
+        # TODO: 处理返回的图片文件
+        # {"answer": "![image](/files/tools/dbf9cd7c-2110-4383-9ba8-50d9fd1a4815.png?timestamp=1713970391&nonce=0d5badf2e39466042113a4ba9fd9bf83&sign=OVmdCxCEuEYwc9add3YNFFdUpn4VdFKgl84Cg54iLnU=)"}
         reply = Reply(ReplyType.TEXT, rsp_data['answer'])
         # 设置dify conversation_id, 依靠dify管理上下文
         if session.get_conversation_id() == '':
@@ -145,7 +147,8 @@ class DifyBot(Bot):
                 reply = Reply(ReplyType.TEXT, msg['content'])
                 channel.send(reply, context)
             elif msg['type'] == 'message_file':
-                reply = Reply(ReplyType.IMAGE_URL, msg['content']['url'])
+                url = self._fill_file_base_url(msg['content']['url'])
+                reply = Reply(ReplyType.IMAGE_URL, url)
                 thread = threading.Thread(target=channel.send, args=(reply, context))
                 thread.start()
         final_msg = msgs[-1]
@@ -153,7 +156,8 @@ class DifyBot(Bot):
         if final_msg['type'] == 'agent_message':
             reply = Reply(ReplyType.TEXT, final_msg['content'])
         elif final_msg['type'] == 'message_file':
-            reply = Reply(ReplyType.IMAGE_URL, final_msg['content']['url'])
+            url = self._fill_file_base_url(final_msg['content']['url'])
+            reply = Reply(ReplyType.IMAGE_URL, url)
         # 设置dify conversation_id, 依靠dify管理上下文
         if session.get_conversation_id() == '':
             session.set_conversation_id(conversation_id)
@@ -190,6 +194,15 @@ class DifyBot(Bot):
         rsp_data = response.json()
         reply = Reply(ReplyType.TEXT, rsp_data['data']['outputs']['text'])
         return reply, None
+
+    def _fill_file_base_url(self, url: str):
+        if url.startswith("https://") or url.startswith("http://"):
+            return url
+        # 补全文件base url, 默认使用去掉"/v1"的dify api base url
+        return self._get_file_base_url() + url
+
+    def _get_file_base_url(self) -> str:
+        return self._get_api_base_url().replace("/v1", "")
 
     def _get_workflow_payload(self, query, session: DifySession):
         return {

@@ -29,7 +29,13 @@
 - [ ] **飞书** 待测试
 
 # 最新功能
-## 1. Suno音乐插件
+## 1. 集成[JinaSum](https://github.com/hanfangyuan4396/jina_sum)插件
+使用Jina Reader和ChatGPT支持总结公众号、小红书、知乎等分享卡片链接，配置详情请查看[JinaSum](https://github.com/hanfangyuan4396/jina_sum)
+
+![plugin-jinasum-1](./plugins/jina_sum/docs/images/wechat_mp.jpg)
+![plugin-jinasum-1](./plugins/jina_sum/docs/images/red.jpg)
+
+## 2. Suno音乐插件
 使用 [Suno](https://github.com/hanfangyuan4396/suno) 插件生成音乐
 
 ![plugin-suno-1](./docs/images/plugin-suno-1.jpg)
@@ -40,11 +46,11 @@
 https://github.com/hanfangyuan4396/dify-on-wechat/assets/43166868/396fa76f-a5d9-4de2-8ce2-365ceb6684f0
 
 
-## 2. 支持Dify Chatflow & Workflow
+## 3. 支持Dify Chatflow & Workflow
 dify官网已正式上线工作流模式，可以导入本项目下的[dsl文件](./dsl/chat-workflow.yml)快速创建工作流进行测试。工作流输入变量名称十分灵活，对于**工作流类型**的应用，本项目**约定工作流的输入变量命名为`query`**，**输出变量命名为`text`**。
 
 (ps: 感觉工作流类型应用不太适合作为聊天机器人，现在它还没有会话的概念，需要自己管理上下文。但是它可以调用各种工具，通过http请求和外界交互，适合执行业务逻辑复杂的任务；它可以导入导出工作流dsl文件，方便分享移植。也许以后dsl文件+配置文件就可以作为本项目的一个插件。)
-## 3. 支持COZE API
+## 4. 支持COZE API
 
 ![image-5](./docs/images/image5.jpg)
 
@@ -52,7 +58,7 @@ dify官网已正式上线工作流模式，可以导入本项目下的[dsl文件
 
 
 
-### 3.1 如何快速启动coze微信机器人
+### 4.1 如何快速启动coze微信机器人
 
 - 请参照**快速开始**步骤克隆源码并安装依赖
 
@@ -88,6 +94,7 @@ python3 app.py                                    # windows环境下该命令通
 
 
 # 更新日志
+- 2024/04/24 集成JinaSum插件，修复总结微信公众号文章，修复dify usage key error, 修复dify私有部署的图片url错误
 - 2024/04/16 支持基本的企业微信客服通道，感谢[**@lei195827**](https://github.com/lei195827), [**@sisuad**](https://github.com/sisuad) 的贡献
 - 2024/04/14 Suno音乐插件，Dify on WeChat对接详细教程，config文件bug修复
 - 2024/04/08 支持聊天助手类型应用内置的Chatflow，支持dify基础的对话Workflow
