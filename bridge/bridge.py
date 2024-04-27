@@ -48,6 +48,9 @@ class Bridge(object):
         if model_type in ["claude"]:
             self.btype["chat"] = const.CLAUDEAI
 
+        if model_type in ["moonshot-v1-8k", "moonshot-v1-32k", "moonshot-v1-128k"]:
+            self.btype["chat"] = const.MOONSHOT
+
         self.bots = {}
         self.chat_bots = {}
     # 模型对应的接口

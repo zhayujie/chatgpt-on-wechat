@@ -1,11 +1,11 @@
 # 简介
 
-> 本项目是基于大模型的智能对话机器人，支持企业微信、微信公众号、飞书、钉钉接入，可选择GPT3.5/GPT4.0/Claude/文心一言/讯飞星火/通义千问/Gemini/LinkAI/ZhipuAI，能处理文本、语音和图片，通过插件访问操作系统和互联网等外部资源，支持基于自有知识库定制企业AI应用。
+> 本项目是基于大模型的智能对话机器人，支持企业微信、微信公众号、飞书、钉钉接入，可选择GPT3.5/GPT4.0/Claude/文心一言/讯飞星火/通义千问/Gemini/LinkAI/ChatGLM/KIMI，能处理文本、语音和图片，通过插件访问操作系统和互联网等外部资源，支持基于自有知识库定制企业AI应用。
 
 最新版本支持的功能如下：
 
 - [x] **多端部署：** 有多种部署方式可选择且功能完备，目前已支持微信生态下公众号、企业微信应用、飞书、钉钉等部署方式
-- [x] **基础对话：** 私聊及群聊的消息智能回复，支持多轮会话上下文记忆，支持 GPT-3.5, GPT-4, Claude-3, Gemini, 文心一言, 讯飞星火, 通义千问，ChatGLM-4
+- [x] **基础对话：** 私聊及群聊的消息智能回复，支持多轮会话上下文记忆，支持 GPT-3.5, GPT-4, Claude-3, Gemini, 文心一言, 讯飞星火, 通义千问，ChatGLM-4，Kimi(月之暗面)
 - [x] **语音能力：** 可识别语音消息，通过文字或语音回复，支持 azure, baidu, google, openai(whisper/tts) 等多种语音模型
 - [x] **图像能力：** 支持图片生成、图片识别、图生图（如照片修复），可选择 Dall-E-3, stable diffusion, replicate, midjourney, CogView-3, vision模型
 - [x] **丰富插件：** 支持个性化插件扩展，已实现多角色切换、文字冒险、敏感词过滤、聊天记录总结、文档总结和对话、联网搜索等插件
@@ -34,6 +34,8 @@ SaaS服务、私有化部署、稳定托管接入 等多种模式。
 <img width="240" src="./docs/images/contact.jpg">
 
 # 更新日志
+
+>**2024.04.26：** [1.6.0版本](https://github.com/zhayujie/chatgpt-on-wechat/releases/tag/1.6.0)，新增 Kimi 接入、gpt-4-turbo版本升级、文件总结和语音识别问题修复
 
 >**2024.03.26：** [1.5.8版本](https://github.com/zhayujie/chatgpt-on-wechat/releases/tag/1.5.8) 和 [1.5.7版本](https://github.com/zhayujie/chatgpt-on-wechat/releases/tag/1.5.7)，新增 GLM-4、Claude-3 模型，edge-tts 语音支持
 
