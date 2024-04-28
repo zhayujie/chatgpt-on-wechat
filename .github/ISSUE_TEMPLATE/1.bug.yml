@@ -64,9 +64,9 @@ body:
       required: true
   - type: dropdown
     attributes:
-      label: 使用的chatgpt-on-wechat版本是?
+      label: 使用的dify-on-wechat版本是?
       description: |
-        请确保你使用的是 [releases](https://github.com/zhayujie/chatgpt-on-wechat/releases) 中的最新版本。
+        请确保你使用的是 [releases](https://github.com/hanfangyuan4396/dify-on-wechat/releases) 中的最新版本。
         如果你使用git, 请使用`git branch`命令来查看分支。
       options:
         - Latest Release
@@ -77,7 +77,7 @@ body:
     attributes:
       label: 运行的`channel`类型是?
       description: |
-        请确保你正确配置了该`channel`所需的配置项，所有可选的配置项都写在了[该文件中](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/config.py)，请将所需配置项填写在根目录下的`config.json`文件中。
+        请确保你正确配置了该`channel`所需的配置项，所有可选的配置项都写在了[该文件中](https://github.com/hanfangyuan4396/dify-on-wechat/blob/master/config.py)，请将所需配置项填写在根目录下的`config.json`文件中。
       options:
         - wx(个人微信, itchat)
         - wxy(个人微信, wechaty)
