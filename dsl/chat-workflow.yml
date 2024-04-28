@@ -32,19 +32,19 @@ workflow:
     - data:
         sourceType: start
         targetType: llm
-      id: 1712585213444-1712585220528
-      source: '1712585213444'
+      id: 1714264983912-1714264986101
+      source: '1714264983912'
       sourceHandle: source
-      target: '1712585220528'
+      target: '1714264986101'
       targetHandle: target
       type: custom
     - data:
         sourceType: llm
         targetType: end
-      id: 1712585220528-1712585261804
-      source: '1712585220528'
+      id: 1714264986101-1714264993459
+      source: '1714264986101'
       sourceHandle: source
-      target: '1712585261804'
+      target: '1714264993459'
       targetHandle: target
       type: custom
     nodes:
@@ -54,14 +54,14 @@ workflow:
         title: "\u5F00\u59CB"
         type: start
         variables:
-        - label: "\u95EE\u9898"
+        - label: query
           max_length: 256
           options: []
           required: true
           type: text-input
           variable: query
       height: 89
-      id: '1712585213444'
+      id: '1714264983912'
       position:
         x: 80
         y: 282
@@ -75,10 +75,8 @@ workflow:
       width: 243
     - data:
         context:
-          enabled: true
-          variable_selector:
-          - '1712585213444'
-          - query
+          enabled: false
+          variable_selector: []
         desc: ''
         model:
           completion_params:
@@ -106,7 +104,7 @@ workflow:
             tips based on the quality of your reply;\nDo your best!\nUnless otherwise
             specified, please answer me in Chinese.
         - role: user
-          text: '{{#1712585213444.query#}}'
+          text: '{{#1714264983912.query#}}'
         selected: true
         title: LLM
         type: llm
@@ -114,7 +112,7 @@ workflow:
         vision:
           enabled: false
       height: 97
-      id: '1712585220528'
+      id: '1714264986101'
       position:
         x: 380
         y: 282
@@ -130,20 +128,21 @@ workflow:
         desc: ''
         outputs:
         - value_selector:
-          - '1712585220528'
+          - '1714264986101'
           - text
           variable: text
         selected: false
         title: "\u7ED3\u675F"
         type: end
       height: 89
-      id: '1712585261804'
+      id: '1714264993459'
       position:
         x: 680
         y: 282
       positionAbsolute:
         x: 680
         y: 282
+      selected: false
       sourcePosition: right
       targetPosition: left
       type: custom
