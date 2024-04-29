@@ -64,6 +64,10 @@ available_setting = {
     "xunfei_app_id": "",  # 讯飞应用ID
     "xunfei_api_key": "",  # 讯飞 API key
     "xunfei_api_secret": "",  # 讯飞 API secret
+    # 讯飞星火Web端 配置
+    "xunfei_web_cookie": "",  # 讯飞Web Cookie
+    "xunfei_web_fd": "",  # 讯飞 Web fd
+    "xunfei_web_gttoken": "",  # 讯飞 Web GtToken
     # claude 配置
     "claude_api_cookie": "",
     "claude_uuid": "",
