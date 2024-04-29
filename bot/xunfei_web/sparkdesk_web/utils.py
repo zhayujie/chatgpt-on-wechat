@@ -1,12 +1,3 @@
-# -*- coding: UTF-8 -*-
-"""
-@Project : sparkdesk-api
-@File    : utils.py
-@Author  : HildaM
-@Email   : Hilda_quan@163.com
-@Date    : 2023/7/6 15:10
-@Description :  common utils
-"""
 import base64
 import json
 

@@ -1,12 +1,3 @@
-# -*- coding: UTF-8 -*-
-"""
-@Project : sparkdesk-api
-@File    : core.py
-@Author  : HildaM
-@Email   : Hilda_quan@163.com
-@Date    : 2023/7/6 15:00
-@Description : web接口核心入口
-"""
 import json
 import os
 import sys

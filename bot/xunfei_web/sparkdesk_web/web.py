@@ -1,12 +1,3 @@
-# -*- coding: UTF-8 -*-
-"""
-@Project : sparkdesk-api
-@File    : web.py
-@Author  : HildaM
-@Email   : Hilda_quan@163.com
-@Date    : 2023/7/6 14:54
-@Description :  web utils
-"""
 import copy
 
 
