@@ -13,7 +13,7 @@ import random
 # 假设这是从您项目中导入的SparkWeb类
 from sparkdesk_web.core import SparkWeb
 
-class XunFeiBot(Bot):
+class XunFeiWebBot(Bot):
     def __init__(self):
         super().__init__()
         sparkWeb = SparkWeb(
