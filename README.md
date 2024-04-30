@@ -105,9 +105,9 @@ python3 app.py                                    # windows环境下该命令通
 - 2024/03/29 支持dify基础的对话工作流，由于dify官网还未上线工作流，需要自行部署测试 [0.6.0-preview-workflow.1](https://github.com/langgenius/dify/releases/tag/0.6.0-preview-workflow.1)。
 # Dify on WeChat 交流群
 
-添加我的微信拉你进群
+添加我的微信拉你进群(之前的企业微信好友达到上限了，无法验证通过了，麻烦未通过好友的重新添加下面的个人微信吧)
 
-<img width="240" src="./docs/images/image3.png">
+<img width="240" src="./docs/images/image3.jpg">
 
 
 
