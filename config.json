@@ -1,24 +1,34 @@
 {
-  "channel_type": "wx",
-  "model": "",
-  "open_ai_api_key": "YOUR API KEY",
-  "claude_api_key": "YOUR API KEY",
+  "open_ai_api_key": "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",
+  "open_ai_api_base": "https://api.openai.com/v1",
+  "gemini_api_key": "AIzaSyDhmMUusxx5_CjvwD8q2yC1a5Yv4A4ZWhc",
+  "bot_type": "ollama",
+  "model": "wizardlm2:7b-fp16",
+  "use_azure_chatgpt": false,
+  "baidu_wenxin_model": "eb-instant",
+    "baidu_wenxin_api_key": "PWhblJFc7n4mihIbiZhnvqZh",
+    "baidu_wenxin_secret_key": "jWInFYqW9UTYl1E2C6KjFQXLs04bCwdu",
+    "qwen_access_key_id": "LTAI5tAVPC1zqH3cRLPN6hmL",
+    "qwen_access_key_secret": "",
+    "qwen_agent_key": "",
+    "qwen_app_id": "",
+    "qwen_node_id": "",
   "text_to_image": "dall-e-2",
   "voice_to_text": "openai",
   "text_to_voice": "openai",
-  "proxy": "",
   "hot_reload": false,
   "single_chat_prefix": [
-    "bot",
-    "@bot"
+    ""
   ],
   "single_chat_reply_prefix": "[bot] ",
   "group_chat_prefix": [
     "@bot"
   ],
   "group_name_white_list": [
-    "ChatGPT测试群",
-    "ChatGPT测试群2"
+    "ALL_GROUP"
+  ],
+  "group_chat_in_one_session": [
+    "ALL_GROUP"
   ],
   "image_create_prefix": [
     "画"
@@ -31,7 +41,5 @@
   "character_desc": "你是ChatGPT, 一个由OpenAI训练的大型语言模型, 你旨在回答并解决人们的任何问题，并且可以使用多种语言与人交流。",
   "temperature": 0.7,
   "subscribe_msg": "感谢您的关注！\n这里是AI智能助手，可以自由对话。\n支持语音对话。\n支持图片输入。\n支持图片输出，画字开头的消息将按要求创作图片。\n支持tool、角色扮演和文字冒险等丰富的插件。\n输入{trigger_prefix}#help 查看详细指令。",
-  "use_linkai": false,
-  "linkai_api_key": "",
-  "linkai_app_code": ""
+  "use_linkai": false
 }

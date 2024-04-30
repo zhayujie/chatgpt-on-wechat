@@ -18,6 +18,7 @@ GEMINI = "gemini"
 ZHIPU_AI = "glm-4"
 MOONSHOT = "moonshot"
 
+OLLAMA = "ollama"
 
 # model
 CLAUDE3 = "claude-3-opus-20240229"

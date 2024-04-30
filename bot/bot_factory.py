@@ -65,5 +65,8 @@ def create_bot(bot_type):
         from bot.moonshot.moonshot_bot import MoonshotBot
         return MoonshotBot()
 
+    elif bot_type == const.OLLAMA:
+        from bot.ollama.ollama_bot import OllamaBot
+        return OllamaBot()
 
     raise RuntimeError
