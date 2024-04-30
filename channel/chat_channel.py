@@ -4,6 +4,7 @@ import threading
 import time
 from asyncio import CancelledError
 from concurrent.futures import Future, ThreadPoolExecutor
+from urllib.parse import urlparse
 
 from bridge.context import *
 from bridge.reply import *
@@ -20,6 +21,14 @@ except Exception as e:
 handler_pool = ThreadPoolExecutor(max_workers=8)  # 处理消息的线程池
 
 
+def is_url(string):
+    """Return whether the string is an URL."""
+    try:
+        result = urlparse(string)
+        return all([result.scheme, result.netloc])
+    except ValueError:
+        return False
+    
 # 抽象类, 它包含了与消息通道无关的通用处理逻辑
 class ChatChannel(Channel):
     name = None  # 登录的用户名
@@ -190,7 +199,11 @@ class ChatChannel(Channel):
             logger.debug("[WX] ready to handle context: type={}, content={}".format(context.type, context.content))
             if context.type == ContextType.TEXT or context.type == ContextType.IMAGE_CREATE:  # 文字和图片消息
                 context["channel"] = e_context["channel"]
-                reply = super().build_reply_content(context.content, context)
+                if is_url(context.content):
+                    reply = super().build_my_text_info(context.content)
+                    logger.debug(f"自定义的reply: {reply}")
+                else:
+                    reply = super().build_reply_content(context.content, context)
             elif context.type == ContextType.VOICE:  # 语音消息
                 cmsg = context["msg"]
                 cmsg.prepare()

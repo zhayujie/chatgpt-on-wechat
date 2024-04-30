@@ -1,3 +1,7 @@
+# 自定义
+python-dotenv
+omnivoreql
+
 tiktoken>=0.3.2 # openai calculate token
 
 #voice

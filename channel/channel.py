@@ -5,7 +5,7 @@ Message sending channel abstract class
 from bridge.bridge import Bridge
 from bridge.context import Context
 from bridge.reply import *
-
+from bridge.omni import save_url2omni
 
 class Channel(object):
     channel_type = ""
@@ -42,3 +42,18 @@ class Channel(object):
 
     def build_text_to_voice(self, text) -> Reply:
         return Bridge().fetch_text_to_voice(text)
+
+    def build_my_text_info(self, context: Context = None) -> Reply:
+        """
+        构建文本回复，包含保存链接的结果。
+        return: Reply（直接构建的文本回复）
+        """
+        result = save_url2omni(context)
+
+        # 使用get方法获取嵌套字典的值，避免 KeyError
+        url = result.get("saveUrl", {}).get("url")
+
+        if url:
+            return Reply(ReplyType.TEXT, f"链接保存成功，现在阅读: {url}")
+        else:
+            return Reply(ReplyType.TEXT, "链接保存失败")
