@@ -8,7 +8,7 @@ ChatGPT on WeChat项目插件, 使用jina reader和ChatGPT总结网页链接内�
 ![csdn](./docs/images/csdn.jpg)
 
 config.json 配置说明
-```json
+```bash
 {
   "jina_reader_base": "https://r.jina.ai",           # jina reader链接，默认为https://r.jina.ai
   "open_ai_api_base": "https://api.openai.com/v1",   # chatgpt chat url
