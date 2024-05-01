@@ -27,6 +27,11 @@ class JinaSum(Plugin):
     open_ai_model = "gpt-3.5-turbo"
     max_words = 8000
     prompt = "我需要对下面引号内文档进行总结，总结输出包括以下三个部分：\n📖 一句话总结\n🔑 关键要点,用数字序号列出3-5个文章的核心内容\n🏷 标签: #xx #xx\n请使用emoji让你的表达更生动\n\n"
+    white_url_list = []
+    black_url_list = [
+        "https://support.weixin.qq.com", # 视频号视频
+        "https://channels-aladin.wxqcloud.qq.com", # 视频号音乐
+    ]
 
     def __init__(self):
         super().__init__()
@@ -40,6 +45,8 @@ class JinaSum(Plugin):
             self.open_ai_model = self.config.get("open_ai_model", self.open_ai_model)
             self.max_words = self.config.get("max_words", self.max_words)
             self.prompt = self.config.get("prompt", self.prompt)
+            self.white_url_list = self.config.get("white_url_list", self.white_url_list)
+            self.black_url_list = self.config.get("black_url_list", self.black_url_list)
             logger.info(f"[JinaSum] inited, config={self.config}")
             self.handlers[Event.ON_HANDLE_CONTEXT] = self.on_handle_context
         except Exception as e:
@@ -53,7 +60,7 @@ class JinaSum(Plugin):
             if context.type != ContextType.SHARING and context.type != ContextType.TEXT:
                 return
             if not self._check_url(content):
-                logger.debug(f"[JinaSum] {content} not a url, skip")
+                logger.debug(f"[JinaSum] {content} is not a valid url, skip")
                 return
             if retry_count == 0:
                 logger.debug("[JinaSum] on_handle_context. content: %s" % content)
@@ -126,5 +133,19 @@ class JinaSum(Plugin):
         return payload
 
     def _check_url(self, target_url: str):
+        stripped_url = target_url.strip()
         # 简单校验是否是url
-        return target_url.strip().startswith("http://") or target_url.strip().startswith("https://")
+        if not stripped_url.startswith("http://") and not stripped_url.startswith("https://"):
+            return False
+
+        # 检查白名单
+        if len(self.white_url_list):
+            if not any(stripped_url.startswith(white_url) for white_url in self.white_url_list):
+                return False
+
+        # 排除黑名单，黑名单优先级>白名单
+        for black_url in self.black_url_list:
+            if stripped_url.startswith(black_url):
+                return False
+
+        return True
