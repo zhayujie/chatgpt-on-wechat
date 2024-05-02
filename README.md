@@ -64,7 +64,7 @@ Dify接入微信生态的**详细教程**请查看文章 [**手摸手教你把 D
 
 可以看到python版本是**3.8.5**，并且是**AMD64**，所以对应的whl文件为**ntwork-0.1.3-cp38-cp38-win_amd64.whl**，需要执行如下命令安装
 ```sh
-pip install ntwork-whl/ntwork-0.1.3-cp38-cp38-win_amd64.whl
+pip install your-path/ntwork-0.1.3-cp38-cp38-win_amd64.whl
 ```
 
 #### 填写配置文件
