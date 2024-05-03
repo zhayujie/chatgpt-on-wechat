@@ -15,8 +15,11 @@ available_setting = {
     # openai apibase，当use_azure_chatgpt为true时，需要设置对应的api base
     "open_ai_api_base": "https://api.openai.com/v1",
     "proxy": "",  # openai使用的代理
+    # use_ollama_server， 当 use_ollama_server 为true时，优先使用本地的Ollama服务。
+    # 配置的model需要是已经安装的 ollama list 中的模型。例如 gemma:7b , wizardlm2:7b-fp16
+    "use_ollama_server": True,
     # chatgpt模型， 当use_azure_chatgpt为true时，其名称为Azure上model deployment名称
-    "model": "gpt-3.5-turbo",  # 还支持 gpt-4, gpt-4-turbo, wenxin, xunfei, qwen
+    "model": "wizardlm2:7b-fp16",  # 还支持 gpt-4, gpt-4-turbo, wenxin, xunfei, qwen. wizardlm2:7b-fp16(For Ollama server)
     "use_azure_chatgpt": False,  # 是否使用azure的chatgpt
     "azure_deployment_id": "",  # azure 模型部署名称
     "azure_api_version": "",  # azure api版本

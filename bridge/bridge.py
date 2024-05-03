@@ -18,6 +18,10 @@ class Bridge(object):
             "text_to_voice": conf().get("text_to_voice", "google"),
             "translate": conf().get("translate", "baidu"),
         }
+        # 判断是否使用ollama服务
+        if conf().get("use_ollama_server", False):
+            self.btype["chat"] = const.OLLAMA_SERVER
+
         # 这边取配置的模型
         model_type = conf().get("model") or const.GPT35
         if model_type in ["text-davinci-003"]:
