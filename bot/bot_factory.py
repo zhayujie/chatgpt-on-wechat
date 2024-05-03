@@ -37,6 +37,10 @@ def create_bot(bot_type):
         from bot.xunfei.xunfei_spark_bot import XunFeiBot
         return XunFeiBot()
 
+    elif bot_type == const.XUNFEIWEB:
+        from bot.xunfei_web.xunfei_web_spark_bot import XunFeiWebBot
+        return XunFeiWebBot()
+
     elif bot_type == const.LINKAI:
         from bot.linkai.link_ai_bot import LinkAIBot
         return LinkAIBot()

@@ -28,6 +28,8 @@ class Bridge(object):
             self.btype["chat"] = const.BAIDU
         if model_type in ["xunfei"]:
             self.btype["chat"] = const.XUNFEI
+        if model_type in ["xunfeiweb"]:
+            self.btype["chat"] = const.XUNFEIWEB
         if model_type in [const.QWEN]:
             self.btype["chat"] = const.QWEN
         if model_type in [const.QWEN_TURBO, const.QWEN_PLUS, const.QWEN_MAX]:
