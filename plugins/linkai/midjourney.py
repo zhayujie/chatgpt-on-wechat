@@ -68,7 +68,7 @@ class MJTask:
 # midjourney bot
 class MJBot:
     def __init__(self, config):
-        self.base_url = conf().get("linkai_api_base", "https://api.link-ai.chat") + "/v1/img/midjourney"
+        self.base_url = conf().get("linkai_api_base", "https://api.link-ai.tech") + "/v1/img/midjourney"
         self.headers = {"Authorization": "Bearer " + conf().get("linkai_api_key")}
         self.config = config
         self.tasks = {}
