@@ -39,20 +39,22 @@ class Bridge(object):
         if model_type and model_type.startswith("claude-3"):
             self.btype["chat"] = const.CLAUDEAPI
 
-        if conf().get("use_linkai") and conf().get("linkai_api_key"):
-            self.btype["chat"] = const.LINKAI
-            if not conf().get("voice_to_text") or conf().get("voice_to_text") in ["openai"]:
-                self.btype["voice_to_text"] = const.LINKAI
-            if not conf().get("text_to_voice") or conf().get("text_to_voice") in ["openai", const.TTS_1, const.TTS_1_HD]:
-                self.btype["text_to_voice"] = const.LINKAI
         if model_type in ["claude"]:
             self.btype["chat"] = const.CLAUDEAI
 
         if model_type in ["moonshot-v1-8k", "moonshot-v1-32k", "moonshot-v1-128k"]:
             self.btype["chat"] = const.MOONSHOT
 
+        if conf().get("use_linkai") and conf().get("linkai_api_key"):
+            self.btype["chat"] = const.LINKAI
+            if not conf().get("voice_to_text") or conf().get("voice_to_text") in ["openai"]:
+                self.btype["voice_to_text"] = const.LINKAI
+            if not conf().get("text_to_voice") or conf().get("text_to_voice") in ["openai", const.TTS_1, const.TTS_1_HD]:
+                self.btype["text_to_voice"] = const.LINKAI
+
         self.bots = {}
         self.chat_bots = {}
+
     # 模型对应的接口
     def get_bot(self, typename):
         if self.bots.get(typename) is None:
