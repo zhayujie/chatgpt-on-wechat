@@ -59,8 +59,7 @@ class ChatClient(LinkAIClient):
 
 def start(channel):
     global chat_client
-    chat_client = ChatClient(api_key=conf().get("linkai_api_key"),
-                        host="link-ai.chat", channel=channel)
+    chat_client = ChatClient(api_key=conf().get("linkai_api_key"), host="", channel=channel)
     chat_client.config = _build_config()
     chat_client.start()
     time.sleep(1.5)
