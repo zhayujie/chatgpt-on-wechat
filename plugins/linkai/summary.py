@@ -61,7 +61,7 @@ class LinkSummary:
             return None
 
     def base_url(self):
-        return conf().get("linkai_api_base", "https://api.link-ai.chat")
+        return conf().get("linkai_api_base", "https://api.link-ai.tech")
 
     def headers(self):
         return {"Authorization": "Bearer " + conf().get("linkai_api_key")}

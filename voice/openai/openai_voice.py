@@ -21,8 +21,21 @@ class OpenaiVoice(Voice):
         logger.debug("[Openai] voice file name={}".format(voice_file))
         try:
             file = open(voice_file, "rb")
-            result = openai.Audio.transcribe("whisper-1", file)
-            text = result["text"]
+            api_base = conf().get("open_ai_api_base") or "https://api.openai.com/v1"
+            url = f'{api_base}/audio/transcriptions'
+            headers = {
+                'Authorization': 'Bearer ' + conf().get("open_ai_api_key"),
+                # 'Content-Type': 'multipart/form-data' # 加了会报错，不知道什么原因
+            }
+            files = {
+                "file": file,
+            }
+            data = {
+                "model": "whisper-1",
+            }
+            response = requests.post(url, headers=headers, files=files, data=data)
+            response_data = response.json()
+            text = response_data['text']
             reply = Reply(ReplyType.TEXT, text)
             logger.info("[Openai] voiceToText text={} voice file name={}".format(text, voice_file))
         except Exception as e:
