@@ -6,7 +6,7 @@ from bot.bot import Bot
 from bridge.reply import Reply, ReplyType
 
 
-# Baidu Unit对话接口 (可用, 但能力较弱)
+# Baidu Unit 对话接口 (可用，但能力较弱)
 class BaiduUnitBot(Bot):
     def reply(self, query, context=None):
         token = self.get_token()

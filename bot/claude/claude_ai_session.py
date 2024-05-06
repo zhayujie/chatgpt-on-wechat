@@ -5,5 +5,5 @@ class ClaudeAiSession(Session):
     def __init__(self, session_id, system_prompt=None, model="claude"):
         super().__init__(session_id, system_prompt)
         self.model = model
-        # claude逆向不支持role prompt
+        # claude 逆向不支持 role prompt
         # self.reset()

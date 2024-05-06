@@ -90,7 +90,7 @@ class AliQwenBot(Bot):
             return reply
 
         else:
-            reply = Reply(ReplyType.ERROR, "Bot不支持处理{}类型的消息".format(context.type))
+            reply = Reply(ReplyType.ERROR, "Bot 不支持处理{}类型的消息".format(context.type))
             return reply
 
     def reply_text(self, session: AliQwenSession, retry_count=0) -> dict:
@@ -103,7 +103,7 @@ class AliQwenBot(Bot):
         try:
             prompt, history = self.convert_messages_format(session.messages)
             self.update_api_key_if_expired()
-            # NOTE 阿里百炼的call()函数未提供temperature参数，考虑到temperature和top_p参数作用相同，取两者较小的值作为top_p参数传入，详情见文档 https://help.aliyun.com/document_detail/2587502.htm
+            # NOTE 阿里百炼的 call() 函数未提供 temperature 参数，考虑到 temperature 和 top_p 参数作用相同，取两者较小的值作为 top_p 参数传入，详情见文档 https://help.aliyun.com/document_detail/2587502.htm
             response = broadscope_bailian.Completions().call(app_id=self.app_id(), prompt=prompt, history=history, top_p=min(self.temperature(), self.top_p()))
             completion_content = self.get_completion_content(response, self.node_id())
             completion_tokens, total_tokens = self.calc_tokens(session.messages, completion_content)
@@ -173,7 +173,7 @@ class AliQwenBot(Bot):
         if user_content == '':
             raise Exception('no user message')
         if system_content != '':
-            # NOTE 模拟系统消息，测试发现人格描述以"你需要扮演ChatGPT"开头能够起作用，而以"你是ChatGPT"开头模型会直接否认
+            # NOTE 模拟系统消息，测试发现人格描述以"你需要扮演 ChatGPT"开头能够起作用，而以"你是 ChatGPT"开头模型会直接否认
             system_qa = ChatQaMessage(system_content, '好的，我会严格按照你的设定回答问题')
             history.insert(0, system_qa)
         logger.debug("[QWEN] converted qa messages: {}".format([item.to_dict() for item in history]))
@@ -186,7 +186,7 @@ class AliQwenBot(Bot):
         text = response['Data']['Text']
         if node_id == '':
             return text
-        # TODO: 当使用流程编排创建大模型应用时，响应结构如下，最终结果在['finalResult'][node_id]['response']['text']中，暂时先这么写
+        # TODO: 当使用流程编排创建大模型应用时，响应结构如下，最终结果在 ['finalResult'][node_id]['response']['text'] 中，暂时先这么写
         # {
         #     'Success': True,
         #     'Code': None,
@@ -194,7 +194,7 @@ class AliQwenBot(Bot):
         #     'Data': {
         #         'ResponseId': '9822f38dbacf4c9b8daf5ca03a2daf15',
         #         'SessionId': 'session_id',
-        #         'Text': '{"finalResult":{"LLM_T7islK":{"params":{"modelId":"qwen-plus-v1","prompt":"${systemVars.query}${bizVars.Text}"},"response":{"text":"作为一个AI语言模型，我没有年龄，因为我没有生日。\n我只是一个程序，没有生命和身体。"}}}}',
+        #         'Text': '{"finalResult":{"LLM_T7islK":{"params":{"modelId":"qwen-plus-v1","prompt":"${systemVars.query}${bizVars.Text}"},"response":{"text":"作为一个 AI 语言模型，我没有年龄，因为我没有生日。\n我只是一个程序，没有生命和身体。"}}}}',
         #         'Thoughts': [],
         #         'Debug': {},
         #         'DocReferences': []

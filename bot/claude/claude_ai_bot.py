@@ -47,7 +47,7 @@ class ClaudeAIBot(Bot, OpenAIImage):
                 reply = Reply(ReplyType.ERROR, res)
             return reply
         else:
-            reply = Reply(ReplyType.ERROR, "Bot不支持处理{}类型的消息".format(context.type))
+            reply = Reply(ReplyType.ERROR, "Bot 不支持处理{}类型的消息".format(context.type))
             return reply
 
     def get_organization_id(self):
@@ -71,10 +71,10 @@ class ClaudeAIBot(Bot, OpenAIImage):
         except:
             if "App unavailable" in response.text:
                 logger.error("IP error: The IP is not allowed to be used on Claude")
-                self.error = "ip所在地区不被claude支持"
+                self.error = "ip 所在地区不被 claude 支持"
             elif "Invalid authorization" in response.text:
                 logger.error("Cookie error: Invalid authorization of claude, check cookie please.")
-                self.error = "无法通过claude身份验证，请检查cookie"
+                self.error = "无法通过 claude 身份验证，请检查 cookie"
             return None
         return uuid
 
@@ -93,8 +93,8 @@ class ClaudeAIBot(Bot, OpenAIImage):
 
     def create_new_chat(self, con_uuid):
         """
-        新建claude对话实体
-        :param con_uuid: 对话id
+        新建 claude 对话实体
+        :param con_uuid: 对话 id
         :return:
         """
         url = f"https://claude.ai/api/organizations/{self.org_uuid}/chat_conversations"
@@ -193,7 +193,7 @@ class ClaudeAIBot(Bot, OpenAIImage):
 
                 if "rate limi" in reply_content:
                     logger.error("rate limit error: The conversation has reached the system speed limit and is synchronized with Cladue. Please go to the official website to check the lifting time")
-                    return Reply(ReplyType.ERROR, "对话达到系统速率限制，与cladue同步，请进入官网查看解除限制时间")
+                    return Reply(ReplyType.ERROR, "对话达到系统速率限制，与 cladue 同步，请进入官网查看解除限制时间")
                 logger.info(f"[CLAUDE] reply={reply_content}, total_tokens=invisible")
                 self.sessions.session_reply(reply_content, session_id, 100)
                 return Reply(ReplyType.TEXT, reply_content)

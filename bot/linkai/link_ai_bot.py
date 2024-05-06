@@ -41,7 +41,7 @@ class LinkAIBot(Bot):
                 reply = Reply(ReplyType.ERROR, res)
             return reply
         else:
-            reply = Reply(ReplyType.ERROR, "Bot不支持处理{}类型的消息".format(context.type))
+            reply = Reply(ReplyType.ERROR, "Bot 不支持处理{}类型的消息".format(context.type))
             return reply
 
     def _chat(self, query, context, retry_count=0) -> Reply:
@@ -86,11 +86,11 @@ class LinkAIBot(Bot):
             body = {
                 "app_code": app_code,
                 "messages": session_message,
-                "model": model,     # 对话模型的名称, 支持 gpt-3.5-turbo, gpt-3.5-turbo-16k, gpt-4, wenxin, xunfei
+                "model": model,     # 对话模型的名称，支持 gpt-3.5-turbo, gpt-3.5-turbo-16k, gpt-4, wenxin, xunfei
                 "temperature": conf().get("temperature"),
                 "top_p": conf().get("top_p", 1),
-                "frequency_penalty": conf().get("frequency_penalty", 0.0),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
-                "presence_penalty": conf().get("presence_penalty", 0.0),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
+                "frequency_penalty": conf().get("frequency_penalty", 0.0),  # [-2,2] 之间，该值越大则更倾向于产生不同的内容
+                "presence_penalty": conf().get("presence_penalty", 0.0),  # [-2,2] 之间，该值越大则更倾向于产生不同的内容
                 "session_id": session_id,
                 "sender_id": session_id,
                 "channel_type": conf().get("channel_type", "wx")
@@ -250,11 +250,11 @@ class LinkAIBot(Bot):
             body = {
                 "app_code": app_code,
                 "messages": session.messages,
-                "model": conf().get("model") or "gpt-3.5-turbo",  # 对话模型的名称, 支持 gpt-3.5-turbo, gpt-3.5-turbo-16k, gpt-4, wenxin, xunfei
+                "model": conf().get("model") or "gpt-3.5-turbo",  # 对话模型的名称，支持 gpt-3.5-turbo, gpt-3.5-turbo-16k, gpt-4, wenxin, xunfei
                 "temperature": conf().get("temperature"),
                 "top_p": conf().get("top_p", 1),
-                "frequency_penalty": conf().get("frequency_penalty", 0.0),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
-                "presence_penalty": conf().get("presence_penalty", 0.0),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
+                "frequency_penalty": conf().get("frequency_penalty", 0.0),  # [-2,2] 之间，该值越大则更倾向于产生不同的内容
+                "presence_penalty": conf().get("presence_penalty", 0.0),  # [-2,2] 之间，该值越大则更倾向于产生不同的内容
             }
             if self.args.get("max_tokens"):
                 body["max_tokens"] = self.args.get("max_tokens")

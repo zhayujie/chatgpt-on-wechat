@@ -12,19 +12,19 @@ def create_bot(bot_type):
     :return: bot instance
     """
     if bot_type == const.BAIDU:
-        # 替换Baidu Unit为Baidu文心千帆对话接口
+        # 替换 Baidu Unit 为 Baidu 文心千帆对话接口
         # from bot.baidu.baidu_unit_bot import BaiduUnitBot
         # return BaiduUnitBot()
         from bot.baidu.baidu_wenxin import BaiduWenxinBot
         return BaiduWenxinBot()
 
     elif bot_type == const.CHATGPT:
-        # ChatGPT 网页端web接口
+        # ChatGPT 网页端 web 接口
         from bot.chatgpt.chat_gpt_bot import ChatGPTBot
         return ChatGPTBot()
 
     elif bot_type == const.OPEN_AI:
-        # OpenAI 官方对话模型API
+        # OpenAI 官方对话模型 API
         from bot.openai.open_ai_bot import OpenAIBot
         return OpenAIBot()
 

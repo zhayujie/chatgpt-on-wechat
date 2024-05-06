@@ -20,32 +20,32 @@ except Exception as e:
 handler_pool = ThreadPoolExecutor(max_workers=8)  # 处理消息的线程池
 
 
-# 抽象类, 它包含了与消息通道无关的通用处理逻辑
+# 抽象类，它包含了与消息通道无关的通用处理逻辑
 class ChatChannel(Channel):
     name = None  # 登录的用户名
-    user_id = None  # 登录的用户id
-    futures = {}  # 记录每个session_id提交到线程池的future对象, 用于重置会话时把没执行的future取消掉，正在执行的不会被取消
-    sessions = {}  # 用于控制并发，每个session_id同时只能有一个context在处理
-    lock = threading.Lock()  # 用于控制对sessions的访问
+    user_id = None  # 登录的用户 id
+    futures = {}  # 记录每个 session_id 提交到线程池的 future 对象，用于重置会话时把没执行的 future 取消掉，正在执行的不会被取消
+    sessions = {}  # 用于控制并发，每个 session_id 同时只能有一个 context 在处理
+    lock = threading.Lock()  # 用于控制对 sessions 的访问
 
     def __init__(self):
         _thread = threading.Thread(target=self.consume)
         _thread.setDaemon(True)
         _thread.start()
 
-    # 根据消息构造context，消息内容相关的触发项写在这里
+    # 根据消息构造 context，消息内容相关的触发项写在这里
     def _compose_context(self, ctype: ContextType, content, **kwargs):
         context = Context(ctype, content)
         context.kwargs = kwargs
-        # context首次传入时，origin_ctype是None,
-        # 引入的起因是：当输入语音时，会嵌套生成两个context，第一步语音转文本，第二步通过文本生成文字回复。
-        # origin_ctype用于第二步文本回复时，判断是否需要匹配前缀，如果是私聊的语音，就不需要匹配前缀
+        # context 首次传入时，origin_ctype 是 None,
+        # 引入的起因是：当输入语音时，会嵌套生成两个 context，第一步语音转文本，第二步通过文本生成文字回复。
+        # origin_ctype 用于第二步文本回复时，判断是否需要匹配前缀，如果是私聊的语音，就不需要匹配前缀
         if "origin_ctype" not in context:
             context["origin_ctype"] = ctype
-        # context首次传入时，receiver是None，根据类型设置receiver
+        # context 首次传入时，receiver 是 None，根据类型设置 receiver
         first_in = "receiver" not in context
-        # 群名匹配过程，设置session_id和receiver
-        if first_in:  # context首次传入时，receiver是None，根据类型设置receiver
+        # 群名匹配过程，设置 session_id 和 receiver
+        if first_in:  # context 首次传入时，receiver 是 None，根据类型设置 receiver
             config = conf()
             cmsg = context["msg"]
             user_data = conf().get_user_data(cmsg.from_user_id)
@@ -89,7 +89,7 @@ class ChatChannel(Channel):
                 logger.debug("[WX]self message skipped")
                 return None
 
-        # 消息内容匹配过程，并处理content
+        # 消息内容匹配过程，并处理 content
         if ctype == ContextType.TEXT:
             if first_in and "」\n- - - - - - -" in content:  # 初次匹配 过滤引用消息
                 logger.debug(content)
@@ -140,7 +140,7 @@ class ChatChannel(Channel):
                     return None
 
                 match_prefix = check_prefix(content, conf().get("single_chat_prefix", [""]))
-                if match_prefix is not None:  # 判断如果匹配到自定义前缀，则返回过滤掉前缀+空格后的内容
+                if match_prefix is not None:  # 判断如果匹配到自定义前缀，则返回过滤掉前缀 + 空格后的内容
                     content = content.replace(match_prefix, "", 1).strip()
                 elif context["origin_ctype"] == ContextType.VOICE:  # 如果源消息是私聊的语音消息，允许不匹配前缀，放宽条件
                     pass
@@ -166,16 +166,16 @@ class ChatChannel(Channel):
         if context is None or not context.content:
             return
         logger.debug("[WX] ready to handle context: {}".format(context))
-        # reply的构建步骤
+        # reply 的构建步骤
         reply = self._generate_reply(context)
 
         logger.debug("[WX] ready to decorate reply: {}".format(reply))
 
-        # reply的包装步骤
+        # reply 的包装步骤
         if reply and reply.content:
             reply = self._decorate_reply(context, reply)
 
-            # reply的发送步骤
+            # reply 的发送步骤
             self._send_reply(context, reply)
 
     def _generate_reply(self, context: Context, reply: Reply = Reply()) -> Reply:
@@ -198,7 +198,7 @@ class ChatChannel(Channel):
                 wav_path = os.path.splitext(file_path)[0] + ".wav"
                 try:
                     any_to_wav(file_path, wav_path)
-                except Exception as e:  # 转换失败，直接使用mp3，对于某些api，mp3也可以识别
+                except Exception as e:  # 转换失败，直接使用 mp3，对于某些 api，mp3 也可以识别
                     logger.warning("[WX]any to wav error, use raw path. " + str(e))
                     wav_path = file_path
                 # 语音识别
@@ -246,7 +246,7 @@ class ChatChannel(Channel):
                 if reply.type in self.NOT_SUPPORT_REPLYTYPE:
                     logger.error("[WX]reply type not support: " + str(reply.type))
                     reply.type = ReplyType.ERROR
-                    reply.content = "不支持发送的消息类型: " + str(reply.type)
+                    reply.content = "不支持发送的消息类型：" + str(reply.type)
 
                 if reply.type == ReplyType.TEXT:
                     reply_text = reply.content
@@ -356,7 +356,7 @@ class ChatChannel(Channel):
                             semaphore.release()
             time.sleep(0.1)
 
-    # 取消session_id对应的所有任务，只能取消排队的消息和已提交线程池但未执行的任务
+    # 取消 session_id 对应的所有任务，只能取消排队的消息和已提交线程池但未执行的任务
     def cancel_session(self, session_id):
         with self.lock:
             if session_id in self.sessions:

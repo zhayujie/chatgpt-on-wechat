@@ -19,15 +19,15 @@ class WechatMessage(ChatMessage):
             self.content = itchat_msg["Text"]
         elif itchat_msg["Type"] == VOICE:
             self.ctype = ContextType.VOICE
-            self.content = TmpDir().path() + itchat_msg["FileName"]  # content直接存临时目录路径
+            self.content = TmpDir().path() + itchat_msg["FileName"]  # content 直接存临时目录路径
             self._prepare_fn = lambda: itchat_msg.download(self.content)
         elif itchat_msg["Type"] == PICTURE and itchat_msg["MsgType"] == 3:
             self.ctype = ContextType.IMAGE
-            self.content = TmpDir().path() + itchat_msg["FileName"]  # content直接存临时目录路径
+            self.content = TmpDir().path() + itchat_msg["FileName"]  # content 直接存临时目录路径
             self._prepare_fn = lambda: itchat_msg.download(self.content)
         elif itchat_msg["Type"] == NOTE and itchat_msg["MsgType"] == 10000:
             if is_group and ("加入群聊" in itchat_msg["Content"] or "加入了群聊" in itchat_msg["Content"]):
-                # 这里只能得到nickname， actual_user_id还是机器人的id
+                # 这里只能得到 nickname，actual_user_id 还是机器人的 id
                 if "加入了群聊" in itchat_msg["Content"]:
                     self.ctype = ContextType.JOIN_GROUP
                     self.content = itchat_msg["Content"]
@@ -54,7 +54,7 @@ class WechatMessage(ChatMessage):
                 raise NotImplementedError("Unsupported note message: " + itchat_msg["Content"])
         elif itchat_msg["Type"] == ATTACHMENT:
             self.ctype = ContextType.FILE
-            self.content = TmpDir().path() + itchat_msg["FileName"]  # content直接存临时目录路径
+            self.content = TmpDir().path() + itchat_msg["FileName"]  # content 直接存临时目录路径
             self._prepare_fn = lambda: itchat_msg.download(self.content)
         elif itchat_msg["Type"] == SHARING:
             self.ctype = ContextType.SHARING
@@ -69,14 +69,14 @@ class WechatMessage(ChatMessage):
         user_id = itchat.instance.storageClass.userName
         nickname = itchat.instance.storageClass.nickName
 
-        # 虽然from_user_id和to_user_id用的少，但是为了保持一致性，还是要填充一下
+        # 虽然 from_user_id 和 to_user_id 用的少，但是为了保持一致性，还是要填充一下
         # 以下很繁琐，一句话总结：能填的都填了。
         if self.from_user_id == user_id:
             self.from_user_nickname = nickname
         if self.to_user_id == user_id:
             self.to_user_nickname = nickname
-        try:  # 陌生人时候, User字段可能不存在
-            # my_msg 为True是表示是自己发送的消息
+        try:  # 陌生人时候，User 字段可能不存在
+            # my_msg 为 True 是表示是自己发送的消息
             self.my_msg = itchat_msg["ToUserName"] == itchat_msg["User"]["UserName"] and \
                           itchat_msg["ToUserName"] != itchat_msg["FromUserName"]
             self.other_user_id = itchat_msg["User"]["UserName"]

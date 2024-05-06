@@ -41,7 +41,7 @@ class WechatyMessage(ChatMessage, aobject):
         elif wechaty_msg.type() == MessageType.MESSAGE_TYPE_AUDIO:
             self.ctype = ContextType.VOICE
             voice_file = await wechaty_msg.to_file_box()
-            self.content = TmpDir().path() + voice_file.name  # content直接存临时目录路径
+            self.content = TmpDir().path() + voice_file.name  # content 直接存临时目录路径
 
             def func():
                 loop = asyncio.get_event_loop()
@@ -56,10 +56,10 @@ class WechatyMessage(ChatMessage, aobject):
         self.from_user_id = from_contact.contact_id
         self.from_user_nickname = from_contact.name
 
-        # group中的from和to，wechaty跟itchat含义不一样
-        # wecahty: from是消息实际发送者, to:所在群
-        # itchat: 如果是你发送群消息，from和to是你自己和所在群，如果是别人发群消息，from和to是所在群和你自己
-        # 但这个差别不影响逻辑，group中只使用到：1.用from来判断是否是自己发的，2.actual_user_id来判断实际发送用户
+        # group 中的 from 和 to，wechaty 跟 itchat 含义不一样
+        # wecahty: from 是消息实际发送者，to:所在群
+        # itchat: 如果是你发送群消息，from 和 to 是你自己和所在群，如果是别人发群消息，from 和 to 是所在群和你自己
+        # 但这个差别不影响逻辑，group 中只使用到：1.用 from 来判断是否是自己发的，2.actual_user_id 来判断实际发送用户
 
         if self.is_group:
             self.to_user_id = room.room_id
@@ -69,14 +69,14 @@ class WechatyMessage(ChatMessage, aobject):
             self.to_user_id = to_contact.contact_id
             self.to_user_nickname = to_contact.name
 
-        if self.is_group or wechaty_msg.is_self():  # 如果是群消息，other_user设置为群，如果是私聊消息，而且自己发的，就设置成对方。
+        if self.is_group or wechaty_msg.is_self():  # 如果是群消息，other_user 设置为群，如果是私聊消息，而且自己发的，就设置成对方。
             self.other_user_id = self.to_user_id
             self.other_user_nickname = self.to_user_nickname
         else:
             self.other_user_id = self.from_user_id
             self.other_user_nickname = self.from_user_nickname
 
-        if self.is_group:  # wechaty群聊中，实际发送用户就是from_user
+        if self.is_group:  # wechaty 群聊中，实际发送用户就是 from_user
             self.is_at = await wechaty_msg.mention_self()
             if not self.is_at:  # 有时候复制粘贴的消息，不算做@，但是内容里面会有@xxx，这里做一下兼容
                 name = wechaty_msg.wechaty.user_self().name

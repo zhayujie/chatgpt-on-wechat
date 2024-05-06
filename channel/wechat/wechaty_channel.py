@@ -43,7 +43,7 @@ class WechatyChannel(ChatChannel):
 
     async def main(self):
         loop = asyncio.get_event_loop()
-        # 将asyncio的loop传入处理线程
+        # 将 asyncio 的 loop 传入处理线程
         self.handler_pool._initializer = lambda: asyncio.set_event_loop(loop)
         self.bot = Wechaty()
         self.bot.on("login", self.on_login)
@@ -55,7 +55,7 @@ class WechatyChannel(ChatChannel):
         self.name = contact.name
         logger.info("[WX] login user={}".format(contact))
 
-    # 统一的发送函数，每个Channel自行实现，根据reply的type字段发送不同类型的消息
+    # 统一的发送函数，每个 Channel 自行实现，根据 reply 的 type 字段发送不同类型的消息
     def send(self, reply: Reply, context: Context):
         receiver_id = context["receiver"]
         loop = asyncio.get_event_loop()
@@ -120,7 +120,7 @@ class WechatyChannel(ChatChannel):
             logger.exception("[WX] {}".format(e))
             return
         logger.debug("[WX] message:{}".format(cmsg))
-        room = msg.room()  # 获取消息来自的群聊. 如果消息不是来自群聊, 则返回None
+        room = msg.room()  # 获取消息来自的群聊。如果消息不是来自群聊，则返回 None
         isgroup = room is not None
         ctype = cmsg.ctype
         context = self._compose_context(ctype, cmsg.content, isgroup=isgroup, msg=cmsg)

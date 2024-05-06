@@ -2,7 +2,7 @@ from common.log import logger
 from config import conf
 
 
-# ZhipuAI提供的画图接口
+# ZhipuAI 提供的画图接口
 
 class ZhipuAIImage(object):
     def __init__(self):
@@ -18,7 +18,7 @@ class ZhipuAIImage(object):
                 prompt=query,
                 n=1,  # 每次生成图片的数量
                 model=conf().get("text_to_image") or "cogview-3",
-                size=conf().get("image_create_size", "1024x1024"),  # 图片大小,可选有 256x256, 512x512, 1024x1024
+                size=conf().get("image_create_size", "1024x1024"),  # 图片大小，可选有 256x256, 512x512, 1024x1024
                 quality="standard",
             )
             image_url = response.data[0].url

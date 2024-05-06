@@ -40,18 +40,18 @@ class XunFeiBot(Bot):
         self.app_id = conf().get("xunfei_app_id")
         self.api_key = conf().get("xunfei_api_key")
         self.api_secret = conf().get("xunfei_api_secret")
-        # 默认使用v2.0版本: "generalv2"
-        # v1.5版本为 "general"
-        # v3.0版本为: "generalv3"
+        # 默认使用 v2.0 版本："generalv2"
+        # v1.5 版本为 "general"
+        # v3.0 版本为："generalv3"
         self.domain = "generalv3"
-        # 默认使用v2.0版本: "ws://spark-api.xf-yun.com/v2.1/chat"
-        # v1.5版本为: "ws://spark-api.xf-yun.com/v1.1/chat"
-        # v3.0版本为: "ws://spark-api.xf-yun.com/v3.1/chat"
-        # v3.5版本为: "wss://spark-api.xf-yun.com/v3.5/chat"
+        # 默认使用 v2.0 版本："ws://spark-api.xf-yun.com/v2.1/chat"
+        # v1.5 版本为："ws://spark-api.xf-yun.com/v1.1/chat"
+        # v3.0 版本为："ws://spark-api.xf-yun.com/v3.1/chat"
+        # v3.5 版本为："wss://spark-api.xf-yun.com/v3.5/chat"
         self.spark_url = "wss://spark-api.xf-yun.com/v3.5/chat"
         self.host = urlparse(self.spark_url).netloc
         self.path = urlparse(self.spark_url).path
-        # 和wenxin使用相同的session机制
+        # 和 wenxin 使用相同的 session 机制
         self.sessions = SessionManager(BaiduWenxinSession, model=const.XUNFEI)
 
     def reply(self, query, context: Context = None) -> Reply:
@@ -99,7 +99,7 @@ class XunFeiBot(Bot):
             return reply
         else:
             reply = Reply(ReplyType.ERROR,
-                          "Bot不支持处理{}类型的消息".format(context.type))
+                          "Bot 不支持处理{}类型的消息".format(context.type))
             return reply
 
     def create_web_socket(self, prompt, session_id, temperature=0.5):
@@ -124,9 +124,9 @@ class XunFeiBot(Bot):
         return session_id + "_" + str(int(time.time())) + "" + str(
             random.randint(0, 100))
 
-    # 生成url
+    # 生成 url
     def create_url(self):
-        # 生成RFC1123格式的时间戳
+        # 生成 RFC1123 格式的时间戳
         now = datetime.now()
         date = format_date_time(mktime(now.timetuple()))
 
@@ -135,7 +135,7 @@ class XunFeiBot(Bot):
         signature_origin += "date: " + date + "\n"
         signature_origin += "GET " + self.path + " HTTP/1.1"
 
-        # 进行hmac-sha256进行加密
+        # 进行 hmac-sha256 进行加密
         signature_sha = hmac.new(self.api_secret.encode('utf-8'),
                                  signature_origin.encode('utf-8'),
                                  digestmod=hashlib.sha256).digest()
@@ -151,14 +151,14 @@ class XunFeiBot(Bot):
 
         # 将请求的鉴权参数组合为字典
         v = {"authorization": authorization, "date": date, "host": self.host}
-        # 拼接鉴权参数，生成url
+        # 拼接鉴权参数，生成 url
         url = self.spark_url + '?' + urlencode(v)
-        # 此处打印出建立连接时候的url,参考本demo的时候可取消上方打印的注释，比对相同参数时生成的url与自己代码生成的url是否一致
+        # 此处打印出建立连接时候的 url，参考本 demo 的时候可取消上方打印的注释，比对相同参数时生成的 url 与自己代码生成的 url 是否一致
         return url
 
     def gen_params(self, appid, domain, question):
         """
-        通过appid和用户的提问来生成请参数
+        通过 appid 和用户的提问来生成请参数
         """
         data = {
             "header": {
@@ -189,18 +189,18 @@ class ReplyItem:
         self.usage = usage
 
 
-# 收到websocket错误的处理
+# 收到 websocket 错误的处理
 def on_error(ws, error):
     logger.error(f"[XunFei] error: {str(error)}")
 
 
-# 收到websocket关闭的处理
+# 收到 websocket 关闭的处理
 def on_close(ws, one, two):
     data_queue = queue_map.get(ws.session_id)
     data_queue.put("END")
 
 
-# 收到websocket连接建立的处理
+# 收到 websocket 连接建立的处理
 def on_open(ws):
     logger.info(f"[XunFei] Start websocket, session_id={ws.session_id}")
     thread.start_new_thread(run, (ws, ))
@@ -216,12 +216,12 @@ def run(ws, *args):
 
 
 # Websocket 操作
-# 收到websocket消息的处理
+# 收到 websocket 消息的处理
 def on_message(ws, message):
     data = json.loads(message)
     code = data['header']['code']
     if code != 0:
-        logger.error(f'请求错误: {code}, {data}')
+        logger.error(f'请求错误：{code}, {data}')
         ws.close()
     else:
         choices = data["payload"]["choices"]
@@ -243,7 +243,7 @@ def on_message(ws, message):
 
 def gen_params(appid, domain, question, temperature=0.5):
     """
-    通过appid和用户的提问来生成请参数
+    通过 appid 和用户的提问来生成请参数
     """
     data = {
         "header": {

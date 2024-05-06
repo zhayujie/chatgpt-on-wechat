@@ -53,9 +53,9 @@ class AliQwenSession(Session):
 
 def num_tokens_from_messages(messages, model):
     """Returns the number of tokens used by a list of messages."""
-    # 官方token计算规则："对于中文文本来说，1个token通常对应一个汉字；对于英文文本来说，1个token通常对应3至4个字母或1个单词"
+    # 官方 token 计算规则："对于中文文本来说，1 个 token 通常对应一个汉字；对于英文文本来说，1 个 token 通常对应 3 至 4 个字母或 1 个单词"
     # 详情请产看文档：https://help.aliyun.com/document_detail/2586397.html
-    # 目前根据字符串长度粗略估计token数，不影响正常使用
+    # 目前根据字符串长度粗略估计 token 数，不影响正常使用
     tokens = 0
     for msg in messages:
         tokens += len(msg["content"])

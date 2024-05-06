@@ -56,7 +56,7 @@ def _check(func):
             return
         self.receivedMsgs[msgId] = True
         create_time = cmsg.create_time  # 消息时间戳
-        if conf().get("hot_reload") == True and int(create_time) < int(time.time()) - 60:  # 跳过1分钟前的历史消息
+        if conf().get("hot_reload") == True and int(create_time) < int(time.time()) - 60:  # 跳过 1 分钟前的历史消息
             logger.debug("[WX]history message {} skipped".format(msgId))
             return
         if cmsg.my_msg and not cmsg.is_group:
@@ -151,17 +151,17 @@ class WechatChannel(ChatChannel):
         logger.debug("Login success")
         _send_login_success()
 
-    # handle_* 系列函数处理收到的消息后构造Context，然后传入produce函数中处理Context和发送回复
-    # Context包含了消息的所有信息，包括以下属性
-    #   type 消息类型, 包括TEXT、VOICE、IMAGE_CREATE
-    #   content 消息内容，如果是TEXT类型，content就是文本内容，如果是VOICE类型，content就是语音文件名，如果是IMAGE_CREATE类型，content就是图片生成命令
-    #   kwargs 附加参数字典，包含以下的key：
-    #        session_id: 会话id
+    # handle_* 系列函数处理收到的消息后构造 Context，然后传入 produce 函数中处理 Context 和发送回复
+    # Context 包含了消息的所有信息，包括以下属性
+    #   type 消息类型，包括 TEXT、VOICE、IMAGE_CREATE
+    #   content 消息内容，如果是 TEXT 类型，content 就是文本内容，如果是 VOICE 类型，content 就是语音文件名，如果是 IMAGE_CREATE 类型，content 就是图片生成命令
+    #   kwargs 附加参数字典，包含以下的 key：
+    #        session_id: 会话 id
     #        isgroup: 是否是群聊
     #        receiver: 需要回复的对象
-    #        msg: ChatMessage消息对象
+    #        msg: ChatMessage 消息对象
     #        origin_ctype: 原始消息类型，语音转文字后，私聊时如果匹配前缀失败，会根据初始消息是否是语音来放宽触发规则
-    #        desire_rtype: 希望回复类型，默认是文本回复，设置为ReplyType.VOICE是语音回复
+    #        desire_rtype: 希望回复类型，默认是文本回复，设置为 ReplyType.VOICE 是语音回复
     @time_checker
     @_check
     def handle_single(self, cmsg: ChatMessage):
@@ -206,7 +206,7 @@ class WechatChannel(ChatChannel):
         if context:
             self.produce(context)
 
-    # 统一的发送函数，每个Channel自行实现，根据reply的type字段发送不同类型的消息
+    # 统一的发送函数，每个 Channel 自行实现，根据 reply 的 type 字段发送不同类型的消息
     def send(self, reply: Reply, context: Context):
         receiver = context["receiver"]
         if reply.type == ReplyType.TEXT:
@@ -244,7 +244,7 @@ class WechatChannel(ChatChannel):
             video_storage = reply.content
             itchat.send_video(video_storage, toUserName=receiver)
             logger.info("[WX] sendFile, receiver={}".format(receiver))
-        elif reply.type == ReplyType.VIDEO_URL:  # 新增视频URL回复类型
+        elif reply.type == ReplyType.VIDEO_URL:  # 新增视频 URL 回复类型
             video_url = reply.content
             logger.debug(f"[WX] start download video, video_url={video_url}")
             video_res = requests.get(video_url, stream=True)

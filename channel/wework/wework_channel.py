@@ -28,7 +28,7 @@ def get_wxid_by_name(room_members, group_wxid, name):
         for member in room_members[group_wxid]['member_list']:
             if member['room_nickname'] == name or member['username'] == name:
                 return member['user_id']
-    return None  # 如果没有找到对应的group_wxid或name，则返回None
+    return None  # 如果没有找到对应的 group_wxid 或 name，则返回 None
 
 
 def download_and_compress_image(url, filename, quality=30):
@@ -79,7 +79,7 @@ def download_video(url, filename):
         for block in response.iter_content(1024):
             total_size += len(block)
 
-            # 如果视频的总大小超过30MB (30 * 1024 * 1024 bytes)，则停止下载并返回
+            # 如果视频的总大小超过 30MB (30 * 1024 * 1024 bytes)，则停止下载并返回
             if total_size > 30 * 1024 * 1024:
                 logger.info("[WX] Video is larger than 30MB, skipping...")
                 return None
@@ -111,7 +111,7 @@ def _check(func):
         create_time = cmsg.create_time  # 消息时间戳
         if create_time is None:
             return func(self, cmsg)
-        if int(create_time) < int(time.time()) - 60:  # 跳过1分钟前的历史消息
+        if int(create_time) < int(time.time()) - 60:  # 跳过 1 分钟前的历史消息
             logger.debug("[WX]history message {} skipped".format(msgId))
             return
         return func(self, cmsg)
@@ -122,16 +122,16 @@ def _check(func):
 @wework.msg_register(
     [ntwork.MT_RECV_TEXT_MSG, ntwork.MT_RECV_IMAGE_MSG, 11072, ntwork.MT_RECV_LINK_CARD_MSG,ntwork.MT_RECV_FILE_MSG, ntwork.MT_RECV_VOICE_MSG])
 def all_msg_handler(wework_instance: ntwork.WeWork, message):
-    logger.debug(f"收到消息: {message}")
+    logger.debug(f"收到消息：{message}")
     if 'data' in message:
-        # 首先查找conversation_id，如果没有找到，则查找room_conversation_id
+        # 首先查找 conversation_id，如果没有找到，则查找 room_conversation_id
         conversation_id = message['data'].get('conversation_id', message['data'].get('room_conversation_id'))
         if conversation_id is not None:
             is_group = "R:" in conversation_id
             try:
                 cmsg = create_message(wework_instance=wework_instance, message=message, is_group=is_group)
             except NotImplementedError as e:
-                logger.error(f"[WX]{message.get('MsgId', 'unknown')} 跳过: {e}")
+                logger.error(f"[WX]{message.get('MsgId', 'unknown')} 跳过：{e}")
                 return None
             delay = random.randint(1, 2)
             timer = threading.Timer(delay, handle_message, args=(cmsg, is_group))
@@ -188,18 +188,18 @@ class WeworkChannel(ChatChannel):
         self.user_id = login_info['user_id']
         self.name = login_info['nickname']
         logger.info(f"登录信息:>>>user_id:{self.user_id}>>>>>>>>name:{self.name}")
-        logger.info("静默延迟60s，等待客户端刷新数据，请勿进行任何操作······")
+        logger.info("静默延迟 60s，等待客户端刷新数据，请勿进行任何操作······")
         time.sleep(60)
         contacts = get_with_retry(wework.get_external_contacts)
         rooms = get_with_retry(wework.get_rooms)
         directory = os.path.join(os.getcwd(), "tmp")
         if not contacts or not rooms:
-            logger.error("获取contacts或rooms失败，程序退出")
+            logger.error("获取 contacts 或 rooms 失败，程序退出")
             ntwork.exit_()
             os.exit(0)
         if not os.path.exists(directory):
             os.makedirs(directory)
-        # 将contacts保存到json文件中
+        # 将 contacts 保存到 json 文件中
         with open(os.path.join(directory, 'wework_contacts.json'), 'w', encoding='utf-8') as f:
             json.dump(contacts, f, ensure_ascii=False, indent=4)
         with open(os.path.join(directory, 'wework_rooms.json'), 'w', encoding='utf-8') as f:
@@ -209,7 +209,7 @@ class WeworkChannel(ChatChannel):
 
         # 遍历列表中的每个字典
         for room in rooms['room_list']:
-            # 获取聊天室ID
+            # 获取聊天室 ID
             room_wxid = room['conversation_id']
 
             # 获取聊天室成员
@@ -218,10 +218,10 @@ class WeworkChannel(ChatChannel):
             # 将聊天室成员保存到结果字典中
             result[room_wxid] = room_members
 
-        # 将结果保存到json文件中
+        # 将结果保存到 json 文件中
         with open(os.path.join(directory, 'wework_room_members.json'), 'w', encoding='utf-8') as f:
             json.dump(result, f, ensure_ascii=False, indent=4)
-        logger.info("wework程序初始化完成········")
+        logger.info("wework 程序初始化完成········")
         run.forever()
 
     @time_checker
@@ -265,7 +265,7 @@ class WeworkChannel(ChatChannel):
         if context:
             self.produce(context)
 
-    # 统一的发送函数，每个Channel自行实现，根据reply的type字段发送不同类型的消息
+    # 统一的发送函数，每个 Channel 自行实现，根据 reply 的 type 字段发送不同类型的消息
     def send(self, reply: Reply, context: Context):
         logger.debug(f"context: {context}")
         receiver = context["receiver"]

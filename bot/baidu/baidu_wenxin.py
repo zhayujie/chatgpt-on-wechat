@@ -94,13 +94,13 @@ class BaiduWenxinBot(Bot):
             logger.warn("[BAIDU] Exception: {}".format(e))
             need_retry = False
             self.sessions.clear_session(session.session_id)
-            result = {"completion_tokens": 0, "content": "出错了: {}".format(e)}
+            result = {"completion_tokens": 0, "content": "出错了：{}".format(e)}
             return result
 
     def get_access_token(self):
         """
         使用 AK，SK 生成鉴权签名（Access Token）
-        :return: access_token，或是None(如果错误)
+        :return: access_token，或是 None(如果错误)
         """
         url = "https://aip.baidubce.com/oauth/2.0/token"
         params = {"grant_type": "client_credentials", "client_id": BAIDU_API_KEY, "client_secret": BAIDU_SECRET_KEY}

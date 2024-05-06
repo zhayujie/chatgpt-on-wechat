@@ -19,9 +19,9 @@
 在以上配置项中：
 
 - `action`: 对用户消息的默认处理行为
-- `reply_filter`: 是否对ChatGPT的回复也进行敏感词过滤
+- `reply_filter`: 是否对 ChatGPT 的回复也进行敏感词过滤
 - `reply_action`: 如果开启了回复过滤，对回复的默认处理行为
 
 ## 致谢
 
-搜索功能实现来自https://github.com/toolgood/ToolGood.Words
+搜索功能实现来自 https://github.com/toolgood/ToolGood.Words

@@ -16,13 +16,13 @@ from config import conf
 from bot.baidu.baidu_wenxin_session import BaiduWenxinSession
 
 
-# OpenAI对话模型API (可用)
+# OpenAI 对话模型 API (可用)
 class GoogleGeminiBot(Bot):
 
     def __init__(self):
         super().__init__()
         self.api_key = conf().get("gemini_api_key")
-        # 复用文心的token计算方式
+        # 复用文心的 token 计算方式
         self.sessions = SessionManager(BaiduWenxinSession, model=conf().get("model") or "gpt-3.5-turbo")
 
     def reply(self, query, context: Context = None) -> Reply:

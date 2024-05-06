@@ -31,7 +31,7 @@ class FeishuMessage(ChatMessage):
             self.content = TmpDir().path() + file_key + "." + utils.get_path_suffix(file_name)
 
             def _download_file():
-                # 如果响应状态码是200，则将响应内容写入本地文件
+                # 如果响应状态码是 200，则将响应内容写入本地文件
                 url = f"https://open.feishu.cn/open-apis/im/v1/messages/{self.msg_id}/resources/{file_key}"
                 headers = {
                     "Authorization": "Bearer " + access_token,

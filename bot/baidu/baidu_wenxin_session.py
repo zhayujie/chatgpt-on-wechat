@@ -14,7 +14,7 @@ class BaiduWenxinSession(Session):
     def __init__(self, session_id, system_prompt=None, model="gpt-3.5-turbo"):
         super().__init__(session_id, system_prompt)
         self.model = model
-        # 百度文心不支持system prompt
+        # 百度文心不支持 system prompt
         # self.reset()
 
     def discard_exceeding(self, max_tokens, cur_tokens=None):
@@ -47,7 +47,7 @@ def num_tokens_from_messages(messages, model):
     """Returns the number of tokens used by a list of messages."""
     tokens = 0
     for msg in messages:
-        # 官方token计算规则暂不明确： "大约为 token数为 "中文字 + 其他语种单词数 x 1.3"
+        # 官方 token 计算规则暂不明确： "大约为 token 数为 "中文字 + 其他语种单词数 x 1.3"
         # 这里先直接根据字数粗略估算吧，暂不影响正常使用，仅在判断是否丢弃历史会话的时候会有偏差
         tokens += len(msg["content"])
     return tokens

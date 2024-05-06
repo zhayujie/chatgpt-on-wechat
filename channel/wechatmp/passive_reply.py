@@ -71,7 +71,7 @@ class Query:
                                 reply_text = textwrap.dedent(
                                     f"""\
                                     请输入'{trigger_prefix}'接你想说的话跟我说话。
-                                    例如:
+                                    例如：
                                     {trigger_prefix}你好，很高兴见到你。"""
                                 )
                             else:
