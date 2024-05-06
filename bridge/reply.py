@@ -7,10 +7,10 @@ class ReplyType(Enum):
     TEXT = 1  # 文本
     VOICE = 2  # 音频文件
     IMAGE = 3  # 图片文件
-    IMAGE_URL = 4  # 图片URL
-    VIDEO_URL = 5  # 视频URL
+    IMAGE_URL = 4  # 图片 URL
+    VIDEO_URL = 5  # 视频 URL
     FILE = 6  # 文件
-    CARD = 7  # 微信名片，仅支持ntchat
+    CARD = 7  # 微信名片，仅支持 ntchat
     INVITE_ROOM = 8  # 邀请好友进群
     INFO = 9
     ERROR = 10

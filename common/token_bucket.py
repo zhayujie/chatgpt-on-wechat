@@ -5,7 +5,7 @@ import time
 class TokenBucket:
     def __init__(self, tpm, timeout=None):
         self.capacity = int(tpm)  # 令牌桶容量
-        self.tokens = 0  # 初始令牌数为0
+        self.tokens = 0  # 初始令牌数为 0
         self.rate = int(tpm) / 60  # 令牌每秒生成速率
         self.timeout = timeout  # 等待令牌超时时间
         self.cond = threading.Condition()  # 条件变量
@@ -37,7 +37,7 @@ class TokenBucket:
 
 
 if __name__ == "__main__":
-    token_bucket = TokenBucket(20, None)  # 创建一个每分钟生产20个tokens的令牌桶
+    token_bucket = TokenBucket(20, None)  # 创建一个每分钟生产 20 个 tokens 的令牌桶
     # token_bucket = TokenBucket(20, 0.1)
     for i in range(3):
         if token_bucket.get_token():

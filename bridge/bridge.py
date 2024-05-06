@@ -91,6 +91,6 @@ class Bridge(object):
 
     def reset_bot(self):
         """
-        重置bot路由
+        重置 bot 路由
         """
         self.__init__()
