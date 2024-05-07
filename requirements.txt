@@ -9,3 +9,5 @@ pre-commit
 web.py
 linkai>=0.0.5.0
 ollama
+tiktoken
+google-generativeai
