@@ -45,7 +45,7 @@ class ChatClient(LinkAIClient):
             elif reply_voice_mode == "always_reply_voice":
                 local_config["always_reply_voice"] = True
 
-        if config.get("admin_password") and plugin_config["Godcmd"]:
+        if config.get("admin_password") and plugin_config.get("Godcmd"):
             plugin_config["Godcmd"]["password"] = config.get("admin_password")
             PluginManager().instances["GODCMD"].reload()
 
@@ -55,6 +55,11 @@ class ChatClient(LinkAIClient):
                 local_group_map[mapping.get("group_name")] = mapping.get("app_code")
             pconf("linkai")["group_app_map"] = local_group_map
             PluginManager().instances["LINKAI"].reload()
+
+        if config.get("text_to_image") and config.get("text_to_image") == "midjourney" and pconf("linkai"):
+            if pconf("linkai")["midjourney"]:
+                pconf("linkai")["midjourney"]["enabled"] = True
+                pconf("linkai")["midjourney"]["use_image_create_prefix"] = True
 
 
 def start(channel):
