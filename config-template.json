@@ -7,5 +7,6 @@
   "single_chat_prefix": [""],
   "single_chat_reply_prefix": "",
   "group_chat_prefix": ["@bot"],
-  "group_name_white_list": ["ALL_GROUP"]
+  "group_name_white_list": ["ALL_GROUP"],
+  "accept_friend_commands": ["加好友"]
 }

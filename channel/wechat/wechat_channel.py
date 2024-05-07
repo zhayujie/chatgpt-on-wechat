@@ -47,6 +47,16 @@ def handler_group_msg(msg):
     WechatChannel().handle_group(cmsg)
     return None
 
+# 自动接受加好友
+@itchat.msg_register(FRIENDS)
+def deal_with_friend(msg):
+    try:
+        cmsg = WechatMessage(msg, False)
+    except NotImplementedError as e:
+        logger.debug("[WX]friend request {} skipped: {}".format(msg["MsgId"], e))
+        return None
+    WechatChannel().handle_friend_request(cmsg)
+    return None
 
 def _check(func):
     def wrapper(self, cmsg: ChatMessage):
@@ -206,9 +216,21 @@ class WechatChannel(ChatChannel):
         if context:
             self.produce(context)
 
+    @time_checker
+    @_check
+    def handle_friend_request(self, cmsg: ChatMessage):
+        if cmsg.ctype == ContextType.ACCEPT_FRIEND:
+            logger.debug("[WX]receive friend request: {}".format(cmsg.content["NickName"]))
+        else:
+            logger.debug("[WX]receive friend request: {}, cmsg={}".format(cmsg.content["NickName"], cmsg))
+        context = self._compose_context(cmsg.ctype, cmsg.content, msg=cmsg)
+        if context:
+            self.produce(context)
+
+
     # 统一的发送函数，每个Channel自行实现，根据reply的type字段发送不同类型的消息
     def send(self, reply: Reply, context: Context):
-        receiver = context["receiver"]
+        receiver = context.get("receiver")
         if reply.type == ReplyType.TEXT:
             itchat.send(reply.content, toUserName=receiver)
             logger.info("[WX] sendMsg={}, receiver={}".format(reply, receiver))
@@ -257,6 +279,51 @@ class WechatChannel(ChatChannel):
             video_storage.seek(0)
             itchat.send_video(video_storage, toUserName=receiver)
             logger.info("[WX] sendVideo url={}, receiver={}".format(video_url, receiver))
+
+        elif reply.type == ReplyType.ACCEPT_FRIEND:  # 新增接受好友申请回复类型
+            # 假设 reply.content 包含了新好友的用户名
+            is_accept = reply.content
+            if is_accept:
+                try:
+                    # 自动接受好友申请
+                    debug_msg = itchat.accept_friend(userName=context.content["UserName"], v4=context.content["Ticket"])
+                    logger.debug("[WX] accept_friend return: {}".format(debug_msg))
+                    logger.info("[WX] Accepted new friend, UserName={}, NickName={}".format(context.content["UserName"], context.content["NickName"]))
+                except Exception as e:
+                    logger.error("[WX] Failed to add friend. Error: {}".format(e))
+            else:
+                logger.info("[WX] Ignored new friend, username={}".format(context.content["NickName"]))
+        elif reply.type == ReplyType.INVITE_ROOM:  # 新增邀请好友进群回复类型
+            # 假设 reply.content 包含了群聊的名字
+
+            def get_group_id(group_name):
+                """
+                根据群聊名称获取群聊ID。
+                :param group_name: 群聊的名称。
+                :return: 群聊的ID (UserName)。
+                """
+                group_list = itchat.search_chatrooms(name=group_name)
+                if group_list:
+                    return group_list[0]["UserName"]
+                else:
+                    return None
+
+            try:
+                chatroomUserName = reply.content
+                group_id = get_group_id(chatroomUserName)
+                logger.debug("[WX] find group_id={}, where chatroom={}".format(group_id, chatroomUserName))
+                if group_id is None:
+                    raise ValueError("The specified group chat was not found: {}".format(chatroomUserName))
+                # 调用 itchat 的 add_member_into_chatroom 方法来添加成员
+                debug_msg = itchat.add_member_into_chatroom(group_id, receiver)
+                logger.debug("[WX] add_member_into_chatroom return: {}".format(debug_msg))
+                logger.info("[WX] invite members={}, to chatroom={}".format(receiver, chatroomUserName))
+            except ValueError as ve:
+                # 记录查找群聊失败的错误信息
+                logger.error("[WX] {}".format(ve))
+            except Exception as e:
+                # 记录添加成员失败的错误信息
+                logger.error("[WX] Failed to invite members to chatroom. Error: {}".format(e))
 
 def _send_login_success():
     try:

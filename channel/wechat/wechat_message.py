@@ -59,7 +59,10 @@ class WechatMessage(ChatMessage):
         elif itchat_msg["Type"] == SHARING:
             self.ctype = ContextType.SHARING
             self.content = itchat_msg.get("Url")
-
+        elif itchat_msg["Type"] == FRIENDS:
+            self.ctype = ContextType.ACCEPT_FRIEND
+            self.content = itchat_msg.get("RecommendInfo")
+            
         else:
             raise NotImplementedError("Unsupported message type: Type:{} MsgType:{}".format(itchat_msg["Type"], itchat_msg["MsgType"]))
 
