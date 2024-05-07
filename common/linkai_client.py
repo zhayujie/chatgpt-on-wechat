@@ -60,6 +60,9 @@ class ChatClient(LinkAIClient):
             if pconf("linkai")["midjourney"]:
                 pconf("linkai")["midjourney"]["enabled"] = True
                 pconf("linkai")["midjourney"]["use_image_create_prefix"] = True
+        elif config.get("text_to_image") and config.get("text_to_image") in ["dall-e-2", "dall-e-3"]:
+            if pconf("linkai")["midjourney"]:
+                pconf("linkai")["midjourney"]["use_image_create_prefix"] = False
 
 
 def start(channel):
