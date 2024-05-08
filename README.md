@@ -23,15 +23,15 @@ https://github.com/zhayujie/chatgpt-on-wechat/assets/26161723/d5154020-36e3-41db
 
 <br>
 
-# 商业服务
+# 平台产品
 
 <a href="https://link-ai.tech" target="_blank"><img width="800" src="https://img-1317903499.cos.ap-guangzhou.myqcloud.com/docs/github-linkai-intro.png"></a>
 
-> 我们还提供企业级的 **一站式AI应用搭建与接入平台** - [LinkAI](https://link-ai.tech/)，聚合多模态大模型、知识库、Agent 插件、工作流等能力，并支持一键接入主流IM和办公协同平台并进行管理，支持SaaS、私有化部署、稳定托管接入多种模式。
+> [LinkAI](https://link-ai.tech/) 是企业级一站式AI应用搭建与接入平台，聚合多模态大模型、知识库、Agent 插件、工作流等能力，支持一键接入主流平台并进行管理，支持SaaS、私有化部署多种模式。
 >
 > LinkAI 目前 已在私域运营、智能客服、企业效率助手等场景积累了丰富的 AI 解决方案， 在电商、文教、健康、新消费、科技制造等各行业沉淀了大模型落地应用的最佳实践，致力于帮助更多团队和企业拥抱 AI 生产力。
 
-**企业服务和商用咨询** 可联系产品顾问：
+**企业服务和产品咨询** 可联系产品顾问：
 
 <img width="160" src="https://img-1317903499.cos.ap-guangzhou.myqcloud.com/docs/github-product-consult.png">
 
