@@ -132,7 +132,7 @@ class WechatChannel(ChatChannel):
             # start message listener
             itchat.run()
         except Exception as e:
-            logger.error(e)
+            logger.exception(e)
 
     def exitCallback(self):
         try:

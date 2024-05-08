@@ -1,6 +1,6 @@
 # 简介
 
-> chatgpt-on-wechat（简称CoW）项目是基于大模型的智能对话机器人，支持微信公众号、企业微信应用、微信、飞书、钉钉接入，可选择GPT3.5/GPT4.0/Claude/文心一言/讯飞星火/通义千问/Gemini/LinkAI/ChatGLM/KIMI，能处理文本、语音和图片，通过插件访问操作系统和互联网等外部资源，支持基于自有知识库定制企业AI应用。
+> chatgpt-on-wechat（简称CoW）项目是基于大模型的智能对话机器人，支持微信公众号、企业微信应用、微信、飞书、钉钉接入，可选择GPT3.5/GPT4.0/Claude/Gemini/LinkAI/ChatGLM/KIMI/文心一言/讯飞星火/通义千问/LinkAI，能处理文本、语音和图片，通过插件访问操作系统和互联网等外部资源，支持基于自有知识库定制企业AI应用。
 
 最新版本支持的功能如下：
 
@@ -23,13 +23,13 @@ https://github.com/zhayujie/chatgpt-on-wechat/assets/26161723/d5154020-36e3-41db
 
 <br>
 
-# 平台产品
+# 企业服务
 
-<a href="https://link-ai.tech" target="_blank"><img width="800" src="https://img-1317903499.cos.ap-guangzhou.myqcloud.com/docs/github-linkai-intro.png"></a>
+<a href="https://link-ai.tech" target="_blank"><img width="800" src="https://img-1317903499.cos.ap-guangzhou.myqcloud.com/docs/github-linkai-intro-v2.png"></a>
 
-> [LinkAI](https://link-ai.tech/) 是企业级一站式AI应用搭建与接入平台，聚合多模态大模型、知识库、Agent 插件、工作流等能力，支持一键接入主流平台并进行管理，支持SaaS、私有化部署多种模式。
+> [LinkAI](https://link-ai.tech/) 是面向企业和开发者的一站式AI应用平台，聚合多模态大模型、知识库、Agent 插件、工作流等能力，支持一键接入主流平台并进行管理，支持SaaS、私有化部署多种模式。
 >
-> LinkAI 目前 已在私域运营、智能客服、企业效率助手等场景积累了丰富的 AI 解决方案， 在电商、文教、健康、新消费、科技制造等各行业沉淀了大模型落地应用的最佳实践，致力于帮助更多团队和企业拥抱 AI 生产力。
+> LinkAI 目前 已在私域运营、智能客服、企业效率助手等场景积累了丰富的 AI 解决方案， 在电商、文教、健康、新消费、科技制造等各行业沉淀了大模型落地应用的最佳实践，致力于帮助更多企业和开发者拥抱 AI 生产力。
 
 **企业服务和产品咨询** 可联系产品顾问：
 
