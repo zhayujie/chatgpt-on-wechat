@@ -14,7 +14,7 @@ from .moonshot_session import MoonshotSession
 import requests
 
 
-# ZhipuAI对话模型API
+# ZhipuAI 对话模型 API
 class MoonshotBot(Bot):
     def __init__(self):
         super().__init__()
@@ -76,7 +76,7 @@ class MoonshotBot(Bot):
                 logger.debug("[MOONSHOT_AI] reply {} used 0 tokens.".format(reply_content))
             return reply
         else:
-            reply = Reply(ReplyType.ERROR, "Bot不支持处理{}类型的消息".format(context.type))
+            reply = Reply(ReplyType.ERROR, "Bot 不支持处理{}类型的消息".format(context.type))
             return reply
 
     def reply_text(self, session: MoonshotSession, args=None, retry_count=0) -> dict:
@@ -121,7 +121,7 @@ class MoonshotBot(Bot):
                     logger.warn(f"[MOONSHOT_AI] do retry, times={retry_count}")
                     need_retry = retry_count < 2
                 elif res.status_code == 401:
-                    result["content"] = "授权失败，请检查API Key是否正确"
+                    result["content"] = "授权失败，请检查 API Key 是否正确"
                 elif res.status_code == 429:
                     result["content"] = "请求过于频繁，请稍后再试"
                     need_retry = retry_count < 2

@@ -15,15 +15,15 @@ from config import conf, load_config
 from zhipuai import ZhipuAI
 
 
-# ZhipuAI对话模型API
+# ZhipuAI 对话模型 API
 class ZHIPUAIBot(Bot, ZhipuAIImage):
     def __init__(self):
         super().__init__()
         self.sessions = SessionManager(ZhipuAISession, model=conf().get("model") or "ZHIPU_AI")
         self.args = {
             "model": conf().get("model") or "glm-4",  # 对话模型的名称
-            "temperature": conf().get("temperature", 0.9),  # 值在(0,1)之间(智谱AI 的温度不能取 0 或者 1)
-            "top_p": conf().get("top_p", 0.7),  # 值在(0,1)之间(智谱AI 的 top_p 不能取 0 或者 1)
+            "temperature": conf().get("temperature", 0.9),  # 值在 (0,1) 之间 (智谱 AI 的温度不能取 0 或者 1)
+            "top_p": conf().get("top_p", 0.7),  # 值在 (0,1) 之间 (智谱 AI 的 top_p 不能取 0 或者 1)
         }
         self.client = ZhipuAI(api_key=conf().get("zhipu_ai_api_key"))
 
@@ -87,7 +87,7 @@ class ZHIPUAIBot(Bot, ZhipuAIImage):
             return reply
 
         else:
-            reply = Reply(ReplyType.ERROR, "Bot不支持处理{}类型的消息".format(context.type))
+            reply = Reply(ReplyType.ERROR, "Bot 不支持处理{}类型的消息".format(context.type))
             return reply
 
     def reply_text(self, session: ZhipuAISession, api_key=None, args=None, retry_count=0) -> dict:

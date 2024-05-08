@@ -19,7 +19,7 @@ dashscope_models = {
     "qwen-max": dashscope.Generation.Models.qwen_max,
     "qwen-bailian-v1": dashscope.Generation.Models.bailian_v1
 }
-# ZhipuAI对话模型API
+# ZhipuAI 对话模型 API
 class DashscopeBot(Bot):
     def __init__(self):
         super().__init__()
@@ -70,7 +70,7 @@ class DashscopeBot(Bot):
                 logger.debug("[DASHSCOPE] reply {} used 0 tokens.".format(reply_content))
             return reply
         else:
-            reply = Reply(ReplyType.ERROR, "Bot不支持处理{}类型的消息".format(context.type))
+            reply = Reply(ReplyType.ERROR, "Bot 不支持处理{}类型的消息".format(context.type))
             return reply
 
     def reply_text(self, session: DashscopeSession, retry_count=0) -> dict:

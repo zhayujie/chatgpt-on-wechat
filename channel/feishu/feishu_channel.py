@@ -34,7 +34,7 @@ class FeiShuChanel(ChatChannel):
 
     def __init__(self):
         super().__init__()
-        # 历史消息id暂存，用于幂等控制
+        # 历史消息 id 暂存，用于幂等控制
         self.receivedMsgs = ExpiredDict(60 * 60 * 7.1)
         logger.info("[FeiShu] app_id={}, app_secret={} verification_token={}".format(
             self.feishu_app_id, self.feishu_app_secret, self.feishu_token))

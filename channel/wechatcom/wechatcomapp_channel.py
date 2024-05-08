@@ -59,7 +59,7 @@ class WechatComAppChannel(ChatChannel):
             for i, text in enumerate(texts):
                 self.client.message.send_text(self.agent_id, receiver, text)
                 if i != len(texts) - 1:
-                    time.sleep(0.5)  # 休眠0.5秒，防止发送过快乱序
+                    time.sleep(0.5)  # 休眠 0.5 秒，防止发送过快乱序
             logger.info("[wechatcom] Do send text to {}: {}".format(receiver, reply_text))
         elif reply.type == ReplyType.VOICE:
             try:

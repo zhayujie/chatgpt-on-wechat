@@ -55,7 +55,7 @@ class ReturnValue(dict):
 
 TRANSLATION = {
     'Chinese': {
-        -1000: u'返回值不带BaseResponse',
+        -1000: u'返回值不带 BaseResponse',
         -1001: u'无法找到对应的成员',
         -1002: u'文件位置错误',
         -1003: u'服务器拒绝连接',

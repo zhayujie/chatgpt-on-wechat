@@ -24,7 +24,7 @@ from config import conf
 class AliVoice(Voice):
     def __init__(self):
         """
-        初始化AliVoice类，从配置文件加载必要的配置。
+        初始化 AliVoice 类，从配置文件加载必要的配置。
         """
         try:
             curdir = os.path.dirname(__file__)
@@ -46,12 +46,12 @@ class AliVoice(Voice):
         将文本转换为语音文件。
 
         :param text: 要转换的文本。
-        :return: 返回一个Reply对象，其中包含转换得到的语音文件或错误信息。
+        :return: 返回一个 Reply 对象，其中包含转换得到的语音文件或错误信息。
         """
         # 清除文本中的非中文、非英文和非基本字符
         text = re.sub(r'[^\u4e00-\u9fa5\u3040-\u30FF\uAC00-\uD7AFa-zA-Z0-9'
                       r'äöüÄÖÜáéíóúÁÉÍÓÚàèìòùÀÈÌÒÙâêîôûÂÊÎÔÛçÇñÑ，。！？,.]', '', text)
-        # 提取有效的token
+        # 提取有效的 token
         token_id = self.get_valid_token()
         fileName = text_to_speech_aliyun(self.api_url, text, self.app_key, token_id)
         if fileName:
@@ -63,9 +63,9 @@ class AliVoice(Voice):
 
     def get_valid_token(self):
         """
-        获取有效的阿里云token。
+        获取有效的阿里云 token。
 
-        :return: 返回有效的token字符串。
+        :return: 返回有效的 token 字符串。
         """
         current_time = time.time()
         if self.token is None or current_time >= self.token_expire_time:
@@ -73,9 +73,9 @@ class AliVoice(Voice):
             token_str = get_token.get_token()
             token_data = json.loads(token_str)
             self.token = token_data["Token"]["Id"]
-            # 将过期时间减少一小段时间（例如5分钟），以避免在边界条件下的过期
+            # 将过期时间减少一小段时间（例如 5 分钟），以避免在边界条件下的过期
             self.token_expire_time = token_data["Token"]["ExpireTime"] - 300
-            logger.debug(f"新获取的阿里云token：{self.token}")
+            logger.debug(f"新获取的阿里云 token：{self.token}")
         else:
-            logger.debug("使用缓存的token")
+            logger.debug("使用缓存的 token")
         return self.token

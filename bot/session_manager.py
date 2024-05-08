@@ -48,15 +48,15 @@ class SessionManager(object):
 
     def build_session(self, session_id, system_prompt=None):
         """
-        如果session_id不在sessions中，创建一个新的session并添加到sessions中
-        如果system_prompt不会空，会更新session的system_prompt并重置session
+        如果 session_id 不在 sessions 中，创建一个新的 session 并添加到 sessions 中
+        如果 system_prompt 不会空，会更新 session 的 system_prompt 并重置 session
         """
         if session_id is None:
             return self.sessioncls(session_id, system_prompt, **self.session_args)
 
         if session_id not in self.sessions:
             self.sessions[session_id] = self.sessioncls(session_id, system_prompt, **self.session_args)
-        elif system_prompt is not None:  # 如果有新的system_prompt，更新并重置session
+        elif system_prompt is not None:  # 如果有新的 system_prompt，更新并重置 session
             self.sessions[session_id].set_system_prompt(system_prompt)
         session = self.sessions[session_id]
         return session

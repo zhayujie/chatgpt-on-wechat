@@ -5,7 +5,7 @@
 # Licensed under the Apache License 2.0
 # 更新日志
 # 2020.04.06 第一次提交
-# 2020.05.16 修改，支持大于0xffff的字符
+# 2020.05.16 修改，支持大于 0xffff 的字符
 
 __all__ = ['WordsSearch']
 __author__ = 'Lin Zhijun'

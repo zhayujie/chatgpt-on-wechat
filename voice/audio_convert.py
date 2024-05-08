@@ -10,7 +10,7 @@ except ImportError:
 
 from pydub import AudioSegment
 
-sil_supports = [8000, 12000, 16000, 24000, 32000, 44100, 48000]  # slk转wav时，支持的采样率
+sil_supports = [8000, 12000, 16000, 24000, 32000, 44100, 48000]  # slk 转 wav 时，支持的采样率
 
 
 def find_closest_sil_supports(sample_rate):
@@ -42,7 +42,7 @@ def get_pcm_from_wav(wav_path):
 
 def any_to_mp3(any_path, mp3_path):
     """
-    把任意格式转成mp3文件
+    把任意格式转成 mp3 文件
     """
     if any_path.endswith(".mp3"):
         shutil.copy2(any_path, mp3_path)
@@ -56,7 +56,7 @@ def any_to_mp3(any_path, mp3_path):
 
 def any_to_wav(any_path, wav_path):
     """
-    把任意格式转成wav文件
+    把任意格式转成 wav 文件
     """
     if any_path.endswith(".wav"):
         shutil.copy2(any_path, wav_path)
@@ -64,14 +64,14 @@ def any_to_wav(any_path, wav_path):
     if any_path.endswith(".sil") or any_path.endswith(".silk") or any_path.endswith(".slk"):
         return sil_to_wav(any_path, wav_path)
     audio = AudioSegment.from_file(any_path)
-    audio.set_frame_rate(8000)    # 百度语音转写支持8000采样率, pcm_s16le, 单通道语音识别
+    audio.set_frame_rate(8000)    # 百度语音转写支持 8000 采样率，pcm_s16le, 单通道语音识别
     audio.set_channels(1)
     audio.export(wav_path, format="wav", codec='pcm_s16le')
 
 
 def any_to_sil(any_path, sil_path):
     """
-    把任意格式转成sil文件
+    把任意格式转成 sil 文件
     """
     if any_path.endswith(".sil") or any_path.endswith(".silk") or any_path.endswith(".slk"):
         shutil.copy2(any_path, sil_path)
@@ -90,7 +90,7 @@ def any_to_sil(any_path, sil_path):
 
 def any_to_amr(any_path, amr_path):
     """
-    把任意格式转成amr文件
+    把任意格式转成 amr 文件
     """
     if any_path.endswith(".amr"):
         shutil.copy2(any_path, amr_path)

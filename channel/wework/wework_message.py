@@ -28,10 +28,10 @@ def get_room_info(wework, conversation_id):
     logger.debug(f"传入的 conversation_id: {conversation_id}")
     rooms = wework.get_rooms()
     if not rooms or 'room_list' not in rooms:
-        logger.error(f"获取群聊信息失败: {rooms}")
+        logger.error(f"获取群聊信息失败：{rooms}")
         return None
     time.sleep(1)
-    logger.debug(f"获取到的群聊信息: {rooms}")
+    logger.debug(f"获取到的群聊信息：{rooms}")
     for room in rooms['room_list']:
         if room['conversation_id'] == conversation_id:
             return room
@@ -51,9 +51,9 @@ def cdn_download(wework, message, file_name):
     if "url" in data["cdn"].keys() and "auth_key" in data["cdn"].keys():
         url = data["cdn"]["url"]
         auth_key = data["cdn"]["auth_key"]
-        # result = wework.wx_cdn_download(url, auth_key, aes_key, file_size, save_path)  # ntwork库本身接口有问题，缺失了aes_key这个参数
+        # result = wework.wx_cdn_download(url, auth_key, aes_key, file_size, save_path)  # ntwork 库本身接口有问题，缺失了 aes_key 这个参数
         """
-        下载wx类型的cdn文件，以https开头
+        下载 wx 类型的 cdn 文件，以 https 开头
         """
         data = {
             'url': url,
@@ -62,7 +62,7 @@ def cdn_download(wework, message, file_name):
             'size': file_size,
             'save_path': save_path
         }
-        result = wework._WeWork__send_sync(send_type.MT_WXCDN_DOWNLOAD_MSG, data)  # 直接用wx_cdn_download的接口内部实现来调用
+        result = wework._WeWork__send_sync(send_type.MT_WXCDN_DOWNLOAD_MSG, data)  # 直接用 wx_cdn_download 的接口内部实现来调用
     elif "file_id" in data["cdn"].keys():
         if message["type"] == 11042:
             file_type = 2
@@ -90,12 +90,12 @@ def c2c_download_and_convert(wework, message, file_name):
     result = wework.c2c_cdn_download(file_id, aes_key, file_size, file_type, save_path)
     logger.debug(result)
 
-    # 在下载完SILK文件之后，立即将其转换为WAV文件
+    # 在下载完 SILK 文件之后，立即将其转换为 WAV 文件
     base_name, _ = os.path.splitext(save_path)
     wav_file = base_name + ".wav"
     pilk.silk_to_wav(save_path, wav_file, rate=24000)
 
-    # 删除SILK文件
+    # 删除 SILK 文件
     try:
         os.remove(save_path)
     except Exception as e:
@@ -107,7 +107,7 @@ class WeworkMessage(ChatMessage):
         try:
             super().__init__(wework_msg)
             self.msg_id = wework_msg['data'].get('conversation_id', wework_msg['data'].get('room_conversation_id'))
-            # 使用.get()防止 'send_time' 键不存在时抛出错误
+            # 使用.get() 防止 'send_time' 键不存在时抛出错误
             self.create_time = wework_msg['data'].get("send_time")
             self.is_group = is_group
             self.wework = wework
@@ -156,7 +156,7 @@ class WeworkMessage(ChatMessage):
                 else:
                     result = {}
                     for room in rooms['room_list']:
-                        # 获取聊天室ID
+                        # 获取聊天室 ID
                         room_wxid = room['conversation_id']
 
                         # 获取聊天室成员

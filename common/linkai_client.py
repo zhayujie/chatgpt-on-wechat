@@ -29,7 +29,7 @@ class ChatClient(LinkAIClient):
     def on_config(self, config: dict):
         if not self.client_id:
             return
-        logger.info(f"[LinkAI] 从客户端管理加载远程配置: {config}")
+        logger.info(f"[LinkAI] 从客户端管理加载远程配置：{config}")
         if config.get("enabled") != "Y":
             return
 

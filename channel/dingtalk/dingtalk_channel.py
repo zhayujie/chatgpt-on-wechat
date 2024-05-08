@@ -38,7 +38,7 @@ class DingTalkChanel(ChatChannel, dingtalk_stream.ChatbotHandler):
         super().__init__()
         super(dingtalk_stream.ChatbotHandler, self).__init__()
         self.logger = self.setup_logger()
-        # 历史消息id暂存，用于幂等控制
+        # 历史消息 id 暂存，用于幂等控制
         self.receivedMsgs = ExpiredDict(60 * 60 * 7.1)
         logger.info("[dingtalk] client_id={}, client_secret={} ".format(
             self.dingtalk_client_id, self.dingtalk_client_secret))

@@ -16,9 +16,9 @@ from voice.voice import Voice
 
 """
 Azure voice
-主目录设置文件中需填写azure_voice_api_key和azure_voice_region
+主目录设置文件中需填写 azure_voice_api_key 和 azure_voice_region
 
-查看可用的 voice： https://speech.microsoft.com/portal/voicegallery
+查看可用的 voice：https://speech.microsoft.com/portal/voicegallery
 
 """
 
