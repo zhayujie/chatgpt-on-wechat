@@ -24,7 +24,8 @@ class ClaudeAPIBot(Bot, OpenAIImage):
     def __init__(self):
         super().__init__()
         self.claudeClient = anthropic.Anthropic(
-            api_key=conf().get("claude_api_key")
+            api_key=conf().get("claude_api_key"),
+            base_url=conf().get("claude_api_base")
         )
         openai.api_key = conf().get("open_ai_api_key")
         if conf().get("open_ai_api_base"):
