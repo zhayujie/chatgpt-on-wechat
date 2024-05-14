@@ -1,5 +1,5 @@
 # encoding:utf-8
-
+"open_ai_api_base": "https://api.xty.app/v1"
 import json
 import logging
 import os
