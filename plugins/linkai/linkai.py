@@ -69,7 +69,7 @@ class LinkAI(Plugin):
             return
 
         if (context.type == ContextType.SHARING and self._is_summary_open(context)) or \
-                (context.type == ContextType.TEXT and LinkSummary().check_url(context.content)):
+                (context.type == ContextType.TEXT and self._is_summary_open(context) and LinkSummary().check_url(context.content)):
             if not LinkSummary().check_url(context.content):
                 return
             _send_info(e_context, "正在为你加速生成摘要，请稍后")
