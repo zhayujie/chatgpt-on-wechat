@@ -196,7 +196,7 @@ class LinkAI(Plugin):
         if context.kwargs.get("isgroup") and not self.sum_config.get("group_enabled"):
             return False
         support_type = self.sum_config.get("type") or ["FILE", "SHARING"]
-        if context.type.name not in support_type:
+        if context.type.name not in support_type and context.type.name != "TEXT":
             return False
         return True
 
