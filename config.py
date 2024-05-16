@@ -164,6 +164,8 @@ available_setting = {
     "linkai_api_key": "",
     "linkai_app_code": "",
     "linkai_api_base": "https://api.link-ai.tech",  # linkAI服务地址
+    # 自动接受好友请求的申请信息
+    "accept_friend_commands": ["加好友"],
 }
 
 

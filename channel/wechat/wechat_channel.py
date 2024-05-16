@@ -48,6 +48,18 @@ def handler_group_msg(msg):
     return None
 
 
+# 自动接受加好友
+@itchat.msg_register(FRIENDS)
+def deal_with_friend(msg):
+    try:
+        cmsg = WechatMessage(msg, False)
+    except NotImplementedError as e:
+        logger.debug("[WX]friend request {} skipped: {}".format(msg["MsgId"], e))
+        return None
+    WechatChannel().handle_friend_request(cmsg)
+    return None
+
+
 def _check(func):
     def wrapper(self, cmsg: ChatMessage):
         msgId = cmsg.msg_id
@@ -206,9 +218,20 @@ class WechatChannel(ChatChannel):
         if context:
             self.produce(context)
 
+    @time_checker
+    @_check
+    def handle_friend_request(self, cmsg: ChatMessage):
+        if cmsg.ctype == ContextType.ACCEPT_FRIEND:
+            logger.debug("[WX]receive friend request: {}".format(cmsg.content["NickName"]))
+        else:
+            logger.debug("[WX]receive friend request: {}, cmsg={}".format(cmsg.content["NickName"], cmsg))
+        context = self._compose_context(cmsg.ctype, cmsg.content, msg=cmsg)
+        if context:
+            self.produce(context)
+
     # 统一的发送函数，每个Channel自行实现，根据reply的type字段发送不同类型的消息
     def send(self, reply: Reply, context: Context):
-        receiver = context["receiver"]
+        receiver = context.get("receiver")
         if reply.type == ReplyType.TEXT:
             itchat.send(reply.content, toUserName=receiver)
             logger.info("[WX] sendMsg={}, receiver={}".format(reply, receiver))
@@ -257,6 +280,19 @@ class WechatChannel(ChatChannel):
             video_storage.seek(0)
             itchat.send_video(video_storage, toUserName=receiver)
             logger.info("[WX] sendVideo url={}, receiver={}".format(video_url, receiver))
+        elif reply.type == ReplyType.ACCEPT_FRIEND:  # 新增接受好友申请回复类型
+            # 假设 reply.content 包含了新好友的用户名
+            is_accept = reply.content
+            if is_accept:
+                try:
+                    # 自动接受好友申请
+                    debug_msg = itchat.accept_friend(userName=context.content["UserName"], v4=context.content["Ticket"])
+                    logger.debug("[WX] accept_friend return: {}".format(debug_msg))
+                    logger.info("[WX] Accepted new friend, UserName={}, NickName={}".format(context.content["UserName"], context.content["NickName"]))
+                except Exception as e:
+                    logger.error("[WX] Failed to add friend. Error: {}".format(e))
+            else:
+                logger.info("[WX] Ignored new friend, username={}".format(context.content["NickName"]))
 
 def _send_login_success():
     try:
