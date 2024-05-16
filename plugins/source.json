@@ -27,6 +27,10 @@
     "Blackroom": {
       "url": "https://github.com/dividduang/blackroom.git",
       "desc": "小黑屋插件，被拉进小黑屋的人将不能使用@bot的功能的插件"
+    },
+    "GroupInvitation": {
+      "url": "https://github.com/dfldylan/GroupInvitation.git",
+      "desc": "根据特定关键词自动邀请用户加入指定的群聊"
     }
   }
 }
