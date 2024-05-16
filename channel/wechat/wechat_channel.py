@@ -293,6 +293,37 @@ class WechatChannel(ChatChannel):
                     logger.error("[WX] Failed to add friend. Error: {}".format(e))
             else:
                 logger.info("[WX] Ignored new friend, username={}".format(context.content["NickName"]))
+        elif reply.type == ReplyType.INVITE_ROOM:  # 新增邀请好友进群回复类型
+            # 假设 reply.content 包含了群聊的名字
+
+            def get_group_id(group_name):
+                """
+                根据群聊名称获取群聊ID。
+                :param group_name: 群聊的名称。
+                :return: 群聊的ID (UserName)。
+                """
+                group_list = itchat.search_chatrooms(name=group_name)
+                if group_list:
+                    return group_list[0]["UserName"]
+                else:
+                    return None
+
+            try:
+                chatroomUserName = reply.content
+                group_id = get_group_id(chatroomUserName)
+                logger.debug("[WX] find group_id={}, where chatroom={}".format(group_id, chatroomUserName))
+                if group_id is None:
+                    raise ValueError("The specified group chat was not found: {}".format(chatroomUserName))
+                # 调用 itchat 的 add_member_into_chatroom 方法来添加成员
+                debug_msg = itchat.add_member_into_chatroom(group_id, receiver)
+                logger.debug("[WX] add_member_into_chatroom return: {}".format(debug_msg))
+                logger.info("[WX] invite members={}, to chatroom={}".format(receiver, chatroomUserName))
+            except ValueError as ve:
+                # 记录查找群聊失败的错误信息
+                logger.error("[WX] {}".format(ve))
+            except Exception as e:
+                # 记录添加成员失败的错误信息
+                logger.error("[WX] Failed to invite members to chatroom. Error: {}".format(e))
 
 def _send_login_success():
     try:
