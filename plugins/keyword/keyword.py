@@ -8,6 +8,7 @@ from bridge.context import ContextType
 from bridge.reply import Reply, ReplyType
 from common.log import logger
 from plugins import *
+import random
 
 
 @plugins.register(
@@ -53,6 +54,11 @@ class Keyword(Plugin):
         if content in self.keyword:
             logger.info(f"[keyword] 匹配到关键字【{content}】")
             reply_text = self.keyword[content]
+
+            # 判断匹配内容的类型
+            if isinstance(reply_text, list):
+                # 如果关键词对应的是一个列表，则随机选择列表中的一个元素
+                reply_text = random.choice(reply_text)
 
             # 判断匹配内容的类型
             if (reply_text.startswith("http://") or reply_text.startswith("https://")) and any(reply_text.endswith(ext) for ext in [".jpg", ".jpeg", ".png", ".gif", ".img"]):

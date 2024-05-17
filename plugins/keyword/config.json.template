@@ -1,5 +1,11 @@
 {
   "keyword": {
     "关键字匹配": "测试成功"
+    "单关键词匹配多个回复": [
+      "测试成功",
+      "测试失败",
+      "http://www.baidu.com/1.jpg",
+       "http://www.google.com/2.mp4"
+    ]
   }
 }

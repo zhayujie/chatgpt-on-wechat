@@ -70,6 +70,13 @@ class Hello(Plugin):
             return
         
         if e_context["context"].type == ContextType.EXIT_GROUP:
+            if "group_exit_msg" in conf():
+                reply = Reply()
+                reply.type = ReplyType.TEXT
+                reply.content = conf().get("group_exit_msg", "")
+                e_context["reply"] = reply
+                e_context.action = EventAction.BREAK_PASS  # 事件结束，并跳过处理context的默认逻辑
+                return
             if conf().get("group_chat_exit_group"):
                 e_context["context"].type = ContextType.TEXT
                 e_context["context"].content = self.group_exit_prompt.format(nickname=msg.actual_user_nickname)
