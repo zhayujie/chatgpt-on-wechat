@@ -1,19 +1,22 @@
 # 简介
 
-> chatgpt-on-wechat（简称CoW）项目是基于大模型的智能对话机器人，支持微信公众号、企业微信应用、微信、飞书、钉钉接入，可选择GPT3.5/GPT4.0/Claude/Gemini/LinkAI/ChatGLM/KIMI/文心一言/讯飞星火/通义千问/LinkAI，能处理文本、语音和图片，通过插件访问操作系统和互联网等外部资源，支持基于自有知识库定制企业AI应用。
+> chatgpt-on-wechat（简称CoW）项目是基于大模型的智能对话机器人，支持微信公众号、企业微信应用、飞书、钉钉接入，可选择GPT3.5/GPT4.0/Claude/Gemini/LinkAI/ChatGLM/KIMI/文心一言/讯飞星火/通义千问/LinkAI，能处理文本、语音和图片，通过插件访问操作系统和互联网等外部资源，支持基于自有知识库定制企业AI应用。
 
 最新版本支持的功能如下：
 
--  ✅   **多端部署：** 有多种部署方式可选择且功能完备，目前已支持微信生态下公众号、企业微信应用、飞书、钉钉等部署方式
+-  ✅   **多端部署：** 有多种部署方式可选择且功能完备，目前已支持微信公众号、企业微信应用、飞书、钉钉等部署方式
 -  ✅   **基础对话：** 私聊及群聊的消息智能回复，支持多轮会话上下文记忆，支持 GPT-3.5, GPT-4, GPT-4o, Claude-3, Gemini, 文心一言, 讯飞星火, 通义千问，ChatGLM-4，Kimi(月之暗面)
 -  ✅   **语音能力：** 可识别语音消息，通过文字或语音回复，支持 azure, baidu, google, openai(whisper/tts) 等多种语音模型
 -  ✅   **图像能力：** 支持图片生成、图片识别、图生图（如照片修复），可选择 Dall-E-3, stable diffusion, replicate, midjourney, CogView-3, vision模型
 -  ✅   **丰富插件：** 支持个性化插件扩展，已实现多角色切换、文字冒险、敏感词过滤、聊天记录总结、文档总结和对话、联网搜索等插件
 -  ✅   **知识库：** 通过上传知识库文件自定义专属机器人，可作为数字分身、智能客服、私域助手使用，基于 [LinkAI](https://link-ai.tech) 实现
 
-## 演示
+## 声明
 
-https://github.com/zhayujie/chatgpt-on-wechat/assets/26161723/d5154020-36e3-41db-8706-40ce9f3f1b1e
+1. 本项目遵循 [MIT开源协议](/LICENSE)，仅用于技术研究和学习，使用本项目时需遵守所在地法律法规、相关政策以及企业章程，禁止用于任何违法或侵犯他人权益的行为
+2. 境内使用该项目时，请使用国内厂商的大模型服务，并进行必要的内容安全审核及过滤
+3. 本项目主要接入协同办公平台，请使用公众号、企微自建应用、钉钉、飞书等接入通道，其他通道为历史产物，已不再维护
+4. 任何个人、团队和企业，无论以何种方式使用该项目、对何对象提供服务，所产生的一切后果，本项目均不承担任何责任
 
 ## 社区
 
@@ -25,7 +28,7 @@ https://github.com/zhayujie/chatgpt-on-wechat/assets/26161723/d5154020-36e3-41db
 
 # 企业服务
 
-<a href="https://link-ai.tech" target="_blank"><img width="800" src="https://img-1317903499.cos.ap-guangzhou.myqcloud.com/docs/github-linkai-intro-v2.png"></a>
+<a href="https://link-ai.tech" target="_blank"><img width="800" src="https://cdn.link-ai.tech/image/link-ai-intro.jpg"></a>
 
 > [LinkAI](https://link-ai.tech/) 是面向企业和开发者的一站式AI应用平台，聚合多模态大模型、知识库、Agent 插件、工作流等能力，支持一键接入主流平台并进行管理，支持SaaS、私有化部署多种模式。
 >
@@ -160,7 +163,7 @@ pip3 install -r requirements-optional.txt
 
 + 添加 `"speech_recognition": true` 将开启语音识别，默认使用openai的whisper模型识别为文字，同时以文字回复，该参数仅支持私聊 (注意由于语音消息无法匹配前缀，一旦开启将对所有语音自动回复，支持语音触发画图)；
 + 添加 `"group_speech_recognition": true` 将开启群组语音识别，默认使用openai的whisper模型识别为文字，同时以文字回复，参数仅支持群聊 (会匹配group_chat_prefix和group_chat_keyword, 支持语音触发画图)；
-+ 添加 `"voice_reply_voice": true` 将开启语音回复语音（同时作用于私聊和群聊），但是需要配置对应语音合成平台的key，由于itchat协议的限制，只能发送语音mp3文件，若使用wechaty则回复的是微信语音。
++ 添加 `"voice_reply_voice": true` 将开启语音回复语音（同时作用于私聊和群聊）
 
 **4.其他配置**
 
@@ -172,7 +175,7 @@ pip3 install -r requirements-optional.txt
 + `conversation_max_tokens`：表示能够记忆的上下文最大字数（一问一答为一组对话，如果累积的对话字数超出限制，就会优先移除最早的一组对话）
 + `rate_limit_chatgpt`，`rate_limit_dalle`：每分钟最高问答速率、画图速率，超速后排队按序处理。
 + `clear_memory_commands`: 对话内指令，主动清空前文记忆，字符串数组可自定义指令别名。
-+ `hot_reload`: 程序退出后，暂存微信扫码状态，默认关闭。
++ `hot_reload`: 程序退出后，暂存等于状态，默认关闭。
 + `character_desc` 配置中保存着你对机器人说的一段话，他会记住这段话并作为他的设定，你可以为他定制任何人格      (关于会话上下文的更多内容参考该 [issue](https://github.com/zhayujie/chatgpt-on-wechat/issues/43))
 + `subscribe_msg`：订阅消息，公众号和企业微信channel中请填写，当被订阅时会自动回复， 可使用特殊占位符。目前支持的占位符有{trigger_prefix}，在程序中它会自动替换成bot的触发词。
 
@@ -194,7 +197,7 @@ pip3 install -r requirements-optional.txt
 python3 app.py                                    # windows环境下该命令通常为 python app.py
 ```
 
-终端输出二维码后，使用微信进行扫码，当输出 "Start auto replying" 时表示自动回复程序已经成功运行了（注意：用于登录的微信需要在支付处已完成实名认证）。扫码登录后你的账号就成为机器人了，可以在手机端通过配置的关键词触发自动回复 (任意好友发送消息给你，或是自己发消息给好友)，参考[#142](https://github.com/zhayujie/chatgpt-on-wechat/issues/142)。
+终端输出二维码后，进行扫码登录，当输出 "Start auto replying" 时表示自动回复程序已经成功运行了（注意：用于登录的账号需要在支付处已完成实名认证）。扫码登录后你的账号就成为机器人了，可以在手机端通过配置的关键词触发自动回复 (任意好友发送消息给你，或是自己发消息给好友)，参考[#142](https://github.com/zhayujie/chatgpt-on-wechat/issues/142)。
 
 ### 2.服务器部署
 
