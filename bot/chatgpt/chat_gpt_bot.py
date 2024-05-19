@@ -129,10 +129,52 @@ class ChatGPTBot(Bot, OpenAIImage, OpenAIVision):
             response = openai.ChatCompletion.create(api_key=api_key, messages=session.messages, **args)
             # logger.debug("[CHATGPT] response={}".format(response))
             # logger.info("[ChatGPT] reply={}, total_tokens={}".format(response.choices[0]['message']['content'], response["usage"]["total_tokens"]))
+            content = response.choices[0]["message"]["content"]
+            # fastgpt工具调用格式处理
+            if isinstance(content, list):
+                # {
+                #     "id": "",
+                #     "model": "",
+                #     "usage": {},
+                #     "choices": [
+                #         {
+                #             "message": {
+                #                 "role": "assistant",
+                #                 "content": [
+                #                     {
+                #                         "type": "tool",
+                #                         "tools": [
+                #                             {
+                #                                 "id": "xx",
+                #                                 "toolName": "HTTP请求",
+                #                                 "toolAvatar": "xx",
+                #                                 "functionName": "xx",
+                #                                 "params": "{\"key1\":\"xx\",\"key2\":\"xxx"}",
+                #                                 "response": "xxx"
+                #                             }
+                #                         ]
+                #                     },
+                #                     {
+                #                         "type": "text",
+                #                         "text": {
+                #                             "content": "xxx"
+                #                         }
+                #                     }
+                #                 ]
+                #             },
+                #             "finish_reason": "stop",
+                #             "index": 0
+                #         }
+                #     ]
+                # }
+                for item in content:
+                    if item["type"] == "text":
+                        content = item["text"]["content"]
+                        break
             return {
                 "total_tokens": response["usage"]["total_tokens"],
                 "completion_tokens": response["usage"]["completion_tokens"],
-                "content": response.choices[0]["message"]["content"],
+                "content": content,
             }
         except Exception as e:
             need_retry = retry_count < 2
