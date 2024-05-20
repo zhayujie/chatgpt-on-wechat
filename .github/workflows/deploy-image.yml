@@ -11,7 +11,7 @@ name: Create and publish a Docker image
 
 on:
   push:
-    branches: ['master']
+    branches: ['dev']
   create:
 env:
   REGISTRY: ghcr.io
@@ -19,7 +19,7 @@ env:
 
 jobs:
   build-and-push-image:
-    if: github.repository == 'zhayujie/chatgpt-on-wechat'
+    if: github.repository == 'lmy668/chatgpt-on-wechat'
     runs-on: ubuntu-latest
     permissions:
       contents: read
