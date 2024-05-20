@@ -45,7 +45,7 @@ class ChatClient(LinkAIClient):
             elif reply_voice_mode == "always_reply_voice":
                 local_config["always_reply_voice"] = True
 
-        if config.get("admin_password") and plugin_config["Godcmd"]:
+        if config.get("admin_password") and plugin_config.get("Godcmd"):
             plugin_config["Godcmd"]["password"] = config.get("admin_password")
             PluginManager().instances["GODCMD"].reload()
 
@@ -56,11 +56,18 @@ class ChatClient(LinkAIClient):
             pconf("linkai")["group_app_map"] = local_group_map
             PluginManager().instances["LINKAI"].reload()
 
+        if config.get("text_to_image") and config.get("text_to_image") == "midjourney" and pconf("linkai"):
+            if pconf("linkai")["midjourney"]:
+                pconf("linkai")["midjourney"]["enabled"] = True
+                pconf("linkai")["midjourney"]["use_image_create_prefix"] = True
+        elif config.get("text_to_image") and config.get("text_to_image") in ["dall-e-2", "dall-e-3"]:
+            if pconf("linkai")["midjourney"]:
+                pconf("linkai")["midjourney"]["use_image_create_prefix"] = False
+
 
 def start(channel):
     global chat_client
-    chat_client = ChatClient(api_key=conf().get("linkai_api_key"),
-                        host="link-ai.chat", channel=channel)
+    chat_client = ChatClient(api_key=conf().get("linkai_api_key"), host="", channel=channel)
     chat_client.config = _build_config()
     chat_client.start()
     time.sleep(1.5)
