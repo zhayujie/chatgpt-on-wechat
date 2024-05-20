@@ -7,7 +7,7 @@
 # To get a newer version, you will need to update the SHA.
 # You can also reference a tag or branch, but the action may change without warning.
 
-name: Create and publish a Docker image
+name: Create and publish a Docker image ARM
 
 on:
   push:
@@ -19,7 +19,7 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  build-and-push-image:
+  build-and-push-image-arm:
     if: github.repository == 'lmy668/chatgpt-on-wechat'
     runs-on: ubuntu-latest
     permissions:
