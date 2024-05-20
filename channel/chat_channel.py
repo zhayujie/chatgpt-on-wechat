@@ -4,7 +4,6 @@ import threading
 import time
 from asyncio import CancelledError
 from concurrent.futures import Future, ThreadPoolExecutor
-from concurrent import futures
 
 from bridge.context import *
 from bridge.reply import *
