@@ -95,7 +95,7 @@ available_setting = {
     "baidu_api_key": "",
     "baidu_secret_key": "",
     # 1536普通话(支持简单的英文识别) 1737英语 1637粤语 1837四川话 1936普通话远场
-    "baidu_dev_pid": "1536",
+    "baidu_dev_pid": 1536,
     # azure 语音api配置， 使用azure语音识别和语音合成时需要
     "azure_voice_api_key": "",
     "azure_voice_region": "japaneast",
