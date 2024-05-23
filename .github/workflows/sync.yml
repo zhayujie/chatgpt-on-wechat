@@ -17,6 +17,7 @@ jobs:
           ref: 'master' # 分支名
 
       - name: Backup sync.yml
+        if: exists('.github/workflows/sync.yml')
         run: |
           mkdir -p /tmp/${{ github.repository }}
           cp .github/workflows/sync.yml /tmp/${{ github.repository }}/sync.yml
@@ -29,6 +30,7 @@ jobs:
           git rebase upstream/master
 
       - name: Restore sync.yml
+        if: exists('/tmp/${{ github.repository }}/sync.yml')
         run: |
           cp /tmp/${{ github.repository }}/sync.yml .github/workflows/sync.yml
 
