@@ -6,7 +6,7 @@ from common.log import logger
 try:
     import pysilk
 except ImportError:
-    logger.warn("import pysilk failed, wechaty voice message will not be supported.")
+    logger.debug("import pysilk failed, wechaty voice message will not be supported.")
 
 from pydub import AudioSegment
 
@@ -64,7 +64,9 @@ def any_to_wav(any_path, wav_path):
     if any_path.endswith(".sil") or any_path.endswith(".silk") or any_path.endswith(".slk"):
         return sil_to_wav(any_path, wav_path)
     audio = AudioSegment.from_file(any_path)
-    audio.export(wav_path, format="wav")
+    audio.set_frame_rate(8000)    # 百度语音转写支持8000采样率, pcm_s16le, 单通道语音识别
+    audio.set_channels(1)
+    audio.export(wav_path, format="wav", codec='pcm_s16le')
 
 
 def any_to_sil(any_path, sil_path):

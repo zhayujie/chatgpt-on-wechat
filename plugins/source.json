@@ -19,6 +19,14 @@
     "Apilot": {
       "url": "https://github.com/6vision/Apilot.git",
       "desc": "通过api直接查询早报、热榜、快递、天气等实用信息的插件"
+    },
+    "pictureChange": {
+      "url": "https://github.com/Yanyutin753/pictureChange.git",
+      "desc": "利用stable-diffusion和百度Ai进行图生图或者画图的插件"
+    },
+    "Blackroom": {
+      "url": "https://github.com/dividduang/blackroom.git",
+      "desc": "小黑屋插件，被拉进小黑屋的人将不能使用@bot的功能的插件"
     }
   }
 }

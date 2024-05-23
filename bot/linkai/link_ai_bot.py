@@ -15,7 +15,7 @@ from config import conf, pconf
 import threading
 from common import memory, utils
 import base64
-
+import os
 
 class LinkAIBot(Bot):
     # authentication failed
@@ -83,7 +83,6 @@ class LinkAIBot(Bot):
             if session_message[0].get("role") == "system":
                 if app_code or model == "wenxin":
                     session_message.pop(0)
-
             body = {
                 "app_code": app_code,
                 "messages": session_message,
@@ -92,7 +91,30 @@ class LinkAIBot(Bot):
                 "top_p": conf().get("top_p", 1),
                 "frequency_penalty": conf().get("frequency_penalty", 0.0),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
                 "presence_penalty": conf().get("presence_penalty", 0.0),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
+                "session_id": session_id,
+                "sender_id": session_id,
+                "channel_type": conf().get("channel_type", "wx")
             }
+            try:
+                from linkai import LinkAIClient
+                client_id = LinkAIClient.fetch_client_id()
+                if client_id:
+                    body["client_id"] = client_id
+                    # start: client info deliver
+                    if context.kwargs.get("msg"):
+                        body["session_id"] = context.kwargs.get("msg").from_user_id
+                        if context.kwargs.get("msg").is_group:
+                            body["is_group"] = True
+                            body["group_name"] = context.kwargs.get("msg").from_user_nickname
+                            body["sender_name"] = context.kwargs.get("msg").actual_user_nickname
+                        else:
+                            if body.get("channel_type") in ["wechatcom_app"]:
+                                body["sender_name"] = context.kwargs.get("msg").from_user_id
+                            else:
+                                body["sender_name"] = context.kwargs.get("msg").from_user_nickname
+
+            except Exception as e:
+                pass
             file_id = context.kwargs.get("file_id")
             if file_id:
                 body["file_id"] = file_id
@@ -100,7 +122,7 @@ class LinkAIBot(Bot):
             headers = {"Authorization": "Bearer " + linkai_api_key}
 
             # do http request
-            base_url = conf().get("linkai_api_base", "https://api.link-ai.chat")
+            base_url = conf().get("linkai_api_base", "https://api.link-ai.tech")
             res = requests.post(url=base_url + "/v1/chat/completions", json=body, headers=headers,
                                 timeout=conf().get("request_timeout", 180))
             if res.status_code == 200:
@@ -108,9 +130,12 @@ class LinkAIBot(Bot):
                 response = res.json()
                 reply_content = response["choices"][0]["message"]["content"]
                 total_tokens = response["usage"]["total_tokens"]
-                logger.info(f"[LINKAI] reply={reply_content}, total_tokens={total_tokens}")
-                self.sessions.session_reply(reply_content, session_id, total_tokens, query=query)
-    
+                res_code = response.get('code')
+                logger.info(f"[LINKAI] reply={reply_content}, total_tokens={total_tokens}, res_code={res_code}")
+                if res_code == 429:
+                    logger.warn(f"[LINKAI] 用户访问超出限流配置，sender_id={body.get('sender_id')}")
+                else:
+                    self.sessions.session_reply(reply_content, session_id, total_tokens, query=query)
                 agent_suffix = self._fetch_agent_suffix(response)
                 if agent_suffix:
                     reply_content += agent_suffix
@@ -139,7 +164,10 @@ class LinkAIBot(Bot):
                     logger.warn(f"[LINKAI] do retry, times={retry_count}")
                     return self._chat(query, context, retry_count + 1)
 
-                return Reply(ReplyType.TEXT, "提问太快啦，请休息一下再问我吧")
+                error_reply = "提问太快啦，请休息一下再问我吧"
+                if res.status_code == 409:
+                    error_reply = "这个问题我还没有学会，请问我其它问题吧"
+                return Reply(ReplyType.TEXT, error_reply)
 
         except Exception as e:
             logger.exception(e)
@@ -230,10 +258,10 @@ class LinkAIBot(Bot):
             }
             if self.args.get("max_tokens"):
                 body["max_tokens"] = self.args.get("max_tokens")
-            headers = {"Authorization": "Bearer " +  conf().get("linkai_api_key")}
+            headers = {"Authorization": "Bearer " + conf().get("linkai_api_key")}
 
             # do http request
-            base_url = conf().get("linkai_api_base", "https://api.link-ai.chat")
+            base_url = conf().get("linkai_api_base", "https://api.link-ai.tech")
             res = requests.post(url=base_url + "/v1/chat/completions", json=body, headers=headers,
                                 timeout=conf().get("request_timeout", 180))
             if res.status_code == 200:
@@ -276,7 +304,7 @@ class LinkAIBot(Bot):
     def _fetch_app_info(self, app_code: str):
         headers = {"Authorization": "Bearer " + conf().get("linkai_api_key")}
         # do http request
-        base_url = conf().get("linkai_api_base", "https://api.link-ai.chat")
+        base_url = conf().get("linkai_api_base", "https://api.link-ai.tech")
         params = {"app_code": app_code}
         res = requests.get(url=base_url + "/v1/app/info", params=params, headers=headers, timeout=(5, 10))
         if res.status_code == 200:
@@ -298,7 +326,7 @@ class LinkAIBot(Bot):
                 "response_format": "url",
                 "img_proxy": conf().get("image_proxy")
             }
-            url = conf().get("linkai_api_base", "https://api.link-ai.chat") + "/v1/images/generations"
+            url = conf().get("linkai_api_base", "https://api.link-ai.tech") + "/v1/images/generations"
             res = requests.post(url, headers=headers, json=data, timeout=(5, 90))
             t2 = time.time()
             image_url = res.json()["data"][0]["url"]
@@ -344,7 +372,9 @@ class LinkAIBot(Bot):
                         suffix += f"{turn.get('thought')}\n"
                     if plugin_name:
                         plugin_list.append(turn.get('plugin_name'))
-                        suffix += f"{turn.get('plugin_icon')} {turn.get('plugin_name')}"
+                        if turn.get('plugin_icon'):
+                            suffix += f"{turn.get('plugin_icon')} "
+                        suffix += f"{turn.get('plugin_name')}"
                         if turn.get('plugin_input'):
                             suffix += f"：{turn.get('plugin_input')}"
                     if i < len(chain) - 1:
@@ -367,12 +397,44 @@ class LinkAIBot(Bot):
     def _send_image(self, channel, context, image_urls):
         if not image_urls:
             return
+        max_send_num = conf().get("max_media_send_count")
+        send_interval = conf().get("media_send_interval")
         try:
+            i = 0
             for url in image_urls:
-                reply = Reply(ReplyType.IMAGE_URL, url)
+                if max_send_num and i >= max_send_num:
+                    continue
+                i += 1
+                if url.endswith(".mp4"):
+                    reply_type = ReplyType.VIDEO_URL
+                elif url.endswith(".pdf") or url.endswith(".doc") or url.endswith(".docx") or url.endswith(".csv"):
+                    reply_type = ReplyType.FILE
+                    url = _download_file(url)
+                    if not url:
+                        continue
+                else:
+                    reply_type = ReplyType.IMAGE_URL
+                reply = Reply(reply_type, url)
                 channel.send(reply, context)
+                if send_interval:
+                    time.sleep(send_interval)
         except Exception as e:
             logger.error(e)
+
+
+def _download_file(url: str):
+    try:
+        file_path = "tmp"
+        if not os.path.exists(file_path):
+            os.makedirs(file_path)
+        file_name = url.split("/")[-1]  # 获取文件名
+        file_path = os.path.join(file_path, file_name)
+        response = requests.get(url)
+        with open(file_path, "wb") as f:
+            f.write(response.content)
+        return file_path
+    except Exception as e:
+        logger.warn(e)
 
 
 class LinkAISessionManager(SessionManager):

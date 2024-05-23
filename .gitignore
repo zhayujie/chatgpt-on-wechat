@@ -31,3 +31,4 @@ plugins/banwords/lib/__pycache__
 !plugins/keyword
 !plugins/linkai
 !plugins/kxt
+client_config.json

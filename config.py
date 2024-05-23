@@ -67,12 +67,16 @@ available_setting = {
     # claude 配置
     "claude_api_cookie": "",
     "claude_uuid": "",
+    # claude api key
+    "claude_api_key":"",
     # 通义千问API, 获取方式查看文档 https://help.aliyun.com/document_detail/2587494.html
     "qwen_access_key_id": "",
     "qwen_access_key_secret": "",
     "qwen_agent_key": "",
     "qwen_app_id": "",
     "qwen_node_id": "",  # 流程编排模型用到的id，如果没有用到qwen_node_id，请务必保持为空字符串
+    # 阿里灵积模型api key
+    "dashscope_api_key": "",
     # Google Gemini Api Key
     "gemini_api_key": "",
     # wework的通用配置
@@ -83,7 +87,7 @@ available_setting = {
     "voice_reply_voice": False,  # 是否使用语音回复语音，需要设置对应语音合成引擎的api key
     "always_reply_voice": False,  # 是否一直使用语音回复
     "voice_to_text": "openai",  # 语音识别引擎，支持openai,baidu,google,azure
-    "text_to_voice": "openai",  # 语音合成引擎，支持openai,baidu,google,pytts(offline),azure,elevenlabs
+    "text_to_voice": "openai",  # 语音合成引擎，支持openai,baidu,google,pytts(offline),azure,elevenlabs,edge(online)
     "text_to_voice_model": "tts-1",
     "tts_voice_id": "alloy",
     # baidu 语音api配置， 使用百度语音识别和语音合成时需要
@@ -91,7 +95,7 @@ available_setting = {
     "baidu_api_key": "",
     "baidu_secret_key": "",
     # 1536普通话(支持简单的英文识别) 1737英语 1637粤语 1837四川话 1936普通话远场
-    "baidu_dev_pid": "1536",
+    "baidu_dev_pid": 1536,
     # azure 语音api配置， 使用azure语音识别和语音合成时需要
     "azure_voice_api_key": "",
     "azure_voice_region": "japaneast",
@@ -132,7 +136,11 @@ available_setting = {
     "feishu_app_secret": "",  # 飞书机器人APP secret
     "feishu_token": "",  # 飞书 verification token
     "feishu_bot_name": "",  # 飞书机器人的名字
-
+    
+    # 钉钉配置
+    "dingtalk_client_id": "",  # 钉钉机器人Client ID 
+    "dingtalk_client_secret": "",  # 钉钉机器人Client Secret 
+    
     # chatgpt指令自定义触发词
     "clear_memory_commands": ["#清除记忆"],  # 重置会话指令，必须以#开头
     # channel配置
@@ -144,11 +152,18 @@ available_setting = {
     "plugin_trigger_prefix": "$",  # 规范插件提供聊天相关指令的前缀，建议不要和管理员指令前缀"#"冲突
     # 是否使用全局插件配置
     "use_global_plugin_config": False,
-    # 知识库平台配置
+    "max_media_send_count": 3,     # 单次最大发送媒体资源的个数
+    "media_send_interval": 1,  # 发送图片的事件间隔，单位秒
+    # 智谱AI 平台配置
+    "zhipu_ai_api_key": "",
+    "zhipu_ai_api_base": "https://open.bigmodel.cn/api/paas/v4",
+    "moonshot_api_key": "",
+    "moonshot_base_url":"https://api.moonshot.cn/v1/chat/completions",
+    # LinkAI平台配置
     "use_linkai": False,
     "linkai_api_key": "",
     "linkai_app_code": "",
-    "linkai_api_base": "https://api.link-ai.chat",  # linkAI服务地址，若国内无法访问或延迟较高可改为 https://api.link-ai.tech
+    "linkai_api_base": "https://api.link-ai.tech",  # linkAI服务地址
 }
 
 
@@ -245,6 +260,8 @@ def load_config():
     logger.info("[INIT] load config: {}".format(config))
 
     config.load_user_datas()
+
+
 
 
 def get_root():

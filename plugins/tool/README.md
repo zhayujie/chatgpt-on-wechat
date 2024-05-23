@@ -3,11 +3,19 @@
 使用说明(默认trigger_prefix为$)：  
 ```text
 #help tool: 查看tool帮助信息，可查看已加载工具列表  
-$tool 命令: 根据给出的{命令}使用一些可用工具尽力为你得到结果。  
+$tool 工具名 命令: （pure模式）根据给出的{命令}使用指定 一个 可用工具尽力为你得到结果。
+$tool 命令: （多工具模式）根据给出的{命令}使用 一些 可用工具尽力为你得到结果。  
 $tool reset: 重置工具。  
 ```
 ### 本插件所有工具同步存放至专用仓库：[chatgpt-tool-hub](https://github.com/goldfishh/chatgpt-tool-hub)
 
+2024.01.16更新
+1. 新增工具pure模式，支持单个工具调用
+2. 新增消息转发工具：email, sms, wechat, 可以根据规则向其他平台发送消息
+3. 替换visual-dl（更名为visual）实现，目前识别图片链接效果较好。
+4. 修复了0.4版本大部分工具返回结果不可靠问题
+
+新版本工具名共19个，不一一列举，相应工具需要的环境参数见`tool.py`里的`_build_tool_kwargs`函数
 
 ## 使用说明
 使用该插件后将默认使用4个工具, 无需额外配置长期生效：
@@ -24,7 +32,7 @@ $tool reset: 重置工具。
 
 > 注1：url-get默认配置、browser需额外配置，browser依赖google-chrome，你需要提前安装好
 
-> 注2：当检测到长文本时会进入summary tool总结长文本，tokens可能会大量消耗！
+> 注2：（可通过`browser_use_summary`或 `url_get_use_summary`开关）当检测到长文本时会进入summary tool总结长文本，tokens可能会大量消耗！
 
 这是debian端安装google-chrome教程，其他系统请自行查找
 > https://www.linuxjournal.com/content/how-can-you-install-google-browser-debian
@@ -34,9 +42,10 @@ $tool reset: 重置工具。
 
 > terminal调优记录：https://github.com/zhayujie/chatgpt-on-wechat/issues/776#issue-1659347640
 
-### 4. meteo-weather
+### 4. meteo
 ###### 回答你有关天气的询问, 需要获取时间、地点上下文信息，本工具使用了[meteo open api](https://open-meteo.com/)
 注：该工具需要较高的对话技巧，不保证你问的任何问题均能得到满意的回复
+注2：当前版本可只使用这个工具，返回结果较可控。
 
 > meteo调优记录：https://github.com/zhayujie/chatgpt-on-wechat/issues/776#issuecomment-1500771334
 
@@ -65,18 +74,12 @@ $tool reset: 重置工具。
 #### 6.2. morning-news *
 ###### 每日60秒早报，每天凌晨一点更新，本工具使用了[alapi-每日60秒早报](https://alapi.cn/api/view/93)
 
-```text
-可配置参数：
-1. morning_news_use_llm: 是否使用LLM润色结果，默认false（可能会慢）
-```
-
 > 该tool每天返回内容相同
 
 #### 6.3. finance-news
 ###### 获取实时的金融财政新闻
 
-> 该工具需要解决browser tool 的google-chrome依赖安装
-
+> 该工具需要用到browser工具解决反爬问题
 
 
 ### 7. bing-search *
@@ -99,17 +102,32 @@ $tool reset: 重置工具。
 > 0.4.2更新，例子：帮我找一篇吴恩达写的论文
 
 ### 11. summary
-###### 总结工具，该工具必须输入一个本地文件的绝对路径
+###### 总结工具，该工具可以支持输入url
 
 > 该工具目前是和其他工具配合使用，暂未测试单独使用效果
 
-### 12. image2text
-###### 将图片转换成文字，底层调用imageCaption模型，该工具必须输入一个本地文件的绝对路径
+### 12. visual
+###### 将图片转换成文字，底层调用ali dashscope `qwen-vl-plus`模型
 
 ### 13. searxng-search *
 ###### 一个私有化的搜索引擎工具
 
 > 安装教程：https://docs.searxng.org/admin/installation.html
+
+### 14. email *
+###### 发送邮件
+
+### 15. sms *
+###### 发送短信
+
+### 16. stt *
+###### speak to text 语音识别
+
+### 17. tts *
+###### text to speak 文生语音
+
+### 18. wechat *
+###### 向好友、群组发送微信
 
 ---
 
@@ -120,7 +138,7 @@ $tool reset: 重置工具。
 ###### 默认工具无需配置，其它工具需手动配置，以增加morning-news和bing-search两个工具为例：
 ```json
 {
-  "tools": ["bing-search", "news", "你想要添加的其他工具"],  // 填入你想用到的额外工具名，这里加入了工具"bing-search"和工具"news"(news工具会自动加载morning-news、finance-news等子工具)
+  "tools": ["bing-search", "morning-news", "你想要添加的其他工具"],  // 填入你想用到的额外工具名，这里加入了工具"bing-search"和工具"morning-news"
   "kwargs": {
       "debug": true, // 当你遇到问题求助时，需要配置
       "request_timeout": 120,  // openai接口超时时间
@@ -137,7 +155,6 @@ $tool reset: 重置工具。
   - `debug`: 输出chatgpt-tool-hub额外信息用于调试
   - `request_timeout`: 访问openai接口的超时时间，默认与wechat-on-chatgpt配置一致，可单独配置
   - `no_default`: 用于配置默认加载4个工具的行为，如果为true则仅使用tools列表工具，不加载默认工具
-  - `top_k_results`: 控制所有有关搜索的工具返回条目数，数字越高则参考信息越多，但无用信息可能干扰判断，该值一般为2
   - `model_name`: 用于控制tool插件底层使用的llm模型，目前暂未测试3.5以外的模型，一般保持默认
 
 ---
