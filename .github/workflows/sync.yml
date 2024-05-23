@@ -40,8 +40,10 @@ jobs:
         run: |
           git config user.name "${{ github.actor }}"
           git config user.email "${{ github.actor }}@users.noreply.github.com"
-          git add .github/workflows/sync.yml
-          git commit -m "Restore sync.yml"
-          git push origin master --force
+          if [ -f .github/workflows/sync.yml ]; then
+            git add .github/workflows/sync.yml
+            git commit -m "Restore sync.yml"
+            git push origin master --force
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
