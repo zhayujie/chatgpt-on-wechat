@@ -23,6 +23,10 @@
     "GroupInvitation": {
       "url": "https://github.com/dfldylan/GroupInvitation.git",
       "desc": "根据特定关键词自动邀请用户加入指定的群聊"
+    },
+    "file_writer": {
+      "url": "https://github.com/Isaac20231231/file_writer.git",
+      "desc": "手动发送微信通知消息插件,通过api写入文件,监听文件变化发送消息"
     }
   }
 }
