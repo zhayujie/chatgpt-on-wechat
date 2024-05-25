@@ -94,7 +94,7 @@ class BaiduWenxinBot(Bot):
             logger.warn("[BAIDU] Exception: {}".format(e))
             need_retry = False
             self.sessions.clear_session(session.session_id)
-            result = {"completion_tokens": 0, "content": "出错了: {}".format(e)}
+            result = {"total_tokens": 0, "completion_tokens": 0, "content": "出错了: {}".format(e)}
             return result
 
     def get_access_token(self):
