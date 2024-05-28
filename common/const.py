@@ -8,6 +8,7 @@ LINKAI = "linkai"
 CLAUDEAI = "claude"
 CLAUDEAPI= "claudeAPI"
 QWEN = "qwen"
+AnhLeyze = "anhleyze"
 
 QWEN_DASHSCOPE = "dashscope"
 QWEN_TURBO = "qwen-turbo"

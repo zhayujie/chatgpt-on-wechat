@@ -64,6 +64,9 @@ def create_bot(bot_type):
     elif bot_type == const.MOONSHOT:
         from bot.moonshot.moonshot_bot import MoonshotBot
         return MoonshotBot()
+    elif bot_type == const.AnhLeyze:
+        from bot.anhleyze.anhleyze_bot import AnhLeyzeBot
+        return AnhLeyzeBot()
 
 
     raise RuntimeError

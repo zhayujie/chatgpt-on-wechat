@@ -13,7 +13,7 @@ from voice.factory import create_voice
 class Bridge(object):
     def __init__(self):
         self.btype = {
-            "chat": const.CHATGPT,
+            "chat": const.AnhLeyze,
             "voice_to_text": conf().get("voice_to_text", "openai"),
             "text_to_voice": conf().get("text_to_voice", "google"),
             "translate": conf().get("translate", "baidu"),
@@ -44,6 +44,9 @@ class Bridge(object):
 
         if model_type in ["moonshot-v1-8k", "moonshot-v1-32k", "moonshot-v1-128k"]:
             self.btype["chat"] = const.MOONSHOT
+
+        if model_type in ["anhleyze"]:
+            self.btype["chat"] = const.AnhLeyze
 
         if conf().get("use_linkai") and conf().get("linkai_api_key"):
             self.btype["chat"] = const.LINKAI
