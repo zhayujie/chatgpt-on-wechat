@@ -24,9 +24,9 @@
       "url": "https://github.com/dfldylan/GroupInvitation.git",
       "desc": "根据特定关键词自动邀请用户加入指定的群聊"
     },
-    "file_writer": {
-      "url": "https://github.com/Isaac20231231/file_writer.git",
-      "desc": "手动发送微信通知消息插件,通过api写入文件,监听文件变化发送消息"
+    "send_msg": {
+      "url": "https://github.com/Isaac20231231/send_msg.git",
+      "desc": "手动发送微信通知消息插件,通过api发送消息/微信命令发送消息，支持个人/群聊"
     }
   }
 }
