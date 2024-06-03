@@ -17,11 +17,12 @@ try:
 except Exception as e:
     pass
 
-handler_pool = ThreadPoolExecutor(max_workers=8)  # 处理消息的线程池
-
 
 # 抽象类, 它包含了与消息通道无关的通用处理逻辑
 class ChatChannel(Channel):
+
+    handler_pool = ThreadPoolExecutor(max_workers=8)  # 处理消息的线程池
+
     name = None  # 登录的用户名
     user_id = None  # 登录的用户id
     futures = {}  # 记录每个session_id提交到线程池的future对象, 用于重置会话时把没执行的future取消掉，正在执行的不会被取消
@@ -343,7 +344,7 @@ class ChatChannel(Channel):
                         if not context_queue.empty():
                             context = context_queue.get()
                             logger.debug("[WX] consume context: {}".format(context))
-                            future: Future = handler_pool.submit(self._handle, context)
+                            future: Future = self.handler_pool.submit(self._handle, context)
                             future.add_done_callback(self._thread_pool_callback(session_id, context=context))
                             if session_id not in self.futures:
                                 self.futures[session_id] = []
