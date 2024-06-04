@@ -1,9 +1,5 @@
 {
   "repo": {
-    "midjourney": {
-      "url": "https://github.com/baojingyu/midjourney.git",
-      "desc": "利用midjourney实现ai绘图的的插件"
-    },
     "sdwebui": {
       "url": "https://github.com/lanvent/plugin_sdwebui.git",
       "desc": "利用stable-diffusion画图的插件"
@@ -31,6 +27,10 @@
     "Blackroom": {
       "url": "https://github.com/dividduang/blackroom.git",
       "desc": "小黑屋插件，被拉进小黑屋的人将不能使用@bot的功能的插件"
+    },
+    "midjourney": {
+      "url": "https://github.com/baojingyu/midjourney.git",
+      "desc": "利用midjourney实现ai绘图的的插件"
     }
   }
 }
