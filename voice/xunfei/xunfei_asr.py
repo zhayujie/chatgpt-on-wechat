@@ -109,23 +109,23 @@ def on_message(ws, message):
                 rep_start = rep[0]
                 rep_end = rep[1]
                 for sn in range(rep_start,rep_end+1):
-                    print("before pop",whole_dict)
-                    print("sn",sn)
+                    #print("before pop",whole_dict)
+                    #print("sn",sn)
                     whole_dict.pop(sn,None)
-                    print("after pop",whole_dict)
+                    #print("after pop",whole_dict)
                 results = ""
                 for i in data:
                     for w in i["cw"]:
                         results += w["w"]
                 whole_dict[sn]=results
-                print("after add",whole_dict)
+                #print("after add",whole_dict)
             else:
                 results = ""
                 for i in data:
                     for w in i["cw"]:
                         results += w["w"]
                 whole_dict[sn]=results
-            print("sid:%s call success!,data is:%s" % (sid, json.dumps(data, ensure_ascii=False)))
+            #print("sid:%s call success!,data is:%s" % (sid, json.dumps(data, ensure_ascii=False)))
     except Exception as e:
         print("receive msg,but parse exception:", e)
 
