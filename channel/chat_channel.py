@@ -99,8 +99,8 @@ class ChatChannel(Channel):
             nick_name_black_list = conf().get("nick_name_black_list", [])
             if context.get("isgroup", False):  # 群聊
                 # 校验关键字
-                match_prefix = check_prefix(content, conf().get("group_chat_prefix",[""]))
-                match_contain = check_contain(content, conf().get("group_chat_keyword",[""]))
+                match_prefix = check_prefix(content, conf().get("group_chat_prefix"))
+                match_contain = check_contain(content, conf().get("group_chat_keyword"))
                 flag = False
                 if context["msg"].to_user_id != context["msg"].actual_user_id:
                     if match_prefix is not None or match_contain is not None:
