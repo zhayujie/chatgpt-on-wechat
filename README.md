@@ -142,7 +142,7 @@ pip3 install -r requirements-optional.txt
   "subscribe_msg": "感谢您的关注！\n这里是ChatGPT，可以自由对话。\n支持语音对话。\n支持图片输出，画字开头的消息将按要求创作图片。\n支持角色扮演和文字冒险等丰富插件。\n输入{trigger_prefix}#help 查看详细指令。",
   "use_linkai": false,                                        # 是否使用LinkAI接口，默认关闭，开启后可国内访问，使用知识库和MJ
   "linkai_api_key": "",                                       # LinkAI Api Key
-  "linkai_app_code": ""                                       # LinkAI 应用code
+  "linkai_app_code": ""                                       # LinkAI 应用或工作流code
 }
 ```
 **配置说明：**
@@ -183,7 +183,7 @@ pip3 install -r requirements-optional.txt
 
 + `use_linkai`: 是否使用LinkAI接口，开启后可国内访问，使用知识库和 `Midjourney` 绘画, 参考 [文档](https://link-ai.tech/platform/link-app/wechat)
 + `linkai_api_key`: LinkAI Api Key，可在 [控制台](https://link-ai.tech/console/interface) 创建
-+ `linkai_app_code`: LinkAI 应用code，选填
++ `linkai_app_code`: LinkAI 应用或工作流的code，选填
 
 **本说明文档可能会未及时更新，当前所有可选的配置项均在该[`config.py`](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/config.py)中列出。**
 

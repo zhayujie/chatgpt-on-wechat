@@ -6,6 +6,15 @@
 #    要使用本模块, 首先到 xfyun.cn 注册一个开发者账号,
 #    之后创建一个新应用, 然后在应用管理的语音识别或者语音合同右边可以查看APPID API Key 和 Secret Key
 #    然后在 config.json 中填入这三个值
+#
+#    配置说明：
+# {
+#  "APPID":"xxx71xxx",
+#  "APIKey":"xxxx69058exxxxxx",  #讯飞xfyun.cn控制台语音合成或者听写界面的APIKey
+#  "APISecret":"xxxx697f0xxxxxx",  #讯飞xfyun.cn控制台语音合成或者听写界面的APIKey
+#  "BusinessArgsTTS":{"aue": "lame", "sfl": 1, "auf": "audio/L16;rate=16000", "vcn": "xiaoyan", "tte": "utf8"}, #语音合成的参数，具体可以参考xfyun.cn的文档
+#  "BusinessArgsASR":{"domain": "iat", "language": "zh_cn", "accent": "mandarin", "vad_eos":10000, "dwa": "wpgs"}  #语音听写的参数，具体可以参考xfyun.cn的文档
+# }
 #####################################################################
 
 import json
