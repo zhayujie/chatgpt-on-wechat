@@ -232,6 +232,22 @@ class Config(dict):
 config = Config()
 
 
+def drag_sensitive(config):
+    if isinstance(config, str):
+        conf_dict: dict = json.loads(config)
+        for key in conf_dict:
+            if "key" in key or "secret" in key:
+                conf_dict[key] = conf_dict[key][0:3] + "*" * 5 + conf_dict[key][-3:]
+        return json.dumps(conf_dict, indent=4)
+    elif isinstance(config, dict):
+        for key in config:
+            if "key" in key or "secret" in key:
+                config[key] = config[key][0:3] + "*" * 5 + config[key][-3:]
+        return config
+
+    return config
+
+
 def load_config():
     global config
     config_path = "./config.json"
@@ -240,7 +256,7 @@ def load_config():
         config_path = "./config-template.json"
 
     config_str = read_file(config_path)
-    logger.debug("[INIT] config str: {}".format(config_str))
+    logger.debug("[INIT] config str: {}".format(drag_sensitive(config_str)))
 
     # 将json字符串反序列化为dict类型
     config = Config(json.loads(config_str))
@@ -265,7 +281,7 @@ def load_config():
         logger.setLevel(logging.DEBUG)
         logger.debug("[INIT] set log level to DEBUG")
 
-    logger.info("[INIT] load config: {}".format(config))
+    logger.info("[INIT] load config: {}".format(drag_sensitive(config)))
 
     config.load_user_datas()
 
