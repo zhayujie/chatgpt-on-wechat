@@ -129,7 +129,7 @@ def on_open(ws):
              "data": wsParam.Data,
              }
         d = json.dumps(d)
-        print("------>开始发送文本数据")
+        # print("------>开始发送文本数据")
         ws.send(d)
         if os.path.exists(outfile):
             os.remove(outfile)

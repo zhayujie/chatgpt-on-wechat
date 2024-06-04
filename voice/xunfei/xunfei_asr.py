@@ -195,7 +195,7 @@ def xunfei_asr(APPID,APISecret,APIKey,BusinessArgsASR,AudioFile):
                        AudioFile=AudioFile)
     #wsParam是global变量，给上面on_open函数调用使用的
     wsParam = wsParam1
-    websocket.enableTrace(True)
+    websocket.enableTrace(False)
     wsUrl = wsParam.create_url()
     ws = websocket.WebSocketApp(wsUrl, on_message=on_message, on_error=on_error, on_close=on_close)
     ws.on_open = on_open
