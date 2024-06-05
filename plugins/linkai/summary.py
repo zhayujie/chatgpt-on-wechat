@@ -9,28 +9,28 @@ class LinkSummary:
     def __init__(self):
         pass
 
-    def summary_file(self, file_path: str):
+    def summary_file(self, file_path: str, sum_config: dict):
         file_body = {
             "file": open(file_path, "rb"),
             "name": file_path.split("/")[-1],
         }
         url = self.base_url() + "/v1/summary/file"
-        res = requests.post(url, headers=self.headers(), files=file_body, timeout=(5, 300))
+        res = requests.post(url, headers=self.headers(), files=file_body, timeout=(sum_config.get("time_out", 5), 300))
         return self._parse_summary_res(res)
 
-    def summary_url(self, url: str):
+    def summary_url(self, url: str, sum_config: dict):
         url = html.unescape(url)
         body = {
             "url": url
         }
-        res = requests.post(url=self.base_url() + "/v1/summary/url", headers=self.headers(), json=body, timeout=(5, 180))
+        res = requests.post(url=self.base_url() + "/v1/summary/url", headers=self.headers(), json=body, timeout=(sum_config.get("time_out", 5), 180))
         return self._parse_summary_res(res)
 
-    def summary_chat(self, summary_id: str):
+    def summary_chat(self, summary_id: str, sum_config: dict):
         body = {
             "summary_id": summary_id
         }
-        res = requests.post(url=self.base_url() + "/v1/summary/chat", headers=self.headers(), json=body, timeout=(5, 180))
+        res = requests.post(url=self.base_url() + "/v1/summary/chat", headers=self.headers(), json=body, timeout=(sum_config.get("time_out", 5), 180))
         if res.status_code == 200:
             res = res.json()
             logger.debug(f"[LinkSum] chat open, res={res}")

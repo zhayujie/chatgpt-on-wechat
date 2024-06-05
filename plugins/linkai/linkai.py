@@ -56,7 +56,7 @@ class LinkAI(Plugin):
                 return
             if context.type != ContextType.IMAGE:
                 _send_info(e_context, "正在为你加速生成摘要，请稍后")
-            res = LinkSummary().summary_file(file_path)
+            res = LinkSummary().summary_file(file_path, self.sum_config)
             e_context['context']['no_need_at'] = self.sum_config.get("group_no_need_at", False)
             if not res:
                 if context.type != ContextType.IMAGE:
@@ -75,7 +75,7 @@ class LinkAI(Plugin):
             if not LinkSummary().check_url(context.content):
                 return
             _send_info(e_context, "正在为你加速生成摘要，请稍后")
-            res = LinkSummary().summary_url(context.content)
+            res = LinkSummary().summary_url(context.content, self.sum_config)
             e_context['context']['no_need_at'] = self.sum_config.get("group_no_need_at", False)
             if not res:
                 _set_reply_text("因为神秘力量无法获取文章内容，请稍后再试吧~", e_context, level=ReplyType.TEXT)
@@ -99,7 +99,7 @@ class LinkAI(Plugin):
         if context.type == ContextType.TEXT and context.content == "开启对话" and _find_sum_id(context):
             # 文本对话
             _send_info(e_context, "正在为你开启对话，请稍后")
-            res = LinkSummary().summary_chat(_find_sum_id(context))
+            res = LinkSummary().summary_chat(_find_sum_id(context), self.sum_config)
             if not res:
                 _set_reply_text("开启对话失败，请稍后再试吧", e_context)
                 return
