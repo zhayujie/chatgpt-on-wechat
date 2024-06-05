@@ -8,6 +8,7 @@
   "text_to_voice": "openai",
   "proxy": "",
   "hot_reload": false,
+  "single_chat_no_need_prefix": false,
   "single_chat_prefix": [
     "bot",
     "@bot"
