@@ -14,6 +14,7 @@
     "summary": {
         "enabled": true,
         "group_enabled": true,
+        "group_no_need_at": false,
         "max_file_size": 5000,
         "type": ["FILE", "SHARING"]
     }
