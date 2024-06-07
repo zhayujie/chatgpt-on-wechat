@@ -41,7 +41,7 @@
             "type": ["FILE", "SHARING"]
         }
     },
-    "hello":{
+    "hello": {
         "group_welc_fixed_msg": {
             "群聊1": "群聊1的固定欢迎语",
             "群聊2": "群聊2的固定欢迎语"
@@ -54,7 +54,7 @@
 
         "use_character_desc": false
     },
-    "Apilot"{
+    "Apilot": {
         "alapi_token": "xxx",
         "morning_news_text_enabled": false
     }
