@@ -65,6 +65,14 @@ COMMANDS = {
         "alias": ["reset", "重置会话"],
         "desc": "重置会话",
     },
+    "push_sub": {
+        "alias": ["push_sub", "订阅推送", "推送订阅"],
+        "desc": "订阅推送信息"
+    },
+    "push_unsub": {
+        "alias": ["push_unsub", "取消订阅推送", "取消推送订阅"],
+        "desc": "取消订阅推送信息"
+    }
 }
 
 ADMIN_COMMANDS = {
@@ -321,6 +329,37 @@ class Godcmd(Plugin):
                         ok, result = True, "会话已重置"
                     else:
                         ok, result = False, "当前对话机器人不支持重置会话"
+                elif cmd == "push_sub":
+                    filename = 'push_sub_groups.json'
+                    if not os.path.exists(filename):
+                        with open(filename, 'w', encoding='utf-8') as f:
+                            json.dump({}, f, ensure_ascii=False, indent=4)
+                    with open(filename, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                    msg = e_context["context"]["msg"]
+                    user_id = msg.other_user_id
+                    nickname = msg.other_user_nickname
+                    data[user_id] = {
+                        "enable": True,
+                        "nickname": nickname
+                    }
+                    with open(filename, 'w', encoding='utf-8') as file:
+                        json.dump(data, file, ensure_ascii=False, indent=4)
+                    ok, result = True, "推送订阅成功！"
+                elif cmd == "push_unsub":
+                    filename = 'push_sub_groups.json'
+                    if not os.path.exists(filename):
+                        with open(filename, 'w', encoding='utf-8') as f:
+                            json.dump({}, f, ensure_ascii=False, indent=4)
+                    with open(filename, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                    msg = e_context["context"]["msg"]
+                    user_id = msg.other_user_id
+                    if data[user_id] is not None:
+                        data[user_id]["enable"] = False
+                    with open(filename, 'w', encoding='utf-8') as file:
+                        json.dump(data, file, ensure_ascii=False, indent=4)
+                    ok, result = True, "取消推送订阅成功！"
                 logger.debug("[Godcmd] command: %s by %s" % (cmd, user))
             elif any(cmd in info["alias"] for info in ADMIN_COMMANDS.values()):
                 if isadmin:
