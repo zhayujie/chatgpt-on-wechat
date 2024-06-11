@@ -1,9 +1,9 @@
 # encoding:utf-8
 import json
 import threading
-
 import requests
-
+import time
+from threading import Thread, Event
 from bot.bot import Bot
 from bot.dify.dify_session import DifySession, DifySessionManager
 from bridge.context import ContextType, Context
@@ -11,8 +11,6 @@ from bridge.reply import Reply, ReplyType
 from common.log import logger
 from common import const
 from config import conf
-from threading import Thread, Event
-import time
 
 class DifyBot(Bot):
     def __init__(self):
@@ -31,7 +29,7 @@ class DifyBot(Bot):
             user = None
             if channel_type == "wx":
                 user = context["msg"].other_user_nickname if context.get("msg") else "default"
-            elif channel_type in ["wechatcom_app", "wechatmp", "wechatmp_service"]:
+            elif channel_type in ["wechatcom_app", "wechatmp", "wechatmp_service", "wechatcom_service", "wework"]:
                 user = context["msg"].other_user_id if context.get("msg") else "default"
             else:
                 return Reply(ReplyType.ERROR, f"unsupported channel type: {channel_type}, now dify only support wx, wechatcom_app, wechatmp, wechatmp_service channel")
@@ -43,12 +41,15 @@ class DifyBot(Bot):
             reply, err = self._reply(query, session, context)
             if err != None:
                 reply = Reply(ReplyType.TEXT, "我暂时遇到了一些问题，请您稍后重试~")
+            else:
+                # 替换Markdown粗体标记和标题标记
+                reply.content = self._replace_markdown(reply.content)
             return reply
         else:
             reply = Reply(ReplyType.ERROR, "Bot不支持处理{}类型的消息".format(context.type))
             return reply
 
-    def _get_api_base_url(self):
+    def _get_api_base_url(self) -> str:
         return conf().get("dify_api_base", "https://api.dify.ai/v1")
 
     def _get_headers(self):
@@ -65,30 +66,8 @@ class DifyBot(Bot):
             "user": session.get_user()
         }
 
-#    def _reply(self, query: str, session: DifySession, context: Context):
-#        try:
-#            # 首先发送一条消息，告知用户正在生成总结
-#            initial_reply = Reply(ReplyType.TEXT, "🎉正在为您查询，请稍候...")
-#            channel = context.get("channel")
-#            channel.send(initial_reply, context)
-#
-#            session.count_user_message() # 限制一个conversation中消息数，防止conversation过长
-#            dify_app_type = conf().get('dify_app_type', 'chatbot')
-#            if dify_app_type == 'chatbot':
-#                return self._handle_chatbot(query, session)
-#            elif dify_app_type == 'agent':
-#                return self._handle_agent(query, session, context)
-#            elif dify_app_type == 'workflow':
-#                return self._handle_workflow(query, session)
-#            else:
-#                return None, "dify_app_type must be agent, chatbot or workflow"
-#
-#        except Exception as e:
-#            error_info = f"[DIFY] Exception: {e}"
-#            logger.exception(error_info)
-#            return None, error_info
-
     def _reply(self, query: str, session: DifySession, context: Context):
+
         completed = Event()
         reply_data = None
         error_info = None
@@ -125,7 +104,6 @@ class DifyBot(Bot):
 
         return reply_data
 
-
     def _handle_chatbot(self, query: str, session: DifySession):
         # TODO: 获取response部分抽取为公共函数
         base_url = self._get_api_base_url()
@@ -139,22 +117,10 @@ class DifyBot(Bot):
             logger.warn(error_info)
             return None, error_info
 
-        # response: 
-        # {
-        #     "event": "message",
-        #     "message_id": "9da23599-e713-473b-982c-4328d4f5c78a",
-        #     "conversation_id": "45701982-8118-4bc5-8e9b-64562b4555f2",
-        #     "mode": "chat",
-        #     "answer": "xxx",
-        #     "metadata": {
-        #         "usage": {
-        #         },
-        #         "retriever_resources": []
-        #     },
-        #     "created_at": 1705407629
-        # }
         rsp_data = response.json()
-        logger.debug("[DIFY] usage ".format(rsp_data['metadata']['usage']))
+        logger.debug("[DIFY] usage {}".format(rsp_data.get('metadata', {}).get('usage', 0)))
+        # TODO: 处理返回的图片文件
+        # {"answer": "![image](/files/tools/dbf9cd7c-2110-4383-9ba8-50d9fd1a4815.png?timestamp=1713970391&nonce=0d5badf2e39466042113a4ba9fd9bf83&sign=OVmdCxCEuEYwc9add3YNFFdUpn4VdFKgl84Cg54iLnU=)"}
         reply = Reply(ReplyType.TEXT, rsp_data['answer'])
         # 设置dify conversation_id, 依靠dify管理上下文
         if session.get_conversation_id() == '':
@@ -173,11 +139,7 @@ class DifyBot(Bot):
             error_info = f"[DIFY] response text={response.text} status_code={response.status_code}"
             logger.warn(error_info)
             return None, error_info
-        # response:
-        # data: {"event": "agent_thought", "id": "8dcf3648-fbad-407a-85dd-73a6f43aeb9f", "task_id": "9cf1ddd7-f94b-459b-b942-b77b26c59e9b", "message_id": "1fb10045-55fd-4040-99e6-d048d07cbad3", "position": 1, "thought": "", "observation": "", "tool": "", "tool_input": "", "created_at": 1705639511, "message_files": [], "conversation_id": "c216c595-2d89-438c-b33c-aae5ddddd142"}
-        # data: {"event": "agent_thought", "id": "8dcf3648-fbad-407a-85dd-73a6f43aeb9f", "task_id": "9cf1ddd7-f94b-459b-b942-b77b26c59e9b", "message_id": "1fb10045-55fd-4040-99e6-d048d07cbad3", "position": 1, "thought": "", "observation": "", "tool": "dalle3", "tool_input": "{\"dalle3\": {\"prompt\": \"cute Japanese anime girl with white hair, blue eyes, bunny girl suit\"}}", "created_at": 1705639511, "message_files": [], "conversation_id": "c216c595-2d89-438c-b33c-aae5ddddd142"}
-        # data: {"event": "agent_message", "id": "1fb10045-55fd-4040-99e6-d048d07cbad3", "task_id": "9cf1ddd7-f94b-459b-b942-b77b26c59e9b", "message_id": "1fb10045-55fd-4040-99e6-d048d07cbad3", "answer": "I have created an image of a cute Japanese", "created_at": 1705639511, "conversation_id": "c216c595-2d89-438c-b33c-aae5ddddd142"}
-        # data: {"event": "message_end", "task_id": "9cf1ddd7-f94b-459b-b942-b77b26c59e9b", "id": "1fb10045-55fd-4040-99e6-d048d07cbad3", "message_id": "1fb10045-55fd-4040-99e6-d048d07cbad3", "conversation_id": "c216c595-2d89-438c-b33c-aae5ddddd142", "metadata": {"usage": {"prompt_tokens": 305, "prompt_unit_price": "0.001", "prompt_price_unit": "0.001", "prompt_price": "0.0003050", "completion_tokens": 97, "completion_unit_price": "0.002", "completion_price_unit": "0.001", "completion_price": "0.0001940", "total_tokens": 184, "total_price": "0.0002290", "currency": "USD", "latency": 1.771092874929309}}}
+ 
         msgs, conversation_id = self._handle_sse_response(response)
         channel = context.get("channel")
         # TODO: 适配除微信以外的其他channel
@@ -190,7 +152,8 @@ class DifyBot(Bot):
                 reply = Reply(ReplyType.TEXT, msg['content'])
                 channel.send(reply, context)
             elif msg['type'] == 'message_file':
-                reply = Reply(ReplyType.IMAGE_URL, msg['content']['url'])
+                url = self._fill_file_base_url(msg['content']['url'])
+                reply = Reply(ReplyType.IMAGE_URL, url)
                 thread = threading.Thread(target=channel.send, args=(reply, context))
                 thread.start()
         final_msg = msgs[-1]
@@ -198,7 +161,8 @@ class DifyBot(Bot):
         if final_msg['type'] == 'agent_message':
             reply = Reply(ReplyType.TEXT, final_msg['content'])
         elif final_msg['type'] == 'message_file':
-            reply = Reply(ReplyType.IMAGE_URL, final_msg['content']['url'])
+            url = self._fill_file_base_url(final_msg['content']['url'])
+            reply = Reply(ReplyType.IMAGE_URL, url)
         # 设置dify conversation_id, 依靠dify管理上下文
         if session.get_conversation_id() == '':
             session.set_conversation_id(conversation_id)
@@ -214,27 +178,19 @@ class DifyBot(Bot):
             error_info = f"[DIFY] response text={response.text} status_code={response.status_code}"
             logger.warn(error_info)
             return None, error_info
-        # {
-        #     "log_id": "djflajgkldjgd",
-        #     "task_id": "9da23599-e713-473b-982c-4328d4f5c78a",
-        #     "data": {
-        #         "id": "fdlsjfjejkghjda",
-        #         "workflow_id": "fldjaslkfjlsda",
-        #         "status": "succeeded",
-        #         "outputs": {
-        #         "text": "Nice to meet you."
-        #         },
-        #         "error": null,
-        #         "elapsed_time": 0.875,
-        #         "total_tokens": 3562,
-        #         "total_steps": 8,
-        #         "created_at": 1705407629,
-        #         "finished_at": 1727807631
-        #     }
-        # }
+
         rsp_data = response.json()
         reply = Reply(ReplyType.TEXT, rsp_data['data']['outputs']['text'])
         return reply, None
+
+    def _fill_file_base_url(self, url: str):
+        if url.startswith("https://") or url.startswith("http://"):
+            return url
+        # 补全文件base url, 默认使用去掉"/v1"的dify api base url
+        return self._get_file_base_url() + url
+
+    def _get_file_base_url(self) -> str:
+        return self._get_api_base_url().replace("/v1", "")
 
     def _get_workflow_payload(self, query, session: DifySession):
         return {
@@ -307,10 +263,10 @@ class DifyBot(Bot):
                 break
             else:
                 logger.warn("[DIFY] unknown event: {}".format(event))
-        
+
         if not conversation_id:
             raise Exception("conversation_id not found")
-        
+
         return merged_message, conversation_id
 
     def _append_agent_message(self, accumulated_agent_message,  merged_message):
@@ -327,3 +283,10 @@ class DifyBot(Bot):
             'type': 'message_file',
             'content': event,
         })
+
+    def _replace_markdown(self, text):
+        # 替换Markdown的粗体标记
+        text = text.replace("**", "")
+        # 替换Markdown的标题标记
+        text = text.replace("### ", "").replace("## ", "").replace("# ", "")
+        return text
