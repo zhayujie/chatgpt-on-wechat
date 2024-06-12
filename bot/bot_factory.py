@@ -64,6 +64,10 @@ def create_bot(bot_type):
     elif bot_type == const.MOONSHOT:
         from bot.moonshot.moonshot_bot import MoonshotBot
         return MoonshotBot()
+    
+    elif bot_type == const.MiniMax:
+        from bot.minimax.minimax_bot import MinimaxBot
+        return MinimaxBot()
 
 
     raise RuntimeError
