@@ -36,6 +36,11 @@ COMMANDS = {
         "alias": ["model", "模型"],
         "desc": "查看和设置全局模型",
     },
+    "set_openai_api_base": {
+        "alias": ["set_openai_api_base"],
+        "args": ["api_base"],
+        "desc": "设置你的OpenAI私有api_base",
+    },
     "set_openai_api_key": {
         "alias": ["set_openai_api_key"],
         "args": ["api_key"],
@@ -138,7 +143,7 @@ ADMIN_COMMANDS = {
 def get_help_text(isadmin, isgroup):
     help_text = "通用指令\n"
     for cmd, info in COMMANDS.items():
-        if cmd in ["auth", "set_openai_api_key", "reset_openai_api_key", "set_gpt_model", "reset_gpt_model", "gpt_model"]:  # 不显示帮助指令
+        if not isadmin and cmd in ["auth", "set_openai_api_base", "set_openai_api_key", "reset_openai_api_key", "set_gpt_model", "reset_gpt_model", "gpt_model"]:  # 不显示帮助指令
             continue
         if cmd == "id" and conf().get("channel_type", "wx") not in ["wxy", "wechatmp"]:
             continue
@@ -278,6 +283,13 @@ class Godcmd(Plugin):
                             ok, result = True, "模型设置为: " + str(model)
                 elif cmd == "id":
                     ok, result = True, user
+                elif cmd == "set_openai_api_base":
+                    if len(args) == 1:
+                        user_data = conf().get_user_data(user)
+                        user_data["open_ai_api_base"] = args[0]
+                        ok, result = True, "你的OpenAI私有api_base已设置为" + args[0]
+                    else:
+                        ok, result = False, "请提供一个api_base"
                 elif cmd == "set_openai_api_key":
                     if len(args) == 1:
                         user_data = conf().get_user_data(user)
