@@ -176,24 +176,29 @@ class DingTalkChanel(ChatChannel, dingtalk_stream.ChatbotHandler):
         receiver = context["receiver"]
         isgroup = context.kwargs['msg'].is_group
         incoming_message = context.kwargs['msg'].incoming_message
-        logger.info("[Dingtalk] sendMsg={}, receiver={}".format(reply, receiver))
-        def reply_with_text():
-            self.reply_text(reply.content, incoming_message)
-        def reply_with_at_text():
-            self.reply_text("📢 您有一条新的消息，请查看。", incoming_message)
-        def reply_with_ai_markdown():
-            button_list, markdown_content = self.generate_button_markdown_content(context, reply)
-            self.reply_ai_markdown_button(incoming_message, markdown_content, button_list, "", "📌 内容由AI-Bot生成", "",[incoming_message.sender_staff_id])
 
-        if reply.type in [ReplyType.IMAGE_URL, ReplyType.IMAGE, ReplyType.TEXT]:
-            if isgroup:
-                reply_with_ai_markdown()
-                reply_with_at_text()
+        if conf().get("dingtalk_card_enabled"):
+            logger.info("[Dingtalk] sendMsg={}, receiver={}".format(reply, receiver))
+            def reply_with_text():
+                self.reply_text(reply.content, incoming_message)
+            def reply_with_at_text():
+                self.reply_text("📢 您有一条新的消息，请查看。", incoming_message)
+            def reply_with_ai_markdown():
+                button_list, markdown_content = self.generate_button_markdown_content(context, reply)
+                self.reply_ai_markdown_button(incoming_message, markdown_content, button_list, "", "📌 内容由AI生成", "",[incoming_message.sender_staff_id])
+
+            if reply.type in [ReplyType.IMAGE_URL, ReplyType.IMAGE, ReplyType.TEXT]:
+                if isgroup:
+                    reply_with_ai_markdown()
+                    reply_with_at_text()
+                else:
+                    reply_with_ai_markdown()
             else:
-                reply_with_ai_markdown()
+                # 暂不支持其它类型消息回复
+                reply_with_text()
         else:
-            # 暂不支持其它类型消息回复
-            reply_with_text()
+            self.reply_text(reply.content, incoming_message)
+
 
     def generate_button_markdown_content(self, context, reply):
         image_url = context.kwargs.get("image_url")

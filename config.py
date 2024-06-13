@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import pickle
+import copy
 
 from common.log import logger
 
@@ -36,6 +37,13 @@ available_setting = {
     "group_welcome_msg": "",  # 配置新人进群固定欢迎语，不配置则使用随机风格欢迎
     "trigger_by_self": False,  # 是否允许机器人触发
     "text_to_image": "dall-e-2",  # 图片生成模型，可选 dall-e-2, dall-e-3
+    # Azure OpenAI dall-e-3 配置
+    "dalle3_image_style": "vivid", # 图片生成dalle3的风格，可选有 vivid, natural
+    "dalle3_image_quality": "hd", # 图片生成dalle3的质量，可选有 standard, hd
+    # Azure OpenAI DALL-E API 配置, 当use_azure_chatgpt为true时,用于将文字回复的资源和Dall-E的资源分开.
+    "azure_openai_dalle_api_base": "", # [可选] azure openai 用于回复图片的资源 endpoint，默认使用 open_ai_api_base
+    "azure_openai_dalle_api_key": "", # [可选] azure openai 用于回复图片的资源 key，默认使用 open_ai_api_key
+    "azure_openai_dalle_deployment_id":"", # [可选] azure openai 用于回复图片的资源 deployment id，默认使用 text_to_image
     "image_proxy": True,  # 是否需要图片代理，国内访问LinkAI时需要
     "image_create_prefix": ["画", "看", "找"],  # 开启图片回复的前缀
     "concurrency_in_session": 1,  # 同一会话最多有多少条消息在处理中，大于1可能乱序
@@ -98,7 +106,7 @@ available_setting = {
     "baidu_api_key": "",
     "baidu_secret_key": "",
     # 1536普通话(支持简单的英文识别) 1737英语 1637粤语 1837四川话 1936普通话远场
-    "baidu_dev_pid": "1536",
+    "baidu_dev_pid": 1536,
     # azure 语音api配置， 使用azure语音识别和语音合成时需要
     "azure_voice_api_key": "",
     "azure_voice_region": "japaneast",
@@ -141,8 +149,9 @@ available_setting = {
     "feishu_bot_name": "",  # 飞书机器人的名字
 
     # 钉钉配置
-    "dingtalk_client_id": "",  # 钉钉机器人Client ID
+    "dingtalk_client_id": "",  # 钉钉机器人Client ID 
     "dingtalk_client_secret": "",  # 钉钉机器人Client Secret
+    "dingtalk_card_enabled": False,
 
     # chatgpt指令自定义触发词
     "clear_memory_commands": ["#清除记忆"],  # 重置会话指令，必须以#开头
@@ -227,6 +236,30 @@ class Config(dict):
 config = Config()
 
 
+def drag_sensitive(config):
+    try:
+        if isinstance(config, str):
+            conf_dict: dict = json.loads(config)
+            conf_dict_copy = copy.deepcopy(conf_dict)
+            for key in conf_dict_copy:
+                if "key" in key or "secret" in key:
+                    if isinstance(key, str):
+                        conf_dict_copy[key] = conf_dict_copy[key][0:3] + "*" * 5 + conf_dict_copy[key][-3:]
+            return json.dumps(conf_dict_copy, indent=4)
+
+        elif isinstance(config, dict):
+            config_copy = copy.deepcopy(config)
+            for key in config:
+                if "key" in key or "secret" in key:
+                    if isinstance(key, str):
+                        config_copy[key] = config_copy[key][0:3] + "*" * 5 + config_copy[key][-3:]
+            return config_copy
+    except Exception as e:
+        logger.exception(e)
+        return config
+    return config
+
+
 def load_config():
     global config
     config_path = "./config.json"
@@ -235,7 +268,7 @@ def load_config():
         config_path = "./config-template.json"
 
     config_str = read_file(config_path)
-    logger.debug("[INIT] config str: {}".format(config_str))
+    logger.debug("[INIT] config str: {}".format(drag_sensitive(config_str)))
 
     # 将json字符串反序列化为dict类型
     config = Config(json.loads(config_str))
@@ -260,11 +293,9 @@ def load_config():
         logger.setLevel(logging.DEBUG)
         logger.debug("[INIT] set log level to DEBUG")
 
-    logger.info("[INIT] load config: {}".format(config))
+    logger.info("[INIT] load config: {}".format(drag_sensitive(config)))
 
     config.load_user_datas()
-
-
 
 
 def get_root():
