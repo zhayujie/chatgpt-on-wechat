@@ -1,6 +1,6 @@
 FROM python:3.10-slim-bullseye
 
-LABEL maintainer="baojingyu@live.cn"
+LABEL maintainer="foo@bar.com"
 ARG TZ='Asia/Shanghai'
 
 ARG CHATGPT_ON_WECHAT_VER
