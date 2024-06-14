@@ -250,6 +250,10 @@ class ChatChannel(Channel):
 
                 if reply.type == ReplyType.TEXT:
                     reply_text = reply.content
+            # 修改位置1：确保 reply_text 是一个字符串
+                    if isinstance(reply_text, list):
+                        reply_text = ' '.join(reply_text)  # 使用空格将列表元素连接成字符串，修改结束
+                   
                     if desire_rtype == ReplyType.VOICE and ReplyType.VOICE not in self.NOT_SUPPORT_REPLYTYPE:
                         reply = super().build_text_to_voice(reply.content)
                         return self._decorate_reply(context, reply)
