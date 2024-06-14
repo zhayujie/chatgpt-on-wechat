@@ -99,8 +99,8 @@ class ChatChannel(Channel):
             nick_name_black_list = conf().get("nick_name_black_list", [])
             if context.get("isgroup", False):  # 群聊
                 # 校验关键字
-                match_prefix = check_prefix(content, conf().get("group_chat_prefix",[""]))
-                match_contain = check_contain(content, conf().get("group_chat_keyword",[""]))
+                match_prefix = check_prefix(content, conf().get("group_chat_prefix"))
+                match_contain = check_contain(content, conf().get("group_chat_keyword"))
                 flag = False
                 if context["msg"].to_user_id != context["msg"].actual_user_id:
                     if match_prefix is not None or match_contain is not None:
@@ -158,72 +158,6 @@ class ChatChannel(Channel):
                 context["desire_rtype"] = ReplyType.VOICE
         elif context.type == ContextType.VOICE:
             if "desire_rtype" not in context and conf().get("voice_reply_voice") and ReplyType.VOICE not in self.NOT_SUPPORT_REPLYTYPE:
-                context["desire_rtype"] = ReplyType.VOICE
-        elif context.type == ContextType.IMAGE:
-            if first_in and "」\n- - - - - - -" in content:  # 初次匹配 过滤引用消息
-                logger.debug(content)
-                logger.debug("[chat_channel]reference query skipped")
-                return None
-
-            nick_name_black_list = conf().get("nick_name_black_list", [])
-            if context.get("isgroup", False):  # 群聊
-                # 校验关键字
-                match_prefix = check_prefix(content, conf().get("group_chat_prefix",[""]))
-                match_contain = check_contain(content, conf().get("group_chat_keyword",[""]))
-                flag = False
-                if context["msg"].to_user_id != context["msg"].actual_user_id:
-                    if match_prefix is not None or match_contain is not None:
-                        flag = True
-                        if match_prefix:
-                            content = content.replace(match_prefix, "", 1).strip()
-                    if context["msg"].is_at:
-                        nick_name = context["msg"].actual_user_nickname
-                        if nick_name and nick_name in nick_name_black_list:
-                            # 黑名单过滤
-                            logger.warning(f"[chat_channel] Nickname {nick_name} in In BlackList, ignore")
-                            return None
-
-                        logger.info("[chat_channel]receive group at")
-                        if not conf().get("group_at_off", False):
-                            flag = True
-                        pattern = f"@{re.escape(self.name)}(\u2005|\u0020)"
-                        subtract_res = re.sub(pattern, r"", content)
-                        if isinstance(context["msg"].at_list, list):
-                            for at in context["msg"].at_list:
-                                pattern = f"@{re.escape(at)}(\u2005|\u0020)"
-                                subtract_res = re.sub(pattern, r"", subtract_res)
-                        if subtract_res == content and context["msg"].self_display_name:
-                            # 前缀移除后没有变化，使用群昵称再次移除
-                            pattern = f"@{re.escape(context['msg'].self_display_name)}(\u2005|\u0020)"
-                            subtract_res = re.sub(pattern, r"", content)
-                        content = subtract_res
-                if not flag:
-                    if context["origin_ctype"] == ContextType.VOICE:
-                        logger.info("[chat_channel]receive group voice, but checkprefix didn't match")
-                    return None
-            else:  # 单聊
-                nick_name = context["msg"].from_user_nickname
-                if nick_name and nick_name in nick_name_black_list:
-                    # 黑名单过滤
-                    logger.warning(f"[chat_channel] Nickname '{nick_name}' in In BlackList, ignore")
-                    return None
-
-                match_prefix = check_prefix(content, conf().get("single_chat_prefix", [""]))
-                if match_prefix is not None:  # 判断如果匹配到自定义前缀，则返回过滤掉前缀+空格后的内容
-                    content = content.replace(match_prefix, "", 1).strip()
-                elif context["origin_ctype"] == ContextType.VOICE:  # 如果源消息是私聊的语音消息，允许不匹配前缀，放宽条件
-                    pass
-                else:
-                    return None
-            content = content.strip()
-            img_match_prefix = check_prefix(content, conf().get("image_create_prefix",[""]))
-            if img_match_prefix:
-                content = content.replace(img_match_prefix, "", 1)
-                context.type = ContextType.IMAGE_CREATE
-            else:
-                context.type = ContextType.IMAGE
-            context.content = content.strip()
-            if "desire_rtype" not in context and conf().get("always_reply_voice") and ReplyType.VOICE not in self.NOT_SUPPORT_REPLYTYPE:
                 context["desire_rtype"] = ReplyType.VOICE
         return context
 
@@ -321,9 +255,9 @@ class ChatChannel(Channel):
                     if context.get("isgroup", False):
                         if not context.get("no_need_at", False):
                             reply_text = "@" + context["msg"].actual_user_nickname + "\n" + reply_text.strip()
-                        reply_text = conf().get("group_chat_reply_prefix", [""])[0] + reply_text + conf().get("group_chat_reply_suffix", [""])[0]
+                        reply_text = conf().get("group_chat_reply_prefix", "") + reply_text + conf().get("group_chat_reply_suffix", "")
                     else:
-                        reply_text = conf().get("single_chat_reply_prefix", [""])[0] + reply_text + conf().get("single_chat_reply_suffix", [""])[0]
+                        reply_text = conf().get("single_chat_reply_prefix", "") + reply_text + conf().get("single_chat_reply_suffix", "")
                     reply.content = reply_text
                 elif reply.type == ReplyType.ERROR or reply.type == ReplyType.INFO:
                     reply.content = "[" + str(reply.type) + "]\n" + reply.content

@@ -8,5 +8,3 @@ Pillow
 pre-commit
 web.py
 linkai>=0.0.6.0
-apscheduler
-webuiapi>=0.6.2
