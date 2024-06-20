@@ -1,6 +1,8 @@
 # encoding:utf-8
 
-import requests, json
+import requests
+import json
+from common import const
 from bot.bot import Bot
 from bot.session_manager import SessionManager
 from bridge.context import ContextType
@@ -16,9 +18,15 @@ class BaiduWenxinBot(Bot):
 
     def __init__(self):
         super().__init__()
-        wenxin_model = conf().get("baidu_wenxin_model") or "eb-instant"
-        if conf().get("model") and conf().get("model") == "wenxin-4":
-            wenxin_model = "completions_pro"
+        wenxin_model = conf().get("baidu_wenxin_model")
+        if wenxin_model is not None:
+            wenxin_model = conf().get("baidu_wenxin_model") or "eb-instant"
+        else:
+            if conf().get("model") and conf().get("model") == const.WEN_XIN:
+                wenxin_model = "completions"
+            elif conf().get("model") and conf().get("model") == const.WEN_XIN_4:
+                wenxin_model = "completions_pro"
+
         self.sessions = SessionManager(BaiduWenxinSession, model=wenxin_model)
 
     def reply(self, query, context=None):

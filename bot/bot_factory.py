@@ -2,7 +2,6 @@
 channel factory
 """
 from common import const
-from common.log import logger
 
 
 def create_bot(bot_type):
