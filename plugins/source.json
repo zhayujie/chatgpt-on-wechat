@@ -31,6 +31,10 @@
     "midjourney": {
       "url": "https://github.com/baojingyu/midjourney.git",
       "desc": "利用midjourney实现ai绘图的的插件"
+    },
+    "solitaire": {
+      "url": "https://github.com/Wang-zhechao/solitaire.git",
+      "desc": "机器人微信接龙插件"
     }
   }
 }
