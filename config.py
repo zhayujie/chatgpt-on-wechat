@@ -17,7 +17,8 @@ available_setting = {
     "open_ai_api_base": "https://api.openai.com/v1",
     "proxy": "",  # openai使用的代理
     # chatgpt模型， 当use_azure_chatgpt为true时，其名称为Azure上model deployment名称
-    "model": "gpt-3.5-turbo",  # 还支持 gpt-4, gpt-4-turbo, wenxin, xunfei, qwen
+    "model": "gpt-3.5-turbo",  # 支持ChatGPT、Claude、Gemini、文心一言、通义千问、Kimi、讯飞星火、智谱、LinkAI等模型，模型具体名称详见common/const.py文件列出的模型
+    "bot_type": "",  # 可选配置，使用兼容openai格式的三方服务时候，需填"chatGPT"。bot具体名称详见common/const.py文件列出的bot_type，如不填根据model名称判断，
     "use_azure_chatgpt": False,  # 是否使用azure的chatgpt
     "azure_deployment_id": "",  # azure 模型部署名称
     "azure_api_version": "",  # azure api版本
@@ -83,7 +84,7 @@ available_setting = {
     "qwen_agent_key": "",
     "qwen_app_id": "",
     "qwen_node_id": "",  # 流程编排模型用到的id，如果没有用到qwen_node_id，请务必保持为空字符串
-    # 阿里灵积模型api key
+    # 阿里灵积(通义新版sdk)模型api key
     "dashscope_api_key": "",
     # Google Gemini Api Key
     "gemini_api_key": "",
