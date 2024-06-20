@@ -8,13 +8,13 @@ LINKAI = "linkai"
 CLAUDEAI = "claude"  # 使用cookie的历史模型
 CLAUDEAPI= "claudeAPI"  # 通过Claude api调用模型
 QWEN = "qwen"  # 旧版通义模型
-
 QWEN_DASHSCOPE = "dashscope"  # 通义新版sdk和api key
 
 
 GEMINI = "gemini"
 ZHIPU_AI = "glm-4"
 MOONSHOT = "moonshot"
+MINIMAX = "minimax"
 
 
 # model
@@ -59,10 +59,11 @@ MODEL_LIST = [
               XUNFEI, GEMINI, ZHIPU_AI, MOONSHOT,
               "claude", "claude-3-haiku", "claude-3-sonnet", "claude-3-opus", "claude-3-opus-20240229",
               "moonshot-v1-8k", "moonshot-v1-32k", "moonshot-v1-128k",
-              LINKAI_35, LINKAI_4_TURBO, LINKAI_4o,
-              QWEN, QWEN_TURBO, QWEN_PLUS, QWEN_MAX
+              QWEN, QWEN_TURBO, QWEN_PLUS, QWEN_MAX,
+              MINIMAX,
+              LINKAI_35, LINKAI_4_TURBO, LINKAI_4o
             ]
 
 # channel
 FEISHU = "feishu"
-DINGTALK = "dingtalk"   
+DINGTALK = "dingtalk"
