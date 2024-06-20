@@ -14,7 +14,7 @@ QWEN_DASHSCOPE = "dashscope"  # 通义新版sdk和api key
 GEMINI = "gemini"
 ZHIPU_AI = "glm-4"
 MOONSHOT = "moonshot"
-MINIMAX = "minimax"
+MiniMax = "minimax"
 
 
 # model
@@ -60,7 +60,7 @@ MODEL_LIST = [
               "claude", "claude-3-haiku", "claude-3-sonnet", "claude-3-opus", "claude-3-opus-20240229",
               "moonshot-v1-8k", "moonshot-v1-32k", "moonshot-v1-128k",
               QWEN, QWEN_TURBO, QWEN_PLUS, QWEN_MAX,
-              MINIMAX,
+              MiniMax,
               LINKAI_35, LINKAI_4_TURBO, LINKAI_4o
             ]
 
