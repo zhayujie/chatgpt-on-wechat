@@ -1,3 +1,17 @@
+#《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《
+#《《《《《 引入另一个 专门判断回答是否是“很抱歉，我无法”之类的 函数 .py 文件
+#《《《《《 判断 AI回复的文本 决定要不要实时搜索
+from channel.ANSWER_APOLOGY import analyze_text_features__need_search
+#《《《《《 引入 PLUGIN_MANager_instance 以便本文件中可用它
+from plugins import instance as PLUGIN_MANager_instance
+#《《《《《 引入 bridge单例，以便下面要 重设bot时用
+from bridge import bridge
+from bridge.bridge import Bridge
+from common import const
+#《《《《《 引入 随机数
+import random
+#》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》
+
 import os
 import re
 import threading
@@ -165,10 +179,105 @@ class ChatChannel(Channel):
     def _handle(self, context: Context):
         if context is None or not context.content:
             return
-        logger.debug("[chat_channel] ready to handle context: {}".format(context))
-        # reply的构建步骤
+
+        #《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《
+
+        #《《《《《《 子函数：停用LINKAI插件
+        def DISABLE_LINKAI():    
+            logger.debug("《《《《 子函数内：将要 停用LINKAI插件 ")
+
+            ###因已经在_generate_reply中做了控制：只在需要LINKAI时，才产生事件emit_event。  
+            ###不用LINKAI时，就不会emit_event产生事件了
+            ###所以我后来觉得没必要 disable/enable _pluging 了，这样可以避免相同事件被多个相同的 plugin 实例听到和处理的问题
+            ###
+            ### 停用插件
+            ###success = PLUGIN_MANager_instance.disable_plugin("LINKAI")
+            ###if success:
+            ###    logger.debug(f"《《《《 子函数内：停用 LINKAI 插件 成功")
+            ###else:
+            ###    logger.debug(f"《《《《 子函数内：停用 LINKAI 插件 失败")
+
+            logger.debug(f"《《《《 子函数内：将要 把环境配置use_linkai设为False，重设bot（重选答题的GPT，让LINKAI的bot下岗）")
+            conf()["use_linkai"] = False
+            #reset会导致bot的session丢失，失去记忆。故不要执行：bridge.Bridge().reset_bot()                
+            
+            # Change the model type
+            Bridge().btype["chat"] = const.CHATGPT
+            logger.debug(f"《《《《 子函数内：已把bridge.py中的model改为{const.GPT35}")
+
+            return          
+
+
+        #《《《《《《 子函数：启用LINKAI插件
+        def ENABLE_LINKAI():  
+            logger.debug("《《《《《 子函数内：启用 LINKAI 插件 ")
+
+            ###因已经在_generate_reply中做了控制：只在需要LINKAI时，才产生事件emit_event。  
+            ###不用LINKAI时，就不会emit_event产生事件了
+            ###所以我后来觉得没必要 disable/enable _pluging 了，这样可以避免相同事件被多个相同的 plugin 实例听到和处理的问题
+            ###            
+            # 启用插件
+            ###success, message = PLUGIN_MANager_instance.enable_plugin("LINKAI")
+            ###if success:
+            ###    logger.debug(f"《《《《 子函数内：启用 LINKAI 插件 成功: {message}")
+            ###else:
+            ###    logger.debug(f"《《《《 子函数内：启用 LINKAI 插件 失败: {message}")  
+            
+
+            logger.debug(f"《《《《 子函数内：将要 把环境配置use_linkai设为True，重设bot（重选答题的GPT，让LINKAI的bot上岗）")
+            conf()["use_linkai"] = True
+            #reset会导致bot的session丢失，失去记忆。故不要执行：bridge.Bridge().reset_bot()                
+                           
+            # Change the model type
+            Bridge().btype["chat"] = const.LINKAI
+            logger.debug(f"《《《《 子函数内：已把bridge.py中的model改为{const.LINKAI}")
+
+            return          
+
+
+        logger.debug("《《《《【先禁外援，首考(问)不及格(答不出)，再请外援代答】 首考前先：停用LINKAI插件（禁外援） ")
+        DISABLE_LINKAI()
+
+        logger.debug("》》》》示首考前的 context 以作对比检查 [WX] ready to handle context值={}".format(context))
+        #》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》
+        
+        # reply的构建步骤        
         reply = self._generate_reply(context)
 
+        #《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《
+
+        logger.debug("《《《《 判断【首考的回答及格否?】再决定要不要请外援实时搜索。根据第1次产生的回答，来判断是否需要第2次调用（引发外援LINKAI插件来处理）")
+        text = None if reply is None else reply.content
+        analyze_result_string, final_score = analyze_text_features__need_search(text)
+        logger.debug("\n" + analyze_result_string)
+        
+        # analyze_text_features__need_search 如果 need_search 结果值较小，则不需要再 上网实时搜索
+        # 3.5 这个“及格分数线” 是拿多十多个回复测试后，得到的一个较好的 分界值
+        if final_score < 3.5 :
+            logger.debug("《《《《【首考及格】（首考成功过关）不需要再请外援上网实时搜索。不需要 第2次调用 _generate_reply（来引发LINKAI插件来处理）")
+        else :
+            logger.debug("《《《《【首考不及格】（首考没过）第1次的回答是“很抱歉...”，需要进行 第2次调用 _generate_reply（来引发LINKAI插件来处理）")
+        
+            logger.debug("《《《《 【允许请外援】（需上网搜索）：启用 LINKAI 插件")
+            ENABLE_LINKAI()
+
+            logger.debug("》》》》 输出 第1次后 第2次前 的 context 以作对比检查 context值={}".format(context))
+        
+            logger.debug("《《《《【请外援来答】执行：第2次调用 _generate_reply 以让LINKAI产生回答 ")
+            reply = self._generate_reply(context)
+
+            logger.debug("》》》》 输出补考【第2次考试】后的 context 以作对比检查 context值={}".format(context))
+        
+            logger.debug("《《《《【考完了，禁外援】：停用 LINKAI 插件 ")
+            DISABLE_LINKAI()
+
+            logger.debug("《《《《【用🌎标记答案是补考来的】在回答的开头加上🌎说明这是互联网实时搜索得来的回答")
+            reply.content = "🌎" + reply.content 
+
+        logger.debug("《《《《 overwrite 《《《《【考试结束】《《《《（首考及或补考）完成《《《《")
+        
+        #》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》
+        
         logger.debug("[chat_channel] ready to decorate reply: {}".format(reply))
 
         # reply的包装步骤
@@ -179,12 +288,19 @@ class ChatChannel(Channel):
             self._send_reply(context, reply)
 
     def _generate_reply(self, context: Context, reply: Reply = Reply()) -> Reply:
-        e_context = PluginManager().emit_event(
-            EventContext(
-                Event.ON_HANDLE_CONTEXT,
-                {"channel": self, "context": context, "reply": reply},
-            )
+        #《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《
+        #《《《《 把 EventContext 的构建从原 紧凑 代码中 提取到外面，放到前面来，
+        #《《《《 以便后面的reply = e_context["reply"]要用到
+        e_context = EventContext(
+            Event.ON_HANDLE_CONTEXT,
+            {"channel": self, "context": context, "reply": reply},
         )
+
+        #《《《《 只在需要LINKAI时，才产生事件emit_event。  不用LINKAI时，就不会emit_event产生事件了
+        if conf()["use_linkai"] == True:
+            e_context = PluginManager().emit_event( e_context )        
+        #》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》
+        
         reply = e_context["reply"]
         if not e_context.is_pass():
             logger.debug("[chat_channel] ready to handle context: type={}, content={}".format(context.type, context.content))
@@ -216,6 +332,14 @@ class ChatChannel(Channel):
                     new_context = self._compose_context(ContextType.TEXT, reply.content, **context.kwargs)
                     if new_context:
                         reply = self._generate_reply(new_context)
+
+                        #《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《
+                        logger.debug("《《《 语音识别后，把识别出的文本替换原来context中的语音，经修改context.type与context.content传出去。这样，当语音提问需要调LINKAI搜索时，再调LINKAI时就无需再做一遍语音识别了。")
+                        # 《《《 这样，当语音提问需要调LINKAI搜索时，再调LINKAI时就无需再做一遍语音识别了。
+                        context.type = ContextType.TEXT
+                        context.content = new_context.content                        
+                        #》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》
+                    
                     else:
                         return
             elif context.type == ContextType.IMAGE:  # 图片消息，当前仅做下载保存到本地的逻辑
@@ -259,6 +383,27 @@ class ChatChannel(Channel):
                         reply_text = conf().get("group_chat_reply_prefix", "") + reply_text + conf().get("group_chat_reply_suffix", "")
                     else:
                         reply_text = conf().get("single_chat_reply_prefix", "") + reply_text + conf().get("single_chat_reply_suffix", "")
+                    
+                    #《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《
+                    #《《《 在回答后附加：随机显示3种小提示中的一种
+                    # 生成一个0到1之间的随机数
+                    x = random.random()
+                
+                    logger.debug("《《《 在回答后附加：随机显示3种小提示中的一种，随机数={}".format(x))
+                    # 根据随机数的范围显示不同的情况
+                    if 0 <= x < 0.1:
+                        reply_text = reply_text + """
+━━━━━━━━
+小提示：开启【朗读回答】的方法：微信 > 我 > 设置 > 关怀模式【开启】> 听文字消息【开启】，返回聊天，轻点一下『回答的文字』"""
+                    elif 0.1 <= x < 0.2:
+                        reply_text = reply_text + """
+━━━━━━━━
+小提示：若我一整天都不回话，则可能已被封号，请加备用微信号domesticAI，或找技术员bingjiw"""
+                    elif 0.2 <= x < 0.3:
+                        reply_text = reply_text + """ """
+
+                    # 》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》
+
                     reply.content = reply_text
                 elif reply.type == ReplyType.ERROR or reply.type == ReplyType.INFO:
                     reply.content = "[" + str(reply.type) + "]\n" + reply.content
