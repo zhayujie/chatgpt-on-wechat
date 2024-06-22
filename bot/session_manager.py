@@ -1,7 +1,7 @@
 from common.expired_dict import ExpiredDict
 from common.log import logger
 from config import conf
-
+from datetime import date   # 《《《 告诉LLM今天的日期
 
 class Session(object):
     def __init__(self, session_id, system_prompt=None):
@@ -11,6 +11,9 @@ class Session(object):
             self.system_prompt = conf().get("character_desc", "")
         else:
             self.system_prompt = system_prompt
+        
+        # 《《《 告诉LLM今天的日期  往  今天日期是{}。你回答简短......  中填入具体日期
+        self.system_prompt = self.system_prompt.format(date.today())
 
     # 重置会话
     def reset(self):
