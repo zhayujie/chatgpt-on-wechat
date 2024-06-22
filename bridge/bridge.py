@@ -71,11 +71,38 @@ class Bridge(object):
             elif typename == "voice_to_text":
                 self.bots[typename] = create_voice(self.btype[typename])
             elif typename == "chat":
-                self.bots[typename] = create_bot(self.btype[typename])
+
+                #《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《
+                # chat bot有2个，使self.bots["chat"]指向一个dict, 
+                # 此dict含2个键值对，键为bool型: True -> LINKAI BOT,  False -> GPT35
+                #
+                # 初始化 self.bots[typename] 为一个字典
+                self.bots[typename] = {}
+                #
+                # 创建 2 个 chat bot
+                # 创建 LINKAI 用的 chat bot
+                self.bots[typename][True] = create_bot(const.LINKAI)
+                # 创建 GPT35 用的 chat bot
+                self.bots[typename][False] = create_bot(const.CHATGPT)
+                #
+                logger.debug("《《《《 Bridge().get_bot 函数内：创建2个同时存在的chat bot完成：[ LINKAI用的chat bot、GPT35用的chat bot ]")
+                #》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》
+            
             elif typename == "translate":
                 self.bots[typename] = create_translator(self.btype[typename])
-        return self.bots[typename]
 
+        #《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《
+        # 当创建好，或已经存在时，则返回 bot
+        # 用不用LINKAI随时在变，取最新的情况，根据不同情况返回不同的bot
+        bool_use_linkai = conf()["use_linkai"]
+        if typename == "chat" :
+            str_the_chat_bot_Got = "LINKAI的chat bot" if bool_use_linkai else "GPT35的chat bot"
+            logger.debug(f"《《《《 Bridge().get_bot 函数内：取 chat bot 时返回：{str_the_chat_bot_Got}")
+            return self.bots[typename][bool_use_linkai]
+        else :
+            return self.bots[typename]
+        #》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》
+    
     def get_bot_type(self, typename):
         return self.btype[typename]
 
