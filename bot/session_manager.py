@@ -28,10 +28,30 @@ class Session(object):
     def add_reply(self, reply):
         assistant_item = {"role": "assistant", "content": reply}
         self.messages.append(assistant_item)
+# add
+    def get_text_to_process(self):
+        # 返回需要处理的文本
+        return " ".join([msg["content"] for msg in self.messages])
 
-    def discard_exceeding(self, max_tokens=None, cur_tokens=None):
-        raise NotImplementedError
+#gpt4修改
+    def discard_exceeding(self, max_tokens, tokenizer):
+        text = self.get_text_to_process()
+        if not isinstance(text, str):
+            text = str(text)  # 确保 text 是字符串
+        tokens = tokenizer.encode(text)
+        if len(tokens) > max_tokens:
+            self.trim_text(tokens[:max_tokens])
+        return len(tokens)
+    
+#原来代码 def discard_exceeding(self, max_tokens=None, cur_tokens=None):
+#        raise NotImplementedError
 
+#gpt4修改
+    def trim_text(self, tokens):
+        # 将修剪后的 tokens 转换回文本并更新 messages
+        trimmed_text = tokenizer.decode(tokens)
+        self.messages = [{"role": "system", "content": self.system_prompt}] + [{"role": "user", "content": trimmed_text}]
+    
     def calc_tokens(self):
         raise NotImplementedError
 
@@ -61,12 +81,14 @@ class SessionManager(object):
         session = self.sessions[session_id]
         return session
 
+#修改后代码,注意这里需要linkai定义一个tokenizer的获取函数，但是不知道是放在那里，或者直接加上
     def session_query(self, query, session_id):
         session = self.build_session(session_id)
         session.add_query(query)
         try:
             max_tokens = conf().get("conversation_max_tokens", 1000)
-            total_tokens = session.discard_exceeding(max_tokens, None)
+            tokenizer = get_tokenizer()  # 假设我们有一个获取 tokenizer 的方法
+            total_tokens = session.discard_exceeding(max_tokens, tokenizer)
             logger.debug("prompt tokens used={}".format(total_tokens))
         except Exception as e:
             logger.warning("Exception when counting tokens precisely for prompt: {}".format(str(e)))
@@ -77,11 +99,35 @@ class SessionManager(object):
         session.add_reply(reply)
         try:
             max_tokens = conf().get("conversation_max_tokens", 1000)
-            tokens_cnt = session.discard_exceeding(max_tokens, total_tokens)
+            tokenizer = get_tokenizer()  # 假设我们有一个获取 tokenizer 的方法
+            tokens_cnt = session.discard_exceeding(max_tokens, tokenizer)
             logger.debug("raw total_tokens={}, savesession tokens={}".format(total_tokens, tokens_cnt))
         except Exception as e:
             logger.warning("Exception when counting tokens precisely for session: {}".format(str(e)))
         return session
+
+#原来代码
+    # def session_query(self, query, session_id):
+    #     session = self.build_session(session_id)
+    #     session.add_query(query)
+    #     try:
+    #         max_tokens = conf().get("conversation_max_tokens", 1000)
+    #         total_tokens = session.discard_exceeding(max_tokens, None)
+    #         logger.debug("prompt tokens used={}".format(total_tokens))
+    #     except Exception as e:
+    #         logger.warning("Exception when counting tokens precisely for prompt: {}".format(str(e)))
+    #     return session
+
+    # def session_reply(self, reply, session_id, total_tokens=None):
+    #     session = self.build_session(session_id)
+    #     session.add_reply(reply)
+    #     try:
+    #         max_tokens = conf().get("conversation_max_tokens", 1000)
+    #         tokens_cnt = session.discard_exceeding(max_tokens, total_tokens)
+    #         logger.debug("raw total_tokens={}, savesession tokens={}".format(total_tokens, tokens_cnt))
+    #     except Exception as e:
+    #         logger.warning("Exception when counting tokens precisely for session: {}".format(str(e)))
+    #     return session
 
     def clear_session(self, session_id):
         if session_id in self.sessions:
