@@ -245,7 +245,7 @@ def drag_sensitive(config):
             conf_dict_copy = copy.deepcopy(conf_dict)
             for key in conf_dict_copy:
                 if "key" in key or "secret" in key:
-                    if isinstance(key, str):
+                    if isinstance(conf_dict_copy[key], str):
                         conf_dict_copy[key] = conf_dict_copy[key][0:3] + "*" * 5 + conf_dict_copy[key][-3:]
             return json.dumps(conf_dict_copy, indent=4)
 
@@ -253,7 +253,7 @@ def drag_sensitive(config):
             config_copy = copy.deepcopy(config)
             for key in config:
                 if "key" in key or "secret" in key:
-                    if isinstance(key, str):
+                    if isinstance(config_copy[key], str):
                         config_copy[key] = config_copy[key][0:3] + "*" * 5 + config_copy[key][-3:]
             return config_copy
     except Exception as e:

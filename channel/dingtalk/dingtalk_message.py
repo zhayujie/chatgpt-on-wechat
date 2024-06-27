@@ -49,6 +49,7 @@ class DingTalkMessage(ChatMessage):
         if self.is_group:
             self.from_user_id = event.conversation_id
             self.actual_user_id = event.sender_id
+            self.is_at = True
         else:
             self.from_user_id = event.sender_id
             self.actual_user_id = event.sender_id
