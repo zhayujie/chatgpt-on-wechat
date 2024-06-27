@@ -35,6 +35,10 @@
     "solitaire": {
       "url": "https://github.com/Wang-zhechao/solitaire.git",
       "desc": "机器人微信接龙插件"
+    },
+    "HighSpeedTicket": {
+      "url": "https://github.com/He0607/HighSpeedTicket.git",
+      "desc": "高铁（火车）票查询插件"
     }
   }
 }
