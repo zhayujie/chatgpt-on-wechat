@@ -70,7 +70,8 @@ class JinaSum(Plugin):
 
             target_url = html.unescape(content) # 解决公众号卡片链接校验问题，参考 https://github.com/fatwang2/sum4all/commit/b983c49473fc55f13ba2c44e4d8b226db3517c45
             jina_url = self._get_jina_url(target_url)
-            response = requests.get(jina_url, timeout=60)
+            headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
+            response = requests.get(jina_url, headers=headers, timeout=60)
             response.raise_for_status()
             target_url_content = response.text
 
@@ -78,7 +79,7 @@ class JinaSum(Plugin):
             openai_headers = self._get_openai_headers()
             openai_payload = self._get_openai_payload(target_url_content)
             logger.debug(f"[JinaSum] openai_chat_url: {openai_chat_url}, openai_headers: {openai_headers}, openai_payload: {openai_payload}")
-            response = requests.post(openai_chat_url, headers=openai_headers, json=openai_payload, timeout=60)
+            response = requests.post(openai_chat_url, headers={**openai_headers, **headers}, json=openai_payload, timeout=60)
             response.raise_for_status()
             result = response.json()['choices'][0]['message']['content']
             reply = Reply(ReplyType.TEXT, result)
