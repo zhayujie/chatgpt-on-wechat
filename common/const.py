@@ -67,3 +67,5 @@ MODEL_LIST = [
 # channel
 FEISHU = "feishu"
 DINGTALK = "dingtalk"
+
+OLLAMA = "ollama"
