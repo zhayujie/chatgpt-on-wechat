@@ -175,6 +175,7 @@ available_setting = {
     "Minimax_api_key": "",
     "Minimax_group_id": "",
     "Minimax_base_url": "",
+    "SQLALCHEMY_DATABASE_URI": "",
 }
 
 
@@ -295,6 +296,7 @@ def load_config():
     logger.info("[INIT] load config: {}".format(drag_sensitive(config)))
 
     config.load_user_datas()
+    return config
 
 
 def get_root():
