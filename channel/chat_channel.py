@@ -401,7 +401,7 @@ class ChatChannel(Channel):
                     elif 0.1 <= x < 0.4:
                         reply_text = reply_text + """
 ━━━━━━━━
-增强版上线 n.we8.ai 文字出图 写简历 心理咨询 小红书文案 有多种预设面具角色可选 免费"""
+国产GPT增强版 https://n.we8.ai 文字出图 写简历 心理咨询 小红书文案 有多种预设面具角色可选 免费"""
                     
                     
                     
