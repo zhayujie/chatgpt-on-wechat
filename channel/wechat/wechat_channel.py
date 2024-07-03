@@ -106,7 +106,16 @@ def qrCallback(uuid, status, qrcode):
         print(qr_api4)
         print(qr_api2)
         print(qr_api1)
-        _send_qr_code([qr_api1, qr_api2, qr_api3, qr_api4])
+        qrcodes = [qr_api2, qr_api1, qr_api3, qr_api4]
+        for item in qrcodes:
+            try:
+                response = requests.get(item)
+                response.raise_for_status()
+                with open("wx_qrcode.png", "wb") as f:
+                    f.write(response.content)
+                break
+            except Exception as e:
+                logger.exception(f"[WX_QRCODE]: failed to download qrcode: {e}")
         qr = qrcode.QRCode(border=1)
         qr.add_data(url)
         qr.make(fit=True)
@@ -146,20 +155,16 @@ class WechatChannel(ChatChannel):
 
     def exitCallback(self):
         try:
-            from common.linkai_client import chat_client
-            if chat_client.client_id and conf().get("use_linkai"):
-                _send_logout()
-                time.sleep(2)
-                self.auto_login_times += 1
-                if self.auto_login_times < 100:
-                    chat_channel.handler_pool._shutdown = False
-                    self.startup()
+            time.sleep(2)
+            self.auto_login_times += 1
+            if self.auto_login_times < 100:
+                chat_channel.handler_pool._shutdown = False
+                self.startup()
         except Exception as e:
             pass
 
     def loginCallback(self):
         logger.debug("Login success")
-        _send_login_success()
 
     # handle_* 系列函数处理收到的消息后构造Context，然后传入produce函数中处理Context和发送回复
     # Context包含了消息的所有信息，包括以下属性
