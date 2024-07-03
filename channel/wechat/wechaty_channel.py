@@ -9,6 +9,7 @@ import base64
 import os
 import time
 
+from channel import chat_channel
 from wechaty import Contact, Wechaty
 from wechaty.user import Message
 from wechaty_puppet import FileBox
@@ -44,7 +45,7 @@ class WechatyChannel(ChatChannel):
     async def main(self):
         loop = asyncio.get_event_loop()
         # 将asyncio的loop传入处理线程
-        self.handler_pool._initializer = lambda: asyncio.set_event_loop(loop)
+        chat_channel.handler_pool._initializer = lambda: asyncio.set_event_loop(loop)
         self.bot = Wechaty()
         self.bot.on("login", self.on_login)
         self.bot.on("message", self.on_message)
