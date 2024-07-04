@@ -296,11 +296,13 @@ class ChatChannel(Channel):
             {"channel": self, "context": context, "reply": reply},
         )
 
-        #《《《《 只在需要LINKAI时，才产生事件emit_event。  不用LINKAI时，就不会emit_event产生事件了
-        if conf()["use_linkai"] == True:
+
+        #《《《《 只在【输入消息是#开头指令】或者【需要LINKAI时】 ，才产生事件emit_event。  不用LINKAI时，就不会emit_event产生事件了
+        if (context.content.startswith("#")) or (conf()["use_linkai"] == True):
             e_context = PluginManager().emit_event( e_context )        
         #》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》
         
+
         reply = e_context["reply"]
         if not e_context.is_pass():
             logger.debug("[chat_channel] ready to handle context: type={}, content={}".format(context.type, context.content))
@@ -356,7 +358,41 @@ class ChatChannel(Channel):
                 return
         return reply
 
+
     def _decorate_reply(self, context: Context, reply: Reply) -> Reply:
+
+        #炳 增加子函数《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《
+        #  AI重构前的原代码     #《《《 在回答后附加：随机显示10种小提示中的1种
+        #                     # 生成一个0到9之间（包含0与9）的随机整数
+        #                     x = random.randint(0, 9)
+        #                     # 从JSON对象中拿 提示数组，共 10 个提示
+        #                     hintArray = conf().get("image_create_prefix",[""])
+        #                     # 从10个提示中，随机取一个
+        #                     hint = hintArray[x]
+        #                     # 提示前加上分隔线字符串，组成：回复文本
+        #                     reply_text = reply_text + """
+        # ━━━━━━━━
+        # """ 
+        #                     + hint    
+        def get_safe_random_hint(conf):
+            # 从配置中获取提示数组
+            hint_array = conf().get("image_create_prefix", [])
+            
+            # 检查hint_array是否为空或不是列表
+            if not isinstance(hint_array, list) or len(hint_array) == 0:
+                return ""  # 如果hint_array无效，返回空字符串
+            
+            # 安全地生成随机索引
+            random_index = random.randint(0, len(hint_array) - 1)
+            
+            # 安全地获取提示
+            hint = hint_array[random_index] if 0 <= random_index < len(hint_array) else ""
+            
+            # 确保hint是字符串类型
+            return str(hint)
+        # 》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》
+
+
         if reply and reply.type:
             e_context = PluginManager().emit_event(
                 EventContext(
@@ -385,29 +421,9 @@ class ChatChannel(Channel):
                         reply_text = conf().get("single_chat_reply_prefix", "") + reply_text + conf().get("single_chat_reply_suffix", "")
                     
                     #《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《《
-                    #《《《 在回答后附加：随机显示3种小提示中的一种
-                    # 生成一个0到1之间的随机数
-                    x = random.random()
-                
-                    logger.debug("《《《 在回答后附加：随机显示3种小提示中的一种，随机数={}".format(x))
-                    # 根据随机数的范围显示不同的情况
-                    if 0 <= x < 0.1:
-                        reply_text = reply_text + """
-━━━━━━━━
-开启【朗读回答】的方法：微信 > 我 > 设置 > 关怀模式【开启】> 听文字消息【开启】，返回聊天，轻点一下『回答的文字』"""
-                    
-
-                    
-                    elif 0.1 <= x < 0.4:
-                        reply_text = reply_text + """
-━━━━━━━━
-国产GPT增强版 https://n.we8.ai 文字出图 写简历 心理咨询 小红书文案 有多种预设面具角色可选 免费"""
-                    
-                    
-                    
-                    elif 0.4 <= x < 0.5:
-                        reply_text = reply_text + """ """
-
+                    # 使用函数 安全地获取 随机提示
+                    hint = get_safe_random_hint(conf)
+                    reply_text = reply_text + "\n━━━━━━━━\n" + hint
                     # 》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》》
 
                     reply.content = reply_text
