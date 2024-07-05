@@ -6,6 +6,7 @@ services:
     security_opt:
       - seccomp:unconfined
     environment:
+      TZ: 'Asia/Shanghai'
       OPEN_AI_API_KEY: 'YOUR API KEY'
       MODEL: 'gpt-3.5-turbo'
       PROXY: ''
