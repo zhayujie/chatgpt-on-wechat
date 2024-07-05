@@ -163,7 +163,7 @@ class DingTalkChanel(ChatChannel, dingtalk_stream.ChatbotHandler):
         elif cmsg.ctype == ContextType.PATPAT:
             logger.debug("[DingTalk]receive patpat msg: {}".format(cmsg.content))
         elif cmsg.ctype == ContextType.TEXT:
-            logger.debug("[DingTalk]receive patpat msg: {}".format(cmsg.content))
+            logger.debug("[DingTalk]receive text msg: {}".format(cmsg.content))
         else:
             logger.debug("[DingTalk]receive other msg: {}".format(cmsg.content))
         context = self._compose_context(cmsg.ctype, cmsg.content, isgroup=True, msg=cmsg)
