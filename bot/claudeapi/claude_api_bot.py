@@ -130,4 +130,6 @@ class ClaudeAPIBot(Bot, OpenAIImage):
             return "claude-3-sonnet-20240229"
         elif model == "claude-3-haiku":
             return "claude-3-haiku-20240307"
+        elif model == "claude-3.5-sonnet":
+            return "claude-3-5-sonnet-20240620"
         return model
