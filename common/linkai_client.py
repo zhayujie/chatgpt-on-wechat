@@ -45,8 +45,11 @@ class ChatClient(LinkAIClient):
             elif reply_voice_mode == "always_reply_voice":
                 local_config["always_reply_voice"] = True
 
-        if config.get("admin_password") and plugin_config.get("Godcmd"):
-            plugin_config["Godcmd"]["password"] = config.get("admin_password")
+        if config.get("admin_password"):
+            if not plugin_config.get("Godcmd"):
+                plugin_config["Godcmd"] = {"password": config.get("admin_password"), "admin_users": []}
+            else:
+                plugin_config["Godcmd"]["password"] = config.get("admin_password")
             PluginManager().instances["GODCMD"].reload()
 
         if config.get("group_app_map") and pconf("linkai"):
