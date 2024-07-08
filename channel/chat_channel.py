@@ -117,6 +117,7 @@ class ChatChannel(Channel):
                         logger.info("[chat_channel]receive group at")
                         if not conf().get("group_at_off", False):
                             flag = True
+                        self.name = self.name if self.name is not None else ""  # 部分渠道self.name可能没有赋值
                         pattern = f"@{re.escape(self.name)}(\u2005|\u0020)"
                         subtract_res = re.sub(pattern, r"", content)
                         if isinstance(context["msg"].at_list, list):
