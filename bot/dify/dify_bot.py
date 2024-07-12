@@ -286,7 +286,7 @@ class DifyBot(Bot):
 
     def _replace_markdown(self, text):
         # 替换Markdown的粗体标记
-        text = text.replace("**", "")
+        text = text.replace("**", "").replace("*", "")
         # 替换Markdown的标题标记
         text = text.replace("### ", "").replace("## ", "").replace("# ", "")
         return text
