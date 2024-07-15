@@ -182,7 +182,7 @@ python3 app.py                                    # windows环境下该命令通
 
 添加我的微信拉你进群(之前的企业微信好友达到上限了，无法验证通过了，麻烦未通过好友的重新添加下面的个人微信吧)
 
-<img width="240" src="./docs/images/image3.jpg">
+<img width="240" src="[交流群](https://github.com/hanfangyuan4396/dify-on-wechat/blob/master/docs/images/image3.jpg)">
 
 
 
