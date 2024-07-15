@@ -1,5 +1,7 @@
 <div align="center">
-<h1>Dify on WeChat</h1>
+<h1>[Dify on WeChat](https://github.com/hanfangyuan4396/dify-on-wechat)</h1>
+
+## 请访问Dify on Wechat 作者项目获取更新： https://github.com/hanfangyuan4396/dify-on-wechat 
 
 本项目为 [chatgpt-on-wechat](https://github.com/zhayujie/chatgpt-on-wechat)下游分支
 
