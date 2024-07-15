@@ -399,6 +399,7 @@ class LinkAIBot(Bot):
             return
         max_send_num = conf().get("max_media_send_count")
         send_interval = conf().get("media_send_interval")
+        file_type = (".pdf", ".doc", ".docx", ".csv", ".xls", ".xlsx", ".txt", ".rtf", ".ppt", ".pptx")
         try:
             i = 0
             for url in image_urls:
@@ -407,7 +408,7 @@ class LinkAIBot(Bot):
                 i += 1
                 if url.endswith(".mp4"):
                     reply_type = ReplyType.VIDEO_URL
-                elif url.endswith(".pdf") or url.endswith(".doc") or url.endswith(".docx") or url.endswith(".csv"):
+                elif url.endswith(file_type):
                     reply_type = ReplyType.FILE
                     url = _download_file(url)
                     if not url:
