@@ -6,11 +6,14 @@ services:
     security_opt:
       - seccomp:unconfined
     environment:
+      TZ: 'Asia/Shanghai'
+      OPEN_AI_API_KEY: 'YOUR API KEY'
+      MODEL: 'dify'
       DIFY_API_BASE: 'https://api.dify.ai/v1'
       DIFY_API_KEY: 'app-xx'
       DIFY_APP_TYPE: 'chatbot'
-      MODEL: 'dify'
-      SINGLE_CHAT_PREFIX: '[""]'
-      SINGLE_CHAT_REPLY_PREFIX: '""'
+      PROXY: ''
+      SINGLE_CHAT_PREFIX: '["bot", "@bot"]'
+      SINGLE_CHAT_REPLY_PREFIX: '"[bot] "'
       GROUP_CHAT_PREFIX: '["@bot"]'
       GROUP_NAME_WHITE_LIST: '["ALL_GROUP"]'

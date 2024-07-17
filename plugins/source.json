@@ -19,6 +19,26 @@
     "Apilot": {
       "url": "https://github.com/6vision/Apilot.git",
       "desc": "通过api直接查询早报、热榜、快递、天气等实用信息的插件"
+    },
+    "pictureChange": {
+      "url": "https://github.com/Yanyutin753/pictureChange.git",
+      "desc": "利用stable-diffusion和百度Ai进行图生图或者画图的插件"
+    },
+    "Blackroom": {
+      "url": "https://github.com/dividduang/blackroom.git",
+      "desc": "小黑屋插件，被拉进小黑屋的人将不能使用@bot的功能的插件"
+    },
+    "midjourney": {
+      "url": "https://github.com/baojingyu/midjourney.git",
+      "desc": "利用midjourney实现ai绘图的的插件"
+    },
+    "solitaire": {
+      "url": "https://github.com/Wang-zhechao/solitaire.git",
+      "desc": "机器人微信接龙插件"
+    },
+    "HighSpeedTicket": {
+      "url": "https://github.com/He0607/HighSpeedTicket.git",
+      "desc": "高铁（火车）票查询插件"
     }
   }
 }

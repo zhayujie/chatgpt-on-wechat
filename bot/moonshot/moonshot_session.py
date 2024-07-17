@@ -2,13 +2,11 @@ from bot.session_manager import Session
 from common.log import logger
 
 
-class ZhipuAISession(Session):
-    def __init__(self, session_id, system_prompt=None, model="glm-4"):
+class MoonshotSession(Session):
+    def __init__(self, session_id, system_prompt=None, model="moonshot-v1-128k"):
         super().__init__(session_id, system_prompt)
         self.model = model
         self.reset()
-        if not system_prompt:
-            logger.warn("[ZhiPu] `character_desc` can not be empty")
 
     def discard_exceeding(self, max_tokens, cur_tokens=None):
         precise = True

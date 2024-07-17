@@ -40,7 +40,7 @@ class FeiShuChanel(ChatChannel):
             self.feishu_app_id, self.feishu_app_secret, self.feishu_token))
         # 无需群校验和前缀
         conf()["group_name_white_list"] = ["ALL_GROUP"]
-        conf()["single_chat_prefix"] = []
+        conf()["single_chat_prefix"] = [""]
 
     def startup(self):
         urls = (
