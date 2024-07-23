@@ -208,11 +208,33 @@ class AzureChatGPTBot(ChatGPTBot):
             headers = {"api-key": api_key, "Content-Type": "application/json"}
             try:
                 body = {"prompt": query, "size": conf().get("image_create_size", "1024x1024"), "quality": conf().get("dalle3_image_quality", "standard")}
-                submission = requests.post(url, headers=headers, json=body)
-                image_url = submission.json()['data'][0]['url']
-                return True, image_url
+                response = requests.post(url, headers=headers, json=body)
+                response.raise_for_status()  # 检查请求是否成功
+                data = response.json()
+
+                # 检查响应中是否包含图像 URL
+                if 'data' in data and len(data['data']) > 0 and 'url' in data['data'][0]:
+                    image_url = data['data'][0]['url']
+                    return True, image_url
+                else:
+                    error_message = "响应中没有图像 URL"
+                    logger.error(error_message)
+                    return False, "图片生成失败"
+
+            except requests.exceptions.RequestException as e:
+                # 捕获所有请求相关的异常
+                try:
+                    error_detail = response.json().get('error', {}).get('message', str(e))
+                except ValueError:
+                    error_detail = str(e)
+                error_message = f"{error_detail}"
+                logger.error(error_message)
+                return False, error_message
+
             except Exception as e:
-                logger.error("create image error: {}".format(e))
+                # 捕获所有其他异常
+                error_message = f"生成图像时发生错误: {e}"
+                logger.error(error_message)
                 return False, "图片生成失败"
         else:
             return False, "图片生成失败，未配置text_to_image参数"
