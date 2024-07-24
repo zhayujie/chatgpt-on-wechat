@@ -9,5 +9,6 @@
   "group_chat_prefix": ["@bot"],
   "group_name_white_list": ["ALL_GROUP"],
   "accept_friend_commands": ["加好友"],
-  "group_exit_msg": "退群聊通知文案"
+  "group_exit_msg": "退群聊通知文案",
+  "accept_friend_msg": "通过好友发送的提示语"
 }

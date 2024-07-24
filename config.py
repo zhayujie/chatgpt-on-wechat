@@ -47,6 +47,7 @@ available_setting = {
     "image_create_size": "256x256",  # 图片大小,可选有 256x256, 512x512, 1024x1024 (dall-e-3默认为1024x1024)
     "group_chat_exit_group": False,
     "group_exit_msg": "",  # 退出群聊的消息
+    "accept_friend_msg": "",  # 接受好友请求后发送的消息
     # chatgpt会话参数
     "expires_in_seconds": 3600,  # 无操作会话的过期时间
     # 人格描述
