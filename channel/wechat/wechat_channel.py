@@ -9,7 +9,6 @@ import json
 import os
 import threading
 import time
-import uuid
 import requests
 
 from bridge.context import *
@@ -297,9 +296,7 @@ def _convert_webp_to_png(webp_image):
             webp_image.seek(0)
             img = Image.open(webp_image).convert("RGBA")
             png_image = io.BytesIO()
-            unique_filename = f"{uuid.uuid4()}.png"
             img.save(png_image, format="PNG")
-            png_image.name = unique_filename
             png_image.seek(0)
             return png_image
         except Exception as e:
