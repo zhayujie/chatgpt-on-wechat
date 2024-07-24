@@ -9,7 +9,7 @@ import json
 import os
 import threading
 import time
-
+import uuid
 import requests
 
 from bridge.context import *
@@ -229,6 +229,12 @@ class WechatChannel(ChatChannel):
                 image_storage.write(block)
             logger.info(f"[WX] download image success, size={size}, img_url={img_url}")
             image_storage.seek(0)
+            if img_url.endswith(".webp"):
+                try:
+                    image_storage = _convert_webp_to_png(image_storage)
+                except Exception as e:
+                    logger.error(f"Failed to convert image: {e}")
+                    return
             itchat.send_image(image_storage, toUserName=receiver)
             logger.info("[WX] sendImage url={}, receiver={}".format(img_url, receiver))
         elif reply.type == ReplyType.IMAGE:  # 从文件读取图片
@@ -266,6 +272,7 @@ def _send_login_success():
     except Exception as e:
         pass
 
+
 def _send_logout():
     try:
         from common.linkai_client import chat_client
@@ -274,6 +281,7 @@ def _send_logout():
     except Exception as e:
         pass
 
+
 def _send_qr_code(qrcode_list: list):
     try:
         from common.linkai_client import chat_client
@@ -281,3 +289,19 @@ def _send_qr_code(qrcode_list: list):
             chat_client.send_qrcode(qrcode_list)
     except Exception as e:
         pass
+
+
+def _convert_webp_to_png(webp_image):
+        from PIL import Image
+        try:
+            webp_image.seek(0)
+            img = Image.open(webp_image).convert("RGBA")
+            png_image = io.BytesIO()
+            unique_filename = f"{uuid.uuid4()}.png"
+            img.save(png_image, format="PNG")
+            png_image.name = unique_filename
+            png_image.seek(0)
+            return png_image
+        except Exception as e:
+            logger.error(f"Failed to convert WEBP to PNG: {e}")
+            raise
