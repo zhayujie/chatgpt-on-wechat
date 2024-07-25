@@ -43,12 +43,14 @@ class XunFeiBot(Bot):
         # 默认使用v2.0版本: "generalv2"
         # v1.5版本为 "general"
         # v3.0版本为: "generalv3"
-        self.domain = "generalv3"
+        # v4.0版本为: "4.0Ultra"
+        self.domain = "4.0Ultra"
         # 默认使用v2.0版本: "ws://spark-api.xf-yun.com/v2.1/chat"
         # v1.5版本为: "ws://spark-api.xf-yun.com/v1.1/chat"
         # v3.0版本为: "ws://spark-api.xf-yun.com/v3.1/chat"
         # v3.5版本为: "wss://spark-api.xf-yun.com/v3.5/chat"
-        self.spark_url = "wss://spark-api.xf-yun.com/v3.5/chat"
+        # v4.0版本为: "wss://spark-api.xf-yun.com/v4.0/chat"
+        self.spark_url = "wss://spark-api.xf-yun.com/v4.0/chat"
         self.host = urlparse(self.spark_url).netloc
         self.path = urlparse(self.spark_url).path
         # 和wenxin使用相同的session机制
