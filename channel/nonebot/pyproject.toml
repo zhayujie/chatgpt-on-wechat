@@ -1,0 +1,3 @@
+[tool.nonebot]
+plugins = []
+plugin_dirs = ["channel/nonebot/none_bot/plugins"]
