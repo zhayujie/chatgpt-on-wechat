@@ -45,6 +45,6 @@ zhipuai>=2.0.1
 # tongyi qwen new sdk
 dashscope
 
-# qqBot channel
+# qqBot channel  # here had edited to support qq channel
 nonebot2[FastAPI]
 nonebot-adapter-onebot

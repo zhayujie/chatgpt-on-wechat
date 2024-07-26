@@ -71,3 +71,4 @@ MODEL_LIST = [
 # channel
 FEISHU = "feishu"
 DINGTALK = "dingtalk"
+NONEBOT = "nonebot"  # here had edited to support qq channel

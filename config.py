@@ -148,6 +148,15 @@ available_setting = {
     "dingtalk_client_id": "",  # 钉钉机器人Client ID 
     "dingtalk_client_secret": "",  # 钉钉机器人Client Secret
     "dingtalk_card_enabled": False,
+    # nonebot配置  # here had edited to support qq channel
+    "nonebot_driver": "~fastapi",  # nonebot驱动，默认即可
+    "nonebot_listen_host": "127.0.0.1",  # nonebot监听地址
+    "nonebot_listen_port": "8080",  # nonebot监听端口
+    "nonebot_access_token": "",  # nonebot访问令牌
+    "nonebot_superusers": ["2310257513"],  # nonebot超级用户
+    "nonebot_nickname": ["Bot"],  # nonebot昵称
+    "nonebot_command_start": ["/"],  # nonebot命令前缀
+    "nonebot_command_sep": [" "],  # nonebot命令分隔符
     
     # chatgpt指令自定义触发词
     "clear_memory_commands": ["#清除记忆"],  # 重置会话指令，必须以#开头

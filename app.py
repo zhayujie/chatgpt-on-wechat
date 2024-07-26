@@ -28,7 +28,7 @@ def sigterm_handler_wrap(_signo):
 def start_channel(channel_name: str):
     channel = channel_factory.create_channel(channel_name)
     if channel_name in ["wx", "wxy", "terminal", "wechatmp", "wechatmp_service", "wechatcom_app", "wework",
-                        const.FEISHU, const.DINGTALK]:
+                        const.FEISHU, const.DINGTALK, const.NONEBOT]:  # here had edited to support qq channel
         PluginManager().load_plugins()
 
     if conf().get("use_linkai"):
