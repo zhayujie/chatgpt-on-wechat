@@ -20,6 +20,7 @@ from common.expired_dict import ExpiredDict
 from common.log import logger
 from common.singleton import singleton
 from common.time_check import time_checker
+from common.utils import convert_webp_to_png
 from config import conf, get_appdata_dir
 from lib import itchat
 from lib.itchat.content import *
@@ -228,9 +229,9 @@ class WechatChannel(ChatChannel):
                 image_storage.write(block)
             logger.info(f"[WX] download image success, size={size}, img_url={img_url}")
             image_storage.seek(0)
-            if img_url.endswith(".webp"):
+            if ".webp" in img_url:
                 try:
-                    image_storage = _convert_webp_to_png(image_storage)
+                    image_storage = convert_webp_to_png(image_storage)
                 except Exception as e:
                     logger.error(f"Failed to convert image: {e}")
                     return
@@ -289,16 +290,3 @@ def _send_qr_code(qrcode_list: list):
     except Exception as e:
         pass
 
-
-def _convert_webp_to_png(webp_image):
-        from PIL import Image
-        try:
-            webp_image.seek(0)
-            img = Image.open(webp_image).convert("RGBA")
-            png_image = io.BytesIO()
-            img.save(png_image, format="PNG")
-            png_image.seek(0)
-            return png_image
-        except Exception as e:
-            logger.error(f"Failed to convert WEBP to PNG: {e}")
-            raise
