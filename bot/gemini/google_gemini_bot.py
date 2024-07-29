@@ -24,7 +24,9 @@ class GoogleGeminiBot(Bot):
         self.api_key = conf().get("gemini_api_key")
         # 复用文心的token计算方式
         self.sessions = SessionManager(BaiduWenxinSession, model=conf().get("model") or "gpt-3.5-turbo")
-
+        self.model = conf().get("model") or "gemini-pro"
+        if self.model == "gemini":
+            self.model = "gemini-pro"
     def reply(self, query, context: Context = None) -> Reply:
         try:
             if context.type != ContextType.TEXT:
@@ -35,7 +37,7 @@ class GoogleGeminiBot(Bot):
             session = self.sessions.session_query(query, session_id)
             gemini_messages = self._convert_to_gemini_messages(self.filter_messages(session.messages))
             genai.configure(api_key=self.api_key)
-            model = genai.GenerativeModel('gemini-pro')
+            model = genai.GenerativeModel(self.model)
             response = model.generate_content(gemini_messages)
             reply_text = response.text
             self.sessions.session_reply(reply_text, session_id)

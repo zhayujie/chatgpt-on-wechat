@@ -22,7 +22,7 @@
     },
     "pictureChange": {
       "url": "https://github.com/Yanyutin753/pictureChange.git",
-      "desc": "利用stable-diffusion和百度Ai进行图生图或者画图的插件"
+      "desc": "1. 支持百度AI和Stable Diffusion WebUI进行图像处理，提供多种模型选择，支持图生图、文生图自定义模板。2. 支持Suno音乐AI可将图像和文字转为音乐。3. 支持自定义模型进行文件、图片总结功能。4. 支持管理员控制群聊内容与参数和功能改变。"
     },
     "Blackroom": {
       "url": "https://github.com/dividduang/blackroom.git",
@@ -35,6 +35,10 @@
     "solitaire": {
       "url": "https://github.com/Wang-zhechao/solitaire.git",
       "desc": "机器人微信接龙插件"
+    },
+    "HighSpeedTicket": {
+      "url": "https://github.com/He0607/HighSpeedTicket.git",
+      "desc": "高铁（火车）票查询插件"
     }
   }
 }
