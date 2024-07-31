@@ -22,10 +22,12 @@ class Tool(Plugin):
     def __init__(self):
         super().__init__()
         self.handlers[Event.ON_HANDLE_CONTEXT] = self.on_handle_context
-
         self.app = self._reset_app()
-
+        if not self.tool_config.get("tools"):
+            logger.warn("[tool] init failed, ignore ")
+            raise Exception("config.json not found")
         logger.info("[tool] inited")
+
 
     def get_help_text(self, verbose=False, **kwargs):
         help_text = "这是一个能让chatgpt联网，搜索，数字运算的插件，将赋予强大且丰富的扩展能力。"
