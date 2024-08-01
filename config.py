@@ -73,6 +73,8 @@ available_setting = {
     "xunfei_app_id": "",  # 讯飞应用ID
     "xunfei_api_key": "",  # 讯飞 API key
     "xunfei_api_secret": "",  # 讯飞 API secret
+    "xunfei_domain": "",  # 讯飞模型对应的domain参数，Spark4.0 Ultra为 4.0Ultra，其他模型详见: https://www.xfyun.cn/doc/spark/Web.html
+    "xunfei_spark_url": "",  # 讯飞模型对应的请求地址，Spark4.0 Ultra为 wss://spark-api.xf-yun.com/v4.0/chat，其他模型参考详见: https://www.xfyun.cn/doc/spark/Web.html
     # claude 配置
     "claude_api_cookie": "",
     "claude_uuid": "",
