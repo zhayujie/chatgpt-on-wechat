@@ -1,7 +1,20 @@
 version: '2.0'
 services:
   dify-on-wechat:
-    image: hanfangyuan/dify-on-wechat
+    # 对镜像地址的说明 
+    # docker hub 仓库国内无法访问, 可以使用ACR阿里云容器仓库，但由于我使用的是免费个人版仓库不保证可用性
+
+    # 对tag的说明 
+    # tag为 master 表示是主分支的镜像，最新版本，功能不稳定
+    # tag为 latest 表示是最新的release镜像，相对稳定(个人没有精力全面测试)
+    # tag以arm64结尾的镜像为arm64架构镜像，其他为amd64架构镜像
+    
+    # image: hanfangyuan/dify-on-wechat:latest # docker hub
+    # image: hanfangyuan/dify-on-wechat:latest-arm64 # docker hub arm64
+    image: registry.cn-hangzhou.aliyuncs.com/hanfangyuan/dify-on-wechat:latest # acr
+    # image: registry.cn-hangzhou.aliyuncs.com/hanfangyuan/dify-on-wechat:latest-arm64 # acr arm64
+    restart: always
+    pull_policy: always
     container_name: dify-on-wechat
     security_opt:
       - seccomp:unconfined
