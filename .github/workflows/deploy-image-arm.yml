@@ -75,7 +75,7 @@ jobs:
       - name: Modify tags to include arm64 suffix
         id: modify-tags
         run: |
-          tags=$(echo '${{ steps.meta.outputs.tags }}' | jq -r 'split("\n") | map(. + "-arm64") | join("\n")')
+          tags=$(echo '${{ steps.meta.outputs.tags }}' | sed '/./ s/$/-arm64/')
           echo "::set-output name=tags::$tags"
 
       - name: Build and push Docker image
