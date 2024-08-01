@@ -134,11 +134,7 @@ dify官网已正式上线工作流模式，可以导入本项目下的[dsl文件
 
 ### 5.1 如何快速启动coze微信机器人
 
-<<<<<<< HEAD
 - 请参照**快速开始**步骤克隆源码并安装依赖
-=======
-然后在`config.json`中填入配置，以下是对默认配置的说明，可根据需要进行自定义修改（注意实际使用时请去掉注释，保证JSON格式的完整）：
->>>>>>> feature/sync-fork
 
 - 按照下方coze api config.json示例文件进行配置
 以下是对默认配置的说明，可根据需要进行自定义修改（**如果复制下方的示例内容，请去掉注释**）
@@ -172,6 +168,7 @@ python3 app.py                                    # windows环境下该命令通
 
 
 # 更新日志
+- 2024/08/01 同步上游chatgpt on wechat最新功能，docker镜像地址支持阿里云容器仓库ACR
 - 2024/04/30 支持windows环境下企业微信个人号
 - 2024/04/24 集成JinaSum插件，修复总结微信公众号文章，修复dify usage key error, 修复dify私有部署的图片url错误
 - 2024/04/16 支持基本的企业微信客服通道，感谢[**@lei195827**](https://github.com/lei195827), [**@sisuad**](https://github.com/sisuad) 的贡献
