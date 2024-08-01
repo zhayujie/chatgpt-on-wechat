@@ -22,10 +22,12 @@ class Tool(Plugin):
     def __init__(self):
         super().__init__()
         self.handlers[Event.ON_HANDLE_CONTEXT] = self.on_handle_context
-
         self.app = self._reset_app()
-
+        if not self.tool_config.get("tools"):
+            logger.warn("[tool] init failed, ignore ")
+            raise Exception("config.json not found")
         logger.info("[tool] inited")
+
 
     def get_help_text(self, verbose=False, **kwargs):
         help_text = "这是一个能让chatgpt联网，搜索，数字运算的插件，将赋予强大且丰富的扩展能力。"
@@ -137,7 +139,7 @@ class Tool(Plugin):
 
         return {
             # 全局配置相关
-            "log": True,  # tool 日志开关
+            "log": False,  # tool 日志开关
             "debug": kwargs.get("debug", False),  # 输出更多日志
             "no_default": kwargs.get("no_default", False),  # 不要默认的工具，只加载自己导入的工具
             "think_depth": kwargs.get("think_depth", 2),  # 一个问题最多使用多少次工具

@@ -14,3 +14,4 @@ services:
       SINGLE_CHAT_REPLY_PREFIX: '""'
       GROUP_CHAT_PREFIX: '["@bot"]'
       GROUP_NAME_WHITE_LIST: '["ALL_GROUP"]'
+      TZ: 'Asia/Shanghai'

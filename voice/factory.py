@@ -42,4 +42,12 @@ def create_voice(voice_type):
         from voice.ali.ali_voice import AliVoice
 
         return AliVoice()
+    elif voice_type == "edge":
+        from voice.edge.edge_voice import EdgeVoice
+
+        return EdgeVoice()
+    elif voice_type == "xunfei":
+        from voice.xunfei.xunfei_voice import XunfeiVoice
+
+        return XunfeiVoice()
     raise RuntimeError
