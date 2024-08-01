@@ -78,6 +78,9 @@ jobs:
           tags=$(echo '${{ steps.meta.outputs.tags }}' | sed '/./ s/$/-arm64/')
           echo "::set-output name=tags::$tags"
 
+      - name: echo tags
+        run: echo ${{ steps.modify-tags.outputs.tags }}
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v3
         with:
