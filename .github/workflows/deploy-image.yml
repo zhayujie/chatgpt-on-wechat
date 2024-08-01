@@ -12,11 +12,14 @@ name: Create and publish a Docker image
 on:
   push:
     branches: ['master']
+  workflow_dispatch:
   create:
 env:
-  REGISTRY: ghcr.io
-  GITHUB_IMAGE_NAME: hanfangyuan4396/dify-on-wechat
   DOCKERHUB_IMAGE_NAME: hanfangyuan/dify-on-wechat
+  GITHUB_REGISTRY: ghcr.io
+  GITHUB_IMAGE_NAME: hanfangyuan4396/dify-on-wechat
+  ACR_REGISTRY: registry.cn-hangzhou.aliyuncs.com
+  ACR_IMAGE_NAME: ${{ secrets.ACR_NAMESPACE }}/dify-on-wechat
 
 jobs:
   build-and-push-image:
@@ -39,9 +42,16 @@ jobs:
       - name: Log in to the Container registry
         uses: docker/login-action@v2
         with:
-          registry: ${{ env.REGISTRY }}
+          registry: ${{ env.GITHUB_REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Login to the ACR
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.ACR_REGISTRY }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
 
       - name: Extract metadata (tags, labels) for Docker
         id: meta
@@ -49,7 +59,8 @@ jobs:
         with:
           images: |
             ${{ env.DOCKERHUB_IMAGE_NAME }}
-            ${{ env.REGISTRY }}/${{ env.GITHUB_IMAGE_NAME }}
+            ${{ env.GITHUB_REGISTRY }}/${{ env.GITHUB_IMAGE_NAME }}
+            ${{ env.ACR_REGISTRY }}/${{ env.ACR_IMAGE_NAME }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v3
