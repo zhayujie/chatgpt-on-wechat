@@ -47,5 +47,3 @@ gradio==4.37.2
 gradio_client==1.0.2
 # tongyi qwen new sdk
 dashscope
-# wework依赖
-pilk==0.2.4
