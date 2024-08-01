@@ -76,7 +76,11 @@ jobs:
         id: modify-tags
         run: |
           tags=$(echo '${{ steps.meta.outputs.tags }}' | sed '/./ s/$/-arm64/')
-          echo "TAGS=$tags" >> $GITHUB_ENV
+          {
+            echo "TAGS=<<EOF"
+            echo "$tags"
+            echo "EOF"
+          } >> $GITHUB_ENV
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v3
