@@ -8,6 +8,7 @@ import time
 from channel import channel_factory
 from common import const
 from config import load_config
+from lib.db.frame import DB
 from plugins import *
 import threading
 
@@ -43,12 +44,13 @@ def start_channel(channel_name: str):
 def run():
     try:
         # load config
-        load_config()
+        config = load_config()
         # ctrl + c
         sigterm_handler_wrap(signal.SIGINT)
         # kill signal
         sigterm_handler_wrap(signal.SIGTERM)
-
+        
+        DB.db_connect(config)
         # create channel
         channel_name = conf().get("channel_type", "wx")
 
