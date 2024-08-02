@@ -63,7 +63,7 @@ jobs:
           push: true
           file: ./docker/Dockerfile.latest
           platforms: linux/arm64
-          tags: ${{ steps.meta.outputs.tags }}-arm64
+          tags: ${{ env.DOCKERHUB_IMAGE_NAME }}:arm64
           labels: ${{ steps.meta.outputs.labels }}
 
   build-and-push-image-arm64-ghcr:
@@ -108,7 +108,7 @@ jobs:
           push: true
           file: ./docker/Dockerfile.latest
           platforms: linux/arm64
-          tags: ${{ steps.meta.outputs.tags }}-arm64
+          tags: ${{ env.GITHUB_REGISTRY }}/${{ env.GITHUB_IMAGE_NAME }}:arm64
           labels: ${{ steps.meta.outputs.labels }}
 
   build-and-push-image-arm64-acr:
@@ -153,5 +153,5 @@ jobs:
           push: true
           file: ./docker/Dockerfile.latest
           platforms: linux/arm64
-          tags: ${{ steps.meta.outputs.tags }}-arm64
+          tags: ${{ env.ACR_REGISTRY }}/${{ env.ACR_IMAGE_NAME }}:arm64
           labels: ${{ steps.meta.outputs.labels }}
