@@ -2,7 +2,7 @@ import io
 import os
 from urllib.parse import urlparse
 from PIL import Image
-
+from common.log import logger
 
 def fsize(file):
     if isinstance(file, io.BytesIO):
@@ -54,3 +54,17 @@ def split_string_by_utf8_length(string, max_length, max_split=0):
 def get_path_suffix(path):
     path = urlparse(path).path
     return os.path.splitext(path)[-1].lstrip('.')
+
+
+def convert_webp_to_png(webp_image):
+    from PIL import Image
+    try:
+        webp_image.seek(0)
+        img = Image.open(webp_image).convert("RGBA")
+        png_image = io.BytesIO()
+        img.save(png_image, format="PNG")
+        png_image.seek(0)
+        return png_image
+    except Exception as e:
+        logger.error(f"Failed to convert WEBP to PNG: {e}")
+        raise
