@@ -31,12 +31,12 @@ def start_channel(channel_name: str):
                         const.FEISHU, const.DINGTALK]:
         PluginManager().load_plugins()
 
-    if conf().get("use_linkai"):
-        try:
-            from common import linkai_client
-            threading.Thread(target=linkai_client.start, args=(channel,)).start()
-        except Exception as e:
-            pass
+    # if conf().get("use_linkai"):
+    #     try:
+    #         from common import linkai_client
+    #         threading.Thread(target=linkai_client.start, args=(channel,)).start()
+    #     except Exception as e:
+    #         pass
     channel.startup()
 
 
@@ -50,7 +50,7 @@ def run():
         sigterm_handler_wrap(signal.SIGTERM)
 
         # create channel
-        channel_name = conf().get("channel_type", "wx")
+        channel_name = conf().get("channel_type", "dingtalk")
 
         if "--cmd" in sys.argv:
             channel_name = "terminal"

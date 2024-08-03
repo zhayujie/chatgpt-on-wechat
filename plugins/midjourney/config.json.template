@@ -1,0 +1,9 @@
+{
+  "user_drawing_mode":"relax",
+  "group_drawing_mode":"relax",
+  "default_drawing_mode":"relax",
+  "use_image_create_prefix":true,
+  "mj_proxy_server":"",
+  "mj_proxy_api_secret":"",
+  "mj_trigger_prefix":"/"
+}
