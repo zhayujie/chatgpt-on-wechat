@@ -28,10 +28,10 @@ services:
       GROUP_CHAT_PREFIX: '["@bot"]'
       GROUP_NAME_WHITE_LIST: '["ALL_GROUP"]'
       TZ: 'Asia/Shanghai'
-      # web_ui 相关配置，只支持wx channel_tpye生效
+      # web_ui 相关配置，只支持wx channel_tpye生效，默认不开启，取消注释下方配置可开启web_ui功能
       # DIFY_ON_WECHAT_EXEC: 'python web_ui.py'
       # WEB_UI_PORT: '7860'
-      # WEB_UI_USERNAME: 'dow'
-      # WEB_UI_PASSWORD: 'dify-on-wechat'
+      # WEB_UI_USERNAME: 'dow'                    
+      # WEB_UI_PASSWORD: 'dify-on-wechat'         # 务必保证修改默认的用户名和密码
     ports:
       - "7860:7860"

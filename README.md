@@ -168,6 +168,7 @@ python3 app.py                                    # windows环境下该命令通
 
 
 # 更新日志
+- 2024/08/03 微信支持通过web ui扫码登录或异常重启，已适配docker容器
 - 2024/08/01 同步上游chatgpt on wechat最新功能，docker镜像地址支持阿里云容器仓库ACR
 - 2024/04/30 支持windows环境下企业微信个人号
 - 2024/04/24 集成JinaSum插件，修复总结微信公众号文章，修复dify usage key error, 修复dify私有部署的图片url错误
