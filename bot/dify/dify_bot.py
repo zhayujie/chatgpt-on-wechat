@@ -40,7 +40,8 @@ class DifyBot(Bot):
 
             reply, err = self._reply(query, session, context)
             if err != None:
-                reply = Reply(ReplyType.TEXT, "我暂时遇到了一些问题，请您稍后重试~")
+                error_msg = conf().get("error_reply", "我暂时遇到了一些问题，请您稍后重试~")
+                reply = Reply(ReplyType.TEXT, error_msg)
             return reply
         else:
             reply = Reply(ReplyType.ERROR, "Bot不支持处理{}类型的消息".format(context.type))
