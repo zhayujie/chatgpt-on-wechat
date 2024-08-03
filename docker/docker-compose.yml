@@ -21,10 +21,17 @@ services:
     environment:
       DIFY_API_BASE: 'https://api.dify.ai/v1'
       DIFY_API_KEY: 'app-xx'
-      DIFY_APP_TYPE: 'chatbot'
+      DIFY_APP_TYPE: 'chatbot'                    # dify助手类型 chatbot(对应聊天助手)/agent(对应Agent)/workflow(对应工作流)，默认为chatbot
       MODEL: 'dify'
-      SINGLE_CHAT_PREFIX: '[""]'
-      SINGLE_CHAT_REPLY_PREFIX: '""'
+      SINGLE_CHAT_PREFIX: '[""]'                  # 私聊前缀，配置示例 '["bot", "ai"]'
+      SINGLE_CHAT_REPLY_PREFIX: '""'              # 单聊回复前缀，配置示例 '"bot"' 只支持单个字符串，请勿配置成列表形式
       GROUP_CHAT_PREFIX: '["@bot"]'
       GROUP_NAME_WHITE_LIST: '["ALL_GROUP"]'
       TZ: 'Asia/Shanghai'
+      # web_ui 相关配置，只支持wx channel_tpye生效
+      # DIFY_ON_WECHAT_EXEC: 'python web_ui.py'
+      # WEB_UI_PORT: '7860'
+      # WEB_UI_USERNAME: 'dow'
+      # WEB_UI_PASSWORD: 'dify-on-wechat'
+    ports:
+      - "7860:7860"
