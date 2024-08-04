@@ -40,3 +40,6 @@ wx_qrcode.png
 .auto-coder
 actions
 output.txt
+
+# test bot
+test_dify.py

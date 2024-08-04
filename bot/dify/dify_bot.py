@@ -1,10 +1,11 @@
 # encoding:utf-8
-import json
 import threading
+import json
 
 import requests
 
 from bot.bot import Bot
+from lib.dify.dify_client import DifyClient, ChatClient
 from bot.dify.dify_session import DifySession, DifySessionManager
 from bridge.context import ContextType, Context
 from bridge.reply import Reply, ReplyType
@@ -47,14 +48,6 @@ class DifyBot(Bot):
             reply = Reply(ReplyType.ERROR, "Bot不支持处理{}类型的消息".format(context.type))
             return reply
 
-    def _get_api_base_url(self) -> str:
-        return conf().get("dify_api_base", "https://api.dify.ai/v1")
-
-    def _get_headers(self):
-        return {
-            'Authorization': f"Bearer {conf().get('dify_api_key', '')}"
-        }
-
     def _get_payload(self, query, session: DifySession, response_mode):
         return {
             'inputs': {},
@@ -83,13 +76,19 @@ class DifyBot(Bot):
             return None, error_info
 
     def _handle_chatbot(self, query: str, session: DifySession):
-        # TODO: 获取response部分抽取为公共函数
-        base_url = self._get_api_base_url()
-        chat_url = f'{base_url}/chat-messages'
-        headers = self._get_headers()
+        api_key = conf().get('dify_api_key', '')
+        api_base = conf().get("dify_api_base", "https://api.dify.ai/v1")
+        chat_client = ChatClient(api_key, api_base)
         response_mode = 'blocking'
         payload = self._get_payload(query, session, response_mode)
-        response = requests.post(chat_url, headers=headers, json=payload)
+        response = chat_client.create_chat_message(
+            inputs=payload['inputs'],
+            query=payload['query'],
+            user=payload['user'],
+            response_mode=payload['response_mode'],
+            conversation_id=payload['conversation_id'] if payload['conversation_id'] else None
+        )
+        
         if response.status_code != 200:
             error_info = f"[DIFY] response text={response.text} status_code={response.status_code}"
             logger.warn(error_info)
@@ -117,16 +116,23 @@ class DifyBot(Bot):
         # 设置dify conversation_id, 依靠dify管理上下文
         if session.get_conversation_id() == '':
             session.set_conversation_id(rsp_data['conversation_id'])
+        
         return reply, None
 
     def _handle_agent(self, query: str, session: DifySession, context: Context):
-        # TODO: 获取response抽取为公共函数
-        base_url = self._get_api_base_url()
-        chat_url = f'{base_url}/chat-messages'
-        headers = self._get_headers()
+        api_key = conf().get('dify_api_key', '')
+        api_base = conf().get("dify_api_base", "https://api.dify.ai/v1")
+        chat_client = ChatClient(api_key, api_base)
         response_mode = 'streaming'
         payload = self._get_payload(query, session, response_mode)
-        response = requests.post(chat_url, headers=headers, json=payload)
+        response = chat_client.create_chat_message(
+            inputs=payload['inputs'],
+            query=payload['query'],
+            user=payload['user'],
+            response_mode=payload['response_mode'],
+            conversation_id=payload['conversation_id']
+        )
+        
         if response.status_code != 200:
             error_info = f"[DIFY] response text={response.text} status_code={response.status_code}"
             logger.warn(error_info)
@@ -165,34 +171,40 @@ class DifyBot(Bot):
         return reply, None
 
     def _handle_workflow(self, query: str, session: DifySession):
-        base_url = self._get_api_base_url()
-        workflow_url = f'{base_url}/workflows/run'
-        headers = self._get_headers()
         payload = self._get_workflow_payload(query, session)
-        response = requests.post(workflow_url, headers=headers, json=payload)
+        api_key = conf().get('dify_api_key', '')
+        api_base = conf().get("dify_api_base", "https://api.dify.ai/v1")
+        dify_client = DifyClient(api_key, api_base)
+        response = dify_client._send_request("POST", "/workflows/run", json=payload)
         if response.status_code != 200:
             error_info = f"[DIFY] response text={response.text} status_code={response.status_code}"
             logger.warn(error_info)
             return None, error_info
-        # {
-        #     "log_id": "djflajgkldjgd",
-        #     "task_id": "9da23599-e713-473b-982c-4328d4f5c78a",
-        #     "data": {
-        #         "id": "fdlsjfjejkghjda",
-        #         "workflow_id": "fldjaslkfjlsda",
-        #         "status": "succeeded",
-        #         "outputs": {
-        #         "text": "Nice to meet you."
-        #         },
-        #         "error": null,
-        #         "elapsed_time": 0.875,
-        #         "total_tokens": 3562,
-        #         "total_steps": 8,
-        #         "created_at": 1705407629,
-        #         "finished_at": 1727807631
-        #     }
-        # }
+
+        #  {
+        #      "log_id": "djflajgkldjgd",
+        #      "task_id": "9da23599-e713-473b-982c-4328d4f5c78a",
+        #      "data": {
+        #          "id": "fdlsjfjejkghjda",
+        #          "workflow_id": "fldjaslkfjlsda",
+        #          "status": "succeeded",
+        #          "outputs": {
+        #          "text": "Nice to meet you."
+        #          },
+        #          "error": null,
+        #          "elapsed_time": 0.875,
+        #          "total_tokens": 3562,
+        #          "total_steps": 8,
+        #          "created_at": 1705407629,
+        #          "finished_at": 1727807631
+        #      }
+        #  }
+
         rsp_data = response.json()
+        if 'data' not in rsp_data or 'outputs' not in rsp_data['data'] or 'text' not in rsp_data['data']['outputs']:
+            error_info = f"[DIFY] Unexpected response format: {rsp_data}"
+            logger.warn(error_info)
+            return None, error_info
         reply = Reply(ReplyType.TEXT, rsp_data['data']['outputs']['text'])
         return reply, None
 
@@ -203,7 +215,7 @@ class DifyBot(Bot):
         return self._get_file_base_url() + url
 
     def _get_file_base_url(self) -> str:
-        return self._get_api_base_url().replace("/v1", "")
+        return self.api_base.replace("/v1", "")
 
     def _get_workflow_payload(self, query, session: DifySession):
         return {
