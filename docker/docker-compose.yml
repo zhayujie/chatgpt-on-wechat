@@ -35,5 +35,7 @@ services:
       # WEB_UI_PORT: '7860'
       # WEB_UI_USERNAME: 'dow'                    
       # WEB_UI_PASSWORD: 'dify-on-wechat'         # 务必保证修改默认的用户名和密码
+      # 图片理解功能
+      # IMAGE_RECOGNITION: 'false'                # 是否开启图片理解功能，默认为false
     ports:
       - "7860:7860"

@@ -1,6 +1,9 @@
 # encoding:utf-8
+import os
+import mimetypes
 import threading
 import json
+
 
 import requests
 
@@ -10,7 +13,7 @@ from bot.dify.dify_session import DifySession, DifySessionManager
 from bridge.context import ContextType, Context
 from bridge.reply import Reply, ReplyType
 from common.log import logger
-from common import const
+from common import const, memory
 from config import conf
 
 class DifyBot(Bot):
@@ -48,6 +51,7 @@ class DifyBot(Bot):
             reply = Reply(ReplyType.ERROR, "Bot不支持处理{}类型的消息".format(context.type))
             return reply
 
+    # TODO: delete this function
     def _get_payload(self, query, session: DifySession, response_mode):
         return {
             'inputs': {},
@@ -81,12 +85,14 @@ class DifyBot(Bot):
         chat_client = ChatClient(api_key, api_base)
         response_mode = 'blocking'
         payload = self._get_payload(query, session, response_mode)
+        files = self._get_upload_files(session)
         response = chat_client.create_chat_message(
             inputs=payload['inputs'],
             query=payload['query'],
             user=payload['user'],
             response_mode=payload['response_mode'],
-            conversation_id=payload['conversation_id'] if payload['conversation_id'] else None
+            conversation_id=payload['conversation_id'],
+            files=files
         )
         
         if response.status_code != 200:
@@ -125,14 +131,16 @@ class DifyBot(Bot):
         chat_client = ChatClient(api_key, api_base)
         response_mode = 'streaming'
         payload = self._get_payload(query, session, response_mode)
+        files = self._get_upload_files(session)
         response = chat_client.create_chat_message(
             inputs=payload['inputs'],
             query=payload['query'],
             user=payload['user'],
             response_mode=payload['response_mode'],
-            conversation_id=payload['conversation_id']
+            conversation_id=payload['conversation_id'],
+            files=files
         )
-        
+
         if response.status_code != 200:
             error_info = f"[DIFY] response text={response.text} status_code={response.status_code}"
             logger.warn(error_info)
@@ -207,6 +215,48 @@ class DifyBot(Bot):
             return None, error_info
         reply = Reply(ReplyType.TEXT, rsp_data['data']['outputs']['text'])
         return reply, None
+
+    def _get_upload_files(self, session: DifySession):
+        img_cache = memory.USER_IMAGE_CACHE.get(session.get_session_id())
+        if not img_cache or not conf().get("image_recognition"):
+            return None
+        api_key = conf().get('dify_api_key', '')
+        api_base = conf().get("dify_api_base", "https://api.dify.ai/v1")
+        dify_client = DifyClient(api_key, api_base)
+        msg = img_cache.get("msg")
+        path = img_cache.get("path")
+        msg.prepare()
+        with open(path, 'rb') as file:
+            file_name = os.path.basename(path)
+            file_type, _ = mimetypes.guess_type(file_name)
+            files = {
+                'file': (file_name, file, file_type)
+            }
+            response = dify_client.file_upload(user=session.get_user(), files=files)
+            response.raise_for_status()
+
+            if response.status_code != 200 and response.status_code != 201:
+                error_info = f"[DIFY] response text={response.text} status_code={response.status_code} when upload file"
+                logger.warn(error_info)
+                return None, error_info
+        # {
+        #     'id': 'f508165a-10dc-4256-a7be-480301e630e6',
+        #     'name': '0.png',
+        #     'size': 17023,
+        #     'extension': 'png',
+        #     'mime_type': 'image/png',
+        #     'created_by': '0d501495-cfd4-4dd4-a78b-a15ed4ed77d1',
+        #     'created_at': 1722781568
+        # }
+        file_upload_data = response.json()
+        logger.debug("[DIFY] upload file {}".format(file_upload_data))
+        return [
+            {
+                "type": "image",
+                "transfer_method": "local_file",
+                "upload_file_id": file_upload_data['id']
+            }
+        ]
 
     def _fill_file_base_url(self, url: str):
         if url.startswith("https://") or url.startswith("http://"):
