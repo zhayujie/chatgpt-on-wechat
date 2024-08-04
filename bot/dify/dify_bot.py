@@ -215,7 +215,8 @@ class DifyBot(Bot):
         return self._get_file_base_url() + url
 
     def _get_file_base_url(self) -> str:
-        return self.api_base.replace("/v1", "")
+        api_base = conf().get("dify_api_base", "https://api.dify.ai/v1")
+        return api_base.replace("/v1", "")
 
     def _get_workflow_payload(self, query, session: DifySession):
         return {
