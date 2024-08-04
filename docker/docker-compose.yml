@@ -22,6 +22,8 @@ services:
       DIFY_API_BASE: 'https://api.dify.ai/v1'
       DIFY_API_KEY: 'app-xx'
       DIFY_APP_TYPE: 'chatbot'                    # dify助手类型 chatbot(对应聊天助手)/agent(对应Agent)/workflow(对应工作流)，默认为chatbot
+      # DIFY_CONVERSATION_MAX_MESSAGES: '5'       # dify目前不支持设置历史消息长度，暂时使用超过最大消息数清空会话的策略，缺点是没有滑动窗口，会突然丢失历史消息，当设置的值小于等于0，则不限制历史消息长度
+      EXPIRES_IN_SECONDS: '3600'                  # dify会话过期时间，单位秒，默认3600秒
       MODEL: 'dify'
       SINGLE_CHAT_PREFIX: '[""]'                  # 私聊前缀，配置示例 '["bot", "ai"]'
       SINGLE_CHAT_REPLY_PREFIX: '""'              # 单聊回复前缀，配置示例 '"bot"' 只支持单个字符串，请勿配置成列表形式
