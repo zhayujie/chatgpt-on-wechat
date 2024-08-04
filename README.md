@@ -36,7 +36,7 @@ Dify接入微信生态的**详细教程**请查看文章 [**手摸手教你把 D
 
 |<img width="240" src="./docs/images/wechat.jpg">|<img width="240" src="./docs/images/supportme.jpg">|
 |:-:|:-:|
-|添加我的微信拉你进交流群|开源不易，感谢支持🎉|
+|添加我的微信拉你进交流群|开源不易，感谢打赏🎉|
 
 
 # 最新功能
