@@ -217,7 +217,8 @@ class DifyBot(Bot):
         return reply, None
 
     def _get_upload_files(self, session: DifySession):
-        img_cache = memory.USER_IMAGE_CACHE.get(session.get_session_id())
+        session_id = session.get_session_id()
+        img_cache = memory.USER_IMAGE_CACHE.get(session_id)
         if not img_cache or not conf().get("image_recognition"):
             return None
         api_key = conf().get('dify_api_key', '')
@@ -239,6 +240,8 @@ class DifyBot(Bot):
                 error_info = f"[DIFY] response text={response.text} status_code={response.status_code} when upload file"
                 logger.warn(error_info)
                 return None, error_info
+        # 清理图片缓存
+        memory.USER_IMAGE_CACHE[session_id] = None
         # {
         #     'id': 'f508165a-10dc-4256-a7be-480301e630e6',
         #     'name': '0.png',
