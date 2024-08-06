@@ -55,7 +55,7 @@ class Keyword(Plugin):
             reply_text = self.keyword[content]
 
             # 判断匹配内容的类型
-            if (reply_text.startswith("http://") or reply_text.startswith("https://")) and any(reply_text.endswith(ext) for ext in [".jpg", ".jpeg", ".png", ".gif", ".img"]):
+            if (reply_text.startswith("http://") or reply_text.startswith("https://")) and any(reply_text.endswith(ext) for ext in [".jpg", ".webp", ".jpeg", ".png", ".gif", ".img"]):
             # 如果是以 http:// 或 https:// 开头，且".jpg", ".jpeg", ".png", ".gif", ".img"结尾，则认为是图片 URL。
                 reply = Reply()
                 reply.type = ReplyType.IMAGE_URL

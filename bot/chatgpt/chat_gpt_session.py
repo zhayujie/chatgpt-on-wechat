@@ -67,7 +67,7 @@ def num_tokens_from_messages(messages, model):
     elif model in ["gpt-4-0314", "gpt-4-0613", "gpt-4-32k", "gpt-4-32k-0613", "gpt-3.5-turbo-0613",
                    "gpt-3.5-turbo-16k", "gpt-3.5-turbo-16k-0613", "gpt-35-turbo-16k", "gpt-4-turbo-preview",
                    "gpt-4-1106-preview", const.GPT4_TURBO_PREVIEW, const.GPT4_VISION_PREVIEW, const.GPT4_TURBO_01_25,
-                   const.GPT_4o, const.LINKAI_4o, const.LINKAI_4_TURBO]:
+                   const.GPT_4o, const.GPT_4o_MINI, const.LINKAI_4o, const.LINKAI_4_TURBO]:
         return num_tokens_from_messages(messages, model="gpt-4")
     elif model.startswith("claude-3"):
         return num_tokens_from_messages(messages, model="gpt-3.5-turbo")

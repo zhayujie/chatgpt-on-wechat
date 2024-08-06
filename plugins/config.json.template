@@ -10,9 +10,7 @@
     },
     "tool": {
         "tools": [
-            "python",
             "url-get",
-            "terminal",
             "meteo-weather"
         ],
         "kwargs": {
