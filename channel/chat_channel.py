@@ -8,8 +8,8 @@ from concurrent.futures import Future, ThreadPoolExecutor
 from bridge.context import *
 from bridge.reply import *
 from channel.channel import Channel
-from common.dequeue import Dequeue
 from common import memory
+from common.dequeue import Dequeue
 from plugins import *
 
 try:
@@ -148,7 +148,7 @@ class ChatChannel(Channel):
                 else:
                     return None
             content = content.strip()
-            img_match_prefix = check_prefix(content, conf().get("image_create_prefix",[""]))
+            img_match_prefix = check_prefix(content, conf().get("image_create_prefix", [""]))
             if img_match_prefix:
                 content = content.replace(img_match_prefix, "", 1)
                 context.type = ContextType.IMAGE_CREATE
@@ -219,10 +219,7 @@ class ChatChannel(Channel):
                     else:
                         return
             elif context.type == ContextType.IMAGE:  # 图片消息，当前仅做下载保存到本地的逻辑
-                memory.USER_IMAGE_CACHE[context["session_id"]] = {
-                    "path": context.content,
-                    "msg": context.get("msg")
-                }
+                memory.USER_IMAGE_CACHE[context["session_id"]] = {"path": context.content, "msg": context.get("msg")}
             elif context.type == ContextType.SHARING:  # 分享信息，当前无默认逻辑
                 pass
             elif context.type == ContextType.FUNCTION or context.type == ContextType.FILE:  # 文件消息及函数调用等，当前无默认逻辑
@@ -250,6 +247,18 @@ class ChatChannel(Channel):
 
                 if reply.type == ReplyType.TEXT:
                     reply_text = reply.content
+
+                    # 处理 FastGPT 工具调用返回格式
+                    if type(reply_text) is list:
+                        _t = ""
+                        for reply_text_item in reply_text:
+                            if reply_text_item.type == "text":
+                                _t += reply_text_item.text.content + "\n"
+                        # logger.info("[chat_channel] receive text: ", reply_text)
+                        reply_text = _t
+
+                    if reply_text.startswith("0: "):
+                        reply_text = reply_text[3:]
                     if desire_rtype == ReplyType.VOICE and ReplyType.VOICE not in self.NOT_SUPPORT_REPLYTYPE:
                         reply = super().build_text_to_voice(reply.content)
                         return self._decorate_reply(context, reply)
@@ -262,7 +271,14 @@ class ChatChannel(Channel):
                     reply.content = reply_text
                 elif reply.type == ReplyType.ERROR or reply.type == ReplyType.INFO:
                     reply.content = "[" + str(reply.type) + "]\n" + reply.content
-                elif reply.type == ReplyType.IMAGE_URL or reply.type == ReplyType.VOICE or reply.type == ReplyType.IMAGE or reply.type == ReplyType.FILE or reply.type == ReplyType.VIDEO or reply.type == ReplyType.VIDEO_URL:
+                elif (
+                    reply.type == ReplyType.IMAGE_URL
+                    or reply.type == ReplyType.VOICE
+                    or reply.type == ReplyType.IMAGE
+                    or reply.type == ReplyType.FILE
+                    or reply.type == ReplyType.VIDEO
+                    or reply.type == ReplyType.VIDEO_URL
+                ):
                     pass
                 else:
                     logger.error("[chat_channel] unknown reply type: {}".format(reply.type))
