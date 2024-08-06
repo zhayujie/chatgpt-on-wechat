@@ -41,6 +41,8 @@ class XunFeiBot(Bot):
         self.api_key = conf().get("xunfei_api_key")
         self.api_secret = conf().get("xunfei_api_secret")
         # 默认使用v2.0版本: "generalv2"
+
+
         # Spark Lite请求地址(spark_url): wss://spark-api.xf-yun.com/v1.1/chat, 对应的domain参数为: "general"
         # Spark V2.0请求地址(spark_url): wss://spark-api.xf-yun.com/v2.1/chat, 对应的domain参数为: "generalv2"
         # Spark Pro 请求地址(spark_url): wss://spark-api.xf-yun.com/v3.1/chat, 对应的domain参数为: "generalv3"
@@ -50,6 +52,7 @@ class XunFeiBot(Bot):
         # 后续模型更新，对应的参数可以参考官网文档获取：https://www.xfyun.cn/doc/spark/Web.html
         self.domain = conf().get("xunfei_domain", "generalv3.5")
         self.spark_url = conf().get("xunfei_spark_url", "wss://spark-api.xf-yun.com/v3.5/chat")
+
         self.host = urlparse(self.spark_url).netloc
         self.path = urlparse(self.spark_url).path
         # 和wenxin使用相同的session机制
