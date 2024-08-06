@@ -14,7 +14,7 @@ class WechatMessage(ChatMessage):
         self.create_time = itchat_msg["CreateTime"]
         self.is_group = is_group
 
-        notes_join_group = ["加入群聊","加入了群聊","invited"]  # 可通过添加对应语言的加入群聊通知中的关键词适配更多
+        notes_join_group = ["加入群聊","加入了群聊","invited","joined"]  # 可通过添加对应语言的加入群聊通知中的关键词适配更多
         notes_exit_group = ["移出了群聊","removed"]  # 可通过添加对应语言的踢出群聊通知中的关键词适配更多
         notes_patpat = ["拍了拍我","tickled my","tickled me"] # 可通过添加对应语言的拍一拍通知中的关键词适配更多
 
@@ -37,6 +37,8 @@ class WechatMessage(ChatMessage):
                     self.content = itchat_msg["Content"]
                     if "invited" in itchat_msg["Content"]: # 匹配英文信息
                         self.actual_user_nickname = re.findall(r'invited\s+(.+?)\s+to\s+the\s+group\s+chat', itchat_msg["Content"])[0]
+                    elif "joined" in itchat_msg["Content"]: # 匹配通过二维码加入的英文信息
+                        self.actual_user_nickname = re.findall(r'"(.*?)" joined the group chat via the QR Code shared by', itchat_msg["Content"])[0]
                     elif "加入了群聊" in itchat_msg["Content"]:
                         self.actual_user_nickname = re.findall(r"\"(.*?)\"", itchat_msg["Content"])[-1]
                 elif "加入群聊" in itchat_msg["Content"]:
