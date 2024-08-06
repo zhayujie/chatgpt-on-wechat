@@ -144,8 +144,12 @@ class WechatChannel(ChatChannel):
                 if self.auto_login_times < 100:
                     chat_channel.handler_pool._shutdown = False
                     self.startup()
+            else:
+                logger.info('Logged out, try auto login...')
+                self.startup()
         except Exception as e:
             pass
+        
 
     def loginCallback(self):
         logger.debug("Login success")
