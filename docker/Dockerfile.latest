@@ -7,6 +7,8 @@ ARG CHATGPT_ON_WECHAT_VER
 
 RUN echo /etc/apt/sources.list
 # RUN sed -i 's/deb.debian.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list
+RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list \
+  && pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/ 
 ENV BUILD_PREFIX=/app
 
 ADD . ${BUILD_PREFIX}
