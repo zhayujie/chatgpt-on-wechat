@@ -120,7 +120,7 @@ class ChatGPTBot(Bot, OpenAIImage):
             # if api_key == None, the default openai.api_key will be used
             if args is None:
                 args = self.args
-            response = openai.ChatCompletion.create(api_key=api_key, messages=session.messages, **args)
+            response = openai.ChatCompletion.create(api_key=api_key, messages=session.messages, chatId=session.session_id, **args)
             # logger.debug("[CHATGPT] response={}".format(response))
             # logger.info("[ChatGPT] reply={}, total_tokens={}".format(response.choices[0]['message']['content'], response["usage"]["total_tokens"]))
             return {
@@ -174,42 +174,42 @@ class AzureChatGPTBot(ChatGPTBot):
         text_to_image_model = conf().get("text_to_image")
         if text_to_image_model == "dall-e-2":
             api_version = "2023-06-01-preview"
-            endpoint = conf().get("azure_openai_dalle_api_base","open_ai_api_base")
+            endpoint = conf().get("azure_openai_dalle_api_base", "open_ai_api_base")
             # 检查endpoint是否以/结尾
             if not endpoint.endswith("/"):
                 endpoint = endpoint + "/"
             url = "{}openai/images/generations:submit?api-version={}".format(endpoint, api_version)
-            api_key = conf().get("azure_openai_dalle_api_key","open_ai_api_key")
+            api_key = conf().get("azure_openai_dalle_api_key", "open_ai_api_key")
             headers = {"api-key": api_key, "Content-Type": "application/json"}
             try:
-                body = {"prompt": query, "size": conf().get("image_create_size", "256x256"),"n": 1}
+                body = {"prompt": query, "size": conf().get("image_create_size", "256x256"), "n": 1}
                 submission = requests.post(url, headers=headers, json=body)
-                operation_location = submission.headers['operation-location']
+                operation_location = submission.headers["operation-location"]
                 status = ""
-                while (status != "succeeded"):
+                while status != "succeeded":
                     if retry_count > 3:
                         return False, "图片生成失败"
                     response = requests.get(operation_location, headers=headers)
-                    status = response.json()['status']
+                    status = response.json()["status"]
                     retry_count += 1
-                image_url = response.json()['result']['data'][0]['url']
+                image_url = response.json()["result"]["data"][0]["url"]
                 return True, image_url
             except Exception as e:
                 logger.error("create image error: {}".format(e))
                 return False, "图片生成失败"
         elif text_to_image_model == "dall-e-3":
             api_version = conf().get("azure_api_version", "2024-02-15-preview")
-            endpoint = conf().get("azure_openai_dalle_api_base","open_ai_api_base")
+            endpoint = conf().get("azure_openai_dalle_api_base", "open_ai_api_base")
             # 检查endpoint是否以/结尾
             if not endpoint.endswith("/"):
                 endpoint = endpoint + "/"
-            url = "{}openai/deployments/{}/images/generations?api-version={}".format(endpoint, conf().get("azure_openai_dalle_deployment_id","text_to_image"),api_version)
-            api_key = conf().get("azure_openai_dalle_api_key","open_ai_api_key")
+            url = "{}openai/deployments/{}/images/generations?api-version={}".format(endpoint, conf().get("azure_openai_dalle_deployment_id", "text_to_image"), api_version)
+            api_key = conf().get("azure_openai_dalle_api_key", "open_ai_api_key")
             headers = {"api-key": api_key, "Content-Type": "application/json"}
             try:
                 body = {"prompt": query, "size": conf().get("image_create_size", "1024x1024"), "quality": conf().get("dalle3_image_quality", "standard")}
                 submission = requests.post(url, headers=headers, json=body)
-                image_url = submission.json()['data'][0]['url']
+                image_url = submission.json()["data"][0]["url"]
                 return True, image_url
             except Exception as e:
                 logger.error("create image error: {}".format(e))
