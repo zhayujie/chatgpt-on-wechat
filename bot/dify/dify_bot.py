@@ -1,4 +1,5 @@
 # encoding:utf-8
+import io
 import os
 import mimetypes
 import threading
@@ -6,6 +7,7 @@ import json
 
 
 import requests
+from urllib.parse import urlparse, unquote
 
 from bot.bot import Bot
 from lib.dify.dify_client import DifyClient, ChatClient
@@ -14,6 +16,8 @@ from bridge.context import ContextType, Context
 from bridge.reply import Reply, ReplyType
 from common.log import logger
 from common import const, memory
+from common.utils import parse_markdown_text
+from common.tmp_dir import TmpDir
 from config import conf
 
 class DifyBot(Bot):
@@ -66,7 +70,7 @@ class DifyBot(Bot):
             session.count_user_message() # 限制一个conversation中消息数，防止conversation过长
             dify_app_type = conf().get('dify_app_type', 'chatbot')
             if dify_app_type == 'chatbot':
-                return self._handle_chatbot(query, session)
+                return self._handle_chatbot(query, session, context)
             elif dify_app_type == 'agent':
                 return self._handle_agent(query, session, context)
             elif dify_app_type == 'workflow':
@@ -79,7 +83,7 @@ class DifyBot(Bot):
             logger.exception(error_info)
             return None, error_info
 
-    def _handle_chatbot(self, query: str, session: DifySession):
+    def _handle_chatbot(self, query: str, session: DifySession, context: Context):
         api_key = conf().get('dify_api_key', '')
         api_base = conf().get("dify_api_base", "https://api.dify.ai/v1")
         chat_client = ChatClient(api_key, api_base)
@@ -116,14 +120,101 @@ class DifyBot(Bot):
         # }
         rsp_data = response.json()
         logger.debug("[DIFY] usage {}".format(rsp_data.get('metadata', {}).get('usage', 0)))
-        # TODO: 处理返回的图片文件
+
+        answer = rsp_data['answer']
+        parsed_content = parse_markdown_text(answer)
+        
         # {"answer": "![image](/files/tools/dbf9cd7c-2110-4383-9ba8-50d9fd1a4815.png?timestamp=1713970391&nonce=0d5badf2e39466042113a4ba9fd9bf83&sign=OVmdCxCEuEYwc9add3YNFFdUpn4VdFKgl84Cg54iLnU=)"}
-        reply = Reply(ReplyType.TEXT, rsp_data['answer'])
+        at_prefix = ""
+        channel = context.get("channel")
+        is_group = context.get("isgroup", False)
+        if is_group:
+            at_prefix = "@" + context["msg"].actual_user_nickname + "\n" 
+        for item in parsed_content[:-1]:
+            reply = None
+            if item['type'] == 'text':
+                content = at_prefix + item['content']
+                reply = Reply(ReplyType.TEXT, content)
+            elif item['type'] == 'image':
+                image_url = self._fill_file_base_url(item['content'])
+                image = self._download_image(image_url)
+                if image:
+                    reply = Reply(ReplyType.IMAGE, image)
+                else:
+                    reply = Reply(ReplyType.TEXT, f"图片链接：{image_url}")
+            elif item['type'] == 'file':
+                file_url = self._fill_file_base_url(item['content'])
+                file_path = self._download_file(file_url)
+                if file_path:
+                    reply = Reply(ReplyType.FILE, file_path)  
+                else:
+                    reply = Reply(ReplyType.TEXT, f"文件链接：{file_url}")
+            logger.debug(f"[DIFY] reply={reply}")
+            if reply and channel:
+                channel.send(reply, context)
+
+        final_item = parsed_content[-1]
+        final_reply = None
+        if final_item['type'] == 'text':
+            content = final_item['content']
+            if is_group:
+                at_prefix = "@" + context["msg"].actual_user_nickname + "\n"
+                content = at_prefix + content
+            final_reply = Reply(ReplyType.TEXT, final_item['content'])
+        elif final_item['type'] == 'image':
+            image_url = self._fill_file_base_url(final_item['content'])
+            image = self._download_image(image_url)
+            if image:
+                final_reply = Reply(ReplyType.IMAGE, image)
+            else:
+                final_reply = Reply(ReplyType.TEXT, f"图片链接：{image_url}")
+        elif final_item['type'] == 'file':
+            file_url = self._fill_file_base_url(final_item['content'])
+            file_path = self._download_file(file_url)
+            if file_path:
+                final_reply = Reply(ReplyType.FILE, file_path)
+            else:
+                final_reply = Reply(ReplyType.TEXT, f"文件链接：{file_url}")
+
         # 设置dify conversation_id, 依靠dify管理上下文
         if session.get_conversation_id() == '':
             session.set_conversation_id(rsp_data['conversation_id'])
         
-        return reply, None
+        return final_reply, None
+
+    def _download_file(self, url):
+        try:
+            response = requests.get(url)
+            response.raise_for_status()
+            parsed_url = urlparse(url)
+            logger.debug(f"Downloading file from {url}")
+            url_path = unquote(parsed_url.path)
+            # 从路径中提取文件名
+            file_name = url_path.split('/')[-1]
+            logger.debug(f"Saving file as {file_name}")
+            file_path = os.path.join(TmpDir().path(), file_name)
+            with open(file_path, 'wb') as file:
+                file.write(response.content)
+            return file_path
+        except Exception as e:
+            logger.error(f"Error downloading {url}: {e}")
+        return None
+
+    def _download_image(self, url):
+        try:
+            pic_res = requests.get(url, stream=True)
+            pic_res.raise_for_status()
+            image_storage = io.BytesIO()
+            size = 0
+            for block in pic_res.iter_content(1024):
+                size += len(block)
+                image_storage.write(block)
+            logger.debug(f"[WX] download image success, size={size}, img_url={url}")
+            image_storage.seek(0)
+            return image_storage
+        except Exception as e:
+            logger.error(f"Error downloading {url}: {e}")
+        return None
 
     def _handle_agent(self, query: str, session: DifySession, context: Context):
         api_key = conf().get('dify_api_key', '')
