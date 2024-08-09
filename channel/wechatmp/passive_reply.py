@@ -49,7 +49,7 @@ class Query:
 
                 # New request
                 if (
-                    from_user not in channel.cache_dict
+                    channel.cache_dict.get(from_user) is None
                     and from_user not in channel.running
                     or content.startswith("#")
                     and message_id not in channel.request_cnt  # insert the godcmd
@@ -131,8 +131,10 @@ class Query:
 
                 # Only one request can access to the cached data
                 try:
-                    (reply_type, reply_content) = channel.cache_dict.pop(from_user)
-                except KeyError:
+                    (reply_type, reply_content) = channel.cache_dict[from_user].pop(0)
+                    if not channel.cache_dict[from_user]:  # If popping the message makes the list empty, delete the user entry from cache
+                        del channel.cache_dict[from_user]
+                except IndexError:
                     return "success"
 
                 if reply_type == "text":
@@ -146,7 +148,7 @@ class Query:
                             max_split=1,
                         )
                         reply_text = splits[0] + continue_text
-                        channel.cache_dict[from_user] = ("text", splits[1])
+                        channel.cache_dict[from_user].append(("text", splits[1]))
 
                     logger.info(
                         "[wechatmp] Request {} do send to {} {}: {}\n{}".format(

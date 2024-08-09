@@ -1,6 +1,6 @@
 # 企业微信应用号channel
 
-企业微信官方提供了客服、应用等API，本channel使用的是企业微信的应用API的能力。
+企业微信官方提供了客服、应用等API，本channel使用的是企业微信的自建应用API的能力。
 
 因为未来可能还会开发客服能力，所以本channel的类型名叫作`wechatcom_app`。
 
@@ -72,13 +72,11 @@ Error code: 60020, message: "not allow to access from your ip, ...from ip: xx.xx
 
 意思是IP不可信，需要参考上一步的`企业可信IP`配置，把这里的IP加进去。
 
-### Railway部署方式
+~~### Railway部署方式~~（2023-06-08已失效）
 
-公众号不能在`Railway`上部署，但企业微信应用[可以](https://railway.app/template/-FHS--?referralCode=RC3znh)!
+~~公众号不能在`Railway`上部署，但企业微信应用[可以](https://railway.app/template/-FHS--?referralCode=RC3znh)!~~
 
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/-FHS--?referralCode=RC3znh)
-
-填写配置后，将部署完成后的网址```**.railway.app/wxcomapp```，填写在上一步的URL中。发送信息后观察日志，把报错的IP加入到可信IP。（每次重启后都需要加入可信IP）
+~~填写配置后，将部署完成后的网址```**.railway.app/wxcomapp```，填写在上一步的URL中。发送信息后观察日志，把报错的IP加入到可信IP。（每次重启后都需要加入可信IP）~~
 
 ## 测试体验
 

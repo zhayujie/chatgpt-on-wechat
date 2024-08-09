@@ -64,7 +64,7 @@ class Dungeon(Plugin):
         if e_context["context"].type != ContextType.TEXT:
             return
         bottype = Bridge().get_bot_type("chat")
-        if bottype not in [const.OPEN_AI, const.CHATGPT, const.CHATGPTONAZURE]:
+        if bottype not in [const.OPEN_AI, const.CHATGPT, const.CHATGPTONAZURE, const.LINKAI]:
             return
         bot = Bridge().get_bot("chat")
         content = e_context["context"].content[:]
