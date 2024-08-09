@@ -177,6 +177,9 @@ available_setting = {
     "Minimax_api_key": "",
     "Minimax_group_id": "",
     "Minimax_base_url": "",
+    # Ollama 平台配置
+    "ollama_base_url": "127.0.0.1",
+    "ollama_port": "",
 }
 
 

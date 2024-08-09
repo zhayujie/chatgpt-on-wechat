@@ -13,7 +13,7 @@ from voice.factory import create_voice
 class Bridge(object):
     def __init__(self):
         self.btype = {
-            "chat": const.CHATGPT,
+            "chat": conf().get("bot_type", const.CHATGPT),
             "voice_to_text": conf().get("voice_to_text", "openai"),
             "text_to_voice": conf().get("text_to_voice", "google"),
             "translate": conf().get("translate", "baidu"),
@@ -58,6 +58,10 @@ class Bridge(object):
                     self.btype["voice_to_text"] = const.LINKAI
                 if not conf().get("text_to_voice") or conf().get("text_to_voice") in ["openai", const.TTS_1, const.TTS_1_HD]:
                     self.btype["text_to_voice"] = const.LINKAI
+
+            if conf().get("ollama_base_url") and conf().get("ollama_port"):
+                self.btype["chat"] = const.OLLAMA
+
 
         self.bots = {}
         self.chat_bots = {}
