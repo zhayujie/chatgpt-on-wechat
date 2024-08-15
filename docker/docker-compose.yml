@@ -19,20 +19,21 @@ services:
     security_opt:
       - seccomp:unconfined
     environment:
-      COZE_API_BASE: 'https://api.coze.cn/open_api/v2'
-      COZE_API_KEY: 'xxx'
-      COZE_BOT_ID: 'xxx'
+      # dify 相关配置
       DIFY_API_BASE: 'https://api.dify.ai/v1'
       DIFY_API_KEY: 'app-xx'
       DIFY_APP_TYPE: 'chatbot'                    # dify助手类型 chatbot(对应聊天助手)/agent(对应Agent)/workflow(对应工作流)，默认为chatbot
-      # DIFY_CONVERSATION_MAX_MESSAGES: '5'       # dify目前不支持设置历史消息长度，暂时使用超过最大消息数清空会话的策略，缺点是没有滑动窗口，会突然丢失历史消息，当设置的值小于等于0，则不限制历史消息长度
-      EXPIRES_IN_SECONDS: '3600'                  # dify会话过期时间，单位秒，默认3600秒
       MODEL: 'dify'                               # 默认为 dify,默认使用coze 则填写 coze,也可以在启动后使用godcmd=>"#model coze"进行模型热切换(必须先认证管理员权限)
+      # DIFY_CONVERSATION_MAX_MESSAGES: '5'       # dify目前不支持设置历史消息长度，暂时使用超过最大消息数清空会话的策略，缺点是没有滑动窗口，会突然丢失历史消息，当设置的值小于等于0，则不限制历史消息长度
+      
+      # 会话相关配置
+      EXPIRES_IN_SECONDS: '3600'                  # dify会话过期时间，单位秒，默认3600秒
       SINGLE_CHAT_PREFIX: '[""]'                  # 私聊前缀，配置示例 '["bot", "ai"]'
       SINGLE_CHAT_REPLY_PREFIX: '""'              # 单聊回复前缀，配置示例 '"bot"' 只支持单个字符串，请勿配置成列表形式
       GROUP_CHAT_PREFIX: '["@bot"]'
       GROUP_NAME_WHITE_LIST: '["ALL_GROUP"]'
       TZ: 'Asia/Shanghai'
+
       # web_ui 相关配置，只支持wx channel_tpye生效，默认不开启，取消注释下方配置可开启web_ui功能
       # DIFY_ON_WECHAT_EXEC: 'python web_ui.py'
       # WEB_UI_PORT: '7860'
@@ -40,5 +41,12 @@ services:
       # WEB_UI_PASSWORD: 'dify-on-wechat'         # 务必保证修改默认的用户名和密码
       # 图片理解功能
       # IMAGE_RECOGNITION: 'false'                # 是否开启图片理解功能，默认为false
+
+      # coze 相关配置
+      COZE_API_BASE: 'https://api.coze.cn/open_api/v2'
+      COZE_API_KEY: 'xxx'
+      COZE_BOT_ID: 'xxx'
+      
+      # 更多配置请查看 config.py
     ports:
       - "7860:7860"

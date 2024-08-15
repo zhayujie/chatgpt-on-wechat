@@ -54,7 +54,7 @@ class ByteDanceCozeBot(Bot):
         }
 
     def _get_payload(self, user: str, query: str, chat_history: List[dict]):
-        coze_bot_id = conf().get('coze_bot_id')
+        coze_bot_id = conf().get('coze_bot_id', '')
         coze_bot_id = str(coze_bot_id)
         if not coze_bot_id:
             logger.error("[COZE] coze_bot_id is not set")
