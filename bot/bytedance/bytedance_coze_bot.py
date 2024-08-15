@@ -14,6 +14,7 @@ from bridge.reply import Reply, ReplyType
 from common.log import logger
 from config import conf
 
+
 class ByteDanceCozeBot(Bot):
     def __init__(self):
         super().__init__()
@@ -53,13 +54,19 @@ class ByteDanceCozeBot(Bot):
         }
 
     def _get_payload(self, user: str, query: str, chat_history: List[dict]):
+        coze_bot_id = conf().get('coze_bot_id')
+        coze_bot_id = str(coze_bot_id)
+        if not coze_bot_id:
+            logger.error("[COZE] coze_bot_id is not set")
+            raise Exception("coze_bot_id is not set")
         return {
-            'bot_id': conf().get('coze_bot_id'),
+            'bot_id': coze_bot_id,
             "user": user,
             "query": query,
             "chat_history": chat_history,
             "stream": False
         }
+
     def _reply_text(self, session_id: str, session: ChatGPTSession, retry_count=0):
         try:
             query, chat_history = self._convert_messages_format(session.messages)
@@ -67,6 +74,7 @@ class ByteDanceCozeBot(Bot):
             chat_url = f'{base_url}/chat'
             headers = self._get_headers()
             payload = self._get_payload(session.session_id, query, chat_history)
+            logger.debug("[COZE] headers={}, payload={}".format(headers, payload))
             response = requests.post(chat_url, headers=headers, json=payload)
             if response.status_code != 200:
                 error_info = f"[COZE] response text={response.text} status_code={response.status_code}"
@@ -99,11 +107,11 @@ class ByteDanceCozeBot(Bot):
             role = message.get('role')
             if role == 'user':
                 content = message.get('content')
-                chat_history.append({"role":"user", "content": content, "content_type":"text"})
+                chat_history.append({"role": "user", "content": content, "content_type": "text"})
             elif role == 'assistant':
                 content = message.get('content')
-                chat_history.append({"role":"assistant", "type":"answer", "content": content, "content_type":"text"})
-            elif role =='system':
+                chat_history.append({"role": "assistant", "type": "answer", "content": content, "content_type": "text"})
+            elif role == 'system':
                 # TODO: deal system message
                 pass
         user_message = chat_history.pop()
