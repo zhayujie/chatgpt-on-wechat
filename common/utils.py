@@ -1,6 +1,8 @@
 import io
 import re
 import os
+from typing import List, Dict
+
 from urllib.parse import urlparse
 from PIL import Image
 from common.log import logger
@@ -70,7 +72,7 @@ def convert_webp_to_png(webp_image):
         logger.error(f"Failed to convert WEBP to PNG: {e}")
         raise
 
-def parse_markdown_text(text: str) -> list[dict]:
+def parse_markdown_text(text: str) -> List[Dict]:
     """
     解析包含图片和文件链接的混合内容文本。code by sonnet3.5
 
