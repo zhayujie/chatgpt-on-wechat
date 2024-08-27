@@ -3,7 +3,7 @@
 import requests, json
 from bot.bot import Bot
 from bot.session_manager import SessionManager
-from bot.baidu.baidu_wenxin_session import BaiduWenxinSession
+from bot.chatgpt.chat_gpt_session import ChatGPTSession
 from bridge.context import ContextType, Context
 from bridge.reply import Reply, ReplyType
 from common.log import logger
@@ -53,7 +53,7 @@ class XunFeiBot(Bot):
         self.host = urlparse(self.spark_url).netloc
         self.path = urlparse(self.spark_url).path
         # 和wenxin使用相同的session机制
-        self.sessions = SessionManager(BaiduWenxinSession, model=const.XUNFEI)
+        self.sessions = SessionManager(ChatGPTSession, model=const.XUNFEI)
 
     def reply(self, query, context: Context = None) -> Reply:
         if context.type == ContextType.TEXT:
