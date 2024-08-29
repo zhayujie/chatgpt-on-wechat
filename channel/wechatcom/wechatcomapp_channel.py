@@ -162,11 +162,12 @@ class Query:
         logger.debug("[wechatcom] receive message: {}, msg= {}".format(message, msg))
         if msg.type == "event":
             if msg.event == "subscribe":
-                reply_content = subscribe_msg()
-                if reply_content:
-                    reply = create_reply(reply_content, msg).render()
-                    res = channel.crypto.encrypt_message(reply, nonce, timestamp)
-                    return res
+                pass
+                # reply_content = subscribe_msg()
+                # if reply_content:
+                #     reply = create_reply(reply_content, msg).render()
+                #     res = channel.crypto.encrypt_message(reply, nonce, timestamp)
+                #     return res
         else:
             try:
                 wechatcom_msg = WechatComAppMessage(msg, client=channel.client)
