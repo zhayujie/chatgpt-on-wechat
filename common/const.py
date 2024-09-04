@@ -24,6 +24,7 @@ GPT35_0125 = "gpt-3.5-turbo-0125"
 GPT35_1106 = "gpt-3.5-turbo-1106"
 
 GPT_4o = "gpt-4o"
+GPT_4O_0806 = "gpt-4o-2024-08-06"
 GPT4_TURBO = "gpt-4-turbo"
 GPT4_TURBO_PREVIEW = "gpt-4-turbo-preview"
 GPT4_TURBO_04_09 = "gpt-4-turbo-2024-04-09"
@@ -58,7 +59,7 @@ GEMINI_15_PRO = "gemini-1.5-pro"
 
 MODEL_LIST = [
               GPT35, GPT35_0125, GPT35_1106, "gpt-3.5-turbo-16k",
-              GPT_4o, GPT_4o_MINI, GPT4_TURBO, GPT4_TURBO_PREVIEW, GPT4_TURBO_01_25, GPT4_TURBO_11_06, GPT4, GPT4_32k, GPT4_06_13, GPT4_32k_06_13,
+              GPT_4o, GPT_4O_0806, GPT_4o_MINI, GPT4_TURBO, GPT4_TURBO_PREVIEW, GPT4_TURBO_01_25, GPT4_TURBO_11_06, GPT4, GPT4_32k, GPT4_06_13, GPT4_32k_06_13,
               WEN_XIN, WEN_XIN_4,
               XUNFEI, ZHIPU_AI, MOONSHOT, MiniMax,
               GEMINI, GEMINI_PRO, GEMINI_15_flash, GEMINI_15_PRO,
