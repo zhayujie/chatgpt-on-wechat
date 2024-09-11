@@ -10,7 +10,6 @@ import os
 import threading
 import time
 import requests
-import sys
 
 from bridge.context import *
 from bridge.reply import *
