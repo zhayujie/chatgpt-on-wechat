@@ -10,6 +10,7 @@ import os
 import threading
 import time
 import requests
+import sys
 
 from bridge.context import *
 from bridge.reply import *
@@ -100,7 +101,10 @@ def qrCallback(uuid, status, qrcode):
         qr = qrcode.QRCode(border=1)
         qr.add_data(url)
         qr.make(fit=True)
-        qr.print_ascii(invert=True)
+        try:
+            qr.print_ascii(invert=True)
+        except UnicodeEncodeError:
+            print("ASCII QR code printing failed due to encoding issues.")
 
 
 @singleton
