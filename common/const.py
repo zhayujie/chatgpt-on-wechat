@@ -38,6 +38,9 @@ GPT4_32k = "gpt-4-32k"
 GPT4_06_13 = "gpt-4-0613"
 GPT4_32k_06_13 = "gpt-4-32k-0613"
 
+O1 = "o1-preview"
+O1_MINI = "o1-mini"
+
 WHISPER_1 = "whisper-1"
 TTS_1 = "tts-1"
 TTS_1_HD = "tts-1-hd"
