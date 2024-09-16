@@ -159,7 +159,7 @@ class WechatChannel(ChatChannel):
         try:
             time.sleep(2)
             self.auto_login_times += 1
-            if self.auto_login_times < 100:
+            if self.auto_login_times < 3:
                 chat_channel.handler_pool._shutdown = False
                 self.startup()
         except Exception as e:
