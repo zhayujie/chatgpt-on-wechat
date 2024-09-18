@@ -173,9 +173,24 @@ python3 app.py                                    # windows环境下该命令通
 
 特别感谢 [**@绛烨**](https://github.com/jiangye520) 提供内测coze api key
 
+## 6. 支持dify voice
 
+dify语音相关配置如下，另外需要在dify应用中开启语音转文字以及文字转语音功能
+
+```bash
+{
+  "dify_api_base": "https://api.dify.ai/v1",
+  "dify_api_key": "app-xxx",
+  "dify_app_type": "chatbot",
+  "voice_reply_voice": true,   # 是否使用语音回复语音
+  "always_reply_voice": false, # 是否一直使用语音回复
+  "voice_to_text": "dify",     # 语音识别引擎
+  "text_to_voice": "dify"      # 语音合成引擎
+}
+```
 
 # 更新日志
+- 2024/09/18 支持dify voice
 - 2024/08/09 dify chatbot类型应用支持解析markdown格式响应，分别发送文本、图片和文件
 - 2024/08/04 支持dify图片识别功能
 - 2024/08/03 微信支持通过web ui扫码登录或异常重启，已适配docker容器
@@ -302,3 +317,13 @@ docker logs -f dify-on-wechat  # 查看二维码并登录
 - [ ] **支持：** 企业微信个人号 
 
 也请各位大佬多多提PR，我社畜打工人，精力实在有限~
+
+# 致谢
+
+感谢所有打赏的朋友。
+
+感谢 [auto-coder](https://github.com/allwefantasy/auto-coder) 项目的自动编程工具。
+
+![auto-coder-1](./docs/images/auto-coder-1.jpg)
+
+![auto-coder-2](./docs/images/auto-coder-2.jpg)
