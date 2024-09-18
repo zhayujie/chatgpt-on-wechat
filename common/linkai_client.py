@@ -42,8 +42,13 @@ class ChatClient(LinkAIClient):
         if reply_voice_mode:
             if reply_voice_mode == "voice_reply_voice":
                 local_config["voice_reply_voice"] = True
+                local_config["always_reply_voice"] = False
             elif reply_voice_mode == "always_reply_voice":
                 local_config["always_reply_voice"] = True
+                local_config["voice_reply_voice"] = True
+            elif reply_voice_mode == "no_reply_voice":
+                local_config["always_reply_voice"] = False
+                local_config["voice_reply_voice"] = False
 
         if config.get("admin_password"):
             if not plugin_config.get("Godcmd"):
