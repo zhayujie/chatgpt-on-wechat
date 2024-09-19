@@ -24,9 +24,7 @@ is_at: 是否被at
 - (群消息时，一般会存在实际发送者，是群内某个成员的id和昵称，下列项仅在群消息时存在)
 actual_user_id: 实际发送者id (群聊必填)
 actual_user_nickname：实际发送者昵称
-
-
-
+self_display_name: 自身的展示名，设置群昵称时，该字段表示群昵称
 
 _prepare_fn: 准备函数，用于准备消息的内容，比如下载图片等,
 _prepared: 是否已经调用过准备函数
@@ -48,11 +46,14 @@ class ChatMessage(object):
     to_user_nickname = None
     other_user_id = None
     other_user_nickname = None
+    my_msg = False
+    self_display_name = None
 
     is_group = False
     is_at = False
     actual_user_id = None
     actual_user_nickname = None
+    at_list = None
 
     _prepare_fn = None
     _prepared = False
@@ -67,7 +68,7 @@ class ChatMessage(object):
             self._prepare_fn()
 
     def __str__(self):
-        return "ChatMessage: id={}, create_time={}, ctype={}, content={}, from_user_id={}, from_user_nickname={}, to_user_id={}, to_user_nickname={}, other_user_id={}, other_user_nickname={}, is_group={}, is_at={}, actual_user_id={}, actual_user_nickname={}".format(
+        return "ChatMessage: id={}, create_time={}, ctype={}, content={}, from_user_id={}, from_user_nickname={}, to_user_id={}, to_user_nickname={}, other_user_id={}, other_user_nickname={}, is_group={}, is_at={}, actual_user_id={}, actual_user_nickname={}, at_list={}".format(
             self.msg_id,
             self.create_time,
             self.ctype,
@@ -82,4 +83,5 @@ class ChatMessage(object):
             self.is_at,
             self.actual_user_id,
             self.actual_user_nickname,
+            self.at_list
         )
