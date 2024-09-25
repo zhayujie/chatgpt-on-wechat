@@ -19,8 +19,11 @@ class MoonshotBot(Bot):
     def __init__(self):
         super().__init__()
         self.sessions = SessionManager(MoonshotSession, model=conf().get("model") or "moonshot-v1-128k")
+        model = conf().get("model") or "moonshot-v1-128k"
+        if model == "moonshot":
+            model = "moonshot-v1-32k"
         self.args = {
-            "model": conf().get("model") or "moonshot-v1-128k",  # 对话模型的名称
+            "model": model,  # 对话模型的名称
             "temperature": conf().get("temperature", 0.3),  # 如果设置，值域须为 [0, 1] 我们推荐 0.3，以达到较合适的效果。
             "top_p": conf().get("top_p", 1.0),  # 使用默认值
         }
