@@ -60,11 +60,22 @@ GEMINI_PRO = "gemini-1.0-pro"
 GEMINI_15_flash = "gemini-1.5-flash"
 GEMINI_15_PRO = "gemini-1.5-pro"
 
+GLM_4 = "glm-4"
+GLM_4_PLUS = "glm-4-plus"
+GLM_4_flash = "glm-4-flash"
+GLM_4_LONG = "glm-4-long"
+GLM_4_ALLTOOLS = "glm-4-alltools"
+GLM_4_0520 = "glm-4-0520"
+GLM_4_AIR = "glm-4-air"
+GLM_4_AIRX = "glm-4-airx"
+
 MODEL_LIST = [
               GPT35, GPT35_0125, GPT35_1106, "gpt-3.5-turbo-16k",
               O1, O1_MINI, GPT_4o, GPT_4O_0806, GPT_4o_MINI, GPT4_TURBO, GPT4_TURBO_PREVIEW, GPT4_TURBO_01_25, GPT4_TURBO_11_06, GPT4, GPT4_32k, GPT4_06_13, GPT4_32k_06_13,
               WEN_XIN, WEN_XIN_4,
-              XUNFEI, ZHIPU_AI, MOONSHOT, MiniMax,
+              XUNFEI,
+              ZHIPU_AI, GLM_4, GLM_4_PLUS, GLM_4_flash, GLM_4_LONG, GLM_4_ALLTOOLS, GLM_4_0520, GLM_4_AIR, GLM_4_AIRX,
+              MOONSHOT, MiniMax,
               GEMINI, GEMINI_PRO, GEMINI_15_flash, GEMINI_15_PRO,
               "claude", "claude-3-haiku", "claude-3-sonnet", "claude-3-opus", "claude-3-opus-20240229", "claude-3.5-sonnet",
               "moonshot-v1-8k", "moonshot-v1-32k", "moonshot-v1-128k",
