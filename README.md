@@ -86,7 +86,7 @@ DEMO视频：https://cdn.link-ai.tech/doc/cow_demo.mp4
 
 - 快速安装脚本，详细使用指导：[一键安装启动脚本](https://github.com/zhayujie/chatgpt-on-wechat/wiki/%E4%B8%80%E9%94%AE%E5%AE%89%E8%A3%85%E5%90%AF%E5%8A%A8%E8%84%9A%E6%9C%AC)
 ```bash
-bash <(curl -sS https://wangpc-cc.oss-cn-shenzhen.aliyuncs.com/blog/install.sh)
+bash <(curl -sS https://cdn.link-ai.tech/code/cow/install.sh)
 ```
 - 项目管理脚本，详细使用指导：[项目管理脚本](https://github.com/zhayujie/chatgpt-on-wechat/wiki/%E9%A1%B9%E7%9B%AE%E7%AE%A1%E7%90%86%E8%84%9A%E6%9C%AC)
 ## 一、准备
