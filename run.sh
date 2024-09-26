@@ -68,9 +68,22 @@ run_project() {
     sleep 2
 
 
-    nohup python3 "${BASE_DIR}/app.py" > "${BASE_DIR}/nohup.out" 2>&1 &
+    # 判断操作系统类型
+    OS_TYPE=$(uname)
 
-    echo -e "${GREEN}🚀 正在启动 ChatGPT-on-WeChat ...${NC}"
+    if [[ "$OS_TYPE" == "Linux" ]]; then
+        # 在 Linux 上使用 setsid
+        setsid python3 "${BASE_DIR}/app.py" > "${BASE_DIR}/nohup.out" 2>&1 &
+        echo -e "${GREEN}🚀 正在启动 ChatGPT-on-WeChat (Linux)...${NC}"
+    elif [[ "$OS_TYPE" == "Darwin" ]]; then
+        # 在 macOS 上直接运行
+        python3 "${BASE_DIR}/app.py" > "${BASE_DIR}/nohup.out" 2>&1 &
+        echo -e "${GREEN}🚀 正在启动 ChatGPT-on-WeChat (macOS)...${NC}"
+    else
+        echo -e "${RED}❌ 错误：不支持的操作系统 ${OS_TYPE}。${NC}"
+        exit 1
+    fi
+
     sleep 2
     # 显示日志输出，供用户扫码
     tail -n 30 -f "${BASE_DIR}/nohup.out"
