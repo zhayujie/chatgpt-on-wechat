@@ -2,6 +2,7 @@
 OPEN_AI = "openAI"
 CHATGPT = "chatGPT"
 BAIDU = "baidu"  # 百度文心一言模型
+COZE = "coze"  # 头条 coze
 XUNFEI = "xunfei"
 CHATGPTONAZURE = "chatGPTOnAzure"
 LINKAI = "linkai"

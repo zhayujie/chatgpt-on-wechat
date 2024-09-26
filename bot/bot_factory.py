@@ -16,7 +16,11 @@ def create_bot(bot_type):
         # return BaiduUnitBot()
         from bot.baidu.baidu_wenxin import BaiduWenxinBot
         return BaiduWenxinBot()
-
+    
+    if bot_type == const.COZE:
+        from bot.coze.coze import CozeBot
+        return CozeBot()
+    
     elif bot_type == const.CHATGPT:
         # ChatGPT 网页端web接口
         from bot.chatgpt.chat_gpt_bot import ChatGPTBot
