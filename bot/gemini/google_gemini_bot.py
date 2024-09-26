@@ -24,7 +24,7 @@ class GoogleGeminiBot(Bot):
     def __init__(self):
         super().__init__()
         self.api_key = conf().get("gemini_api_key")
-        # 复用文心的token计算方式
+        # 复用chatGPT的token计算方式
         self.sessions = SessionManager(ChatGPTSession, model=conf().get("model") or "gpt-3.5-turbo")
         self.model = conf().get("model") or "gemini-pro"
         if self.model == "gemini":
@@ -38,7 +38,7 @@ class GoogleGeminiBot(Bot):
             session_id = context["session_id"]
             session = self.sessions.session_query(query, session_id)
             gemini_messages = self._convert_to_gemini_messages(self.filter_messages(session.messages))
-            logger.info(f"[Gemini] messages={gemini_messages}")
+            logger.debug(f"[Gemini] messages={gemini_messages}")
             genai.configure(api_key=self.api_key)
             model = genai.GenerativeModel(self.model)
             
