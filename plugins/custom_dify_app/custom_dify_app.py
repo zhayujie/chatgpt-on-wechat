@@ -41,11 +41,13 @@ class CustomDifyApp(Plugin):
             raise "[CustomDifyApp] init failed, ignore "
 
     def _parse_config(self):
+        # TODO: dify_app_dict dify_app_map 变量命名区分度不够
         for dify_app_dict in self.config:
             dify_app_conf = DifyAppConf(
                 app_name=dify_app_dict["app_name"], app_type=dify_app_dict["app_type"],
                 api_base=dify_app_dict["api_base"], api_key=dify_app_dict["api_key"]
             )
+            # TODO: app name 不能保证唯一性，建议换成api-key作为map的key
             self.dify_app_map[dify_app_conf.app_name] = dify_app_conf
 
             if "use_on_single_chat" in dify_app_dict and dify_app_dict["use_on_single_chat"]:
@@ -56,6 +58,7 @@ class CustomDifyApp(Plugin):
 
             # 添加到 group_chat_config_map 中，方便后续操作
             group_name_list = dify_app_dict["group_name_list"]
+            # TODO: 使用群聊名称关键字，更方便配置，比如"dify交流群"关键字，可同时配置"dify交流群1"、"dify交流群2"、"dify交流群3"
             for group_name in group_name_list:
                 self.group_chat_dify_app[group_name] = dify_app_conf.app_name
 
@@ -79,6 +82,7 @@ class CustomDifyApp(Plugin):
             dify_app_conf = None
 
         if dify_app_conf is None:
+            # TODO: 不能因为找不到dify配置就break，中断消息处理流程，直接continue即可
             self._break_pass(e_context)
             return
 

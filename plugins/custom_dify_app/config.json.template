@@ -1,12 +1,12 @@
 [
     {
-        "app_name": "xxx",
+        "app_name": "xx应用",
         "app_type": "chatbot",
-        "api_base": "xxx",
-        "api_key": "xxx",
-        "use_on_single_chat": true,
+        "api_base": "https://api.dify.ai/v1",
+        "api_key": "app-xx",
+        "use_on_single_chat": false,
         "group_name_list": [
-            "测试群1",
+            "测试群1"
         ]
     }
 ]
