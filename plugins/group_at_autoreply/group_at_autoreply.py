@@ -6,7 +6,7 @@ from plugins import *
 
 @plugins.register(
     name="GroupAtAutoreply",
-    desire_priority=900,
+    desire_priority=0,
     hidden=True,
     enabled=True,
     desc="群聊中出现@某人时，触发某人的自动回复",
@@ -61,7 +61,7 @@ class GroupAtAutoreply(Plugin):
             if len(autoreply_members) > 0:
                 context["autoreply_members"] = autoreply_members
                 e_context.action = EventAction.BREAK_PASS
-        elif str(context.content).startswith("#群自动回复"):
+        elif str(context.content).startswith("$群自动回复"):
             # 私聊消息，且是设置自动回复的
             lines = str(context.content).split("\n")[1:]
             enabled = None  # 开关
@@ -81,7 +81,7 @@ class GroupAtAutoreply(Plugin):
                 elif key == "回复内容":
                     reply_text = value
 
-            help_info = "指令错误，参考示例如下：\n\n#群自动回复\n开关: 打开\n回复内容: 请稍后联系~\n\n#群自动回复\n开关: 关闭"
+            help_info = "指令错误，参考示例如下：\n\n$群自动回复\n开关: 打开\n回复内容: 请稍后联系~\n\n$群自动回复\n开关: 关闭"
             if enabled is None:
                 autoreply_config_result = help_info
             elif enabled and reply_text is None:
