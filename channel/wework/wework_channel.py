@@ -124,6 +124,10 @@ def _check(func):
 def all_msg_handler(wework_instance: ntwork.WeWork, message):
     logger.debug(f"收到消息: {message}")
     if 'data' in message:
+        sender = message['data'].get("sender", None)
+        if sender and sender == WeworkChannel().user_id:
+            logger.debug("自己发的，直接结束")
+            return
         # 首先查找conversation_id，如果没有找到，则查找room_conversation_id
         conversation_id = message['data'].get('conversation_id', message['data'].get('room_conversation_id'))
         if conversation_id is not None:
@@ -186,7 +190,7 @@ class WeworkChannel(ChatChannel):
         wework.wait_login()
         login_info = wework.get_login_info()
         self.user_id = login_info['user_id']
-        self.name = login_info['nickname']
+        self.name = login_info['nickname'] if login_info['nickname'] else login_info['username']
         logger.info(f"登录信息:>>>user_id:{self.user_id}>>>>>>>>name:{self.name}")
         logger.info("静默延迟60s，等待客户端刷新数据，请勿进行任何操作······")
         time.sleep(60)

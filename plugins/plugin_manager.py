@@ -34,7 +34,7 @@ class PluginManager:
             plugincls.version = kwargs.get("version") if kwargs.get("version") != None else "1.0"
             plugincls.namecn = kwargs.get("namecn") if kwargs.get("namecn") != None else name
             plugincls.hidden = kwargs.get("hidden") if kwargs.get("hidden") != None else False
-            plugincls.enabled = True
+            plugincls.enabled = kwargs.get("enabled") if kwargs.get("enabled") != None else False
             if self.current_plugin_path == None:
                 raise Exception("Plugin path not set")
             self.plugins[name.upper()] = plugincls

@@ -17,6 +17,7 @@ itchat.pkl
 user_datas.pkl
 chatgpt_tool_hub/
 plugins/**/
+plugins/**/config.json
 !plugins/bdunit
 !plugins/dungeon
 !plugins/finish
@@ -32,6 +33,8 @@ plugins/banwords/lib/__pycache__
 !plugins/linkai
 !plugins/jina_sum
 !plugins/jina_sum/**/
+!plugins/set_dify_conf
+!plugins/group_at_autoreply
 client_config.json
 # qrcode
 wx_qrcode.png

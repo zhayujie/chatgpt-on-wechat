@@ -35,9 +35,9 @@ class DifyBot(Bot):
             # TODO: 适配除微信以外的其他channel
             channel_type = conf().get("channel_type", "wx")
             user = None
-            if channel_type == "wx":
+            if channel_type in ["wx", "wework"]:
                 user = context["msg"].other_user_nickname if context.get("msg") else "default"
-            elif channel_type in ["wechatcom_app", "wechatmp", "wechatmp_service", "wechatcom_service", "wework"]:
+            elif channel_type in ["wechatcom_app", "wechatmp", "wechatmp_service", "wechatcom_service"]:
                 user = context["msg"].other_user_id if context.get("msg") else "default"
             else:
                 return Reply(ReplyType.ERROR, f"unsupported channel type: {channel_type}, now dify only support wx, wechatcom_app, wechatmp, wechatmp_service channel")
@@ -65,16 +65,19 @@ class DifyBot(Bot):
             "user": session.get_user()
         }
 
+    def _get_dify_conf(self, context: Context, key, default=None):
+        return context.get(key, conf().get(key, default))
+
     def _reply(self, query: str, session: DifySession, context: Context):
         try:
             session.count_user_message() # 限制一个conversation中消息数，防止conversation过长
-            dify_app_type = conf().get('dify_app_type', 'chatbot')
+            dify_app_type = self._get_dify_conf(context, "dify_app_type", 'chatbot')
             if dify_app_type == 'chatbot':
                 return self._handle_chatbot(query, session, context)
             elif dify_app_type == 'agent':
                 return self._handle_agent(query, session, context)
             elif dify_app_type == 'workflow':
-                return self._handle_workflow(query, session)
+                return self._handle_workflow(query, session, context)
             else:
                 return None, "dify_app_type must be agent, chatbot or workflow"
 
@@ -84,8 +87,8 @@ class DifyBot(Bot):
             return None, error_info
 
     def _handle_chatbot(self, query: str, session: DifySession, context: Context):
-        api_key = conf().get('dify_api_key', '')
-        api_base = conf().get("dify_api_base", "https://api.dify.ai/v1")
+        api_key = self._get_dify_conf(context, "dify_api_key", '')
+        api_base = self._get_dify_conf(context, "dify_api_base", "https://api.dify.ai/v1")
         chat_client = ChatClient(api_key, api_base)
         response_mode = 'blocking'
         payload = self._get_payload(query, session, response_mode)
@@ -217,8 +220,8 @@ class DifyBot(Bot):
         return None
 
     def _handle_agent(self, query: str, session: DifySession, context: Context):
-        api_key = conf().get('dify_api_key', '')
-        api_base = conf().get("dify_api_base", "https://api.dify.ai/v1")
+        api_key = self._get_dify_conf(context, "dify_api_key", '')
+        api_base = self._get_dify_conf(context, "dify_api_base", "https://api.dify.ai/v1")
         chat_client = ChatClient(api_key, api_base)
         response_mode = 'streaming'
         payload = self._get_payload(query, session, response_mode)
@@ -269,10 +272,10 @@ class DifyBot(Bot):
             session.set_conversation_id(conversation_id)
         return reply, None
 
-    def _handle_workflow(self, query: str, session: DifySession):
+    def _handle_workflow(self, query: str, session: DifySession, context: Context):
         payload = self._get_workflow_payload(query, session)
-        api_key = conf().get('dify_api_key', '')
-        api_base = conf().get("dify_api_base", "https://api.dify.ai/v1")
+        api_key = self._get_dify_conf(context, "dify_api_key", '')
+        api_base = self._get_dify_conf(context, "dify_api_base", "https://api.dify.ai/v1")
         dify_client = DifyClient(api_key, api_base)
         response = dify_client._send_request("POST", "/workflows/run", json=payload)
         if response.status_code != 200:
