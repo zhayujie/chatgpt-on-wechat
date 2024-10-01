@@ -3,90 +3,76 @@
 import plugins
 from plugins import *
 
-
-class DifyAppConf:
-    def __init__(self, app_name, app_type, api_base, api_key):
-        self.app_name: str = app_name
-        self.app_type: str = app_type
-        self.api_base: str = api_base
-        self.api_key: str = api_key
-
-
 @plugins.register(
     name="CustomDifyApp",
     desire_priority=0,
     hidden=True,
     enabled=True,
     desc="根据群聊环境自动选择相应的Dify应用",
-    version="0.1",
-    author="zexin.li",
+    version="0.2",
+    author="zexin.li, hanfangyuan",
 )
 class CustomDifyApp(Plugin):
 
     def __init__(self):
         super().__init__()
         try:
+            # 加载配置文件
             self.config = super().load_config()
-            self.dify_app_map: dict[str, DifyAppConf] = {}
-            self.single_chat_dify_app = None
-            self.group_chat_dify_app: dict[str, str] = {}
+            # 单聊配置初始化为None
+            self.single_chat_conf = None
             if self.config is None:
                 logger.info("[CustomDifyApp] config is None")
                 return
-            self._parse_config()
+            # 初始化单聊配置
+            self._init_single_chat_conf()
             logger.info("[CustomDifyApp] inited")
+            # 注册事件处理函数
             self.handlers[Event.ON_HANDLE_CONTEXT] = self.on_handle_context
         except Exception as e:
             logger.error(f"[CustomDifyApp]初始化异常：{e}")
             raise "[CustomDifyApp] init failed, ignore "
 
-    def _parse_config(self):
-        # TODO: dify_app_dict dify_app_map 变量命名区分度不够
+    def _init_single_chat_conf(self):
+        # 遍历配置，找到用于单聊的配置
         for dify_app_dict in self.config:
-            dify_app_conf = DifyAppConf(
-                app_name=dify_app_dict["app_name"], app_type=dify_app_dict["app_type"],
-                api_base=dify_app_dict["api_base"], api_key=dify_app_dict["api_key"]
-            )
-            # TODO: app name 不能保证唯一性，建议换成api-key作为map的key
-            self.dify_app_map[dify_app_conf.app_name] = dify_app_conf
-
             if "use_on_single_chat" in dify_app_dict and dify_app_dict["use_on_single_chat"]:
-                self.single_chat_dify_app = dify_app_conf.app_name
-
-            if "group_name_list" not in dify_app_dict:
-                continue
-
-            # 添加到 group_chat_config_map 中，方便后续操作
-            group_name_list = dify_app_dict["group_name_list"]
-            # TODO: 使用群聊名称关键字，更方便配置，比如"dify交流群"关键字，可同时配置"dify交流群1"、"dify交流群2"、"dify交流群3"
-            for group_name in group_name_list:
-                self.group_chat_dify_app[group_name] = dify_app_conf.app_name
-
-    def _break_pass(self, e_context: EventContext):
-        e_context.reply = None
-        e_context.action = EventAction.BREAK_PASS
+                self.single_chat_conf = dify_app_dict
+                break
 
     def on_handle_context(self, e_context: EventContext):
-        if self.config is None:
-            return
-
-        context = e_context["context"]
         try:
-            if context.get("isgroup", False):
-                group_name = context["group_name"]
-                dify_app_name = self.group_chat_dify_app[group_name]
-                dify_app_conf = self.dify_app_map[dify_app_name]
-            else:
-                dify_app_conf = self.dify_app_map[self.single_chat_dify_app]
-        except:
+            if self.config is None:
+                return
+
+            context = e_context["context"]
             dify_app_conf = None
+            # 判断是群聊还是单聊
+            if context.get("isgroup", False):
+                # 群聊情况
+                group_name = context["group_name"]
+                # 遍历配置，找到匹配的群名关键词
+                for conf in self.config:
+                    if "group_name_keywords" in conf:
+                        if any(keyword in group_name for keyword in conf["group_name_keywords"]):
+                            dify_app_conf = conf
+                            break
+            else:
+                # 单聊情况，使用预设的单聊配置
+                dify_app_conf = self.single_chat_conf
 
-        if dify_app_conf is None:
-            # TODO: 不能因为找不到dify配置就break，中断消息处理流程，直接continue即可
-            self._break_pass(e_context)
-            return
+            # 如果没有找到匹配的配置，直接返回
+            if dify_app_conf is None:
+                return
+            # 检查配置是否完整
+            if not (dify_app_conf.get("app_type") and dify_app_conf.get("api_base") and dify_app_conf.get("api_key")):
+                logger.warning(f"[CustomDifyApp] dify app config is invalid: {dify_app_conf}")
+                return
 
-        logger.info(f"use dify app: {dify_app_conf.app_name}")
-        context["dify_app_type"] = dify_app_conf.app_type
-        context["dify_api_base"] = dify_app_conf.api_base
-        context["dify_api_key"] = dify_app_conf.api_key
+            # 使用找到的配置
+            logger.debug(f"use dify app: {dify_app_conf['app_name']}")
+            context["dify_app_type"] = dify_app_conf["app_type"]
+            context["dify_api_base"] = dify_app_conf["api_base"]
+            context["dify_api_key"] = dify_app_conf["api_key"]
+        except Exception as e:
+            logger.error(f"[CustomDifyApp] on_handle_context error: {e}")
