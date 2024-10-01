@@ -117,16 +117,12 @@ python app.py
 ![plugin-jinasum-1](./plugins/jina_sum/docs/images/wechat_mp.jpg)
 ![plugin-jinasum-1](./plugins/jina_sum/docs/images/red.jpg)
 
-## 3. Suno音乐插件
-使用 [Suno](https://github.com/hanfangyuan4396/suno) 插件生成音乐
+## 3. 新增[CustomDifyApp](https://github.com/hanfangyuan4396/dify-on-wechat/tree/master/plugins/custom_dify_app)插件
+支持根据群聊名称关键词自动切换不同的Dify应用，也支持为单聊配置专门的Dify应用。
 
-![plugin-suno-1](./docs/images/plugin-suno-1.jpg)
-![plugin-suno-2](./docs/images/plugin-suno-2.jpg)
+例如，在与AI助手进行私聊时，自动调用企业内部员工助手Dify应用；在xx平台技术支持群中@AI助手时，则自动切换至该平台的技术支持Dify应用。
 
-我把音乐、封面和歌词简单剪成了一个视频，效果很炸裂，Suno生成的效果好的离谱
-
-https://github.com/hanfangyuan4396/dify-on-wechat/assets/43166868/396fa76f-a5d9-4de2-8ce2-365ceb6684f0
-
+配置详情请查看 [CustomDifyApp](https://github.com/hanfangyuan4396/dify-on-wechat/tree/master/plugins/custom_dify_app)
 
 ## 4. 支持Dify Chatflow & Workflow
 dify官网已正式上线工作流模式，可以导入本项目下的[dsl文件](./dsl/chat-workflow.yml)快速创建工作流进行测试。工作流输入变量名称十分灵活，对于**工作流类型**的应用，本项目**约定工作流的输入变量命名为`query`**，**输出变量命名为`text`**。
@@ -190,6 +186,7 @@ dify语音相关配置如下，另外需要在dify应用中开启语音转文字
 ```
 
 # 更新日志
+- 2024/10/01 新增插件CustomDifyApp与GroupAtAutoreply，CustomDifyApp支持根据群聊名称关键词自动切换不同的Dify应用，GroupAtAutoreply支持群聊艾特自动回复，贡献者[**blankbro**](https://github.com/blankbro)
 - 2024/09/18 支持dify voice
 - 2024/08/09 dify chatbot类型应用支持解析markdown格式响应，分别发送文本、图片和文件
 - 2024/08/04 支持dify图片识别功能
