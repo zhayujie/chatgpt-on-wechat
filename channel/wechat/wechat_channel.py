@@ -9,7 +9,6 @@ import json
 import os
 import threading
 import time
-
 import requests
 
 from bridge.context import *
@@ -21,6 +20,7 @@ from common.expired_dict import ExpiredDict
 from common.log import logger
 from common.singleton import singleton
 from common.time_check import time_checker
+from common.utils import convert_webp_to_png
 from config import conf, get_appdata_dir
 from lib import itchat
 from lib.itchat.content import *
@@ -121,7 +121,10 @@ def qrCallback(uuid, status, qrcode):
         qr = qrcode.QRCode(border=1)
         qr.add_data(url)
         qr.make(fit=True)
-        qr.print_ascii(invert=True)
+        try:
+            qr.print_ascii(invert=True)
+        except UnicodeEncodeError:
+            print("ASCII QR code printing failed due to encoding issues.")
 
 
 @singleton
@@ -130,7 +133,7 @@ class WechatChannel(ChatChannel):
 
     def __init__(self):
         super().__init__()
-        self.receivedMsgs = ExpiredDict(conf().get("expires_in_seconds"))
+        self.receivedMsgs = ExpiredDict(conf().get("expires_in_seconds", 3600))
         self.auto_login_times = 0
 
     def startup(self):
@@ -220,7 +223,7 @@ class WechatChannel(ChatChannel):
             logger.debug(f"[WX]receive attachment msg, file_name={cmsg.content}")
         else:
             logger.debug("[WX]receive group msg: {}".format(cmsg.content))
-        context = self._compose_context(cmsg.ctype, cmsg.content, isgroup=True, msg=cmsg)
+        context = self._compose_context(cmsg.ctype, cmsg.content, isgroup=True, msg=cmsg, no_need_at=conf().get("no_need_at", False))
         if context:
             self.produce(context)
 
@@ -258,6 +261,12 @@ class WechatChannel(ChatChannel):
                 image_storage.write(block)
             logger.info(f"[WX] download image success, size={size}, img_url={img_url}")
             image_storage.seek(0)
+            if ".webp" in img_url:
+                try:
+                    image_storage = convert_webp_to_png(image_storage)
+                except Exception as e:
+                    logger.error(f"Failed to convert image: {e}")
+                    return
             itchat.send_image(image_storage, toUserName=receiver)
             logger.info("[WX] sendImage url={}, receiver={}".format(img_url, receiver))
         elif reply.type == ReplyType.IMAGE:  # 从文件读取图片
@@ -363,3 +372,4 @@ def _send_qr_code(qrcode_list: list):
             chat_client.send_qrcode(qrcode_list)
     except Exception as e:
         pass
+

@@ -3,7 +3,7 @@
 import requests, json
 from bot.bot import Bot
 from bot.session_manager import SessionManager
-from bot.baidu.baidu_wenxin_session import BaiduWenxinSession
+from bot.chatgpt.chat_gpt_session import ChatGPTSession
 from bridge.context import ContextType, Context
 from bridge.reply import Reply, ReplyType
 from common.log import logger
@@ -41,18 +41,19 @@ class XunFeiBot(Bot):
         self.api_key = conf().get("xunfei_api_key")
         self.api_secret = conf().get("xunfei_api_secret")
         # 默认使用v2.0版本: "generalv2"
-        # v1.5版本为 "general"
-        # v3.0版本为: "generalv3"
-        self.domain = "generalv3"
-        # 默认使用v2.0版本: "ws://spark-api.xf-yun.com/v2.1/chat"
-        # v1.5版本为: "ws://spark-api.xf-yun.com/v1.1/chat"
-        # v3.0版本为: "ws://spark-api.xf-yun.com/v3.1/chat"
-        # v3.5版本为: "wss://spark-api.xf-yun.com/v3.5/chat"
-        self.spark_url = "wss://spark-api.xf-yun.com/v3.5/chat"
+        # Spark Lite请求地址(spark_url): wss://spark-api.xf-yun.com/v1.1/chat, 对应的domain参数为: "general"
+        # Spark V2.0请求地址(spark_url): wss://spark-api.xf-yun.com/v2.1/chat, 对应的domain参数为: "generalv2"
+        # Spark Pro 请求地址(spark_url): wss://spark-api.xf-yun.com/v3.1/chat, 对应的domain参数为: "generalv3"
+        # Spark Pro-128K请求地址(spark_url):  wss://spark-api.xf-yun.com/chat/pro-128k, 对应的domain参数为: "pro-128k"
+        # Spark Max 请求地址(spark_url): wss://spark-api.xf-yun.com/v3.5/chat, 对应的domain参数为: "generalv3.5"
+        # Spark4.0 Ultra 请求地址(spark_url): wss://spark-api.xf-yun.com/v4.0/chat, 对应的domain参数为: "4.0Ultra"
+        # 后续模型更新，对应的参数可以参考官网文档获取：https://www.xfyun.cn/doc/spark/Web.html
+        self.domain = conf().get("xunfei_domain", "generalv3.5")
+        self.spark_url = conf().get("xunfei_spark_url", "wss://spark-api.xf-yun.com/v3.5/chat")
         self.host = urlparse(self.spark_url).netloc
         self.path = urlparse(self.spark_url).path
         # 和wenxin使用相同的session机制
-        self.sessions = SessionManager(BaiduWenxinSession, model=const.XUNFEI)
+        self.sessions = SessionManager(ChatGPTSession, model=const.XUNFEI)
 
     def reply(self, query, context: Context = None) -> Reply:
         if context.type == ContextType.TEXT:

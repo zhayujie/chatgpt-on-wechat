@@ -19,6 +19,11 @@ class BaiduWenxinBot(Bot):
     def __init__(self):
         super().__init__()
         wenxin_model = conf().get("baidu_wenxin_model")
+        self.prompt_enabled = conf().get("baidu_wenxin_prompt_enabled")
+        if self.prompt_enabled:
+            self.prompt = conf().get("character_desc", "")
+            if self.prompt == "":
+                logger.warn("[BAIDU] Although you enabled model prompt, character_desc is not specified.")
         if wenxin_model is not None:
             wenxin_model = conf().get("baidu_wenxin_model") or "eb-instant"
         else:
@@ -84,7 +89,7 @@ class BaiduWenxinBot(Bot):
             headers = {
                 'Content-Type': 'application/json'
             }
-            payload = {'messages': session.messages}
+            payload = {'messages': session.messages, 'system': self.prompt} if self.prompt_enabled else {'messages': session.messages}
             response = requests.request("POST", url, headers=headers, data=json.dumps(payload))
             response_text = json.loads(response.text)
             logger.info(f"[BAIDU] response text={response_text}")

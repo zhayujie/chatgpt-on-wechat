@@ -6,7 +6,7 @@ import time
 import openai
 import openai.error
 import requests
-
+from common import const
 from bot.bot import Bot
 from bot.chatgpt.chat_gpt_session import ChatGPTSession
 from bot.openai.open_ai_image import OpenAIImage
@@ -18,7 +18,7 @@ from common.log import logger
 from common.token_bucket import TokenBucket
 from common import memory, utils, const
 from config import conf, load_config
-
+from bot.baidu.baidu_wenxin_session import BaiduWenxinSession
 
 # OpenAI对话模型API (可用)
 class ChatGPTBot(Bot, OpenAIImage, OpenAIVision):
@@ -33,10 +33,12 @@ class ChatGPTBot(Bot, OpenAIImage, OpenAIVision):
             openai.proxy = proxy
         if conf().get("rate_limit_chatgpt"):
             self.tb4chatgpt = TokenBucket(conf().get("rate_limit_chatgpt", 20))
-
+        conf_model = conf().get("model") or "gpt-3.5-turbo"
         self.sessions = SessionManager(ChatGPTSession, model=conf().get("model") or "gpt-3.5-turbo")
+        # o1相关模型不支持system prompt，暂时用文心模型的session
+
         self.args = {
-            "model": conf().get("model") or "gpt-3.5-turbo",  # 对话模型的名称
+            "model": conf_model,  # 对话模型的名称
             "temperature": conf().get("temperature", 0.9),  # 值在[0,1]之间，越大表示回复越具有不确定性
             # "max_tokens":4096,  # 回复最大的字符数
             "top_p": conf().get("top_p", 1),
@@ -45,6 +47,12 @@ class ChatGPTBot(Bot, OpenAIImage, OpenAIVision):
             "request_timeout": conf().get("request_timeout", None),  # 请求超时时间，openai接口默认设置为600，对于难问题一般需要较长时间
             "timeout": conf().get("request_timeout", None),  # 重试超时时间，在这个时间内，将会自动重试
         }
+        # o1相关模型固定了部分参数，暂时去掉
+        if conf_model in [const.O1, const.O1_MINI]:
+            self.sessions = SessionManager(BaiduWenxinSession, model=conf().get("model") or const.O1_MINI)
+            remove_keys = ["temperature", "top_p", "frequency_penalty", "presence_penalty"]
+            for key in remove_keys:
+                self.args.pop(key, None)  # 如果键不存在，使用 None 来避免抛出错误
 
     def reply(self, query, context=None):
         # acquire reply content

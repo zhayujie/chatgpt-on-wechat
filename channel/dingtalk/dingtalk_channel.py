@@ -100,7 +100,7 @@ class DingTalkChanel(ChatChannel, dingtalk_stream.ChatbotHandler):
         super(dingtalk_stream.ChatbotHandler, self).__init__()
         self.logger = self.setup_logger()
         # 历史消息id暂存，用于幂等控制
-        self.receivedMsgs = ExpiredDict(conf().get("expires_in_seconds"))
+        self.receivedMsgs = ExpiredDict(conf().get("expires_in_seconds", 3600))
         logger.info("[DingTalk] client_id={}, client_secret={} ".format(
             self.dingtalk_client_id, self.dingtalk_client_secret))
         # 无需群校验和前缀

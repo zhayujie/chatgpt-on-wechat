@@ -17,7 +17,7 @@ from channel.wechatcom.wechatcomapp_client import WechatComAppClient
 from channel.wechatcom.wechatcomapp_message import WechatComAppMessage
 from common.log import logger
 from common.singleton import singleton
-from common.utils import compress_imgfile, fsize, split_string_by_utf8_length
+from common.utils import compress_imgfile, fsize, split_string_by_utf8_length, convert_webp_to_png
 from config import conf, subscribe_msg
 from voice.audio_convert import any_to_amr, split_audio
 
@@ -99,6 +99,12 @@ class WechatComAppChannel(ChatChannel):
                 image_storage = compress_imgfile(image_storage, 10 * 1024 * 1024 - 1)
                 logger.info("[wechatcom] image compressed, sz={}".format(fsize(image_storage)))
             image_storage.seek(0)
+            if ".webp" in img_url:
+                try:
+                    image_storage = convert_webp_to_png(image_storage)
+                except Exception as e:
+                    logger.error(f"Failed to convert image: {e}")
+                    return
             try:
                 response = self.client.media.upload("image", image_storage)
                 logger.debug("[wechatcom] upload image response: {}".format(response))
@@ -156,11 +162,12 @@ class Query:
         logger.debug("[wechatcom] receive message: {}, msg= {}".format(message, msg))
         if msg.type == "event":
             if msg.event == "subscribe":
-                reply_content = subscribe_msg()
-                if reply_content:
-                    reply = create_reply(reply_content, msg).render()
-                    res = channel.crypto.encrypt_message(reply, nonce, timestamp)
-                    return res
+                pass
+                # reply_content = subscribe_msg()
+                # if reply_content:
+                #     reply = create_reply(reply_content, msg).render()
+                #     res = channel.crypto.encrypt_message(reply, nonce, timestamp)
+                #     return res
         else:
             try:
                 wechatcom_msg = WechatComAppMessage(msg, client=channel.client)
