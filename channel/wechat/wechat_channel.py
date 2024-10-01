@@ -121,7 +121,10 @@ def qrCallback(uuid, status, qrcode):
         qr = qrcode.QRCode(border=1)
         qr.add_data(url)
         qr.make(fit=True)
-        qr.print_ascii(invert=True)
+        try:
+            qr.print_ascii(invert=True)
+        except UnicodeEncodeError:
+            print("ASCII QR code printing failed due to encoding issues.")
 
 
 @singleton
@@ -220,7 +223,7 @@ class WechatChannel(ChatChannel):
             logger.debug(f"[WX]receive attachment msg, file_name={cmsg.content}")
         else:
             logger.debug("[WX]receive group msg: {}".format(cmsg.content))
-        context = self._compose_context(cmsg.ctype, cmsg.content, isgroup=True, msg=cmsg)
+        context = self._compose_context(cmsg.ctype, cmsg.content, isgroup=True, msg=cmsg, no_need_at=conf().get("no_need_at", False))
         if context:
             self.produce(context)
 

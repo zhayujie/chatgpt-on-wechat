@@ -34,6 +34,7 @@ available_setting = {
     "single_chat_reply_suffix": "",  # 私聊时自动回复的后缀，\n 可以换行
     "accept_friend_commands": ["加好友"],  # 自动接受好友请求的申请信息
     "group_chat_prefix": ["@bot"],  # 群聊时包含该前缀则会触发机器人回复
+    "no_need_at": False,  # 群聊回复时是否不需要艾特
     "group_chat_reply_prefix": "",  # 群聊时自动回复的前缀
     "group_chat_reply_suffix": "",  # 群聊时自动回复的后缀，\n 可以换行
     "group_chat_keyword": [],  # 群聊时包含该关键词则会触发机器人回复
@@ -78,6 +79,7 @@ available_setting = {
     "baidu_wenxin_model": "eb-instant",  # 默认使用ERNIE-Bot-turbo模型
     "baidu_wenxin_api_key": "",  # Baidu api key
     "baidu_wenxin_secret_key": "",  # Baidu secret key
+    "baidu_wenxin_prompt_enabled": False,  # Enable prompt if you are using ernie character model
     # 讯飞星火API
     "xunfei_app_id": "",  # 讯飞应用ID
     "xunfei_api_key": "",  # 讯飞 API key

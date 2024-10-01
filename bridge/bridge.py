@@ -41,7 +41,7 @@ class Bridge(object):
                 self.btype["chat"] = const.GEMINI
             if model_type in [const.DIFY]:
                 self.btype["chat"] = const.DIFY
-            if model_type in [const.ZHIPU_AI]:
+            if model_type and model_type.startswith("glm"):
                 self.btype["chat"] = const.ZHIPU_AI
             if model_type in [const.COZE]:
                 self.btype["chat"] = const.COZE
@@ -51,7 +51,7 @@ class Bridge(object):
             if model_type in ["claude"]:
                 self.btype["chat"] = const.CLAUDEAI
 
-            if model_type in ["moonshot-v1-8k", "moonshot-v1-32k", "moonshot-v1-128k"]:
+            if model_type in [const.MOONSHOT, "moonshot-v1-8k", "moonshot-v1-32k", "moonshot-v1-128k"]:
                 self.btype["chat"] = const.MOONSHOT
 
             if model_type in ["abab6.5-chat"]:
