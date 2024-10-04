@@ -16,6 +16,7 @@ from config import plugin_config
     name="linkai",
     desc="A plugin that supports knowledge base and midjourney drawing.",
     version="0.1.0",
+    enabled=False,
     author="https://link-ai.tech",
     desire_priority=99
 )
