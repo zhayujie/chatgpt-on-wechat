@@ -13,6 +13,7 @@ services:
     # image: hanfangyuan/dify-on-wechat:arm64  # docker hub arm64
     image: registry.cn-hangzhou.aliyuncs.com/hanfangyuan/dify-on-wechat:latest # acr
     # image: registry.cn-hangzhou.aliyuncs.com/hanfangyuan/dify-on-wechat:arm64 # acr arm64
+    user: root
     restart: always
     pull_policy: always
     container_name: dify-on-wechat
