@@ -8,7 +8,9 @@
   "single_chat_reply_prefix": "",
   "group_chat_prefix": ["@bot"],
   "group_name_white_list": ["ALL_GROUP"],
-  "accept_friend_commands": ["加好友"],
-  "group_exit_msg": "退群聊通知文案",
-  "accept_friend_msg": "通过好友发送的提示语"
+  "image_recognition": true,
+  "speech_recognition": true,
+  "voice_reply_voice": true,
+  "voice_to_text": "dify",
+  "text_to_voice": "dify"
 }

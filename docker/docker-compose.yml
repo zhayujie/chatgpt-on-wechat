@@ -18,6 +18,8 @@ services:
     container_name: dify-on-wechat
     security_opt:
       - seccomp:unconfined
+    
+    # 注意环境变量配置优先级高于config.json配置
     environment:
       # dify 相关配置
       DIFY_API_BASE: 'https://api.dify.ai/v1'

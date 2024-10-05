@@ -178,6 +178,7 @@ dify语音相关配置如下，另外需要在dify应用中开启语音转文字
   "dify_api_base": "https://api.dify.ai/v1",
   "dify_api_key": "app-xxx",
   "dify_app_type": "chatbot",
+  "speech_recognition": true,  # 是否开启语音识别
   "voice_reply_voice": true,   # 是否使用语音回复语音
   "always_reply_voice": false, # 是否一直使用语音回复
   "voice_to_text": "dify",     # 语音识别引擎
@@ -257,13 +258,19 @@ pip3 install -r requirements-optional.txt # 国内可以在该命令末尾添加
   "dify_api_base": "https://api.dify.ai/v1",    # dify base url
   "dify_api_key": "app-xxx",                    # dify api key
   "dify_app_type": "chatbot",                   # dify应用类型 chatbot(对应聊天助手)/agent(对应Agent)/workflow(对应工作流)，默认为chatbot
-  "dify_convsersation_max_messages": 5,         # dify目前不支持设置历史消息长度，暂时使用超过最大消息数清空会话的策略，缺点是没有滑动窗口，会突然丢失历史消息, 当前为5
+  "dify_convsersation_max_messages": 5,         # dify目前不支持设置历史消息长度，暂时使用超过最大消息数清空会话的策略，缺点是没有滑动窗口，会突然丢失历史消息，当设置的值小于等于0，则不限制历史消息长度
   "channel_type": "wx",                         # 通道类型，当前为个人微信
   "model": "dify",                              # 模型名称，当前对应dify平台
   "single_chat_prefix": [""],                   # 私聊时文本需要包含该前缀才能触发机器人回复
   "single_chat_reply_prefix": "",               # 私聊时自动回复的前缀，用于区分真人
   "group_chat_prefix": ["@bot"],                # 群聊时包含该前缀则会触发机器人回复
-  "group_name_white_list": ["ALL_GROUP"]        # 机器人回复的群名称列表
+  "group_name_white_list": ["ALL_GROUP"],       # 机器人回复的群名称列表
+  "image_recognition": true,                    # 是否开启图片理解功能，需保证对应的dify应用已开启视觉功能
+  "speech_recognition": true,                   # 是否开启语音识别
+  "voice_reply_voice": true,                    # 是否使用语音回复语音
+  "always_reply_voice": false,                  # 是否一直使用语音回复
+  "voice_to_text": "dify",                      # 语音识别引擎
+  "text_to_voice": "dify"                       # 语音合成引擎
 }
 ```
 
@@ -298,6 +305,7 @@ nohup python3 app.py & tail -f nohup.out          # 在后台运行程序并通�
 
 ```bash
 cd dify-on-wechat/docker       # 进入docker目录
+cp ../config-template.json ../config.json
 docker compose up -d           # 启动docker容器
 docker logs -f dify-on-wechat  # 查看二维码并登录
 ```
