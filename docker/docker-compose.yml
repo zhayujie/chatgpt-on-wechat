@@ -51,7 +51,10 @@ services:
     ports:
       - "7860:7860"
 
-    # 挂载配置和插件目录，防止删除容器后丢失数据
+    # 挂载配置和插件目录，防止删除容器后丢失数据，注意需要先复制config-template.json为config.json
     volumes:
-      - ../config.json:/app/config.json # 注意需要先复制config-template.json为config.json
+      # 如果想要实现在宿主机修改config.json然后通过 #reconf 热更新配置
+      # 请执行 chmod 666 config.json，增加容器对宿主机的config.json文件修改权限
+      # 注意环境变量配置优先级高于config.json配置
+      - ../config.json:/app/config.json
       - ../plugins:/app/plugins
