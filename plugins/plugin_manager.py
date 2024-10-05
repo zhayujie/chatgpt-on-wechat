@@ -139,6 +139,7 @@ class PluginManager:
 
     def activate_plugins(self):  # 生成新开启的插件实例
         failed_plugins = []
+        self._load_all_config() # 重新读取全局插件配置，支持使用#reloadp命令对插件配置热更新
         for name, plugincls in self.plugins.items():
             if plugincls.enabled:
                 if 'GODCMD' in self.instances and name == 'GODCMD':
