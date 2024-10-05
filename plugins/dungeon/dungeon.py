@@ -47,6 +47,7 @@ class StoryTeller:
     namecn="文字冒险",
     desc="A plugin to play dungeon game",
     version="1.0",
+    enabled=False,
     author="lanvent",
 )
 class Dungeon(Plugin):

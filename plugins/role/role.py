@@ -38,6 +38,7 @@ class RolePlay:
     namecn="角色扮演",
     desc="为你的Bot设置预设角色",
     version="1.0",
+    enabled=False,
     author="lanvent",
 )
 class Role(Plugin):
@@ -105,6 +106,9 @@ class Role(Plugin):
         bot = Bridge().get_bot("chat")
         content = e_context["context"].content[:]
         clist = e_context["context"].content.split(maxsplit=1)
+        if len(clist) == 0:
+            logger.warning("[Role] on_handle_context. clist is empty, skipped role plugin")
+            return
         desckey = None
         customize = False
         sessionid = e_context["context"]["session_id"]
