@@ -368,7 +368,8 @@ def pconf(plugin_name: str) -> dict:
     :param plugin_name: 插件名称
     :return: 该插件的配置项
     """
-    return plugin_config.get(plugin_name.lower())
+    # 如果插件名称作为key获取不到，则尝试使用小写名称
+    return plugin_config.get(plugin_name) or plugin_config.get(plugin_name.lower())
 
 
 # 全局配置，用于存放全局生效的状态
