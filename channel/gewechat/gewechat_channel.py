@@ -51,7 +51,7 @@ class GeWeChatChannel(ChatChannel):
         if reply.type in [ReplyType.TEXT, ReplyType.ERROR, ReplyType.INFO]:
             reply_text = reply.content
             ats = ""
-            if gewechat_message:
+            if gewechat_message and gewechat_message.is_group:
                 ats = gewechat_message.actual_user_id
             self.client.post_text(self.app_id, receiver, reply_text, ats)
             logger.info("[gewechat] Do send text to {}: {}".format(receiver, reply_text))
