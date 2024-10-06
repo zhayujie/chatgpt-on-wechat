@@ -2,6 +2,7 @@
 import io
 import os
 import mimetypes
+import random
 import threading
 import json
 
@@ -35,7 +36,7 @@ class DifyBot(Bot):
             # TODO: 适配除微信以外的其他channel
             channel_type = conf().get("channel_type", "wx")
             user = None
-            if channel_type in ["wx", "wework"]:
+            if channel_type in ["wx", "wework", "gewechat"]:
                 user = context["msg"].other_user_nickname if context.get("msg") else "default"
             elif channel_type in ["wechatcom_app", "wechatmp", "wechatmp_service", "wechatcom_service"]:
                 user = context["msg"].other_user_id if context.get("msg") else "default"
@@ -43,6 +44,7 @@ class DifyBot(Bot):
                 return Reply(ReplyType.ERROR, f"unsupported channel type: {channel_type}, now dify only support wx, wechatcom_app, wechatmp, wechatmp_service channel")
             logger.debug(f"[DIFY] dify_user={user}")
             user = user if user else "default" # 防止用户名为None，当被邀请进的群未设置群名称时用户名为None
+            # FIXME: 群聊与私聊是同一个sessionid，应该区分不同的用户名, 同一个conversation_id下，只允许一个username，否则报错对话不存在
             session = self.sessions.get_session(session_id, user)
             logger.debug(f"[DIFY] session={session} query={query}")
 
@@ -103,7 +105,7 @@ class DifyBot(Bot):
         )
         
         if response.status_code != 200:
-            error_info = f"[DIFY] response text={response.text} status_code={response.status_code}"
+            error_info = f"[DIFY] payload={payload} response text={response.text} status_code={response.status_code}"
             logger.warn(error_info)
             return None, error_info
 
@@ -229,14 +231,14 @@ class DifyBot(Bot):
         response = chat_client.create_chat_message(
             inputs=payload['inputs'],
             query=payload['query'],
-            user=payload['user'],
+            user= payload['user'],
             response_mode=payload['response_mode'],
             conversation_id=payload['conversation_id'],
             files=files
         )
 
         if response.status_code != 200:
-            error_info = f"[DIFY] response text={response.text} status_code={response.status_code}"
+            error_info = f"[DIFY] payload={payload} response text={response.text} status_code={response.status_code}"
             logger.warn(error_info)
             return None, error_info
         # response:
@@ -279,7 +281,7 @@ class DifyBot(Bot):
         dify_client = DifyClient(api_key, api_base)
         response = dify_client._send_request("POST", "/workflows/run", json=payload)
         if response.status_code != 200:
-            error_info = f"[DIFY] response text={response.text} status_code={response.status_code}"
+            error_info = f"[DIFY] payload={payload} response text={response.text} status_code={response.status_code}"
             logger.warn(error_info)
             return None, error_info
 
