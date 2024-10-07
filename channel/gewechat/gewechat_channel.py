@@ -1,11 +1,5 @@
-import base64
-import io
 import os
-import time
 import json
-import uuid
-
-import requests
 import web
 
 from bridge.context import Context
@@ -15,9 +9,8 @@ from channel.gewechat.gewechat_message import GeWeChatMessage
 from common.log import logger
 from common.singleton import singleton
 from common.tmp_dir import TmpDir
-from common.utils import compress_imgfile, fsize, split_string_by_utf8_length, convert_webp_to_png
+from common.utils import compress_imgfile, fsize
 from config import conf
-from voice.audio_convert import any_to_amr, any_to_mp3, split_audio
 from lib.gewechat import GewechatClient
 
 MAX_UTF8_LEN = 2048
@@ -63,23 +56,7 @@ class GeWeChatChannel(ChatChannel):
                 logger.error(f"[gewechat] send voice failed: {e}")
         elif reply.type == ReplyType.IMAGE_URL:
             img_url = reply.content
-            pic_res = requests.get(img_url, stream=True)
-            image_storage = io.BytesIO()
-            for block in pic_res.iter_content(1024):
-                image_storage.write(block)
-            sz = fsize(image_storage)
-            if sz >= 10 * 1024 * 1024:
-                logger.info("[gewechat] image too large, ready to compress, sz={}".format(sz))
-                image_storage = compress_imgfile(image_storage, 10 * 1024 * 1024 - 1)
-                logger.info("[gewechat] image compressed, sz={}".format(fsize(image_storage)))
-            image_storage.seek(0)
-            if ".webp" in img_url:
-                try:
-                    image_storage = convert_webp_to_png(image_storage)
-                except Exception as e:
-                    logger.error(f"Failed to convert image: {e}")
-                    return
-            self.client.post_image(self.app_id, receiver, image_storage.getvalue())
+            self.client.post_image(self.app_id, receiver, img_url)
             logger.info("[gewechat] sendImage url={}, receiver={}".format(img_url, receiver))
         elif reply.type == ReplyType.IMAGE:
             image_storage = reply.content
@@ -96,9 +73,8 @@ class Query:
     def GET(self):
         params = web.input(file="")
         if params.file:
-            file_path = os.path.join("tmp", params.file)
-            if os.path.exists(file_path):
-                with open(file_path, 'rb') as f:
+            if os.path.exists(params.file):
+                with open(params.file, 'rb') as f:
                     return f.read()
             else:
                 raise web.notfound()

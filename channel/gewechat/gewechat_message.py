@@ -48,6 +48,8 @@ class GeWeChatMessage(ChatMessage):
         if brief_info['ret'] == 200 and brief_info['data']:
             info = brief_info['data'][0]
             self.other_user_nickname = info.get('nickName', '')
+            if self.other_user_nickname is None:
+                self.other_user_nickname = self.other_user_id
 
         # 补充群聊信息
         if self.is_group:
@@ -57,6 +59,8 @@ class GeWeChatMessage(ChatMessage):
             actual_user_info = self.client.get_brief_info(self.app_id, [self.actual_user_id])
             if actual_user_info['ret'] == 200 and actual_user_info['data']:
                 self.actual_user_nickname = actual_user_info['data'][0].get('nickName', '')
+                if self.actual_user_nickname is None:
+                    self.actual_user_nickname = self.actual_user_id
             else:
                 self.actual_user_nickname = ''
 
