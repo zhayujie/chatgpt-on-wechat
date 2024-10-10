@@ -69,13 +69,13 @@ class GroupAtAutoreply(Plugin):
 
             for line in lines:
                 line = line.strip()
-                kwarg = line.split(":")
-                if len(kwarg) <= 1:
-                    kwarg = line.split("：")
-                    if len(kwarg) <= 1:
+                index = line.find(":")
+                if index == -1:
+                    index = line.find("：")
+                    if index == -1:
                         continue
-                key = kwarg[0].strip()
-                value = kwarg[1].strip()
+                key = line[:index].strip()
+                value = line[index + 1:].strip()
                 if key == "开关":
                     enabled = True if "打开" == value else (False if "关闭" == value else None)
                 elif key == "回复内容":

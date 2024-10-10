@@ -123,7 +123,7 @@ def _check(func):
     [ntwork.MT_RECV_TEXT_MSG, ntwork.MT_RECV_IMAGE_MSG, 11072, ntwork.MT_RECV_LINK_CARD_MSG,ntwork.MT_RECV_FILE_MSG, ntwork.MT_RECV_VOICE_MSG])
 def all_msg_handler(wework_instance: ntwork.WeWork, message):
     logger.debug(f"收到消息: {message}")
-    if 'data' in message:
+    if WeworkChannel().inited and 'data' in message:
         sender = message['data'].get("sender", None)
         if sender and sender == WeworkChannel().user_id:
             logger.debug("自己发的，直接结束")
@@ -182,6 +182,7 @@ class WeworkChannel(ChatChannel):
 
     def __init__(self):
         super().__init__()
+        self.inited = False
 
     def startup(self):
         smart = conf().get("wework_smart", True)
@@ -226,6 +227,7 @@ class WeworkChannel(ChatChannel):
         with open(os.path.join(directory, 'wework_room_members.json'), 'w', encoding='utf-8') as f:
             json.dump(result, f, ensure_ascii=False, indent=4)
         logger.info("wework程序初始化完成········")
+        self.inited = True
         run.forever()
 
     @time_checker
