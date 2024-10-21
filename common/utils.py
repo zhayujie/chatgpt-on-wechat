@@ -1,5 +1,6 @@
 import io
 import os
+import re
 from urllib.parse import urlparse
 from PIL import Image
 from common.log import logger
@@ -68,3 +69,9 @@ def convert_webp_to_png(webp_image):
     except Exception as e:
         logger.error(f"Failed to convert WEBP to PNG: {e}")
         raise
+
+def remove_markdown_symbol(text: str):
+    # 移除markdown格式，目前先移除**
+    if not text:
+        return text
+    return re.sub(r'\*\*(.*?)\*\*', r'\1', text)

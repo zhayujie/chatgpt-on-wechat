@@ -20,7 +20,7 @@ from common.expired_dict import ExpiredDict
 from common.log import logger
 from common.singleton import singleton
 from common.time_check import time_checker
-from common.utils import convert_webp_to_png
+from common.utils import convert_webp_to_png, remove_markdown_symbol
 from config import conf, get_appdata_dir
 from lib import itchat
 from lib.itchat.content import *
@@ -213,9 +213,11 @@ class WechatChannel(ChatChannel):
     def send(self, reply: Reply, context: Context):
         receiver = context["receiver"]
         if reply.type == ReplyType.TEXT:
+            reply.content = remove_markdown_symbol(reply.content)
             itchat.send(reply.content, toUserName=receiver)
             logger.info("[WX] sendMsg={}, receiver={}".format(reply, receiver))
         elif reply.type == ReplyType.ERROR or reply.type == ReplyType.INFO:
+            reply.content = remove_markdown_symbol(reply.content)
             itchat.send(reply.content, toUserName=receiver)
             logger.info("[WX] sendMsg={}, receiver={}".format(reply, receiver))
         elif reply.type == ReplyType.VOICE:

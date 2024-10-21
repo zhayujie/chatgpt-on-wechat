@@ -17,7 +17,7 @@ from channel.wechatcom.wechatcomapp_client import WechatComAppClient
 from channel.wechatcom.wechatcomapp_message import WechatComAppMessage
 from common.log import logger
 from common.singleton import singleton
-from common.utils import compress_imgfile, fsize, split_string_by_utf8_length, convert_webp_to_png
+from common.utils import compress_imgfile, fsize, split_string_by_utf8_length, convert_webp_to_png, remove_markdown_symbol
 from config import conf, subscribe_msg
 from voice.audio_convert import any_to_amr, split_audio
 
@@ -52,7 +52,7 @@ class WechatComAppChannel(ChatChannel):
     def send(self, reply: Reply, context: Context):
         receiver = context["receiver"]
         if reply.type in [ReplyType.TEXT, ReplyType.ERROR, ReplyType.INFO]:
-            reply_text = reply.content
+            reply_text = remove_markdown_symbol(reply.content)
             texts = split_string_by_utf8_length(reply_text, MAX_UTF8_LEN)
             if len(texts) > 1:
                 logger.info("[wechatcom] text too long, split into {} parts".format(len(texts)))
