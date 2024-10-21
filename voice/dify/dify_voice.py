@@ -17,7 +17,7 @@ class DifyVoice(Voice):
             if ext != ".mp3":
                 old_voice_file = voice_file
                 voice_file = filepath + ".mp3"
-                if not os.path.exists(old_voice_file):
+                if os.path.exists(old_voice_file):
                     any_to_mp3(old_voice_file, voice_file)
             files = {
                 'file': (os.path.basename(voice_file), open(voice_file, 'rb'), 'audio/mp3')
@@ -38,7 +38,7 @@ class DifyVoice(Voice):
             reply = Reply(ReplyType.TEXT, text)
             logger.info("[DIFY VOICE] voiceToText text={} voice file name={}".format(text, voice_file))
         except Exception as e:
-            logger.error("[DIFY VOICE] voiceToText error={}")
+            logger.error("[DIFY VOICE] voiceToText error={}".format(str(e))
             reply = Reply(ReplyType.ERROR, "我暂时还无法听清您的语音，请稍后再试吧~")
         return reply
 
