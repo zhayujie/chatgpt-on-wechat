@@ -19,7 +19,7 @@ from channel.wechatmp.common import *
 from channel.wechatmp.wechatmp_client import WechatMPClient
 from common.log import logger
 from common.singleton import singleton
-from common.utils import split_string_by_utf8_length
+from common.utils import split_string_by_utf8_length, remove_markdown_symbol
 from config import conf
 from voice.audio_convert import any_to_mp3, split_audio
 
@@ -81,7 +81,7 @@ class WechatMPChannel(ChatChannel):
         receiver = context["receiver"]
         if self.passive_reply:
             if reply.type == ReplyType.TEXT or reply.type == ReplyType.INFO or reply.type == ReplyType.ERROR:
-                reply_text = reply.content
+                reply_text = remove_markdown_symbol(reply.content)
                 logger.info("[wechatmp] text cached, receiver {}\n{}".format(receiver, reply_text))
                 self.cache_dict[receiver].append(("text", reply_text))
             elif reply.type == ReplyType.VOICE:
