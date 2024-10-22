@@ -44,3 +44,7 @@ zhipuai>=2.0.1
 
 # tongyi qwen new sdk
 dashscope
+
+# web scrapy
+selenium
+webdriver-manager
