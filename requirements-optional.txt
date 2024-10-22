@@ -48,3 +48,4 @@ dashscope
 # web scrapy
 selenium
 webdriver-manager
+playwright

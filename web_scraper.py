@@ -1,28 +1,33 @@
-# 文件名：web_scraper.py
-
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.options import Options
-from webdriver_manager.chrome import ChromeDriverManager
+from playwright.sync_api import sync_playwright
 from common.log import logger
 
 class WebScraper:
     def __init__(self):
-        options = Options()
-        options.add_argument('--headless')
-        options.add_argument('--no-sandbox')
-        options.add_argument('--disable-dev-shm-usage')
-        self.service = Service(ChromeDriverManager().install())
-        self.driver = webdriver.Chrome(service=self.service, options=options)
+        self.playwright = sync_playwright().start()
+        self.browser = self.playwright.chromium.launch(headless=True)
 
     def get_content(self, url):
         try:
-            self.driver.get(url)
-            content = self.driver.find_element(By.TAG_NAME, 'body').text
+            page = self.browser.new_page()
+            page.goto(url)
+            
+            # 提取标题和正文内容
+            title = page.title()
+            body = page.query_selector('body').inner_text()  # 根据实际的选择器调整
+            
+            content = title + '\n' + body
+            page.close()
             return content
         except Exception as e:
-            logger.error(e)
+            logger.error(f"Error fetching content from {url}: {e}")
             return ""
-        finally:
-            self.driver.quit()
+
+    def close(self):
+        self.browser.close()
+        self.playwright.stop()
+
+if __name__ == '__main__':
+    scraper = WebScraper()
+    content = scraper.get_content('https://mp.weixin.qq.com/s/OC71o5puU9nIkng3U6Fm4w')
+    print(content)
+    scraper.close()
