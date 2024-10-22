@@ -11,6 +11,8 @@ from channel.channel import Channel
 from common.dequeue import Dequeue
 from common import memory
 from plugins import *
+import re
+from web_scraper import WebScraper  # 导入 WebScraper 类
 
 try:
     from voice.audio_convert import any_to_wav
@@ -189,6 +191,14 @@ class ChatChannel(Channel):
         if not e_context.is_pass():
             logger.debug("[chat_channel] ready to handle context: type={}, content={}".format(context.type, context.content))
             if context.type == ContextType.TEXT or context.type == ContextType.IMAGE_CREATE:  # 文字和图片消息
+                if context.type == ContextType.TEXT and conf().get("enable_web", False):
+                    url_pattern = re.compile(r'https?://\S+')
+                    matches = url_pattern.findall(str(context.content))
+                    for url in matches:
+                        self.web_scraper = WebScraper()
+                        logger.info("[WEB_SCRAPER] Fetching content from URL: {}".format(url))
+                        web_content = self.web_scraper.get_content(url)
+                        context.content += "\n以下是链接 {} 的内容:\n{}".format(url, web_content)
                 context["channel"] = e_context["channel"]
                 reply = super().build_reply_content(context.content, context)
             elif context.type == ContextType.VOICE:  # 语音消息
