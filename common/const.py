@@ -69,6 +69,17 @@ GLM_4_0520 = "glm-4-0520"
 GLM_4_AIR = "glm-4-air"
 GLM_4_AIRX = "glm-4-airx"
 
+
+CLAUDE_3_OPUS = "claude-3-opus-latest"
+CLAUDE_3_OPUS_0229 = "claude-3-opus-20240229"
+
+CLAUDE_35_SONNET = "claude-3-5-sonnet-latest"  # 带 latest 标签的模型名称，会不断更新指向最新发布的模型
+CLAUDE_35_SONNET_1022 = "claude-3-5-sonnet-20241022"  # 带具体日期的模型名称，会固定为该日期发布的模型
+CLAUDE_35_SONNET_0620 = "claude-3-5-sonnet-20240620"
+CLAUDE_3_SONNET = "claude-3-sonnet-20240229"
+
+CLAUDE_3_HAIKU = "claude-3-haiku-20240307"
+
 MODEL_LIST = [
               GPT35, GPT35_0125, GPT35_1106, "gpt-3.5-turbo-16k",
               O1, O1_MINI, GPT_4o, GPT_4O_0806, GPT_4o_MINI, GPT4_TURBO, GPT4_TURBO_PREVIEW, GPT4_TURBO_01_25, GPT4_TURBO_11_06, GPT4, GPT4_32k, GPT4_06_13, GPT4_32k_06_13,
@@ -77,7 +88,7 @@ MODEL_LIST = [
               ZHIPU_AI, GLM_4, GLM_4_PLUS, GLM_4_flash, GLM_4_LONG, GLM_4_ALLTOOLS, GLM_4_0520, GLM_4_AIR, GLM_4_AIRX,
               MOONSHOT, MiniMax,
               GEMINI, GEMINI_PRO, GEMINI_15_flash, GEMINI_15_PRO,
-              "claude", "claude-3-haiku", "claude-3-sonnet", "claude-3-opus", "claude-3-opus-20240229", "claude-3.5-sonnet",
+              CLAUDE_3_OPUS, CLAUDE_3_OPUS_0229, CLAUDE_35_SONNET, CLAUDE_35_SONNET_1022, CLAUDE_35_SONNET_0620, CLAUDE_3_SONNET, CLAUDE_3_HAIKU, "claude", "claude-3-haiku", "claude-3-sonnet", "claude-3-opus", "claude-3.5-sonnet",
               "moonshot-v1-8k", "moonshot-v1-32k", "moonshot-v1-128k",
               QWEN, QWEN_TURBO, QWEN_PLUS, QWEN_MAX,
               LINKAI_35, LINKAI_4_TURBO, LINKAI_4o

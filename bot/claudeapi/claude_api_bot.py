@@ -14,6 +14,7 @@ from bot.session_manager import SessionManager
 from bridge.context import ContextType
 from bridge.reply import Reply, ReplyType
 from common.log import logger
+from common import const
 from config import conf
 
 user_session = dict()
@@ -125,11 +126,11 @@ class ClaudeAPIBot(Bot, OpenAIImage):
 
     def _model_mapping(self, model) -> str:
         if model == "claude-3-opus":
-            return "claude-3-opus-20240229"
+            return const.CLAUDE_3_OPUS
         elif model == "claude-3-sonnet":
-            return "claude-3-sonnet-20240229"
+            return const.CLAUDE_3_SONNET
         elif model == "claude-3-haiku":
-            return "claude-3-haiku-20240307"
+            return const.CLAUDE_3_HAIKU
         elif model == "claude-3.5-sonnet":
-            return "claude-3-5-sonnet-20240620"
+            return const.CLAUDE_35_SONNET
         return model
