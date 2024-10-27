@@ -70,6 +70,7 @@ def convert_webp_to_png(webp_image):
         logger.error(f"Failed to convert WEBP to PNG: {e}")
         raise
 
+
 def remove_markdown_symbol(text: str):
     # 移除markdown格式，目前先移除**
     if not text:

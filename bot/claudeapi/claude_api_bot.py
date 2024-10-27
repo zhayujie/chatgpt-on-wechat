@@ -8,8 +8,7 @@ import anthropic
 
 from bot.bot import Bot
 from bot.openai.open_ai_image import OpenAIImage
-from bot.chatgpt.chat_gpt_session import ChatGPTSession
-from bot.gemini.google_gemini_bot import GoogleGeminiBot
+from bot.baidu.baidu_wenxin_session import BaiduWenxinSession
 from bot.session_manager import SessionManager
 from bridge.context import ContextType
 from bridge.reply import Reply, ReplyType
@@ -34,7 +33,7 @@ class ClaudeAPIBot(Bot, OpenAIImage):
         if proxy:
             openai.proxy = proxy
 
-        self.sessions = SessionManager(ChatGPTSession, model=conf().get("model") or "text-davinci-003")
+        self.sessions = SessionManager(BaiduWenxinSession, model=conf().get("model") or "text-davinci-003")
 
     def reply(self, query, context=None):
         # acquire reply content
@@ -77,14 +76,14 @@ class ClaudeAPIBot(Bot, OpenAIImage):
                     reply = Reply(ReplyType.ERROR, retstring)
                 return reply
 
-    def reply_text(self, session: ChatGPTSession, retry_count=0):
+    def reply_text(self, session: BaiduWenxinSession, retry_count=0):
         try:
             actual_model = self._model_mapping(conf().get("model"))
             response = self.claudeClient.messages.create(
                 model=actual_model,
-                max_tokens=1024,
-                # system=conf().get("system"),
-                messages=GoogleGeminiBot.filter_messages(session.messages)
+                max_tokens=4096,
+                system=conf().get("character_desc", ""),
+                messages=session.messages
             )
             # response = openai.Completion.create(prompt=str(session), **self.args)
             res_content = response.content[0].text.strip().replace("<|endoftext|>", "")
