@@ -23,16 +23,13 @@ user_session = dict()
 class ClaudeAPIBot(Bot, OpenAIImage):
     def __init__(self):
         super().__init__()
+        proxy = conf().get("proxy", None)
+        base_url = conf().get("open_ai_api_base", None)  # 复用"open_ai_api_base"参数作为base_url
         self.claudeClient = anthropic.Anthropic(
-            api_key=conf().get("claude_api_key")
+            api_key=conf().get("claude_api_key"),
+            proxies=proxy if proxy else None,
+            base_url=base_url if base_url else None
         )
-        openai.api_key = conf().get("open_ai_api_key")
-        if conf().get("open_ai_api_base"):
-            openai.api_base = conf().get("open_ai_api_base")
-        proxy = conf().get("proxy")
-        if proxy:
-            openai.proxy = proxy
-
         self.sessions = SessionManager(BaiduWenxinSession, model=conf().get("model") or "text-davinci-003")
 
     def reply(self, query, context=None):
