@@ -313,7 +313,7 @@ class Godcmd(Plugin):
                     except Exception as e:
                         ok, result = False, "你没有设置私有GPT模型"
                 elif cmd == "reset":
-                    if bottype in [const.OPEN_AI, const.CHATGPT, const.CHATGPTONAZURE, const.LINKAI, const.BAIDU, const.XUNFEI, const.QWEN, const.GEMINI, const.ZHIPU_AI]:
+                    if bottype in [const.OPEN_AI, const.CHATGPT, const.CHATGPTONAZURE, const.LINKAI, const.BAIDU, const.XUNFEI, const.QWEN, const.GEMINI, const.ZHIPU_AI, const.CLAUDEAPI]:
                         bot.sessions.clear_session(session_id)
                         if Bridge().chat_bots.get(bottype):
                             Bridge().chat_bots.get(bottype).sessions.clear_session(session_id)
