@@ -1,7 +1,7 @@
 <div align="center">
 <h1>Dify on WeChat</h1>
 
-本项目为 [chatgpt-on-wechat](https://github.com/zhayujie/chatgpt-on-wechat)下游分支
+本项目[dify-on-wechat](https://github.com/hanfangyuan4396/dify-on-wechat)为 [chatgpt-on-wechat](https://github.com/zhayujie/chatgpt-on-wechat)下游分支
 
 额外对接了LLMOps平台 [Dify](https://github.com/langgenius/dify)，支持Dify智能助手模型，调用工具和知识库，支持Dify工作流。
 
@@ -171,7 +171,7 @@ python3 app.py                                    # windows环境下该命令通
 
 ## 6. 支持dify voice
 
-dify语音相关配置如下，另外需要在dify应用中开启语音转文字以及文字转语音功能
+dify语音相关配置如下，另外需要在dify应用中开启语音转文字以及文字转语音功能，注意语音功能需要**安装ffmpeg依赖**
 
 ```bash
 {
