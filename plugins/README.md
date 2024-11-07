@@ -184,19 +184,35 @@
 
 ```
 plugins/
-└── hello
+└── plugin_name.py
     ├── __init__.py
+    ├── plugin_name.py
     └── hello.py
 ```
 
 ``__init__.py``的内容：
+
 ```
-from .hello import *
+from .plugin_name import *
 ```
+
+导入区规范：
+
+```python
+[plugin_name.py]
+
+import plugins.plugin_name.hello (✅)
+from .hello import * （✅）
+import hello（❌）# not found for the module 'plugins.plugin_name.hello'
+
+import plugins.plugin_name.hello as hello #建议这样
+```
+
+
 
 ### 2. 编写插件类
 
-在`hello.py`文件中，创建插件类，它继承自`Plugin`。
+在`plugin_name`文件中，创建插件类，它继承自`Plugin`。
 
 在类定义之前需要使用`@plugins.register`装饰器注册插件，并填写插件的相关信息，其中`desire_priority`表示插件默认的优先级，越大优先级越高。初次加载插件后可在`plugins/plugins.json`中修改插件优先级。
 
@@ -208,7 +224,7 @@ PS: `ON_HANDLE_CONTEXT`是最常用的事件，如果要根据不同的消息来
 
 ```python
 @plugins.register(name="Hello", desc="A simple plugin that says hello", version="0.1", author="lanvent", desire_priority= -1)
-class Hello(Plugin):
+class Plugin_name(Plugin):
     def __init__(self):
         super().__init__()
         self.handlers[Event.ON_HANDLE_CONTEXT] = self.on_handle_context
