@@ -38,7 +38,7 @@ class DifyVoice(Voice):
             reply = Reply(ReplyType.TEXT, text)
             logger.info("[DIFY VOICE] voiceToText text={} voice file name={}".format(text, voice_file))
         except Exception as e:
-            logger.error("[DIFY VOICE] voiceToText error={}".format(str(e))
+            logger.error(f"[DIFY VOICE] voiceToText error={e}")
             reply = Reply(ReplyType.ERROR, "我暂时还无法听清您的语音，请稍后再试吧~")
         return reply
 
