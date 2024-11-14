@@ -55,10 +55,10 @@ workflow:
         type: start
         variables:
         - label: query
-          max_length: 256
+          max_length: 999999
           options: []
           required: true
-          type: text-input
+          type: paragraph
           variable: query
       height: 89
       id: '1714264983912'
