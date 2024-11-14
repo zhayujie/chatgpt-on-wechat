@@ -176,43 +176,45 @@
 
 ## 插件编写示例
 
-以`plugins/hello`为例，其中编写了一个简单的`Hello`插件。
+以`plugins/hello`为例，其中编写了一个简单的`Hello`插件。`hello`即为插件的名称，需要自行替换为自己的插件名字。
 
 ### 1. 创建插件
 
 在`plugins`目录下创建一个插件文件夹`hello`。然后，在该文件夹中创建``__init__.py``文件，在``__init__.py``中将其他编写的模块文件导入。在程序启动时，插件管理器会读取``__init__.py``的所有内容。
 
+
+
 ```
 plugins/
-└── plugin_name.py
+└── hello
     ├── __init__.py
-    ├── plugin_name.py
-    └── hello.py
+    ├── hello.py
+    └── tool.py
 ```
 
 ``__init__.py``的内容：
 
 ```
-from .plugin_name import *
+from .hello import *
 ```
 
 导入区规范：
 
 ```python
-[plugin_name.py]
+[hello.py]
 
-import plugins.plugin_name.hello (✅)
-from .hello import * （✅）
-import hello（❌）# not found for the module 'plugins.plugin_name.hello'
+import plugins.hello.tool (✅)
+from .tool import * （✅）
+import tool（❌）# not found for the module 'plugins.hello.tool'
 
-import plugins.plugin_name.hello as hello #建议这样
+import plugins.hello.tool as tool #建议这样
 ```
 
 
 
 ### 2. 编写插件类
 
-在`plugin_name`文件中，创建插件类，它继承自`Plugin`。
+在`hello`文件中，创建插件类，它继承自`Plugin`。
 
 在类定义之前需要使用`@plugins.register`装饰器注册插件，并填写插件的相关信息，其中`desire_priority`表示插件默认的优先级，越大优先级越高。初次加载插件后可在`plugins/plugins.json`中修改插件优先级。
 
