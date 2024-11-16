@@ -319,12 +319,15 @@ class DifyBot(Bot):
         img_cache = memory.USER_IMAGE_CACHE.get(session_id)
         if not img_cache or not conf().get("image_recognition"):
             return None
+        # 清理图片缓存
+        memory.USER_IMAGE_CACHE[session_id] = None
         api_key = conf().get('dify_api_key', '')
         api_base = conf().get("dify_api_base", "https://api.dify.ai/v1")
         dify_client = DifyClient(api_key, api_base)
         msg = img_cache.get("msg")
         path = img_cache.get("path")
         msg.prepare()
+
         with open(path, 'rb') as file:
             file_name = os.path.basename(path)
             file_type, _ = mimetypes.guess_type(file_name)
@@ -332,14 +335,11 @@ class DifyBot(Bot):
                 'file': (file_name, file, file_type)
             }
             response = dify_client.file_upload(user=session.get_user(), files=files)
-            response.raise_for_status()
 
-            if response.status_code != 200 and response.status_code != 201:
-                error_info = f"[DIFY] response text={response.text} status_code={response.status_code} when upload file"
-                logger.warn(error_info)
-                return None, error_info
-        # 清理图片缓存
-        memory.USER_IMAGE_CACHE[session_id] = None
+        if response.status_code != 200 and response.status_code != 201:
+            error_info = f"[DIFY] response text={response.text} status_code={response.status_code} when upload file"
+            logger.warn(error_info)
+            return None, error_info
         # {
         #     'id': 'f508165a-10dc-4256-a7be-480301e630e6',
         #     'name': '0.png',
