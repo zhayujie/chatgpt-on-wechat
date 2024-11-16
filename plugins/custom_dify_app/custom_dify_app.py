@@ -36,7 +36,7 @@ class CustomDifyApp(Plugin):
     def _init_single_chat_conf(self):
         # 遍历配置，找到用于单聊的配置
         for dify_app_dict in self.config:
-            if "use_on_single_chat" in dify_app_dict and dify_app_dict["use_on_single_chat"]:
+            if dify_app_dict.get("single_chat", False):
                 self.single_chat_conf = dify_app_dict
                 break
 
@@ -74,5 +74,6 @@ class CustomDifyApp(Plugin):
             context["dify_app_type"] = dify_app_conf["app_type"]
             context["dify_api_base"] = dify_app_conf["api_base"]
             context["dify_api_key"] = dify_app_conf["api_key"]
+            context["image_recognition"] = dify_app_conf.get("image_recognition", False)
         except Exception as e:
             logger.error(f"[CustomDifyApp] on_handle_context error: {e}")

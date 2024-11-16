@@ -4,6 +4,7 @@
         "app_type": "chatbot",
         "api_base": "https://api.dify.ai/v1",
         "api_key": "app-xx",
+        "image_recognition": false,
         "use_on_single_chat": false,
         "group_name_keywords": [
             "测试群"

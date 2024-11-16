@@ -24,6 +24,7 @@ config.json 配置说明
         "api_base": "https://api.dify.ai/v1", # Dify API 基础URL
         "api_key": "app-xx",                  # Dify应用的API密钥
         "use_on_single_chat": false,          # 是否用于单聊，true/false
+        "image_recognition": false,           # 是否启用图片识别，true/false
         "group_name_keywords": [              # 群名关键词列表，当群名包含其中任一关键词时，使用该配置
             "测试群"
         ]
@@ -35,5 +36,6 @@ config.json 配置说明
 
 1. 插件会根据配置文件中的顺序逐一匹配群名关键词，匹配到第一个符合条件的配置就会停止并使用该配置。
 2. 对于单聊，插件会使用配置文件中第一个设置了 `"use_on_single_chat": true` 的配置。
-3. 如果没有找到匹配的配置，插件不会修改上下文，将使用默认的 Dify 配置（如果有的话）。
-4. 确保在项目的主配置文件中正确设置了 Dify 相关的配置项，以便插件可以正常工作。
+3. `image_recognition` 默认为false，当设置为true后，请确保在对应的Dify应用中已开启图片识别功能。
+4. 如果没有找到匹配的配置，插件不会修改上下文，将使用默认的 Dify 配置（如果有的话）。
+5. 确保在项目的主配置文件中正确设置了 Dify 相关的配置项，以便插件可以正常工作。
