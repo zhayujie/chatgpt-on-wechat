@@ -30,7 +30,7 @@ class GeWeChatChannel(ChatChannel):
                 self.base_url, self.download_url, self.token, self.app_id
             )
         )
-        self.client = GewechatClient(self.base_url, self.download_url, self.token)
+        self.client = GewechatClient(self.base_url, self.token)
 
     def startup(self):
         urls = ("/v2/api/callback/collect", "channel.gewechat.gewechat_channel.Query")

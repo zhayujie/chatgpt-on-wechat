@@ -6,6 +6,7 @@ from common.log import logger
 from common.tmp_dir import TmpDir
 from config import conf
 from lib.gewechat import GewechatClient
+import requests
 
 class GeWeChatMessage(ChatMessage):
     def __init__(self, msg, client: GewechatClient):
@@ -79,7 +80,7 @@ class GeWeChatMessage(ChatMessage):
 
     def download_voice(self):
         try:
-            voice_data = self.client.download_file(self.msg['Wxid'], self.msg_id)
+            voice_data = self.client.download_voice(self.msg['Wxid'], self.msg_id)
             with open(self.content, "wb") as f:
                 f.write(voice_data)
         except Exception as e:
@@ -87,9 +88,27 @@ class GeWeChatMessage(ChatMessage):
 
     def download_image(self):
         try:
-            image_data = self.client.download_file(self.msg['Wxid'], self.msg_id)
-            with open(self.content, "wb") as f:
-                f.write(image_data)
+            try:
+                # 尝试下载高清图片
+                image_info = self.client.download_image(app_id=self.app_id, xml=self.msg['Data']['Content']['string'], type=1)
+            except Exception as e:
+                logger.warning(f"[gewechat] Failed to download high-quality image: {e}")
+                # 尝试下载普通图片
+                image_info = self.client.download_image(app_id=self.app_id, xml=self.msg['Data']['Content']['string'], type=2)
+            if image_info['ret'] == 200 and image_info['data']:
+                file_url = image_info['data']['fileUrl']
+                logger.info(f"[gewechat] Download image file from {file_url}")
+                download_url = conf().get("gewechat_download_url").rstrip('/')
+                full_url = download_url + '/' + file_url
+                try:
+                    file_data = requests.get(full_url).content
+                except Exception as e:
+                    logger.error(f"[gewechat] Failed to download image file: {e}")
+                    return
+                with open(self.content, "wb") as f:
+                    f.write(file_data)
+            else:
+                logger.error(f"[gewechat] Failed to download image file: {image_info}")
         except Exception as e:
             logger.error(f"[gewechat] Failed to download image file: {e}")
 
