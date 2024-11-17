@@ -39,6 +39,14 @@
     "HighSpeedTicket": {
       "url": "https://github.com/He0607/HighSpeedTicket.git",
       "desc": "高铁（火车）票查询插件"
+    },
+    "DarkRoom":{
+      "url": "git@github.com:Sakura7301/DarkRoom.git",
+      "desc": "自动检测违禁行为的小黑屋插件(违禁词、刷屏；同时支持管理员命令)"
+    },
+    "sakuraTools":{
+      "url":"git@github.com:Sakura7301/sakuraTools.git",
+      "desc":"聚合一些免费的功能插件"
     }
   }
 }
