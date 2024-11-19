@@ -31,17 +31,20 @@ class Util:
 
     @staticmethod
     def fetch_app_plugin(app_code: str, plugin_name: str) -> bool:
-        headers = {"Authorization": "Bearer " + conf().get("linkai_api_key")}
-        # do http request
-        base_url = conf().get("linkai_api_base", "https://api.link-ai.tech")
-        params = {"app_code": app_code}
-        res = requests.get(url=base_url + "/v1/app/info", params=params, headers=headers, timeout=(5, 10))
-        if res.status_code == 200:
-            plugins = res.json().get("data").get("plugins")
-            for plugin in plugins:
-                if plugin.get("name") and plugin.get("name") == plugin_name:
-                    return True
-            return False
-        else:
-            logger.warning(f"[LinkAI] find app info exception, res={res}")
+        try:
+            headers = {"Authorization": "Bearer " + conf().get("linkai_api_key")}
+            # do http request
+            base_url = conf().get("linkai_api_base", "https://api.link-ai.tech")
+            params = {"app_code": app_code}
+            res = requests.get(url=base_url + "/v1/app/info", params=params, headers=headers, timeout=(5, 10))
+            if res.status_code == 200:
+                plugins = res.json().get("data").get("plugins")
+                for plugin in plugins:
+                    if plugin.get("name") and plugin.get("name") == plugin_name:
+                        return True
+                return False
+            else:
+                logger.warning(f"[LinkAI] find app info exception, res={res}")
+                return False
+        except Exception as e:
             return False
