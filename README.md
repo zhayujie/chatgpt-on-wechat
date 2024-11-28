@@ -40,7 +40,7 @@ DEMO视频：https://cdn.link-ai.tech/doc/cow_demo.mp4
 
 **企业服务和产品咨询** 可联系产品顾问：
 
-<img width="160" src="https://img-1317903499.cos.ap-guangzhou.myqcloud.com/docs/github-product-consult.png">
+<img width="160" src="https://cdn.link-ai.tech/consultant-s.jpg">
 
 <br>
 
