@@ -179,6 +179,10 @@ available_setting = {
     "Minimax_api_key": "",
     "Minimax_group_id": "",
     "Minimax_base_url": "",
+
+    # Ollama 平台配置
+    "ollama_base_url": "",
+    "ollama_port": "",
 }
 
 
