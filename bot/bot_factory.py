@@ -67,6 +67,10 @@ def create_bot(bot_type):
     elif bot_type == const.MiniMax:
         from bot.minimax.minimax_bot import MinimaxBot
         return MinimaxBot()
+    
+    elif bot_type == const.OLLAMA:
+        from bot.ollama.ollama_bot import OllamaBot
+        return OllamaBot()
 
 
     raise RuntimeError
