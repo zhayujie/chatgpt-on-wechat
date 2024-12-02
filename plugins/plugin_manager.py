@@ -9,7 +9,7 @@ import sys
 from common.log import logger
 from common.singleton import singleton
 from common.sorted_dict import SortedDict
-from config import conf, write_plugin_config
+from config import conf, remove_plugin_config, write_plugin_config
 
 from .event import *
 
@@ -161,6 +161,7 @@ class PluginManager:
 
     def reload_plugin(self, name: str):
         name = name.upper()
+        remove_plugin_config(name)
         if name in self.instances:
             for event in self.listening_plugins:
                 if name in self.listening_plugins[event]:

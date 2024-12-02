@@ -341,6 +341,14 @@ def write_plugin_config(pconf: dict):
     for k in pconf:
         plugin_config[k.lower()] = pconf[k]
 
+def remove_plugin_config(name: str):
+    """
+    移除待重新加载的插件全局配置
+    :param name: 待重载的插件名
+    """
+    global plugin_config
+    plugin_config.pop(name.lower(), None)
+
 
 def pconf(plugin_name: str) -> dict:
     """

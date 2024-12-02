@@ -2,7 +2,7 @@ from bridge.context import Context, ContextType
 from bridge.reply import Reply, ReplyType
 from common.log import logger
 from linkai import LinkAIClient, PushMsg
-from config import conf, pconf, plugin_config, available_setting
+from config import conf, pconf, plugin_config, available_setting, write_plugin_config
 from plugins import PluginManager
 import time
 
@@ -51,10 +51,10 @@ class ChatClient(LinkAIClient):
                 local_config["voice_reply_voice"] = False
 
         if config.get("admin_password"):
-            if not plugin_config.get("Godcmd"):
-                plugin_config["Godcmd"] = {"password": config.get("admin_password"), "admin_users": []}
+            if not pconf("Godcmd"):
+                write_plugin_config({"Godcmd": {"password": config.get("admin_password"), "admin_users": []} })
             else:
-                plugin_config["Godcmd"]["password"] = config.get("admin_password")
+                pconf("Godcmd")["password"] = config.get("admin_password")
             PluginManager().instances["GODCMD"].reload()
 
         if config.get("group_app_map") and pconf("linkai"):
