@@ -201,12 +201,14 @@ class LinkAI(Plugin):
             group_name = context.get("msg").from_user_nickname
             app_code = self._fetch_group_app_code(group_name)
             if app_code:
-                remote_enabled = Util.fetch_app_plugin(app_code, "内容总结")
+                if context.type.name in ["FILE", "SHARING"]:
+                    remote_enabled = Util.fetch_app_plugin(app_code, "内容总结")
         else:
             # 非群聊场景使用全局app_code
             app_code = conf().get("linkai_app_code")
             if app_code:
-                remote_enabled = Util.fetch_app_plugin(app_code, "内容总结")
+                if context.type.name in ["FILE", "SHARING"]:
+                    remote_enabled = Util.fetch_app_plugin(app_code, "内容总结")
 
         # 基础条件：总开关开启且消息类型符合要求
         base_enabled = (
