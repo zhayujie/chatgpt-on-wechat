@@ -5,6 +5,7 @@
 .vs
 .wechaty/
 __pycache__/
+env/
 venv*
 *.pyc
 config.json
