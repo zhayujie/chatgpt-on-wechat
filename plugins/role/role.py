@@ -180,6 +180,7 @@ class Role(Plugin):
             e_context["reply"] = reply
             e_context.action = EventAction.BREAK_PASS
         else:
+            e_context["context"]["generate_breaked_by"] = EventAction.BREAK
             prompt = self.roleplays[sessionid].action(content)
             e_context["context"].type = ContextType.TEXT
             e_context["context"].content = prompt
