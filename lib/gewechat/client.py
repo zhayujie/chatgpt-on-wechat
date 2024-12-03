@@ -1,5 +1,6 @@
 from .api.contact_api import ContactApi
 from .api.download_api import DownloadApi
+from .api.download_api import DownloadApi
 from .api.favor_api import FavorApi
 from .api.group_api import GroupApi
 from .api.label_api import LabelApi
@@ -15,7 +16,7 @@ class GewechatClient:
     使用示例:
     ```
     # 初始化客户端
-    client = GewechatClient("http://服务ip:2531/v2/api", "http://服务ip:2532/download", "your_token_here")
+    client = GewechatClient("http://服务ip:2531/v2/api", "your_token_here")
     app_id = "your_app_id"
     # 获取联系人列表
     contacts = client.fetch_contacts_list(app_id)
@@ -243,6 +244,10 @@ class GewechatClient:
         return self._personal_api.update_head_img(app_id, head_img_url)
 
     # Login API methods
+    def login(self, app_id):
+        """登录"""
+        return self._login_api.login(app_id)
+
     def get_token(self):
         """获取tokenId"""
         return self._login_api.get_token()

@@ -1,6 +1,7 @@
 import os
 import json
 import web
+from urllib.parse import urlparse
 
 from bridge.context import Context
 from bridge.reply import Reply, ReplyType
@@ -10,7 +11,7 @@ from common.log import logger
 from common.singleton import singleton
 from common.tmp_dir import TmpDir
 from common.utils import compress_imgfile, fsize
-from config import conf
+from config import conf, save_config
 from lib.gewechat import GewechatClient
 
 MAX_UTF8_LEN = 2048
@@ -21,22 +22,72 @@ class GeWeChatChannel(ChatChannel):
 
     def __init__(self):
         super().__init__()
+
         self.base_url = conf().get("gewechat_base_url")
-        self.download_url = conf().get("gewechat_download_url")
+        if not self.base_url:
+            logger.error("[gewechat] base_url is not set")
+            return
         self.token = conf().get("gewechat_token")
-        self.app_id = conf().get("gewechat_app_id")
-        logger.info(
-            "[gewechat] init: base_url: {}, download_url: {}, token: {}, app_id: {}".format(
-                self.base_url, self.download_url, self.token, self.app_id
-            )
-        )
         self.client = GewechatClient(self.base_url, self.token)
 
+        # 如果token为空，尝试获取token
+        if not self.token:
+            logger.warning("[gewechat] token is not set，trying to get token")
+            token_resp = self.client.get_token()
+            # {'ret': 200, 'msg': '执行成功', 'data': 'tokenxxx'}
+            if token_resp.get("ret") != 200:
+                logger.error(f"[gewechat] get token failed: {token_resp}")
+                return
+            self.token = token_resp.get("data")
+            conf().set("gewechat_token", self.token)
+            save_config()
+            logger.info(f"[gewechat] new token saved: {self.token}")
+            self.client = GewechatClient(self.base_url, self.token)
+
+        self.app_id = conf().get("gewechat_app_id")
+        if not self.app_id:
+            logger.warning("[gewechat] app_id is not set，trying to get new app_id when login")
+
+        self.download_url = conf().get("gewechat_download_url")
+        if not self.download_url:
+            logger.warning("[gewechat] download_url is not set, unable to download image")
+
+        logger.info(f"[gewechat] init: base_url: {self.base_url}, token: {self.token}, app_id: {self.app_id}, download_url: {self.download_url}")
+
     def startup(self):
-        urls = ("/v2/api/callback/collect", "channel.gewechat.gewechat_channel.Query")
+        # 如果app_id为空或登录后获取到新的app_id，保存配置
+        app_id, error_msg = self.client.login(self.app_id)
+        if error_msg:
+            logger.error(f"[gewechat] login failed: {error_msg}")
+            return
+
+        # 如果原来的self.app_id为空或登录后获取到新的app_id，保存配置
+        if not self.app_id or self.app_id != app_id:
+            conf().set("gewechat_app_id", app_id)
+            save_config()
+            logger.info(f"[gewechat] new app_id saved: {app_id}")
+            self.app_id = app_id
+
+        # 获取回调地址，示例地址：http://172.17.0.1:9919/v2/api/callback/collect  
+        callback_url = conf().get("gewechat_callback_url")
+        if not callback_url:
+            logger.error("[gewechat] callback_url is not set, unable to start callback server")
+            return
+        
+        # 设置回调地址，{ "ret": 200, "msg": "操作成功" }
+        callback_resp = self.client.set_callback(self.token, callback_url)
+        if callback_resp.get("ret") != 200:
+            logger.error(f"[gewechat] set callback failed: {callback_resp}")
+            return
+        
+        # 从回调地址中解析出端口与url path，启动回调服务器  
+        parsed_url = urlparse(callback_url)
+        path = parsed_url.path
+        port = parsed_url.port
+        logger.info(f"[gewechat] start callback server: {callback_url}")
+        urls = (path, "channel.gewechat.gewechat_channel.Query")
         app = web.application(urls, globals(), autoreload=False)
-        port = conf().get("gewechat_callback_server_port", 9919)
-        web.httpserver.runsimple(app.wsgifunc(), ("0.0.0.0", port))
+        web.httpserver.runsimple(app.wsgifunc(), ("0.0.0.0", port))  # 传入(host, port)元组
 
     def send(self, reply: Reply, context: Context):
         receiver = context["receiver"]

@@ -178,7 +178,7 @@ available_setting = {
     "gewechat_download_url": "",
     "gewechat_token": "",
     "gewechat_app_id": "",
-    "gewechat_callback_server_port": 9919,
+    "gewechat_callback_url": "", # 回调地址，示例：http://172.17.0.1:9919/v2/api/callback/collect
     
     # chatgpt指令自定义触发词
     "clear_memory_commands": ["#清除记忆"],  # 重置会话指令，必须以#开头
@@ -234,6 +234,12 @@ class Config(dict):
             return self[key]
         except KeyError as e:
             return default
+        except Exception as e:
+            raise e
+            
+    def set(self, key, value):
+        try:
+            self[key] = value
         except Exception as e:
             raise e
 
@@ -326,6 +332,19 @@ def load_config():
     logger.info("[INIT] load config: {}".format(drag_sensitive(config)))
 
     config.load_user_datas()
+
+def save_config():
+    global config
+    config_path = "./config.json"
+    try:
+        config_dict = dict(config)  # 将Config对象转换为普通字典
+        # 创建一个按键排序的有序字典
+        sorted_config = {key: config_dict[key] for key in sorted(config_dict.keys())}
+        with open(config_path, "w", encoding="utf-8") as f:
+            json.dump(sorted_config, f, indent=4, ensure_ascii=False)
+            logger.info("[Config] Configuration saved.")
+    except Exception as e:
+        logger.error(f"[Config] Save configuration error: {e}")
 
 
 def get_root():

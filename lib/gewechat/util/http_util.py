@@ -19,5 +19,5 @@ def post_json(base_url, route, token, data):
         else:
             raise RuntimeError(response.text)
     except Exception as e:
-        print(f"url={url}, exception={e}")
+        print(f"http请求失败, url={url}, exception={e}")
         raise RuntimeError(str(e))
