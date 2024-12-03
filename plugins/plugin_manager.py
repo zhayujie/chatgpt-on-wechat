@@ -151,6 +151,8 @@ class PluginManager:
                     self.disable_plugin(name)
                     failed_plugins.append(name)
                     continue
+                if name in self.instances:
+                    self.instances[name].handlers.clear()
                 self.instances[name] = instance
                 for event in instance.handlers:
                     if event not in self.listening_plugins:
