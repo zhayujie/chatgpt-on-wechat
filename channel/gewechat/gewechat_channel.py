@@ -73,13 +73,13 @@ class GeWeChatChannel(ChatChannel):
         if not callback_url:
             logger.error("[gewechat] callback_url is not set, unable to start callback server")
             return
-        
+
         # 设置回调地址，{ "ret": 200, "msg": "操作成功" }
         callback_resp = self.client.set_callback(self.token, callback_url)
         if callback_resp.get("ret") != 200:
             logger.error(f"[gewechat] set callback failed: {callback_resp}")
             return
-        
+
         # 从回调地址中解析出端口与url path，启动回调服务器  
         parsed_url = urlparse(callback_url)
         path = parsed_url.path
