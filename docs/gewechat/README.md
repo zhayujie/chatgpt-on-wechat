@@ -85,7 +85,7 @@ docker compose up -d
 - `gewechat_token`: gewechat服务的认证token，首次登录时，可以留空，启动dify-on-wechat服务时，会**自动获取token**并**自动保存到config.json**中
 - `gewechat_app_id`: gewechat服务分配的设备ID，首次登录时，可以留空，启动dify-on-wechat服务时，会**自动获取appid**并**自动保存到config.json**中
 - `gewechat_base_url`: gewechat服务的API基础地址，请根据实际情况配置，如果gewechat服务与dify-on-wechat服务部署在同一台机器上，可以配置为`http://本机ip:2531/v2/api`
-- `gewechat_callback_url`: 接收gewechat消息的回调地址，请根据实际情况配置，如果gewechat服务与dify-on-wechat服务部署在同一台机器上，可以配置为`http://本机ip:9919/v2/api/callback/collect`
+- `gewechat_callback_url`: 接收gewechat消息的回调地址，请根据实际情况配置，如果gewechat服务与dify-on-wechat服务部署在同一台机器上，可以配置为`http://本机ip:9919/v2/api/callback/collect`，如无特殊需要，请使用9919端口号
 - `gewechat_download_url`: 文件下载地址，用于下载语音、图片等文件，请根据实际部署情况配置，如果gewechat服务与dify-on-wechat服务部署在同一台机器上，可以配置为`http://本机ip:2532/download`
 
 注意：请确保您的回调地址(callback_url)，即dify-on-wechat启动的回调服务可以被gewechat服务正常访问到。如果您使用Docker部署，需要注意网络配置，确保容器之间可以正常通信。

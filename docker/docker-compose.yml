@@ -53,6 +53,7 @@ services:
       # 更多配置请查看 config.py
     ports:
       - "7860:7860"
+      - "9919:9919" # gewechat 回调服务端口
 
     # 挂载配置和插件目录，防止删除容器后丢失数据，注意需要先复制config-template.json为config.json
     volumes:
