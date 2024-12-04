@@ -74,11 +74,23 @@ class GeWeChatChannel(ChatChannel):
             logger.error("[gewechat] callback_url is not set, unable to start callback server")
             return
 
-        # 设置回调地址，{ "ret": 200, "msg": "操作成功" }
-        callback_resp = self.client.set_callback(self.token, callback_url)
-        if callback_resp.get("ret") != 200:
-            logger.error(f"[gewechat] set callback failed: {callback_resp}")
-            return
+        # 创建新线程设置回调地址
+        import threading
+        def set_callback():
+            # 等待服务器启动（给予适当的启动时间）
+            import time
+            logger.info("[gewechat] sleep 3 seconds waiting for server to start, then set callback")
+            time.sleep(3)
+
+            # 设置回调地址，{ "ret": 200, "msg": "操作成功" }
+            callback_resp = self.client.set_callback(self.token, callback_url)
+            if callback_resp.get("ret") != 200:
+                logger.error(f"[gewechat] set callback failed: {callback_resp}")
+                return
+            logger.info("[gewechat] callback set successfully")
+
+        callback_thread = threading.Thread(target=set_callback, daemon=True)
+        callback_thread.start()
 
         # 从回调地址中解析出端口与url path，启动回调服务器  
         parsed_url = urlparse(callback_url)
@@ -87,7 +99,7 @@ class GeWeChatChannel(ChatChannel):
         logger.info(f"[gewechat] start callback server: {callback_url}")
         urls = (path, "channel.gewechat.gewechat_channel.Query")
         app = web.application(urls, globals(), autoreload=False)
-        web.httpserver.runsimple(app.wsgifunc(), ("0.0.0.0", port))  # 传入(host, port)元组
+        web.httpserver.runsimple(app.wsgifunc(), ("0.0.0.0", port))
 
     def send(self, reply: Reply, context: Context):
         receiver = context["receiver"]
