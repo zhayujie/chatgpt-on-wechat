@@ -167,6 +167,8 @@ class PluginManager:
             for event in self.listening_plugins:
                 if name in self.listening_plugins[event]:
                     self.listening_plugins[event].remove(name)
+            if name in self.instances:
+                self.instances[name].handlers.clear()
             del self.instances[name]
             self.activate_plugins()
             return True
