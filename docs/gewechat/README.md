@@ -1,6 +1,6 @@
 # 1. gewechat channel简介
 
-Gewechat channel是基于[Gewechat](https://github.com/Devo919/Gewechat)项目实现的微信个人号通道，使用ipad协议登录，能获取到wxid，能发送语音条消息，相比itchat协议更稳定。
+Gewechat channel是基于[Gewechat](https://github.com/Devo919/Gewechat)项目实现的微信个人号通道，使用ipad协议登录，该协议能获取到wxid，能发送语音条消息，相比itchat协议更稳定。
 
 api文档地址为：[gewechat api](https://apifox.com/apidoc/shared-69ba62ca-cb7d-437e-85e4-6f3d3df271b1/api-197179336)
 
@@ -94,17 +94,17 @@ docker compose up -d
 
 在config.json中需要配置以下dify相关参数：
 
-```json
+```bash
 {
-  "dify_api_base": "https://api.dify.ai/v1",    // dify base url
-  "dify_api_key": "app-xxx",                    // dify api key
-  "dify_app_type": "chatbot",                   // dify应用类型,对应聊天助手
-  "channel_type": "gewechat",                   // 通道类型设置为gewechat
-  "model": "dify",                              // 模型名称设置为dify
-  "single_chat_prefix": [""],                   // 私聊触发前缀
-  "single_chat_reply_prefix": "",               // 私聊回复前缀
-  "group_chat_prefix": ["@bot"],                // 群聊触发前缀
-  "group_name_white_list": ["ALL_GROUP"],       // 允许响应的群组
+  "dify_api_base": "https://api.dify.ai/v1",    # dify base url
+  "dify_api_key": "app-xxx",                    # dify api key
+  "dify_app_type": "chatbot",                   # dify应用类型,对应聊天助手
+  "channel_type": "gewechat",                   # 通道类型设置为gewechat
+  "model": "dify",                              # 模型名称设置为dify
+  "single_chat_prefix": [""],                   # 私聊触发前缀
+  "single_chat_reply_prefix": "",               # 私聊回复前缀
+  "group_chat_prefix": ["@bot"],                # 群聊触发前缀
+  "group_name_white_list": ["ALL_GROUP"],       # 允许响应的群组
 }
 ```
 
@@ -122,7 +122,7 @@ python app.py
 ![gewechat_login](./gewechat_login.jpg)
 
 # 4. gewechat_channel 服务的限制
-1. gewechat 要求必须搭建服务到同省服务器或者电脑里方可正常使用，即登录微信的手机与gewechat服务必须在同一省
-2. gewechat 开源框架只支持下载接收到的图片，不支持下载文件
-3. gewechat_channel 目前暂时只支持接收文字消息，只支持发送文字消息与图片消息，后续支持的消息类型会逐步完善
-4. 此项目仅用于个人娱乐场景，请勿用于任何商业场景
+1. gewechat 要求必须搭建服务到**同省**服务器或者电脑里方可正常使用，即登录微信的手机与gewechat服务必须在同一省
+2. gewechat 开源框架**只支持**下载接收到的图片，不支持下载文件
+3. gewechat_channel 目前暂时**只支持接收文字消息**，**只支持发送文字消息与图片消息**，后续支持的消息类型会逐步完善
+4. 此项目仅用于个人娱乐场景，请**勿用于任何商业场景**
