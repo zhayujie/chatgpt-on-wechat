@@ -7,6 +7,7 @@ from common.tmp_dir import TmpDir
 from config import conf
 from lib.gewechat import GewechatClient
 import requests
+import xml.etree.ElementTree as ET
 
 class GeWeChatMessage(ChatMessage):
     def __init__(self, msg, client: GewechatClient):
@@ -37,6 +38,25 @@ class GeWeChatMessage(ChatMessage):
             self.ctype = ContextType.IMAGE
             self.content = TmpDir().path() + str(self.msg_id) + ".png"
             self._prepare_fn = self.download_image
+        elif msg_type == 49: # 引用消息，小程序等
+            self.ctype = ContextType.TEXT
+            content_xml = msg['Data']['Content']['string']
+            
+            # 解析XML获取引用的消息内容
+            root = ET.fromstring(content_xml)
+            appmsg = root.find('appmsg')
+            # 确认是引用消息类型
+            if appmsg is not None and appmsg.find('type').text == '57':
+                refermsg = appmsg.find('refermsg')
+                title = appmsg.find('title').text
+                if refermsg is not None:
+                    quoted_content = refermsg.find('content').text
+                    displayname = refermsg.find('displayname').text
+                    self.content = f"「引用内容\n{displayname}: {quoted_content}」\n{title}"
+                else:
+                    self.content = content_xml
+            else:
+                self.content = content_xml
         else:
             raise NotImplementedError("Unsupported message type: Type:{}".format(msg_type))
 
