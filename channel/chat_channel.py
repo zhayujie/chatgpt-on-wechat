@@ -69,6 +69,7 @@ class ChatChannel(Channel):
                 ):
                     group_chat_in_one_session = conf().get("group_chat_in_one_session", [])
                     session_id = f"{cmsg.actual_user_id}@@{group_id}" # 当群聊未共享session时，session_id为user_id与group_id的组合，用于区分不同群聊以及单聊
+                    context["is_shared_session_group"] = False  # 默认为非共享会话群
                     if any(
                             [
                                 group_name in group_chat_in_one_session,
@@ -76,6 +77,7 @@ class ChatChannel(Channel):
                             ]
                     ):
                         session_id = group_id
+                        context["is_shared_session_group"] = True  # 如果是共享会话群，设置为True
                 else:
                     logger.debug(f"No need reply, groupName not in whitelist, group_name={group_name}")
                     return None

@@ -2,7 +2,6 @@
 import io
 import os
 import mimetypes
-import random
 import threading
 import json
 
@@ -44,8 +43,24 @@ class DifyBot(Bot):
                 return Reply(ReplyType.ERROR, f"unsupported channel type: {channel_type}, now dify only support wx, wechatcom_app, wechatmp, wechatmp_service channel")
             logger.debug(f"[DIFY] dify_user={user}")
             user = user if user else "default" # 防止用户名为None，当被邀请进的群未设置群名称时用户名为None
-            # FIXME: 群聊与私聊是同一个sessionid，应该区分不同的用户名, 同一个conversation_id下，只允许一个username，否则报错对话不存在
             session = self.sessions.get_session(session_id, user)
+            if context.get("isgroup", False):
+                # 群聊：根据是否是共享会话群来决定是否设置用户信息
+                if not context.get("is_shared_session_group", False):
+                    # 非共享会话群：设置发送者信息
+                    session.set_user_info(context["msg"].actual_user_id, context["msg"].actual_user_nickname)
+                else:
+                    # 共享会话群：不设置用户信息
+                    session.set_user_info('', '')
+                # 设置群聊信息
+                session.set_room_info(context["msg"].other_user_id, context["msg"].other_user_nickname)
+            else:
+                # 私聊：使用发送者信息作为用户信息，房间信息留空
+                session.set_user_info(context["msg"].other_user_id, context["msg"].other_user_nickname)
+                session.set_room_info('', '')
+
+            # 打印设置的session信息
+            logger.debug(f"[DIFY] Session user and room info - user_id: {session.get_user_id()}, user_name: {session.get_user_name()}, room_id: {session.get_room_id()}, room_name: {session.get_room_name()}")
             logger.debug(f"[DIFY] session={session} query={query}")
 
             reply, err = self._reply(query, session, context)
@@ -59,8 +74,14 @@ class DifyBot(Bot):
 
     # TODO: delete this function
     def _get_payload(self, query, session: DifySession, response_mode):
+        # 输入的变量参考 wechat-assistant-pro：https://github.com/leochen-g/wechat-assistant-pro/issues/76
         return {
-            'inputs': {},
+            'inputs': {
+                'user_id': session.get_user_id(),
+                'user_name': session.get_user_name(),
+                'room_id': session.get_room_id(),
+                'room_name': session.get_room_name()
+            },
             "query": query,
             "response_mode": response_mode,
             "conversation_id": session.get_conversation_id(),
