@@ -55,6 +55,16 @@ class WechatMessage(ChatMessage):
                     self.ctype = ContextType.EXIT_GROUP
                     self.content = itchat_msg["Content"]
                     self.actual_user_nickname = re.findall(r"\"(.*?)\"", itchat_msg["Content"])[0]
+
+                elif any(note_patpat in itchat_msg["Content"] for note_patpat in notes_patpat):  # 若有任何在notes_patpat列表中的字符串出现在NOTE中:
+                    self.ctype = ContextType.PATPAT
+                    self.content = itchat_msg["Content"]
+                    if "拍了拍我" in itchat_msg["Content"]:  # 识别中文
+                        self.actual_user_nickname = re.findall(r"\"(.*?)\"", itchat_msg["Content"])[0]
+                    elif "tickled my" in itchat_msg["Content"] or "tickled me" in itchat_msg["Content"]:
+                        self.actual_user_nickname = re.findall(r'^(.*?)(?:tickled my|tickled me)', itchat_msg["Content"])[0]
+                else:
+                    raise NotImplementedError("Unsupported note message: " + itchat_msg["Content"])
                     
             elif "你已添加了" in itchat_msg["Content"]:  #通过好友请求
                 self.ctype = ContextType.ACCEPT_FRIEND
@@ -62,11 +72,6 @@ class WechatMessage(ChatMessage):
             elif any(note_patpat in itchat_msg["Content"] for note_patpat in notes_patpat):  # 若有任何在notes_patpat列表中的字符串出现在NOTE中:
                 self.ctype = ContextType.PATPAT
                 self.content = itchat_msg["Content"]
-                if is_group:
-                    if "拍了拍我" in itchat_msg["Content"]:  # 识别中文
-                        self.actual_user_nickname = re.findall(r"\"(.*?)\"", itchat_msg["Content"])[0]
-                    elif ("tickled my" in itchat_msg["Content"] or "tickled me" in itchat_msg["Content"]):
-                        self.actual_user_nickname = re.findall(r'^(.*?)(?:tickled my|tickled me)', itchat_msg["Content"])[0]
             else:
                 raise NotImplementedError("Unsupported note message: " + itchat_msg["Content"])
         elif itchat_msg["Type"] == ATTACHMENT:

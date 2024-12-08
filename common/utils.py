@@ -163,3 +163,9 @@ def parse_markdown_text(text: str) -> List[Dict]:
     if current_text:
         result.append({"type": "text", "content": current_text})
     return result
+
+def remove_markdown_symbol(text: str):
+    # 移除markdown格式，目前先移除**
+    if not text:
+        return text
+    return re.sub(r'\*\*(.*?)\*\*', r'\1', text)

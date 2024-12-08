@@ -8,12 +8,12 @@ import anthropic
 
 from bot.bot import Bot
 from bot.openai.open_ai_image import OpenAIImage
-from bot.chatgpt.chat_gpt_session import ChatGPTSession
-from bot.gemini.google_gemini_bot import GoogleGeminiBot
+from bot.baidu.baidu_wenxin_session import BaiduWenxinSession
 from bot.session_manager import SessionManager
 from bridge.context import ContextType
 from bridge.reply import Reply, ReplyType
 from common.log import logger
+from common import const
 from config import conf
 
 user_session = dict()
@@ -23,17 +23,14 @@ user_session = dict()
 class ClaudeAPIBot(Bot, OpenAIImage):
     def __init__(self):
         super().__init__()
+        proxy = conf().get("proxy", None)
+        base_url = conf().get("open_ai_api_base", None)  # 复用"open_ai_api_base"参数作为base_url
         self.claudeClient = anthropic.Anthropic(
-            api_key=conf().get("claude_api_key")
+            api_key=conf().get("claude_api_key"),
+            proxies=proxy if proxy else None,
+            base_url=base_url if base_url else None
         )
-        openai.api_key = conf().get("open_ai_api_key")
-        if conf().get("open_ai_api_base"):
-            openai.api_base = conf().get("open_ai_api_base")
-        proxy = conf().get("proxy")
-        if proxy:
-            openai.proxy = proxy
-
-        self.sessions = SessionManager(ChatGPTSession, model=conf().get("model") or "text-davinci-003")
+        self.sessions = SessionManager(BaiduWenxinSession, model=conf().get("model") or "text-davinci-003")
 
     def reply(self, query, context=None):
         # acquire reply content
@@ -76,14 +73,14 @@ class ClaudeAPIBot(Bot, OpenAIImage):
                     reply = Reply(ReplyType.ERROR, retstring)
                 return reply
 
-    def reply_text(self, session: ChatGPTSession, retry_count=0):
+    def reply_text(self, session: BaiduWenxinSession, retry_count=0):
         try:
             actual_model = self._model_mapping(conf().get("model"))
             response = self.claudeClient.messages.create(
                 model=actual_model,
-                max_tokens=1024,
-                # system=conf().get("system"),
-                messages=GoogleGeminiBot.filter_messages(session.messages)
+                max_tokens=4096,
+                system=conf().get("character_desc", ""),
+                messages=session.messages
             )
             # response = openai.Completion.create(prompt=str(session), **self.args)
             res_content = response.content[0].text.strip().replace("<|endoftext|>", "")
@@ -97,7 +94,7 @@ class ClaudeAPIBot(Bot, OpenAIImage):
             }
         except Exception as e:
             need_retry = retry_count < 2
-            result = {"completion_tokens": 0, "content": "我现在有点累了，等会再来吧"}
+            result = {"total_tokens": 0, "completion_tokens": 0, "content": "我现在有点累了，等会再来吧"}
             if isinstance(e, openai.error.RateLimitError):
                 logger.warn("[CLAUDE_API] RateLimitError: {}".format(e))
                 result["content"] = "提问太快啦，请休息一下再问我吧"
@@ -125,11 +122,11 @@ class ClaudeAPIBot(Bot, OpenAIImage):
 
     def _model_mapping(self, model) -> str:
         if model == "claude-3-opus":
-            return "claude-3-opus-20240229"
+            return const.CLAUDE_3_OPUS
         elif model == "claude-3-sonnet":
-            return "claude-3-sonnet-20240229"
+            return const.CLAUDE_3_SONNET
         elif model == "claude-3-haiku":
-            return "claude-3-haiku-20240307"
+            return const.CLAUDE_3_HAIKU
         elif model == "claude-3.5-sonnet":
-            return "claude-3-5-sonnet-20240620"
+            return const.CLAUDE_35_SONNET
         return model
