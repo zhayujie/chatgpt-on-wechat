@@ -374,8 +374,8 @@ docker logs -f dify-on-wechat  # 查看二维码并登录
 
 感谢所有打赏的朋友。
 
-感谢 [auto-coder](https://github.com/allwefantasy/auto-coder) 项目的自动编程工具。
+感谢 **NLP工程化** 知识星球对本项目的支持
 
-![auto-coder-1](./docs/images/auto-coder-1.jpg)
+<img width="240" src="./docs/images/NLP工程化.png">
 
-![auto-coder-2](./docs/images/auto-coder-2.jpg)
+(提供Dify源码剖析及答疑，Dify对话系统源码等)
