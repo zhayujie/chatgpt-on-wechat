@@ -59,6 +59,8 @@ LINKAI_4o = "linkai-4o"
 GEMINI_PRO = "gemini-1.0-pro"
 GEMINI_15_flash = "gemini-1.5-flash"
 GEMINI_15_PRO = "gemini-1.5-pro"
+GEMINI_20_flash_exp = "gemini-2.0-flash-exp"
+
 
 GLM_4 = "glm-4"
 GLM_4_PLUS = "glm-4-plus"
