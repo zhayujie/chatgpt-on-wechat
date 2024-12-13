@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;  /* 占据所有高度 */
+            margin: 0;
+            /* background-color: #f8f9fa; */
+        }
+        #chat-container {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 500px;
+            margin: auto;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            overflow: hidden;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            flex: 1;  /* 使聊天容器占据剩余空间 */
+        }
+        #messages {
+            flex-direction: column;
+            display: flex;
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            overflow-y: auto;
+            border-bottom: 1px solid #ccc;
+            background-color: #ffffff;
+        }
+       
+        .message {
+            margin: 5px 0;                /* 间隔 */
+            padding: 10px 15px;           /* 内边距 */
+            border-radius: 15px;          /* 圆角 */
+            max-width: 80%;               /* 限制最大宽度 */
+            min-width: 80px;              /* 设置最小宽度 */
+            min-height: 40px;             /* 设置最小高度 */
+            word-wrap: break-word;        /* 自动换行 */
+            position: relative;           /* 时间戳定位 */
+            display: inline-block;        /* 内容自适应宽度 */
+            box-sizing: border-box;       /* 包括内边距和边框 */
+            flex-shrink: 0; /* 禁止高度被压缩 */
+            word-wrap: break-word; /* 自动换行，防止单行过长 */
+            white-space: normal; /* 允许正常换行 */
+            overflow: hidden;
+        }
+
+        .bot {
+            background-color: #f1f1f1;    /* 灰色背景 */
+            color: black;                 /* 黑色字体 */
+            align-self: flex-start;       /* 左对齐 */
+            margin-right: auto;           /* 确保消息靠左 */
+            text-align: left;             /* 内容左对齐 */
+        }
+
+        .user {
+            background-color: #2bc840;    /* 蓝色背景 */
+            align-self: flex-end;         /* 右对齐 */
+            margin-left: auto;            /* 确保消息靠右 */
+            text-align: left;             /* 内容左对齐 */
+        }
+        .timestamp {
+            font-size: 0.8em;             /* 时间戳字体大小 */
+            color: rgba(0, 0, 0, 0.5);    /* 半透明黑色 */
+            margin-bottom: 5px;           /* 时间戳下方间距 */
+            display: block;               /* 时间戳独占一行 */
+        }
+        #input-container {
+            display: flex;
+            padding: 10px;
+            background-color: #ffffff;
+            border-top: 1px solid #ccc;
+        }
+        #input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+        #send {
+            padding: 10px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #send:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <div id="messages"></div>
+        <div id="input-container">
+            <input type="text" id="input" placeholder="输入消息..." />
+            <button id="send">发送</button>
+        </div>
+    </div>
+
+    <script>
+        const messagesDiv = document.getElementById('messages');
+        const input = document.getElementById('input');
+        const sendButton = document.getElementById('send');
+
+        // 生成唯一的 user_id
+        const userId = 'user_' + Math.random().toString(36).substr(2, 9);
+
+        // 连接 SSE
+        const eventSource = new EventSource(`/sse/${userId}`);
+
+        eventSource.onmessage = function(event) {
+            const message = JSON.parse(event.data);
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message bot';
+            const timestamp = new Date(message.timestamp).toLocaleTimeString();  // 假设消息中有时间戳
+            messageDiv.innerHTML = `<div class="timestamp">${timestamp}</div>${message.content}`;  // 显示时间
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;  // 滚动到底部
+        };
+
+        sendButton.onclick = function() {
+            sendMessage();
+        };
+
+        input.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+                event.preventDefault();  // 防止换行
+            }
+        });
+
+        function sendMessage() {
+            const userMessage = input.value;
+            if (userMessage) {
+                const timestamp = new Date().toISOString();  // 获取当前时间戳
+                fetch('/message', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ user_id: userId, message: userMessage, timestamp: timestamp })  // 发送时间戳
+                });
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message user';
+                const userTimestamp = new Date().toLocaleTimeString();  // 获取当前时间
+                messageDiv.innerHTML = `<div class="timestamp">${userTimestamp}</div>${userMessage}`;  // 显示时间
+                messagesDiv.appendChild(messageDiv);
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;  // 滚动到底部
+                input.value = '';  // 清空输入框
+            }
+        }
+    </script>
+</body>
+</html>
