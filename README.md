@@ -276,7 +276,7 @@ sudo docker logs -f chatgpt-on-wechat
 volumes:
   - ./config.json:/app/plugins/config.json
 ```
-
+**注**：采用docker方式部署的详细教程可以参考：[docker部署CoW项目](https://www.wangpc.cc/ai/docker-deploy-cow/)
 ### 4. Railway部署
 
 > Railway 每月提供5刀和最多500小时的免费额度。 (07.11更新: 目前大部分账号已无法免费部署)
