@@ -12,6 +12,7 @@ QR.png
 nohup.out
 tmp
 plugins.json
+*.db
 itchat.pkl
 *.log
 user_datas.pkl
