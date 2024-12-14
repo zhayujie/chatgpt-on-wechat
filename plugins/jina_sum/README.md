@@ -3,9 +3,17 @@ ChatGPT on WeChat项目插件, 使用jina reader和ChatGPT总结网页链接内�
 
 支持总结公众号、小红书、csdn等分享卡片链接(有的卡片链接会触发验证，一般直链没有此问题)
 
-![wechat_mp](./docs/images/wechat_mp.jpg)
-![red](./docs/images/red.jpg)
-![csdn](./docs/images/csdn.jpg)
+<div align="center">
+<img width="700" src="./docs/images/wechat_mp.jpg">
+</div>
+
+<div align="center">
+<img width="700" src="./docs/images/red.jpg">
+</div>
+
+<div align="center">
+<img width="700" src="./docs/images/csdn.jpg">
+</div>
 
 config.json 配置说明
 ```bash

@@ -63,7 +63,7 @@ docker compose up -d
 看到如下日志，表示gewechat服务启动成功
 
 <div align="center">
-<img width="700" src="./gewechat_service_success.jpg">
+<img width="700" src="../../docs/gewechat/gewechat_service_success.jpg">
 </div>
 
 # 3. 使用dify-on-wechat对接gewechat服务
@@ -122,7 +122,7 @@ python app.py
 启动成功后，可以看到如下日志信息，注意token和appid会自动保存到config.json，无需手动保存
 
 <div align="center">
-<img width="700" src="./gewechat_login.jpg">
+<img width="700" src="../../docs/gewechat/gewechat_login.jpg">
 </div>
 
 # 4. gewechat_channel 服务的限制

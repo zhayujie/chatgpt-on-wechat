@@ -1,0 +1,146 @@
+app:
+  description: ''
+  icon: 🤖
+  icon_background: '#FFEAD5'
+  mode: advanced-chat
+  name: 用户信息
+  use_icon_as_answer_icon: false
+kind: app
+version: 0.1.4
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      fileUploadConfig:
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        image_file_size_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: ''
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        sourceType: start
+        targetType: answer
+      id: 1734151208078-source-answer-target
+      source: '1734151208078'
+      sourceHandle: source
+      target: answer
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: ''
+        selected: false
+        title: 开始
+        type: start
+        variables:
+        - label: 用户id
+          max_length: 128
+          options: []
+          required: false
+          type: text-input
+          variable: user_id
+        - label: 用户名称
+          max_length: 128
+          options: []
+          required: false
+          type: text-input
+          variable: user_name
+        - label: 群聊id
+          max_length: 128
+          options: []
+          required: false
+          type: text-input
+          variable: room_id
+        - label: 群聊名称
+          max_length: 128
+          options: []
+          required: false
+          type: text-input
+          variable: room_name
+      height: 167
+      id: '1734151208078'
+      position:
+        x: 428
+        y: 215
+      positionAbsolute:
+        x: 428
+        y: 215
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 243
+    - data:
+        answer: '用户id：{{#1734151208078.user_id#}}
+
+          用户名称：{{#1734151208078.user_name#}}
+
+          群聊id：{{#1734151208078.room_id#}}
+
+          群聊名称：{{#1734151208078.room_name#}}
+
+          收到消息：{{#sys.query#}}
+
+          '
+        desc: ''
+        selected: false
+        title: 直接回复
+        type: answer
+        variables: []
+      height: 178
+      id: answer
+      position:
+        x: 793
+        y: 298
+      positionAbsolute:
+        x: 793
+        y: 298
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 243
+    viewport:
+      x: 54
+      y: 62
+      zoom: 1
