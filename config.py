@@ -206,6 +206,7 @@ available_setting = {
     "Minimax_api_key": "",
     "Minimax_group_id": "",
     "Minimax_base_url": "",
+    "web_port": 9899,
 }
 
 
@@ -386,6 +387,14 @@ def write_plugin_config(pconf: dict):
     global plugin_config
     for k in pconf:
         plugin_config[k.lower()] = pconf[k]
+
+def remove_plugin_config(name: str):
+    """
+    移除待重新加载的插件全局配置
+    :param name: 待重载的插件名
+    """
+    global plugin_config
+    plugin_config.pop(name.lower(), None)
 
 
 def pconf(plugin_name: str) -> dict:

@@ -477,7 +477,7 @@ class Godcmd(Plugin):
         return model
 
     def reload(self):
-        gconf = plugin_config[self.name]
+        gconf = pconf(self.name)
         if gconf:
             if gconf.get("password"):
                 self.password = gconf["password"]

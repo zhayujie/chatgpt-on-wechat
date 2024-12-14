@@ -27,8 +27,8 @@ def sigterm_handler_wrap(_signo):
 
 def start_channel(channel_name: str):
     channel = channel_factory.create_channel(channel_name)
-    if channel_name in ["wx", "wxy", "terminal", "wechatmp", "wechatmp_service", "wechatcom_app", "wework",
-                        "wechatcom_service", "gewechat", const.FEISHU, const.DINGTALK]:
+    if channel_name in ["wx", "wxy", "terminal", "wechatmp","wechatmp_service", "wechatcom_app", "wework",
+                        "wechatcom_service", "gewechat", "web", const.FEISHU, const.DINGTALK]:
         PluginManager().load_plugins()
 
     if conf().get("use_linkai"):
