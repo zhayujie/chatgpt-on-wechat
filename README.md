@@ -55,7 +55,7 @@ Dify接入微信生态的**详细教程**请查看文章 [**手摸手教你把 D
 > 1. gewechat要求必须搭建服务到**同省服务器**或者电脑里方可正常使用
 > 2. 此项目仅用于个人娱乐场景，请勿用于任何商业场景
 
-### 1.1 快速启动gewechat机器人
+### 快速启动gewechat机器人
 
 #### 部署gewechat服务
 
@@ -105,7 +105,7 @@ python app.py
 <img width="700" src="./docs/user-info/user-info-room.jpg">
 </div>
 
-## 2. 支持企业微信个人号（仅支持windows系统）
+## 3. 支持企业微信个人号（仅支持windows系统）
 <div align="center">
 <img width="700" src="./docs/images/wework.jpg">
 </div>
@@ -113,7 +113,7 @@ python app.py
 > 1. 有**封号风险**，请使用企业微信**小号**测试
 > 2. 在登录旧版本的企业微信时可能会出现企业微信版本过低，无法登录情况，参考[issue1525](https://github.com/zhayujie/chatgpt-on-wechat/issues/1525)，请尝试更换其他企业微信号重试
 
-### 2.1 快速启动企业微信个人号机器人
+### 快速启动企业微信个人号机器人
 
 #### 安装指定版本企业微信
 
@@ -178,7 +178,7 @@ python app.py
 [INFO][2024-04-30 21:17:05][wework_channel.py:224] - wework程序初始化完成········
 ```
 
-## 3. 集成[JinaSum](https://github.com/hanfangyuan4396/jina_sum)插件
+## 4. 集成[JinaSum](https://github.com/hanfangyuan4396/jina_sum)插件
 使用Jina Reader和ChatGPT支持总结公众号、小红书、知乎等分享卡片链接，配置详情请查看[JinaSum](https://github.com/hanfangyuan4396/jina_sum)
 
 <div align="center">
@@ -189,18 +189,18 @@ python app.py
 <img width="700" src="./plugins/jina_sum/docs/images/red.jpg">
 </div>
 
-## 4. 新增[CustomDifyApp](https://github.com/hanfangyuan4396/dify-on-wechat/tree/master/plugins/custom_dify_app)插件
+## 5. 新增[CustomDifyApp](https://github.com/hanfangyuan4396/dify-on-wechat/tree/master/plugins/custom_dify_app)插件
 支持根据群聊名称关键词自动切换不同的Dify应用，也支持为单聊配置专门的Dify应用。
 
 例如，在与AI助手进行私聊时，自动调用企业内部员工助手Dify应用；在xx平台技术支持群中@AI助手时，则自动切换至该平台的技术支持Dify应用。
 
 配置详情请查看 [CustomDifyApp](https://github.com/hanfangyuan4396/dify-on-wechat/tree/master/plugins/custom_dify_app)
 
-## 5. 支持Dify Chatflow & Workflow
+## 6. 支持Dify Chatflow & Workflow
 dify官网已正式上线工作流模式，可以导入本项目下的[dsl文件](./dsl/chat-workflow.yml)快速创建工作流进行测试。工作流输入变量名称十分灵活，对于**工作流类型**的应用，本项目**约定工作流的输入变量命名为`query`**，**输出变量命名为`text`**。
 
 (ps: 感觉工作流类型应用不太适合作为聊天机器人，现在它还没有会话的概念，需要自己管理上下文。但是它可以调用各种工具，通过http请求和外界交互，适合执行业务逻辑复杂的任务；它可以导入导出工作流dsl文件，方便分享移植。也许以后dsl文件+配置文件就可以作为本项目的一个插件。)
-## 6. 支持COZE API
+## 7. 支持COZE API
 
 <div align="center">
 <img width="700" src="./docs/images/image5.jpg">
@@ -210,7 +210,7 @@ dify官网已正式上线工作流模式，可以导入本项目下的[dsl文件
 <img width="700" src="./docs/images/image6.jpg">
 </div>
 
-### 6.1 如何快速启动coze微信机器人
+### 如何快速启动coze微信机器人
 
 - 请参照**快速开始**步骤克隆源码并安装依赖
 
@@ -243,7 +243,7 @@ python3 app.py                                    # windows环境下该命令通
 
 特别感谢 [**@绛烨**](https://github.com/jiangye520) 提供内测coze api key
 
-## 7. 支持dify voice
+## 8. 支持dify voice
 
 dify语音相关配置如下，另外需要在dify应用中开启语音转文字以及文字转语音功能，注意语音功能需要**安装ffmpeg依赖**
 
