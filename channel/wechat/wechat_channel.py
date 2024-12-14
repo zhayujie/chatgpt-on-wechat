@@ -13,6 +13,7 @@ import requests
 
 from bridge.context import *
 from bridge.reply import *
+from bridge.bridge import Bridge
 from channel.chat_channel import ChatChannel
 from channel import chat_channel
 from channel.wechat.wechat_message import *
@@ -205,10 +206,43 @@ class WechatChannel(ChatChannel):
             logger.debug(f"[WX]receive attachment msg, file_name={cmsg.content}")
         else:
             logger.debug("[WX]receive group msg: {}".format(cmsg.content))
+            
         context = self._compose_context(cmsg.ctype, cmsg.content, isgroup=True, msg=cmsg, no_need_at=conf().get("no_need_at", False))
         if context:
             self.produce(context)
-
+        else:
+            # If context is empty, write the message to session
+            config = conf()
+            group_name = cmsg.other_user_nickname
+            group_id = cmsg.other_user_id
+            
+            # Check if group is in whitelist
+            group_name_white_list = config.get("group_name_white_list", [])
+            group_name_keyword_white_list = config.get("group_name_keyword_white_list", [])
+            if any([
+                group_name in group_name_white_list,
+                "ALL_GROUP" in group_name_white_list,
+                _check_contain(group_name, group_name_keyword_white_list),
+            ]):
+                # Determine session_id based on group chat configuration
+                group_chat_in_one_session = conf().get("group_chat_in_one_session", [])
+                session_id = cmsg.actual_user_id
+                if any([
+                    group_name in group_chat_in_one_session,
+                    "ALL_GROUP" in group_chat_in_one_session,
+                ]):
+                    session_id = group_id
+                
+                # Create context and call add_query
+                context = Context(ContextType.TEXT, cmsg.content)
+                context["session_id"] = session_id
+                context["receiver"] = group_id
+                
+                bot = Bridge().get_bot("chat")
+                nickname = cmsg.self_display_name if cmsg.self_display_name else cmsg.actual_user_nickname
+                query = "%s: %s" % (nickname, cmsg.content)
+                bot.sessions.session_query(query, session_id)
+                
     # 统一的发送函数，每个Channel自行实现，根据reply的type字段发送不同类型的消息
     def send(self, reply: Reply, context: Context):
         receiver = context["receiver"]
@@ -295,3 +329,10 @@ def _send_qr_code(qrcode_list: list):
     except Exception as e:
         pass
 
+def _check_contain(content, keyword_list):
+    if not keyword_list:
+        return None
+    for ky in keyword_list:
+        if content.find(ky) != -1:
+            return True
+    return None
