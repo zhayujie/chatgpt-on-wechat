@@ -128,6 +128,13 @@ class ChatGPTBot(Bot, OpenAIImage):
             # if api_key == None, the default openai.api_key will be used
             if args is None:
                 args = self.args
+            
+            # Replace ${datetime} with current time in system messages
+            current_time = time.strftime("%Y-%m-%dT%H:%M:%S+08:00")
+            for msg in session.messages:
+                if msg["role"] == "system":
+                    msg["content"] = msg["content"].replace("${datetime}", current_time)
+            
             response = openai.ChatCompletion.create(api_key=api_key, messages=session.messages, **args)
             # logger.debug("[CHATGPT] response={}".format(response))
             # logger.info("[ChatGPT] reply={}, total_tokens={}".format(response.choices[0]['message']['content'], response["usage"]["total_tokens"]))
