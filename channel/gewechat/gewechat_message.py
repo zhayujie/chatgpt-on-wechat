@@ -101,24 +101,41 @@ class GeWeChatMessage(ChatMessage):
             self.ctype = ContextType.IMAGE
             self.content = TmpDir().path() + str(self.msg_id) + ".png"
             self._prepare_fn = self.download_image
-        elif msg_type == 49: # 引用消息，小程序等
-            self.ctype = ContextType.TEXT
+        elif msg_type == 49:  # 引用消息，小程序，公众号等
             content_xml = msg['Data']['Content']['string']
-            # 解析XML获取引用的消息内容
+            # 解析XML获取内容
             root = ET.fromstring(content_xml)
             appmsg = root.find('appmsg')
-            # 引用消息类型
-            if appmsg is not None and appmsg.find('type').text == '57':
-                refermsg = appmsg.find('refermsg')
-                if refermsg is not None:
-                    displayname = refermsg.find('displayname').text
-                    quoted_content = refermsg.find('content').text
-                    title = appmsg.find('title').text
-                    self.content = f"「引用内容\n{displayname}: {quoted_content}」\n{title}"
-                else:
+
+            if appmsg is not None:
+                msg_type = appmsg.find('type')
+                if msg_type is not None and msg_type.text == '57':  # 引用消息
+                    self.ctype = ContextType.TEXT
+                    refermsg = appmsg.find('refermsg')
+                    if refermsg is not None:
+                        displayname = refermsg.find('displayname').text
+                        quoted_content = refermsg.find('content').text
+                        title = appmsg.find('title').text
+                        self.content = f"「引用内容\n{displayname}: {quoted_content}」\n{title}"
+                    else:
+                        self.content = content_xml
+                elif msg_type is not None and msg_type.text == '5':  # 可能是公众号文章
+                    title = appmsg.find('title').text if appmsg.find('title') is not None else "无标题"
+                    if "加入群聊" in title:
+                        # 群聊邀请消息
+                        self.ctype = ContextType.TEXT
+                        self.content = content_xml
+                    else:
+                        # 公众号文章
+                        self.ctype = ContextType.SHARING
+                        url = appmsg.find('url').text if appmsg.find('url') is not None else ""
+                        self.content = url
+
+                else:  # 其他消息类型，暂时不解析，直接返回XML
+                    self.ctype = ContextType.TEXT
                     self.content = content_xml
-            # 其他消息类型，暂时不解析，直接返回XML
             else:
+                self.ctype = ContextType.TEXT
                 self.content = content_xml
         else:
             raise NotImplementedError("Unsupported message type: Type:{}".format(msg_type))
