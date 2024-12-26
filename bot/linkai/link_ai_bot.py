@@ -147,9 +147,9 @@ class LinkAIBot(Bot):
                 if response["choices"][0].get("img_urls"):
                     thread = threading.Thread(target=self._send_image, args=(context.get("channel"), context, response["choices"][0].get("img_urls")))
                     thread.start()
-                    if response["choices"][0].get("text_content"):
-                        reply_content = response["choices"][0].get("text_content")
-                reply_content = self._process_url(reply_content)
+                    reply_content = response["choices"][0].get("text_content")
+                if reply_content:
+                    reply_content = self._process_url(reply_content)
                 return Reply(ReplyType.TEXT, reply_content)
 
             else:
