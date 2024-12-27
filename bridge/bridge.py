@@ -28,6 +28,8 @@ class Bridge(object):
                 self.btype["chat"] = const.OPEN_AI
             if conf().get("use_azure_chatgpt", False):
                 self.btype["chat"] = const.CHATGPTONAZURE
+            if model_type in ["coze"]:
+                self.btype["chat"] = const.COZE
             if model_type in ["wenxin", "wenxin-4"]:
                 self.btype["chat"] = const.BAIDU
             if model_type in ["xunfei"]:
