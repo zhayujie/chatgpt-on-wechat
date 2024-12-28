@@ -13,6 +13,7 @@ from common.tmp_dir import TmpDir
 from common.utils import compress_imgfile, fsize
 from config import conf, save_config
 from lib.gewechat import GewechatClient
+from voice.audio_convert import mp3_to_silk
 
 MAX_UTF8_LEN = 2048
 
@@ -113,8 +114,19 @@ class GeWeChatChannel(ChatChannel):
             logger.info("[gewechat] Do send text to {}: {}".format(receiver, reply_text))
         elif reply.type == ReplyType.VOICE:
             try:
-                # TODO: mp3 to silk
                 content = reply.content
+                if content.endswith('.mp3'):
+                    # 如果是mp3文件，转换为silk格式
+                    silk_path = content + '.silk'
+                    silk_path = mp3_to_silk(content, silk_path)
+                    callback_url = conf().get("gewechat_callback_url")
+                    silk_url = callback_url + "?file=" + silk_path
+                    # TODO: 计算silk文件语音时长，暂时都设置为5s
+                    self.client.post_voice(self.app_id, receiver, silk_url, 5000)
+                    logger.info("[gewechat] Do send voice to {}: {}".format(receiver, silk_url))
+                    return
+                else:
+                    logger.error(f"[gewechat] voice file is not mp3, path: {content}, only support mp3")
             except Exception as e:
                 logger.error(f"[gewechat] send voice failed: {e}")
         elif reply.type == ReplyType.IMAGE_URL:
@@ -136,10 +148,13 @@ class Query:
     def GET(self):
         params = web.input(file="")
         if params.file:
-            if os.path.exists(params.file):
-                with open(params.file, 'rb') as f:
+            # TODO: 只允许访问tmp目录下的文件
+            # raise web.forbidden()
+            if os.path.exists(file_path):
+                with open(file_path, 'rb') as f:
                     return f.read()
             else:
+                logger.error(f"[gewechat] File not found: {file_path}")
                 raise web.notfound()
         return "gewechat callback server is running"
 

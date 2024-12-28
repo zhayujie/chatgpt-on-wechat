@@ -1,3 +1,4 @@
+import os
 import shutil
 import wave
 
@@ -9,6 +10,11 @@ except ImportError:
     logger.debug("import pysilk failed, wechaty voice message will not be supported.")
 
 from pydub import AudioSegment
+
+try:
+    import pilk
+except ImportError:
+    logger.warning("import pilk failed, silk voice conversion will not be supported. Try: pip install pilk")
 
 sil_supports = [8000, 12000, 16000, 24000, 32000, 44100, 48000]  # slk转wav时，支持的采样率
 
@@ -43,15 +49,43 @@ def get_pcm_from_wav(wav_path):
 def any_to_mp3(any_path, mp3_path):
     """
     把任意格式转成mp3文件
+    
+    Args:
+        any_path: 输入文件路径
+        mp3_path: 输出的mp3文件路径
     """
-    if any_path.endswith(".mp3"):
-        shutil.copy2(any_path, mp3_path)
-        return
-    if any_path.endswith(".sil") or any_path.endswith(".silk") or any_path.endswith(".slk"):
-        sil_to_wav(any_path, any_path)
-        any_path = mp3_path
-    audio = AudioSegment.from_file(any_path)
-    audio.export(mp3_path, format="mp3")
+    try:
+        # 如果已经是mp3格式，直接复制
+        if any_path.endswith(".mp3"):
+            shutil.copy2(any_path, mp3_path)
+            return
+        
+        # 如果是silk格式，使用pilk转换
+        if any_path.endswith((".sil", ".silk", ".slk")):
+            # 先转成PCM
+            pcm_path = any_path + '.pcm'
+            pilk.decode(any_path, pcm_path)
+            
+            # 再用pydub把PCM转成MP3
+            # TODO: 下面的参数可能需要调整
+            audio = AudioSegment.from_raw(pcm_path, format="raw", 
+                                        frame_rate=24000,
+                                        channels=1,
+                                        sample_width=2)  # 16-bit PCM = 2 bytes
+            audio.export(mp3_path, format="mp3")
+            
+            # 清理临时PCM文件
+            import os
+            os.remove(pcm_path)
+            return
+        
+        # 其他格式使用pydub转换
+        audio = AudioSegment.from_file(any_path)
+        audio.export(mp3_path, format="mp3")
+
+    except Exception as e:
+        logger.error(f"转换文件到mp3失败: {str(e)}")
+        raise
 
 
 def any_to_wav(any_path, wav_path):
@@ -87,6 +121,32 @@ def any_to_sil(any_path, sil_path):
         f.write(silk_data)
     return audio.duration_seconds * 1000
 
+def mp3_to_silk(mp3_path: str, silk_path: str) -> str:
+    """Convert MP3 file to SILK format
+    Args:
+        mp3_path: Path to input MP3 file
+        silk_path: Path to output SILK file
+    Returns:
+        Path to output SILK file
+    """
+    # First load the MP3 file
+    audio = AudioSegment.from_file(mp3_path)
+    
+    # Convert to mono and set sample rate to 24000Hz
+    # TODO: 下面的参数可能需要调整
+    audio = audio.set_channels(1)
+    audio = audio.set_frame_rate(24000)
+    
+    # Export to PCM
+    pcm_path = os.path.splitext(mp3_path)[0] + '.pcm'
+    audio.export(pcm_path, format='s16le')
+    
+    # Convert PCM to SILK
+    pilk.encode(pcm_path, silk_path, pcm_rate=24000, tencent=True)
+    
+    # Clean up temporary PCM file
+    os.remove(pcm_path)
+    return silk_path
 
 def any_to_amr(any_path, amr_path):
     """
