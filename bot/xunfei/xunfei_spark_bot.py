@@ -41,7 +41,7 @@ class XunFeiBot(Bot):
         self.api_key = conf().get("xunfei_api_key")
         self.api_secret = conf().get("xunfei_api_secret")
         # 默认使用v2.0版本: "generalv2"
-        # Spark Lite请求地址(spark_url): wss://spark-api.xf-yun.com/v1.1/chat, 对应的domain参数为: "general"
+        # Spark Lite请求地址(spark_url): wss://spark-api.xf-yun.com/v1.1/chat, 对应的domain参数为: "lite"
         # Spark V2.0请求地址(spark_url): wss://spark-api.xf-yun.com/v2.1/chat, 对应的domain参数为: "generalv2"
         # Spark Pro 请求地址(spark_url): wss://spark-api.xf-yun.com/v3.1/chat, 对应的domain参数为: "generalv3"
         # Spark Pro-128K请求地址(spark_url):  wss://spark-api.xf-yun.com/chat/pro-128k, 对应的domain参数为: "pro-128k"
