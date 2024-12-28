@@ -1,5 +1,6 @@
 import base64
 import uuid
+import re
 from bridge.context import ContextType
 from channel.chat_message import ChatMessage
 from common.log import logger
@@ -102,8 +103,13 @@ class GeWeChatMessage(ChatMessage):
             self.content = TmpDir().path() + str(self.msg_id) + ".png"
             self._prepare_fn = self.download_image
         elif msg_type == 49:  # 引用消息，小程序，公众号等
+            # After getting content_xml
             content_xml = msg['Data']['Content']['string']
-            # 解析XML获取内容
+            # Find the position of '<?xml' declaration and remove any prefix
+            xml_start = content_xml.find('<?xml version=')
+            if xml_start != -1:
+                content_xml = content_xml[xml_start:]
+            # Now parse the cleaned XML
             root = ET.fromstring(content_xml)
             appmsg = root.find('appmsg')
 
@@ -231,9 +237,9 @@ class GeWeChatMessage(ChatMessage):
                 self.is_at = '在群聊中@了你' in self.msg.get('Data', {}).get('PushContent', '')
                 logger.debug(f"[gewechat] Parse is_at from PushContent. self.is_at: {self.is_at}")
             
-            # 如果是群消息，更新content为实际内容（去掉发送者ID）
-            if ':' in self.content:
-                self.content = self.content.split(':', 1)[1].strip()
+            # 如果是群消息，使用正则表达式去掉wxid前缀和@信息
+            self.content = re.sub(r'wxid_[a-zA-Z0-9]+:\n', '', self.content) # 去掉wxid前缀
+            self.content = re.sub(r'@[^\u2005]+\u2005', '', self.content) # 去掉@信息
         else:
             # 如果不是群聊消息，保持结构统一，也要设置actual_user_id和actual_user_nickname
             self.actual_user_id = self.other_user_id
