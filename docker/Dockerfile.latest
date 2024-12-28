@@ -7,14 +7,28 @@ ENV BUILD_PREFIX=/app
 
 ADD . ${BUILD_PREFIX}
 
+# 安装系统依赖和编译工具
 RUN apt-get update \
-    &&apt-get install -y --no-install-recommends bash ffmpeg espeak libavcodec-extra\
+    && apt-get install -y --no-install-recommends \
+        bash \
+        ffmpeg \
+        espeak \
+        libavcodec-extra \
+        gcc \
+        g++ \
+        make \
     && cd ${BUILD_PREFIX} \
     && cp config-template.json config.json \
     && /usr/local/bin/python -m pip install --no-cache --upgrade pip \
     && pip install --no-cache -r requirements.txt \
     && pip install --no-cache -r requirements-optional.txt \
-    && pip install azure-cognitiveservices-speech
+    && pip install --no-cache azure-cognitiveservices-speech \
+    # 清理编译工具和缓存
+    && apt-get remove -y gcc g++ make \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf ~/.cache/pip/*
 
 WORKDIR ${BUILD_PREFIX}
 
