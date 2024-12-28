@@ -147,7 +147,8 @@ class GeWeChatChannel(ChatChannel):
 class Query:
     def GET(self):
         params = web.input(file="")
-        if params.file:
+        file_path = params.file
+        if file_path:
             # TODO: 只允许访问tmp目录下的文件
             # raise web.forbidden()
             if os.path.exists(file_path):
