@@ -8,6 +8,8 @@ import xml.dom.minidom
 import random
 import traceback
 import logging
+
+from common.utils import print_red
 try:
     from httplib import BadStatusLine
 except ImportError:
@@ -203,6 +205,11 @@ def process_login_info(core, loginContent):
     pass_ticket = res[0] if res else None
     if skey is not None:
         core.loginInfo['skey'] = core.loginInfo['BaseRequest']['Skey'] = skey
+    if "wxsid" not in cookies:
+        logger.error("\n[itchat] 请检查是否对微信实名认证！！！\n")
+        print_red("\n[itchat] 请检查是否对微信实名认证！！！\n")
+        core.isLogging = False
+        return False
     core.loginInfo['wxsid'] = core.loginInfo['BaseRequest']['Sid'] = cookies["wxsid"]
     core.loginInfo['wxuin'] = core.loginInfo['BaseRequest']['Uin'] = cookies["wxuin"]
     if pass_ticket is not None:

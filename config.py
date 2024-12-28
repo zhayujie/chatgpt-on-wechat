@@ -104,8 +104,9 @@ available_setting = {
     # dify配置
     "dify_api_base": "https://api.dify.ai/v1",
     "dify_api_key": "app-xxx",
-    "dify_app_type": "chatbot", # dify助手类型 chatbot(对应聊天助手)/agent(对应Agent)/workflow(对应工作流)，默认为chatbot
+    "dify_app_type": "chatbot", # dify助手类型 chatbot(对应聊天助手或对话流)/agent(对应Agent)/workflow(对应工作流，则默认为chatbot
     "dify_conversation_max_messages": 5, # dify目前不支持设置历史消息长度，暂时使用超过最大消息数清空会话的策略，缺点是没有滑动窗口，会突然丢失历史消息，当设置的值小于等于0，则不限制历史消息长度
+    "dify_error_reply": "", # dify bot错误时给用户的回复
     # coze配置
     "coze_api_base": "https://api.coze.cn",
     "coze_api_key": "xxx",

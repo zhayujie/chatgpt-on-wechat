@@ -282,7 +282,21 @@ dify语音相关配置如下，另外需要在dify应用中开启语音转文字
 }
 ```
 
+## 9. 支持dify图片识别
+
+dify图片识别配置如下，另外需要在dify应用中开启图片上传与图片理解功能。使用方法为，**先发送图片**，然后**在3分钟内发送关于图片的问题**，注意先后顺序。
+
+```bash
+{
+  "dify_api_base": "https://api.dify.ai/v1",
+  "dify_api_key": "app-xxx",
+  "dify_app_type": "chatbot",
+  "image_recognition": true
+}
+```
+
 # 更新日志
+- 2024/12/28 支持gewechat总结分享的公众号文章与图片识别
 - 2024/12/14 支持用户信息对接dify
 - 2024/12/04 新增 [gewechat](https://github.com/Devo919/Gewechat) 通道，相比itchat更稳定。
 - 2024/10/01 新增插件CustomDifyApp与GroupAtAutoreply，CustomDifyApp支持根据群聊名称关键词自动切换不同的Dify应用，GroupAtAutoreply支持群聊艾特自动回复，贡献者[**blankbro**](https://github.com/blankbro)

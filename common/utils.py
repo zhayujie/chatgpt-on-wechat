@@ -72,6 +72,15 @@ def convert_webp_to_png(webp_image):
         logger.error(f"Failed to convert WEBP to PNG: {e}")
         raise
 
+def print_green(text):
+    print(f"\033[32m{text}\033[0m")
+
+def print_yellow(text):
+    print(f"\033[33m{text}\033[0m")
+
+def print_red(text):
+    print(f"\033[31m{text}\033[0m")
+
 def parse_markdown_text(text: str) -> List[Dict]:
     """
     解析包含图片和文件链接的混合内容文本。code by sonnet3.5

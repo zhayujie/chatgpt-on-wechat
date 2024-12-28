@@ -148,6 +148,11 @@ class Query:
         data = json.loads(web.data())
         logger.debug("[gewechat] receive data: {}".format(data))
         
+        # 
+        if isinstance(data, dict) and 'testMsg' in data and 'token' in data:
+            logger.info(f"[gewechat] 收到gewechat服务发送的回调测试消息")
+            return "success"
+
         gewechat_msg = GeWeChatMessage(data, channel.client)
         
         context = channel._compose_context(
