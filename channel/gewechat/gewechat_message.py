@@ -259,11 +259,16 @@ class GeWeChatMessage(ChatMessage):
         try:
             try:
                 # 尝试下载高清图片
-                image_info = self.client.download_image(app_id=self.app_id, xml=self.msg['Data']['Content']['string'], type=1)
+                content_xml = self.msg['Data']['Content']['string']
+                # Find the position of '<?xml' declaration and remove any prefix
+                xml_start = content_xml.find('<?xml version=')
+                if xml_start != -1:
+                    content_xml = content_xml[xml_start:]
+                image_info = self.client.download_image(app_id=self.app_id, xml=content_xml, type=1)
             except Exception as e:
                 logger.warning(f"[gewechat] Failed to download high-quality image: {e}")
                 # 尝试下载普通图片
-                image_info = self.client.download_image(app_id=self.app_id, xml=self.msg['Data']['Content']['string'], type=2)
+                image_info = self.client.download_image(app_id=self.app_id, xml=content_xml, type=2)
             if image_info['ret'] == 200 and image_info['data']:
                 file_url = image_info['data']['fileUrl']
                 logger.info(f"[gewechat] Download image file from {file_url}")
