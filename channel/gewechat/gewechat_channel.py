@@ -118,12 +118,11 @@ class GeWeChatChannel(ChatChannel):
                 if content.endswith('.mp3'):
                     # 如果是mp3文件，转换为silk格式
                     silk_path = content + '.silk'
-                    silk_path = mp3_to_silk(content, silk_path)
+                    duration = mp3_to_silk(content, silk_path)
                     callback_url = conf().get("gewechat_callback_url")
                     silk_url = callback_url + "?file=" + silk_path
-                    # TODO: 计算silk文件语音时长，暂时都设置为5s
-                    self.client.post_voice(self.app_id, receiver, silk_url, 5000)
-                    logger.info("[gewechat] Do send voice to {}: {}".format(receiver, silk_url))
+                    self.client.post_voice(self.app_id, receiver, silk_url, duration)
+                    logger.info(f"[gewechat] Do send voice to {receiver}: {silk_url}, duration: {duration/1000.0} seconds")
                     return
                 else:
                     logger.error(f"[gewechat] voice file is not mp3, path: {content}, only support mp3")
@@ -146,16 +145,24 @@ class GeWeChatChannel(ChatChannel):
 
 class Query:
     def GET(self):
+        # 搭建简单的文件服务器，用于向gewechat服务传输语音等文件，但只允许访问tmp目录下的文件
         params = web.input(file="")
         file_path = params.file
         if file_path:
-            # TODO: 只允许访问tmp目录下的文件
-            # raise web.forbidden()
-            if os.path.exists(file_path):
-                with open(file_path, 'rb') as f:
+            # 使用os.path.abspath清理路径
+            clean_path = os.path.abspath(file_path)
+            # 获取tmp目录的绝对路径
+            tmp_dir = os.path.abspath("tmp")
+            # 检查文件路径是否在tmp目录下
+            if not clean_path.startswith(tmp_dir):
+                logger.error(f"[gewechat] Forbidden access to file outside tmp directory: file_path={file_path}, clean_path={clean_path}, tmp_dir={tmp_dir}")
+                raise web.forbidden()
+
+            if os.path.exists(clean_path):
+                with open(clean_path, 'rb') as f:
                     return f.read()
             else:
-                logger.error(f"[gewechat] File not found: {file_path}")
+                logger.error(f"[gewechat] File not found: {clean_path}")
                 raise web.notfound()
         return "gewechat callback server is running"
 

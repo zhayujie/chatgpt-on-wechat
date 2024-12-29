@@ -121,13 +121,13 @@ def any_to_sil(any_path, sil_path):
         f.write(silk_data)
     return audio.duration_seconds * 1000
 
-def mp3_to_silk(mp3_path: str, silk_path: str) -> str:
+def mp3_to_silk(mp3_path: str, silk_path: str) -> int:
     """Convert MP3 file to SILK format
     Args:
         mp3_path: Path to input MP3 file
         silk_path: Path to output SILK file
     Returns:
-        Path to output SILK file
+        Duration of the SILK file in milliseconds
     """
     # First load the MP3 file
     audio = AudioSegment.from_file(mp3_path)
@@ -146,7 +146,10 @@ def mp3_to_silk(mp3_path: str, silk_path: str) -> str:
     
     # Clean up temporary PCM file
     os.remove(pcm_path)
-    return silk_path
+    
+    # Get duration of the SILK file
+    duration = pilk.get_duration(silk_path)
+    return duration
 
 def any_to_amr(any_path, amr_path):
     """
