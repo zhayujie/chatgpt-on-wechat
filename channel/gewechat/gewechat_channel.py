@@ -96,8 +96,9 @@ class GeWeChatChannel(ChatChannel):
         # 从回调地址中解析出端口与url path，启动回调服务器  
         parsed_url = urlparse(callback_url)
         path = parsed_url.path
-        port = parsed_url.port
-        logger.info(f"[gewechat] start callback server: {callback_url}")
+        # 如果没有指定端口，使用默认端口80
+        port = parsed_url.port or 80
+        logger.info(f"[gewechat] start callback server: {callback_url}, using port {port}")
         urls = (path, "channel.gewechat.gewechat_channel.Query")
         app = web.application(urls, globals(), autoreload=False)
         web.httpserver.runsimple(app.wsgifunc(), ("0.0.0.0", port))
