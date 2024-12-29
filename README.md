@@ -77,6 +77,12 @@ Dify接入微信生态的**详细教程**请查看文章 [**手摸手教你把 D
 > 1. gewechat要求必须搭建服务到**同省服务器**或者电脑里方可正常使用
 > 2. 此项目仅用于个人娱乐场景，请勿用于任何商业场景
 
+dify-on-wechat、dify、gewechat服务的调用关系
+
+<div align="center">
+<img width="700" src="./docs/gewechat/gewechat_service_design.png">
+</div>
+
 ### 快速启动gewechat机器人
 
 #### 部署gewechat服务
@@ -282,6 +288,14 @@ dify语音相关配置如下，另外需要在dify应用中开启语音转文字
 }
 ```
 
+搭配 gewechat_channel 可以实现发送语音条功能，gewechat服务只能获取到**20s**以内的语音，所以**你只能给bot发送20s以内的语音**，但**bot给你发送语音时无此限制**。[**请查看gewechat接入文档**](./docs/gewechat/README.md)
+<div align="center">
+<img width="700" src="./docs/gewechat/gewechat_voice.jpg">
+</div>
+
+[点击下载语音文件](./docs/audios/gewechat_voice.mp3)
+
+
 ## 9. 支持dify图片识别
 
 dify图片识别配置如下，另外需要在dify应用中开启图片上传与图片理解功能。使用方法为，**先发送图片**，然后**在3分钟内发送关于图片的问题**，注意先后顺序。
@@ -427,11 +441,7 @@ docker logs -f dify-on-wechat  # 查看二维码并登录
   <img src="https://contrib.rocks/image?repo=hanfangyuan4396/dify-on-wechat" />
 </a>
 
-# 开发计划
-- [ ] **Notice插件**: 识别到特定消息，通知指定好友，详情请查看[#18](https://github.com/hanfangyuan4396/dify-on-wechat/issues/18)。为了鼓励各位多参与此项目，在pr中留下联系方式，我会点咖啡或奶茶表示感谢，一点心意~
-- [ ] **测试合并原项目PR：** 原项目有很多比较好的PR没有通过，之后会把一些比较好的feature测试合并进这个仓库
-- [ ] **优化对接Dify：** 目前对接dify的很多代码写的还很潦草，以后逐步优化
-- [ ] **支持：** 企业微信个人号 
+
 
 也请各位大佬多多提PR，我社畜打工人，精力实在有限~
 

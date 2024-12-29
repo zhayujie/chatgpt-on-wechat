@@ -4,6 +4,13 @@ Gewechat channel是基于[Gewechat](https://github.com/Devo919/Gewechat)项目�
 
 api文档地址为：[gewechat api](https://apifox.com/apidoc/shared-69ba62ca-cb7d-437e-85e4-6f3d3df271b1/api-197179336)
 
+首先可以简单了解 dify-on-wechat、dify、gewechat服务的调用关系，如下图所示
+
+<div align="center">
+<img width="700" src="./gewechat_service_design.png">
+</div>
+
+
 # 2. gewechat 服务部署教程
 
 gewechat 服务需要自行部署，[dify-on-wechat](https://github.com/hanfangyuan4396/dify-on-wechat) 项目只负责对接gewechat服务，请参考下方教程部署gewechat服务。
@@ -124,6 +131,34 @@ python app.py
 <div align="center">
 <img width="700" src="./gewechat_login.jpg">
 </div>
+
+## 3.4 利用gewechat发送语音条消息
+
+语音相关配置如下，另外需要在dify应用中开启语音转文字以及文字转语音功能，注意语音功能需要**安装ffmpeg依赖**
+
+```bash
+{
+  "dify_api_base": "https://api.dify.ai/v1",
+  "dify_api_key": "app-xxx",
+  "dify_app_type": "chatbot",
+  "channel_type": "gewechat",  # 通道类型设置为gewechat
+  "model": "dify",    
+  "speech_recognition": true,  # 是否开启语音识别
+  "voice_reply_voice": true,   # 是否使用语音回复语音
+  "always_reply_voice": false, # 是否一直使用语音回复
+  "voice_to_text": "dify",     # 语音识别引擎
+  "text_to_voice": "dify"      # 语音合成引擎
+}
+```
+
+gewechat支持**发送语音条消息**，但是gewechat服务只能获取到**20s**以内的语音，所以**你只能给bot发送20s以内的语音**，而**bot给你发送语音时无此限制**。
+
+<div align="center">
+<img width="700" src="./gewechat_voice.jpg">
+</div>
+
+[点击下载语音文件](./docs/audios/gewechat_voice.mp3)
+
 
 # 4. gewechat_channel 服务的限制
 1. gewechat 要求必须搭建服务到**同省**服务器或者电脑里方可正常使用，即登录微信的手机与gewechat服务必须在同一省
