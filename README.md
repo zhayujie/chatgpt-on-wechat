@@ -1,3 +1,5 @@
+<<<<<<< HEAD
+=======
 <p align="center"><img src= "https://github.com/user-attachments/assets/31fb4eab-3be4-477d-aa76-82cf62bfd12c" alt="Chatgpt-on-Wechat" width="600" /></p>
 
 <p align="center">
@@ -5,6 +7,7 @@
   <a href="https://github.com/zhayujie/chatgpt-on-wechat/blob/master/LICENSE"><img src="https://img.shields.io/github/license/zhayujie/chatgpt-on-wechat" alt="License: MIT"></a>
   <a href="https://github.com/zhayujie/chatgpt-on-wechat"><img src="https://img.shields.io/github/stars/zhayujie/chatgpt-on-wechat?style=flat-square" alt="Stars"></a> <br/>
 </p>
+>>>>>>> 9050712cd821cdd0209d3237b32c216041383544
 
 chatgpt-on-wechat（简称CoW）项目是基于大模型的智能对话机器人，支持微信公众号、企业微信应用、飞书、钉钉接入，可选择GPT3.5/GPT4.0/Claude/Gemini/LinkAI/ChatGLM/KIMI/文心一言/讯飞星火/通义千问/LinkAI，能处理文本、语音和图片，通过插件访问操作系统和互联网等外部资源，支持基于自有知识库定制企业AI应用。
 
@@ -24,6 +27,10 @@ chatgpt-on-wechat（简称CoW）项目是基于大模型的智能对话机器人
 1. 本项目遵循 [MIT开源协议](/LICENSE)，仅用于技术研究和学习，使用本项目时需遵守所在地法律法规、相关政策以及企业章程，禁止用于任何违法或侵犯他人权益的行为
 2. 境内使用该项目时，请使用国内厂商的大模型服务，并进行必要的内容安全审核及过滤
 3. 本项目主要接入协同办公平台，推荐使用公众号、企微自建应用、钉钉、飞书等接入通道，其他通道为历史产物已不维护
+<<<<<<< HEAD
+4. 任何个人、团队和企业，无论以何种方式使用该项目、对何对象提供服务，所产生å的一切后果，本项目均不承担任何责任
+
+=======
 4. 任何个人、团队和企业，无论以何种方式使用该项目、对何对象提供服务，所产生的一切后果，本项目均不承担任何责任
 
 ## 演示
@@ -316,3 +323,4 @@ FAQs： <https://github.com/zhayujie/chatgpt-on-wechat/wiki/FAQs>
 # 🌟 贡献者
 
 ![cow contributors](https://contrib.rocks/image?repo=zhayujie/chatgpt-on-wechat&max=1000)
+>>>>>>> 9050712cd821cdd0209d3237b32c216041383544
