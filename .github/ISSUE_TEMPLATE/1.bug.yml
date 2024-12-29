@@ -1,0 +1,133 @@
+name: Bug report 🐛
+description: 项目运行中遇到的Bug或问题。
+labels: ['status: needs check']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### ⚠️ 前置确认
+        1. 网络能够访问openai接口
+        2. python 已安装：版本在 3.7 ~ 3.10 之间
+        3. `git pull` 拉取最新代码
+        4. 执行`pip3 install -r requirements.txt`，检查依赖是否满足
+        5. 拓展功能请执行`pip3 install -r requirements-optional.txt`，检查依赖是否满足
+        6. [FAQS](https://github.com/zhayujie/chatgpt-on-wechat/wiki/FAQs) 中无类似问题
+  - type: checkboxes
+    attributes:
+      label: 前置确认
+      options:
+        - label: 我确认我运行的是最新版本的代码，并且安装了所需的依赖，在[FAQS](https://github.com/zhayujie/chatgpt-on-wechat/wiki/FAQs)中也未找到类似问题。
+          required: true
+  - type: checkboxes
+    attributes:
+      label: ⚠️ 搜索issues中是否已存在类似问题
+      description: >
+        请在 [历史issue](https://github.com/zhayujie/chatgpt-on-wechat/issues) 中清空输入框，搜索你的问题
+        或相关日志的关键词来查找是否存在类似问题。
+      options:
+        - label: 我已经搜索过issues和disscussions，没有跟我遇到的问题相关的issue
+          required: true
+  - type: markdown
+    attributes:
+      value: |
+        请在上方的`title`中填写你对你所遇到问题的简略总结，这将帮助其他人更好的找到相似问题，谢谢❤️。
+  - type: dropdown
+    attributes:
+      label: 操作系统类型?
+      description: >
+        请选择你运行程序的操作系统类型。
+      options:
+        - Windows
+        - Linux
+        - MacOS
+        - Docker
+        - Railway
+        - Windows Subsystem for Linux (WSL)
+        - Other (请在问题中说明)
+    validations:
+      required: true
+  - type: dropdown
+    attributes:
+      label: 运行的python版本是?
+      description: |
+        请选择你运行程序的`python`版本。
+        注意：在`python 3.7`中，有部分可选依赖无法安装。
+        经过长时间的观察，我们认为`python 3.8`是兼容性最好的版本。
+        `python 3.7`~`python 3.10`以外版本的issue，将视情况直接关闭。
+      options:
+        - python 3.7
+        - python 3.8
+        - python 3.9
+        - python 3.10
+        - other
+    validations:
+      required: true
+  - type: dropdown
+    attributes:
+      label: 使用的chatgpt-on-wechat版本是?
+      description: |
+        请确保你使用的是 [releases](https://github.com/zhayujie/chatgpt-on-wechat/releases) 中的最新版本。
+        如果你使用git, 请使用`git branch`命令来查看分支。
+      options:
+        - Latest Release
+        - Master (branch)
+    validations:
+      required: true
+  - type: dropdown
+    attributes:
+      label: 运行的`channel`类型是?
+      description: |
+        请确保你正确配置了该`channel`所需的配置项，所有可选的配置项都写在了[该文件中](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/config.py)，请将所需配置项填写在根目录下的`config.json`文件中。
+      options:
+        - wx(个人微信, itchat)
+        - wxy(个人微信, wechaty)
+        - wechatmp(公众号, 订阅号)
+        - wechatmp_service(公众号, 服务号)
+        - terminal
+        - other
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: 复现步骤 🕹
+      description: |
+        **⚠️ 不能复现将会关闭issue.**
+  - type: textarea
+    attributes:
+      label: 问题描述 😯
+      description: 详细描述出现的问题，或提供有关截图。
+  - type: textarea
+    attributes:
+      label: 终端日志 📒
+      description: |
+        在此处粘贴终端日志，可在主目录下`run.log`文件中找到，这会帮助我们更好的分析问题，注意隐去你的API key。
+        如果在配置文件中加入`"debug": true`，打印出的日志会更有帮助。
+
+        <details>
+        <summary><i>示例</i></summary>
+        ```log
+        [DEBUG][2023-04-16 00:23:22][plugin_manager.py:157] - Plugin SUMMARY triggered by event Event.ON_HANDLE_CONTEXT
+        [DEBUG][2023-04-16 00:23:22][main.py:221] - [Summary] on_handle_context. content: $总结前100条消息
+        [DEBUG][2023-04-16 00:23:24][main.py:240] - [Summary] limit: 100, duration: -1 seconds
+        [ERROR][2023-04-16 00:23:24][chat_channel.py:244] - Worker return exception: name 'start_date' is not defined
+        Traceback (most recent call last):
+          File "C:\ProgramData\Anaconda3\lib\concurrent\futures\thread.py", line 57, in run
+            result = self.fn(*self.args, **self.kwargs)
+          File "D:\project\chatgpt-on-wechat\channel\chat_channel.py", line 132, in _handle
+            reply = self._generate_reply(context)
+          File "D:\project\chatgpt-on-wechat\channel\chat_channel.py", line 142, in _generate_reply
+            e_context = PluginManager().emit_event(EventContext(Event.ON_HANDLE_CONTEXT, {
+          File "D:\project\chatgpt-on-wechat\plugins\plugin_manager.py", line 159, in emit_event
+            instance.handlers[e_context.event](e_context, *args, **kwargs)
+          File "D:\project\chatgpt-on-wechat\plugins\summary\main.py", line 255, in on_handle_context
+            records = self._get_records(session_id, start_time, limit)
+          File "D:\project\chatgpt-on-wechat\plugins\summary\main.py", line 96, in _get_records
+            c.execute("SELECT * FROM chat_records WHERE sessionid=? and timestamp>? ORDER BY timestamp DESC LIMIT ?", (session_id, start_date, limit))
+        NameError: name 'start_date' is not defined
+        [INFO][2023-04-16 00:23:36][app.py:14] - signal 2 received, exiting...
+        ```
+        </details>
+      value: |
+        ```log
+        <此处粘贴终端日志>
+        ```

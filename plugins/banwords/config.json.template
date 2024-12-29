@@ -1,0 +1,5 @@
+{
+  "action": "replace",
+  "reply_filter": true,
+  "reply_action": "ignore"
+}

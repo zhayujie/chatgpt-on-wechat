@@ -1,0 +1,12 @@
+{
+  "speech_synthesis_voice_name": "zh-CN-XiaoxiaoNeural",
+  "auto_detect": true,
+  "speech_synthesis_zh": "zh-CN-YunxiNeural",
+  "speech_synthesis_en": "en-US-JacobNeural",
+  "speech_synthesis_ja": "ja-JP-AoiNeural",
+  "speech_synthesis_ko": "ko-KR-SoonBokNeural",
+  "speech_synthesis_de": "de-DE-LouisaNeural",
+  "speech_synthesis_fr": "fr-FR-BrigitteNeural",
+  "speech_synthesis_es": "es-ES-LaiaNeural",
+  "speech_recognition_language": "zh-CN"
+}
