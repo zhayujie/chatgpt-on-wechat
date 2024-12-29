@@ -310,6 +310,7 @@ dify图片识别配置如下，另外需要在dify应用中开启图片上传与
 ```
 
 # 更新日志
+- 2024/12/29 支持gewechat发送语音条消息
 - 2024/12/28 支持gewechat总结分享的公众号文章与图片识别
 - 2024/12/14 支持用户信息对接dify
 - 2024/12/04 新增 [gewechat](https://github.com/Devo919/Gewechat) 通道，相比itchat更稳定。
