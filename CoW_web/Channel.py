@@ -139,7 +139,9 @@ def config_manage():
                 api_key = st.text_input("Moonshot API Key", type="password")
             elif selected_model == const.MiniMax:
                 api_key = st.text_input("MiniMax API Key", type="password")
-            
+            elif selected_model == const.COZE:
+                api_key = st.text_input("Coze API Key", type="password")
+                bot_id = st.text_input("Coze Bot ID")
             # 高级配置
             with st.expander("高级配置"):
                 top_p = st.slider("Top P", 0.0, 1.0, 1.0)
@@ -185,6 +187,9 @@ def config_manage():
                     model_config["moonshot_api_key"] = api_key
                 elif selected_model == const.MiniMax:
                     model_config["Minimax_api_key"] = api_key
+                elif selected_model == const.COZE:
+                    model_config["coze_api_key"] = api_key
+                    model_config["coze_bot_id"] = bot_id
                 
                 # 保存配置
                 if config_manager.save_config(model_config):
