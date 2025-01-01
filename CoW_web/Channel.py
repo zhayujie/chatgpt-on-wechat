@@ -90,7 +90,8 @@ def config_manage():
             "其他模型": [
                 const.GEMINI_PRO, const.GEMINI_15_PRO,  # Google Gemini
                 const.MOONSHOT,  # Moonshot
-                const.MiniMax  # MiniMax
+                const.MiniMax, # MiniMax
+                const.COZE, # Coze
             ]
         }
 
