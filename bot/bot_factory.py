@@ -68,5 +68,9 @@ def create_bot(bot_type):
         from bot.minimax.minimax_bot import MinimaxBot
         return MinimaxBot()
 
+    elif bot_type == const.DEEPSEEK:
+        from bot.deepseek.deepseek_bot import DeepseekBot
+        return DeepseekBot()
+
 
     raise RuntimeError
