@@ -58,9 +58,9 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
+            ${{ env.ACR_REGISTRY }}/${{ env.ACR_IMAGE_NAME }}
             ${{ env.DOCKERHUB_IMAGE_NAME }}
             ${{ env.GITHUB_REGISTRY }}/${{ env.GITHUB_IMAGE_NAME }}
-            ${{ env.ACR_REGISTRY }}/${{ env.ACR_IMAGE_NAME }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v3
