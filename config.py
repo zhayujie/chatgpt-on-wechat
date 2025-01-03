@@ -180,6 +180,8 @@ available_setting = {
     "Minimax_group_id": "",
     "Minimax_base_url": "",
     "web_port": 9899,
+    "deepseek_api_key": "",
+    "deepseek_base_url": ""
 }
 
 
