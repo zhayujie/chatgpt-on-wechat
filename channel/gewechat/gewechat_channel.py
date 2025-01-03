@@ -10,10 +10,10 @@ from channel.gewechat.gewechat_message import GeWeChatMessage
 from common.log import logger
 from common.singleton import singleton
 from common.tmp_dir import TmpDir
-from common.utils import compress_imgfile, fsize
 from config import conf, save_config
 from lib.gewechat import GewechatClient
 from voice.audio_convert import mp3_to_silk
+import uuid
 
 MAX_UTF8_LEN = 2048
 
@@ -135,14 +135,18 @@ class GeWeChatChannel(ChatChannel):
             logger.info("[gewechat] sendImage url={}, receiver={}".format(img_url, receiver))
         elif reply.type == ReplyType.IMAGE:
             image_storage = reply.content
-            sz = fsize(image_storage)
-            if sz >= 10 * 1024 * 1024:
-                logger.info("[gewechat] image too large, ready to compress, sz={}".format(sz))
-                image_storage = compress_imgfile(image_storage, 10 * 1024 * 1024 - 1)
-                logger.info("[gewechat] image compressed, sz={}".format(fsize(image_storage)))
             image_storage.seek(0)
-            self.client.post_image(self.app_id, receiver, image_storage.read())
-            logger.info("[gewechat] sendImage, receiver={}".format(receiver))
+            # Save image to tmp directory
+            img_data = image_storage.read()
+            img_file_name = f"img_{str(uuid.uuid4())}.png"
+            img_file_path = TmpDir().path() + img_file_name
+            with open(img_file_path, "wb") as f:
+                f.write(img_data)
+            # Construct callback URL
+            callback_url = conf().get("gewechat_callback_url")
+            img_url = callback_url + "?file=" + img_file_path
+            self.client.post_image(self.app_id, receiver, img_url)
+            logger.info("[gewechat] sendImage, receiver={}, url={}".format(receiver, img_url))
 
 class Query:
     def GET(self):
