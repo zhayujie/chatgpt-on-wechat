@@ -190,6 +190,10 @@ class Query:
             logger.info(f"[gewechat] ignore message from non-user account: {gewechat_msg.actual_user_id}, content: {gewechat_msg.content}")
             return "success"
 
+        if gewechat_msg.my_msg:
+            logger.info(f"[gewechat] ignore message from myself: {gewechat_msg.actual_user_id}, content: {gewechat_msg.content}")
+            return "success"
+        
         context = channel._compose_context(
             gewechat_msg.ctype,
             gewechat_msg.content,
