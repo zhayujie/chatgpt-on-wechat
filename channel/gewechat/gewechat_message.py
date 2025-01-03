@@ -143,6 +143,11 @@ class GeWeChatMessage(ChatMessage):
             else:
                 self.ctype = ContextType.TEXT
                 self.content = content_xml
+        elif msg_type == 51:
+            # TODO：推测可能是系统通知，待进一步测试
+            self.ctype = ContextType.SYS_NOTICE
+            self.content = "[系统状态通知]"
+            return
         else:
             raise NotImplementedError("Unsupported message type: Type:{}".format(msg_type))
 

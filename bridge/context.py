@@ -17,6 +17,7 @@ class ContextType(Enum):
     PATPAT = 21  # 拍了拍
     FUNCTION = 22  # 函数调用
     EXIT_GROUP = 23 #退出
+    SYS_NOTICE = 51 # 系统通知
 
 
     def __str__(self):

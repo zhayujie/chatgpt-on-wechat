@@ -3,7 +3,7 @@ import json
 import web
 from urllib.parse import urlparse
 
-from bridge.context import Context
+from bridge.context import Context, ContextType
 from bridge.reply import Reply, ReplyType
 from channel.chat_channel import ChatChannel
 from channel.gewechat.gewechat_message import GeWeChatMessage
@@ -179,6 +179,17 @@ class Query:
 
         gewechat_msg = GeWeChatMessage(data, channel.client)
         
+        # 忽略(可能是)系统通知的消息 TODO：待验证
+        if gewechat_msg.ctype == ContextType.SYS_NOTICE:
+            logger.info(f"[gewechat] ignore system notice message")
+            return "success"
+
+        # 根据微信原始id规律，暂时通过"wxid_"开头判断是用户消息，其他一律判断为公众号或其他非用户消息
+        # TODO：微信曾开放过修改原始id的权限，可能存在不是"wxid_"开头的用户消息，存在误判
+        if not gewechat_msg.actual_user_id or not gewechat_msg.actual_user_id.startswith("wxid_"):
+            logger.info(f"[gewechat] ignore message from non-user account: {gewechat_msg.actual_user_id}, content: {gewechat_msg.content}")
+            return "success"
+
         context = channel._compose_context(
             gewechat_msg.ctype,
             gewechat_msg.content,
