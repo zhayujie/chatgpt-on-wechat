@@ -77,9 +77,9 @@ def start_web_interface():
         # 使用subprocess启动streamlit,并设置PYTHONPATH
         process = subprocess.Popen(
             ["streamlit", "run", "CoW_web/Home.py"],
-            # 不捕获输出,让streamlit的输出直接显示
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            # 直接显示输出到控制台
+            stdout=None,
+            stderr=None,
             env={
                 **os.environ,
                 "PYTHONPATH": current_dir  # 添加当前目录到PYTHONPATH
