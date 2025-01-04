@@ -17,7 +17,9 @@ class ContextType(Enum):
     PATPAT = 21  # 拍了拍
     FUNCTION = 22  # 函数调用
     EXIT_GROUP = 23 #退出
-    SYS_NOTICE = 51 # 系统通知
+
+    NON_USER_MSG = 30  # 来自公众号、腾讯游戏、微信团队等非用户账号的消息
+    STATUS_SYNC  = 51   # 微信客户端的状态同步消息，可以忽略 eggs: 打开/退出某个聊天窗口
 
 
     def __str__(self):

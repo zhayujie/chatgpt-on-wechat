@@ -85,6 +85,18 @@ class GeWeChatMessage(ChatMessage):
 
         msg_type = msg['Data']['MsgType']
         self.app_id = conf().get("gewechat_app_id")
+
+        self.from_user_id = msg['Data']['FromUserName']['string']
+        self.to_user_id = msg['Data']['ToUserName']['string']
+        self.other_user_id = self.from_user_id
+        
+        # 检查是否是公众号等非用户账号的消息
+        if self._is_non_user_message(msg['Data'].get('MsgSource', ''), self.from_user_id):
+            self.ctype = ContextType.NON_USER_MSG
+            self.content = msg['Data']['Content']['string']
+            logger.debug(f"[gewechat] detected non-user message from {self.from_user_id}: {self.content}")
+            return
+
         if msg_type == 1:  # Text message
             self.ctype = ContextType.TEXT
             self.content = msg['Data']['Content']['string']
@@ -144,16 +156,14 @@ class GeWeChatMessage(ChatMessage):
                 self.ctype = ContextType.TEXT
                 self.content = content_xml
         elif msg_type == 51:
-            # TODO：推测可能是系统通知，待进一步测试
-            self.ctype = ContextType.SYS_NOTICE
-            self.content = "[系统状态通知]"
+            # msg_type = 51 表示状态同步消息，目前测试出来的情况有:
+            # 1. 打开/退出某个聊天窗口
+            # 是微信客户端的状态同步消息，可以忽略
+            self.ctype = ContextType.STATUS_SYNC
+            self.content = msg['Data']['Content']['string']
             return
         else:
             raise NotImplementedError("Unsupported message type: Type:{}".format(msg_type))
-
-        self.from_user_id = msg['Data']['FromUserName']['string']
-        self.to_user_id = msg['Data']['ToUserName']['string']
-        self.other_user_id = self.from_user_id
 
         # 获取群聊或好友的名称
         brief_info_response = self.client.get_brief_info(self.app_id, [self.other_user_id])
@@ -294,3 +304,39 @@ class GeWeChatMessage(ChatMessage):
     def prepare(self):
         if self._prepare_fn:
             self._prepare_fn()
+
+    def _is_non_user_message(self, msg_source: str, from_user_id: str) -> bool:
+        """检查消息是否来自非用户账号（如公众号、腾讯游戏、微信团队等）
+        
+        Args:
+            msg_source: 消息的MsgSource字段内容
+            from_user_id: 消息发送者的ID
+            
+        Returns:
+            bool: 如果是非用户消息返回True，否则返回False
+            
+        Note:
+            通过以下方式判断是否为非用户消息：
+            1. 检查MsgSource中是否包含特定标签
+            2. 检查发送者ID是否为特殊账号或以特定前缀开头
+        """
+        # 检查发送者ID
+        special_accounts = ["Tencent-Games", "weixin"]
+        if from_user_id in special_accounts or from_user_id.startswith("gh_"):
+            logger.debug(f"[gewechat] non-user message detected by sender id: {from_user_id}")
+            return True
+            
+        # 检查消息源中的标签
+        # 示例:<msgsource>\n\t<tips>3</tips>\n\t<bizmsg>\n\t\t<bizmsgshowtype>0</bizmsgshowtype>\n\t\t<bizmsgfromuser><![CDATA[weixin]]></bizmsgfromuser>\n\t</bizmsg>
+        non_user_indicators = [
+            "<tips>3</tips>",
+            "<bizmsgshowtype>",
+            "</bizmsgshowtype>",
+            "<bizmsgfromuser>",
+            "</bizmsgfromuser>"
+        ]
+        if any(indicator in msg_source for indicator in non_user_indicators):
+            logger.debug(f"[gewechat] non-user message detected by msg_source indicators")
+            return True
+            
+        return False

@@ -176,26 +176,25 @@ class Query:
         data = json.loads(web.data())
         logger.debug("[gewechat] receive data: {}".format(data))
         
-        # 
+        # gewechat服务发送的回调测试消息
         if isinstance(data, dict) and 'testMsg' in data and 'token' in data:
-            logger.info(f"[gewechat] 收到gewechat服务发送的回调测试消息")
+            logger.debug(f"[gewechat] 收到gewechat服务发送的回调测试消息")
             return "success"
 
         gewechat_msg = GeWeChatMessage(data, channel.client)
         
-        # 忽略(可能是)系统通知的消息 TODO：待验证
-        if gewechat_msg.ctype == ContextType.SYS_NOTICE:
-            logger.info(f"[gewechat] ignore system notice message")
+        # 微信客户端的状态同步消息
+        if gewechat_msg.ctype == ContextType.STATUS_SYNC:
+            logger.debug(f"[gewechat] ignore status sync message: {gewechat_msg.content}")
             return "success"
 
-        # 根据微信原始id规律，暂时通过"wxid_"开头判断是用户消息，其他一律判断为公众号或其他非用户消息
-        # TODO：微信曾开放过修改原始id的权限，可能存在不是"wxid_"开头的用户消息，存在误判
-        if not gewechat_msg.actual_user_id or not gewechat_msg.actual_user_id.startswith("wxid_"):
-            logger.info(f"[gewechat] ignore message from non-user account: {gewechat_msg.actual_user_id}, content: {gewechat_msg.content}")
+        # 忽略非用户消息（如公众号、系统通知等）
+        if gewechat_msg.ctype == ContextType.NON_USER_MSG:
+            logger.debug(f"[gewechat] ignore non-user message from {gewechat_msg.from_user_id}: {gewechat_msg.content}")
             return "success"
 
         if gewechat_msg.my_msg:
-            logger.info(f"[gewechat] ignore message from myself: {gewechat_msg.actual_user_id}, content: {gewechat_msg.content}")
+            logger.debug(f"[gewechat] ignore message from myself: {gewechat_msg.actual_user_id}: {gewechat_msg.content}")
             return "success"
         
         context = channel._compose_context(

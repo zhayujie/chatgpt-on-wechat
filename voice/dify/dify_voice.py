@@ -51,6 +51,7 @@ class DifyVoice(Voice):
             headers = {
                 'Authorization': 'Bearer ' + conf().get("dify_api_key")
             }
+            #TODO: raise and log response
             response = requests.post(
                 f'{conf().get("dify_api_base")}/text-to-audio',
                 headers=headers,
