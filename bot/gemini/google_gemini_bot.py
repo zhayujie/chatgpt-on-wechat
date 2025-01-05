@@ -16,6 +16,11 @@ from config import conf
 from bot.chatgpt.chat_gpt_session import ChatGPTSession
 from bot.baidu.baidu_wenxin_session import BaiduWenxinSession
 from google.generativeai.types import HarmCategory, HarmBlockThreshold
+from bot.bot import Bot
+import google.generativeai as genai
+from bot.session_manager import SessionManager
+...
+import time  # 新增 time 库
 
 
 # OpenAI对话模型API (可用)
@@ -31,16 +36,28 @@ class GoogleGeminiBot(Bot):
             self.model = "gemini-pro"
     def reply(self, query, context: Context = None) -> Reply:
         try:
-            if context.type != ContextType.TEXT:
-                logger.warn(f"[Gemini] Unsupported message type, type={context.type}")
-                return Reply(ReplyType.TEXT, None)
-            logger.info(f"[Gemini] query={query}")
             session_id = context["session_id"]
             session = self.sessions.session_query(query, session_id)
-            gemini_messages = self._convert_to_gemini_messages(self.filter_messages(session.messages))
-            logger.debug(f"[Gemini] messages={gemini_messages}")
             genai.configure(api_key=self.api_key)
             model = genai.GenerativeModel(self.model)
+            media_file = None        
+            if context.type == ContextType.TEXT:
+                gemini_messages = self._convert_to_gemini_messages(self.filter_messages(session.messages))
+            elif context.type == ContextType.IMAGE:
+                media_file = genai.upload_file(context.content)
+            elif context.type == ContextType.AUDIO:
+                media_file = genai.upload_file(context.content)
+            elif context.type == ContextType.VIDEO:
+                media_file = genai.upload_file(context.content)
+                while media_file.state.name == "PROCESSING":
+                    time.sleep(5)  # 视频处理中,等待5秒后再查询状态
+                    media_file = genai.get_file(media_file.name)
+            else:
+                raise ValueError(f"Unsupported input type: {context.type}")
+            if media_file:
+                gemini_messages = [media_file, "\n\n", query]
+            else:
+                gemini_messages = self._convert_to_gemini_messages(query)
             
             # 添加安全设置
             safety_settings = {
@@ -57,16 +74,12 @@ class GoogleGeminiBot(Bot):
             )
             if response.candidates and response.candidates[0].content:
                 reply_text = response.candidates[0].content.parts[0].text
-                logger.info(f"[Gemini] reply={reply_text}")
+                logger.info(f"[Gemini] reply={reply_text}") 
                 self.sessions.session_reply(reply_text, session_id)
                 return Reply(ReplyType.TEXT, reply_text)
             else:
-                # 没有有效响应内容，可能内容被屏蔽，输出安全评分
-                logger.warning("[Gemini] No valid response generated. Checking safety ratings.")
-                if hasattr(response, 'candidates') and response.candidates:
-                    for rating in response.candidates[0].safety_ratings:
-                        logger.warning(f"Safety rating: {rating.category} - {rating.probability}")
-                error_message = "No valid response generated due to safety constraints."
+                logger.warning("[Gemini] No valid response generated.")
+                error_message = "No valid response generated."
                 self.sessions.session_reply(error_message, session_id)
                 return Reply(ReplyType.ERROR, error_message)
                     
@@ -76,20 +89,21 @@ class GoogleGeminiBot(Bot):
             self.sessions.session_reply(error_message, session_id)
             return Reply(ReplyType.ERROR, error_message)
             
-    def _convert_to_gemini_messages(self, messages: list):
+    def _convert_to_gemini_messages(self, messages):
+        if isinstance(messages, str):
+            return [{"role": "user", "parts": [{"text": messages}]}]
         res = []
         for msg in messages:
             if msg.get("role") == "user":
                 role = "user"
             elif msg.get("role") == "assistant":
-                role = "model"
+                role = "model" 
             elif msg.get("role") == "system":
                 role = "user"
             else:
                 continue
-            res.append({
-                "role": role,
-                "parts": [{"text": msg.get("content")}]
+            res.append({"role": role,
+            "parts": [{"text": msg.get("content")}]
             })
         return res
 
