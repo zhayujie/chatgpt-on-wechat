@@ -59,15 +59,16 @@ Dify接入微信生态的**详细教程**请查看文章 [**手摸手教你把 D
 
 # 交流群
 
+欢迎加入 **🤖大模型/知识库/bot交流群**，不仅能及时**获取本项目版本更新**公告，还可以一起**交流AI相关知识**！
 
 <div align="center">
 
-|<img width="240" src="./docs/images/wechat.jpg">|<img width="240" src="./docs/images/supportme.jpg">|
+|<img width="240" src="./docs/images/wechat_group_1.jpg">|<img width="240" src="./docs/images/wechat_group_2.jpg">|
 |:-:|:-:|
+|<img width="240" src="./docs/images/wechat.jpg">|<img width="240" src="./docs/images/supportme.jpg">|
 |添加我的微信拉你进交流群|开源不易，感谢打赏🎉|
 
 </div>
-
 
 # 最新功能
 
@@ -310,6 +311,7 @@ dify图片识别配置如下，另外需要在dify应用中开启图片上传与
 ```
 
 # 更新日志
+- 2025/01/04 修复gewechat自动回复公众号等官方账号消息的bug
 - 2024/12/29 支持gewechat发送语音条消息
 - 2024/12/28 支持gewechat总结分享的公众号文章与图片识别
 - 2024/12/14 支持用户信息对接dify
