@@ -411,7 +411,7 @@ def convert_format(input_str):
     second_part = parts[1].strip()
 
     # 组合成新格式
-    result = f"{second_part} {content}"
+    result = f"{second_part} --> {content}"
 
     return result
 
