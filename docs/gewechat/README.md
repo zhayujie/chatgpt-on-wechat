@@ -157,7 +157,6 @@ gewechat支持**发送语音条消息**，但是gewechat服务只能获取到**2
 <img width="700" src="./gewechat_voice.jpg">
 </div>
 
-[点击下载语音文件](./docs/audios/gewechat_voice.mp3)
 
 
 # 4. gewechat_channel 服务的限制
