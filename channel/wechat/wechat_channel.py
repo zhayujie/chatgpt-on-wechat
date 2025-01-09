@@ -99,6 +99,14 @@ def qrCallback(uuid, status, qrcode):
 
         url = f"https://login.weixin.qq.com/l/{uuid}"
 
+        img = qrcode.make(data=url)
+
+        if not os.path.exists('tmp'):
+            os.makedirs('tmp')
+
+        with open('tmp/login.png', 'wb') as f:
+            img.save(f)
+
         qr_api1 = "https://api.isoyu.com/qr/?m=1&e=L&p=20&url={}".format(url)
         qr_api2 = "https://api.qrserver.com/v1/create-qr-code/?size=400×400&data={}".format(url)
         qr_api3 = "https://api.pwmqr.com/qrcode/create/?url={}".format(url)
