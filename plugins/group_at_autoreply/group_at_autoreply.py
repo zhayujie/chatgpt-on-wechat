@@ -8,7 +8,7 @@ from plugins import *
     name="GroupAtAutoreply",
     desire_priority=0,
     hidden=True,
-    enabled=True,
+    enabled=False,
     desc="群聊中出现@某人时，触发某人的自动回复",
     version="0.1",
     author="zexin.li",
