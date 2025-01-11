@@ -33,7 +33,7 @@ docker tag ghcr.io/tu1h/wechotd/wechotd:alpine gewe
 
 ```bash
 mkdir -p gewechat/data  
-docker run -itd -v gewechat/data:/root/temp -p 2531:2531 -p 2532:2532 --restart=always --name=gewe gewe
+docker run -itd -v ./gewechat/data:/root/temp -p 2531:2531 -p 2532:2532 --restart=always --name=gewe gewe
 ```
 
 ## 2.3 使用docker compose启动
