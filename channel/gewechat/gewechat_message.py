@@ -74,22 +74,43 @@ import xml.etree.ElementTree as ET
 }
 """
 
+# 群邀请消息示例
+"""
+{'TypeName': 'AddMsg', 'Appid': 'wx_jA7z385SBKm9VSQaPJAdx', 'Data': {'MsgId': 488566999, 'FromUserName': {'string': '53760920521@chatroom'}, 'ToUserName': {'string': 'wxid_u7aaryr9crqm22'}, 'MsgType': 10002, 'Content': {'string': '53760920521@chatroom:\n<sysmsg type="sysmsgtemplate">\n\t<sysmsgtemplate>\n\t\t<content_template type="tmpl_type_profile">\n\t\t\t<plain><![CDATA[]]></plain>\n\t\t\t<template><![CDATA["$username$"邀请"$names$"加入了群聊]]></template>\n\t\t\t<link_list>\n\t\t\t\t<link name="username" type="link_profile">\n\t\t\t\t\t<memberlist>\n\t\t\t\t\t\t<member>\n\t\t\t\t\t\t\t<username><![CDATA[wxid_eaclcf34ny6221]]></username>\n\t\t\t\t\t\t\t<nickname><![CDATA[刘贺]]></nickname>\n\t\t\t\t\t\t</member>\n\t\t\t\t\t</memberlist>\n\t\t\t\t</link>\n\t\t\t\t<link name="names" type="link_profile">\n\t\t\t\t\t<memberlist>\n\t\t\t\t\t\t<member>\n\t\t\t\t\t\t\t<username><![CDATA[wxid_mmwc3zzkfcl922]]></username>\n\t\t\t\t\t\t\t<nickname><![CDATA[郑德娟]]></nickname>\n\t\t\t\t\t\t</member>\n\t\t\t\t\t</memberlist>\n\t\t\t\t\t<separator><![CDATA[、]]></separator>\n\t\t\t\t</link>\n\t\t\t</link_list>\n\t\t</content_template>\n\t</sysmsgtemplate>\n</sysmsg>\n'}, 'Status': 4, 'ImgStatus': 1, 'ImgBuf': {'iLen': 0}, 'CreateTime': 1736820013, 'MsgSource': '<msgsource>\n\t<tmp_node>\n\t\t<publisher-id></publisher-id>\n\t</tmp_node>\n</msgsource>\n', 'NewMsgId': 5407479395895269893, 'MsgSeq': 821038175}, 'Wxid': 'wxid_u7aaryr9crqm22'}
+"""
+
+# 群聊中移除用户示例
+"""
+{'UserName': {'string': '53760920521@chatroom'}, 'NickName': {'string': 'AITestGroup'}, 'PyInitial': {'string': 'AITESTGROUP'}, 'QuanPin': {'string': 'AITestGroup'}, 'Sex': 0, 'ImgBuf': {'iLen': 0}, 'BitMask': 4294967295, 'BitVal': 2, 'ImgFlag': 1, 'Remark': {}, 'RemarkPyinitial': {}, 'RemarkQuanPin': {}, 'ContactType': 0, 'RoomInfoCount': 0, 'DomainList': [{}], 'ChatRoomNotify': 1, 'AddContactScene': 0, 'PersonalCard': 0, 'HasWeiXinHdHeadImg': 0, 'VerifyFlag': 0, 'Level': 0, 'Source': 0, 'ChatRoomOwner': 'wxid_eaclcf34ny6221', 'WeiboFlag': 0, 'AlbumStyle': 0, 'AlbumFlag': 0, 'SnsUserInfo': {'SnsFlag': 0, 'SnsBgobjectId': 0, 'SnsFlagEx': 0}, 'CustomizedInfo': {'BrandFlag': 0}, 'AdditionalContactList': {'LinkedinContactItem': {}}, 'ChatroomMaxCount': 10037, 'DeleteFlag': 0, 'Description': '\x08\x02\x12\x1c\n\x13wxid_eaclcf34ny62210\x01@\x00�\x01\x00\x12\x1c\n\x13wxid_u7aaryr9crqm220\x01@\x00�\x01\x00\x18\x01"\x00(\x008\x00', 'ChatroomStatus': 4, 'Extflag': 0, 'ChatRoomBusinessType': 0}
+"""
+
+
 class GeWeChatMessage(ChatMessage):
     def __init__(self, msg, client: GewechatClient):
         super().__init__(msg)
         self.msg = msg
+        # 群聊中移除用户， msg['NewMsgId']是空的，可以不处理此类型消息
+        if not msg.get('Data'):
+            logger.error("[gewechat] Missing 'Data' in message")
+            return
+        if 'NewMsgId' not in msg['Data']:
+            logger.error("[gewechat] Missing 'NewMsgId' in message data")
+            return
         self.msg_id = msg['Data']['NewMsgId']
         self.create_time = msg['Data']['CreateTime']
         self.is_group = True if "@chatroom" in msg['Data']['FromUserName']['string'] else False
-        self.client = client
 
+        notes_join_group = ["加入群聊", "加入了群聊", "invited", "joined"]  # 可通过添加对应语言的加入群聊通知中的关键词适配更多
+        notes_bot_join_group = ["邀请你", "invited you", "You've joined", "你通过扫描"]
+
+        self.client = client
         msg_type = msg['Data']['MsgType']
         self.app_id = conf().get("gewechat_app_id")
 
         self.from_user_id = msg['Data']['FromUserName']['string']
         self.to_user_id = msg['Data']['ToUserName']['string']
         self.other_user_id = self.from_user_id
-        
+
         # 检查是否是公众号等非用户账号的消息
         if self._is_non_user_message(msg['Data'].get('MsgSource', ''), self.from_user_id):
             self.ctype = ContextType.NON_USER_MSG
@@ -108,7 +129,7 @@ class GeWeChatMessage(ChatMessage):
                 silk_file_path = TmpDir().path() + silk_file_name
                 with open(silk_file_path, "wb") as f:
                     f.write(silk_data)
-                #TODO: silk2mp3
+                # TODO: silk2mp3
                 self.content = silk_file_path
         elif msg_type == 3:  # Image message
             self.ctype = ContextType.IMAGE
@@ -162,6 +183,45 @@ class GeWeChatMessage(ChatMessage):
             self.ctype = ContextType.STATUS_SYNC
             self.content = msg['Data']['Content']['string']
             return
+        elif msg_type == 10002:  # Group System Message
+            if self.is_group:
+                if any(note_bot_join_group in msg["Content"] for note_bot_join_group in
+                       notes_bot_join_group):  # 邀请机器人加入群聊
+                    logger.warn("机器人加入群聊消息，不处理~")
+                    pass
+                elif any(note_join_group in msg["Content"] for note_join_group in
+                         notes_join_group):  # 若有任何在notes_join_group列表中的字符串出现在NOTE中
+                    content = msg['Data']['Content']['string']
+                    try:
+                        # Extract the XML part after the chatroom ID
+                        xml_content = content.split(':\n', 1)[1] if ':\n' in content else content
+                        root = ET.fromstring(xml_content)
+
+                        # Navigate through the XML structure
+                        sysmsgtemplate = root.find('.//sysmsgtemplate')
+                        if sysmsgtemplate is not None:
+                            content_template = sysmsgtemplate.find('.//content_template')
+                            if content_template is not None and content_template.get('type') == 'tmpl_type_profile':
+                                template = content_template.find('.//template')
+                                if template is not None and '加入了群聊' in template.text:
+                                    self.ctype = ContextType.JOIN_GROUP
+
+                                    # Extract inviter info
+                                    inviter_link = root.find(".//link[@name='username']//nickname")
+                                    inviter_nickname = inviter_link.text if inviter_link is not None else "未知用户"
+
+                                    # Extract invited member info
+                                    invited_link = root.find(".//link[@name='names']//nickname")
+                                    invited_nickname = invited_link.text if invited_link is not None else "未知用户"
+
+                                    self.content = f'"{inviter_nickname}"邀请"{invited_nickname}"加入了群聊'
+                                    self.actual_user_nickname = invited_nickname
+                                    return
+
+                    except ET.ParseError as e:
+                        logger.error(f"[gewechat] Failed to parse group join XML: {e}")
+                        # Fall back to regular content handling
+                        pass
         else:
             raise NotImplementedError("Unsupported message type: Type:{}".format(msg_type))
 
@@ -186,7 +246,8 @@ class GeWeChatMessage(ChatMessage):
             }
             """
             # 获取实际发送者wxid
-            self.actual_user_id = self.msg.get('Data', {}).get('Content', {}).get('string', '').split(':', 1)[0]  # 实际发送者ID
+            self.actual_user_id = self.msg.get('Data', {}).get('Content', {}).get('string', '').split(':', 1)[
+                0]  # 实际发送者ID
             # 从群成员列表中获取实际发送者信息
             """
             {
@@ -209,7 +270,8 @@ class GeWeChatMessage(ChatMessage):
             }
             """
             chatroom_member_list_response = self.client.get_chatroom_member_list(self.app_id, self.from_user_id)
-            if chatroom_member_list_response.get('ret', 0) == 200 and chatroom_member_list_response.get('data', {}).get('memberList', []):
+            if chatroom_member_list_response.get('ret', 0) == 200 and chatroom_member_list_response.get('data', {}).get(
+                    'memberList', []):
                 # 从群成员列表中匹配acual_user_id
                 for member_info in chatroom_member_list_response['data']['memberList']:
                     if member_info['wxid'] == self.actual_user_id:
@@ -246,21 +308,21 @@ class GeWeChatMessage(ChatMessage):
                         logger.debug(f"[gewechat] is_at: {self.is_at}. atuserlist: {atuserlist}")
                 except ET.ParseError:
                     pass
-            
+
             # 只有在XML解析失败时才从PushContent中判断
             if not xml_parsed:
                 self.is_at = '在群聊中@了你' in self.msg.get('Data', {}).get('PushContent', '')
                 logger.debug(f"[gewechat] Parse is_at from PushContent. self.is_at: {self.is_at}")
-            
+
             # 如果是群消息，使用正则表达式去掉wxid前缀和@信息
-            self.content = re.sub(f'{self.actual_user_id}:\n', '', self.content) # 去掉wxid前缀
-            self.content = re.sub(r'@[^\u2005]+\u2005', '', self.content) # 去掉@信息
+            self.content = re.sub(f'{self.actual_user_id}:\n', '', self.content)  # 去掉wxid前缀
+            self.content = re.sub(r'@[^\u2005]+\u2005', '', self.content)  # 去掉@信息
         else:
             # 如果不是群聊消息，保持结构统一，也要设置actual_user_id和actual_user_nickname
             self.actual_user_id = self.other_user_id
             self.actual_user_nickname = self.other_user_nickname
 
-        self.my_msg = self.msg['Wxid'] == self.from_user_id # 消息是否来自自己
+        self.my_msg = self.msg['Wxid'] == self.from_user_id  # 消息是否来自自己
 
     def download_voice(self):
         try:
@@ -325,7 +387,7 @@ class GeWeChatMessage(ChatMessage):
         if from_user_id in special_accounts or from_user_id.startswith("gh_"):
             logger.debug(f"[gewechat] non-user message detected by sender id: {from_user_id}")
             return True
-            
+
         # 检查消息源中的标签
         # 示例:<msgsource>\n\t<tips>3</tips>\n\t<bizmsg>\n\t\t<bizmsgshowtype>0</bizmsgshowtype>\n\t\t<bizmsgfromuser><![CDATA[weixin]]></bizmsgfromuser>\n\t</bizmsg>
         non_user_indicators = [
@@ -338,5 +400,5 @@ class GeWeChatMessage(ChatMessage):
         if any(indicator in msg_source for indicator in non_user_indicators):
             logger.debug(f"[gewechat] non-user message detected by msg_source indicators")
             return True
-            
+
         return False
