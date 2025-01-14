@@ -76,28 +76,240 @@ import xml.etree.ElementTree as ET
 
 # 群邀请消息示例
 """
-{'TypeName': 'AddMsg', 'Appid': 'wx_jA7z385SBKm9VSQaPJAdx', 'Data': {'MsgId': 488566999, 'FromUserName': {'string': '53760920521@chatroom'}, 'ToUserName': {'string': 'wxid_u7aaryr9crqm22'}, 'MsgType': 10002, 'Content': {'string': '53760920521@chatroom:\n<sysmsg type="sysmsgtemplate">\n\t<sysmsgtemplate>\n\t\t<content_template type="tmpl_type_profile">\n\t\t\t<plain><![CDATA[]]></plain>\n\t\t\t<template><![CDATA["$username$"邀请"$names$"加入了群聊]]></template>\n\t\t\t<link_list>\n\t\t\t\t<link name="username" type="link_profile">\n\t\t\t\t\t<memberlist>\n\t\t\t\t\t\t<member>\n\t\t\t\t\t\t\t<username><![CDATA[wxid_eaclcf34ny6221]]></username>\n\t\t\t\t\t\t\t<nickname><![CDATA[刘贺]]></nickname>\n\t\t\t\t\t\t</member>\n\t\t\t\t\t</memberlist>\n\t\t\t\t</link>\n\t\t\t\t<link name="names" type="link_profile">\n\t\t\t\t\t<memberlist>\n\t\t\t\t\t\t<member>\n\t\t\t\t\t\t\t<username><![CDATA[wxid_mmwc3zzkfcl922]]></username>\n\t\t\t\t\t\t\t<nickname><![CDATA[郑德娟]]></nickname>\n\t\t\t\t\t\t</member>\n\t\t\t\t\t</memberlist>\n\t\t\t\t\t<separator><![CDATA[、]]></separator>\n\t\t\t\t</link>\n\t\t\t</link_list>\n\t\t</content_template>\n\t</sysmsgtemplate>\n</sysmsg>\n'}, 'Status': 4, 'ImgStatus': 1, 'ImgBuf': {'iLen': 0}, 'CreateTime': 1736820013, 'MsgSource': '<msgsource>\n\t<tmp_node>\n\t\t<publisher-id></publisher-id>\n\t</tmp_node>\n</msgsource>\n', 'NewMsgId': 5407479395895269893, 'MsgSeq': 821038175}, 'Wxid': 'wxid_u7aaryr9crqm22'}
+{
+    "TypeName": "AddMsg",
+    "Appid": "wx_xxx",
+    "Data": {
+        "MsgId": 488566999,
+        "FromUserName": {
+            "string": "xxx@chatroom"
+        },
+        "ToUserName": {
+            "string": "wxid_gewechat_bot"
+        },
+        "MsgType": 10002,
+        "Content": {
+            "string": "53760920521@chatroom:\n<sysmsg type=\"sysmsgtemplate\">\n\t<sysmsgtemplate>\n\t\t<content_template type=\"tmpl_type_profile\">\n\t\t\t<plain><![CDATA[]]></plain>\n\t\t\t<template><![CDATA[\"$username$\"邀请\"$names$\"加入了群聊]]></template>\n\t\t\t<link_list>\n\t\t\t\t<link name=\"username\" type=\"link_profile\">\n\t\t\t\t\t<memberlist>\n\t\t\t\t\t\t<member>\n\t\t\t\t\t\t\t<username><![CDATA[wxid_eaclcf34ny6221]]></username>\n\t\t\t\t\t\t\t<nickname><![CDATA[刘贺]]></nickname>\n\t\t\t\t\t\t</member>\n\t\t\t\t\t</memberlist>\n\t\t\t\t</link>\n\t\t\t\t<link name=\"names\" type=\"link_profile\">\n\t\t\t\t\t<memberlist>\n\t\t\t\t\t\t<member>\n\t\t\t\t\t\t\t<username><![CDATA[wxid_mmwc3zzkfcl922]]></username>\n\t\t\t\t\t\t\t<nickname><![CDATA[郑德娟]]></nickname>\n\t\t\t\t\t\t</member>\n\t\t\t\t\t</memberlist>\n\t\t\t\t\t<separator><![CDATA[、]]></separator>\n\t\t\t\t</link>\n\t\t\t</link_list>\n\t\t</content_template>\n\t</sysmsgtemplate>\n</sysmsg>\n"
+        },
+        "Status": 4,
+        "ImgStatus": 1,
+        "ImgBuf": {
+            "iLen": 0
+        },
+        "CreateTime": 1736820013,
+        "MsgSource": "<msgsource>\n\t<tmp_node>\n\t\t<publisher-id></publisher-id>\n\t</tmp_node>\n</msgsource>\n",
+        "NewMsgId": 5407479395895269893,
+        "MsgSeq": 821038175
+    },
+    "Wxid": "wxid_gewechat_bot"
+}
+"""
+
+"""
+{
+    "TypeName": "ModContacts",
+    "Appid": "wx_xxx",
+    "Data": {
+        "UserName": {
+            "string": "xxx@chatroom"
+        },
+        "NickName": {
+            "string": "测试2"
+        },
+        "PyInitial": {
+            "string": "CS2"
+        },
+        "QuanPin": {
+            "string": "ceshi2"
+        },
+        "Sex": 0,
+        "ImgBuf": {
+            "iLen": 0
+        },
+        "BitMask": 4294967295,
+        "BitVal": 2,
+        "ImgFlag": 1,
+        "Remark": {},
+        "RemarkPyinitial": {},
+        "RemarkQuanPin": {},
+        "ContactType": 0,
+        "RoomInfoCount": 0,
+        "DomainList": [
+            {}
+        ],
+        "ChatRoomNotify": 1,
+        "AddContactScene": 0,
+        "PersonalCard": 0,
+        "HasWeiXinHdHeadImg": 0,
+        "VerifyFlag": 0,
+        "Level": 0,
+        "Source": 0,
+        "ChatRoomOwner": "wxid_xxx",
+        "WeiboFlag": 0,
+        "AlbumStyle": 0,
+        "AlbumFlag": 0,
+        "SnsUserInfo": {
+            "SnsFlag": 0,
+            "SnsBgobjectId": 0,
+            "SnsFlagEx": 0
+        },
+        "CustomizedInfo": {
+            "BrandFlag": 0
+        },
+        "AdditionalContactList": {
+            "LinkedinContactItem": {}
+        },
+        "ChatroomMaxCount": 10008,
+        "DeleteFlag": 0,
+        "Description": "\b\u0004\u0012\u001c\n\u0013wxid_xxx0\u0001@\u0000\u0001\u0000\u0012\u001c\n\u0013wxid_xxx0\u0001@\u0000\u0001\u0000\u0012\u001c\n\u0013wxid_xxx0\u0001@\u0000\u0001\u0000\u0012\u001c\n\u0013wxid_xxx0\u0001@\u0000\u0001\u0000\u0018\u0001\"\u0000(\u00008\u0000",
+        "ChatroomStatus": 5,
+        "Extflag": 0,
+        "ChatRoomBusinessType": 0
+    },
+    "Wxid": "wxid_xxx"
+}
 """
 
 # 群聊中移除用户示例
 """
-{'UserName': {'string': '53760920521@chatroom'}, 'NickName': {'string': 'AITestGroup'}, 'PyInitial': {'string': 'AITESTGROUP'}, 'QuanPin': {'string': 'AITestGroup'}, 'Sex': 0, 'ImgBuf': {'iLen': 0}, 'BitMask': 4294967295, 'BitVal': 2, 'ImgFlag': 1, 'Remark': {}, 'RemarkPyinitial': {}, 'RemarkQuanPin': {}, 'ContactType': 0, 'RoomInfoCount': 0, 'DomainList': [{}], 'ChatRoomNotify': 1, 'AddContactScene': 0, 'PersonalCard': 0, 'HasWeiXinHdHeadImg': 0, 'VerifyFlag': 0, 'Level': 0, 'Source': 0, 'ChatRoomOwner': 'wxid_eaclcf34ny6221', 'WeiboFlag': 0, 'AlbumStyle': 0, 'AlbumFlag': 0, 'SnsUserInfo': {'SnsFlag': 0, 'SnsBgobjectId': 0, 'SnsFlagEx': 0}, 'CustomizedInfo': {'BrandFlag': 0}, 'AdditionalContactList': {'LinkedinContactItem': {}}, 'ChatroomMaxCount': 10037, 'DeleteFlag': 0, 'Description': '\x08\x02\x12\x1c\n\x13wxid_eaclcf34ny62210\x01@\x00�\x01\x00\x12\x1c\n\x13wxid_u7aaryr9crqm220\x01@\x00�\x01\x00\x18\x01"\x00(\x008\x00', 'ChatroomStatus': 4, 'Extflag': 0, 'ChatRoomBusinessType': 0}
+{
+    "UserName": {
+        "string": "xxx@chatroom"
+    },
+    "NickName": {
+        "string": "AITestGroup"
+    },
+    "PyInitial": {
+        "string": "AITESTGROUP"
+    },
+    "QuanPin": {
+        "string": "AITestGroup"
+    },
+    "Sex": 0,
+    "ImgBuf": {
+        "iLen": 0
+    },
+    "BitMask": 4294967295,
+    "BitVal": 2,
+    "ImgFlag": 1,
+    "Remark": {},
+    "RemarkPyinitial": {},
+    "RemarkQuanPin": {},
+    "ContactType": 0,
+    "RoomInfoCount": 0,
+    "DomainList": [
+        {}
+    ],
+    "ChatRoomNotify": 1,
+    "AddContactScene": 0,
+    "PersonalCard": 0,
+    "HasWeiXinHdHeadImg": 0,
+    "VerifyFlag": 0,
+    "Level": 0,
+    "Source": 0,
+    "ChatRoomOwner": "wxid_xxx",
+    "WeiboFlag": 0,
+    "AlbumStyle": 0,
+    "AlbumFlag": 0,
+    "SnsUserInfo": {
+        "SnsFlag": 0,
+        "SnsBgobjectId": 0,
+        "SnsFlagEx": 0
+    },
+    "CustomizedInfo": {
+        "BrandFlag": 0
+    },
+    "AdditionalContactList": {
+        "LinkedinContactItem": {}
+    },
+    "ChatroomMaxCount": 10037,
+    "DeleteFlag": 0,
+    "Description": "\b\u0002\u0012\u001c\n\u0013wxid_eacxxxx\u0001@\u0000�\u0001\u0000\u0012\u001c\n\u0013wxid_xxx\u0001@\u0000�\u0001\u0000\u0018\u0001\"\u0000(\u00008\u0000",
+    "ChatroomStatus": 4,
+    "Extflag": 0,
+    "ChatRoomBusinessType": 0
+}
 """
 
+# 群聊中移除用户示例
+"""
+{
+    "TypeName": "ModContacts",
+    "Appid": "wx_xxx",
+    "Data": {
+        "UserName": {
+            "string": "xxx@chatroom"
+        },
+        "NickName": {
+            "string": "测试2"
+        },
+        "PyInitial": {
+            "string": "CS2"
+        },
+        "QuanPin": {
+            "string": "ceshi2"
+        },
+        "Sex": 0,
+        "ImgBuf": {
+            "iLen": 0
+        },
+        "BitMask": 4294967295,
+        "BitVal": 2,
+        "ImgFlag": 2,
+        "Remark": {},
+        "RemarkPyinitial": {},
+        "RemarkQuanPin": {},
+        "ContactType": 0,
+        "RoomInfoCount": 0,
+        "DomainList": [
+            {}
+        ],
+        "ChatRoomNotify": 1,
+        "AddContactScene": 0,
+        "PersonalCard": 0,
+        "HasWeiXinHdHeadImg": 0,
+        "VerifyFlag": 0,
+        "Level": 0,
+        "Source": 0,
+        "ChatRoomOwner": "wxid_xxx",
+        "WeiboFlag": 0,
+        "AlbumStyle": 0,
+        "AlbumFlag": 0,
+        "SnsUserInfo": {
+            "SnsFlag": 0,
+            "SnsBgobjectId": 0,
+            "SnsFlagEx": 0
+        },
+        "SmallHeadImgUrl": "https://wx.qlogo.cn/mmcrhead/xxx/0",
+        "CustomizedInfo": {
+            "BrandFlag": 0
+        },
+        "AdditionalContactList": {
+            "LinkedinContactItem": {}
+        },
+        "ChatroomMaxCount": 10007,
+        "DeleteFlag": 0,
+        "Description": "\b\u0003\u0012\u001c\n\u0013wxid_xxx0\u0001@\u0000\u0001\u0000\u0012\u001c\n\u0013wxid_xxx0\u0001@\u0000\u0001\u0000\u0012\u001c\n\u0013wxid_xxx0\u0001@\u0000\u0001\u0000\u0018\u0001\"\u0000(\u00008\u0000",
+        "ChatroomStatus": 5,
+        "Extflag": 0,
+        "ChatRoomBusinessType": 0
+    },
+    "Wxid": "wxid_xxx"
+}
+"""
 
 class GeWeChatMessage(ChatMessage):
     def __init__(self, msg, client: GewechatClient):
         super().__init__(msg)
         self.msg = msg
-        # 群聊中移除用户， msg['NewMsgId']是空的，可以不处理此类型消息
+        self.create_time = msg.get('Data', {}).get('CreateTime', 0)
         if not msg.get('Data'):
-            logger.error("[gewechat] Missing 'Data' in message")
+            logger.warning(f"[gewechat] Missing 'Data' in message")
             return
         if 'NewMsgId' not in msg['Data']:
-            logger.error("[gewechat] Missing 'NewMsgId' in message data")
+            logger.warning(f"[gewechat] Missing 'NewMsgId' in message data")
             return
         self.msg_id = msg['Data']['NewMsgId']
-        self.create_time = msg['Data']['CreateTime']
         self.is_group = True if "@chatroom" in msg['Data']['FromUserName']['string'] else False
 
         notes_join_group = ["加入群聊", "加入了群聊", "invited", "joined"]  # 可通过添加对应语言的加入群聊通知中的关键词适配更多
@@ -185,13 +397,11 @@ class GeWeChatMessage(ChatMessage):
             return
         elif msg_type == 10002:  # Group System Message
             if self.is_group:
-                if any(note_bot_join_group in msg["Content"] for note_bot_join_group in
-                       notes_bot_join_group):  # 邀请机器人加入群聊
+                content = msg['Data']['Content']['string']
+                if any(note_bot_join_group in content for note_bot_join_group in notes_bot_join_group):  # 邀请机器人加入群聊
                     logger.warn("机器人加入群聊消息，不处理~")
                     pass
-                elif any(note_join_group in msg["Content"] for note_join_group in
-                         notes_join_group):  # 若有任何在notes_join_group列表中的字符串出现在NOTE中
-                    content = msg['Data']['Content']['string']
+                elif any(note_join_group in content for note_join_group in notes_join_group):  # 若有任何在notes_join_group列表中的字符串出现在NOTE中
                     try:
                         # Extract the XML part after the chatroom ID
                         xml_content = content.split(':\n', 1)[1] if ':\n' in content else content
