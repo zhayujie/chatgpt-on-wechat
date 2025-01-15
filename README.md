@@ -112,6 +112,13 @@ gewechat相关配置如下，注意**channel_type设置为gewechat**
     "gewechat_download_url": "http://本机ip:2532/download" # 文件下载地址
 }
 ```
+
+> 本机ip是指**局域网ip**或**公网ip**，可通过`ipconfig`或`ifconfig`命令查看
+> 
+> 对与gewechat_callback_url，ip不能填`127.0.0.1`或`localhost`，否则会报错
+> 
+> `9919`端口是dify-on-wechat服务监听的端口，如果是用docker启动的dify-on-wechat服务,请把`9919`端口映射到宿主机
+
 **请务必查看详细配置**： [gewechat接入文档](./docs/gewechat/README.md)
 
 #### 启动机器人

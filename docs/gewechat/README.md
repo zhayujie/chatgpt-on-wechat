@@ -77,7 +77,7 @@ docker compose up -d
 
 ## 3.1 gewechat相关参数配置
 
-在config.json中需要配置以下gewechat相关的参数：
+在dify-on-wechat项目的`config.json`中需要配置以下gewechat相关的参数：
 
 ```bash
 {
@@ -97,11 +97,17 @@ docker compose up -d
 - `gewechat_callback_url`: 接收gewechat消息的回调地址，请根据实际情况配置，如果gewechat服务与dify-on-wechat服务部署在同一台机器上，可以配置为`http://本机ip:9919/v2/api/callback/collect`，如无特殊需要，请使用9919端口号
 - `gewechat_download_url`: 文件下载地址，用于下载语音、图片等文件，请根据实际部署情况配置，如果gewechat服务与dify-on-wechat服务部署在同一台机器上，可以配置为`http://本机ip:2532/download`
 
-注意：请确保您的回调地址(callback_url)，即dify-on-wechat启动的回调服务可以被gewechat服务正常访问到。如果您使用Docker部署，需要注意网络配置，确保容器之间可以正常通信。
+> 请确保您的回调地址(callback_url)，即dify-on-wechat启动的回调服务可以被gewechat服务正常访问到。如果您使用Docker部署，需要注意网络配置，确保容器之间可以正常通信。
+> 
+> 本机ip是指**局域网ip**或**公网ip**，可通过`ipconfig`或`ifconfig`命令查看
+> 
+> 对与gewechat_callback_url，ip不能填`127.0.0.1`或`localhost`，否则会报错
+> 
+> `9919`端口是dify-on-wechat服务监听的端口，如果是用docker启动的dify-on-wechat服务,请把`9919`端口映射到宿主机
 
 ## 3.2 dify相关参数配置
 
-在config.json中需要配置以下dify相关参数：
+在dify-on-wechat项目的`config.json`中需要配置以下dify相关参数：
 
 ```bash
 {
