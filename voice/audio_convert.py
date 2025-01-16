@@ -9,7 +9,10 @@ try:
 except ImportError:
     logger.debug("import pysilk failed, wechaty voice message will not be supported.")
 
-from pydub import AudioSegment
+try:
+    from pydub import AudioSegment
+except ImportError:
+    logger.warning("import pydub failed, wechat voice conversion will not be supported. Try: pip install pydub")
 
 try:
     import pilk
