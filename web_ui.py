@@ -53,7 +53,7 @@ def start_run():
     return f"重启成功!!"
 
 def get_qrcode_image():
-    image_path = 'wx_qrcode.png'
+    image_path = 'tmp/login.png'
     if os.path.exists(image_path):
         return image_path
     else:

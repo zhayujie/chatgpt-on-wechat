@@ -36,8 +36,6 @@ plugins/banwords/lib/__pycache__
 !plugins/custom_dify_app
 !plugins/group_at_autoreply
 client_config.json
-# qrcode
-wx_qrcode.png
 
 # auto coder
 .auto-coder

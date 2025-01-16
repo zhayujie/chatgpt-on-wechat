@@ -121,7 +121,7 @@ def qrCallback(uuid, status, qrcode):
             try:
                 response = requests.get(item)
                 response.raise_for_status()
-                with open("wx_qrcode.png", "wb") as f:
+                with open("tmp/login.png", "wb") as f:
                     f.write(response.content)
                 break
             except Exception as e:

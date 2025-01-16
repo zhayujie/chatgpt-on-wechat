@@ -36,5 +36,3 @@ def make_and_print_qr(url):
         os.makedirs('tmp')
     with open('tmp/login.png', 'wb') as f:
         img.save(f)
-
-
