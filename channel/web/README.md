@@ -3,5 +3,5 @@
 
 #使用方法
 - 在配置文件中channel_type填入web即可
-- 访问地址 http://localhost:9899
+- 访问地址 http://localhost:9899/chat
 - port可以在配置项 web_port中设置

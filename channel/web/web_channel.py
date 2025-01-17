@@ -177,7 +177,7 @@ class WebChannel(ChatChannel):
 
     def startup(self):
         logger.setLevel("WARN")
-        print("\nWeb Channel is running. Send POST requests to /message to send messages.")
+        print("\nWeb Channel is running, please visit http://localhost:9899/chat")
         
         urls = (
             '/sse/(.+)', 'SSEHandler',  # 修改路由以接收用户ID
