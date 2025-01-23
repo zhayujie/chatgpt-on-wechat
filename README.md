@@ -440,6 +440,8 @@ nohup python3 app.py & tail -f nohup.out          # 在后台运行程序并通�
 
 ### 3.Docker部署
 
+⚠️使用`docker`或者`docker-compose`部署时，**必须先拉取最新源码**，否则会报错⚠️
+
 ```bash
 cd dify-on-wechat/docker       # 进入docker目录
 cp ../config-template.json ../config.json
