@@ -137,10 +137,11 @@ python app.py
 <div align="center">
 <img width="700" src="./gewechat_login.jpg">
 </div>
+⚠️如果遇到gewechat创建设备失败，unexpected EOF错误，请排查网络是否是以下情况：1️⃣代理：请关闭代理后尝试；2️⃣国外服务器；3️⃣回调地址为外网；4️⃣异地服务器
 
 ## 3.4 利用gewechat发送语音条消息
 
-语音相关配置如下，另外需要在dify应用中开启语音转文字以及文字转语音功能，注意语音功能需要**安装ffmpeg依赖**
+语音相关配置如下，另外需要在dify应用中开启语音转文字以及文字转语音功能，注意语音功能需要**安装ffmpeg依赖**，如使用docker部署dify，已集成ffmpeg依赖，无需额外安装。
 
 ```bash
 {

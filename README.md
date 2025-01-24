@@ -131,6 +131,7 @@ python app.py
 <div align="center">
 <img width="700" src="./docs/gewechat/gewechat_login.jpg">
 </div>
+⚠️如果遇到gewechat创建设备失败，unexpected EOF错误，请排查网络是否是以下情况：1️⃣代理：请关闭代理后尝试；2️⃣国外服务器；3️⃣回调地址为外网；4️⃣异地服务器
 
 ## 2. 用户信息对接dify
 
@@ -296,7 +297,10 @@ dify语音相关配置如下，另外需要在dify应用中开启语音转文字
 }
 ```
 
+> ⚠️注意：dify应用中开启语音转文字以及文字转语音功能，不是在工具中添加Audio（tts/asr），以0.15.1版本为例，**具体路径是：你的dify应用-编排-调试与预览-开启功能增强 webapp 用户体验（底部）-开启语音转文字-开启文字转语音-发布后生效**。老版本dify与新版不同，不在调试与预览中，而是左边编排工具下面。
+
 搭配 gewechat_channel 可以实现发送语音条功能，gewechat服务只能获取到**20s**以内的语音，所以**你只能给bot发送20s以内的语音**，但**bot给你发送语音时无此限制**。[**请查看gewechat接入文档**](./docs/gewechat/README.md)
+
 <div align="center">
 <img width="700" src="./docs/gewechat/gewechat_voice.jpg">
 </div>
