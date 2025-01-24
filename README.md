@@ -73,10 +73,13 @@ Dify接入微信生态的**详细教程**请查看文章 [**手摸手教你把 D
 # 最新功能
 
 ## 1. 支持gewechat登录微信
+
 基于[Gewechat](https://github.com/Devo919/Gewechat)项目实现的微信个人号通道,使用ipad协议登录,相比itchat协议更稳定。
 
 > 1. gewechat要求必须搭建服务到**同省服务器**或者电脑里方可正常使用
 > 2. 此项目仅用于个人娱乐场景，请勿用于任何商业场景
+>
+> ⚠️注意目前channel_type: "wx" 对应的 itchat无法使用，请更换为gewechat
 
 dify-on-wechat、dify、gewechat服务的调用关系
 
@@ -131,7 +134,15 @@ python app.py
 <div align="center">
 <img width="700" src="./docs/gewechat/gewechat_login.jpg">
 </div>
-⚠️如果遇到gewechat创建设备失败，unexpected EOF错误，请排查网络是否是以下情况：1️⃣代理：请关闭代理后尝试；2️⃣国外服务器；3️⃣回调地址为外网；4️⃣异地服务器
+⚠️如果遇到gewechat创建设备失败，unexpected EOF错误，请排查网络是否是以下情况：
+
+1️⃣代理：请关闭代理后尝试；
+
+2️⃣国外服务器；
+
+3️⃣回调地址为外网；
+
+4️⃣异地服务器
 
 ## 2. 用户信息对接dify
 
@@ -256,15 +267,15 @@ dify官网已正式上线工作流模式，可以导入本项目下的[dsl文件
 ```bash
 # coze config.json文件内容示例
 {
-  "coze_api_base": "https://api.coze.cn/open_api/v2",  # coze base url
-  "coze_api_key": "xxx",                               # coze api key
-  "coze_bot_id": "xxx",                                # 根据url获取coze_bot_id https://www.coze.cn/space/{space_id}/bot/{bot_id}
-  "channel_type": "wx",                                # 通道类型，当前为个人微信
-  "model": "coze",                                     # 模型名称，当前对应coze平台
-  "single_chat_prefix": [""],                          # 私聊时文本需要包含该前缀才能触发机器人回复
-  "single_chat_reply_prefix": "",                      # 私聊时自动回复的前缀，用于区分真人
-  "group_chat_prefix": ["@bot"],                       # 群聊时包含该前缀则会触发机器人回复
-  "group_name_white_list": ["ALL_GROUP"]               # 机器人回复的群名称列表
+  "coze_api_base": "https://api.coze.cn",     # coze base url
+  "coze_api_key": "xxx",                      # coze api key
+  "coze_bot_id": "xxx",                       # 根据url获取coze_bot_id https://www.coze.cn/space/{space_id}/bot/{bot_id}
+  "channel_type": "gewechat",                 # 通道类型，当前为个人微信
+  "model": "coze",                            # 模型名称，当前对应coze平台
+  "single_chat_prefix": [""],                 # 私聊时文本需要包含该前缀才能触发机器人回复
+  "single_chat_reply_prefix": "",             # 私聊时自动回复的前缀，用于区分真人
+  "group_chat_prefix": ["@bot"],              # 群聊时包含该前缀则会触发机器人回复
+  "group_name_white_list": ["ALL_GROUP"]      # 机器人回复的群名称列表
 }
 ```
 
@@ -297,15 +308,13 @@ dify语音相关配置如下，另外需要在dify应用中开启语音转文字
 }
 ```
 
-> ⚠️注意：dify应用中开启语音转文字以及文字转语音功能，不是在工具中添加Audio（tts/asr），以0.15.1版本为例，**具体路径是：你的dify应用-编排-调试与预览-开启功能增强 webapp 用户体验（底部）-开启语音转文字-开启文字转语音-发布后生效**。老版本dify与新版不同，不在调试与预览中，而是左边编排工具下面。
+> ⚠️注意：dify应用中开启语音转文字以及文字转语音功能，不是在工具中添加Audio（tts/asr），以0.15.1版本为例，**具体路径是：你的dify应用-编排-调试与预览-开启功能增强 webapp 用户体验（底部）-开启语音转文字-开启文字转语音-发布后生效**。老版本dify与新版不同，不在调试与预览中，而是左边编排工具下面。详细开启方法可查看issue [#211](https://github.com/hanfangyuan4396/dify-on-wechat/issues/211)
 
 搭配 gewechat_channel 可以实现发送语音条功能，gewechat服务只能获取到**20s**以内的语音，所以**你只能给bot发送20s以内的语音**，但**bot给你发送语音时无此限制**。[**请查看gewechat接入文档**](./docs/gewechat/README.md)
 
 <div align="center">
 <img width="700" src="./docs/gewechat/gewechat_voice.jpg">
 </div>
-
-[点击下载语音文件](./docs/audios/gewechat_voice.mp3)
 
 
 ## 9. 支持dify图片识别

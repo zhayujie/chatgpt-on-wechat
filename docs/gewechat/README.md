@@ -137,7 +137,15 @@ python app.py
 <div align="center">
 <img width="700" src="./gewechat_login.jpg">
 </div>
-⚠️如果遇到gewechat创建设备失败，unexpected EOF错误，请排查网络是否是以下情况：1️⃣代理：请关闭代理后尝试；2️⃣国外服务器；3️⃣回调地址为外网；4️⃣异地服务器
+⚠️如果遇到gewechat创建设备失败，unexpected EOF错误，请排查网络是否是以下情况：
+
+1️⃣代理：请关闭代理后尝试；
+
+2️⃣国外服务器：请更换为国内服务器；
+
+3️⃣回调地址为外网：请更换为内网地址；
+
+4️⃣异地服务器：请更换为同省服务器；
 
 ## 3.4 利用gewechat发送语音条消息
 
