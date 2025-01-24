@@ -174,8 +174,9 @@ class Query:
 
     def POST(self):
         channel = GeWeChatChannel()
-        data = json.loads(web.data())
-        logger.debug("[gewechat] receive data: {}".format(data))
+        web_data = web.data()
+        logger.debug("[gewechat] receive data: {}".format(web_data))
+        data = json.loads(web_data)
         
         # gewechat服务发送的回调测试消息
         if isinstance(data, dict) and 'testMsg' in data and 'token' in data:
