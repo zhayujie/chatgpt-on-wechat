@@ -74,13 +74,14 @@ GLM_4_AIRX = "glm-4-airx"
 
 CLAUDE_3_OPUS = "claude-3-opus-latest"
 CLAUDE_3_OPUS_0229 = "claude-3-opus-20240229"
-
 CLAUDE_35_SONNET = "claude-3-5-sonnet-latest"  # 带 latest 标签的模型名称，会不断更新指向最新发布的模型
 CLAUDE_35_SONNET_1022 = "claude-3-5-sonnet-20241022"  # 带具体日期的模型名称，会固定为该日期发布的模型
 CLAUDE_35_SONNET_0620 = "claude-3-5-sonnet-20240620"
 CLAUDE_3_SONNET = "claude-3-sonnet-20240229"
-
 CLAUDE_3_HAIKU = "claude-3-haiku-20240307"
+
+DEEPSEEK_CHAT = "deepseek-chat"  # DeepSeek-V3对话模型
+DEEPSEEK_REASONER = "deepseek-reasoner"  # DeepSeek-R1模型
 
 GITEE_AI_MODEL_LIST = ["Yi-34B-Chat", "InternVL2-8B", "deepseek-coder-33B-instruct", "InternVL2.5-26B", "Qwen2-VL-72B", "Qwen2.5-32B-Instruct", "glm-4-9b-chat", "codegeex4-all-9b", "Qwen2.5-Coder-32B-Instruct", "Qwen2.5-72B-Instruct", "Qwen2.5-7B-Instruct", "Qwen2-72B-Instruct", "Qwen2-7B-Instruct", "code-raccoon-v1", "Qwen2.5-14B-Instruct"]
 
@@ -95,7 +96,8 @@ MODEL_LIST = [
               CLAUDE_3_OPUS, CLAUDE_3_OPUS_0229, CLAUDE_35_SONNET, CLAUDE_35_SONNET_1022, CLAUDE_35_SONNET_0620, CLAUDE_3_SONNET, CLAUDE_3_HAIKU, "claude", "claude-3-haiku", "claude-3-sonnet", "claude-3-opus", "claude-3.5-sonnet",
               "moonshot-v1-8k", "moonshot-v1-32k", "moonshot-v1-128k",
               QWEN, QWEN_TURBO, QWEN_PLUS, QWEN_MAX,
-              LINKAI_35, LINKAI_4_TURBO, LINKAI_4o
+              LINKAI_35, LINKAI_4_TURBO, LINKAI_4o,
+              DEEPSEEK_CHAT, DEEPSEEK_REASONER
             ]
 
 MODEL_LIST = MODEL_LIST + GITEE_AI_MODEL_LIST
