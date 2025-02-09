@@ -19,7 +19,8 @@ class RolePlay:
         self.sessionid = sessionid
         self.wrapper = wrapper or "%s"  # 用于包装用户输入
         self.desc = desc
-        self.bot.sessions.build_session(self.sessionid, system_prompt=self.desc)
+        self.bot.sessions.session_args.update({"system_prompt": self.desc})
+        self.bot.sessions.build_session(self.sessionid)
 
     def reset(self):
         self.bot.sessions.clear_session(self.sessionid)
@@ -28,6 +29,7 @@ class RolePlay:
         session = self.bot.sessions.build_session(self.sessionid)
         if session.system_prompt != self.desc:  # 目前没有触发session过期事件，这里先简单判断，然后重置
             session.set_system_prompt(self.desc)
+            session.reset()
         prompt = self.wrapper % user_action
         return prompt
 
