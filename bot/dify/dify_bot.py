@@ -291,6 +291,9 @@ class DifyBot(Bot):
                 reply = Reply(ReplyType.IMAGE_URL, url)
                 thread = threading.Thread(target=channel.send, args=(reply, context))
                 thread.start()
+        # 检查msgs是否为空
+        if not msgs:
+            return None, "No messages received from agent."
         final_msg = msgs[-1]
         reply = None
         if final_msg['type'] == 'agent_message':
