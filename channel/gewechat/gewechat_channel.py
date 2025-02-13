@@ -130,24 +130,54 @@ class GeWeChatChannel(ChatChannel):
                     logger.error(f"[gewechat] voice file is not mp3, path: {content}, only support mp3")
             except Exception as e:
                 logger.error(f"[gewechat] send voice failed: {e}")
-        elif reply.type == ReplyType.IMAGE_URL:
-            img_url = reply.content
-            self.client.post_image(self.app_id, receiver, img_url)
-            logger.info("[gewechat] sendImage url={}, receiver={}".format(img_url, receiver))
-        elif reply.type == ReplyType.IMAGE:
+        elif reply.type == ReplyType.IMAGE_URL or reply.type == ReplyType.IMAGE:
             image_storage = reply.content
-            image_storage.seek(0)
+            if reply.type == ReplyType.IMAGE_URL:
+                import requests
+                import io
+                img_url = reply.content
+                logger.debug(f"[gewechat]sendImage, download image start, img_url={img_url}")
+                pic_res = requests.get(img_url, stream=True)
+                image_storage = io.BytesIO()
+                size = 0
+                for block in pic_res.iter_content(1024):
+                    size += len(block)
+                    image_storage.write(block)
+                logger.debug(f"[gewechat]sendImage, download image success, size={size}, img_url={img_url}")
+                image_storage.seek(0)
+                if ".webp" in img_url:
+                    try:
+                        from common.utils import convert_webp_to_png
+                        image_storage = convert_webp_to_png(image_storage)
+                    except Exception as e:
+                        logger.error(f"[gewechat]sendImage, failed to convert image: {e}")
+                        return
             # Save image to tmp directory
+            image_storage.seek(0)
+            header = image_storage.read(6)
+            image_storage.seek(0)
             img_data = image_storage.read()
-            img_file_name = f"img_{str(uuid.uuid4())}.png"
+            image_storage.seek(0)
+            extension = ".gif" if header.startswith((b'GIF87a', b'GIF89a')) else ".png"
+            img_file_name = f"img_{str(uuid.uuid4())}{extension}"
             img_file_path = TmpDir().path() + img_file_name
             with open(img_file_path, "wb") as f:
                 f.write(img_data)
             # Construct callback URL
             callback_url = conf().get("gewechat_callback_url")
             img_url = callback_url + "?file=" + img_file_path
-            self.client.post_image(self.app_id, receiver, img_url)
-            logger.info("[gewechat] sendImage, receiver={}, url={}".format(receiver, img_url))
+            if extension == ".gif":
+                result = self.client.post_file(self.app_id, receiver, file_url=img_url, file_name=img_file_name)
+                logger.info("[gewechat] sendGifAsFile, receiver={}, file_url={}, file_name={}, result={}".format(
+                    receiver, img_url, img_file_name, result))
+            else:
+                result = self.client.post_image(self.app_id, receiver, img_url)
+                logger.info("[gewechat] sendImage, receiver={}, url={}, result={}".format(receiver, img_url, result))
+            if result.get('ret') == 200:
+                newMsgId = result['data'].get('newMsgId')
+                new_img_file_path = TmpDir().path() + str(newMsgId) + extension
+                os.rename(img_file_path, new_img_file_path)
+                logger.info("[gewechat] sendImage rename to {}".format(new_img_file_path))
 
 class Query:
     def GET(self):

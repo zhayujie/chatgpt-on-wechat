@@ -432,6 +432,9 @@ class GeWeChatMessage(ChatMessage):
                         logger.error(f"[gewechat] Failed to parse group join XML: {e}")
                         # Fall back to regular content handling
                         pass
+        elif msg_type == 47:
+            self.ctype = ContextType.EMOJI
+            self.content = msg['Data']['Content']['string']
         else:
             raise NotImplementedError("Unsupported message type: Type:{}".format(msg_type))
 
