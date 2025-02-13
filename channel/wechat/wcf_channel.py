@@ -126,59 +126,11 @@ class WechatfChannel(ChatChannel):
 
             elif reply.type == ReplyType.ERROR or reply.type == ReplyType.INFO:
                 self.wcf.send_text(reply.content, receiver)
-
-            elif reply.type == ReplyType.IMAGE_URL:
-                # 下载图片并发送
-                img_path = self._download_image(reply.content)
-                if img_path:
-                    self.wcf.send_image(img_path, receiver)
-                    os.remove(img_path)  # 清理临时文件
-
-            elif reply.type == ReplyType.IMAGE:
-                # 直接发送本地图片
-                if isinstance(reply.content, str):
-                    self.wcf.send_image(reply.content, receiver)
-                else:
-                    # 处理二进制图片数据
-                    tmp_path = os.path.join(get_appdata_dir(), f"tmp_{int(time.time())}.png")
-                    with open(tmp_path, "wb") as f:
-                        f.write(reply.content.getvalue())
-                    self.wcf.send_image(tmp_path, receiver)
-                    os.remove(tmp_path)
-
-            elif reply.type == ReplyType.FILE:
-                if isinstance(reply.content, str):
-                    self.wcf.send_file(reply.content, receiver)
-                else:
-                    # 处理二进制文件数据
-                    tmp_path = os.path.join(get_appdata_dir(), f"tmp_{int(time.time())}")
-                    with open(tmp_path, "wb") as f:
-                        f.write(reply.content.getvalue())
-                    self.wcf.send_file(tmp_path, receiver)
-                    os.remove(tmp_path)
-
             else:
                 logger.error(f"暂不支持的消息类型: {reply.type}")
 
         except Exception as e:
             logger.error(f"发送消息失败: {e}")
-
-    def _download_image(self, url: str) -> str:
-        """
-        下载图片到临时文件
-        """
-        try:
-            import requests
-            tmp_path = os.path.join(get_appdata_dir(), f"tmp_{int(time.time())}.png")
-            r = requests.get(url, stream=True)
-            if r.status_code == 200:
-                with open(tmp_path, "wb") as f:
-                    for chunk in r.iter_content(chunk_size=1024):
-                        f.write(chunk)
-                return tmp_path
-        except Exception as e:
-            logger.error(f"下载图片失败: {e}")
-        return None
 
     def close(self):
         """
