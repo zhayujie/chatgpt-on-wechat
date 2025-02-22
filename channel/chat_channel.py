@@ -258,7 +258,7 @@ class ChatChannel(Channel):
                         reply = super().build_text_to_voice(reply.content)
                         return self._decorate_reply(context, reply)
                     if context.get("isgroup", False):
-                        if not context.get("no_need_at", False):
+                        if not conf().get("no_need_at", False):
                             reply_text = "@" + context["msg"].actual_user_nickname + "\n" + reply_text.strip()
                         reply_text = conf().get("group_chat_reply_prefix", "") + reply_text + conf().get(
                             "group_chat_reply_suffix", "")
