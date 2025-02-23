@@ -133,6 +133,42 @@ ADMIN_COMMANDS = {
     },
 }
 
+def generate_temporary_password(length=12):
+    """
+    根据设置生成临时密码。
+    确保生成的密码至少包含一个小写字母、大写字母、数字和特殊字符。
+    
+    参数:
+    length (int): 密码的长度，默认为12。
+    
+    返回:
+    str: 生成的临时密码。
+    """
+    # 定义大写字母集合
+    uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    # 定义小写字母集合
+    lowercase = "abcdefghijklmnopqrstuvwxyz"
+    # 定义数字集合
+    digits = "0123456789"
+    # 定义特殊字符集合
+    special_chars = "!@#$%&?"  
+    # 合并所有字符集合
+    all_chars = uppercase + lowercase + digits + special_chars
+    
+    # 循环生成密码，直到满足包含所有类型字符的条件
+    while True:
+        # 随机选择字符生成密码
+        password = ''.join(random.choice(all_chars) for _ in range(length))
+        # 检查密码是否包含所有类型字符
+        if (any(c in uppercase for c in password)
+                and any(c in lowercase for c in password)
+                and any(c in digits for c in password)
+                and any(c in special_chars for c in password)):
+            break
+
+    # 返回生成的密码
+    return password
+
 
 # 定义帮助函数
 def get_help_text(isadmin, isgroup):
@@ -190,8 +226,11 @@ class Godcmd(Plugin):
                 with open(config_path, "w") as f:
                     json.dump(gconf, f, indent=4)
         if gconf["password"] == "":
-            self.temp_password = "".join(random.sample(string.digits, 4))
-            logger.info("[Godcmd] 因未设置口令，本次的临时口令为%s。" % self.temp_password)
+            # 如果未设置密码，则生成一个临时密码
+            self.temp_password = generate_temporary_password()
+            #self.temp_password = "".join(random.sample(string.digits, 4))
+            # 记录生成的临时密码
+            logger.info("[Godcmd] 因未设置口令，本次的临时口令为 === {} ===。".format(self.temp_password))
         else:
             self.temp_password = None
         custom_commands = conf().get("clear_memory_commands", [])
