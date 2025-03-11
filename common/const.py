@@ -15,7 +15,7 @@ GEMINI = "gemini"  # gemini-1.0-pro
 ZHIPU_AI = "glm-4"
 MOONSHOT = "moonshot"
 MiniMax = "minimax"
-
+MODELSCOPE = "Qwen/Qwen2.5-7B-Instruct"
 
 # model
 CLAUDE3 = "claude-3-opus-20240229"
@@ -97,7 +97,8 @@ MODEL_LIST = [
               "moonshot-v1-8k", "moonshot-v1-32k", "moonshot-v1-128k",
               QWEN, QWEN_TURBO, QWEN_PLUS, QWEN_MAX,
               LINKAI_35, LINKAI_4_TURBO, LINKAI_4o,
-              DEEPSEEK_CHAT, DEEPSEEK_REASONER
+              DEEPSEEK_CHAT, DEEPSEEK_REASONER,
+              MODELSCOPE
             ]
 
 MODEL_LIST = MODEL_LIST + GITEE_AI_MODEL_LIST

@@ -68,5 +68,9 @@ def create_bot(bot_type):
         from bot.minimax.minimax_bot import MinimaxBot
         return MinimaxBot()
 
+    elif bot_type == const.MODELSCOPE:
+        from bot.modelscope.modelscope_bot import ModelScopeBot
+        return ModelScopeBot()
+
 
     raise RuntimeError
