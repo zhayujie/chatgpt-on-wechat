@@ -5,7 +5,7 @@
 
 1. 使用该协议接入微信，需要使用特定版本的`windows`客户端，具体因协议的版本而异，目前使用的是`wcferry == 39.4.1.0`，对应的wx客户端版本为`3.9.12.17`，[下载链接](https://github.com/lich0821/WeChatFerry/releases/download/v39.4.1/WeChatSetup-3.9.12.17.exe) 
 
-   下载后安装并登录，**关闭系统自动更新**  
+   下载后安装并登录，**关闭系统自动更新**  （wx客户端版本降级不影响历史聊天数据）
 2. python版本:`Python>=3.9`，建议3.9或3.10即可，[3.10.10下载链接](https://www.python.org/ftp/python/3.10.11/python-3.10.11-amd64.exe) ，
 
    安装时候记得勾选 `add to path`。
