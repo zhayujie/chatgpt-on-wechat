@@ -31,7 +31,7 @@ class ModelScopeBot(Bot):
         self.base_url = conf().get("modelscope_base_url", "https://api-inference.modelscope.cn/v1/chat/completions")
         """
         需要获取MOdelScope支持API-inference的模型名称列表，请到魔搭社区官网模型中心查看 https://modelscope.cn/models?filter=inference_type&page=1。
-        或者使用命令 curl https://api-inference.modelscope.cn/v1/models 对模型列表和ID进行获取。
+        或者使用命令 curl https://api-inference.modelscope.cn/v1/models 对模型列表和ID进行获取。查看bridge.py文件也可以获取模型列表。
         获取ModelScope的免费API Key，请到魔搭社区官网用户中心查看获取方式 https://modelscope.cn/docs/model-service/API-Inference/intro。
         """
     def reply(self, query, context=None):
@@ -60,11 +60,12 @@ class ModelScopeBot(Bot):
             new_args = self.args.copy()
             if model:
                 new_args["model"] = model
-            # if context.get('stream'):
-            #     # reply in stream
-            #     return self.reply_text_stream(query, new_query, session_id)
 
-            reply_content = self.reply_text(session, args=new_args)
+            if new_args["model"] == "Qwen/QwQ-32B":
+                reply_content = self.reply_text_stream(session, args=new_args)
+            else:
+                reply_content = self.reply_text(session, args=new_args)
+
             logger.debug(
                 "[MODELSCOPE_AI] new_query={}, session_id={}, reply_cont={}, completion_tokens={}".format(
                     session.messages,
@@ -74,7 +75,11 @@ class ModelScopeBot(Bot):
                 )
             )
             if reply_content["completion_tokens"] == 0 and len(reply_content["content"]) > 0:
-                reply = Reply(ReplyType.ERROR, reply_content["content"])
+                # 只有当 content 为空且 completion_tokens 为 0 时才标记为错误
+                if len(reply_content["content"]) == 0:
+                    reply = Reply(ReplyType.ERROR, reply_content["content"])
+                else:
+                    reply = Reply(ReplyType.TEXT, reply_content["content"])
             elif reply_content["completion_tokens"] > 0:
                 self.sessions.session_reply(reply_content["content"], session_id, reply_content["total_tokens"])
                 reply = Reply(ReplyType.TEXT, reply_content["content"])
@@ -102,8 +107,6 @@ class ModelScopeBot(Bot):
             
             body = args
             body["messages"] = session.messages
-            # logger.debug("[MODELSCOPE_AI] response={}".format(response))
-            # logger.info("[MODELSCOPE_AI] reply={}, total_tokens={}".format(response.choices[0]['message']['content'], response["usage"]["total_tokens"]))
             res = requests.post(
                 self.base_url,
                 headers=headers,
@@ -148,5 +151,82 @@ class ModelScopeBot(Bot):
             result = {"completion_tokens": 0, "content": "我现在有点累了，等会再来吧"}
             if need_retry:
                 return self.reply_text(session, args, retry_count + 1)
+            else:
+                return result
+
+    def reply_text_stream(self, session: ModelScopeSession, args=None, retry_count=0) -> dict:
+        """
+        call ModelScope's ChatCompletion to get the answer with stream response
+        :param session: a conversation session
+        :param session_id: session id
+        :param retry_count: retry count
+        :return: {}
+        """
+        try:
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + self.api_key
+            }
+            
+            body = args
+            body["messages"] = session.messages
+            body["stream"] = True  # 启用流式响应
+
+            res = requests.post(
+                self.base_url,
+                headers=headers,
+                data=json.dumps(body),
+                stream=True
+            )
+            print(res.status_code)
+            if res.status_code == 200:
+                content = ""
+                for line in res.iter_lines():
+                    if line:
+                        decoded_line = line.decode('utf-8')
+                        if decoded_line.startswith("data: "):
+                            try:
+                                json_data = json.loads(decoded_line[6:])
+                                delta_content = json_data.get("choices", [{}])[0].get("delta", {}).get("content", "")
+                                if delta_content:
+                                    content += delta_content
+                            except json.JSONDecodeError as e:
+                                pass
+                return {
+                    "total_tokens": 1,  # 流式响应通常不返回token使用情况
+                    "completion_tokens": 1,
+                    "content": content
+                }
+            else:
+                response = res.json()
+                error = response.get("error")
+                logger.error(f"[MODELSCOPE_AI] chat failed, status_code={res.status_code}, "
+                             f"msg={error.get('message')}, type={error.get('type')}")
+
+                result = {"completion_tokens": 0, "content": "提问太快啦，请休息一下再问我吧"}
+                need_retry = False
+                if res.status_code >= 500:
+                    # server error, need retry
+                    logger.warn(f"[MODELSCOPE_AI] do retry, times={retry_count}")
+                    need_retry = retry_count < 2
+                elif res.status_code == 401:
+                    result["content"] = "授权失败，请检查API Key是否正确"
+                elif res.status_code == 429:
+                    result["content"] = "请求过于频繁，请稍后再试"
+                    need_retry = retry_count < 2
+                else:
+                    need_retry = False
+
+                if need_retry:
+                    time.sleep(3)
+                    return self.reply_text_stream(session, args, retry_count + 1)
+                else:
+                    return result
+        except Exception as e:
+            logger.exception(e)
+            need_retry = retry_count < 2
+            result = {"completion_tokens": 0, "content": "我现在有点累了，等会再来吧"}
+            if need_retry:
+                return self.reply_text_stream(session, args, retry_count + 1)
             else:
                 return result
