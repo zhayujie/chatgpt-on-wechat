@@ -31,7 +31,7 @@ class ModelScopeBot(Bot):
         self.base_url = conf().get("modelscope_base_url", "https://api-inference.modelscope.cn/v1/chat/completions")
         """
         需要获取ModelScope支持API-inference的模型名称列表，请到魔搭社区官网模型中心查看 https://modelscope.cn/models?filter=inference_type&page=1。
-        或者使用命令 curl https://api-inference.modelscope.cn/v1/models 对模型列表和ID进行获取。查看bridge.py文件也可以获取模型列表。
+        或者使用命令 curl https://api-inference.modelscope.cn/v1/models 对模型列表和ID进行获取。查看commend/const.py文件也可以获取模型列表。
         获取ModelScope的免费API Key，请到魔搭社区官网用户中心查看获取方式 https://modelscope.cn/docs/model-service/API-Inference/intro。
         """
     def reply(self, query, context=None):
@@ -112,7 +112,7 @@ class ModelScopeBot(Bot):
                 headers=headers,
                 data=json.dumps(body)
             )
-            
+
             if res.status_code == 200:
                 response = res.json()
                 return {
