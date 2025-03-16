@@ -46,4 +46,4 @@ zhipuai>=2.0.1
 dashscope
 
 # wechatferry
-wcferry==39.4.1
+wcferry==39.4.2.2
