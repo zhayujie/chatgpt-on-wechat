@@ -87,6 +87,14 @@ class ModelScopeBot(Bot):
                 reply = Reply(ReplyType.ERROR, reply_content["content"])
                 logger.debug("[MODELSCOPE_AI] reply {} used 0 tokens.".format(reply_content))
             return reply
+        elif context.type == ContextType.IMAGE_CREATE:
+            ok, retstring = self.create_img(query, 0)
+            reply = None
+            if ok:
+                reply = Reply(ReplyType.IMAGE_URL, retstring)
+            else:
+                reply = Reply(ReplyType.ERROR, retstring)
+            return reply
         else:
             reply = Reply(ReplyType.ERROR, "Bot不支持处理{}类型的消息".format(context.type))
             return reply
@@ -122,7 +130,7 @@ class ModelScopeBot(Bot):
                 }
             else:
                 response = res.json()
-                error = response.get("error")
+                error = response.get("errors")
                 logger.error(f"[MODELSCOPE_AI] chat failed, status_code={res.status_code}, "
                              f"msg={error.get('message')}, type={error.get('type')}")
 
@@ -198,7 +206,7 @@ class ModelScopeBot(Bot):
                 }
             else:
                 response = res.json()
-                error = response.get("error")
+                error = response.get("errors")
                 logger.error(f"[MODELSCOPE_AI] chat failed, status_code={res.status_code}, "
                              f"msg={error.get('message')}, type={error.get('type')}")
 
@@ -229,3 +237,31 @@ class ModelScopeBot(Bot):
                 return self.reply_text_stream(session, args, retry_count + 1)
             else:
                 return result
+    def create_img(self, query, retry_count=0):
+        try:
+            logger.info("[ModelScopeImage] image_query={}".format(query))
+            headers = {
+                "Content-Type": "application/json; charset=utf-8",  # 明确指定编码
+                "Authorization": f"Bearer {self.api_key}"
+            }
+            payload = {
+                "prompt": query,  # required
+                "n": 1,
+                "model": conf().get("text_to_image"),
+            }
+            url = "https://api-inference.modelscope.cn/v1/images/generations"
+            
+            # 手动序列化并保留中文（禁用 ASCII 转义）
+            json_payload = json.dumps(payload, ensure_ascii=False)
+            
+            # 使用 data 参数发送原始字符串（requests 会自动处理编码）
+            res = requests.post(url, headers=headers, data=json_payload)
+            
+            response_data = res.json()
+            image_url = response_data['images'][0]['url']
+            logger.info("[ModelScopeImage] image_url={}".format(image_url))
+            return True, image_url
+
+        except Exception as e:
+            logger.error(format(e))
+            return False, "画图出现问题，请休息一下再问我吧"
