@@ -130,7 +130,12 @@ class ModelScopeBot(Bot):
                 }
             else:
                 response = res.json()
-                error = response.get("errors")
+                if "errors" in response:
+                    error = response.get("errors")
+                elif "error" in response:
+                    error = response.get("error")
+                else:
+                    error = "Unknown error"
                 logger.error(f"[MODELSCOPE_AI] chat failed, status_code={res.status_code}, "
                              f"msg={error.get('message')}, type={error.get('type')}")
 
@@ -206,7 +211,12 @@ class ModelScopeBot(Bot):
                 }
             else:
                 response = res.json()
-                error = response.get("errors")
+                if "errors" in response:
+                    error = response.get("errors")
+                elif "error" in response:
+                    error = response.get("error")
+                else:
+                    error = "Unknown error"
                 logger.error(f"[MODELSCOPE_AI] chat failed, status_code={res.status_code}, "
                              f"msg={error.get('message')}, type={error.get('type')}")
 
