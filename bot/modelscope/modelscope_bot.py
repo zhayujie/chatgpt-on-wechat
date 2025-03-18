@@ -262,7 +262,7 @@ class ModelScopeBot(Bot):
             url = "https://api-inference.modelscope.cn/v1/images/generations"
             
             # 手动序列化并保留中文（禁用 ASCII 转义）
-            json_payload = json.dumps(payload, ensure_ascii=False)
+            json_payload = json.dumps(payload, ensure_ascii=False).encode('utf-8')
             
             # 使用 data 参数发送原始字符串（requests 会自动处理编码）
             res = requests.post(url, headers=headers, data=json_payload)
