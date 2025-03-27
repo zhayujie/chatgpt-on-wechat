@@ -54,8 +54,4 @@ def create_voice(voice_type):
         from voice.tencent.tencent_voice import TencentVoice
 
         return TencentVoice()
-    elif voice_type == "funasr":
-        from voice.funasr.fun_voice import FunVoice
-
-        return FunVoice()
     raise RuntimeError
