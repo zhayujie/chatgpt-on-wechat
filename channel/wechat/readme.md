@@ -12,7 +12,7 @@
 
 ### 克隆项目
 ```
-git clone https://github.com/josephier/chatgpt-on-wechat
+git clone https://github.com/zhayujie/chatgpt-on-wechat
 ```
 如果克隆失败或者无法克隆，可以下载压缩包到本地解压
 
