@@ -29,7 +29,7 @@ copy config-template.json config.json
 ```
 设置启动通道：`"channel_type": "wcf"`， 其他配置参考项目[配置说明](https://docs.link-ai.tech/cow/quick-start/config)
 
-## 启动
+### 启动
 直接在项目根目录下执行：
 ```
 python3 app.py  
