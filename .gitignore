@@ -14,6 +14,7 @@ tmp
 plugins.json
 itchat.pkl
 *.log
+logs/
 user_datas.pkl
 chatgpt_tool_hub/
 plugins/**/
