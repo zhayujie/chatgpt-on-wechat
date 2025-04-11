@@ -126,7 +126,9 @@ class WechatChannel(ChatChannel):
                 5. dingtalk: 钉钉
                 6. feishu: 飞书
                 7. web: 网页
+                8. wcf: wechat (需Windows环境，参考 https://github.com/zhayujie/chatgpt-on-wechat/pull/2562 )
             可修改 config.json 配置文件的 channel_type 字段进行切换""")
+
             # itchat.instance.receivingRetryCount = 600  # 修改断线超时时间
             # # login by scan QRCode
             # hotReload = conf().get("hot_reload", False)
