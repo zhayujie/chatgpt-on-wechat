@@ -45,5 +45,5 @@ zhipuai>=2.0.1
 # tongyi qwen new sdk
 dashscope
 
-# wechatferry
-wcferry==39.4.2.2
+# tencentcloud sdk
+tencentcloud-sdk-python>=3.0.0
