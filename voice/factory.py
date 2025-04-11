@@ -50,4 +50,8 @@ def create_voice(voice_type):
         from voice.xunfei.xunfei_voice import XunfeiVoice
 
         return XunfeiVoice()
+    elif voice_type == "tencent":
+        from voice.tencent.tencent_voice import TencentVoice
+
+        return TencentVoice()
     raise RuntimeError
