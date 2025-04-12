@@ -18,7 +18,6 @@ class MCPClient:
         # Initialize session and client objects
         self.session: Optional[ClientSession] = None
         self.exit_stack = AsyncExitStack()
-        # self.openai = AsyncOpenAI(api_key="sk-ausgzyjuyhyuaaizdxtzqltuimudowdrxwokgjrcgmebnwnm", base_url="https://api.siliconflow.cn/v1")
         self.openai = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"), base_url=os.getenv("OPENAI_BASE_URL"))
 
     async def connect_to_sse_server(self, server_url: str):
