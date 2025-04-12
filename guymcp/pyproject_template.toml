@@ -1,0 +1,25 @@
+[project]
+name = "guychat01"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "bs4>=0.0.2",
+    "httpx>=0.28.1",
+    "mcp[cli]>=1.6.0",
+    "openai>=1.70.0",
+    "python-docx>=1.1.2",
+    "requests>=2.32.3",
+]
+[tool.black]
+line-length = 176
+target-version = ['py37']
+include = '\.pyi?$'
+extend-exclude = '.+/(dist|.venv|venv|build|lib)/.+'
+
+[tool.isort]
+profile = "black"
+
+[tool.uv.workspace]
+members = ["mcp-server"]

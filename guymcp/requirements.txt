@@ -1,0 +1,6 @@
+bs4>=0.0.2
+httpx>=0.28.1
+mcp[cli]>=1.6.0
+openai>=1.70.0
+python-docx>=1.1.2
+requests>=2.32.3
