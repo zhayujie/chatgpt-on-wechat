@@ -1,4 +1,4 @@
-# cd ../guymcp 运行uv run server.py --host 127.0.0.1 --port 8020  启动MCP服务器
+# cd ../guymcp 运行uv run server.py --host 127.0.0.1 --port 8020 启动MCP服务器
 import asyncio
 import json
 import os
