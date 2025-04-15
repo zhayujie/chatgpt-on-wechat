@@ -1,11 +1,9 @@
 # encoding:utf-8
-# cd ../../guymcp 运行uv run server.py --host 127.0.0.1 --port 8020  启动MCP服务器
+
 import time
 
 import openai
-# import openai.error
-# 因为新代码中asyncio.run，openai必须升级到1.0以上，openai.error.XXXError被弃用，需要更新代码
-# 更新代码中所有openai.error.XXXError引用为直接使用错误类：openai.XXXError
+import openai.error
 import requests
 from common import const
 from bot.bot import Bot
@@ -18,11 +16,6 @@ from common.log import logger
 from common.token_bucket import TokenBucket
 from config import conf, load_config
 from bot.baidu.baidu_wenxin_session import BaiduWenxinSession
-
-import re
-from bot.chatgpt.client import MCPClient
-import asyncio
-
 
 # OpenAI对话模型API (可用)
 class ChatGPTBot(Bot, OpenAIImage):
@@ -57,20 +50,6 @@ class ChatGPTBot(Bot, OpenAIImage):
             remove_keys = ["temperature", "top_p", "frequency_penalty", "presence_penalty"]
             for key in remove_keys:
                 self.args.pop(key, None)  # 如果键不存在，使用 None 来避免抛出错误
-
-    async def gy_getanswer(self,querystr) -> str:
-    # guy 新建函数用于调用MCPClient
-        client = MCPClient()
-        clean_result = 'null before call gychat_loop.'
-        try:
-            server_url =  "http://127.0.0.1:8020/sse" 
-            await client.connect_to_sse_server(server_url)
-            res = await client.gychat_loop(querystr)
-            clean_result = re.sub(r'\[.*?\]', '', res)
-
-        finally:
-            await client.cleanup()
-            return clean_result
 
     def reply(self, query, context=None):
         # acquire reply content
@@ -145,55 +124,37 @@ class ChatGPTBot(Bot, OpenAIImage):
         """
         try:
             if conf().get("rate_limit_chatgpt") and not self.tb4chatgpt.get_token():
-                raise openai.RateLimitError("RateLimitError: rate limit exceeded")
+                raise openai.error.RateLimitError("RateLimitError: rate limit exceeded")
             # if api_key == None, the default openai.api_key will be used
             if args is None:
                 args = self.args
-            # 旧版的openai创建对话的方法因引入1.0以后,所以使用新版本的create方法    
-            # response = openai.ChatCompletion.create(api_key=api_key, messages=session.messages, **args)
-            response = openai.chat.completions.create(
-                    model="Qwen/Qwen2.5-72B-Instruct",
-                    # model=os.getenv("OPENAI_MODEL"),
-                    max_tokens=1000,
-                    messages=session.messages
-                    )
-            
-            # guy
-            guy_answer = "use get MCP answer"
-            user_content = next(
-                (msg["content"] for msg in reversed(session.messages) if msg.get("role") == "user"), 
-                "没有找到用户消息"
-            )
-            guy_answer = asyncio.run(self.gy_getanswer(user_content))
-            logger.debug("[CHATGPT] response={}".format(response))
+            response = openai.ChatCompletion.create(api_key=api_key, messages=session.messages, **args)
+            # logger.debug("[CHATGPT] response={}".format(response))
             # logger.info("[ChatGPT] reply={}, total_tokens={}".format(response.choices[0]['message']['content'], response["usage"]["total_tokens"]))
             return {
-                # "total_tokens": response["usage"]["total_tokens"], 旧版本的openai的返回值
-                # "completion_tokens": response["usage"]["completion_tokens"], 
-                # "content": response.choices[0]["message"]["content"],
-                "total_tokens": response.usage.total_tokens,
-                "completion_tokens": response.usage.completion_tokens,
-                "content":guy_answer,
+                "total_tokens": response["usage"]["total_tokens"],
+                "completion_tokens": response["usage"]["completion_tokens"],
+                "content": response.choices[0]["message"]["content"],
             }
         except Exception as e:
             need_retry = retry_count < 2
             result = {"completion_tokens": 0, "content": "我现在有点累了，等会再来吧"}
-            if isinstance(e, openai.RateLimitError):
+            if isinstance(e, openai.error.RateLimitError):
                 logger.warn("[CHATGPT] RateLimitError: {}".format(e))
                 result["content"] = "提问太快啦，请休息一下再问我吧"
                 if need_retry:
                     time.sleep(20)
-            elif isinstance(e, openai.Timeout):
+            elif isinstance(e, openai.error.Timeout):
                 logger.warn("[CHATGPT] Timeout: {}".format(e))
                 result["content"] = "我没有收到你的消息"
                 if need_retry:
                     time.sleep(5)
-            elif isinstance(e, openai.APIError):
+            elif isinstance(e, openai.error.APIError):
                 logger.warn("[CHATGPT] Bad Gateway: {}".format(e))
                 result["content"] = "请再问我一次"
                 if need_retry:
                     time.sleep(10)
-            elif isinstance(e, openai.APIConnectionError):
+            elif isinstance(e, openai.error.APIConnectionError):
                 logger.warn("[CHATGPT] APIConnectionError: {}".format(e))
                 result["content"] = "我连接不到你的网络"
                 if need_retry:
