@@ -156,11 +156,11 @@ class WebChannel(ChatChannel):
                                                                                      from_user_id=user_id,
                                                                                      other_user_id = user_id
                                                                                      ))
-            context["isgroup"] = False
-            # context["session"] = web.storage(session_id=user_id)
-            
             if not context:
                 return json.dumps({"status": "error", "message": "Failed to process message"})
+
+            context["isgroup"] = False
+            # context["session"] = web.storage(session_id=user_id)
                 
             self.produce(context)
             return json.dumps({"status": "success", "message": "Message received"})
@@ -176,7 +176,6 @@ class WebChannel(ChatChannel):
             return f.read()
 
     def startup(self):
-        logger.setLevel("WARN")
         print("\nWeb Channel is running, please visit http://localhost:9899/chat")
         
         urls = (
