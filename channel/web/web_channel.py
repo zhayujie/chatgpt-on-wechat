@@ -2,7 +2,7 @@ import sys
 import time
 import web
 import json
-from queue import Queue
+from queue import Queue, Empty
 from bridge.context import *
 from bridge.reply import Reply, ReplyType
 from channel.chat_channel import ChatChannel, check_prefix
@@ -11,6 +11,7 @@ from common.log import logger
 from common.singleton import singleton
 from config import conf
 import os
+import mimetypes  # 添加这行来处理MIME类型
 
 
 class WebMessage(ChatMessage):
@@ -53,84 +54,32 @@ class WebChannel(ChatChannel):
 
     def send(self, reply: Reply, context: Context):
         try:
-            if reply.type == ReplyType.IMAGE:
-                from PIL import Image
-
-                image_storage = reply.content
-                image_storage.seek(0)
-                img = Image.open(image_storage)
-                print("<IMAGE>")
-                img.show()
-            elif reply.type == ReplyType.IMAGE_URL:
-                import io
-
-                import requests
-                from PIL import Image
-
-                img_url = reply.content
-                pic_res = requests.get(img_url, stream=True)
-                image_storage = io.BytesIO()
-                for block in pic_res.iter_content(1024):
-                    image_storage.write(block)
-                image_storage.seek(0)
-                img = Image.open(image_storage)
-                print(img_url)
-                img.show()
+            if reply.type in self.NOT_SUPPORT_REPLYTYPE:
+                logger.warning(f"Web channel doesn't support {reply.type} yet")
+                return
+            
+            # 获取用户ID
+            user_id = context.get("receiver", None)
+            if not user_id:
+                logger.error("No receiver found in context, cannot send message")
+                return
+            
+            # 检查是否有响应队列
+            response_queue = context.get("response_queue", None)
+            if response_queue:
+                # 直接将响应放入队列
+                response_data = {
+                    "type": str(reply.type),
+                    "content": reply.content,
+                    "timestamp": time.time()
+                }
+                response_queue.put(response_data)
+                logger.debug(f"Response sent to queue for user {user_id}")
             else:
-                print(reply.content)
-
-            # 获取用户ID，如果没有则使用默认值
-            # user_id = getattr(context.get("session", None), "session_id", "default_user")
-            user_id = context["receiver"]
-            # 确保用户有对应的消息队列
-            if user_id not in self.message_queues:
-                self.message_queues[user_id] = Queue()
-                
-            # 将消息放入对应用户的队列
-            message_data = {
-                "type": str(reply.type),
-                "content": reply.content,
-                "timestamp": time.time()
-            }
-            self.message_queues[user_id].put(message_data)
-            logger.debug(f"Message queued for user {user_id}")
+                logger.warning(f"No response queue found for user {user_id}, response dropped")
             
         except Exception as e:
             logger.error(f"Error in send method: {e}")
-            raise
-
-    def sse_handler(self, user_id):
-        """
-        Handle Server-Sent Events (SSE) for real-time communication.
-        """
-        web.header('Content-Type', 'text/event-stream')
-        web.header('Cache-Control', 'no-cache')
-        web.header('Connection', 'keep-alive')
-        
-        # 确保用户有消息队列
-        if user_id not in self.message_queues:
-            self.message_queues[user_id] = Queue()
-        
-        try:    
-            while True:
-                try:
-                    # 发送心跳
-                    yield f": heartbeat\n\n"
-                    
-                    # 非阻塞方式获取消息
-                    if not self.message_queues[user_id].empty():
-                        message = self.message_queues[user_id].get_nowait()
-                        yield f"data: {json.dumps(message)}\n\n"
-                    time.sleep(0.5)
-                except Exception as e:
-                    logger.error(f"SSE Error: {e}")
-                    break
-        finally:
-            # 清理资源
-            if user_id in self.message_queues:
-                # 只有当队列为空时才删除
-                if self.message_queues[user_id].empty():
-                    del self.message_queues[user_id]
 
     def post_message(self):
         """
@@ -141,6 +90,7 @@ class WebChannel(ChatChannel):
             json_data = json.loads(data)
             user_id = json_data.get('user_id', 'default_user')
             prompt = json_data.get('message', '')
+            session_id = json_data.get('session_id', f'session_{int(time.time())}')
         except json.JSONDecodeError:
             return json.dumps({"status": "error", "message": "Invalid JSON"})
         except Exception as e:
@@ -151,19 +101,36 @@ class WebChannel(ChatChannel):
             
         try:
             msg_id = self._generate_msg_id()
-            context = self._compose_context(ContextType.TEXT, prompt, msg=WebMessage(msg_id, 
-                                                                                     prompt,
-                                                                                     from_user_id=user_id,
-                                                                                     other_user_id = user_id
-                                                                                     ))
+            web_message = WebMessage(
+                msg_id=msg_id, 
+                content=prompt,
+                from_user_id=user_id,
+                to_user_id="Chatgpt",
+                other_user_id=user_id
+            )
+            
+            context = self._compose_context(ContextType.TEXT, prompt, msg=web_message)
             if not context:
                 return json.dumps({"status": "error", "message": "Failed to process message"})
 
+            # 创建一个响应队列
+            response_queue = Queue()
+            
+            # 确保上下文包含必要的信息
             context["isgroup"] = False
-            # context["session"] = web.storage(session_id=user_id)
+            context["receiver"] = user_id
+            context["session_id"] = user_id
+            context["response_queue"] = response_queue
                 
+            # 发送消息到处理队列
             self.produce(context)
-            return json.dumps({"status": "success", "message": "Message received"})
+            
+            # 等待响应，最多等待30秒
+            try:
+                response = response_queue.get(timeout=30)
+                return json.dumps({"status": "success", "reply": response["content"]})
+            except Empty:
+                return json.dumps({"status": "error", "message": "Response timeout"})
             
         except Exception as e:
             logger.error(f"Error processing message: {e}")
@@ -178,19 +145,20 @@ class WebChannel(ChatChannel):
     def startup(self):
         print("\nWeb Channel is running, please visit http://localhost:9899/chat")
         
+        # 确保静态文件目录存在
+        static_dir = os.path.join(os.path.dirname(__file__), 'static')
+        if not os.path.exists(static_dir):
+            os.makedirs(static_dir)
+            logger.info(f"Created static directory: {static_dir}")
+        
         urls = (
-            '/sse/(.+)', 'SSEHandler',  # 修改路由以接收用户ID
             '/message', 'MessageHandler',
-            '/chat', 'ChatHandler', 
+            '/chat', 'ChatHandler',
+            '/assets/(.*)', 'AssetsHandler',  # 匹配 /assets/任何路径
         )
         port = conf().get("web_port", 9899)
         app = web.application(urls, globals(), autoreload=False)
         web.httpserver.runsimple(app.wsgifunc(), ("0.0.0.0", port))
-
-
-class SSEHandler:
-    def GET(self, user_id):
-        return WebChannel().sse_handler(user_id)
 
 
 class MessageHandler:
@@ -200,4 +168,52 @@ class MessageHandler:
 
 class ChatHandler:
     def GET(self):
-        return WebChannel().chat_page()
+        # 正常返回聊天页面
+        file_path = os.path.join(os.path.dirname(__file__), 'chat.html')
+        with open(file_path, 'r', encoding='utf-8') as f:
+            return f.read()
+
+
+class AssetsHandler:
+    def GET(self, file_path):  # 修改默认参数
+        try:
+            # 如果请求是/static/，需要处理
+            if file_path == '':
+                # 返回目录列表...
+                pass
+
+            # 获取当前文件的绝对路径
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            static_dir = os.path.join(current_dir, 'static')
+
+            # 打印调试信息
+            logger.info(f"Current directory: {current_dir}")
+            logger.info(f"Static directory: {static_dir}")
+            logger.info(f"Requested file: {file_path}")
+
+            full_path = os.path.normpath(os.path.join(static_dir, file_path))
+
+            # 安全检查：确保请求的文件在static目录内
+            if not os.path.abspath(full_path).startswith(os.path.abspath(static_dir)):
+                logger.error(f"Security check failed for path: {full_path}")
+                raise web.notfound()
+
+            if not os.path.exists(full_path) or not os.path.isfile(full_path):
+                logger.error(f"File not found: {full_path}")
+                raise web.notfound()
+
+            # 设置正确的Content-Type
+            content_type = mimetypes.guess_type(full_path)[0]
+            if content_type:
+                web.header('Content-Type', content_type)
+            else:
+                # 默认为二进制流
+                web.header('Content-Type', 'application/octet-stream')
+
+            # 读取并返回文件内容
+            with open(full_path, 'rb') as f:
+                return f.read()
+
+        except Exception as e:
+            logger.error(f"Error serving static file: {e}", exc_info=True)  # 添加更详细的错误信息
+            raise web.notfound()
