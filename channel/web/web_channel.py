@@ -13,7 +13,6 @@ from config import conf
 import os
 import mimetypes  # 添加这行来处理MIME类型
 
-
 class WebMessage(ChatMessage):
     def __init__(
         self,
@@ -57,7 +56,7 @@ class WebChannel(ChatChannel):
             if reply.type in self.NOT_SUPPORT_REPLYTYPE:
                 logger.warning(f"Web channel doesn't support {reply.type} yet")
                 return
-            
+                
             # 获取用户ID
             user_id = context.get("receiver", None)
             if not user_id:
