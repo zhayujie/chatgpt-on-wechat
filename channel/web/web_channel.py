@@ -126,7 +126,7 @@ class WebChannel(ChatChannel):
             
             # 等待响应，最多等待30秒
             try:
-                response = response_queue.get(timeout=30)
+                response = response_queue.get(timeout=120)
                 return json.dumps({"status": "success", "reply": response["content"]})
             except Empty:
                 return json.dumps({"status": "error", "message": "Response timeout"})
@@ -151,13 +151,27 @@ class WebChannel(ChatChannel):
             logger.info(f"Created static directory: {static_dir}")
         
         urls = (
+            '/', 'RootHandler',  # 添加根路径处理器
             '/message', 'MessageHandler',
             '/chat', 'ChatHandler',
             '/assets/(.*)', 'AssetsHandler',  # 匹配 /assets/任何路径
         )
         port = conf().get("web_port", 9899)
         app = web.application(urls, globals(), autoreload=False)
-        web.httpserver.runsimple(app.wsgifunc(), ("0.0.0.0", port))
+        
+        # 禁用web.py的默认日志输出
+        import io
+        from contextlib import redirect_stdout
+        
+        # 临时重定向标准输出，捕获web.py的启动消息
+        with redirect_stdout(io.StringIO()):
+            web.httpserver.runsimple(app.wsgifunc(), ("0.0.0.0", port))
+
+
+class RootHandler:
+    def GET(self):
+        # 重定向到/chat
+        raise web.seeother('/chat')
 
 
 class MessageHandler:
@@ -184,11 +198,6 @@ class AssetsHandler:
             # 获取当前文件的绝对路径
             current_dir = os.path.dirname(os.path.abspath(__file__))
             static_dir = os.path.join(current_dir, 'static')
-
-            # 打印调试信息
-            logger.info(f"Current directory: {current_dir}")
-            logger.info(f"Static directory: {static_dir}")
-            logger.info(f"Requested file: {file_path}")
 
             full_path = os.path.normpath(os.path.join(static_dir, file_path))
 

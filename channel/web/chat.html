@@ -6,7 +6,7 @@
     <title>AI Assistant</title>
     <link rel="icon" href="assets/favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/markdown-it@13.0.1/dist/markdown-it.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/python.min.js"></script>
@@ -14,6 +14,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/java.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/go.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/cpp.min.js"></script>
+    <script src="assets/axios.min.js"></script>
     <style>
         :root {
             --primary-color: #10a37f;
@@ -200,7 +201,7 @@
             display: flex;
             justify-content: flex-end;
             margin: 10px 0;
-            padding: 0 15px;
+            padding: 0 0;
         }
 
         .user-container .message-container {
@@ -267,68 +268,139 @@
         .message {
             padding: 12px 16px;
             border-radius: 10px;
-            margin-top: 0; /* 移除顶部外边距 */
+            margin-top: 0;
             margin-bottom: 8px;
             word-wrap: break-word;
             overflow-wrap: break-word;
+            line-height: 1.5;
         }
 
         .message p {
-            margin-top: 0.5em;
-            margin-bottom: 0.5em;
+            margin: 0.8em 0;
+            line-height: 1.6;
         }
 
-        .message p:empty {
-            margin: 0;
-            line-height: 0.7em;
+        .message p:first-child {
+            margin-top: 0;
         }
 
-        .message p:empty::before {
-            content: "";
-            display: inline-block;
-            height: 0.7em;
+        .message p:last-child {
+            margin-bottom: 0;
+        }
+
+        .message h1, .message h2, .message h3, .message h4, .message h5, .message h6 {
+            margin-top: 1.5em;
+            margin-bottom: 0.75em;
+            font-weight: 600;
+            line-height: 1.25;
+        }
+
+        .message h1 {
+            font-size: 1.5em;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.3em;
+        }
+
+        .message h2 {
+            font-size: 1.3em;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.3em;
+        }
+
+        .message h3 {
+            font-size: 1.15em;
+        }
+
+        .message h4 {
+            font-size: 1em;
+        }
+
+        .message ul, .message ol {
+            margin: 0.8em 0;
+            padding-left: 2em;
+        }
+
+        .message li {
+            margin: 0.3em 0;
+        }
+
+        .message li > p {
+            margin: 0.3em 0;
         }
 
         .message pre {
             background-color: #f0f0f0;
-            padding: 10px;
-            border-radius: 4px;
+            padding: 12px;
+            border-radius: 6px;
             overflow-x: auto;
+            margin: 1em 0;
         }
 
         .message code {
-            font-family: monospace;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
             background-color: rgba(0, 0, 0, 0.05);
             padding: 2px 4px;
             border-radius: 3px;
+            font-size: 0.9em;
         }
 
         .message pre code {
             background-color: transparent;
             padding: 0;
+            border-radius: 0;
+            font-size: 0.9em;
+            line-height: 1.5;
         }
 
         .message blockquote {
             border-left: 4px solid #ddd;
-            padding-left: 10px;
+            padding: 0 0 0 1em;
+            margin: 1em 0;
             color: #777;
-            margin: 10px 0;
+        }
+
+        .message blockquote > :first-child {
+            margin-top: 0;
+        }
+
+        .message blockquote > :last-child {
+            margin-bottom: 0;
         }
 
         .message table {
             border-collapse: collapse;
             width: 100%;
-            margin: 10px 0;
+            margin: 1em 0;
+            overflow-x: auto;
+            display: block;
         }
 
         .message th, .message td {
             border: 1px solid #ddd;
-            padding: 8px;
+            padding: 8px 12px;
             text-align: left;
         }
 
         .message th {
             background-color: #f2f2f2;
+            font-weight: 600;
+        }
+
+        .message tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .message hr {
+            height: 1px;
+            background-color: var(--border-color);
+            border: none;
+            margin: 1.5em 0;
+        }
+
+        .message img {
+            max-width: 100%;
+            height: auto;
+            margin: 1em 0;
         }
 
         .timestamp {
@@ -487,7 +559,7 @@
             }
 
             .message-container {
-                padding: 10px;
+                padding: 10px 0 10px 0;
             }
 
             .bot-container {
@@ -621,28 +693,10 @@
             font-weight: bold;
         }
 
-        /* 基础消息样式 */
-        .message {
-            border-radius: 10px;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-        }
-
-        /* 用户消息样式 */
-        .user-container .message {
-            background-color: var(--bot-msg-bg);
-            border-radius: 10px;
-            margin-bottom: 8px;
-            padding: 12px 16px;
-        }
-
-        /* 机器人消息样式 */
-        .bot-container .message {
-            background-color: var(--bot-msg-bg);
-            border-radius: 10px 10px 10px 0;
-            margin-bottom: 8px;
-            padding: 0px 16px 12px 16px;
-            margin-top: 0;
+        /* 确保代码块内的文本不会溢出 */
+        .hljs {
+            white-space: pre-wrap;
+            word-break: break-all;
         }
     </style>
 </head>
@@ -728,6 +782,19 @@
         let userId = 'user_' + Math.random().toString(36).substring(2, 10);
         let currentSessionId = 'default_session'; // 使用固定会话ID
         
+        // 添加一个变量来跟踪输入法状态
+        let isComposing = false;
+
+        // 监听输入法组合状态开始
+        input.addEventListener('compositionstart', function() {
+            isComposing = true;
+        });
+
+        // 监听输入法组合状态结束
+        input.addEventListener('compositionend', function() {
+            isComposing = false;
+        });
+
         // 自动调整文本区域高度
         input.addEventListener('input', function() {
             this.style.height = 'auto';
@@ -780,15 +847,19 @@
                 
                 event.preventDefault();
             } 
-            // Enter 键发送消息
-            else if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey) {
+            // Enter 键发送消息，但只在不是输入法组合状态时
+            else if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey && !isComposing) {
                 sendMessage();
                 event.preventDefault();
             }
         });
 
+        // 在发送消息函数前添加调试代码
+        console.log('Axios loaded:', typeof axios !== 'undefined');
+
         // 发送消息函数
         function sendMessage() {
+            console.log('Send message function called');
             const userMessage = input.value.trim();
             if (userMessage) {
                 // 隐藏欢迎屏幕
@@ -811,33 +882,26 @@
                 sendButton.disabled = true;
                 
                 // 发送到服务器并等待响应
-                fetch('/message', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ 
+                axios({
+                    method: 'post',
+                    url: '/message',
+                    data: { 
                         user_id: userId, 
                         message: userMessage, 
                         timestamp: timestamp.toISOString(),
                         session_id: currentSessionId
-                    })
+                    },
+                    timeout: 120000  // 120秒超时
                 })
                 .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Failed to send message');
-                    }
-                    return response.json();
-                })
-                .then(data => {
                     // 移除加载消息
                     if (loadingContainer.parentNode) {
                         messagesDiv.removeChild(loadingContainer);
                     }
                     
                     // 添加AI回复
-                    if (data.reply) {
-                        addBotMessage(data.reply, new Date());
+                    if (response.data.reply) {
+                        addBotMessage(response.data.reply, new Date());
                     }
                 })
                 .catch(error => {
@@ -847,7 +911,11 @@
                         messagesDiv.removeChild(loadingContainer);
                     }
                     // 显示错误消息
-                    addBotMessage("抱歉，发生了错误，请稍后再试。", new Date());
+                    if (error.code === 'ECONNABORTED') {
+                        addBotMessage("请求超时，请再试一次吧。", new Date());
+                    } else {
+                        addBotMessage("抱歉，发生了错误，请稍后再试。", new Date());
+                    }
                 });
             }
         }
@@ -882,35 +950,30 @@
             return botContainer;
         }
 
-        // 格式化消息内容（处理Markdown和代码高亮）
+        // 替换 formatMessage 函数，使用 markdown-it 替代 marked
         function formatMessage(content) {
-            // 配置 marked 以使用 highlight.js
-            marked.setOptions({
-                highlight: function(code, language) {
-                    if (language && hljs.getLanguage(language)) {
-                        try {
-                            return hljs.highlight(code, { language: language }).value;
-                        } catch (e) {
-                            console.error('Error highlighting code:', e);
-                            return code;
-                        }
-                    }
-                    return code;
-                },
-                breaks: true,     // 启用换行符转换为 <br>
-                gfm: true,        // 启用 GitHub 风格的 Markdown
-                headerIds: true,  // 为标题生成ID
-                mangle: false,    // 不转义内联HTML
-                sanitize: false,  // 不净化输出
-                smartLists: true, // 使用更智能的列表行为
-                smartypants: false, // 不使用更智能的标点符号
-                xhtml: false      // 不使用自闭合标签
-            });
-            
             try {
-                // 使用 marked 解析 Markdown
-                const parsed = marked.parse(content);
-                return parsed;
+                // 初始化 markdown-it 实例
+                const md = window.markdownit({
+                    html: false,        // 禁用 HTML 标签
+                    xhtmlOut: false,    // 使用 '/' 关闭单标签
+                    breaks: true,       // 将换行符转换为 <br>
+                    linkify: true,      // 自动将 URL 转换为链接
+                    typographer: true,  // 启用一些语言中性的替换和引号美化
+                    highlight: function(str, lang) {
+                        if (lang && hljs.getLanguage(lang)) {
+                            try {
+                                return hljs.highlight(str, { language: lang }).value;
+                            } catch (e) {
+                                console.error('Error highlighting code:', e);
+                            }
+                        }
+                        return hljs.highlightAuto(str).value;
+                    }
+                });
+
+                // 渲染 Markdown
+                return md.render(content);
             } catch (e) {
                 console.error('Error parsing markdown:', e);
                 // 如果解析失败，至少确保换行符正确显示
@@ -918,17 +981,30 @@
             }
         }
 
-        // 添加消息后应用代码高亮
+        // 更新 applyHighlighting 函数
         function applyHighlighting() {
             try {
                 document.querySelectorAll('pre code').forEach((block) => {
-                    // 手动应用高亮
-                    const language = block.className.replace('language-', '');
+                    // 确保代码块有正确的类
+                    if (!block.classList.contains('hljs')) {
+                        block.classList.add('hljs');
+                    }
+
+                    // 尝试获取语言
+                    let language = '';
+                    block.classList.forEach(cls => {
+                        if (cls.startsWith('language-')) {
+                            language = cls.replace('language-', '');
+                        }
+                    });
+                    
+                    // 应用高亮
                     if (language && hljs.getLanguage(language)) {
                         try {
                             hljs.highlightBlock(block);
                         } catch (e) {
-                            console.error('Error highlighting block:', e);
+                            console.error('Error highlighting specific language:', e);
+                            hljs.highlightAuto(block);
                         }
                     } else {
                         hljs.highlightAuto(block);
