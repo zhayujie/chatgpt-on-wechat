@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>登录</title>
+<style>
+  /* Reset and base */
+  * {
+    box-sizing: border-box;
+  }
+  body, html {
+    margin: 0; padding: 0; height: 100%;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .login-container {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 2.5rem 3rem;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    width: 100%;
+    max-width: 400px;
+  }
+  h2 {
+    margin-bottom: 1.5rem;
+    color: #333;
+    text-align: center;
+  }
+  form {
+    display: flex;
+    flex-direction: column;
+  }
+  label {
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+    color: #444;
+  }
+  input[type="text"],
+  input[type="email"],
+  input[type="password"] {
+    padding: 0.6rem 0.8rem;
+    font-size: 1rem;
+    border: 1.8px solid #ccc;
+    border-radius: 6px;
+    transition: border-color 0.3s ease;
+    outline-offset: 2px;
+  }
+  input[type="text"]:focus,
+  input[type="email"]:focus,
+  input[type="password"]:focus {
+    border-color: #667eea;
+  }
+  .password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .toggle-password {
+    position: absolute;
+    right: 0.8rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    color: #667eea;
+    user-select: none;
+  }
+  .login-button {
+    margin-top: 1.5rem;
+    padding: 0.75rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    background-color: #667eea;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  .login-button:disabled {
+    background-color: #a3a9f7;
+    cursor: not-allowed;
+  }
+  .forgot-password {
+    margin-top: 1rem;
+    text-align: right;
+  }
+  .forgot-password a {
+    color: #667eea;
+    text-decoration: none;
+    font-size: 0.9rem;
+  }
+  .forgot-password a:hover {
+    text-decoration: underline;
+  }
+  .error-message {
+    margin-top: 1rem;
+    color: #d93025;
+    font-weight: 600;
+    text-align: center;
+  }
+  .loading-spinner {
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #667eea;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    animation: spin 1s linear infinite;
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: 8px;
+  }
+  @keyframes spin {
+    0% { transform: rotate(0deg);}
+    100% { transform: rotate(360deg);}
+  }
+  /* Responsive */
+  @media (max-width: 480px) {
+    .login-container {
+      margin: 1rem;
+      padding: 2rem 1.5rem;
+    }
+  }
+</style>
+</head>
+<body>
+  <div class="login-container" role="main" aria-label="登录表单">
+    <h2>用户登录</h2>
+    <form id="loginForm" novalidate>
+      <label for="usernameEmail">用户名或邮箱</label>
+      <input type="text" id="usernameEmail" name="usernameEmail" autocomplete="username" placeholder="请输入用户名或邮箱" required aria-describedby="usernameEmailError" />
+      <div id="usernameEmailError" class="error-message" aria-live="polite"></div>
+
+      <label for="password" style="margin-top:1rem;">密码</label>
+      <div class="password-wrapper">
+        <input type="password" id="password" name="password" autocomplete="current-password" placeholder="请输入密码" required minlength="6" aria-describedby="passwordError" />
+        <button type="button" class="toggle-password" aria-label="切换密码可见性" title="切换密码可见性">👁️</button>
+      </div>
+      <div id="passwordError" class="error-message" aria-live="polite"></div>
+
+      <button type="submit" id="loginButton" class="login-button" disabled>登录</button>
+      <div class="forgot-password">
+        <a href="/forgot-password.html" target="_blank" rel="noopener noreferrer">忘记密码？</a>
+      </div>
+      <div id="submitError" class="error-message" aria-live="polite"></div>
+    </form>
+  </div>
+
+<script>
+  (function(){
+    const usernameEmailInput = document.getElementById('usernameEmail');
+    const passwordInput = document.getElementById('password');
+    const loginButton = document.getElementById('loginButton');
+    const usernameEmailError = document.getElementById('usernameEmailError');
+    const passwordError = document.getElementById('passwordError');
+    const submitError = document.getElementById('submitError');
+    const togglePasswordBtn = document.querySelector('.toggle-password');
+    const form = document.getElementById('loginForm');
+
+    // 校验用户名或邮箱格式
+    function validateUsernameEmail(value) {
+      if (!value.trim()) {
+        return "用户名或邮箱不能为空";
+      }
+      // 简单邮箱正则
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      // 用户名规则：允许字母数字下划线，长度3-20
+      const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
+      if (emailRegex.test(value)) {
+        return "";
+      } else if (usernameRegex.test(value)) {
+        return "";
+      } else {
+        return "请输入有效的用户名或邮箱格式";
+      }
+    }
+
+    // 校验密码格式
+    function validatePassword(value) {
+      if (!value) {
+        return "密码不能为空";
+      }
+      if (value.length < 6) {
+        return "密码长度不能少于6位";
+      }
+      return "";
+    }
+
+    // 实时校验并更新错误提示和按钮状态
+    function validateForm() {
+      const usernameEmailVal = usernameEmailInput.value;
+      const passwordVal = passwordInput.value;
+
+      const usernameEmailErrMsg = validateUsernameEmail(usernameEmailVal);
+      const passwordErrMsg = validatePassword(passwordVal);
+
+      usernameEmailError.textContent = usernameEmailErrMsg;
+      passwordError.textContent = passwordErrMsg;
+      submitError.textContent = "";
+
+      const isValid = !usernameEmailErrMsg && !passwordErrMsg;
+      loginButton.disabled = !isValid;
+      return isValid;
+    }
+
+    // 密码可见切换
+    togglePasswordBtn.addEventListener('click', () => {
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        togglePasswordBtn.textContent = '🙈';
+        togglePasswordBtn.setAttribute('aria-label', '隐藏密码');
+        togglePasswordBtn.setAttribute('title', '隐藏密码');
+      } else {
+        passwordInput.type = 'password';
+        togglePasswordBtn.textContent = '👁️';
+        togglePasswordBtn.setAttribute('aria-label', '显示密码');
+        togglePasswordBtn.setAttribute('title', '显示密码');
+      }
+    });
+
+    // 监听输入事件实时校验
+    usernameEmailInput.addEventListener('input', validateForm);
+    passwordInput.addEventListener('input', validateForm);
+
+    // 模拟登录请求
+    function fakeLoginRequest(data) {
+      return new Promise((resolve, reject) => {
+        setTimeout(() => {
+          // 模拟用户名/邮箱为 "user" 或 "user@example.com" 且密码为 "password123" 才成功
+          const validUsers = ["user", "user@example.com"];
+          if (validUsers.includes(data.usernameEmail.toLowerCase()) && data.password === "password123") {
+            resolve();
+          } else {
+            reject(new Error("用户名或密码错误"));
+          }
+        }, 1500);
+      });
+    }
+
+    // 表单提交处理
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!validateForm()) return;
+
+      loginButton.disabled = true;
+      const originalText = loginButton.textContent;
+      loginButton.textContent = "登录中";
+      const spinner = document.createElement('span');
+      spinner.className = 'loading-spinner';
+      loginButton.appendChild(spinner);
+      submitError.textContent = "";
+
+      try {
+        await fakeLoginRequest({
+          usernameEmail: usernameEmailInput.value.trim(),
+          password: passwordInput.value
+        });
+        // 登录成功跳转（此处用alert模拟）
+        alert("登录成功，跳转到用户主页");
+        // window.location.href = "/user-home.html"; // 实际跳转
+      } catch (err) {
+        submitError.textContent = err.message;
+      } finally {
+        loginButton.disabled = false;
+        loginButton.textContent = originalText;
+      }
+    });
+
+    // 页面加载时校验一次，防止缓存值导致按钮状态异常
+    validateForm();
+  })();
+<\/script>
+<\/body>
+<\/html>

@@ -6,7 +6,7 @@
     <title>AI Assistant</title>
     <link rel="icon" href="assets/favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/markdown-it@13.0.1/dist/markdown-it.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/python.min.js"></script>
@@ -14,6 +14,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/java.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/go.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/cpp.min.js"></script>
+    <script src="assets/axios.min.js"></script>
     <style>
         :root {
             --primary-color: #10a37f;
@@ -169,6 +170,24 @@
             flex: 1;
         }
 
+        #github-link {
+            display: flex;
+            align-items: center;
+            margin-left: 15px;
+            color: var(--text-color);
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+
+        #github-link:hover {
+            opacity: 0.8;
+        }
+
+        #github-icon {
+            height: 24px;
+            width: 24px;
+        }
+
         #messages {
             flex: 1;
             overflow-y: auto;
@@ -200,7 +219,7 @@
             display: flex;
             justify-content: flex-end;
             margin: 10px 0;
-            padding: 0 15px;
+            padding: 0 0;
         }
 
         .user-container .message-container {
@@ -209,7 +228,7 @@
         }
 
         .user-container .avatar {
-            margin-left: 15px;
+            margin-left: 20px;
             margin-right: 0;
         }
 
@@ -218,6 +237,7 @@
         }
 
         .user-container .message {
+            padding: 13px 16px;
             background-color: var(--bot-msg-bg);
             border-radius: 10px;
             margin-bottom: 8px;
@@ -265,70 +285,141 @@
         }
 
         .message {
-            padding: 12px 16px;
+            padding: 5px 16px;
             border-radius: 10px;
-            margin-top: 0; /* 移除顶部外边距 */
+            margin-top: 0;
             margin-bottom: 8px;
             word-wrap: break-word;
             overflow-wrap: break-word;
+            line-height: 1.5;
         }
 
         .message p {
-            margin-top: 0.5em;
-            margin-bottom: 0.5em;
+            margin: 0.8em 0;
+            line-height: 1.6;
         }
 
-        .message p:empty {
-            margin: 0;
-            line-height: 0.7em;
+        .message p:first-child {
+            margin-top: 0;
         }
 
-        .message p:empty::before {
-            content: "";
-            display: inline-block;
-            height: 0.7em;
+        .message p:last-child {
+            margin-bottom: 0;
+        }
+
+        .message h1, .message h2, .message h3, .message h4, .message h5, .message h6 {
+            margin-top: 1.5em;
+            margin-bottom: 0.75em;
+            font-weight: 600;
+            line-height: 1.25;
+        }
+
+        .message h1 {
+            font-size: 1.5em;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.3em;
+        }
+
+        .message h2 {
+            font-size: 1.3em;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.3em;
+        }
+
+        .message h3 {
+            font-size: 1.15em;
+        }
+
+        .message h4 {
+            font-size: 1em;
+        }
+
+        .message ul, .message ol {
+            margin: 0.8em 0;
+            padding-left: 2em;
+        }
+
+        .message li {
+            margin: 0.3em 0;
+        }
+
+        .message li > p {
+            margin: 0.3em 0;
         }
 
         .message pre {
             background-color: #f0f0f0;
-            padding: 10px;
-            border-radius: 4px;
+            padding: 12px;
+            border-radius: 6px;
             overflow-x: auto;
+            margin: 1em 0;
         }
 
         .message code {
-            font-family: monospace;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
             background-color: rgba(0, 0, 0, 0.05);
             padding: 2px 4px;
             border-radius: 3px;
+            font-size: 0.9em;
         }
 
         .message pre code {
             background-color: transparent;
             padding: 0;
+            border-radius: 0;
+            font-size: 0.9em;
+            line-height: 1.5;
         }
 
         .message blockquote {
             border-left: 4px solid #ddd;
-            padding-left: 10px;
+            padding: 0 0 0 1em;
+            margin: 1em 0;
             color: #777;
-            margin: 10px 0;
+        }
+
+        .message blockquote > :first-child {
+            margin-top: 0;
+        }
+
+        .message blockquote > :last-child {
+            margin-bottom: 0;
         }
 
         .message table {
             border-collapse: collapse;
             width: 100%;
-            margin: 10px 0;
+            margin: 1em 0;
+            overflow-x: auto;
+            display: block;
         }
 
         .message th, .message td {
             border: 1px solid #ddd;
-            padding: 8px;
+            padding: 8px 12px;
             text-align: left;
         }
 
         .message th {
             background-color: #f2f2f2;
+            font-weight: 600;
+        }
+
+        .message tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .message hr {
+            height: 1px;
+            background-color: var(--border-color);
+            border: none;
+            margin: 1.5em 0;
+        }
+
+        .message img {
+            max-width: 100%;
+            height: auto;
+            margin: 0 0;
         }
 
         .timestamp {
@@ -476,10 +567,12 @@
                 left: -260px;
                 height: 100%;
                 z-index: 1000;
+                transition: left 0.3s ease;
             }
 
             #sidebar.active {
                 left: 0;
+                box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
             }
 
             #menu-toggle {
@@ -487,7 +580,7 @@
             }
 
             .message-container {
-                padding: 10px;
+                padding: 10px 0 10px 0;
             }
 
             .bot-container {
@@ -504,6 +597,23 @@
 
             #header-logo {
                 height: 24px;
+            }
+            
+            /* 添加遮罩层，当侧边栏打开时显示 */
+            #sidebar-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(0, 0, 0, 0.5);
+                z-index: 999;
+                cursor: pointer;
+            }
+            
+            #sidebar.active + #sidebar-overlay {
+                display: block;
             }
         }
 
@@ -621,28 +731,10 @@
             font-weight: bold;
         }
 
-        /* 基础消息样式 */
-        .message {
-            border-radius: 10px;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-        }
-
-        /* 用户消息样式 */
-        .user-container .message {
-            background-color: var(--bot-msg-bg);
-            border-radius: 10px;
-            margin-bottom: 8px;
-            padding: 12px 16px;
-        }
-
-        /* 机器人消息样式 */
-        .bot-container .message {
-            background-color: var(--bot-msg-bg);
-            border-radius: 10px 10px 10px 0;
-            margin-bottom: 8px;
-            padding: 0px 16px 12px 16px;
-            margin-top: 0;
+        /* 确保代码块内的文本不会溢出 */
+        .hljs {
+            white-space: pre-wrap;
+            word-break: break-all;
         }
     </style>
 </head>
@@ -663,7 +755,7 @@
                 </div>
             </div>
         </div>
-
+        <div id="sidebar-overlay"></div>
         <div id="main-content">
             <div id="chat-header">
                 <button id="menu-toggle">
@@ -671,6 +763,9 @@
                 </button>
                 <img id="header-logo" src="assets/logo.jpg" alt="AI Assistant Logo">
                 <div id="chat-title">AI 助手</div>
+                <a id="github-link" href="https://github.com/zhayujie/chatgpt-on-wechat" target="_blank" rel="noopener noreferrer">
+                    <img id="github-icon" src="assets/github.png" alt="GitHub">
+                </a>
             </div>
 
             <div id="messages">
@@ -724,10 +819,30 @@
         const newChatButton = document.getElementById('new-chat');
         const chatHistory = document.getElementById('chat-history');
 
-        // 简化变量，只保留用户ID
-        let userId = 'user_' + Math.random().toString(36).substring(2, 10);
-        let currentSessionId = 'default_session'; // 使用固定会话ID
-        
+        // 生成新的会话ID
+        function generateSessionId() {
+            return 'session_' + ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+                (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+            );
+        }
+
+        // 生成初始会话ID
+        let sessionId = generateSessionId();
+        console.log('Session ID:', sessionId);
+
+        // 添加一个变量来跟踪输入法状态
+        let isComposing = false;
+
+        // 监听输入法组合状态开始
+        input.addEventListener('compositionstart', function() {
+            isComposing = true;
+        });
+
+        // 监听输入法组合状态结束
+        input.addEventListener('compositionend', function() {
+            isComposing = false;
+        });
+
         // 自动调整文本区域高度
         input.addEventListener('input', function() {
             this.style.height = 'auto';
@@ -748,15 +863,18 @@
         });
 
         // 处理菜单切换
-        menuToggle.addEventListener('click', function() {
+        menuToggle.addEventListener('click', function(event) {
+            event.stopPropagation(); // 防止事件冒泡到 main-content
             sidebar.classList.toggle('active');
         });
 
-        // 处理新对话按钮 - 创建新的用户ID和清空当前对话
+        // 处理新对话按钮 - 创建新的会话ID和清空当前对话
         newChatButton.addEventListener('click', function() {
-            // 生成新的用户ID
-            userId = 'user_' + Math.random().toString(36).substring(2, 10);
-            console.log('New conversation started with user ID:', userId);
+            // 生成新的会话ID
+            sessionId = generateSessionId();
+            // 将新的会话ID保存到全局变量，供轮询函数使用
+            window.sessionId = sessionId;
+            console.log('New conversation started with new session ID:', sessionId);
             
             // 清空聊天记录
             clearChat();
@@ -780,15 +898,19 @@
                 
                 event.preventDefault();
             } 
-            // Enter 键发送消息
-            else if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey) {
+            // Enter 键发送消息，但只在不是输入法组合状态时
+            else if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey && !isComposing) {
                 sendMessage();
                 event.preventDefault();
             }
         });
 
+        // 在发送消息函数前添加调试代码
+        console.log('Axios loaded:', typeof axios !== 'undefined');
+
         // 发送消息函数
         function sendMessage() {
+            console.log('Send message function called');
             const userMessage = input.value.trim();
             if (userMessage) {
                 // 隐藏欢迎屏幕
@@ -810,34 +932,42 @@
                 input.style.height = '52px';
                 sendButton.disabled = true;
                 
-                // 发送到服务器并等待响应
-                fetch('/message', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ 
-                        user_id: userId, 
+                // 使用当前的全局会话ID
+                const currentSessionId = window.sessionId || sessionId;
+                
+                // 发送到服务器并获取请求ID
+                axios({
+                    method: 'post',
+                    url: '/message',
+                    data: { 
+                        session_id: currentSessionId,  // 使用最新的会话ID
                         message: userMessage, 
-                        timestamp: timestamp.toISOString(),
-                        session_id: currentSessionId
-                    })
+                        timestamp: timestamp.toISOString()
+                    },
+                    timeout: 10000  // 10秒超时
                 })
                 .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Failed to send message');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    // 移除加载消息
-                    if (loadingContainer.parentNode) {
-                        messagesDiv.removeChild(loadingContainer);
-                    }
-                    
-                    // 添加AI回复
-                    if (data.reply) {
-                        addBotMessage(data.reply, new Date());
+                    if (response.data.status === "success") {
+                        // 保存当前请求ID，用于识别响应
+                        const currentRequestId = response.data.request_id;
+                        
+                        // 如果还没有开始轮询，则开始轮询
+                        if (!window.isPolling) {
+                            startPolling(currentSessionId);
+                        }
+                        
+                        // 将请求ID和加载容器关联起来
+                        window.loadingContainers = window.loadingContainers || {};
+                        window.loadingContainers[currentRequestId] = loadingContainer;
+                        
+                        // 初始化请求的响应容器映射
+                        window.requestContainers = window.requestContainers || {};
+                    } else {
+                        // 处理错误
+                        if (loadingContainer.parentNode) {
+                            messagesDiv.removeChild(loadingContainer);
+                        }
+                        addBotMessage("抱歉，发生了错误，请稍后再试。", new Date());
                     }
                 })
                 .catch(error => {
@@ -847,174 +977,116 @@
                         messagesDiv.removeChild(loadingContainer);
                     }
                     // 显示错误消息
-                    addBotMessage("抱歉，发生了错误，请稍后再试。", new Date());
-                });
-            }
-        }
-
-        // 添加加载中的消息
-        function addLoadingMessage() {
-            const botContainer = document.createElement('div');
-            botContainer.className = 'bot-container loading-container';
-            
-            const messageContainer = document.createElement('div');
-            messageContainer.className = 'message-container';
-            
-            messageContainer.innerHTML = `
-                <div class="avatar bot-avatar">
-                    <i class="fas fa-robot"></i>
-                </div>
-                <div class="message-content">
-                    <div class="message">
-                        <div class="typing-indicator">
-                            <span></span>
-                            <span></span>
-                            <span></span>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            botContainer.appendChild(messageContainer);
-            messagesDiv.appendChild(botContainer);
-            scrollToBottom();
-            
-            return botContainer;
-        }
-
-        // 格式化消息内容（处理Markdown和代码高亮）
-        function formatMessage(content) {
-            // 配置 marked 以使用 highlight.js
-            marked.setOptions({
-                highlight: function(code, language) {
-                    if (language && hljs.getLanguage(language)) {
-                        try {
-                            return hljs.highlight(code, { language: language }).value;
-                        } catch (e) {
-                            console.error('Error highlighting code:', e);
-                            return code;
-                        }
-                    }
-                    return code;
-                },
-                breaks: true,     // 启用换行符转换为 <br>
-                gfm: true,        // 启用 GitHub 风格的 Markdown
-                headerIds: true,  // 为标题生成ID
-                mangle: false,    // 不转义内联HTML
-                sanitize: false,  // 不净化输出
-                smartLists: true, // 使用更智能的列表行为
-                smartypants: false, // 不使用更智能的标点符号
-                xhtml: false      // 不使用自闭合标签
-            });
-            
-            try {
-                // 使用 marked 解析 Markdown
-                const parsed = marked.parse(content);
-                return parsed;
-            } catch (e) {
-                console.error('Error parsing markdown:', e);
-                // 如果解析失败，至少确保换行符正确显示
-                return content.replace(/\n/g, '<br>');
-            }
-        }
-
-        // 添加消息后应用代码高亮
-        function applyHighlighting() {
-            try {
-                document.querySelectorAll('pre code').forEach((block) => {
-                    // 手动应用高亮
-                    const language = block.className.replace('language-', '');
-                    if (language && hljs.getLanguage(language)) {
-                        try {
-                            hljs.highlightBlock(block);
-                        } catch (e) {
-                            console.error('Error highlighting block:', e);
-                        }
+                    if (error.code === 'ECONNABORTED') {
+                        addBotMessage("请求超时，请再试一次吧。", new Date());
                     } else {
-                        hljs.highlightAuto(block);
+                        addBotMessage("抱歉，发生了错误，请稍后再试。", new Date());
                     }
                 });
-            } catch (e) {
-                console.error('Error applying code highlighting:', e);
             }
         }
 
-        // 添加用户消息的函数 (保存到localStorage)
-        function addUserMessage(content, timestamp) {
-            // 显示消息
-            displayUserMessage(content, timestamp);
+        // 修改轮询函数，确保正确处理多条回复
+        function startPolling(sessionId) {
+            if (window.isPolling) return;
             
-            // 保存到localStorage
-            saveMessageToLocalStorage({
-                role: 'user',
-                content: content,
-                timestamp: timestamp.getTime()
-            });
+            window.isPolling = true;
+            console.log('Starting polling with session ID:', sessionId);
+            
+            function poll() {
+                if (!window.isPolling) return;
+                
+                // 如果页面已关闭或导航离开，停止轮询
+                if (document.hidden) {
+                    setTimeout(poll, 5000); // 页面不可见时降低轮询频率
+                    return;
+                }
+                
+                // 使用当前的会话ID，而不是闭包中的sessionId
+                const currentSessionId = window.sessionId || sessionId;
+                
+                axios({
+                    method: 'post',
+                    url: '/poll',
+                    data: { 
+                        session_id: currentSessionId
+                    },
+                    timeout: 5000
+                })
+                .then(response => {
+                    if (response.data.status === "success") {
+                        if (response.data.has_content) {
+                            console.log('Received response:', response.data);
+                            
+                            // 获取请求ID和内容
+                            const requestId = response.data.request_id;
+                            const content = response.data.content;
+                            const timestamp = new Date(response.data.timestamp * 1000);
+                            
+                            // 检查是否有对应的加载容器
+                            if (window.loadingContainers && window.loadingContainers[requestId]) {
+                                // 移除加载容器
+                                const loadingContainer = window.loadingContainers[requestId];
+                                if (loadingContainer && loadingContainer.parentNode) {
+                                    messagesDiv.removeChild(loadingContainer);
+                                }
+                                
+                                // 删除已处理的加载容器引用
+                                delete window.loadingContainers[requestId];
+                            }
+                            
+                            // 始终创建新的消息，无论是否是同一个请求的后续回复
+                            addBotMessage(content, timestamp, requestId);
+                            
+                            // 滚动到底部
+                            scrollToBottom();
+                        }
+                        
+                        // 继续轮询，使用原来的2秒间隔
+                        setTimeout(poll, 2000);
+                    } else {
+                        // 处理错误但继续轮询
+                        console.error('Error in polling response:', response.data.message);
+                        setTimeout(poll, 3000);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error polling for response:', error);
+                    // 出错后继续轮询，但间隔更长
+                    setTimeout(poll, 3000);
+                });
+            }
+            
+            // 开始轮询
+            poll();
         }
 
-        // 添加机器人消息的函数 (保存到localStorage)
-        function addBotMessage(content, timestamp) {
+        // 添加机器人消息的函数 (保存到localStorage)，增加requestId参数
+        function addBotMessage(content, timestamp, requestId) {
             // 显示消息
-            displayBotMessage(content, timestamp);
+            displayBotMessage(content, timestamp, requestId);
             
             // 保存到localStorage
             saveMessageToLocalStorage({
                 role: 'assistant',
                 content: content,
-                timestamp: timestamp.getTime()
+                timestamp: timestamp.getTime(),
+                requestId: requestId
             });
         }
 
-        // 只显示用户消息而不保存到localStorage
-        function displayUserMessage(content, timestamp) {
-            const userContainer = document.createElement('div');
-            userContainer.className = 'user-container';
-            
-            const messageContainer = document.createElement('div');
-            messageContainer.className = 'message-container';
-            
-            // 安全地格式化消息
-            let formattedContent;
-            try {
-                formattedContent = formatMessage(content);
-            } catch (e) {
-                console.error('Error formatting user message:', e);
-                formattedContent = `<p>${content.replace(/\n/g, '<br>')}</p>`;
-            }
-            
-            messageContainer.innerHTML = `
-                <div class="avatar user-avatar">
-                    <i class="fas fa-user"></i>
-                </div>
-                <div class="message-content">
-                    <div class="message">${formattedContent}</div>
-                    <div class="timestamp">${formatTimestamp(timestamp)}</div>
-                </div>
-            `;
-            
-            userContainer.appendChild(messageContainer);
-            messagesDiv.appendChild(userContainer);
-            
-            // 应用代码高亮
-            setTimeout(() => {
-                applyHighlighting();
-            }, 0);
-            
-            scrollToBottom();
-        }
-
-        // 只显示机器人消息而不保存到localStorage
-        function displayBotMessage(content, timestamp) {
+        // 修改显示机器人消息的函数，增加requestId参数
+        function displayBotMessage(content, timestamp, requestId) {
             const botContainer = document.createElement('div');
             botContainer.className = 'bot-container';
             
+            // 如果有requestId，将其存储在数据属性中
+            if (requestId) {
+                botContainer.dataset.requestId = requestId;
+            }
+            
             const messageContainer = document.createElement('div');
             messageContainer.className = 'message-container';
-            
-            // 确保时间戳是有效的 Date 对象
-            if (!(timestamp instanceof Date) || isNaN(timestamp)) {
-                timestamp = new Date();
-            }
             
             // 安全地格式化消息
             let formattedContent;
@@ -1038,43 +1110,80 @@
             botContainer.appendChild(messageContainer);
             messagesDiv.appendChild(botContainer);
             
-            // 使用setTimeout确保DOM已更新，并延长等待时间
+            // 应用代码高亮
             setTimeout(() => {
-                try {
-                    // 直接对新添加的消息应用高亮
-                    const codeBlocks = botContainer.querySelectorAll('pre code');
-                    codeBlocks.forEach(block => {
-                        // 确保代码块有正确的类
-                        if (!block.classList.contains('hljs')) {
-                            block.classList.add('hljs');
-                        }
-                        
-                        // 尝试获取语言
-                        let language = '';
-                        block.classList.forEach(cls => {
-                            if (cls.startsWith('language-')) {
-                                language = cls.replace('language-', '');
-                            }
-                        });
-                        
-                        // 应用高亮
-                        if (language && hljs.getLanguage(language)) {
-                            try {
-                                hljs.highlightBlock(block);
-                            } catch (e) {
-                                console.error('Error highlighting specific language:', e);
-                                hljs.highlightAuto(block);
-                            }
-                        } else {
-                            hljs.highlightAuto(block);
-                        }
-                    });
-                } catch (e) {
-                    console.error('Error in delayed highlighting:', e);
-                }
-            }, 100); // 增加延迟以确保DOM完全更新
+                applyHighlighting();
+            }, 0);
             
             scrollToBottom();
+        }
+
+        // 处理响应
+        function handleResponse(requestId, content) {
+            // 获取该请求的加载容器
+            const loadingContainer = window.loadingContainers && window.loadingContainers[requestId];
+            
+            // 如果有加载容器，移除它
+            if (loadingContainer && loadingContainer.parentNode) {
+                messagesDiv.removeChild(loadingContainer);
+                delete window.loadingContainers[requestId];
+            }
+            
+            // 为每个请求创建一个新的消息容器
+            if (!window.requestContainers[requestId]) {
+                window.requestContainers[requestId] = createBotMessageContainer(content, new Date());
+            } else {
+                // 更新现有消息容器
+                updateBotMessageContent(window.requestContainers[requestId], content);
+            }
+            
+            // 保存消息到localStorage
+            saveMessageToLocalStorage({
+                role: 'assistant',
+                content: content,
+                timestamp: new Date().getTime(),
+                request_id: requestId
+            });
+        }
+
+        // 修改createBotMessageContainer函数，使其返回创建的容器
+        function createBotMessageContainer(content, timestamp) {
+            const botContainer = document.createElement('div');
+            botContainer.className = 'bot-container';
+            
+            const messageContainer = document.createElement('div');
+            messageContainer.className = 'message-container';
+            
+            // 安全地格式化消息
+            let formattedContent;
+            try {
+                formattedContent = formatMessage(content);
+            } catch (e) {
+                console.error('Error formatting bot message:', e);
+                formattedContent = `<p>${content.replace(/\n/g, '<br>')}</p>`;
+            }
+            
+            messageContainer.innerHTML = `
+                <div class="avatar bot-avatar">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div class="message-content">
+                    <div class="message">${formattedContent}</div>
+                    <div class="timestamp">${formatTimestamp(timestamp)}</div>
+                </div>
+            `;
+            
+            botContainer.appendChild(messageContainer);
+            messagesDiv.appendChild(botContainer);
+            
+            // 应用代码高亮
+            setTimeout(() => {
+                applyHighlighting();
+            }, 0);
+            
+            scrollToBottom();
+            
+            return botContainer;
         }
 
         // 格式化时间戳
@@ -1147,8 +1256,8 @@
                 });
             });
             
-            // 清空localStorage中的消息 - 使用用户ID作为键
-            localStorage.setItem(`chatMessages_${userId}`, JSON.stringify([]));
+            // 清空localStorage中的消息 - 使用会话ID作为键
+            localStorage.setItem(`chatMessages_${sessionId}`, JSON.stringify([]));
             
             // 在移动设备上关闭侧边栏
             if (window.innerWidth <= 768) {
@@ -1156,26 +1265,242 @@
             }
         }
 
-        // 从localStorage加载消息 - 使用用户ID作为键
+        // 从localStorage加载消息 - 使用会话ID作为键
         function loadMessagesFromLocalStorage() {
             try {
-                return JSON.parse(localStorage.getItem(`chatMessages_${userId}`) || '[]');
+                return JSON.parse(localStorage.getItem(`chatMessages_${sessionId}`) || '[]');
             } catch (error) {
                 console.error('Error loading messages from localStorage:', error);
                 return [];
             }
         }
 
-        // 保存消息到localStorage - 使用用户ID作为键
+        // 保存消息到localStorage - 使用会话ID作为键
         function saveMessageToLocalStorage(message) {
             try {
                 const messages = loadMessagesFromLocalStorage();
                 messages.push(message);
-                localStorage.setItem(`chatMessages_${userId}`, JSON.stringify(messages));
+                localStorage.setItem(`chatMessages_${sessionId}`, JSON.stringify(messages));
             } catch (error) {
                 console.error('Error saving message to localStorage:', error);
             }
         }
+
+        // 添加用户消息的函数 (保存到localStorage)
+        function addUserMessage(content, timestamp) {
+            // 显示消息
+            displayUserMessage(content, timestamp);
+            
+            // 保存到localStorage
+            saveMessageToLocalStorage({
+                role: 'user',
+                content: content,
+                timestamp: timestamp.getTime()
+            });
+        }
+
+        // 只显示用户消息而不保存到localStorage
+        function displayUserMessage(content, timestamp) {
+            const userContainer = document.createElement('div');
+            userContainer.className = 'user-container';
+            
+            const messageContainer = document.createElement('div');
+            messageContainer.className = 'message-container';
+            
+            // 安全地格式化消息
+            let formattedContent;
+            try {
+                formattedContent = formatMessage(content);
+            } catch (e) {
+                console.error('Error formatting user message:', e);
+                formattedContent = `<p>${content.replace(/\n/g, '<br>')}</p>`;
+            }
+            
+            messageContainer.innerHTML = `
+                <div class="avatar user-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="message-content">
+                    <div class="message">${formattedContent}</div>
+                    <div class="timestamp">${formatTimestamp(timestamp)}</div>
+                </div>
+            `;
+            
+            userContainer.appendChild(messageContainer);
+            messagesDiv.appendChild(userContainer);
+            
+            // 应用代码高亮
+            setTimeout(() => {
+                applyHighlighting();
+            }, 0);
+            
+            scrollToBottom();
+        }
+
+        // 添加加载中的消息
+        function addLoadingMessage() {
+            const botContainer = document.createElement('div');
+            botContainer.className = 'bot-container loading-container';
+            
+            const messageContainer = document.createElement('div');
+            messageContainer.className = 'message-container';
+            
+            messageContainer.innerHTML = `
+                <div class="avatar bot-avatar">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div class="message-content">
+                    <div class="message">
+                        <div class="typing-indicator">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            botContainer.appendChild(messageContainer);
+            messagesDiv.appendChild(botContainer);
+            scrollToBottom();
+            
+            return botContainer;
+        }
+
+        // 自动将链接设置为在新标签页打开
+        const externalLinksPlugin = (md) => {
+            // 保存原始的链接渲染器
+            const defaultRender = md.renderer.rules.link_open || function(tokens, idx, options, env, self) {
+                return self.renderToken(tokens, idx, options);
+            };
+
+            // 重写链接渲染器
+            md.renderer.rules.link_open = function(tokens, idx, options, env, self) {
+                // 为所有链接添加 target="_blank" 和 rel="noopener noreferrer"
+                const token = tokens[idx];
+                
+                // 添加 target="_blank" 属性
+                token.attrPush(['target', '_blank']);
+                
+                // 添加 rel="noopener noreferrer" 以提高安全性
+                token.attrPush(['rel', 'noopener noreferrer']);
+                
+                // 调用默认渲染器
+                return defaultRender(tokens, idx, options, env, self);
+            };
+        };
+
+        // 替换 formatMessage 函数，使用 markdown-it 替代 marked
+        function formatMessage(content) {
+            try {
+                // 初始化 markdown-it 实例
+                const md = window.markdownit({
+                    html: false,        // 禁用 HTML 标签
+                    xhtmlOut: false,    // 使用 '/' 关闭单标签
+                    breaks: true,       // 将换行符转换为 <br>
+                    linkify: true,      // 自动将 URL 转换为链接
+                    typographer: true,  // 启用一些语言中性的替换和引号美化
+                    highlight: function(str, lang) {
+                        if (lang && hljs.getLanguage(lang)) {
+                            try {
+                                return hljs.highlight(str, { language: lang }).value;
+                            } catch (e) {
+                                console.error('Error highlighting code:', e);
+                            }
+                        }
+                        return hljs.highlightAuto(str).value;
+                    }
+                });
+
+                // 自动将图片URL转换为图片标签
+                const autoImagePlugin = (md) => {
+                    const defaultRender = md.renderer.rules.text || function(tokens, idx, options, env, self) {
+                        return self.renderToken(tokens, idx, options);
+                    };
+
+                    md.renderer.rules.text = function(tokens, idx, options, env, self) {
+                        const token = tokens[idx];
+                        const text = token.content.trim();
+                        
+                        // 检测是否完全是一个图片链接 (以https://开头，以图片扩展名结尾)
+                        const imageRegex = /^https?:\/\/\S+\.(jpg|jpeg|png|gif|webp)(\?\S*)?$/i;
+                        if (imageRegex.test(text)) {
+                            return `<img src="${text}" alt="Image" style="max-width: 100%; height: auto;" />`;
+                        }
+                        
+                        // 使用默认渲染
+                        return defaultRender(tokens, idx, options, env, self);
+                    };
+                };
+
+                // 应用插件
+                md.use(autoImagePlugin);
+                
+                // 应用外部链接插件
+                md.use(externalLinksPlugin);
+
+                // 渲染 Markdown
+                return md.render(content);
+            } catch (e) {
+                console.error('Error parsing markdown:', e);
+                // 如果解析失败，至少确保换行符正确显示
+                return content.replace(/\n/g, '<br>');
+            }
+        }
+
+        // 更新 applyHighlighting 函数
+        function applyHighlighting() {
+            try {
+                document.querySelectorAll('pre code').forEach((block) => {
+                    // 确保代码块有正确的类
+                    if (!block.classList.contains('hljs')) {
+                        block.classList.add('hljs');
+                    }
+
+                    // 尝试获取语言
+                    let language = '';
+                    block.classList.forEach(cls => {
+                        if (cls.startsWith('language-')) {
+                            language = cls.replace('language-', '');
+                        }
+                    });
+                    
+                    // 应用高亮
+                    if (language && hljs.getLanguage(language)) {
+                        try {
+                            hljs.highlightBlock(block);
+                        } catch (e) {
+                            console.error('Error highlighting specific language:', e);
+                            hljs.highlightAuto(block);
+                        }
+                    } else {
+                        hljs.highlightAuto(block);
+                    }
+                });
+            } catch (e) {
+                console.error('Error applying code highlighting:', e);
+            }
+        }
+
+        // 在 #main-content 上添加点击事件，用于关闭侧边栏
+        document.getElementById('main-content').addEventListener('click', function(event) {
+            // 只在移动视图下且侧边栏打开时处理
+            if (window.innerWidth <= 768 && sidebar.classList.contains('active')) {
+                sidebar.classList.remove('active');
+            }
+        });
+
+        // 阻止侧边栏内部点击事件冒泡到 main-content
+        document.getElementById('sidebar').addEventListener('click', function(event) {
+            event.stopPropagation();
+        });
+
+        // 添加遮罩层点击事件，用于关闭侧边栏
+        document.getElementById('sidebar-overlay').addEventListener('click', function() {
+            if (sidebar.classList.contains('active')) {
+                sidebar.classList.remove('active');
+            }
+        });
     </script>
 </body>
 </html>

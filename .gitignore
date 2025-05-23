@@ -15,6 +15,8 @@ plugins.json
 itchat.pkl
 *.log
 logs/
+workspace
+config.yaml
 user_datas.pkl
 chatgpt_tool_hub/
 plugins/**/
@@ -31,4 +33,5 @@ plugins/banwords/lib/__pycache__
 !plugins/role
 !plugins/keyword
 !plugins/linkai
+!plugins/agent
 client_config.json
