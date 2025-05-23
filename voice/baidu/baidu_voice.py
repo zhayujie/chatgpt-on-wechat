@@ -115,8 +115,8 @@ class BaiduVoice(Voice):
 
         # 轮询查询任务状态
         query_url = f"https://aip.baidubce.com/rpc/2.0/tts/v1/query?access_token={token}"
-        for _ in range(30):
-            time.sleep(1.5)
+        for _ in range(100):
+            time.sleep(3)
             resp = requests.post(query_url, headers=headers, json={"task_ids":[task_id]})
             result = resp.json()
             infos = result.get("tasks_info") or result.get("tasks") or []
@@ -148,7 +148,7 @@ class BaiduVoice(Voice):
         try:
             # GBK 编码字节长度
             gbk_len = len(text.encode("gbk", errors="ignore"))
-            if gbk_len <= 120:
+            if gbk_len <= 1024:
                 # 短文本走 SDK 合成
                 result = self.client.synthesis(
                     text, self.lang, self.ctp,
