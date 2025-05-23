@@ -6,8 +6,9 @@ tools:
     # get your apikey from https://serper.dev/
     api_key: "YOUR API KEY"
 
-# Team config
+# Agent Team 配置
 teams:
+  # 通用智能体团队
   general_team:
     model: "gpt-4.1-mini"        # 团队使用的模型
     description: "A versatile research and information agent team"
@@ -24,6 +25,7 @@ teams:
           - browser
           - terminal
 
+  # 软件开发智能体团队
   software_team:
     model: "gpt-4.1-mini"
     description: "A software development team with product manager, developer and tester."

@@ -60,7 +60,7 @@ $agent use software_team 帮我写一个产品预约体验的表单页面
 
 - `calculator`: 数学计算工具
 - `current_time`: 获取当前时间
-- `browser`: 浏览器操作工具，注意需安装额外依赖
-- `google_search`: 搜索引擎，注意需在`config.yaml`中配置api_key
-- `file_save`: 文件保存工具
+- `browser`: 浏览器操作工具，注意需安装`browser-use`依赖
+- `google_search`: 搜索引擎，注意需在`config.yaml`中配置 `api_key`
+- `file_save`: 文件保存工具，开启后智能体输出的内容将保存在 `workspace` 目录下
 - `terminal`: 终端命令执行工具
