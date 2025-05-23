@@ -1,21 +1,22 @@
-# 选中的Agent Team
+# 默认选中的Agent Team名称
 team: general_team
 
 tools:
   google_search:
     # get your apikey from https://serper.dev/
-    api_key: "e7a21d840d6bb0ba832d850bb5aa4dee337415c4"
+    api_key: "YOUR API KEY"
 
 # Team config
 teams:
   general_team:
-    model: "qwen-plus"
+    model: "gpt-4.1-mini"        # 团队使用的模型
     description: "A versatile research and information agent team"
     max_steps: 5
     agents:
       - name: "通用智能助手"
         description: "Universal assistant specializing in research, information synthesis, and task execution"
         system_prompt: "You are a versatile assistant who answers questions and completes tasks using available tools. Reply in a clearly structured, attractive and easy to read format."
+        # Agent 支持使用的工具
         tools:
           - time
           - calculator

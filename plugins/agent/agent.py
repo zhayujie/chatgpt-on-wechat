@@ -46,7 +46,7 @@ class AgentPlugin(Plugin):
     
     def get_help_text(self, verbose=False, **kwargs):
         """Return help message for the agent plugin."""
-        help_text = "AgentMesh插件: 使用多智能体团队处理任务和回答问题，支持多种工具和智能体协作能力。"
+        help_text = "通过AgentMesh实现对终端、浏览器、文件系统、搜索引擎等工具的执行，并支持多智能体协作。"
         trigger_prefix = conf().get("plugin_trigger_prefix", "$")
         
         if not verbose:
@@ -56,14 +56,13 @@ class AgentPlugin(Plugin):
         teams_str = ", ".join(teams) if teams else "未配置任何团队"
         
         help_text += "\n\n使用说明：\n"
+        help_text += f"{trigger_prefix}agent [task] - 使用默认团队执行任务\n"
         help_text += f"{trigger_prefix}agent teams - 列出可用的团队\n"
-        help_text += f"{trigger_prefix}agent use [team_name] [task] - 使用特定团队执行任务\n"
-        help_text += f"{trigger_prefix}agent [task] - 使用默认团队执行任务\n\n"
-        help_text += f"可用团队: {teams_str}\n\n"
+        help_text += f"{trigger_prefix}agent use [team_name] [task] - 使用特定团队执行任务\n\n"
+        help_text += f"可用团队: \n{teams_str}\n\n"
         help_text += f"示例:\n"
-        help_text += f"{trigger_prefix}agent use general_team 帮我分析多智能体技术发展趋势\n"
-        help_text += f"{trigger_prefix}agent 帮我查看当前文件夹路径"
-        
+        help_text += f"{trigger_prefix}agent 帮我查看当前文件夹路径\n"
+        help_text += f"{trigger_prefix}agent use software_team 帮我写一个产品预约体验的表单页面"
         return help_text
     
     def get_available_teams(self) -> List[str]:

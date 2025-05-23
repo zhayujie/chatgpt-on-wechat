@@ -1,21 +1,18 @@
-# AgentMesh Plugin
+# Agent插件
 
-这个插件集成了 AgentMesh 多智能体框架，允许用户通过简单的命令使用多智能体团队来完成各种任务。
+## 插件说明
 
-## 功能介绍
+基于 [AgentMesh](https://github.com/MinimalFuture/AgentMesh) 多智能体框架实现的Agent插件，可以让机器人快速获得Agent能力，通过自然语言对话来访问 **终端、浏览器、文件系统、搜索引擎** 等各类工具。
+同时还支持通过 **多智能体协作** 来完成复杂任务，例如多智能体任务分发、多智能体问题讨论、协同处理等。
 
-AgentMesh 是一个开源的多智能体平台，提供开箱即用的 Agent 开发框架、多 Agent 间的协同策略、任务规划和自主决策能力。通过这个插件，你可以：
-
-- 使用预配置的智能体团队处理复杂任务
-- 利用多智能体协作能力解决问题
-- 访问各种工具，如搜索引擎、浏览器、文件系统等
+AgentMesh项目地址：https://github.com/MinimalFuture/AgentMesh
 
 ## 安装
 
-1. 确保已安装 AgentMesh SDK：
+1. 确保已安装依赖：
 
 ```bash
-pip install agentmesh-sdk>=0.1.0
+pip install agentmesh-sdk>=0.1.2
 ```
 
 2. 如需使用浏览器工具，还需安装：
@@ -27,51 +24,43 @@ playwright install
 
 ## 配置
 
-插件从项目根目录的 `config.yaml` 文件中读取配置。请确保该文件包含正确的团队配置。
+插件配置文件是 `plugins/agent`目录下的 `config.yaml`，包含智能体团队的配置以及工具的配置，可以从模板文件 `config-template.yaml`中复制：
 
-配置示例：
-
-```yaml
-teams:
-  general_team:
-    description: "通用智能体团队，擅长于搜索、研究和执行各种任务"
-    model: "gpt-4o"
-    max_steps: 20
-    agents:
-      - name: "通用助手"
-        description: "全能的通用智能体"
-        system_prompt: "你是全能的通用智能体，可以帮助用户解决工作、生活、学习上的任何问题，以及使用工具解决各类复杂问题"
-        tools: ["google_search", "calculator", "current_time"]
+```bash
+cp config-template.yaml config.yaml
 ```
+
+说明：
+
+ - `team`配置是默认选中的 agent team
+ - `teams` 下是Agent团队配置，团队的model默认为`gpt-4.1-mini`，可根据需要进行修改，模型对应的 `api_key` 需要在项目根目录的 `config.json` 全局配置中进行配置。例如openai模型需要配置 `open_ai_api_key`
+ - 支持为 `agents` 下面的每个agent添加model字段来设置不同的模型
+
 
 ## 使用方法
 
-使用 `$agent` 前缀触发插件，支持以下命令：
+在对机器人发送的消息中使用 `$agent` 前缀来触发插件，支持以下命令：
 
-- `$agent teams` - 列出可用的团队
-- `$agent use [team_name] [task]` - 使用特定团队执行任务
-- `$agent [task]` - 使用默认团队执行任务
+- `$agent [task]`: 使用默认团队执行任务 (默认团队可通 config.yaml 中的team配置修改)
+- `$agent teams`: 列出可用的团队
+- `$agent use [team_name] [task]`: 使用指定的团队执行任务
+
 
 ### 示例
 
-```
+```bash
+$agent 帮我查看当前目录下有哪些文件夹
 $agent teams
-$agent use general_team 帮我分析多智能体技术发展趋势
-$agent 帮我查看当前文件夹路径
+$agent use software_team 帮我写一个产品预约体验的表单页面
 ```
 
 ## 工具支持
 
-AgentMesh 支持多种工具，包括但不限于：
+目前支持多种内置工具，包括但不限于：
 
 - `calculator`: 数学计算工具
 - `current_time`: 获取当前时间
-- `browser`: 浏览器操作工具
-- `google_search`: 搜索引擎
+- `browser`: 浏览器操作工具，注意需安装额外依赖
+- `google_search`: 搜索引擎，注意需在`config.yaml`中配置api_key
 - `file_save`: 文件保存工具
 - `terminal`: 终端命令执行工具
-
-## 注意事项
-
-1. 确保 `config.yaml` 文件中包含正确的团队配置
-2. 如果需要使用浏览器工具，请确保安装了相关依赖
