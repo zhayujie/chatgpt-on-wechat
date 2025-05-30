@@ -12,7 +12,7 @@ AgentMesh项目地址：https://github.com/MinimalFuture/AgentMesh
 1. 确保已安装依赖：
 
 ```bash
-pip install agentmesh-sdk>=0.1.2
+pip install agentmesh-sdk>=0.1.3
 ```
 
 2. 如需使用浏览器工具，还需安装：
