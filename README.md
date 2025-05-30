@@ -16,8 +16,8 @@ chatgpt-on-wechat（简称CoW）项目是基于大模型的智能对话机器人
 -  ✅   **基础对话：** 私聊及群聊的消息智能回复，支持多轮会话上下文记忆，支持 GPT-4o系列, GPT-4.1系列, Claude, Gemini, 文心一言, 讯飞星火, 通义千问，ChatGLM-4，Kimi, MiniMax, GiteeAI, ModelScope
 -  ✅   **语音能力：** 可识别语音消息，通过文字或语音回复，支持 azure, baidu, google, openai(whisper/tts) 等多种语音模型
 -  ✅   **图像能力：** 支持图片生成、图片识别、图生图（如照片修复），可选择 Dall-E-3, stable diffusion, replicate, midjourney, CogView-3, vision模型
--  ✅   **丰富插件：** 支持自定义[插件](https://github.com/zhayujie/chatgpt-on-wechat/tree/master/plugins)扩展，已实现多角色切换、文字冒险、敏感词过滤、聊天记录总结、文档总结和对话、联网搜索等插件
--  ✅   **Agent能力：** 通过 [Agent插件](https://github.com/zhayujie/chatgpt-on-wechat/tree/master/plugins/agent) 访问浏览器、终端、文件系统、搜索引擎等各类工具，并支持多智能体协作完成复杂任务，基于 [AgentMesh](https://github.com/MinimalFuture/AgentMesh) 框架实现
+-  ✅   **丰富插件：** 支持自定义插件扩展，已实现多角色切换、文字冒险、敏感词过滤、聊天记录总结、文档总结和对话、联网搜索等插件
+-  ✅   **Agent能力：** 支持访问浏览器、终端、文件系统、搜索引擎等各类工具，并可通过多智能体协作完成复杂任务，基于 [AgentMesh](https://github.com/MinimalFuture/AgentMesh) 框架实现
 -  ✅   **知识库：** 通过上传知识库文件自定义专属机器人，可作为数字分身、智能客服、私域助手使用，基于 [LinkAI](https://link-ai.tech) 实现
 
 ## 声明
