@@ -49,6 +49,9 @@ class WebChannel(ChatChannel):
         self.msg_id_counter = 0  # 添加消息ID计数器
         self.session_queues = {}  # 存储session_id到队列的映射
         self.request_to_session = {}  # 存储request_id到session_id的映射
+        # web channel无需前缀
+        conf()["single_chat_prefix"] = [""]
+
 
     def _generate_msg_id(self):
         """生成唯一的消息ID"""
@@ -125,7 +128,7 @@ class WebChannel(ChatChannel):
             
             # 创建上下文
             context = self._compose_context(ContextType.TEXT, prompt, msg=msg)
-            
+
             # 添加必要的字段
             context["session_id"] = session_id
             context["request_id"] = request_id
