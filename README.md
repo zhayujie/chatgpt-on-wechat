@@ -381,7 +381,7 @@ volumes:
  - `model`: 可填写`qwen-turbo、qwen-plus、qwen-max`
  - `dashscope_api_key`: 通义千问的 API-KEY，参考 [官方文档](https://bailian.console.aliyun.com/?tab=api#/api) ，在 [控制台](https://bailian.console.aliyun.com/?tab=model#/api-key) 创建
  
-方式二：OpenAI方式接入，配置如下：
+方式二：OpenAI兼容方式接入，配置如下：
 ```json
 {
   "bot_type": "chatGPT",
@@ -425,7 +425,7 @@ API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn)
  - `Minimax_api_key`：MiniMax平台的API-KEY，在 [控制台](https://platform.minimaxi.com/user-center/basic-information/interface-key) 创建
  - `Minimax_group_id`: 在 [账户信息](https://platform.minimaxi.com/user-center/basic-information) 右上角获取
  
-方式二：OpenAI方式接入，配置如下：
+方式二：OpenAI兼容方式接入，配置如下：
 ```json
 {
   "bot_type": "chatGPT",
@@ -454,7 +454,7 @@ API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn)
  - `model`: 可填写`moonshot-v1-8k、 moonshot-v1-32k、 moonshot-v1-128k`
  - `moonshot_api_key`: Moonshot的API-KEY，在 [控制台](https://platform.moonshot.cn/console/api-keys) 创建
  
-方式二：OpenAI方式接入，配置如下：
+方式二：OpenAI兼容方式接入，配置如下：
 ```json
 {
   "bot_type": "chatGPT",
@@ -489,7 +489,7 @@ API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn)
  - `xunfei_domain`: 可填写 `4.0Ultra、 generalv3.5、 max-32k、 generalv3、 pro-128k、 lite`
  - `xunfei_spark_url`: 填写参考 [官方文档-请求地址](https://www.xfyun.cn/doc/spark/Web.html#_1-1-%E8%AF%B7%E6%B1%82%E5%9C%B0%E5%9D%80) 的说明
  
-方式二：OpenAI方式接入，配置如下：
+方式二：OpenAI兼容方式接入，配置如下：
 ```json
 {
   "bot_type": "chatGPT",
@@ -518,7 +518,7 @@ API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn)
  - `model`: 可填 `glm-4-plus、glm-4-air-250414、glm-4-airx、glm-4-long 、glm-4-flashx 、glm-4-flash-250414`, 参考 [glm-4系列模型编码](https://bigmodel.cn/dev/api/normal-model/glm-4)
  - `zhipu_ai_api_key`: 智谱AI平台的 API KEY，在 [控制台](https://www.bigmodel.cn/usercenter/proj-mgmt/apikeys) 创建
  
-方式二：OpenAI方式接入，配置如下：
+方式二：OpenAI兼容方式接入，配置如下：
 ```json
 {
   "bot_type": "chatGPT",
@@ -535,8 +535,6 @@ API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn)
 
 <details>
 <summary>ModelScope</summary>
-
-
 
 ```json
 {
