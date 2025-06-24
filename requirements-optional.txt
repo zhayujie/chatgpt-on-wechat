@@ -28,7 +28,7 @@ websocket-client==1.2.0
 # claude bot
 curl_cffi
 # claude API
-anthropic
+anthropic==0.25.0
 
 # tongyi qwen
 broadscope_bailian
