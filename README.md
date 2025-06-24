@@ -276,6 +276,7 @@ volumes:
 ## 模型说明
 
 以下对所有可支持的模型的配置和使用方法进行说明，模型接口实现在项目的 `bot/` 目录下。
+>部分模型厂商接入有官方sdk和OpenAI兼容两种方式，建议使用OpenAI兼容的方式。
 
 <details>
 <summary>OpenAI</summary>
@@ -288,12 +289,14 @@ volumes:
 {
     "model": "gpt-4.1-mini",
     "open_ai_api_key": "YOUR_API_KEY",
-    "open_ai_api_base": "https://api.openai.com/v1"
+    "open_ai_api_base": "https://api.openai.com/v1",
+    "bot_type": "chatGPT"
 }
 ```
 
- - `model`: 与OpenAI接口的model参数一致，支持包括 gpt-4.1系列, gpt-4o系列, o系列模型
+ - `model`: 与OpenAI接口的 [model参数](https://platform.openai.com/docs/models) 一致，支持包括 o系列、gpt-4系列、gpt-3.5系列等模型
  - `open_ai_api_base`: 如果需要接入第三方代理接口，可通过修改该参数进行接入
+ - `bot_type`: 使用OpenAI相关模型时无需填写。当使用第三方代理接口接入Claude等非OpenAI官方模型时，该参数设为 `chatGPT`
 </details>
 
 <details>
@@ -317,7 +320,287 @@ volumes:
 + `model`: model字段填写空则直接使用智能体的模型，可在平台中灵活切换，[模型列表](https://link-ai.tech/console/models)中的全部模型均可使用
 </details>
 
-更多模型说明：Coming soon...
+<details>
+<summary>DeepSeek</summary>
+
+1. API Key创建：在 [DeepSeek平台](https://platform.deepseek.com/api_keys) 创建API Key 
+
+2. 填写配置
+
+```json
+{
+  "bot_type": "chatGPT",
+  "model": "deepseek-chat",
+  "open_ai_api_key": "sk-xxxxxxxxxxx",
+  "open_ai_api_base": "https://api.deepseek.com/v1"
+}
+```
+
+ - `bot_type`: OpenAI兼容方式
+ - `model`: 可填 `deepseek-chat、deepseek-reasoner`，分别对应的是 V3 和 R1 模型
+ - `open_ai_api_key`: DeepSeek平台的 API Key
+ - `open_ai_api_base`: DeepSeek平台 BASE URL
+</details>
+
+<details>
+<summary>Azure</summary>
+
+1. API Key创建：在 [DeepSeek平台](https://platform.deepseek.com/api_keys) 创建API Key 
+
+2. 填写配置
+
+```json
+{
+  "model": "",
+  "use_azure_chatgpt": true,
+  "open_ai_api_key": "e7ffc5dd84f14521a53f14a40231ea78",
+  "open_ai_api_base": "https://linkai-240917.openai.azure.com/",
+  "azure_deployment_id": "gpt-4.1",
+  "azure_api_version": "2025-01-01-preview"
+}
+```
+
+ - `model`: 留空即可
+ - `use_azure_chatgpt`: 设为 true 
+ - `open_ai_api_key`: Azure平台的密钥
+ - `open_ai_api_base`: Azure平台的 BASE URL
+ - `azure_deployment_id`: Azure平台部署的模型名称
+ - `azure_api_version`: api版本以及以上参数可以在部署的 [模型配置](https://oai.azure.com/resource/deployments) 界面查看
+</details>
+
+<details>
+<summary>Claude</summary>
+
+1. API Key创建：在 [Claude控制台](https://console.anthropic.com/settings/keys) 创建API Key
+
+2. 填写配置
+
+```json
+{
+    "model": "claude-sonnet-4-0",
+    "claude_api_key": "YOUR_API_KEY"
+}
+```
+ - `model`: 参考 [官方模型ID](https://docs.anthropic.com/en/docs/about-claude/models/overview#model-aliases) ，例如`claude-opus-4-0`、`claude-3-7-sonnet-latest`等
+</details>
+
+<details>
+<summary>通义千问</summary>
+
+方式一：官方SDK接入，配置如下：
+
+```json
+{
+    "model": "qwen-turbo",
+    "dashscope_api_key": "sk-qVxxxxG"
+}
+```
+ - `model`: 可填写`qwen-turbo、qwen-plus、qwen-max`
+ - `dashscope_api_key`: 通义千问的 API-KEY，参考 [官方文档](https://bailian.console.aliyun.com/?tab=api#/api) ，在 [控制台](https://bailian.console.aliyun.com/?tab=model#/api-key) 创建
+ 
+方式二：OpenAI兼容方式接入，配置如下：
+```json
+{
+  "bot_type": "chatGPT",
+  "model": "qwen-turbo",
+  "open_ai_api_base": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+  "open_ai_api_key": "sk-qVxxxxG"
+}
+```
+- `bot_type`: OpenAI兼容方式
+- `model`: 支持官方所有模型，参考[模型列表](https://help.aliyun.com/zh/model-studio/models?spm=a2c4g.11186623.0.0.78d84823Kth5on#9f8890ce29g5u)
+- `open_ai_api_base`: 通义千问API的 BASE URL
+- `open_ai_api_key`: 通义千问的 API-KEY，参考 [官方文档](https://bailian.console.aliyun.com/?tab=api#/api) ，在 [控制台](https://bailian.console.aliyun.com/?tab=model#/api-key) 创建
+</details>
+
+<details>
+<summary>Gemini</summary>
+
+API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn) 创建API Key ，配置如下
+```json
+{
+    "model": "gemini-2.5-pro",
+    "gemini_api_key": ""
+}
+```
+ - `model`: 参考[官方文档-模型列表](https://ai.google.dev/gemini-api/docs/models?hl=zh-cn)
+</details>
+
+<details>
+<summary>Moonshot</summary>
+
+方式一：官方接入，配置如下：
+
+```json
+{
+    "model": "moonshot-v1-8k",
+    "moonshot_api_key": "moonshot-v1-8k"
+}
+```
+ - `model`: 可填写`moonshot-v1-8k、 moonshot-v1-32k、 moonshot-v1-128k`
+ - `moonshot_api_key`: Moonshot的API-KEY，在 [控制台](https://platform.moonshot.cn/console/api-keys) 创建
+ 
+方式二：OpenAI兼容方式接入，配置如下：
+```json
+{
+  "bot_type": "chatGPT",
+  "model": "moonshot-v1-8k",
+  "open_ai_api_base": "https://api.moonshot.cn/v1",
+  "open_ai_api_key": ""
+}
+```
+- `bot_type`: OpenAI兼容方式
+- `model`: 可填写`moonshot-v1-8k、 moonshot-v1-32k、 moonshot-v1-128k`
+- `open_ai_api_base`: Moonshot的 BASE URL
+- `open_ai_api_key`: Moonshot的 API-KEY，在 [控制台](https://platform.moonshot.cn/console/api-keys) 创建
+</details>
+
+<details>
+<summary>百度文心</summary>
+方式一：官方SDK接入，配置如下：
+
+```json
+{
+    "model": "wenxin", 
+    "baidu_wenxin_api_key": "IajztZ0bDxgnP9bEykU7lBer",
+    "baidu_wenxin_secret_key": "EDPZn6L24uAS9d8RWFfotK47dPvkjD6G"
+}
+```
+ - `model`: 可填 `wenxin`和`wenxin-4`，对应模型为 文心-3.5 和 文心-4.0
+ - `baidu_wenxin_api_key`：参考 [千帆平台-access_token鉴权](https://cloud.baidu.com/doc/WENXINWORKSHOP/s/dlv4pct3s) 文档获取 API Key
+ - `baidu_wenxin_secret_key`：参考 [千帆平台-access_token鉴权](https://cloud.baidu.com/doc/WENXINWORKSHOP/s/dlv4pct3s) 文档获取 Secret Key
+
+方式二：OpenAI兼容方式接入，配置如下：
+```json
+{
+  "bot_type": "chatGPT",
+  "model": "qwen-turbo",
+  "open_ai_api_base": "https://qianfan.baidubce.com/v2",
+  "open_ai_api_key": "bce-v3/ALTxxxxxxd2b"
+}
+```
+- `bot_type`: OpenAI兼容方式
+- `model`: 支持官方所有模型，参考[模型列表](https://cloud.baidu.com/doc/WENXINWORKSHOP/s/Wm9cvy6rl)
+- `open_ai_api_base`: 百度文心API的 BASE URL
+- `open_ai_api_key`: 百度文心的 API-KEY，参考 [官方文档](https://cloud.baidu.com/doc/qianfan-api/s/ym9chdsy5) ，在 [控制台](https://console.bce.baidu.com/iam/#/iam/apikey/list) 创建API Key
+
+</details>
+
+<details>
+<summary>讯飞星火</summary>
+
+方式一：官方接入，配置如下：
+参考 [官方文档-快速指引](https://www.xfyun.cn/doc/platform/quickguide.html#%E7%AC%AC%E4%BA%8C%E6%AD%A5-%E5%88%9B%E5%BB%BA%E6%82%A8%E7%9A%84%E7%AC%AC%E4%B8%80%E4%B8%AA%E5%BA%94%E7%94%A8-%E5%BC%80%E5%A7%8B%E4%BD%BF%E7%94%A8%E6%9C%8D%E5%8A%A1) 获取 `APPID、 APISecret、 APIKey` 三个参数
+
+```json
+{
+  "model": "xunfei",
+  "xunfei_app_id": "",
+  "xunfei_api_key": "",
+  "xunfei_api_secret": "",
+  "xunfei_domain": "4.0Ultra",
+  "xunfei_spark_url": "wss://spark-api.xf-yun.com/v4.0/chat"
+}
+```
+ - `model`: 填 `xunfei`
+ - `xunfei_domain`: 可填写 `4.0Ultra、 generalv3.5、 max-32k、 generalv3、 pro-128k、 lite`
+ - `xunfei_spark_url`: 填写参考 [官方文档-请求地址](https://www.xfyun.cn/doc/spark/Web.html#_1-1-%E8%AF%B7%E6%B1%82%E5%9C%B0%E5%9D%80) 的说明
+ 
+方式二：OpenAI兼容方式接入，配置如下：
+```json
+{
+  "bot_type": "chatGPT",
+  "model": "4.0Ultra",
+  "open_ai_api_base": "https://spark-api-open.xf-yun.com/v1",
+  "open_ai_api_key": ""
+}
+```
+- `bot_type`: OpenAI兼容方式
+- `model`: 可填写 `4.0Ultra、 generalv3.5、 max-32k、 generalv3、 pro-128k、 lite`
+- `open_ai_api_base`: 讯飞星火平台的 BASE URL
+- `open_ai_api_key`: 讯飞星火平台的[APIPassword](https://console.xfyun.cn/services/bm3) ，因模型而已
+</details>
+
+<details>
+<summary>智谱AI</summary>
+
+方式一：官方接入，配置如下：
+
+```json
+{
+  "model": "glm-4-plus",
+  "zhipu_ai_api_key": ""
+}
+```
+ - `model`: 可填 `glm-4-plus、glm-4-air-250414、glm-4-airx、glm-4-long 、glm-4-flashx 、glm-4-flash-250414`, 参考 [glm-4系列模型编码](https://bigmodel.cn/dev/api/normal-model/glm-4)
+ - `zhipu_ai_api_key`: 智谱AI平台的 API KEY，在 [控制台](https://www.bigmodel.cn/usercenter/proj-mgmt/apikeys) 创建
+ 
+方式二：OpenAI兼容方式接入，配置如下：
+```json
+{
+  "bot_type": "chatGPT",
+  "model": "glm-4-plus",
+  "open_ai_api_base": "https://open.bigmodel.cn/api/paas/v4",
+  "open_ai_api_key": ""
+}
+```
+- `bot_type`: OpenAI兼容方式
+- `model`: 可填 `glm-4-plus、glm-4-air-250414、glm-4-airx、glm-4-long 、glm-4-flashx 、glm-4-flash-250414`, 参考 [glm-4系列模型编码](https://bigmodel.cn/dev/api/normal-model/glm-4) 
+- `open_ai_api_base`: 智谱AI平台的 BASE URL
+- `open_ai_api_key`: 智谱AI平台的 API KEY，在 [控制台](https://www.bigmodel.cn/usercenter/proj-mgmt/apikeys) 创建
+</details>
+
+<details>
+<summary>MiniMax</summary>
+
+方式一：官方接入，配置如下：
+
+```json
+{
+    "model": "abab6.5-chat",
+    "Minimax_api_key": "",
+    "Minimax_group_id": ""
+}
+```
+ - `model`: 可填写`abab6.5-chat`
+ - `Minimax_api_key`：MiniMax平台的API-KEY，在 [控制台](https://platform.minimaxi.com/user-center/basic-information/interface-key) 创建
+ - `Minimax_group_id`: 在 [账户信息](https://platform.minimaxi.com/user-center/basic-information) 右上角获取
+ 
+方式二：OpenAI兼容方式接入，配置如下：
+```json
+{
+  "bot_type": "chatGPT",
+  "model": "MiniMax-M1",
+  "open_ai_api_base": "https://api.minimaxi.com/v1",
+  "open_ai_api_key": ""
+}
+```
+- `bot_type`: OpenAI兼容方式
+- `model`: 可填`MiniMax-M1、MiniMax-Text-01`，参考[API文档](https://platform.minimaxi.com/document/%E5%AF%B9%E8%AF%9D?key=66701d281d57f38758d581d0#QklxsNSbaf6kM4j6wjO5eEek)
+- `open_ai_api_base`: MiniMax平台API的 BASE URL
+- `open_ai_api_key`: MiniMax平台的API-KEY，在 [控制台](https://platform.minimaxi.com/user-center/basic-information/interface-key) 创建
+</details>
+
+<details>
+<summary>ModelScope</summary>
+
+```json
+{
+  "bot_type": "modelscope",
+  "model": "Qwen/QwQ-32B",
+  "modelscope_api_key": "your_api_key",
+  "modelscope_base_url": "https://api-inference.modelscope.cn/v1/chat/completions",
+  "text_to_image": "MusePublic/489_ckpt_FLUX_1"
+}
+```
+
+- `bot_type`: modelscope接口格式
+- `model`: 参考[模型列表](https://www.modelscope.cn/models?filter=inference_type&page=1)
+- `modelscope_api_key`: 参考 [官方文档-访问令牌](https://modelscope.cn/docs/accounts/token) ，在 [控制台](https://modelscope.cn/my/myaccesstoken) 
+- `modelscope_base_url`: modelscope平台的 BASE URL
+- `text_to_image`: 图像生成模型，参考[模型列表](https://www.modelscope.cn/models?filter=inference_type&page=1)
+</details>
+
 
 ## 通道说明
 
