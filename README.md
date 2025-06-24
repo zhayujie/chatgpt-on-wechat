@@ -321,34 +321,51 @@ volumes:
 </details>
 
 <details>
-<summary>百度文心</summary>
-方式一：官方SDK接入，配置如下：
+<summary>DeepSeek</summary>
 
-```json
-{
-    "model": "wenxin", 
-    "baidu_wenxin_api_key": "IajztZ0bDxgnP9bEykU7lBer",
-    "baidu_wenxin_secret_key": "EDPZn6L24uAS9d8RWFfotK47dPvkjD6G",
-}
-```
- - `model`: 可填 `wenxin`和`wenxin-4`，对应模型为 文心-3.5 和 文心-4.0
- - `baidu_wenxin_api_key`：参考 [千帆平台-access_token鉴权](https://cloud.baidu.com/doc/WENXINWORKSHOP/s/dlv4pct3s) 文档获取 API Key
- - `baidu_wenxin_secret_key`：参考 [千帆平台-access_token鉴权](https://cloud.baidu.com/doc/WENXINWORKSHOP/s/dlv4pct3s) 文档获取 Secret Key
+1. API Key创建：在 [DeepSeek平台](https://platform.deepseek.com/api_keys) 创建API Key 
 
-方式二：OpenAI兼容方式接入，配置如下：
+2. 填写配置
+
 ```json
 {
   "bot_type": "chatGPT",
-  "model": "qwen-turbo",
-  "open_ai_api_base": "https://qianfan.baidubce.com/v2",
-  "open_ai_api_key": "bce-v3/ALTxxxxxxd2b"
+  "model": "deepseek-chat",
+  "open_ai_api_key": "sk-xxxxxxxxxxx",
+  "open_ai_api_base": "https://api.deepseek.com/v1"
 }
 ```
-- `bot_type`: OpenAI兼容方式
-- `model`: 支持官方所有模型，参考[模型列表](https://cloud.baidu.com/doc/WENXINWORKSHOP/s/Wm9cvy6rl)
-- `open_ai_api_base`: 百度文心API的 BASE URL
-- `open_ai_api_key`: 百度文心的 API-KEY，参考 [官方文档](https://cloud.baidu.com/doc/qianfan-api/s/ym9chdsy5) ，在 [控制台](https://console.bce.baidu.com/iam/#/iam/apikey/list) 创建API Key
 
+ - `bot_type`: OpenAI兼容方式
+ - `model`: 可填 `deepseek-chat、deepseek-reasoner`，分别对应的是 V3 和 R1 模型
+ - `open_ai_api_key`: DeepSeek平台的 API Key
+ - `open_ai_api_base`: DeepSeek平台 BASE URL
+</details>
+
+<details>
+<summary>Azure</summary>
+
+1. API Key创建：在 [DeepSeek平台](https://platform.deepseek.com/api_keys) 创建API Key 
+
+2. 填写配置
+
+```json
+{
+  "model": "",
+  "use_azure_chatgpt": true,
+  "open_ai_api_key": "e7ffc5dd84f14521a53f14a40231ea78",
+  "open_ai_api_base": "https://linkai-240917.openai.azure.com/",
+  "azure_deployment_id": "gpt-4.1",
+  "azure_api_version": "2025-01-01-preview"
+}
+```
+
+ - `model`: 留空即可
+ - `use_azure_chatgpt`: 设为 true 
+ - `open_ai_api_key`: Azure平台的密钥
+ - `open_ai_api_base`: Azure平台的 BASE URL
+ - `azure_deployment_id`: Azure平台部署的模型名称
+ - `azure_api_version`: api版本以及以上参数可以在部署的 [模型配置](https://oai.azure.com/resource/deployments) 界面查看
 </details>
 
 <details>
@@ -361,7 +378,7 @@ volumes:
 ```json
 {
     "model": "claude-sonnet-4-0",
-    "claude_api_key": "YOUR_API_KEY",
+    "claude_api_key": "YOUR_API_KEY"
 }
 ```
  - `model`: 参考 [官方模型ID](https://docs.anthropic.com/en/docs/about-claude/models/overview#model-aliases) ，例如`claude-opus-4-0`、`claude-3-7-sonnet-latest`等
@@ -408,37 +425,6 @@ API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn)
 ```
  - `model`: 参考[官方文档-模型列表](https://ai.google.dev/gemini-api/docs/models?hl=zh-cn)
 </details>
- 
-<details>
-<summary>MiniMax</summary>
-
-方式一：官方接入，配置如下：
-
-```json
-{
-    "model": "abab6.5-chat",
-    "Minimax_api_key": "",
-    "Minimax_group_id": ""
-}
-```
- - `model`: 可填写`abab6.5-chat`
- - `Minimax_api_key`：MiniMax平台的API-KEY，在 [控制台](https://platform.minimaxi.com/user-center/basic-information/interface-key) 创建
- - `Minimax_group_id`: 在 [账户信息](https://platform.minimaxi.com/user-center/basic-information) 右上角获取
- 
-方式二：OpenAI兼容方式接入，配置如下：
-```json
-{
-  "bot_type": "chatGPT",
-  "model": "MiniMax-M1",
-  "open_ai_api_base": "https://api.minimaxi.com/v1",
-  "open_ai_api_key": ""
-}
-```
-- `bot_type`: OpenAI兼容方式
-- `model`: 可填`MiniMax-M1、MiniMax-Text-01`，参考[API文档](https://platform.minimaxi.com/document/%E5%AF%B9%E8%AF%9D?key=66701d281d57f38758d581d0#QklxsNSbaf6kM4j6wjO5eEek)
-- `open_ai_api_base`: MiniMax平台API的 BASE URL
-- `open_ai_api_key`: MiniMax平台的API-KEY，在 [控制台](https://platform.minimaxi.com/user-center/basic-information/interface-key) 创建
-</details>
 
 <details>
 <summary>Moonshot</summary>
@@ -467,6 +453,37 @@ API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn)
 - `model`: 可填写`moonshot-v1-8k、 moonshot-v1-32k、 moonshot-v1-128k`
 - `open_ai_api_base`: Moonshot的 BASE URL
 - `open_ai_api_key`: Moonshot的 API-KEY，在 [控制台](https://platform.moonshot.cn/console/api-keys) 创建
+</details>
+
+<details>
+<summary>百度文心</summary>
+方式一：官方SDK接入，配置如下：
+
+```json
+{
+    "model": "wenxin", 
+    "baidu_wenxin_api_key": "IajztZ0bDxgnP9bEykU7lBer",
+    "baidu_wenxin_secret_key": "EDPZn6L24uAS9d8RWFfotK47dPvkjD6G"
+}
+```
+ - `model`: 可填 `wenxin`和`wenxin-4`，对应模型为 文心-3.5 和 文心-4.0
+ - `baidu_wenxin_api_key`：参考 [千帆平台-access_token鉴权](https://cloud.baidu.com/doc/WENXINWORKSHOP/s/dlv4pct3s) 文档获取 API Key
+ - `baidu_wenxin_secret_key`：参考 [千帆平台-access_token鉴权](https://cloud.baidu.com/doc/WENXINWORKSHOP/s/dlv4pct3s) 文档获取 Secret Key
+
+方式二：OpenAI兼容方式接入，配置如下：
+```json
+{
+  "bot_type": "chatGPT",
+  "model": "qwen-turbo",
+  "open_ai_api_base": "https://qianfan.baidubce.com/v2",
+  "open_ai_api_key": "bce-v3/ALTxxxxxxd2b"
+}
+```
+- `bot_type`: OpenAI兼容方式
+- `model`: 支持官方所有模型，参考[模型列表](https://cloud.baidu.com/doc/WENXINWORKSHOP/s/Wm9cvy6rl)
+- `open_ai_api_base`: 百度文心API的 BASE URL
+- `open_ai_api_key`: 百度文心的 API-KEY，参考 [官方文档](https://cloud.baidu.com/doc/qianfan-api/s/ym9chdsy5) ，在 [控制台](https://console.bce.baidu.com/iam/#/iam/apikey/list) 创建API Key
+
 </details>
 
 <details>
@@ -512,7 +529,7 @@ API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn)
 ```json
 {
   "model": "glm-4-plus",
-  "zhipu_ai_api_key": "",
+  "zhipu_ai_api_key": ""
 }
 ```
  - `model`: 可填 `glm-4-plus、glm-4-air-250414、glm-4-airx、glm-4-long 、glm-4-flashx 、glm-4-flash-250414`, 参考 [glm-4系列模型编码](https://bigmodel.cn/dev/api/normal-model/glm-4)
@@ -534,6 +551,37 @@ API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn)
 </details>
 
 <details>
+<summary>MiniMax</summary>
+
+方式一：官方接入，配置如下：
+
+```json
+{
+    "model": "abab6.5-chat",
+    "Minimax_api_key": "",
+    "Minimax_group_id": ""
+}
+```
+ - `model`: 可填写`abab6.5-chat`
+ - `Minimax_api_key`：MiniMax平台的API-KEY，在 [控制台](https://platform.minimaxi.com/user-center/basic-information/interface-key) 创建
+ - `Minimax_group_id`: 在 [账户信息](https://platform.minimaxi.com/user-center/basic-information) 右上角获取
+ 
+方式二：OpenAI兼容方式接入，配置如下：
+```json
+{
+  "bot_type": "chatGPT",
+  "model": "MiniMax-M1",
+  "open_ai_api_base": "https://api.minimaxi.com/v1",
+  "open_ai_api_key": ""
+}
+```
+- `bot_type`: OpenAI兼容方式
+- `model`: 可填`MiniMax-M1、MiniMax-Text-01`，参考[API文档](https://platform.minimaxi.com/document/%E5%AF%B9%E8%AF%9D?key=66701d281d57f38758d581d0#QklxsNSbaf6kM4j6wjO5eEek)
+- `open_ai_api_base`: MiniMax平台API的 BASE URL
+- `open_ai_api_key`: MiniMax平台的API-KEY，在 [控制台](https://platform.minimaxi.com/user-center/basic-information/interface-key) 创建
+</details>
+
+<details>
 <summary>ModelScope</summary>
 
 ```json
@@ -542,7 +590,7 @@ API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn)
   "model": "Qwen/QwQ-32B",
   "modelscope_api_key": "your_api_key",
   "modelscope_base_url": "https://api-inference.modelscope.cn/v1/chat/completions",
-  "text_to_image": "MusePublic/489_ckpt_FLUX_1",
+  "text_to_image": "MusePublic/489_ckpt_FLUX_1"
 }
 ```
 
