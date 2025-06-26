@@ -635,7 +635,78 @@ API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn)
 
 </details>
 
-更多通道说明：Coming soon...
+<details>
+<summary>微信公众号</summary>
+
+本项目支持订阅号和服务号两种公众号，通过服务号(`wechatmp_service`)体验更佳。将下列配置加入 `config.json`：
+
+```json
+{
+    "channel_type": "wechatmp",
+    "wechatmp_token": "TOKEN",
+    "wechatmp_port": 8080,
+    "wechatmp_app_id": "APPID",
+    "wechatmp_app_secret": "APPSECRET",
+    "wechatmp_aes_key": ""
+}
+```
+
+服务器默认监听8080端口，可通过端口转发使微信服务器访问80或443端口。
+
+</details>
+
+<details>
+<summary>企业微信应用</summary>
+
+企业微信自建应用接入需在后台创建应用并启用消息回调，配置示例：
+
+```json
+{
+    "channel_type": "wechatcom_app",
+    "wechatcom_corp_id": "CORPID",
+    "wechatcomapp_token": "TOKEN",
+    "wechatcomapp_port": 9898,
+    "wechatcomapp_secret": "SECRET",
+    "wechatcomapp_agent_id": "AGENTID",
+    "wechatcomapp_aes_key": "AESKEY"
+}
+```
+
+扫码关注企业后即可与机器人对话。
+
+</details>
+
+<details>
+<summary>钉钉</summary>
+
+钉钉需要在开放平台创建智能机器人应用，将以下配置填入 `config.json`：
+
+```json
+{
+    "channel_type": "dingtalk",
+    "dingtalk_client_id": "CLIENT_ID",
+    "dingtalk_client_secret": "CLIENT_SECRET"
+}
+```
+
+</details>
+
+<details>
+<summary>飞书</summary>
+
+飞书机器人回调服务依赖 `feishu_app_id` 等参数：
+
+```json
+{
+    "channel_type": "feishu",
+    "feishu_app_id": "APP_ID",
+    "feishu_app_secret": "APP_SECRET",
+    "feishu_token": "VERIFICATION_TOKEN",
+    "feishu_port": 80
+}
+```
+
+</details>
 
 <br/>
 
