@@ -189,6 +189,7 @@ class WebChannel(ChatChannel):
             return f.read()
 
     def startup(self):
+        port = conf().get("web_port", 9899)
         logger.info("""[WebChannel] 当前channel为web，可修改 config.json 配置文件中的 channel_type 字段进行切换。全部可用类型为：
         1. web: 网页
         2. terminal: 终端
@@ -197,7 +198,7 @@ class WebChannel(ChatChannel):
         5. wechatcom_app: 企微自建应用
         6. dingtalk: 钉钉
         7. feishu: 飞书""")
-        logger.info("Web对话网页已运行, 请使用浏览器访问 http://localhost:9899/chat")
+        logger.info(f"Web对话网页已运行, 请使用浏览器访问 http://localhost:{port}/chat")
         
         # 确保静态文件目录存在
         static_dir = os.path.join(os.path.dirname(__file__), 'static')
@@ -212,7 +213,6 @@ class WebChannel(ChatChannel):
             '/chat', 'ChatHandler',
             '/assets/(.*)', 'AssetsHandler',  # 匹配 /assets/任何路径
         )
-        port = conf().get("web_port", 9899)
         app = web.application(urls, globals(), autoreload=False)
         
         # 禁用web.py的默认日志输出
