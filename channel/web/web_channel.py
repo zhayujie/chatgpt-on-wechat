@@ -198,7 +198,7 @@ class WebChannel(ChatChannel):
         5. wechatcom_app: 企微自建应用
         6. dingtalk: 钉钉
         7. feishu: 飞书""")
-        logger.info(f"Web对话网页已运行, 请使用浏览器访问 http://localhost:{port}/chat")
+        logger.info(f"Web对话网页已运行, 请使用浏览器访问 http://localhost:{port}/chat（本地运行）或 http://ip:{port}/chat（服务器运行） ")
         
         # 确保静态文件目录存在
         static_dir = os.path.join(os.path.dirname(__file__), 'static')

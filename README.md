@@ -609,7 +609,7 @@ API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn)
 <details>
 <summary>Web</summary>
 
-项目启动后默认运行web通道，可以通过访问 http://localhost:9899/chat 在网页端进行对话，通过修改 `web_port` 配置可自定义服务端口。
+项目启动后默认运行web通道，配置如下：
 
 ```json
 {
@@ -617,7 +617,9 @@ API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn)
     "web_port": 9899
 }
 ```
-
+- `web_port`: 默认为 9899，可按需更改，需要服务器防火墙和安全组放行该端口
+- 如本地运行，启动后请访问 `http://localhost:port/chat` ；如服务器运行，请访问 `http://ip:port/chat` 
+> 注：请将上述 url 中的 ip 或者 port 替换为实际的值
 </details>
 
 <details>
@@ -635,7 +637,78 @@ API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn)
 
 </details>
 
-更多通道说明：Coming soon...
+<details>
+<summary>微信公众号</summary>
+
+本项目支持订阅号和服务号两种公众号，通过服务号(`wechatmp_service`)体验更佳。将下列配置加入 `config.json`：
+
+```json
+{
+    "channel_type": "wechatmp",
+    "wechatmp_token": "TOKEN",
+    "wechatmp_port": 80,
+    "wechatmp_app_id": "APPID",
+    "wechatmp_app_secret": "APPSECRET",
+    "wechatmp_aes_key": ""
+}
+```
+- `channel_type`: 个人订阅号为`wechatmp`，企业服务号为`wechatmp_service`
+
+详细步骤和参数说明参考 [微信公众号接入](https://docs.link-ai.tech/cow/multi-platform/wechat-mp)
+
+</details>
+
+<details>
+<summary>企业微信应用</summary>
+
+企业微信自建应用接入需在后台创建应用并启用消息回调，配置示例：
+
+```json
+{
+    "channel_type": "wechatcom_app",
+    "wechatcom_corp_id": "CORPID",
+    "wechatcomapp_token": "TOKEN",
+    "wechatcomapp_port": 9898,
+    "wechatcomapp_secret": "SECRET",
+    "wechatcomapp_agent_id": "AGENTID",
+    "wechatcomapp_aes_key": "AESKEY"
+}
+```
+详细步骤和参数说明参考 [企微自建应用接入](https://docs.link-ai.tech/cow/multi-platform/wechat-com)
+
+</details>
+
+<details>
+<summary>钉钉</summary>
+
+钉钉需要在开放平台创建智能机器人应用，将以下配置填入 `config.json`：
+
+```json
+{
+    "channel_type": "dingtalk",
+    "dingtalk_client_id": "CLIENT_ID",
+    "dingtalk_client_secret": "CLIENT_SECRET"
+}
+```
+详细步骤和参数说明参考 [钉钉接入](https://docs.link-ai.tech/cow/multi-platform/dingtalk)
+</details>
+
+<details>
+<summary>飞书</summary>
+
+通过自建应用接入AI相关能力到飞书应用中，默认已是飞书的企业用户，且具有企业管理权限，将以下配置填入 `config.json`：：
+
+```json
+{
+    "channel_type": "feishu",
+    "feishu_app_id": "APP_ID",
+    "feishu_app_secret": "APP_SECRET",
+    "feishu_token": "VERIFICATION_TOKEN",
+    "feishu_port": 80
+}
+```
+详细步骤和参数说明参考 [飞书接入](https://docs.link-ai.tech/cow/multi-platform/feishu)
+</details>
 
 <br/>
 
