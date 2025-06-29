@@ -617,7 +617,7 @@ API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn)
     "web_port": 9899
 }
 ```
-
+- `web_port`: 默认为 9899，需服务器防火墙和安全组放行该端口。如更改了端口配置，请访问 `http://localhost:ports/chat` (请将url中的ports替换为实际的端口)
 </details>
 
 <details>
@@ -644,14 +644,15 @@ API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn)
 {
     "channel_type": "wechatmp",
     "wechatmp_token": "TOKEN",
-    "wechatmp_port": 8080,
+    "wechatmp_port": 80,
     "wechatmp_app_id": "APPID",
     "wechatmp_app_secret": "APPSECRET",
     "wechatmp_aes_key": ""
 }
 ```
+- `channel_type`: 个人订阅号为`wechatmp`，企业服务号为`wechatmp_service`
 
-服务器默认监听8080端口，可通过端口转发使微信服务器访问80或443端口。
+详细步骤和参数说明参考 [微信公众号接入](https://docs.link-ai.tech/cow/multi-platform/wechat-mp)
 
 </details>
 
@@ -671,8 +672,7 @@ API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn)
     "wechatcomapp_aes_key": "AESKEY"
 }
 ```
-
-扫码关注企业后即可与机器人对话。
+详细步骤和参数说明参考 [企微自建应用接入](https://docs.link-ai.tech/cow/multi-platform/wechat-com)
 
 </details>
 
@@ -688,13 +688,13 @@ API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn)
     "dingtalk_client_secret": "CLIENT_SECRET"
 }
 ```
-
+详细步骤和参数说明参考 [钉钉接入](https://docs.link-ai.tech/cow/multi-platform/dingtalk)
 </details>
 
 <details>
 <summary>飞书</summary>
 
-飞书机器人回调服务依赖 `feishu_app_id` 等参数：
+通过自建应用接入AI相关能力到飞书应用中，默认已是飞书的企业用户，且具有企业管理权限，将以下配置填入 `config.json`：：
 
 ```json
 {
@@ -705,7 +705,7 @@ API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn)
     "feishu_port": 80
 }
 ```
-
+详细步骤和参数说明参考 [飞书接入](https://docs.link-ai.tech/cow/multi-platform/feishu)
 </details>
 
 <br/>
