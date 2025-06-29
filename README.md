@@ -609,7 +609,7 @@ API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn)
 <details>
 <summary>Web</summary>
 
-项目启动后默认运行web通道，可以通过访问 http://localhost:9899/chat 在网页端进行对话，通过修改 `web_port` 配置可自定义服务端口。
+项目启动后默认运行web通道，配置如下：
 
 ```json
 {
@@ -617,7 +617,9 @@ API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn)
     "web_port": 9899
 }
 ```
-- `web_port`: 默认为 9899，需服务器防火墙和安全组放行该端口。如更改了端口配置，请访问 `http://localhost:ports/chat` (请将url中的ports替换为实际的端口)
+- `web_port`: 默认为 9899，可按需更改，需要服务器防火墙和安全组放行该端口
+- 如本地运行，启动后请访问 `http://localhost:port/chat` ；如服务器运行，请访问 `http://ip:port/chat` 
+> 注：请将上述 url 中的 ip 或者 port 替换为实际的值
 </details>
 
 <details>
