@@ -8,4 +8,4 @@ Pillow
 pre-commit
 web.py
 linkai>=0.0.6.0
-
+agentmesh-sdk>=0.1.3
