@@ -44,12 +44,13 @@ class ChatGPTBot(Bot, OpenAIImage):
             "request_timeout": conf().get("request_timeout", None),  # 请求超时时间，openai接口默认设置为600，对于难问题一般需要较长时间
             "timeout": conf().get("request_timeout", None),  # 重试超时时间，在这个时间内，将会自动重试
         }
-        # o1相关模型固定了部分参数，暂时去掉
-        if conf_model in [const.O1, const.O1_MINI]:
-            self.sessions = SessionManager(BaiduWenxinSession, model=conf().get("model") or const.O1_MINI)
+        # 部分模型暂不支持一些参数，特殊处理
+        if conf_model in [const.O1, const.O1_MINI, const.GPT_5, const.GPT_5_MINI, const.GPT_5_NANO]:
             remove_keys = ["temperature", "top_p", "frequency_penalty", "presence_penalty"]
             for key in remove_keys:
-                self.args.pop(key, None)  # 如果键不存在，使用 None 来避免抛出错误
+                self.args.pop(key, None)  # 如果键不存在，使用 None 来避免抛出错、
+            if conf_model in [const.O1, const.O1_MINI]:  # o1系列模型不支持系统提示词，使用文心模型的session
+                self.sessions = SessionManager(BaiduWenxinSession, model=conf().get("model") or const.O1_MINI)
 
     def reply(self, query, context=None):
         # acquire reply content

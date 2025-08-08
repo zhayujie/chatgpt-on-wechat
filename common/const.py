@@ -41,6 +41,10 @@ GPT_41 = "gpt-4.1"
 GPT_41_MINI = "gpt-4.1-mini"
 GPT_41_NANO = "gpt-4.1-nano"
 
+GPT_5 = "gpt-5"
+GPT_5_MINI = "gpt-5-mini"
+GPT_5_NANO = "gpt-5-nano"
+
 O1 = "o1-preview"
 O1_MINI = "o1-mini"
 
@@ -102,6 +106,7 @@ MODELSCOPE_MODEL_LIST = ["LLM-Research/c4ai-command-r-plus-08-2024","mistralai/M
 MODEL_LIST = [
               GPT35, GPT35_0125, GPT35_1106, "gpt-3.5-turbo-16k",
               GPT_41, GPT_41_MINI, GPT_41_NANO, O1, O1_MINI, GPT_4o, GPT_4O_0806, GPT_4o_MINI, GPT4_TURBO, GPT4_TURBO_PREVIEW, GPT4_TURBO_01_25, GPT4_TURBO_11_06, GPT4, GPT4_32k, GPT4_06_13, GPT4_32k_06_13,
+              GPT_5, GPT_5_MINI, GPT_5_NANO,
               WEN_XIN, WEN_XIN_4,
               XUNFEI,
               ZHIPU_AI, GLM_4, GLM_4_PLUS, GLM_4_flash, GLM_4_LONG, GLM_4_ALLTOOLS, GLM_4_0520, GLM_4_AIR, GLM_4_AIRX,
