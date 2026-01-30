@@ -30,8 +30,8 @@ class MemorySearchTool(BaseTool):
             },
             "min_score": {
                 "type": "number",
-                "description": "Minimum relevance score (0-1, default: 0.3)",
-                "default": 0.3
+                "description": "Minimum relevance score (0-1, default: 0.1)",
+                "default": 0.1
             }
         },
         "required": ["query"]
@@ -64,7 +64,7 @@ class MemorySearchTool(BaseTool):
         
         query = args.get("query")
         max_results = args.get("max_results", 10)
-        min_score = args.get("min_score", 0.3)
+        min_score = args.get("min_score", 0.1)
         
         if not query:
             return ToolResult.fail("Error: query parameter is required")

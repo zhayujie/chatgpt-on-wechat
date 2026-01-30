@@ -22,7 +22,7 @@ class MemoryGetTool(BaseTool):
         "properties": {
             "path": {
                 "type": "string",
-                "description": "Relative path to the memory file (e.g., 'MEMORY.md', 'memory/2024-01-29.md')"
+                "description": "Relative path to the memory file (e.g., 'memory/MEMORY.md', 'memory/2024-01-29.md')"
             },
             "start_line": {
                 "type": "integer",
@@ -68,6 +68,11 @@ class MemoryGetTool(BaseTool):
         
         try:
             workspace_dir = self.memory_manager.config.get_workspace()
+            
+            # Auto-prepend memory/ if not present and not absolute path
+            if not path.startswith('memory/') and not path.startswith('/'):
+                path = f'memory/{path}'
+            
             file_path = workspace_dir / path
             
             if not file_path.exists():

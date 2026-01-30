@@ -213,7 +213,6 @@ class MemoryManager:
             
             memory_chunks.append(MemoryChunk(
                 id=chunk_id,
-                agent_id="default",
                 user_id=user_id,
                 scope=scope,
                 source=source,
@@ -330,7 +329,6 @@ class MemoryManager:
             
             memory_chunks.append(MemoryChunk(
                 id=chunk_id,
-                agent_id="default",
                 user_id=user_id,
                 scope=scope,
                 source=source,
@@ -428,7 +426,7 @@ class MemoryManager:
         
         return success
     
-    def build_memory_guidance(self, lang: str = "en", include_context: bool = True) -> str:
+    def build_memory_guidance(self, lang: str = "zh", include_context: bool = True) -> str:
         """
         Build natural memory guidance for agent system prompt
         
@@ -450,7 +448,7 @@ class MemoryManager:
         
         if lang == "zh":
             guidance = f"""## 记忆召回
-回答关于过去工作、决策、日期、人物、偏好或待办事项的问题前：先用 memory_search 搜索 MEMORY.md + memory/*.md；然后用 memory_get 只读取需要的行。如果搜索后仍不确定，说明你已检查过。
+下方"背景知识"包含你的核心长期记忆，可直接使用。如果背景知识中没有相关信息，再用 memory_search 搜索历史记录（memory/*.md 日期文件）。
 
 ## 记忆存储
 当用户分享持久偏好、决策或重要事实时（无论是否明确要求"记住"），主动存储：
@@ -465,7 +463,7 @@ class MemoryManager:
 - 自然使用记忆，就像你本来就知道这些信息"""
         else:
             guidance = f"""## Memory Recall
-Before answering anything about prior work, decisions, dates, people, preferences, or todos: run memory_search on MEMORY.md + memory/*.md; then use memory_get to pull only the needed lines. If low confidence after search, say you checked.
+"Background Knowledge" below contains your core long-term memories - use them directly. If information is not in Background Knowledge, use memory_search to search, then use memory_get to read files (path format: memory/MEMORY.md, memory/2026-01-30.md).
 
 ## Memory Storage
 When user shares durable preferences, decisions, or important facts (whether or not they explicitly say "remember"), proactively store:

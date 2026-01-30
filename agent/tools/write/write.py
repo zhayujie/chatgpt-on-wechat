@@ -34,6 +34,7 @@ class Write(BaseTool):
     def __init__(self, config: dict = None):
         self.config = config or {}
         self.cwd = self.config.get("cwd", os.getcwd())
+        self.memory_manager = self.config.get("memory_manager", None)
     
     def execute(self, args: Dict[str, Any]) -> ToolResult:
         """
@@ -63,6 +64,10 @@ class Write(BaseTool):
             
             # Get bytes written
             bytes_written = len(content.encode('utf-8'))
+            
+            # Auto-sync to memory database if this is a memory file
+            if self.memory_manager and 'memory/' in path:
+                self.memory_manager.mark_dirty()
             
             result = {
                 "message": f"Successfully wrote {bytes_written} bytes to {path}",

@@ -28,7 +28,7 @@ class MemoryConfig:
     
     # Search config
     max_results: int = 10
-    min_score: float = 0.3
+    min_score: float = 0.1
     
     # Hybrid search weights
     vector_weight: float = 0.7
