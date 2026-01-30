@@ -11,7 +11,8 @@ from agent.tools.base_tool import BaseTool, ToolStage
 class Agent:
     def __init__(self, system_prompt: str, description: str = "AI Agent", model: LLMModel = None,
                  tools=None, output_mode="print", max_steps=100, max_context_tokens=None, 
-                 context_reserve_tokens=None, memory_manager=None, name: str = None):
+                 context_reserve_tokens=None, memory_manager=None, name: str = None,
+                 workspace_dir: str = None, skill_manager=None, enable_skills: bool = True):
         """
         Initialize the Agent with system prompt, model, description.
 
@@ -26,6 +27,9 @@ class Agent:
         :param context_reserve_tokens: Reserve tokens for new requests (default: None, auto-calculated)
         :param memory_manager: Optional MemoryManager instance for memory operations
         :param name: [Deprecated] The name of the agent (no longer used in single-agent system)
+        :param workspace_dir: Optional workspace directory for workspace-specific skills
+        :param skill_manager: Optional SkillManager instance (will be created if None and enable_skills=True)
+        :param enable_skills: Whether to enable skills support (default: True)
         """
         self.name = name or "Agent"
         self.system_prompt = system_prompt
@@ -40,6 +44,23 @@ class Agent:
         self.last_usage = None  # Store last API response usage info
         self.messages = []  # Unified message history for stream mode
         self.memory_manager = memory_manager  # Memory manager for auto memory flush
+        self.workspace_dir = workspace_dir  # Workspace directory
+        self.enable_skills = enable_skills  # Skills enabled flag
+        
+        # Initialize skill manager
+        self.skill_manager = None
+        if enable_skills:
+            if skill_manager:
+                self.skill_manager = skill_manager
+            else:
+                # Auto-create skill manager
+                try:
+                    from agent.skills import SkillManager
+                    self.skill_manager = SkillManager(workspace_dir=workspace_dir)
+                    logger.info(f"Initialized SkillManager with {len(self.skill_manager.skills)} skills")
+                except Exception as e:
+                    logger.warning(f"Failed to initialize SkillManager: {e}")
+        
         if tools:
             for tool in tools:
                 self.add_tool(tool)
@@ -53,6 +74,52 @@ class Agent:
         # If tool is already an instance, use it directly
         tool.model = self.model
         self.tools.append(tool)
+
+    def get_skills_prompt(self, skill_filter=None) -> str:
+        """
+        Get the skills prompt to append to system prompt.
+        
+        :param skill_filter: Optional list of skill names to include
+        :return: Formatted skills prompt or empty string
+        """
+        if not self.skill_manager:
+            return ""
+        
+        try:
+            return self.skill_manager.build_skills_prompt(skill_filter=skill_filter)
+        except Exception as e:
+            logger.warning(f"Failed to build skills prompt: {e}")
+            return ""
+    
+    def get_full_system_prompt(self, skill_filter=None) -> str:
+        """
+        Get the full system prompt including skills.
+        
+        :param skill_filter: Optional list of skill names to include
+        :return: Complete system prompt with skills appended
+        """
+        base_prompt = self.system_prompt
+        skills_prompt = self.get_skills_prompt(skill_filter=skill_filter)
+        
+        if skills_prompt:
+            return base_prompt + "\n" + skills_prompt
+        return base_prompt
+    
+    def refresh_skills(self):
+        """Refresh the loaded skills."""
+        if self.skill_manager:
+            self.skill_manager.refresh_skills()
+            logger.info(f"Refreshed skills: {len(self.skill_manager.skills)} skills loaded")
+    
+    def list_skills(self):
+        """
+        List all loaded skills.
+        
+        :return: List of skill entries or empty list
+        """
+        if not self.skill_manager:
+            return []
+        return self.skill_manager.list_skills()
 
     def _get_model_context_window(self) -> int:
         """
@@ -229,7 +296,7 @@ class Agent:
 
         return action
 
-    def run_stream(self, user_message: str, on_event=None, clear_history: bool = False) -> str:
+    def run_stream(self, user_message: str, on_event=None, clear_history: bool = False, skill_filter=None) -> str:
         """
         Execute single agent task with streaming (based on tool-call)
 
@@ -244,6 +311,7 @@ class Agent:
             on_event: Event callback function callback(event: dict)
                      event = {"type": str, "timestamp": float, "data": dict}
             clear_history: If True, clear conversation history before this call (default: False)
+            skill_filter: Optional list of skill names to include in this run
 
         Returns:
             Final response text
@@ -264,11 +332,14 @@ class Agent:
         if not self.model:
             raise ValueError("No model available for agent")
 
+        # Get full system prompt with skills
+        full_system_prompt = self.get_full_system_prompt(skill_filter=skill_filter)
+
         # Create stream executor with agent's message history
         executor = AgentStreamExecutor(
             agent=self,
             model=self.model,
-            system_prompt=self.system_prompt,
+            system_prompt=full_system_prompt,
             tools=self.tools,
             max_turns=self.max_steps,
             on_event=on_event,

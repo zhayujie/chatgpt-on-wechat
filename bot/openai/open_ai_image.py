@@ -1,7 +1,7 @@
 import time
 
 import openai
-import openai.error
+from bot.openai.openai_compat import RateLimitError
 
 from common.log import logger
 from common.token_bucket import TokenBucket
@@ -30,7 +30,7 @@ class OpenAIImage(object):
             image_url = response["data"][0]["url"]
             logger.info("[OPEN_AI] image_url={}".format(image_url))
             return True, image_url
-        except openai.error.RateLimitError as e:
+        except RateLimitError as e:
             logger.warn(e)
             if retry_count < 1:
                 time.sleep(5)

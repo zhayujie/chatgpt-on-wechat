@@ -156,12 +156,17 @@ class AgentStreamExecutor:
                     
                     # Log tool result in compact format
                     status_emoji = "✅" if result.get("status") == "success" else "❌"
-                    result_str = str(result.get('result', ''))
+                    result_data = result.get('result', '')
+                    # Format result string with proper Chinese character support
+                    if isinstance(result_data, (dict, list)):
+                        result_str = json.dumps(result_data, ensure_ascii=False)
+                    else:
+                        result_str = str(result_data)
                     logger.info(f"  {status_emoji} {tool_call['name']} ({result.get('execution_time', 0):.2f}s): {result_str[:200]}{'...' if len(result_str) > 200 else ''}")
 
                     # Build tool result block (Claude format)
                     # Content should be a string representation of the result
-                    result_content = json.dumps(result) if not isinstance(result, str) else result
+                    result_content = json.dumps(result, ensure_ascii=False) if not isinstance(result, str) else result
                     tool_result_blocks.append({
                         "type": "tool_result",
                         "tool_use_id": tool_call["id"],

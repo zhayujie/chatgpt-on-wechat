@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Dict, Any, Type
 from agent.tools.base_tool import BaseTool
 from common.log import logger
+from config import conf
 
 
 class ToolManager:
@@ -69,6 +70,11 @@ class ToolManager:
                                     and cls != BaseTool
                             ):
                                 try:
+                                    # Skip memory tools (they need special initialization with memory_manager)
+                                    if class_name in ["MemorySearchTool", "MemoryGetTool"]:
+                                        logger.debug(f"Skipped tool {class_name} (requires memory_manager)")
+                                        continue
+                                    
                                     # Create a temporary instance to get the name
                                     temp_instance = cls()
                                     tool_name = temp_instance.name
@@ -76,11 +82,22 @@ class ToolManager:
                                     self.tool_classes[tool_name] = cls
                                     logger.debug(f"Loaded tool: {tool_name} from class {class_name}")
                                 except ImportError as e:
-                                    # Ignore browser_use dependency missing errors
-                                    if "browser_use" in str(e):
-                                        pass
+                                    # Handle missing dependencies with helpful messages
+                                    error_msg = str(e)
+                                    if "browser-use" in error_msg or "browser_use" in error_msg:
+                                        logger.warning(
+                                            f"[ToolManager] Browser tool not loaded - missing dependencies.\n"
+                                            f"  To enable browser tool, run:\n"
+                                            f"    pip install browser-use markdownify playwright\n"
+                                            f"    playwright install chromium"
+                                        )
+                                    elif "markdownify" in error_msg:
+                                        logger.warning(
+                                            f"[ToolManager] {cls.__name__} not loaded - missing markdownify.\n"
+                                            f"  Install with: pip install markdownify"
+                                        )
                                     else:
-                                        logger.error(f"Error initializing tool class {cls.__name__}: {e}")
+                                        logger.warning(f"[ToolManager] {cls.__name__} not loaded due to missing dependency: {error_msg}")
                                 except Exception as e:
                                     logger.error(f"Error initializing tool class {cls.__name__}: {e}")
                     except Exception as e:
@@ -124,19 +141,35 @@ class ToolManager:
                                 and cls != BaseTool
                         ):
                             try:
+                                # Skip memory tools (they need special initialization with memory_manager)
+                                if attr_name in ["MemorySearchTool", "MemoryGetTool"]:
+                                    logger.debug(f"Skipped tool {attr_name} (requires memory_manager)")
+                                    continue
+                                
                                 # Create a temporary instance to get the name
                                 temp_instance = cls()
                                 tool_name = temp_instance.name
                                 # Store the class, not the instance
                                 self.tool_classes[tool_name] = cls
                             except ImportError as e:
-                                # Ignore browser_use dependency missing errors
-                                if "browser_use" in str(e):
-                                    pass
+                                # Handle missing dependencies with helpful messages
+                                error_msg = str(e)
+                                if "browser-use" in error_msg or "browser_use" in error_msg:
+                                    logger.warning(
+                                        f"[ToolManager] Browser tool not loaded - missing dependencies.\n"
+                                        f"  To enable browser tool, run:\n"
+                                        f"    pip install browser-use markdownify playwright\n"
+                                        f"    playwright install chromium"
+                                    )
+                                elif "markdownify" in error_msg:
+                                    logger.warning(
+                                        f"[ToolManager] {cls.__name__} not loaded - missing markdownify.\n"
+                                        f"  Install with: pip install markdownify"
+                                    )
                                 else:
-                                    print(f"Error initializing tool class {cls.__name__}: {e}")
+                                    logger.warning(f"[ToolManager] {cls.__name__} not loaded due to missing dependency: {error_msg}")
                             except Exception as e:
-                                print(f"Error initializing tool class {cls.__name__}: {e}")
+                                logger.error(f"Error initializing tool class {cls.__name__}: {e}")
             except Exception as e:
                 print(f"Error importing module {py_file}: {e}")
 
@@ -144,7 +177,7 @@ class ToolManager:
         """Configure tool classes based on configuration file"""
         try:
             # Get tools configuration
-            tools_config = config_dict or config().get("tools", {})
+            tools_config = config_dict or conf().get("tools", {})
 
             # Record tools that are configured but not loaded
             missing_tools = []
@@ -161,13 +194,20 @@ class ToolManager:
             if missing_tools:
                 for tool_name in missing_tools:
                     if tool_name == "browser":
-                        logger.error(
-                            "Browser tool is configured but could not be loaded. "
-                            "Please install the required dependency with: "
-                            "pip install browser-use>=0.1.40 or pip install agentmesh-sdk[full]"
+                        logger.warning(
+                            f"[ToolManager] Browser tool is configured but not loaded.\n"
+                            f"  To enable browser tool, run:\n"
+                            f"    pip install browser-use markdownify playwright\n"
+                            f"    playwright install chromium"
+                        )
+                    elif tool_name == "google_search":
+                        logger.warning(
+                            f"[ToolManager] Google Search tool is configured but may need API key.\n"
+                            f"  Get API key from: https://serper.dev\n"
+                            f"  Configure in config.json: tools.google_search.api_key"
                         )
                     else:
-                        logger.warning(f"Tool '{tool_name}' is configured but could not be loaded.")
+                        logger.warning(f"[ToolManager] Tool '{tool_name}' is configured but could not be loaded.")
 
         except Exception as e:
             logger.error(f"Error configuring tools from config: {e}")

@@ -7,13 +7,21 @@ import requests
 
 from bot.baidu.baidu_wenxin_session import BaiduWenxinSession
 from bot.bot import Bot
-from bot.openai.open_ai_image import OpenAIImage
 from bot.session_manager import SessionManager
 from bridge.context import ContextType
 from bridge.reply import Reply, ReplyType
 from common import const
 from common.log import logger
 from config import conf
+
+# Optional OpenAI image support
+try:
+    from bot.openai.open_ai_image import OpenAIImage
+    _openai_image_available = True
+except Exception as e:
+    logger.warning(f"OpenAI image support not available: {e}")
+    _openai_image_available = False
+    OpenAIImage = object  # Fallback to object
 
 user_session = dict()
 

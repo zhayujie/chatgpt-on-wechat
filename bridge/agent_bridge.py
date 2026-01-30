@@ -5,7 +5,6 @@ Agent Bridge - Integrates Agent system with existing COW bridge
 from typing import Optional, List
 
 from agent.protocol import Agent, LLMModel, LLMRequest
-from agent.tools import Calculator, CurrentTime, Read, Write, Edit, Bash, Grep, Find, Ls
 from bridge.bridge import Bridge
 from bridge.context import Context
 from bridge.reply import Reply, ReplyType
@@ -89,14 +88,15 @@ class AgentLLMModel(LLMModel):
                 
                 stream = self.bot.call_with_tools(**kwargs)
                 
-                # Convert Claude stream format to our expected format
+                # Convert stream format to our expected format
                 for chunk in stream:
                     yield self._format_stream_chunk(chunk)
             else:
-                raise NotImplementedError("Streaming call not implemented yet")
+                bot_type = type(self.bot).__name__
+                raise NotImplementedError(f"Bot {bot_type} does not support call_with_tools. Please add the method.")
                 
         except Exception as e:
-            logger.error(f"AgentLLMModel call_stream error: {e}")
+            logger.error(f"AgentLLMModel call_stream error: {e}", exc_info=True)
             raise
     
     def _format_response(self, response):
@@ -136,17 +136,19 @@ class AgentBridge:
         
         # Default tools if none provided
         if tools is None:
-            tools = [
-                Calculator(),
-                CurrentTime(),
-                Read(),
-                Write(),
-                Edit(),
-                Bash(),
-                Grep(),
-                Find(),
-                Ls()
-            ]
+            # Use ToolManager to load all available tools
+            from agent.tools import ToolManager
+            tool_manager = ToolManager()
+            tool_manager.load_tools()
+            
+            tools = []
+            for tool_name in tool_manager.tool_classes.keys():
+                try:
+                    tool = tool_manager.create_tool(tool_name)
+                    if tool:
+                        tools.append(tool)
+                except Exception as e:
+                    logger.warning(f"[AgentBridge] Failed to load tool {tool_name}: {e}")
         
         # Create the single super agent
         self.agent = Agent(
@@ -222,19 +224,26 @@ class AgentBridge:
         # Configure file tools to work in the correct workspace
         file_config = {"cwd": workspace_root} if memory_manager else {}
         
-        # Create default tools with workspace config
-        from agent.tools import Calculator, CurrentTime, Read, Write, Edit, Bash, Grep, Find, Ls
-        tools = [
-            Calculator(),
-            CurrentTime(),
-            Read(config=file_config),
-            Write(config=file_config),
-            Edit(config=file_config),
-            Bash(config=file_config),
-            Grep(config=file_config),
-            Find(config=file_config),
-            Ls(config=file_config)
-        ]
+        # Use ToolManager to dynamically load all available tools
+        from agent.tools import ToolManager
+        tool_manager = ToolManager()
+        tool_manager.load_tools()
+        
+        # Create tool instances for all available tools
+        tools = []
+        for tool_name in tool_manager.tool_classes.keys():
+            try:
+                tool = tool_manager.create_tool(tool_name)
+                if tool:
+                    # Apply workspace config to file operation tools
+                    if tool_name in ['read', 'write', 'edit', 'bash', 'grep', 'find', 'ls']:
+                        tool.config = file_config
+                    tools.append(tool)
+                    logger.debug(f"[AgentBridge] Loaded tool: {tool_name}")
+            except Exception as e:
+                logger.warning(f"[AgentBridge] Failed to load tool {tool_name}: {e}")
+        
+        logger.info(f"[AgentBridge] Loaded {len(tools)} tools: {[t.name for t in tools]}")
         
         # Create agent with configured tools
         agent = self.create_agent(

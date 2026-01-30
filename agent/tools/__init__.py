@@ -19,6 +19,9 @@ from agent.tools.ls.ls import Ls
 from agent.tools.memory.memory_search import MemorySearchTool
 from agent.tools.memory.memory_get import MemoryGetTool
 
+# Import web tools
+from agent.tools.web_fetch.web_fetch import WebFetch
+
 # Import tools with optional dependencies
 def _import_optional_tools():
     """Import tools that have optional dependencies"""
@@ -89,6 +92,7 @@ __all__ = [
     'Ls',
     'MemorySearchTool',
     'MemoryGetTool',
+    'WebFetch',
     # Optional tools (may be None if dependencies not available)
     'GoogleSearch',
     'FileSave',

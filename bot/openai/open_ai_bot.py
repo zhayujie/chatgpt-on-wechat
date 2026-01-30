@@ -120,3 +120,98 @@ class OpenAIBot(Bot, OpenAIImage):
                 return self.reply_text(session, retry_count + 1)
             else:
                 return result
+
+    def call_with_tools(self, messages, tools=None, stream=False, **kwargs):
+        """
+        Call OpenAI API with tool support for agent integration
+        Note: This bot uses the old Completion API which doesn't support tools.
+        For tool support, use ChatGPTBot instead.
+        
+        This method converts to ChatCompletion API when tools are provided.
+        
+        Args:
+            messages: List of messages
+            tools: List of tool definitions (OpenAI format)
+            stream: Whether to use streaming
+            **kwargs: Additional parameters
+            
+        Returns:
+            Formatted response in OpenAI format or generator for streaming
+        """
+        try:
+            # The old Completion API doesn't support tools
+            # We need to use ChatCompletion API instead
+            logger.info("[OPEN_AI] Using ChatCompletion API for tool support")
+            
+            # Build request parameters for ChatCompletion
+            request_params = {
+                "model": kwargs.get("model", conf().get("model") or "gpt-3.5-turbo"),
+                "messages": messages,
+                "temperature": kwargs.get("temperature", conf().get("temperature", 0.9)),
+                "top_p": kwargs.get("top_p", 1),
+                "frequency_penalty": kwargs.get("frequency_penalty", conf().get("frequency_penalty", 0.0)),
+                "presence_penalty": kwargs.get("presence_penalty", conf().get("presence_penalty", 0.0)),
+                "stream": stream
+            }
+            
+            # Add max_tokens if specified
+            if kwargs.get("max_tokens"):
+                request_params["max_tokens"] = kwargs["max_tokens"]
+            
+            # Add tools if provided
+            if tools:
+                request_params["tools"] = tools
+                request_params["tool_choice"] = kwargs.get("tool_choice", "auto")
+            
+            # Make API call using ChatCompletion
+            if stream:
+                return self._handle_stream_response(request_params)
+            else:
+                return self._handle_sync_response(request_params)
+                
+        except Exception as e:
+            logger.error(f"[OPEN_AI] call_with_tools error: {e}")
+            if stream:
+                def error_generator():
+                    yield {
+                        "error": True,
+                        "message": str(e),
+                        "status_code": 500
+                    }
+                return error_generator()
+            else:
+                return {
+                    "error": True,
+                    "message": str(e),
+                    "status_code": 500
+                }
+    
+    def _handle_sync_response(self, request_params):
+        """Handle synchronous OpenAI ChatCompletion API response"""
+        try:
+            response = openai.ChatCompletion.create(**request_params)
+            
+            logger.info(f"[OPEN_AI] call_with_tools reply, model={response.get('model')}, "
+                       f"total_tokens={response.get('usage', {}).get('total_tokens', 0)}")
+            
+            return response
+            
+        except Exception as e:
+            logger.error(f"[OPEN_AI] sync response error: {e}")
+            raise
+    
+    def _handle_stream_response(self, request_params):
+        """Handle streaming OpenAI ChatCompletion API response"""
+        try:
+            stream = openai.ChatCompletion.create(**request_params)
+            
+            for chunk in stream:
+                yield chunk
+                
+        except Exception as e:
+            logger.error(f"[OPEN_AI] stream response error: {e}")
+            yield {
+                "error": True,
+                "message": str(e),
+                "status_code": 500
+            }
