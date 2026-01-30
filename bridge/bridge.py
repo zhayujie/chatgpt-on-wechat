@@ -23,7 +23,7 @@ class Bridge(object):
         if bot_type:
             self.btype["chat"] = bot_type
         else:
-            model_type = conf().get("model") or const.GPT35
+            model_type = conf().get("model") or const.GPT_41_MINI
             if model_type in ["text-davinci-003"]:
                 self.btype["chat"] = const.OPEN_AI
             if conf().get("use_azure_chatgpt", False):
@@ -64,6 +64,7 @@ class Bridge(object):
 
         self.bots = {}
         self.chat_bots = {}
+        self._agent_bridge = None
 
     # 模型对应的接口
     def get_bot(self, typename):
@@ -104,3 +105,29 @@ class Bridge(object):
         重置bot路由
         """
         self.__init__()
+
+    def get_agent_bridge(self):
+        """
+        Get agent bridge for agent-based conversations
+        """
+        if self._agent_bridge is None:
+            from bridge.agent_bridge import AgentBridge
+            self._agent_bridge = AgentBridge(self)
+        return self._agent_bridge
+
+    def fetch_agent_reply(self, query: str, context: Context = None,
+                          on_event=None, clear_history: bool = False) -> Reply:
+        """
+        Use super agent to handle the query
+
+        Args:
+            query: User query
+            context: Context object
+            on_event: Event callback for streaming
+            clear_history: Whether to clear conversation history
+
+        Returns:
+            Reply object
+        """
+        agent_bridge = self.get_agent_bridge()
+        return agent_bridge.agent_reply(query, context, on_event, clear_history)

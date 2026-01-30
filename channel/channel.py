@@ -5,6 +5,8 @@ Message sending channel abstract class
 from bridge.bridge import Bridge
 from bridge.context import Context
 from bridge.reply import *
+from common.log import logger
+from config import conf
 
 
 class Channel(object):
@@ -35,7 +37,30 @@ class Channel(object):
         raise NotImplementedError
 
     def build_reply_content(self, query, context: Context = None) -> Reply:
-        return Bridge().fetch_reply_content(query, context)
+        """
+        Build reply content, using agent if enabled in config
+        """
+        # Check if agent mode is enabled
+        use_agent = conf().get("agent", False)
+
+        if use_agent:
+            try:
+                logger.info("[Channel] Using agent mode")
+
+                # Use agent bridge to handle the query
+                return Bridge().fetch_agent_reply(
+                    query=query,
+                    context=context,
+                    on_event=None,
+                    clear_history=False
+                )
+            except Exception as e:
+                logger.error(f"[Channel] Agent mode failed, fallback to normal mode: {e}")
+                # Fallback to normal mode if agent fails
+                return Bridge().fetch_reply_content(query, context)
+        else:
+            # Normal mode
+            return Bridge().fetch_reply_content(query, context)
 
     def build_voice_to_text(self, voice_file) -> Reply:
         return Bridge().fetch_voice_to_text(voice_file)

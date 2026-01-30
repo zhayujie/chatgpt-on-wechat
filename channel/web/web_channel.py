@@ -150,9 +150,6 @@ class WebChannel(ChatChannel):
         Poll for responses using the session_id.
         """
         try:
-            # 不记录轮询请求的日志
-            web.ctx.log_request = False
-            
             data = web.data()
             json_data = json.loads(data)
             session_id = json_data.get('session_id')
@@ -215,19 +212,20 @@ class WebChannel(ChatChannel):
         )
         app = web.application(urls, globals(), autoreload=False)
         
-        # 禁用web.py的默认日志输出
-        import io
-        from contextlib import redirect_stdout
+        # 完全禁用web.py的HTTP日志输出
+        # 创建一个空的日志处理函数
+        def null_log_function(status, environ):
+            pass
         
-        # 配置web.py的日志级别为ERROR，只显示错误
+        # 替换web.py的日志函数
+        web.httpserver.LogMiddleware.log = lambda self, status, environ: None
+        
+        # 配置web.py的日志级别为ERROR
         logging.getLogger("web").setLevel(logging.ERROR)
-        
-        # 禁用web.httpserver的日志
         logging.getLogger("web.httpserver").setLevel(logging.ERROR)
         
-        # 临时重定向标准输出，捕获web.py的启动消息
-        with redirect_stdout(io.StringIO()):
-            web.httpserver.runsimple(app.wsgifunc(), ("0.0.0.0", port))
+        # 启动服务器
+        web.httpserver.runsimple(app.wsgifunc(), ("0.0.0.0", port))
 
 
 class RootHandler:

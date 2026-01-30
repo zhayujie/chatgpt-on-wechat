@@ -1,10 +1,10 @@
 # encoding:utf-8
 
+import copy
 import json
 import logging
 import os
 import pickle
-import copy
 
 from common.log import logger
 
@@ -183,6 +183,7 @@ available_setting = {
     "Minimax_group_id": "",
     "Minimax_base_url": "",
     "web_port": 9899,
+    "agent": False  # 是否开启Agent模式
 }
 
 
