@@ -17,7 +17,7 @@ class MemoryFlushManager:
     - Triggers when context approaches token limit
     - Runs a silent agent turn to write memories to disk
     - Uses memory/YYYY-MM-DD.md for daily notes
-    - Uses MEMORY.md for long-term curated memories
+    - Uses MEMORY.md (workspace root) for long-term curated memories
     """
     
     def __init__(
@@ -103,7 +103,7 @@ class MemoryFlushManager:
     
     def get_main_memory_file(self, user_id: Optional[str] = None) -> Path:
         """
-        Get main memory file path: memory/MEMORY.md
+        Get main memory file path: MEMORY.md (workspace root)
         
         Args:
             user_id: Optional user ID for user-specific memory
@@ -116,7 +116,8 @@ class MemoryFlushManager:
             user_dir.mkdir(parents=True, exist_ok=True)
             return user_dir / "MEMORY.md"
         else:
-            return self.memory_dir / "MEMORY.md"
+            # Return workspace root MEMORY.md
+            return Path(self.workspace_root) / "MEMORY.md"
     
     def create_flush_prompt(self) -> str:
         """
@@ -207,13 +208,13 @@ def create_memory_files_if_needed(workspace_dir: Path, user_id: Optional[str] = 
     memory_dir = workspace_dir / "memory"
     memory_dir.mkdir(parents=True, exist_ok=True)
     
-    # Create main MEMORY.md in memory directory
+    # Create main MEMORY.md in workspace root
     if user_id:
         user_dir = memory_dir / "users" / user_id
         user_dir.mkdir(parents=True, exist_ok=True)
         main_memory = user_dir / "MEMORY.md"
     else:
-        main_memory = memory_dir / "MEMORY.md"
+        main_memory = Path(workspace_root) / "MEMORY.md"
     
     if not main_memory.exists():
         # Create empty file or with minimal structure (no obvious "Memory" header)

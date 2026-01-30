@@ -47,8 +47,8 @@ def ensure_workspace(workspace_dir: str, create_templates: bool = True) -> Works
     soul_path = os.path.join(workspace_dir, DEFAULT_SOUL_FILENAME)
     user_path = os.path.join(workspace_dir, DEFAULT_USER_FILENAME)
     agents_path = os.path.join(workspace_dir, DEFAULT_AGENTS_FILENAME)
-    memory_path = os.path.join(workspace_dir, DEFAULT_MEMORY_FILENAME)
-    memory_dir = os.path.join(workspace_dir, "memory")
+    memory_path = os.path.join(workspace_dir, DEFAULT_MEMORY_FILENAME)  # MEMORY.md 在根目录
+    memory_dir = os.path.join(workspace_dir, "memory")  # 每日记忆子目录
     
     # 创建memory子目录
     os.makedirs(memory_dir, exist_ok=True)
@@ -197,9 +197,9 @@ def _get_soul_template() -> str:
 
 def _get_user_template() -> str:
     """用户身份信息模板"""
-    return """# USER.md - 关于我的用户
+    return """# USER.md - 用户基本信息
 
-*了解你正在帮助的人。随着了解的深入，更新此文件。*
+*这个文件只存放不会变的基本身份信息。爱好、偏好、计划等动态信息请写入 MEMORY.md。*
 
 ## 基本信息
 
@@ -214,24 +214,14 @@ def _get_user_template() -> str:
 - **邮箱**: 
 - **其他**: 
 
-## 偏好设置
-
-- **语言**: 中文
-- **工作时间**: *(例如: 9:00-18:00)*
-- **提醒方式**: *(用户偏好的提醒方式)*
-
 ## 重要日期
 
 - **生日**: 
-- **其他重要日期**: 
-
-## 上下文
-
-*(用户关心什么？正在做什么项目？有什么习惯？什么会让他们开心？随着时间积累这些信息。)*
+- **纪念日**: 
 
 ---
 
-**记住**: 你了解得越多，就能帮助得越好。但要尊重隐私 - 这是在了解一个人，而不是建立档案。
+**注意**: 这个文件存放静态的身份信息
 """
 
 
@@ -270,17 +260,30 @@ def _get_agents_template() -> str:
 - **仅在主会话中加载**（与用户的直接聊天）
 - **不要在共享上下文中加载**（群聊、与其他人的会话）
 - 这是为了**安全** - 包含不应泄露给陌生人的个人上下文
-- 你可以在主会话中自由**读取、编辑和更新** MEMORY.md
 - 记录重要事件、想法、决定、观点、经验教训
 - 这是你精选的记忆 - 精华，而不是原始日志
+- 用 `edit` 工具追加新的记忆内容
 
 ### 📝 写下来 - 不要"记在心里"！
 - **记忆是有限的** - 如果你想记住某事，写入文件
 - "记在心里"不会在会话重启后保留，文件才会
-- 当有人说"记住这个" → 更新 `memory/YYYY-MM-DD.md` 或相关文件
+- 当有人说"记住这个" → 更新 `MEMORY.md` 或 `memory/YYYY-MM-DD.md`
 - 当你学到教训 → 更新 AGENTS.md、TOOLS.md 或相关技能
 - 当你犯错 → 记录下来，这样未来的你不会重复
 - **文字 > 大脑** 📝
+
+### 存储规则
+
+当用户分享信息时，根据类型选择存储位置：
+
+1. **静态身份 → USER.md**（仅限：姓名、职业、时区、联系方式、生日）
+2. **动态记忆 → MEMORY.md**（爱好、偏好、决策、目标、项目、教训、待办事项）
+3. **当天对话 → memory/YYYY-MM-DD.md**（今天聊的内容）
+
+**重要**: 
+- 爱好（唱歌、篮球等）→ MEMORY.md，不是 USER.md
+- 近期计划（下周要做什么）→ MEMORY.md，不是 USER.md
+- USER.md 只存放不会变的基本信息
 
 ## 安全
 
@@ -290,7 +293,7 @@ def _get_agents_template() -> str:
 
 ## 工具使用
 
-技能提供你的工具。当你需要一个时，查看它的 `SKILL.md`。在 `TOOLS.md` 中保留本地笔记（相机名称、SSH详情、语音偏好）。
+技能提供你的工具。当你需要一个时，查看它的 `SKILL.md`。
 
 ## 让它成为你的
 
@@ -299,34 +302,13 @@ def _get_agents_template() -> str:
 
 
 def _get_memory_template() -> str:
-    """长期记忆模板"""
+    """长期记忆模板 - 创建一个空文件，由 Agent 自己填充"""
     return """# MEMORY.md - 长期记忆
 
-*这是你精选的长期记忆。重要的背景信息、决策和经验教训都记录在这里。*
-
-## 重要背景
-
-*(记录与用户相关的重要背景信息)*
-
-## 关键决策
-
-*(记录做过的重要决定及其原因)*
-
-## 经验教训
-
-*(记录学到的教训和避免的陷阱)*
-
-## 项目和目标
-
-*(记录正在进行的项目和长期目标)*
+*这是你的长期记忆文件。记录重要的事件、决策、偏好、学到的教训。*
 
 ---
 
-**使用指南**:
-- 定期从每日记忆文件中提取重要内容更新到这里
-- 保持内容精炼和有价值
-- 移除过时或不再相关的信息
-- 这应该是精华的总结，而不是流水账
 """
 
 

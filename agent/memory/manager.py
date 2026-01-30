@@ -248,8 +248,8 @@ class MemoryManager:
         memory_dir = self.config.get_memory_dir()
         workspace_dir = self.config.get_workspace()
         
-        # Scan memory/MEMORY.md
-        memory_file = memory_dir / "MEMORY.md"
+        # Scan MEMORY.md (workspace root)
+        memory_file = Path(workspace_dir) / "MEMORY.md"
         if memory_file.exists():
             await self._sync_file(memory_file, "memory", "shared", None)
         
@@ -452,7 +452,7 @@ class MemoryManager:
 **背景知识**: 下方包含核心长期记忆，可直接使用。需要查找历史时，用 memory_search 搜索（搜索一次即可，不要重复）。
 
 **存储记忆**: 当用户分享重要信息时（偏好、决策、事实等），主动用 write 工具存储：
-- 长期信息 → memory/MEMORY.md
+- 长期信息 → MEMORY.md
 - 当天笔记 → memory/{today_file}
 - 静默存储，仅在明确要求时确认
 
@@ -463,7 +463,7 @@ class MemoryManager:
 **Background Knowledge**: Core long-term memories below - use directly. For history, use memory_search once (don't repeat).
 
 **Store Memories**: When user shares important info (preferences, decisions, facts), proactively write:
-- Durable info → memory/MEMORY.md  
+- Durable info → MEMORY.md  
 - Daily notes → memory/{today_file}
 - Store silently; confirm only when explicitly requested
 
@@ -482,8 +482,8 @@ class MemoryManager:
         Load bootstrap memory files for session start
         
         Following clawdbot's design:
-        - Only loads memory/MEMORY.md (long-term curated memory)
-        - Daily files (YYYY-MM-DD.md) are accessed via memory_search tool, not bootstrap
+        - Only loads MEMORY.md from workspace root (long-term curated memory)
+        - Daily files (memory/YYYY-MM-DD.md) are accessed via memory_search tool, not bootstrap
         - User-specific MEMORY.md is also loaded if user_id provided
         
         Returns memory content WITHOUT obvious headers so it blends naturally
@@ -500,16 +500,16 @@ class MemoryManager:
         
         sections = []
         
-        # 1. Load memory/MEMORY.md ONLY (long-term curated memory)
+        # 1. Load MEMORY.md from workspace root (long-term curated memory)
         # Following clawdbot: only MEMORY.md is bootstrap, daily files use memory_search
-        memory_file = memory_dir / "MEMORY.md"
+        memory_file = Path(workspace_dir) / "MEMORY.md"
         if memory_file.exists():
             try:
                 content = memory_file.read_text(encoding='utf-8').strip()
                 if content:
                     sections.append(content)
             except Exception as e:
-                print(f"Warning: Failed to read memory/MEMORY.md: {e}")
+                print(f"Warning: Failed to read MEMORY.md: {e}")
         
         # 2. Load user-specific MEMORY.md if user_id provided
         if user_id:

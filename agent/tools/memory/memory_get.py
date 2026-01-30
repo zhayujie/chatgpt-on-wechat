@@ -22,7 +22,7 @@ class MemoryGetTool(BaseTool):
         "properties": {
             "path": {
                 "type": "string",
-                "description": "Relative path to the memory file (e.g., 'memory/MEMORY.md', 'memory/2024-01-29.md')"
+                "description": "Relative path to the memory file (e.g., 'MEMORY.md', 'memory/2024-01-29.md')"
             },
             "start_line": {
                 "type": "integer",
