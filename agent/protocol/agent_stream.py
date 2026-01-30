@@ -111,16 +111,20 @@ class AgentStreamExecutor:
                     if usage and 'input_tokens' in usage:
                         current_tokens = usage.get('input_tokens', 0)
                         context_window = self.agent._get_model_context_window()
-                        reserve_tokens = self.agent.context_reserve_tokens or 20000
+                        # Use configured reserve_tokens or calculate based on context window
+                        reserve_tokens = self.agent._get_context_reserve_tokens()
+                        # Use smaller soft_threshold to trigger flush earlier (e.g., at 50K tokens)
+                        soft_threshold = 10000  # Trigger 10K tokens before limit
 
                         if self.agent.memory_manager.should_flush_memory(
                                 current_tokens=current_tokens,
                                 context_window=context_window,
-                                reserve_tokens=reserve_tokens
+                                reserve_tokens=reserve_tokens,
+                                soft_threshold=soft_threshold
                         ):
                             self._emit_event("memory_flush_start", {
                                 "current_tokens": current_tokens,
-                                "threshold": context_window - reserve_tokens - 4000
+                                "threshold": context_window - reserve_tokens - soft_threshold
                             })
 
                             # TODO: Execute memory flush in background
@@ -384,6 +388,14 @@ class AgentStreamExecutor:
                 "result": result.result,
                 "execution_time": execution_time
             }
+
+            # Auto-refresh skills after skill creation
+            if tool_name == "bash" and result.status == "success":
+                command = arguments.get("command", "")
+                if "init_skill.py" in command and self.agent.skill_manager:
+                    logger.info("🔄 Detected skill creation, refreshing skills...")
+                    self.agent.refresh_skills()
+                    logger.info(f"✅ Skills refreshed! Now have {len(self.agent.skill_manager.skills)} skills")
 
             self._emit_event("tool_execution_end", {
                 "tool_call_id": tool_id,

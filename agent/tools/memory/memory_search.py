@@ -80,7 +80,13 @@ class MemorySearchTool(BaseTool):
             ))
             
             if not results:
-                return ToolResult.success(f"No relevant memories found for query: {query}")
+                # Return clear message that no memories exist yet
+                # This prevents infinite retry loops
+                return ToolResult.success(
+                    f"No memories found for '{query}'. "
+                    f"This is normal if no memories have been stored yet. "
+                    f"You can store new memories by writing to memory/MEMORY.md or memory/YYYY-MM-DD.md files."
+                )
             
             # Format results
             output = [f"Found {len(results)} relevant memories:\n"]

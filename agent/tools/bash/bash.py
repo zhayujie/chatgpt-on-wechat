@@ -20,7 +20,6 @@ class Bash(BaseTool):
 IMPORTANT SAFETY GUIDELINES:
 - You can freely create, modify, and delete files within the current workspace
 - For operations outside the workspace or potentially destructive commands (rm -rf, system commands, etc.), always explain what you're about to do and ask for user confirmation first
-- Be especially careful with: file deletions, system modifications, network operations, or commands that might affect system stability
 - When in doubt, describe the command's purpose and ask for permission before executing"""
 
     params: dict = {

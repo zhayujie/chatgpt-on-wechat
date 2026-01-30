@@ -8,6 +8,7 @@ Google gemini bot
 
 import json
 import time
+import requests
 from bot.bot import Bot
 import google.generativeai as genai
 from bot.session_manager import SessionManager
@@ -118,82 +119,165 @@ class GoogleGeminiBot(Bot):
 
     def call_with_tools(self, messages, tools=None, stream=False, **kwargs):
         """
-        Call Gemini API with tool support for agent integration
+        Call Gemini API with tool support using REST API (following official docs)
         
         Args:
-            messages: List of messages
-            tools: List of tool definitions (OpenAI format, will be converted to Gemini format)
+            messages: List of messages (OpenAI format)
+            tools: List of tool definitions (OpenAI/Claude format)
             stream: Whether to use streaming
-            **kwargs: Additional parameters
+            **kwargs: Additional parameters (system, max_tokens, temperature, etc.)
             
         Returns:
             Formatted response compatible with OpenAI format or generator for streaming
         """
         try:
-            # Configure Gemini
-            genai.configure(api_key=self.api_key)
-            model_name = kwargs.get("model", self.model)
+            model_name = kwargs.get("model", self.model or "gemini-1.5-flash")
             
-            # Extract system prompt from messages
+            # Build REST API payload
+            payload = {"contents": []}
+            
+            # Extract and set system instruction
             system_prompt = kwargs.get("system", "")
-            gemini_messages = []
+            if not system_prompt:
+                for msg in messages:
+                    if msg.get("role") == "system":
+                        system_prompt = msg["content"]
+                        break
             
-            for msg in messages:
-                if msg.get("role") == "system":
-                    system_prompt = msg["content"]
-                else:
-                    gemini_messages.append(msg)
+            if system_prompt:
+                payload["system_instruction"] = {
+                    "parts": [{"text": system_prompt}]
+                }
             
             # Convert messages to Gemini format
-            gemini_messages = self._convert_to_gemini_messages(gemini_messages)
+            for msg in messages:
+                role = msg.get("role")
+                content = msg.get("content", "")
+                
+                if role == "system":
+                    continue
+                
+                # Convert role
+                gemini_role = "user" if role in ["user", "tool"] else "model"
+                
+                # Handle different content formats
+                parts = []
+                
+                if isinstance(content, str):
+                    # Simple text content
+                    parts.append({"text": content})
+                    
+                elif isinstance(content, list):
+                    # List of content blocks (Claude format)
+                    for block in content:
+                        if not isinstance(block, dict):
+                            if isinstance(block, str):
+                                parts.append({"text": block})
+                            continue
+                        
+                        block_type = block.get("type")
+                        
+                        if block_type == "text":
+                            # Text block
+                            parts.append({"text": block.get("text", "")})
+                            
+                        elif block_type == "tool_result":
+                            # Convert Claude tool_result to Gemini functionResponse
+                            tool_use_id = block.get("tool_use_id")
+                            tool_content = block.get("content", "")
+                            
+                            # Try to parse tool content as JSON
+                            try:
+                                if isinstance(tool_content, str):
+                                    tool_result_data = json.loads(tool_content)
+                                else:
+                                    tool_result_data = tool_content
+                            except:
+                                tool_result_data = {"result": tool_content}
+                            
+                            # Find the tool name from previous messages
+                            # Look for the corresponding tool_call in model's message
+                            tool_name = None
+                            for prev_msg in reversed(messages):
+                                if prev_msg.get("role") == "assistant":
+                                    prev_content = prev_msg.get("content", [])
+                                    if isinstance(prev_content, list):
+                                        for prev_block in prev_content:
+                                            if isinstance(prev_block, dict) and prev_block.get("type") == "tool_use":
+                                                if prev_block.get("id") == tool_use_id:
+                                                    tool_name = prev_block.get("name")
+                                                    break
+                                    if tool_name:
+                                        break
+                            
+                            # Gemini functionResponse format
+                            parts.append({
+                                "functionResponse": {
+                                    "name": tool_name or "unknown",
+                                    "response": tool_result_data
+                                }
+                            })
+                            
+                        elif "text" in block:
+                            # Generic text field
+                            parts.append({"text": block["text"]})
+                
+                if parts:
+                    payload["contents"].append({
+                        "role": gemini_role,
+                        "parts": parts
+                    })
             
-            # Safety settings
-            safety_settings = {
-                HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
-                HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
-                HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
-                HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
-            }
-            
-            # Convert tools from OpenAI format to Gemini format if provided
-            gemini_tools = None
-            if tools:
-                gemini_tools = self._convert_tools_to_gemini_format(tools)
-            
-            # Create model with system instruction if available
-            model_kwargs = {"model_name": model_name}
-            if system_prompt:
-                model_kwargs["system_instruction"] = system_prompt
-            
-            model = genai.GenerativeModel(**model_kwargs)
-            
-            # Generate content
-            generation_config = {}
-            if kwargs.get("max_tokens"):
-                generation_config["max_output_tokens"] = kwargs["max_tokens"]
+            # Generation config
+            gen_config = {}
             if kwargs.get("temperature") is not None:
-                generation_config["temperature"] = kwargs["temperature"]
+                gen_config["temperature"] = kwargs["temperature"]
+            if kwargs.get("max_tokens"):
+                gen_config["maxOutputTokens"] = kwargs["max_tokens"]
+            if gen_config:
+                payload["generationConfig"] = gen_config
             
-            request_params = {
-                "safety_settings": safety_settings
+            # Convert tools to Gemini format (REST API style)
+            if tools:
+                gemini_tools = self._convert_tools_to_gemini_rest_format(tools)
+                if gemini_tools:
+                    payload["tools"] = gemini_tools
+                    logger.info(f"[Gemini] Added {len(tools)} tools to request")
+            
+            # Make REST API call
+            base_url = "https://generativelanguage.googleapis.com/v1beta"
+            endpoint = f"{base_url}/models/{model_name}:generateContent"
+            if stream:
+                endpoint = f"{base_url}/models/{model_name}:streamGenerateContent?alt=sse"
+            
+            headers = {
+                "x-goog-api-key": self.api_key,
+                "Content-Type": "application/json"
             }
-            if generation_config:
-                request_params["generation_config"] = generation_config
-            if gemini_tools:
-                request_params["tools"] = gemini_tools
+            
+            logger.debug(f"[Gemini] REST API call: {endpoint}")
+            
+            response = requests.post(
+                endpoint,
+                headers=headers,
+                json=payload,
+                stream=stream,
+                timeout=60
+            )
             
             if stream:
-                return self._handle_gemini_stream_response(model, gemini_messages, request_params, model_name)
+                return self._handle_gemini_rest_stream_response(response, model_name)
             else:
-                return self._handle_gemini_sync_response(model, gemini_messages, request_params, model_name)
+                return self._handle_gemini_rest_sync_response(response, model_name)
                 
         except Exception as e:
-            logger.error(f"[Gemini] call_with_tools error: {e}")
+            logger.error(f"[Gemini] call_with_tools error: {e}", exc_info=True)
+            error_msg = str(e)  # Capture error message before creating generator
             if stream:
                 def error_generator():
                     yield {
                         "error": True,
-                        "message": str(e),
+                        "message": error_msg,
                         "status_code": 500
                     }
                 return error_generator()
@@ -203,6 +287,227 @@ class GoogleGeminiBot(Bot):
                     "message": str(e),
                     "status_code": 500
                 }
+    
+    def _convert_tools_to_gemini_rest_format(self, tools_list):
+        """
+        Convert tools to Gemini REST API format
+        
+        Handles both OpenAI and Claude/Agent formats.
+        Returns: [{"functionDeclarations": [...]}]
+        """
+        function_declarations = []
+        
+        for tool in tools_list:
+            # Extract name, description, and parameters based on format
+            if tool.get("type") == "function":
+                # OpenAI format: {"type": "function", "function": {...}}
+                func = tool.get("function", {})
+                name = func.get("name")
+                description = func.get("description", "")
+                parameters = func.get("parameters", {})
+            else:
+                # Claude/Agent format: {"name": "...", "description": "...", "input_schema": {...}}
+                name = tool.get("name")
+                description = tool.get("description", "")
+                parameters = tool.get("input_schema", {})
+            
+            if not name:
+                logger.warning(f"[Gemini] Skipping tool without name: {tool}")
+                continue
+            
+            logger.debug(f"[Gemini] Converting tool: {name}")
+            
+            function_declarations.append({
+                "name": name,
+                "description": description,
+                "parameters": parameters
+            })
+        
+        # All functionDeclarations must be in a single tools object (per Gemini REST API spec)
+        return [{
+            "functionDeclarations": function_declarations
+        }] if function_declarations else []
+    
+    def _handle_gemini_rest_sync_response(self, response, model_name):
+        """Handle Gemini REST API sync response and convert to OpenAI format"""
+        try:
+            if response.status_code != 200:
+                error_text = response.text
+                logger.error(f"[Gemini] API error ({response.status_code}): {error_text}")
+                return {
+                    "error": True,
+                    "message": f"Gemini API error: {error_text}",
+                    "status_code": response.status_code
+                }
+            
+            data = response.json()
+            logger.debug(f"[Gemini] Response received")
+            
+            # Extract from Gemini response format
+            candidates = data.get("candidates", [])
+            if not candidates:
+                logger.warning("[Gemini] No candidates in response")
+                return {
+                    "error": True,
+                    "message": "No candidates in response",
+                    "status_code": 500
+                }
+            
+            candidate = candidates[0]
+            content = candidate.get("content", {})
+            parts = content.get("parts", [])
+            
+            # Extract text and function calls
+            text_content = ""
+            tool_calls = []
+            
+            for part in parts:
+                # Check for text
+                if "text" in part:
+                    text_content += part["text"]
+                
+                # Check for functionCall (per REST API docs)
+                if "functionCall" in part:
+                    fc = part["functionCall"]
+                    logger.info(f"[Gemini] Function call detected: {fc.get('name')}")
+                    
+                    tool_calls.append({
+                        "id": f"call_{int(time.time() * 1000000)}",
+                        "type": "function",
+                        "function": {
+                            "name": fc.get("name"),
+                            "arguments": json.dumps(fc.get("args", {}))
+                        }
+                    })
+            
+            logger.info(f"[Gemini] Response: text={len(text_content)} chars, tool_calls={len(tool_calls)}")
+            
+            # Build OpenAI format response
+            message_dict = {
+                "role": "assistant",
+                "content": text_content or None
+            }
+            if tool_calls:
+                message_dict["tool_calls"] = tool_calls
+            
+            return {
+                "id": f"chatcmpl-{time.time()}",
+                "object": "chat.completion",
+                "created": int(time.time()),
+                "model": model_name,
+                "choices": [{
+                    "index": 0,
+                    "message": message_dict,
+                    "finish_reason": "tool_calls" if tool_calls else "stop"
+                }],
+                "usage": data.get("usageMetadata", {})
+            }
+            
+        except Exception as e:
+            logger.error(f"[Gemini] sync response error: {e}")
+            return {
+                "error": True,
+                "message": str(e),
+                "status_code": 500
+            }
+    
+    def _handle_gemini_rest_stream_response(self, response, model_name):
+        """Handle Gemini REST API stream response"""
+        try:
+            all_tool_calls = []
+            has_sent_tool_calls = False
+            
+            for line in response.iter_lines():
+                if not line:
+                    continue
+                
+                line = line.decode('utf-8')
+                
+                # Skip SSE prefixes
+                if line.startswith('data: '):
+                    line = line[6:]
+                
+                if not line or line == '[DONE]':
+                    continue
+                
+                try:
+                    chunk_data = json.loads(line)
+                    candidates = chunk_data.get("candidates", [])
+                    if not candidates:
+                        continue
+                    
+                    candidate = candidates[0]
+                    content = candidate.get("content", {})
+                    parts = content.get("parts", [])
+                    
+                    # Stream text content
+                    for part in parts:
+                        if "text" in part and part["text"]:
+                            yield {
+                                "id": f"chatcmpl-{time.time()}",
+                                "object": "chat.completion.chunk",
+                                "created": int(time.time()),
+                                "model": model_name,
+                                "choices": [{
+                                    "index": 0,
+                                    "delta": {"content": part["text"]},
+                                    "finish_reason": None
+                                }]
+                            }
+                        
+                        # Collect function calls
+                        if "functionCall" in part:
+                            fc = part["functionCall"]
+                            all_tool_calls.append({
+                                "index": len(all_tool_calls),  # Add index to differentiate multiple tool calls
+                                "id": f"call_{int(time.time() * 1000000)}_{len(all_tool_calls)}",
+                                "type": "function",
+                                "function": {
+                                    "name": fc.get("name"),
+                                    "arguments": json.dumps(fc.get("args", {}))
+                                }
+                            })
+                    
+                except json.JSONDecodeError:
+                    continue
+            
+            # Send tool calls if any were collected
+            if all_tool_calls and not has_sent_tool_calls:
+                logger.info(f"[Gemini] Stream detected {len(all_tool_calls)} tool calls")
+                yield {
+                    "id": f"chatcmpl-{time.time()}",
+                    "object": "chat.completion.chunk",
+                    "created": int(time.time()),
+                    "model": model_name,
+                    "choices": [{
+                        "index": 0,
+                        "delta": {"tool_calls": all_tool_calls},
+                        "finish_reason": None
+                    }]
+                }
+                has_sent_tool_calls = True
+            
+            # Final chunk
+            yield {
+                "id": f"chatcmpl-{time.time()}",
+                "object": "chat.completion.chunk",
+                "created": int(time.time()),
+                "model": model_name,
+                "choices": [{
+                    "index": 0,
+                    "delta": {},
+                    "finish_reason": "tool_calls" if all_tool_calls else "stop"
+                }]
+            }
+                    
+        except Exception as e:
+            logger.error(f"[Gemini] stream response error: {e}", exc_info=True)
+            error_msg = str(e)
+            yield {
+                "error": True,
+                "message": error_msg,
+                "status_code": 500
+            }
     
     def _convert_tools_to_gemini_format(self, openai_tools):
         """Convert OpenAI tool format to Gemini function declarations"""

@@ -447,35 +447,27 @@ class MemoryManager:
         today_file = self.flush_manager.get_today_memory_file().name
         
         if lang == "zh":
-            guidance = f"""## 记忆召回
-下方"背景知识"包含你的核心长期记忆，可直接使用。如果背景知识中没有相关信息，再用 memory_search 搜索历史记录（memory/*.md 日期文件）。
+            guidance = f"""## 记忆系统
 
-## 记忆存储
-当用户分享持久偏好、决策或重要事实时（无论是否明确要求"记住"），主动存储：
-- 持久信息（偏好、决策、人物信息）→ memory/MEMORY.md
-- 当天的笔记和上下文 → memory/{today_file}
-- 静默存储，仅在用户明确要求时确认
+**背景知识**: 下方包含核心长期记忆，可直接使用。需要查找历史时，用 memory_search 搜索（搜索一次即可，不要重复）。
 
-## 记忆使用原则
-- 不要主动提起或列举记忆内容
-- 只在用户明确询问相关信息时才使用记忆
-- 记忆是背景知识，不是要展示的内容
-- 自然使用记忆，就像你本来就知道这些信息"""
+**存储记忆**: 当用户分享重要信息时（偏好、决策、事实等），主动用 write 工具存储：
+- 长期信息 → memory/MEMORY.md
+- 当天笔记 → memory/{today_file}
+- 静默存储，仅在明确要求时确认
+
+**使用原则**: 自然使用记忆，就像你本来就知道。不要主动提起或列举记忆，除非用户明确询问。"""
         else:
-            guidance = f"""## Memory Recall
-"Background Knowledge" below contains your core long-term memories - use them directly. If information is not in Background Knowledge, use memory_search to search, then use memory_get to read files (path format: memory/MEMORY.md, memory/2026-01-30.md).
+            guidance = f"""## Memory System
 
-## Memory Storage
-When user shares durable preferences, decisions, or important facts (whether or not they explicitly say "remember"), proactively store:
-- Durable info (preferences, decisions, people) → memory/MEMORY.md
-- Daily notes and context → memory/{today_file}
-- Store silently; only confirm when explicitly requested
+**Background Knowledge**: Core long-term memories below - use directly. For history, use memory_search once (don't repeat).
 
-## Memory Usage Principles
-- Don't proactively mention or list memory contents
-- Only use memories when user explicitly asks about them
-- Memories are background knowledge, not content to showcase
-- Use memories naturally as if you inherently knew this information"""
+**Store Memories**: When user shares important info (preferences, decisions, facts), proactively write:
+- Durable info → memory/MEMORY.md  
+- Daily notes → memory/{today_file}
+- Store silently; confirm only when explicitly requested
+
+**Usage**: Use memories naturally as if you always knew. Don't mention or list unless user explicitly asks."""
         
         if include_context:
             # Load bootstrap context (MEMORY.md only, like clawdbot)

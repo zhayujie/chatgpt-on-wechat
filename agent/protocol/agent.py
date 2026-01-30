@@ -162,9 +162,16 @@ class Agent:
             # DeepSeek
             elif 'deepseek' in model_name:
                 return 64000
+            
+            # Gemini models
+            elif 'gemini' in model_name:
+                if '2.0' in model_name or 'exp' in model_name:
+                    return 2000000  # Gemini 2.0: 2M tokens
+                else:
+                    return 1000000  # Gemini 1.5: 1M tokens
 
         # Default conservative value
-        return 10000
+        return 128000
 
     def _get_context_reserve_tokens(self) -> int:
         """
@@ -176,9 +183,10 @@ class Agent:
         if self.context_reserve_tokens is not None:
             return self.context_reserve_tokens
 
-        # Reserve ~20% of context window for new requests
+        # Reserve ~10% of context window, with min 10K and max 200K
         context_window = self._get_model_context_window()
-        return max(4000, int(context_window * 0.2))
+        reserve = int(context_window * 0.1)
+        return max(10000, min(200000, reserve))
 
     def _estimate_message_tokens(self, message: dict) -> int:
         """

@@ -6,6 +6,7 @@ import time
 import requests
 import config
 from bot.bot import Bot
+from bot.openai_compatible_bot import OpenAICompatibleBot
 from bot.chatgpt.chat_gpt_session import ChatGPTSession
 from bot.session_manager import SessionManager
 from bridge.context import Context, ContextType
@@ -17,7 +18,7 @@ from common import memory, utils
 import base64
 import os
 
-class LinkAIBot(Bot):
+class LinkAIBot(Bot, OpenAICompatibleBot):
     # authentication failed
     AUTH_FAILED_CODE = 401
     NO_QUOTA_CODE = 406
@@ -26,6 +27,18 @@ class LinkAIBot(Bot):
         super().__init__()
         self.sessions = LinkAISessionManager(LinkAISession, model=conf().get("model") or "gpt-3.5-turbo")
         self.args = {}
+    
+    def get_api_config(self):
+        """Get API configuration for OpenAI-compatible base class"""
+        return {
+            'api_key': conf().get("open_ai_api_key"),  # LinkAI uses OpenAI-compatible key
+            'api_base': conf().get("open_ai_api_base", "https://api.link-ai.tech/v1"),
+            'model': conf().get("model", "gpt-3.5-turbo"),
+            'default_temperature': conf().get("temperature", 0.9),
+            'default_top_p': conf().get("top_p", 1.0),
+            'default_frequency_penalty': conf().get("frequency_penalty", 0.0),
+            'default_presence_penalty': conf().get("presence_penalty", 0.0),
+        }
 
     def reply(self, query, context: Context = None) -> Reply:
         if context.type == ContextType.TEXT:

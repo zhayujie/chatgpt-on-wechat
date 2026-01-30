@@ -5,6 +5,7 @@ Agent Bridge - Integrates Agent system with existing COW bridge
 from typing import Optional, List
 
 from agent.protocol import Agent, LLMModel, LLMRequest
+from bot.openai_compatible_bot import OpenAICompatibleBot
 from bridge.bridge import Bridge
 from bridge.context import Context
 from bridge.reply import Reply, ReplyType
@@ -12,11 +13,51 @@ from common import const
 from common.log import logger
 
 
+def add_openai_compatible_support(bot_instance):
+    """
+    Dynamically add OpenAI-compatible tool calling support to a bot instance.
+    
+    This allows any bot to gain tool calling capability without modifying its code,
+    as long as it uses OpenAI-compatible API format.
+    """
+    if hasattr(bot_instance, 'call_with_tools'):
+        # Bot already has tool calling support
+        return bot_instance
+
+    # Create a temporary mixin class that combines the bot with OpenAI compatibility
+    class EnhancedBot(bot_instance.__class__, OpenAICompatibleBot):
+        """Dynamically enhanced bot with OpenAI-compatible tool calling"""
+
+        def get_api_config(self):
+            """
+            Infer API config from common configuration patterns.
+            Most OpenAI-compatible bots use similar configuration.
+            """
+            from config import conf
+
+            return {
+                'api_key': conf().get("open_ai_api_key"),
+                'api_base': conf().get("open_ai_api_base"),
+                'model': conf().get("model", "gpt-3.5-turbo"),
+                'default_temperature': conf().get("temperature", 0.9),
+                'default_top_p': conf().get("top_p", 1.0),
+                'default_frequency_penalty': conf().get("frequency_penalty", 0.0),
+                'default_presence_penalty': conf().get("presence_penalty", 0.0),
+            }
+
+    # Change the bot's class to the enhanced version
+    bot_instance.__class__ = EnhancedBot
+    logger.info(
+        f"[AgentBridge] Enhanced {bot_instance.__class__.__bases__[0].__name__} with OpenAI-compatible tool calling")
+
+    return bot_instance
+
+
 class AgentLLMModel(LLMModel):
     """
     LLM Model adapter that uses COW's existing bot infrastructure
     """
-    
+
     def __init__(self, bridge: Bridge, bot_type: str = "chat"):
         # Get model name directly from config
         from config import conf
@@ -28,9 +69,11 @@ class AgentLLMModel(LLMModel):
     
     @property
     def bot(self):
-        """Lazy load the bot"""
+        """Lazy load the bot and enhance it with tool calling if needed"""
         if self._bot is None:
             self._bot = self.bridge.get_bot(self.bot_type)
+            # Automatically add tool calling support if not present
+            self._bot = add_openai_compatible_support(self._bot)
         return self._bot
 
     def call(self, request: LLMRequest):
@@ -157,9 +200,23 @@ class AgentBridge:
             model=model,
             tools=tools,
             max_steps=kwargs.get("max_steps", 15),
-            output_mode=kwargs.get("output_mode", "logger")
+            output_mode=kwargs.get("output_mode", "logger"),
+            workspace_dir=kwargs.get("workspace_dir"),  # Pass workspace for skills loading
+            enable_skills=kwargs.get("enable_skills", True),  # Enable skills by default
+            memory_manager=kwargs.get("memory_manager"),  # Pass memory manager
+            max_context_tokens=kwargs.get("max_context_tokens"),
+            context_reserve_tokens=kwargs.get("context_reserve_tokens")
         )
-        
+
+        # Log skill loading details
+        if self.agent.skill_manager:
+            logger.info(f"[AgentBridge] SkillManager initialized:")
+            logger.info(f"[AgentBridge]   - Managed dir: {self.agent.skill_manager.managed_skills_dir}")
+            logger.info(f"[AgentBridge]   - Workspace dir: {self.agent.skill_manager.workspace_dir}")
+            logger.info(f"[AgentBridge]   - Total skills: {len(self.agent.skill_manager.skills)}")
+            for skill_name in self.agent.skill_manager.skills.keys():
+                logger.info(f"[AgentBridge]     * {skill_name}")
+
         return self.agent
     
     def get_agent(self) -> Optional[Agent]:
@@ -169,24 +226,28 @@ class AgentBridge:
         return self.agent
     
     def _init_default_agent(self):
-        """Initialize default super agent with config and memory"""
+        """Initialize default super agent with new prompt system"""
         from config import conf
         import os
-        
-        # Get base system prompt from config
-        base_prompt = conf().get("character_desc", "你是一个AI助手")
-        
-        # Setup memory if enabled
+
+        # Get workspace from config
+        workspace_root = os.path.expanduser(conf().get("agent_workspace", "~/cow"))
+
+        # Initialize workspace and create template files
+        from agent.prompt import ensure_workspace, load_context_files, PromptBuilder
+
+        workspace_files = ensure_workspace(workspace_root, create_templates=True)
+        logger.info(f"[AgentBridge] Workspace initialized at: {workspace_root}")
+
+        # Setup memory system
         memory_manager = None
         memory_tools = []
-        
+
         try:
             # Try to initialize memory system
             from agent.memory import MemoryManager, MemoryConfig
             from agent.tools import MemorySearchTool, MemoryGetTool
-            
-            # Create memory config directly with sensible defaults
-            workspace_root = os.path.expanduser("~/cow")
+
             memory_config = MemoryConfig(
                 workspace_root=workspace_root,
                 embedding_provider="local",  # Use local embedding (no API key needed)
@@ -202,35 +263,24 @@ class AgentBridge:
                 MemoryGetTool(memory_manager)
             ]
             
-            # Build memory guidance and add to system prompt
-            memory_guidance = memory_manager.build_memory_guidance(
-                lang="zh",
-                include_context=True
-            )
-            system_prompt = base_prompt + "\n\n" + memory_guidance
-            
             logger.info(f"[AgentBridge] Memory system initialized")
-            logger.info(f"[AgentBridge] Workspace: {memory_config.get_workspace()}")
             
         except Exception as e:
             logger.warning(f"[AgentBridge] Memory system not available: {e}")
             logger.info("[AgentBridge] Continuing without memory features")
-            system_prompt = base_prompt
-            import traceback
-            traceback.print_exc()
-        
-        logger.info("[AgentBridge] Initializing super agent")
-        
-        # Configure file tools to work in the correct workspace
-        file_config = {"cwd": workspace_root} if memory_manager else {}
-        
+
         # Use ToolManager to dynamically load all available tools
         from agent.tools import ToolManager
         tool_manager = ToolManager()
         tool_manager.load_tools()
-        
+
         # Create tool instances for all available tools
         tools = []
+        file_config = {
+            "cwd": workspace_root,
+            "memory_manager": memory_manager
+        } if memory_manager else {"cwd": workspace_root}
+
         for tool_name in tool_manager.tool_classes.keys():
             try:
                 tool = tool_manager.create_tool(tool_name)
@@ -238,30 +288,61 @@ class AgentBridge:
                     # Apply workspace config to file operation tools
                     if tool_name in ['read', 'write', 'edit', 'bash', 'grep', 'find', 'ls']:
                         tool.config = file_config
+                        tool.cwd = file_config.get("cwd", tool.cwd if hasattr(tool, 'cwd') else None)
+                        if 'memory_manager' in file_config:
+                            tool.memory_manager = file_config['memory_manager']
                     tools.append(tool)
                     logger.debug(f"[AgentBridge] Loaded tool: {tool_name}")
             except Exception as e:
                 logger.warning(f"[AgentBridge] Failed to load tool {tool_name}: {e}")
-        
+
+        # Add memory tools
+        if memory_tools:
+            tools.extend(memory_tools)
+            logger.info(f"[AgentBridge] Added {len(memory_tools)} memory tools")
+
         logger.info(f"[AgentBridge] Loaded {len(tools)} tools: {[t.name for t in tools]}")
-        
-        # Create agent with configured tools
+
+        # Load context files (SOUL.md, USER.md, etc.)
+        context_files = load_context_files(workspace_root)
+        logger.info(f"[AgentBridge] Loaded {len(context_files)} context files: {[f.path for f in context_files]}")
+
+        # Build system prompt using new prompt builder
+        prompt_builder = PromptBuilder(
+            workspace_dir=workspace_root,
+            language="zh"
+        )
+
+        # Get runtime info
+        runtime_info = {
+            "model": conf().get("model", "unknown"),
+            "workspace": workspace_root,
+            "channel": "web"  # TODO: get from actual channel, default to "web" to hide if not specified
+        }
+
+        system_prompt = prompt_builder.build(
+            tools=tools,
+            context_files=context_files,
+            memory_manager=memory_manager,
+            runtime_info=runtime_info
+        )
+
+        logger.info("[AgentBridge] System prompt built successfully")
+
+        # Create agent with configured tools and workspace
         agent = self.create_agent(
             system_prompt=system_prompt,
             tools=tools,
             max_steps=50,
-            output_mode="logger"
+            output_mode="logger",
+            workspace_dir=workspace_root,  # Pass workspace to agent for skills loading
+            enable_skills=True  # Enable skills auto-loading
         )
-        
+
         # Attach memory manager to agent if available
         if memory_manager:
             agent.memory_manager = memory_manager
-        
-        # Add memory tools if available
-        if memory_tools:
-            for tool in memory_tools:
-                agent.add_tool(tool)
-            logger.info(f"[AgentBridge] Added {len(memory_tools)} memory tools")
+            logger.info(f"[AgentBridge] Memory manager attached to agent")
     
     def agent_reply(self, query: str, context: Context = None, 
                    on_event=None, clear_history: bool = False) -> Reply:

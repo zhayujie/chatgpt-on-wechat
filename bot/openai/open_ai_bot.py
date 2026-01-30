@@ -6,6 +6,7 @@ import openai
 import openai.error
 
 from bot.bot import Bot
+from bot.openai_compatible_bot import OpenAICompatibleBot
 from bot.openai.open_ai_image import OpenAIImage
 from bot.openai.open_ai_session import OpenAISession
 from bot.session_manager import SessionManager
@@ -18,7 +19,7 @@ user_session = dict()
 
 
 # OpenAI对话模型API (可用)
-class OpenAIBot(Bot, OpenAIImage):
+class OpenAIBot(Bot, OpenAIImage, OpenAICompatibleBot):
     def __init__(self):
         super().__init__()
         openai.api_key = conf().get("open_ai_api_key")
@@ -39,6 +40,18 @@ class OpenAIBot(Bot, OpenAIImage):
             "request_timeout": conf().get("request_timeout", None),  # 请求超时时间，openai接口默认设置为600，对于难问题一般需要较长时间
             "timeout": conf().get("request_timeout", None),  # 重试超时时间，在这个时间内，将会自动重试
             "stop": ["\n\n\n"],
+        }
+    
+    def get_api_config(self):
+        """Get API configuration for OpenAI-compatible base class"""
+        return {
+            'api_key': conf().get("open_ai_api_key"),
+            'api_base': conf().get("open_ai_api_base"),
+            'model': conf().get("model", "text-davinci-003"),
+            'default_temperature': conf().get("temperature", 0.9),
+            'default_top_p': conf().get("top_p", 1.0),
+            'default_frequency_penalty': conf().get("frequency_penalty", 0.0),
+            'default_presence_penalty': conf().get("presence_penalty", 0.0),
         }
 
     def reply(self, query, context=None):
