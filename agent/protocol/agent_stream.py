@@ -78,8 +78,9 @@ class AgentStreamExecutor:
         Returns:
             Final response text
         """
-        # Log user message
-        logger.info(f"\n{'='*50}")
+        # Log user message with model info
+        logger.info(f"{'='*50}")
+        logger.info(f"🤖 Model: {self.model.model}")
         logger.info(f"👤 用户: {user_message}")
         logger.info(f"{'='*50}")
         
@@ -102,7 +103,7 @@ class AgentStreamExecutor:
         try:
             while turn < self.max_turns:
                 turn += 1
-                logger.info(f"\n🔄 第 {turn} 轮")
+                logger.info(f"第 {turn} 轮")
                 self._emit_event("turn_start", {"turn": turn})
 
                 # Check if memory flush is needed (before calling LLM)
@@ -145,7 +146,7 @@ class AgentStreamExecutor:
                         final_response = (
                             "抱歉，我暂时无法生成回复。请尝试换一种方式描述你的需求，或稍后再试。"
                         )
-                        logger.info(f"💭 Generated fallback response for empty LLM output")
+                        logger.info(f"Generated fallback response for empty LLM output")
                     else:
                         logger.info(f"💭 {assistant_msg[:150]}{'...' if len(assistant_msg) > 150 else ''}")
                     
@@ -239,7 +240,7 @@ class AgentStreamExecutor:
             raise
 
         finally:
-            logger.info(f"🏁 完成({turn}轮)\n")
+            logger.info(f"🏁 完成({turn}轮)")
             self._emit_event("agent_end", {"final_response": final_response})
 
         return final_response
@@ -365,8 +366,8 @@ class AgentStreamExecutor:
             
             if is_retryable and retry_count < max_retries:
                 wait_time = (retry_count + 1) * 2  # Exponential backoff: 2s, 4s, 6s
-                logger.warning(f"⚠️  LLM API error (attempt {retry_count + 1}/{max_retries}): {e}")
-                logger.info(f"🔄 Retrying in {wait_time}s...")
+                logger.warning(f"⚠️ LLM API error (attempt {retry_count + 1}/{max_retries}): {e}")
+                logger.info(f"Retrying in {wait_time}s...")
                 time.sleep(wait_time)
                 return self._call_llm_stream(
                     retry_on_empty=retry_on_empty, 
@@ -486,9 +487,9 @@ class AgentStreamExecutor:
             if tool_name == "bash" and result.status == "success":
                 command = arguments.get("command", "")
                 if "init_skill.py" in command and self.agent.skill_manager:
-                    logger.info("🔄 Detected skill creation, refreshing skills...")
+                    logger.info("Detected skill creation, refreshing skills...")
                     self.agent.refresh_skills()
-                    logger.info(f"✅ Skills refreshed! Now have {len(self.agent.skill_manager.skills)} skills")
+                    logger.info(f"Skills refreshed! Now have {len(self.agent.skill_manager.skills)} skills")
 
             self._emit_event("tool_execution_end", {
                 "tool_call_id": tool_id,

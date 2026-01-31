@@ -74,12 +74,14 @@ class AgentLLMModel(LLMModel):
         if self._bot is None:
             # If use_linkai is enabled, use LinkAI bot directly
             if self._use_linkai:
-                logger.info("[AgentBridge] Using LinkAI bot for agent")
                 self._bot = self.bridge.find_chat_bot(const.LINKAI)
             else:
                 self._bot = self.bridge.get_bot(self.bot_type)
                 # Automatically add tool calling support if not present
                 self._bot = add_openai_compatible_support(self._bot)
+            
+            # Log bot info
+            bot_name = type(self._bot).__name__
         return self._bot
 
     def call(self, request: LLMRequest):
@@ -331,7 +333,7 @@ class AgentBridge:
         runtime_info = {
             "model": conf().get("model", "unknown"),
             "workspace": workspace_root,
-            "channel": "web"  # TODO: get from actual channel, default to "web" to hide if not specified
+            "channel": conf().get("channel_type", "unknown")  # Get from config
         }
 
         system_prompt = prompt_builder.build(

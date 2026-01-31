@@ -505,14 +505,9 @@ def _linkai_call_with_tools(self, messages, tools=None, stream=False, **kwargs):
         Formatted response in OpenAI format or generator for streaming
     """
     try:
-        # Debug logging
-        logger.info(f"[LinkAI] ⭐ LinkAI call_with_tools method called")
-        logger.info(f"[LinkAI] messages count (before conversion): {len(messages) if messages else 0}")
-        
         # Convert messages from Claude format to OpenAI format
         # This is important because Agent uses Claude format internally
         messages = self._convert_messages_to_openai_format(messages)
-        logger.info(f"[LinkAI] messages count (after conversion): {len(messages) if messages else 0}")
         
         # Convert tools from Claude format to OpenAI format
         if tools:
@@ -528,7 +523,7 @@ def _linkai_call_with_tools(self, messages, tools=None, stream=False, **kwargs):
                 # Replace existing system message
                 messages[0] = {"role": "system", "content": system_prompt}
         
-        logger.info(f"[LinkAI] Final messages count: {len(messages)}, tools count: {len(tools) if tools else 0}, stream: {stream}")
+        logger.debug(f"[LinkAI] messages: {len(messages)}, tools: {len(tools) if tools else 0}, stream: {stream}")
         
         # Build request parameters (LinkAI uses OpenAI-compatible format)
         body = {
@@ -583,8 +578,8 @@ def _handle_linkai_sync_response(self, base_url, headers, body):
         
         if res.status_code == 200:
             response = res.json()
-            logger.info(f"[LinkAI] call_with_tools reply, model={response.get('model')}, "
-                       f"total_tokens={response.get('usage', {}).get('total_tokens', 0)}")
+            logger.debug(f"[LinkAI] reply: model={response.get('model')}, "
+                        f"tokens={response.get('usage', {}).get('total_tokens', 0)}")
             
             # LinkAI response is already in OpenAI-compatible format
             return response
