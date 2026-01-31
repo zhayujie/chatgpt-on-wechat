@@ -529,6 +529,15 @@ class GoogleGeminiBot(Bot):
             # Log summary
             logger.info(f"[Gemini] Stream complete: has_content={has_content}, tool_calls={len(all_tool_calls)}")
             
+            # 如果返回空响应，记录详细警告
+            if not has_content and not all_tool_calls:
+                logger.warning(f"[Gemini] ⚠️  Empty response detected!")
+                logger.warning(f"[Gemini] Possible reasons:")
+                logger.warning(f"  1. Model couldn't generate response based on context")
+                logger.warning(f"  2. Content blocked by safety filters")
+                logger.warning(f"  3. All previous tool calls failed")
+                logger.warning(f"  4. API error not properly caught")
+            
             # Final chunk
             yield {
                 "id": f"chatcmpl-{time.time()}",

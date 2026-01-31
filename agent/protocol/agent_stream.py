@@ -137,8 +137,18 @@ class AgentStreamExecutor:
 
                 # No tool calls, end loop
                 if not tool_calls:
-                    if assistant_msg:
+                    # 检查是否返回了空响应
+                    if not assistant_msg:
+                        logger.warning(f"[Agent] LLM returned empty response (no content and no tool calls)")
+                        
+                        # 生成通用的友好提示
+                        final_response = (
+                            "抱歉，我暂时无法生成回复。请尝试换一种方式描述你的需求，或稍后再试。"
+                        )
+                        logger.info(f"💭 Generated fallback response for empty LLM output")
+                    else:
                         logger.info(f"💭 {assistant_msg[:150]}{'...' if len(assistant_msg) > 150 else ''}")
+                    
                     logger.info(f"✅ 完成 (无工具调用)")
                     self._emit_event("turn_end", {
                         "turn": turn,
