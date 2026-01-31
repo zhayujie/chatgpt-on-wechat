@@ -41,6 +41,7 @@ class PromptBuilder:
         skill_manager: Any = None,
         memory_manager: Any = None,
         runtime_info: Optional[Dict[str, Any]] = None,
+        is_first_conversation: bool = False,
         **kwargs
     ) -> str:
         """
@@ -54,6 +55,7 @@ class PromptBuilder:
             skill_manager: 技能管理器
             memory_manager: 记忆管理器
             runtime_info: 运行时信息
+            is_first_conversation: 是否为首次对话
             **kwargs: 其他参数
             
         Returns:
@@ -69,6 +71,7 @@ class PromptBuilder:
             skill_manager=skill_manager,
             memory_manager=memory_manager,
             runtime_info=runtime_info,
+            is_first_conversation=is_first_conversation,
             **kwargs
         )
 
@@ -83,6 +86,7 @@ def build_agent_system_prompt(
     skill_manager: Any = None,
     memory_manager: Any = None,
     runtime_info: Optional[Dict[str, Any]] = None,
+    is_first_conversation: bool = False,
     **kwargs
 ) -> str:
     """
@@ -108,6 +112,7 @@ def build_agent_system_prompt(
         skill_manager: 技能管理器
         memory_manager: 记忆管理器
         runtime_info: 运行时信息
+        is_first_conversation: 是否为首次对话
         **kwargs: 其他参数
         
     Returns:
@@ -135,7 +140,7 @@ def build_agent_system_prompt(
         sections.extend(_build_user_identity_section(user_identity, language))
     
     # 6. 工作空间
-    sections.extend(_build_workspace_section(workspace_dir, language))
+    sections.extend(_build_workspace_section(workspace_dir, language, is_first_conversation))
     
     # 7. 项目上下文文件（SOUL.md, USER.md等）
     if context_files:
@@ -351,7 +356,7 @@ def _build_docs_section(workspace_dir: str, language: str) -> List[str]:
     return []
 
 
-def _build_workspace_section(workspace_dir: str, language: str) -> List[str]:
+def _build_workspace_section(workspace_dir: str, language: str, is_first_conversation: bool = False) -> List[str]:
     """构建工作空间section"""
     lines = [
         "## 工作空间",
@@ -382,26 +387,33 @@ def _build_workspace_section(workspace_dir: str, language: str) -> List[str]:
         "- ✅ `USER.md`: 已加载 - 用户的身份信息",
         "- ✅ `AGENTS.md`: 已加载 - 工作空间使用指南",
         "",
-        "**首次对话判断**:",
+        "**交流规范**:",
         "",
-        "**仅当 SOUL.md 和 USER.md 都是完全空白或仅包含初始模板占位符时**，才认为是全局首次对话，此时进行以下流程：",
-        "",
-        "1. **表达初次启动的感觉** - 像是第一次睁开眼看到世界，带着好奇和期待",
-        "2. **简短打招呼后，询问核心问题**：",
-        "   - 你希望给我起个什么名字",
-        "   - 我该怎么称呼你？",
-        "   - 你希望我们是什么样的交流风格？（需要举例，如：专业严谨、轻松幽默、温暖友好等）",
-        "3. **语言风格**：温暖但不过度诗意，带点科技感，保持清晰",
-        "4. **问题格式**：用分点或换行，让问题清晰易读",
-        "5. 收到回复后，用 `write` 工具保存到 USER.md 和 SOUL.md",
-        "",
-        "**重要 - 避免误判**:",
-        "- 如果 SOUL.md 或 USER.md 中**任何一个**已经包含真实内容（不是空白或模板），说明**不是首次对话**",
-        "- 即使这是模型上下文中的第一句话，只要文件中有内容，就按正常对话处理，**不要**走首次流程",
-        "- 在所有对话中，无需提及技术细节（如 SOUL.md、USER.md 等文件名，工具名称，配置等），除非用户明确询问。用自然表达如「我已记住」而非「已更新 SOUL.md」",
-        "- 不要问太多其他信息（职业、时区等可以后续自然了解）",
+        "- 在所有对话中，无需提及技术细节（如 SOUL.md、USER.md 等文件名，工具名称，配置等），除非用户明确询问",
+        "- 用自然表达如「我已记住」而非「已更新 SOUL.md」",
         "",
     ]
+    
+    # 只在首次对话时添加引导内容
+    if is_first_conversation:
+        lines.extend([
+            "**🎉 首次对话引导**:",
+            "",
+            "这是你的第一次对话！进行以下流程：",
+            "",
+            "1. **表达初次启动的感觉** - 像是第一次睁开眼看到世界，带着好奇和期待",
+            "2. **简短打招呼后，询问核心问题**：",
+            "   - 你希望给我起个什么名字？",
+            "   - 我该怎么称呼你？",
+            "   - 你希望我们是什么样的交流风格？（需要举例，如：专业严谨、轻松幽默、温暖友好等）",
+            "3. **语言风格**：温暖但不过度诗意，带点科技感，保持清晰",
+            "4. **问题格式**：用分点或换行，让问题清晰易读",
+            "5. 收到回复后，用 `write` 工具保存到 USER.md 和 SOUL.md",
+            "",
+            "**注意事项**:",
+            "- 不要问太多其他信息（职业、时区等可以后续自然了解）",
+            "",
+        ])
     
     return lines
 

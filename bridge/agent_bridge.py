@@ -323,6 +323,12 @@ class AgentBridge:
         context_files = load_context_files(workspace_root)
         logger.info(f"[AgentBridge] Loaded {len(context_files)} context files: {[f.path for f in context_files]}")
 
+        # Check if this is the first conversation
+        from agent.prompt.workspace import is_first_conversation, mark_conversation_started
+        is_first = is_first_conversation(workspace_root)
+        if is_first:
+            logger.info("[AgentBridge] First conversation detected")
+        
         # Build system prompt using new prompt builder
         prompt_builder = PromptBuilder(
             workspace_dir=workspace_root,
@@ -340,8 +346,13 @@ class AgentBridge:
             tools=tools,
             context_files=context_files,
             memory_manager=memory_manager,
-            runtime_info=runtime_info
+            runtime_info=runtime_info,
+            is_first_conversation=is_first
         )
+        
+        # Mark conversation as started (will be saved after first user message)
+        if is_first:
+            mark_conversation_started(workspace_root)
 
         logger.info("[AgentBridge] System prompt built successfully")
 

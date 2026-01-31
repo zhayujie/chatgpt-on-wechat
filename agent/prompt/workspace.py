@@ -5,6 +5,7 @@ Workspace Management - 工作空间管理模块
 """
 
 import os
+import json
 from typing import List, Optional, Dict
 from dataclasses import dataclass
 
@@ -17,6 +18,7 @@ DEFAULT_SOUL_FILENAME = "SOUL.md"
 DEFAULT_USER_FILENAME = "USER.md"
 DEFAULT_AGENTS_FILENAME = "AGENTS.md"
 DEFAULT_MEMORY_FILENAME = "MEMORY.md"
+DEFAULT_STATE_FILENAME = ".agent_state.json"
 
 
 @dataclass
@@ -27,6 +29,7 @@ class WorkspaceFiles:
     agents_path: str
     memory_path: str
     memory_dir: str
+    state_path: str
 
 
 def ensure_workspace(workspace_dir: str, create_templates: bool = True) -> WorkspaceFiles:
@@ -49,6 +52,7 @@ def ensure_workspace(workspace_dir: str, create_templates: bool = True) -> Works
     agents_path = os.path.join(workspace_dir, DEFAULT_AGENTS_FILENAME)
     memory_path = os.path.join(workspace_dir, DEFAULT_MEMORY_FILENAME)  # MEMORY.md 在根目录
     memory_dir = os.path.join(workspace_dir, "memory")  # 每日记忆子目录
+    state_path = os.path.join(workspace_dir, DEFAULT_STATE_FILENAME)  # 状态文件
     
     # 创建memory子目录
     os.makedirs(memory_dir, exist_ok=True)
@@ -67,7 +71,8 @@ def ensure_workspace(workspace_dir: str, create_templates: bool = True) -> Works
         user_path=user_path,
         agents_path=agents_path,
         memory_path=memory_path,
-        memory_dir=memory_dir
+        memory_dir=memory_dir,
+        state_path=state_path
     )
 
 
@@ -311,4 +316,66 @@ def _get_memory_template() -> str:
 
 """
 
+
+# ============= 状态管理 =============
+
+def is_first_conversation(workspace_dir: str) -> bool:
+    """
+    判断是否为首次对话
+    
+    Args:
+        workspace_dir: 工作空间目录
+        
+    Returns:
+        True 如果是首次对话，False 否则
+    """
+    state_path = os.path.join(workspace_dir, DEFAULT_STATE_FILENAME)
+    
+    if not os.path.exists(state_path):
+        return True
+    
+    try:
+        with open(state_path, 'r', encoding='utf-8') as f:
+            state = json.load(f)
+        return not state.get('has_conversation', False)
+    except Exception as e:
+        logger.warning(f"[Workspace] Failed to read state file: {e}")
+        return True
+
+
+def mark_conversation_started(workspace_dir: str):
+    """
+    标记已经发生过对话
+    
+    Args:
+        workspace_dir: 工作空间目录
+    """
+    state_path = os.path.join(workspace_dir, DEFAULT_STATE_FILENAME)
+    
+    state = {
+        'has_conversation': True,
+        'first_conversation_time': None
+    }
+    
+    # 如果文件已存在，保留原有的首次对话时间
+    if os.path.exists(state_path):
+        try:
+            with open(state_path, 'r', encoding='utf-8') as f:
+                old_state = json.load(f)
+            if 'first_conversation_time' in old_state:
+                state['first_conversation_time'] = old_state['first_conversation_time']
+        except Exception as e:
+            logger.warning(f"[Workspace] Failed to read old state: {e}")
+    
+    # 如果是首次标记，记录时间
+    if state['first_conversation_time'] is None:
+        from datetime import datetime
+        state['first_conversation_time'] = datetime.now().isoformat()
+    
+    try:
+        with open(state_path, 'w', encoding='utf-8') as f:
+            json.dump(state, f, indent=2, ensure_ascii=False)
+        logger.info(f"[Workspace] Marked conversation as started")
+    except Exception as e:
+        logger.error(f"[Workspace] Failed to write state file: {e}")
 
