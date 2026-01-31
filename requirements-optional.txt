@@ -15,7 +15,7 @@ elevenlabs==1.0.3 # elevenlabs TTS
 #install plugin
 dulwich
 
-# wechatmp && wechatcom
+# wechatmp && wechatcom && feishu
 web.py
 wechatpy
 
@@ -27,6 +27,7 @@ websocket-client==1.2.0
 
 # claude bot
 curl_cffi
+
 # claude API
 anthropic==0.25.0
 

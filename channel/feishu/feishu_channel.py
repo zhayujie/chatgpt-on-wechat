@@ -1,29 +1,47 @@
 """
 飞书通道接入
 
+支持两种事件接收模式:
+1. webhook模式: 通过HTTP服务器接收事件(需要公网IP)
+2. websocket模式: 通过长连接接收事件(本地开发友好)
+
+通过配置项 feishu_event_mode 选择模式: "webhook" 或 "websocket"
+
 @author Saboteur7
 @Date 2023/11/19
 """
 
+import json
+import os
+import threading
 # -*- coding=utf-8 -*-
 import uuid
 
 import requests
 import web
-from channel.feishu.feishu_message import FeishuMessage
+
 from bridge.context import Context
+from bridge.context import ContextType
 from bridge.reply import Reply, ReplyType
+from channel.chat_channel import ChatChannel, check_prefix
+from channel.feishu.feishu_message import FeishuMessage
+from common import utils
+from common.expired_dict import ExpiredDict
 from common.log import logger
 from common.singleton import singleton
 from config import conf
-from common.expired_dict import ExpiredDict
-from bridge.context import ContextType
-from channel.chat_channel import ChatChannel, check_prefix
-from common import utils
-import json
-import os
 
 URL_VERIFICATION = "url_verification"
+
+# 尝试导入飞书SDK,如果未安装则websocket模式不可用
+try:
+    import lark_oapi as lark
+
+    LARK_SDK_AVAILABLE = True
+except ImportError:
+    LARK_SDK_AVAILABLE = False
+    logger.warning(
+        "[FeiShu] lark_oapi not installed, websocket mode is not available. Install with: pip install lark-oapi")
 
 
 @singleton
@@ -31,24 +49,141 @@ class FeiShuChanel(ChatChannel):
     feishu_app_id = conf().get('feishu_app_id')
     feishu_app_secret = conf().get('feishu_app_secret')
     feishu_token = conf().get('feishu_token')
+    feishu_event_mode = conf().get('feishu_event_mode', 'websocket')  # webhook 或 websocket
 
     def __init__(self):
         super().__init__()
         # 历史消息id暂存，用于幂等控制
         self.receivedMsgs = ExpiredDict(60 * 60 * 7.1)
-        logger.info("[FeiShu] app_id={}, app_secret={} verification_token={}".format(
-            self.feishu_app_id, self.feishu_app_secret, self.feishu_token))
+        logger.info("[FeiShu] app_id={}, app_secret={}, verification_token={}, event_mode={}".format(
+            self.feishu_app_id, self.feishu_app_secret, self.feishu_token, self.feishu_event_mode))
         # 无需群校验和前缀
         conf()["group_name_white_list"] = ["ALL_GROUP"]
         conf()["single_chat_prefix"] = [""]
 
+        # 验证配置
+        if self.feishu_event_mode == 'websocket' and not LARK_SDK_AVAILABLE:
+            logger.error("[FeiShu] websocket mode requires lark_oapi. Please install: pip install lark-oapi")
+            raise Exception("lark_oapi not installed")
+
     def startup(self):
+        if self.feishu_event_mode == 'websocket':
+            self._startup_websocket()
+        else:
+            self._startup_webhook()
+
+    def _startup_webhook(self):
+        """启动HTTP服务器接收事件(webhook模式)"""
+        logger.info("[FeiShu] Starting in webhook mode...")
         urls = (
             '/', 'channel.feishu.feishu_channel.FeishuController'
         )
         app = web.application(urls, globals(), autoreload=False)
         port = conf().get("feishu_port", 9891)
         web.httpserver.runsimple(app.wsgifunc(), ("0.0.0.0", port))
+
+    def _startup_websocket(self):
+        """启动长连接接收事件(websocket模式)"""
+        logger.info("[FeiShu] Starting in websocket mode...")
+
+        # 创建事件处理器
+        def handle_message_event(data: lark.im.v1.P2ImMessageReceiveV1) -> None:
+            """处理接收消息事件 v2.0"""
+            try:
+                logger.debug(f"[FeiShu] websocket receive event: {lark.JSON.marshal(data, indent=2)}")
+
+                # 转换为标准的event格式
+                event_dict = json.loads(lark.JSON.marshal(data))
+                event = event_dict.get("event", {})
+
+                # 处理消息
+                self._handle_message_event(event)
+
+            except Exception as e:
+                logger.error(f"[FeiShu] websocket handle message error: {e}", exc_info=True)
+
+        # 构建事件分发器
+        event_handler = lark.EventDispatcherHandler.builder("", "") \
+            .register_p2_im_message_receive_v1(handle_message_event) \
+            .build()
+
+        # 创建长连接客户端
+        ws_client = lark.ws.Client(
+            self.feishu_app_id,
+            self.feishu_app_secret,
+            event_handler=event_handler,
+            log_level=lark.LogLevel.DEBUG if conf().get("debug") else lark.LogLevel.INFO
+        )
+
+        # 在新线程中启动客户端，避免阻塞主线程
+        def start_client():
+            try:
+                logger.info("[FeiShu] Websocket client starting...")
+                ws_client.start()
+            except Exception as e:
+                logger.error(f"[FeiShu] Websocket client error: {e}", exc_info=True)
+
+        ws_thread = threading.Thread(target=start_client, daemon=True)
+        ws_thread.start()
+
+        # 保持主线程运行
+        logger.info("[FeiShu] Websocket mode started, waiting for events...")
+        ws_thread.join()
+
+    def _handle_message_event(self, event: dict):
+        """
+        处理消息事件的核心逻辑
+        webhook和websocket模式共用此方法
+        """
+        if not event.get("message") or not event.get("sender"):
+            logger.warning(f"[FeiShu] invalid message, event={event}")
+            return
+
+        msg = event.get("message")
+
+        # 幂等判断
+        msg_id = msg.get("message_id")
+        if self.receivedMsgs.get(msg_id):
+            logger.warning(f"[FeiShu] repeat msg filtered, msg_id={msg_id}")
+            return
+        self.receivedMsgs[msg_id] = True
+
+        is_group = False
+        chat_type = msg.get("chat_type")
+
+        if chat_type == "group":
+            if not msg.get("mentions") and msg.get("message_type") == "text":
+                # 群聊中未@不响应
+                return
+            if msg.get("mentions") and msg.get("mentions")[0].get("name") != conf().get("feishu_bot_name") and msg.get(
+                    "message_type") == "text":
+                # 不是@机器人，不响应
+                return
+            # 群聊
+            is_group = True
+            receive_id_type = "chat_id"
+        elif chat_type == "p2p":
+            receive_id_type = "open_id"
+        else:
+            logger.warning("[FeiShu] message ignore")
+            return
+
+        # 构造飞书消息对象
+        feishu_msg = FeishuMessage(event, is_group=is_group, access_token=self.fetch_access_token())
+        if not feishu_msg:
+            return
+
+        context = self._compose_context(
+            feishu_msg.ctype,
+            feishu_msg.content,
+            isgroup=is_group,
+            msg=feishu_msg,
+            receive_id_type=receive_id_type,
+            no_need_at=True
+        )
+        if context:
+            self.produce(context)
+        logger.info(f"[FeiShu] query={feishu_msg.content}, type={feishu_msg.ctype}")
 
     def send(self, reply: Reply, context: Context):
         msg = context.get("msg")
@@ -143,9 +278,39 @@ class FeiShuChanel(ChatChannel):
             os.remove(temp_name)
             return upload_response.json().get("data").get("image_key")
 
+    def _compose_context(self, ctype: ContextType, content, **kwargs):
+        context = Context(ctype, content)
+        context.kwargs = kwargs
+        if "origin_ctype" not in context:
+            context["origin_ctype"] = ctype
+
+        cmsg = context["msg"]
+        context["session_id"] = cmsg.from_user_id
+        context["receiver"] = cmsg.other_user_id
+
+        if ctype == ContextType.TEXT:
+            # 1.文本请求
+            # 图片生成处理
+            img_match_prefix = check_prefix(content, conf().get("image_create_prefix"))
+            if img_match_prefix:
+                content = content.replace(img_match_prefix, "", 1)
+                context.type = ContextType.IMAGE_CREATE
+            else:
+                context.type = ContextType.TEXT
+            context.content = content.strip()
+
+        elif context.type == ContextType.VOICE:
+            # 2.语音请求
+            if "desire_rtype" not in context and conf().get("voice_reply_voice"):
+                context["desire_rtype"] = ReplyType.VOICE
+
+        return context
 
 
 class FeishuController:
+    """
+    HTTP服务器控制器，用于webhook模式
+    """
     # 类常量
     FAILED_MSG = '{"success": false}'
     SUCCESS_MSG = '{"success": true}'
@@ -175,80 +340,10 @@ class FeishuController:
             # 处理消息事件
             event = request.get("event")
             if header.get("event_type") == self.MESSAGE_RECEIVE_TYPE and event:
-                if not event.get("message") or not event.get("sender"):
-                    logger.warning(f"[FeiShu] invalid message, msg={request}")
-                    return self.FAILED_MSG
-                msg = event.get("message")
+                channel._handle_message_event(event)
 
-                # 幂等判断
-                if channel.receivedMsgs.get(msg.get("message_id")):
-                    logger.warning(f"[FeiShu] repeat msg filtered, event_id={header.get('event_id')}")
-                    return self.SUCCESS_MSG
-                channel.receivedMsgs[msg.get("message_id")] = True
-
-                is_group = False
-                chat_type = msg.get("chat_type")
-                if chat_type == "group":
-                    if not msg.get("mentions") and msg.get("message_type") == "text":
-                        # 群聊中未@不响应
-                        return self.SUCCESS_MSG
-                    if msg.get("mentions")[0].get("name") != conf().get("feishu_bot_name") and msg.get("message_type") == "text":
-                        # 不是@机器人，不响应
-                        return self.SUCCESS_MSG
-                    # 群聊
-                    is_group = True
-                    receive_id_type = "chat_id"
-                elif chat_type == "p2p":
-                    receive_id_type = "open_id"
-                else:
-                    logger.warning("[FeiShu] message ignore")
-                    return self.SUCCESS_MSG
-                # 构造飞书消息对象
-                feishu_msg = FeishuMessage(event, is_group=is_group, access_token=channel.fetch_access_token())
-                if not feishu_msg:
-                    return self.SUCCESS_MSG
-
-                context = self._compose_context(
-                    feishu_msg.ctype,
-                    feishu_msg.content,
-                    isgroup=is_group,
-                    msg=feishu_msg,
-                    receive_id_type=receive_id_type,
-                    no_need_at=True
-                )
-                if context:
-                    channel.produce(context)
-                logger.info(f"[FeiShu] query={feishu_msg.content}, type={feishu_msg.ctype}")
             return self.SUCCESS_MSG
 
         except Exception as e:
             logger.error(e)
             return self.FAILED_MSG
-
-    def _compose_context(self, ctype: ContextType, content, **kwargs):
-        context = Context(ctype, content)
-        context.kwargs = kwargs
-        if "origin_ctype" not in context:
-            context["origin_ctype"] = ctype
-
-        cmsg = context["msg"]
-        context["session_id"] = cmsg.from_user_id
-        context["receiver"] = cmsg.other_user_id
-
-        if ctype == ContextType.TEXT:
-            # 1.文本请求
-            # 图片生成处理
-            img_match_prefix = check_prefix(content, conf().get("image_create_prefix"))
-            if img_match_prefix:
-                content = content.replace(img_match_prefix, "", 1)
-                context.type = ContextType.IMAGE_CREATE
-            else:
-                context.type = ContextType.TEXT
-            context.content = content.strip()
-
-        elif context.type == ContextType.VOICE:
-            # 2.语音请求
-            if "desire_rtype" not in context and conf().get("voice_reply_voice"):
-                context["desire_rtype"] = ReplyType.VOICE
-
-        return context
