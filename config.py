@@ -212,6 +212,14 @@ class Config(dict):
         return super().__setitem__(key, value)
 
     def get(self, key, default=None):
+        # 跳过以下划线开头的注释字段
+        if key.startswith("_"):
+            return super().get(key, default)
+        
+        # 如果key不在available_setting中，直接返回default
+        if key not in available_setting:
+            return super().get(key, default)
+        
         try:
             return self[key]
         except KeyError as e:

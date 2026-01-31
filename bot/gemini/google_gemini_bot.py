@@ -32,6 +32,19 @@ class GoogleGeminiBot(Bot):
         self.model = conf().get("model") or "gemini-pro"
         if self.model == "gemini":
             self.model = "gemini-pro"
+        
+        # 支持自定义API base地址，复用open_ai_api_base配置
+        self.api_base = conf().get("open_ai_api_base", "").strip()
+        if self.api_base:
+            # 移除末尾的斜杠
+            self.api_base = self.api_base.rstrip('/')
+            # 如果配置的是OpenAI的地址，则使用默认的Gemini地址
+            if "api.openai.com" in self.api_base or not self.api_base:
+                self.api_base = "https://generativelanguage.googleapis.com"
+            logger.info(f"[Gemini] Using custom API base: {self.api_base}")
+        else:
+            self.api_base = "https://generativelanguage.googleapis.com"
+
     def reply(self, query, context: Context = None) -> Reply:
         try:
             if context.type != ContextType.TEXT:
@@ -245,7 +258,7 @@ class GoogleGeminiBot(Bot):
                     logger.info(f"[Gemini] Added {len(tools)} tools to request")
             
             # Make REST API call
-            base_url = "https://generativelanguage.googleapis.com/v1beta"
+            base_url = f"{self.api_base}/v1beta"
             endpoint = f"{base_url}/models/{model_name}:generateContent"
             if stream:
                 endpoint = f"{base_url}/models/{model_name}:streamGenerateContent?alt=sse"
