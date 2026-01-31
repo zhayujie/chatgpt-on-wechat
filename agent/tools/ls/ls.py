@@ -51,6 +51,13 @@ class Ls(BaseTool):
         absolute_path = self._resolve_path(path)
         
         if not os.path.exists(absolute_path):
+            # Provide helpful hint if using relative path
+            if not os.path.isabs(path) and not path.startswith('~'):
+                return ToolResult.fail(
+                    f"Error: Path not found: {path}\n"
+                    f"Resolved to: {absolute_path}\n"
+                    f"Hint: If accessing files outside workspace ({self.cwd}), use absolute path like ~/{path} or /full/path/{path}"
+                )
             return ToolResult.fail(f"Error: Path not found: {path}")
         
         if not os.path.isdir(absolute_path):
