@@ -66,14 +66,20 @@ class AgentLLMModel(LLMModel):
         self.bridge = bridge
         self.bot_type = bot_type
         self._bot = None
+        self._use_linkai = conf().get("use_linkai", False) and conf().get("linkai_api_key")
     
     @property
     def bot(self):
         """Lazy load the bot and enhance it with tool calling if needed"""
         if self._bot is None:
-            self._bot = self.bridge.get_bot(self.bot_type)
-            # Automatically add tool calling support if not present
-            self._bot = add_openai_compatible_support(self._bot)
+            # If use_linkai is enabled, use LinkAI bot directly
+            if self._use_linkai:
+                logger.info("[AgentBridge] Using LinkAI bot for agent")
+                self._bot = self.bridge.find_chat_bot(const.LINKAI)
+            else:
+                self._bot = self.bridge.get_bot(self.bot_type)
+                # Automatically add tool calling support if not present
+                self._bot = add_openai_compatible_support(self._bot)
         return self._bot
 
     def call(self, request: LLMRequest):
@@ -88,11 +94,18 @@ class AgentLLMModel(LLMModel):
                 kwargs = {
                     'messages': request.messages,
                     'tools': getattr(request, 'tools', None),
-                    'stream': False
+                    'stream': False,
+                    'model': self.model  # Pass model parameter
                 }
                 # Only pass max_tokens if it's explicitly set
                 if request.max_tokens is not None:
                     kwargs['max_tokens'] = request.max_tokens
+                
+                # Extract system prompt if present
+                system_prompt = getattr(request, 'system', None)
+                if system_prompt:
+                    kwargs['system'] = system_prompt
+                
                 response = self.bot.call_with_tools(**kwargs)
                 return self._format_response(response)
             else:
@@ -122,7 +135,8 @@ class AgentLLMModel(LLMModel):
                     'messages': request.messages,
                     'tools': getattr(request, 'tools', None),
                     'stream': True,
-                    'max_tokens': max_tokens
+                    'max_tokens': max_tokens,
+                    'model': self.model  # Pass model parameter
                 }
                 
                 # Add system prompt if present

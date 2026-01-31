@@ -305,10 +305,20 @@ class AgentStreamExecutor:
             for chunk in stream:
                 # Check for errors
                 if isinstance(chunk, dict) and chunk.get("error"):
-                    error_msg = chunk.get("message", "Unknown error")
+                    # Extract error message from nested structure
+                    error_data = chunk.get("error", {})
+                    if isinstance(error_data, dict):
+                        error_msg = error_data.get("message", chunk.get("message", "Unknown error"))
+                        error_code = error_data.get("code", "")
+                    else:
+                        error_msg = chunk.get("message", str(error_data))
+                        error_code = ""
+                    
                     status_code = chunk.get("status_code", "N/A")
-                    logger.error(f"API Error: {error_msg} (Status: {status_code})")
+                    logger.error(f"API Error: {error_msg} (Status: {status_code}, Code: {error_code})")
                     logger.error(f"Full error chunk: {chunk}")
+                    
+                    # Raise exception with full error message for retry logic
                     raise Exception(f"{error_msg} (Status: {status_code})")
 
                 # Parse chunk
@@ -346,10 +356,11 @@ class AgentStreamExecutor:
 
         except Exception as e:
             error_str = str(e).lower()
-            # Check if error is retryable (timeout, connection, rate limit, etc.)
+            # Check if error is retryable (timeout, connection, rate limit, server busy, etc.)
             is_retryable = any(keyword in error_str for keyword in [
                 'timeout', 'timed out', 'connection', 'network', 
-                'rate limit', 'overloaded', 'unavailable', '429', '500', '502', '503', '504'
+                'rate limit', 'overloaded', 'unavailable', 'busy', 'retry',
+                '429', '500', '502', '503', '504', '512'
             ])
             
             if is_retryable and retry_count < max_retries:

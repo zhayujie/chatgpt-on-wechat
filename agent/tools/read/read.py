@@ -22,7 +22,7 @@ class Read(BaseTool):
         "properties": {
             "path": {
                 "type": "string",
-                "description": "Path to the file to read (relative or absolute)"
+                "description": "Path to the file to read. IMPORTANT: Relative paths are based on workspace directory. To access files outside workspace, use absolute paths starting with ~ or /."
             },
             "offset": {
                 "type": "integer",
@@ -68,7 +68,7 @@ class Read(BaseTool):
                 return ToolResult.fail(
                     f"Error: File not found: {path}\n"
                     f"Resolved to: {absolute_path}\n"
-                    f"Hint: If accessing files outside workspace ({self.cwd}), use absolute path like ~/{path}"
+                    f"Hint: Relative paths are based on workspace ({self.cwd}). For files outside workspace, use absolute paths."
                 )
             return ToolResult.fail(f"Error: File not found: {path}")
         

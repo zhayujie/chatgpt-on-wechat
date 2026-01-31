@@ -245,8 +245,7 @@ class GoogleGeminiBot(Bot):
             gen_config = {}
             if kwargs.get("temperature") is not None:
                 gen_config["temperature"] = kwargs["temperature"]
-            if kwargs.get("max_tokens"):
-                gen_config["maxOutputTokens"] = kwargs["max_tokens"]
+
             if gen_config:
                 payload["generationConfig"] = gen_config
             

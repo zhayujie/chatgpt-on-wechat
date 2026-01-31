@@ -23,7 +23,7 @@ class Ls(BaseTool):
         "properties": {
             "path": {
                 "type": "string",
-                "description": "Directory to list (default: current directory)"
+                "description": "Directory to list. IMPORTANT: Relative paths are based on workspace directory. To access directories outside workspace, use absolute paths starting with ~ or /."
             },
             "limit": {
                 "type": "integer",
@@ -56,7 +56,7 @@ class Ls(BaseTool):
                 return ToolResult.fail(
                     f"Error: Path not found: {path}\n"
                     f"Resolved to: {absolute_path}\n"
-                    f"Hint: If accessing files outside workspace ({self.cwd}), use absolute path like ~/{path} or /full/path/{path}"
+                    f"Hint: Relative paths are based on workspace ({self.cwd}). For files outside workspace, use absolute paths."
                 )
             return ToolResult.fail(f"Error: Path not found: {path}")
         
