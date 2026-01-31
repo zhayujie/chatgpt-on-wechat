@@ -278,6 +278,18 @@ class GoogleGeminiBot(Bot):
                 timeout=60
             )
             
+            # Check HTTP status for stream mode (for non-stream, it's checked in handler)
+            if stream and response.status_code != 200:
+                error_text = response.text
+                logger.error(f"[Gemini] API error ({response.status_code}): {error_text}")
+                def error_generator():
+                    yield {
+                        "error": True,
+                        "message": f"Gemini API error: {error_text}",
+                        "status_code": response.status_code
+                    }
+                return error_generator()
+            
             if stream:
                 return self._handle_gemini_rest_stream_response(response, model_name)
             else:
@@ -354,7 +366,7 @@ class GoogleGeminiBot(Bot):
                 }
             
             data = response.json()
-            logger.debug(f"[Gemini] Response received")
+            logger.debug(f"[Gemini] Response data: {json.dumps(data, ensure_ascii=False)[:500]}")
             
             # Extract from Gemini response format
             candidates = data.get("candidates", [])
@@ -370,6 +382,8 @@ class GoogleGeminiBot(Bot):
             content = candidate.get("content", {})
             parts = content.get("parts", [])
             
+            logger.debug(f"[Gemini] Candidate parts count: {len(parts)}")
+            
             # Extract text and function calls
             text_content = ""
             tool_calls = []
@@ -378,6 +392,7 @@ class GoogleGeminiBot(Bot):
                 # Check for text
                 if "text" in part:
                     text_content += part["text"]
+                    logger.debug(f"[Gemini] Text part: {part['text'][:100]}...")
                 
                 # Check for functionCall (per REST API docs)
                 if "functionCall" in part:
@@ -417,7 +432,7 @@ class GoogleGeminiBot(Bot):
             }
             
         except Exception as e:
-            logger.error(f"[Gemini] sync response error: {e}")
+            logger.error(f"[Gemini] sync response error: {e}", exc_info=True)
             return {
                 "error": True,
                 "message": str(e),
@@ -429,6 +444,7 @@ class GoogleGeminiBot(Bot):
         try:
             all_tool_calls = []
             has_sent_tool_calls = False
+            has_content = False  # Track if any content was sent
             
             for line in response.iter_lines():
                 if not line:
@@ -445,17 +461,25 @@ class GoogleGeminiBot(Bot):
                 
                 try:
                     chunk_data = json.loads(line)
+                    logger.debug(f"[Gemini] Stream chunk: {json.dumps(chunk_data, ensure_ascii=False)[:200]}")
+                    
                     candidates = chunk_data.get("candidates", [])
                     if not candidates:
+                        logger.debug("[Gemini] No candidates in chunk")
                         continue
                     
                     candidate = candidates[0]
                     content = candidate.get("content", {})
                     parts = content.get("parts", [])
                     
+                    if not parts:
+                        logger.debug("[Gemini] No parts in candidate content")
+                    
                     # Stream text content
                     for part in parts:
                         if "text" in part and part["text"]:
+                            has_content = True
+                            logger.debug(f"[Gemini] Streaming text: {part['text'][:50]}...")
                             yield {
                                 "id": f"chatcmpl-{time.time()}",
                                 "object": "chat.completion.chunk",
@@ -471,6 +495,7 @@ class GoogleGeminiBot(Bot):
                         # Collect function calls
                         if "functionCall" in part:
                             fc = part["functionCall"]
+                            logger.debug(f"[Gemini] Function call detected: {fc.get('name')}")
                             all_tool_calls.append({
                                 "index": len(all_tool_calls),  # Add index to differentiate multiple tool calls
                                 "id": f"call_{int(time.time() * 1000000)}_{len(all_tool_calls)}",
@@ -481,7 +506,8 @@ class GoogleGeminiBot(Bot):
                                 }
                             })
                     
-                except json.JSONDecodeError:
+                except json.JSONDecodeError as je:
+                    logger.debug(f"[Gemini] JSON decode error: {je}")
                     continue
             
             # Send tool calls if any were collected
@@ -499,6 +525,9 @@ class GoogleGeminiBot(Bot):
                     }]
                 }
                 has_sent_tool_calls = True
+            
+            # Log summary
+            logger.info(f"[Gemini] Stream complete: has_content={has_content}, tool_calls={len(all_tool_calls)}")
             
             # Final chunk
             yield {

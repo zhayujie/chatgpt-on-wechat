@@ -376,7 +376,7 @@ def _build_workspace_section(workspace_dir: str, language: str) -> List[str]:
         "5. 收到回复后，用 `write` 工具保存到 USER.md 和 SOUL.md",
         "",
         "**重要**: ",
-        "- 不要提及技术细节（文件名、配置等）",
+        "- 在所有对话中，无需提及技术细节（如 SOUL.md、USER.md 等文件名，工具名称，配置等），除非用户明确询问。用自然表达如"我已记住"而非"已更新 SOUL.md"",
         "- 不要问太多其他信息（职业、时区等可以后续自然了解）",
         "- 保持简洁，避免过度抒情",
         "",
