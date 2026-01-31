@@ -255,7 +255,7 @@ class GoogleGeminiBot(Bot):
                 gemini_tools = self._convert_tools_to_gemini_rest_format(tools)
                 if gemini_tools:
                     payload["tools"] = gemini_tools
-                    logger.info(f"[Gemini] Added {len(tools)} tools to request")
+                    logger.debug(f"[Gemini] Added {len(tools)} tools to request")
             
             # Make REST API call
             base_url = f"{self.api_base}/v1beta"
@@ -445,6 +445,9 @@ class GoogleGeminiBot(Bot):
             all_tool_calls = []
             has_sent_tool_calls = False
             has_content = False  # Track if any content was sent
+            chunk_count = 0
+            last_finish_reason = None
+            last_safety_ratings = None
             
             for line in response.iter_lines():
                 if not line:
@@ -461,6 +464,7 @@ class GoogleGeminiBot(Bot):
                 
                 try:
                     chunk_data = json.loads(line)
+                    chunk_count += 1
                     logger.debug(f"[Gemini] Stream chunk: {json.dumps(chunk_data, ensure_ascii=False)[:200]}")
                     
                     candidates = chunk_data.get("candidates", [])
@@ -469,6 +473,13 @@ class GoogleGeminiBot(Bot):
                         continue
                     
                     candidate = candidates[0]
+                    
+                    # 记录 finish_reason 和 safety_ratings
+                    if "finishReason" in candidate:
+                        last_finish_reason = candidate["finishReason"]
+                    if "safetyRatings" in candidate:
+                        last_safety_ratings = candidate["safetyRatings"]
+                    
                     content = candidate.get("content", {})
                     parts = content.get("parts", [])
                     
@@ -512,7 +523,7 @@ class GoogleGeminiBot(Bot):
             
             # Send tool calls if any were collected
             if all_tool_calls and not has_sent_tool_calls:
-                logger.info(f"[Gemini] Stream detected {len(all_tool_calls)} tool calls")
+                logger.debug(f"[Gemini] Stream detected {len(all_tool_calls)} tool calls")
                 yield {
                     "id": f"chatcmpl-{time.time()}",
                     "object": "chat.completion.chunk",
@@ -526,17 +537,17 @@ class GoogleGeminiBot(Bot):
                 }
                 has_sent_tool_calls = True
             
-            # Log summary
-            logger.info(f"[Gemini] Stream complete: has_content={has_content}, tool_calls={len(all_tool_calls)}")
+            # Log summary (only if there's something interesting)
+            if not has_content and not all_tool_calls:
+                logger.debug(f"[Gemini] Stream complete: has_content={has_content}, tool_calls={len(all_tool_calls)}")
+            elif all_tool_calls:
+                logger.debug(f"[Gemini] Stream complete: {len(all_tool_calls)} tool calls")
+            else:
+                logger.debug(f"[Gemini] Stream complete: text response")
             
             # 如果返回空响应，记录详细警告
             if not has_content and not all_tool_calls:
                 logger.warning(f"[Gemini] ⚠️  Empty response detected!")
-                logger.warning(f"[Gemini] Possible reasons:")
-                logger.warning(f"  1. Model couldn't generate response based on context")
-                logger.warning(f"  2. Content blocked by safety filters")
-                logger.warning(f"  3. All previous tool calls failed")
-                logger.warning(f"  4. API error not properly caught")
             
             # Final chunk
             yield {

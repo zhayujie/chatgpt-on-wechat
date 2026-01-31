@@ -354,7 +354,7 @@ def _build_workspace_section(workspace_dir: str, language: str) -> List[str]:
         "",
         "**路径使用规则** (非常重要):",
         "",
-        "- **工作空间内的文件**: 使用相对路径（如 `SOUL.md`、`memory/daily.md`）",
+        "- **工作空间内的文件**: 可以使用相对路径（如 `SOUL.md`、`MEMORY.md`）",
         "- **工作空间外的文件**: 必须使用绝对路径（如 `~/project/code.py`、`/etc/config`）",
         "- **不确定时**: 先用 `bash pwd` 确认当前目录，或用 `ls .` 查看当前位置",
         "",
