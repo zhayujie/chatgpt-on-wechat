@@ -35,3 +35,6 @@ plugins/banwords/lib/__pycache__
 !plugins/linkai
 !plugins/agent
 client_config.json
+ref/
+.cursor/
+local/

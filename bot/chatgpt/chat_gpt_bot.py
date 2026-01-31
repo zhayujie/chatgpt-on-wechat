@@ -1,12 +1,14 @@
 # encoding:utf-8
 
 import time
+import json
 
 import openai
 import openai.error
 import requests
 from common import const
 from bot.bot import Bot
+from bot.openai_compatible_bot import OpenAICompatibleBot
 from bot.chatgpt.chat_gpt_session import ChatGPTSession
 from bot.openai.open_ai_image import OpenAIImage
 from bot.session_manager import SessionManager
@@ -18,7 +20,7 @@ from config import conf, load_config
 from bot.baidu.baidu_wenxin_session import BaiduWenxinSession
 
 # OpenAI对话模型API (可用)
-class ChatGPTBot(Bot, OpenAIImage):
+class ChatGPTBot(Bot, OpenAIImage, OpenAICompatibleBot):
     def __init__(self):
         super().__init__()
         # set the default api_key
@@ -52,6 +54,18 @@ class ChatGPTBot(Bot, OpenAIImage):
             if conf_model in [const.O1, const.O1_MINI]:  # o1系列模型不支持系统提示词，使用文心模型的session
                 self.sessions = SessionManager(BaiduWenxinSession, model=conf().get("model") or const.O1_MINI)
 
+    def get_api_config(self):
+        """Get API configuration for OpenAI-compatible base class"""
+        return {
+            'api_key': conf().get("open_ai_api_key"),
+            'api_base': conf().get("open_ai_api_base"),
+            'model': conf().get("model", "gpt-3.5-turbo"),
+            'default_temperature': conf().get("temperature", 0.9),
+            'default_top_p': conf().get("top_p", 1.0),
+            'default_frequency_penalty': conf().get("frequency_penalty", 0.0),
+            'default_presence_penalty': conf().get("presence_penalty", 0.0),
+        }
+    
     def reply(self, query, context=None):
         # acquire reply content
         if context.type == ContextType.TEXT:
@@ -170,7 +184,6 @@ class ChatGPTBot(Bot, OpenAIImage):
                 return self.reply_text(session, api_key, args, retry_count + 1)
             else:
                 return result
-
 
 class AzureChatGPTBot(ChatGPTBot):
     def __init__(self):

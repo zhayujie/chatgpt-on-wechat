@@ -6,6 +6,7 @@ import time
 import requests
 import config
 from bot.bot import Bot
+from bot.openai_compatible_bot import OpenAICompatibleBot
 from bot.chatgpt.chat_gpt_session import ChatGPTSession
 from bot.session_manager import SessionManager
 from bridge.context import Context, ContextType
@@ -17,7 +18,7 @@ from common import memory, utils
 import base64
 import os
 
-class LinkAIBot(Bot):
+class LinkAIBot(Bot, OpenAICompatibleBot):
     # authentication failed
     AUTH_FAILED_CODE = 401
     NO_QUOTA_CODE = 406
@@ -26,6 +27,18 @@ class LinkAIBot(Bot):
         super().__init__()
         self.sessions = LinkAISessionManager(LinkAISession, model=conf().get("model") or "gpt-3.5-turbo")
         self.args = {}
+    
+    def get_api_config(self):
+        """Get API configuration for OpenAI-compatible base class"""
+        return {
+            'api_key': conf().get("open_ai_api_key"),  # LinkAI uses OpenAI-compatible key
+            'api_base': conf().get("open_ai_api_base", "https://api.link-ai.tech/v1"),
+            'model': conf().get("model", "gpt-3.5-turbo"),
+            'default_temperature': conf().get("temperature", 0.9),
+            'default_top_p': conf().get("top_p", 1.0),
+            'default_frequency_penalty': conf().get("frequency_penalty", 0.0),
+            'default_presence_penalty': conf().get("presence_penalty", 0.0),
+        }
 
     def reply(self, query, context: Context = None) -> Reply:
         if context.type == ContextType.TEXT:
@@ -473,3 +486,150 @@ class LinkAISession(ChatGPTSession):
                     self.messages.pop(i - 1)
                     return self.calc_tokens()
         return cur_tokens
+
+
+# Add call_with_tools method to LinkAIBot class
+def _linkai_call_with_tools(self, messages, tools=None, stream=False, **kwargs):
+    """
+    Call LinkAI API with tool support for agent integration
+    LinkAI is fully compatible with OpenAI's tool calling format
+    
+    Args:
+        messages: List of messages
+        tools: List of tool definitions (OpenAI format)
+        stream: Whether to use streaming
+        **kwargs: Additional parameters (max_tokens, temperature, etc.)
+        
+    Returns:
+        Formatted response in OpenAI format or generator for streaming
+    """
+    try:
+        # Build request parameters (LinkAI uses OpenAI-compatible format)
+        body = {
+            "messages": messages,
+            "model": kwargs.get("model", conf().get("model") or "gpt-3.5-turbo"),
+            "temperature": kwargs.get("temperature", conf().get("temperature", 0.9)),
+            "top_p": kwargs.get("top_p", conf().get("top_p", 1)),
+            "frequency_penalty": kwargs.get("frequency_penalty", conf().get("frequency_penalty", 0.0)),
+            "presence_penalty": kwargs.get("presence_penalty", conf().get("presence_penalty", 0.0)),
+            "stream": stream
+        }
+        
+        # Add max_tokens if specified
+        if kwargs.get("max_tokens"):
+            body["max_tokens"] = kwargs["max_tokens"]
+        
+        # Add app_code if provided
+        app_code = kwargs.get("app_code", conf().get("linkai_app_code"))
+        if app_code:
+            body["app_code"] = app_code
+        
+        # Add tools if provided (OpenAI-compatible format)
+        if tools:
+            body["tools"] = tools
+            body["tool_choice"] = kwargs.get("tool_choice", "auto")
+        
+        # Prepare headers
+        headers = {"Authorization": "Bearer " + conf().get("linkai_api_key")}
+        base_url = conf().get("linkai_api_base", "https://api.link-ai.tech")
+        
+        if stream:
+            return self._handle_linkai_stream_response(base_url, headers, body)
+        else:
+            return self._handle_linkai_sync_response(base_url, headers, body)
+            
+    except Exception as e:
+        logger.error(f"[LinkAI] call_with_tools error: {e}")
+        if stream:
+            def error_generator():
+                yield {
+                    "error": True,
+                    "message": str(e),
+                    "status_code": 500
+                }
+            return error_generator()
+        else:
+            return {
+                "error": True,
+                "message": str(e),
+                "status_code": 500
+            }
+
+def _handle_linkai_sync_response(self, base_url, headers, body):
+    """Handle synchronous LinkAI API response"""
+    try:
+        res = requests.post(
+            url=base_url + "/v1/chat/completions",
+            json=body,
+            headers=headers,
+            timeout=conf().get("request_timeout", 180)
+        )
+        
+        if res.status_code == 200:
+            response = res.json()
+            logger.info(f"[LinkAI] call_with_tools reply, model={response.get('model')}, "
+                       f"total_tokens={response.get('usage', {}).get('total_tokens', 0)}")
+            
+            # LinkAI response is already in OpenAI-compatible format
+            return response
+        else:
+            error_data = res.json()
+            error_msg = error_data.get("error", {}).get("message", "Unknown error")
+            raise Exception(f"LinkAI API error: {res.status_code} - {error_msg}")
+            
+    except Exception as e:
+        logger.error(f"[LinkAI] sync response error: {e}")
+        raise
+
+def _handle_linkai_stream_response(self, base_url, headers, body):
+    """Handle streaming LinkAI API response"""
+    try:
+        res = requests.post(
+            url=base_url + "/v1/chat/completions",
+            json=body,
+            headers=headers,
+            timeout=conf().get("request_timeout", 180),
+            stream=True
+        )
+        
+        if res.status_code != 200:
+            error_text = res.text
+            try:
+                error_data = json.loads(error_text)
+                error_msg = error_data.get("error", {}).get("message", error_text)
+            except:
+                error_msg = error_text or "Unknown error"
+            
+            yield {
+                "error": True,
+                "status_code": res.status_code,
+                "message": error_msg
+            }
+            return
+        
+        # Process streaming response (OpenAI-compatible SSE format)
+        for line in res.iter_lines():
+            if line:
+                line = line.decode('utf-8')
+                if line.startswith('data: '):
+                    line = line[6:]  # Remove 'data: ' prefix
+                    if line == '[DONE]':
+                        break
+                    try:
+                        chunk = json.loads(line)
+                        yield chunk
+                    except json.JSONDecodeError:
+                        continue
+                        
+    except Exception as e:
+        logger.error(f"[LinkAI] stream response error: {e}")
+        yield {
+            "error": True,
+            "message": str(e),
+            "status_code": 500
+        }
+
+# Attach methods to LinkAIBot class
+LinkAIBot.call_with_tools = _linkai_call_with_tools
+LinkAIBot._handle_linkai_sync_response = _handle_linkai_sync_response
+LinkAIBot._handle_linkai_stream_response = _handle_linkai_stream_response

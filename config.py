@@ -1,10 +1,10 @@
 # encoding:utf-8
 
+import copy
 import json
 import logging
 import os
 import pickle
-import copy
 
 from common.log import logger
 
@@ -148,6 +148,7 @@ available_setting = {
     "feishu_app_secret": "",  # 飞书机器人APP secret
     "feishu_token": "",  # 飞书 verification token
     "feishu_bot_name": "",  # 飞书机器人的名字
+    "feishu_event_mode": "websocket",  # 飞书事件接收模式: webhook(HTTP服务器) 或 websocket(长连接)
     # 钉钉配置
     "dingtalk_client_id": "",  # 钉钉机器人Client ID 
     "dingtalk_client_secret": "",  # 钉钉机器人Client Secret
@@ -183,6 +184,8 @@ available_setting = {
     "Minimax_group_id": "",
     "Minimax_base_url": "",
     "web_port": 9899,
+    "agent": False,  # 是否开启Agent模式
+    "agent_workspace": "~/cow"  # agent工作空间路径，用于存储skills、memory等
 }
 
 
@@ -197,16 +200,26 @@ class Config(dict):
         self.user_datas = {}
 
     def __getitem__(self, key):
-        if key not in available_setting:
+        # 跳过以下划线开头的注释字段
+        if not key.startswith("_") and key not in available_setting:
             raise Exception("key {} not in available_setting".format(key))
         return super().__getitem__(key)
 
     def __setitem__(self, key, value):
-        if key not in available_setting:
+        # 跳过以下划线开头的注释字段
+        if not key.startswith("_") and key not in available_setting:
             raise Exception("key {} not in available_setting".format(key))
         return super().__setitem__(key, value)
 
     def get(self, key, default=None):
+        # 跳过以下划线开头的注释字段
+        if key.startswith("_"):
+            return super().get(key, default)
+        
+        # 如果key不在available_setting中，直接返回default
+        if key not in available_setting:
+            return super().get(key, default)
+        
         try:
             return self[key]
         except KeyError as e:
@@ -284,6 +297,9 @@ def load_config():
     # Some online deployment platforms (e.g. Railway) deploy project from github directly. So you shouldn't put your secrets like api key in a config file, instead use environment variables to override the default config.
     for name, value in os.environ.items():
         name = name.lower()
+        # 跳过以下划线开头的注释字段
+        if name.startswith("_"):
+            continue
         if name in available_setting:
             logger.info("[INIT] override config by environ args: {}={}".format(name, value))
             try:
