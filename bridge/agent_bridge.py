@@ -5,7 +5,7 @@ Agent Bridge - Integrates Agent system with existing COW bridge
 from typing import Optional, List
 
 from agent.protocol import Agent, LLMModel, LLMRequest
-from bot.openai_compatible_bot import OpenAICompatibleBot
+from models.openai_compatible_bot import OpenAICompatibleBot
 from bridge.bridge import Bridge
 from bridge.context import Context
 from bridge.reply import Reply, ReplyType
