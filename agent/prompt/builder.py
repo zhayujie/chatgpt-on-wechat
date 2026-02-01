@@ -315,8 +315,12 @@ def _build_memory_section(memory_manager: Any, tools: Optional[List[Any]], langu
         "",
         "**使用原则**:",
         "- 自然使用记忆，就像你本来就知道; 不用刻意提起或列举记忆，除非用户提起相关内容",
-        "- 追加内容到现有记忆文件 → 必须用 `edit` 工具（先 read 读取，再 edit 追加）",
-        "- 创建新的记忆文件 → 可以用 `write` 工具（已有记忆文件不可直接write，会覆盖删除）",
+        "",
+        "**写入记忆的正确方式**:",
+        "- 追加到现有文件末尾 → 用 `read` 读取文件最后几行（offset=-10），然后用 `edit` 追加",
+        "  例: read(path=memory/2026-02-01.md, offset=-10) → 看到最后内容 → edit(oldText=最后几行完整文本, newText=最后几行+新内容)",
+        "- 创建新文件 → 用 `write`",
+        "- ⚠️ 不要用 `memory_get` 读取后再 `edit`，因为会截断长文本",
         "",
     ]
     

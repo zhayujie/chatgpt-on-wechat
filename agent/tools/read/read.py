@@ -26,7 +26,7 @@ class Read(BaseTool):
             },
             "offset": {
                 "type": "integer",
-                "description": "Line number to start reading from (1-indexed, optional)"
+                "description": "Line number to start reading from (1-indexed, optional). Use negative values to read from end (e.g. -20 for last 20 lines)"
             },
             "limit": {
                 "type": "integer",
@@ -167,11 +167,17 @@ class Read(BaseTool):
             # Apply offset (if specified)
             start_line = 0
             if offset is not None:
-                start_line = max(0, offset - 1)  # Convert to 0-indexed
-                if start_line >= total_file_lines:
-                    return ToolResult.fail(
-                        f"Error: Offset {offset} is beyond end of file ({total_file_lines} lines total)"
-                    )
+                if offset < 0:
+                    # Negative offset: read from end
+                    # -20 means "last 20 lines" → start from (total - 20)
+                    start_line = max(0, total_file_lines + offset)
+                else:
+                    # Positive offset: read from start (1-indexed)
+                    start_line = max(0, offset - 1)  # Convert to 0-indexed
+                    if start_line >= total_file_lines:
+                        return ToolResult.fail(
+                            f"Error: Offset {offset} is beyond end of file ({total_file_lines} lines total)"
+                        )
             
             start_line_display = start_line + 1  # For display (1-indexed)
             
