@@ -13,10 +13,20 @@ from agent.tools.ls.ls import Ls
 from agent.tools.memory.memory_search import MemorySearchTool
 from agent.tools.memory.memory_get import MemoryGetTool
 
+# Import env config tool
+from agent.tools.env_config.env_config import EnvConfig
+
 # Import tools with optional dependencies
 def _import_optional_tools():
     """Import tools that have optional dependencies"""
     tools = {}
+    
+    # Scheduler Tool (requires croniter)
+    try:
+        from agent.tools.scheduler.scheduler_tool import SchedulerTool
+        tools['SchedulerTool'] = SchedulerTool
+    except ImportError:
+        pass
     
     # Google Search (requires requests)
     try:
@@ -43,6 +53,7 @@ def _import_optional_tools():
 
 # Load optional tools
 _optional_tools = _import_optional_tools()
+SchedulerTool = _optional_tools.get('SchedulerTool')
 GoogleSearch = _optional_tools.get('GoogleSearch')
 FileSave = _optional_tools.get('FileSave') 
 Terminal = _optional_tools.get('Terminal')
@@ -79,6 +90,8 @@ __all__ = [
     'Ls',
     'MemorySearchTool',
     'MemoryGetTool',
+    'EnvConfig',
+    'SchedulerTool',
     # Optional tools (may be None if dependencies not available)
     'GoogleSearch',
     'FileSave',

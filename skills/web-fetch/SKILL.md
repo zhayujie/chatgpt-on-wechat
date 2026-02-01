@@ -1,11 +1,12 @@
 ---
 name: web-fetch
-description: Fetch and extract readable content from web pages
+description: Fetch and extract readable content from web pages. Use for lightweight page access without browser automation.
 homepage: https://github.com/zhayujie/chatgpt-on-wechat
 metadata:
   emoji: 🌐
   requires:
     bins: ["curl"]
+  always: true
 ---
 
 # Web Fetch
@@ -14,10 +15,16 @@ Fetch and extract readable content from web pages using curl and basic text proc
 
 ## Usage
 
-Use the provided script to fetch a URL and extract its content:
+**Important**: Scripts are located relative to this skill's base directory.
+
+When you see this skill in `<available_skills>`, note the `<base_dir>` path.
 
 ```bash
-bash scripts/fetch.sh <url> [output_file]
+# General pattern:
+bash "<base_dir>/scripts/fetch.sh" <url> [output_file]
+
+# Example (replace <base_dir> with actual path from skill listing):
+bash "~/chatgpt-on-wechat/skills/web-fetch/scripts/fetch.sh" "https://example.com"
 ```
 
 **Parameters:**
@@ -31,18 +38,18 @@ bash scripts/fetch.sh <url> [output_file]
 
 ### Fetch a web page
 ```bash
-bash scripts/fetch.sh "https://example.com"
+bash "<base_dir>/scripts/fetch.sh" "https://example.com"
 ```
 
 ### Save to file
 ```bash
-bash scripts/fetch.sh "https://example.com" output.txt
+bash "<base_dir>/scripts/fetch.sh" "https://example.com" output.txt
 cat output.txt
 ```
 
 ## Notes
 
-- Uses curl for HTTP requests (timeout: 20s)
+- Uses curl for HTTP requests (timeout: 10s)
 - Extracts title and basic text content
 - Removes HTML tags and scripts
 - Works with any standard web page

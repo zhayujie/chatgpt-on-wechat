@@ -19,7 +19,7 @@ if [[ ! "$url" =~ ^https?:// ]]; then
 fi
 
 # Fetch the page with curl
-html=$(curl -sS -L --max-time 20 \
+html=$(curl -sS -L --max-time 10 \
     -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36" \
     -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8" \
     "$url" 2>&1) || {
