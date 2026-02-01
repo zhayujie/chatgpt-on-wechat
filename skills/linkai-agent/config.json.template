@@ -1,0 +1,14 @@
+{
+  "apps": [
+    {
+      "app_code": "your_app_code_2",
+      "app_name": "知识库助手",
+      "app_description": "基于特定领域知识库提供智能问答的知识助手"
+    },
+    {
+      "app_code": "your_workflow_code",
+      "app_name": "数据分析工作流",
+      "app_description": "用于数据分析任务的工作流程"
+    }
+  ]
+}

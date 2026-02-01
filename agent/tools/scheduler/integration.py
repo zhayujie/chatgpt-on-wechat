@@ -45,10 +45,17 @@ def init_scheduler(agent_bridge) -> bool:
                 action = task.get("action", {})
                 action_type = action.get("type")
                 
-                if action_type == "send_message":
+                if action_type == "agent_task":
+                    _execute_agent_task(task, agent_bridge)
+                elif action_type == "send_message":
+                    # Legacy support for old tasks
                     _execute_send_message(task, agent_bridge)
                 elif action_type == "tool_call":
+                    # Legacy support for old tasks
                     _execute_tool_call(task, agent_bridge)
+                elif action_type == "skill_call":
+                    # Legacy support for old tasks
+                    _execute_skill_call(task, agent_bridge)
                 else:
                     logger.warning(f"[Scheduler] Unknown action type: {action_type}")
             except Exception as e:
@@ -74,6 +81,100 @@ def get_task_store():
 def get_scheduler_service():
     """Get the global scheduler service instance"""
     return _scheduler_service
+
+
+def _execute_agent_task(task: dict, agent_bridge):
+    """
+    Execute an agent_task action - let Agent handle the task
+    
+    Args:
+        task: Task dictionary
+        agent_bridge: AgentBridge instance
+    """
+    try:
+        action = task.get("action", {})
+        task_description = action.get("task_description")
+        receiver = action.get("receiver")
+        is_group = action.get("is_group", False)
+        channel_type = action.get("channel_type", "unknown")
+        
+        if not task_description:
+            logger.error(f"[Scheduler] Task {task['id']}: No task_description specified")
+            return
+        
+        if not receiver:
+            logger.error(f"[Scheduler] Task {task['id']}: No receiver specified")
+            return
+        
+        # Check for unsupported channels
+        if channel_type == "dingtalk":
+            logger.warning(f"[Scheduler] Task {task['id']}: DingTalk channel does not support scheduled messages (Stream mode limitation). Task will execute but message cannot be sent.")
+        
+        logger.info(f"[Scheduler] Task {task['id']}: Executing agent task '{task_description}'")
+        
+        # Create context for Agent
+        context = Context(ContextType.TEXT, task_description)
+        context["receiver"] = receiver
+        context["isgroup"] = is_group
+        context["session_id"] = receiver
+        
+        # Channel-specific setup
+        if channel_type == "web":
+            import uuid
+            request_id = f"scheduler_{task['id']}_{uuid.uuid4().hex[:8]}"
+            context["request_id"] = request_id
+        elif channel_type == "feishu":
+            context["receive_id_type"] = "chat_id" if is_group else "open_id"
+            context["msg"] = None
+        elif channel_type == "dingtalk":
+            # DingTalk requires msg object, set to None for scheduled tasks
+            context["msg"] = None
+            # 如果是单聊，需要传递 sender_staff_id
+            if not is_group:
+                sender_staff_id = action.get("dingtalk_sender_staff_id")
+                if sender_staff_id:
+                    context["dingtalk_sender_staff_id"] = sender_staff_id
+        
+        # Use Agent to execute the task
+        # Mark this as a scheduled task execution to prevent recursive task creation
+        context["is_scheduled_task"] = True
+        
+        try:
+            reply = agent_bridge.agent_reply(task_description, context=context, on_event=None, clear_history=True)
+            
+            if reply and reply.content:
+                # Send the reply via channel
+                from channel.channel_factory import create_channel
+                
+                try:
+                    channel = create_channel(channel_type)
+                    if channel:
+                        # For web channel, register request_id
+                        if channel_type == "web" and hasattr(channel, 'request_to_session'):
+                            request_id = context.get("request_id")
+                            if request_id:
+                                channel.request_to_session[request_id] = receiver
+                                logger.debug(f"[Scheduler] Registered request_id {request_id} -> session {receiver}")
+                        
+                        # Send the reply
+                        channel.send(reply, context)
+                        logger.info(f"[Scheduler] Task {task['id']} executed successfully, result sent to {receiver}")
+                    else:
+                        logger.error(f"[Scheduler] Failed to create channel: {channel_type}")
+                except Exception as e:
+                    logger.error(f"[Scheduler] Failed to send result: {e}")
+            else:
+                logger.error(f"[Scheduler] Task {task['id']}: No result from agent execution")
+                
+        except Exception as e:
+            logger.error(f"[Scheduler] Failed to execute task via Agent: {e}")
+            import traceback
+            logger.error(f"[Scheduler] Traceback: {traceback.format_exc()}")
+            
+    except Exception as e:
+        logger.error(f"[Scheduler] Error in _execute_agent_task: {e}")
+        import traceback
+        logger.error(f"[Scheduler] Traceback: {traceback.format_exc()}")
 
 
 def _execute_send_message(task: dict, agent_bridge):
@@ -116,6 +217,17 @@ def _execute_send_message(task: dict, agent_bridge):
             # Feishu channel will detect this and send as new message instead of reply
             context["msg"] = None
             logger.debug(f"[Scheduler] Feishu: receive_id_type={context['receive_id_type']}, is_group={is_group}, receiver={receiver}")
+        elif channel_type == "dingtalk":
+            # DingTalk channel setup
+            context["msg"] = None
+            # 如果是单聊，需要传递 sender_staff_id
+            if not is_group:
+                sender_staff_id = action.get("dingtalk_sender_staff_id")
+                if sender_staff_id:
+                    context["dingtalk_sender_staff_id"] = sender_staff_id
+                    logger.debug(f"[Scheduler] DingTalk single chat: sender_staff_id={sender_staff_id}")
+                else:
+                    logger.warning(f"[Scheduler] Task {task['id']}: DingTalk single chat message missing sender_staff_id")
         
         # Create reply
         reply = Reply(ReplyType.TEXT, content)
@@ -156,8 +268,9 @@ def _execute_tool_call(task: dict, agent_bridge):
     """
     try:
         action = task.get("action", {})
-        tool_name = action.get("tool_name")
-        tool_params = action.get("tool_params", {})
+        # Support both old and new field names
+        tool_name = action.get("call_name") or action.get("tool_name")
+        tool_params = action.get("call_params") or action.get("tool_params", {})
         result_prefix = action.get("result_prefix", "")
         receiver = action.get("receiver")
         is_group = action.get("is_group", False)
@@ -235,6 +348,82 @@ def _execute_tool_call(task: dict, agent_bridge):
             
     except Exception as e:
         logger.error(f"[Scheduler] Error in _execute_tool_call: {e}")
+
+
+def _execute_skill_call(task: dict, agent_bridge):
+    """
+    Execute a skill_call action by asking Agent to run the skill
+    
+    Args:
+        task: Task dictionary
+        agent_bridge: AgentBridge instance
+    """
+    try:
+        action = task.get("action", {})
+        # Support both old and new field names
+        skill_name = action.get("call_name") or action.get("skill_name")
+        skill_params = action.get("call_params") or action.get("skill_params", {})
+        result_prefix = action.get("result_prefix", "")
+        receiver = action.get("receiver")
+        is_group = action.get("isgroup", False)
+        channel_type = action.get("channel_type", "unknown")
+        
+        if not skill_name:
+            logger.error(f"[Scheduler] Task {task['id']}: No skill_name specified")
+            return
+        
+        if not receiver:
+            logger.error(f"[Scheduler] Task {task['id']}: No receiver specified")
+            return
+        
+        logger.info(f"[Scheduler] Task {task['id']}: Executing skill '{skill_name}' with params {skill_params}")
+        
+        # Build a natural language query for the Agent to execute the skill
+        # Format: "Use skill-name to do something with params"
+        param_str = ", ".join([f"{k}={v}" for k, v in skill_params.items()])
+        query = f"Use {skill_name} skill"
+        if param_str:
+            query += f" with {param_str}"
+        
+        # Create context for Agent
+        context = Context(ContextType.TEXT, query)
+        context["receiver"] = receiver
+        context["isgroup"] = is_group
+        context["session_id"] = receiver
+        
+        # Channel-specific setup
+        if channel_type == "web":
+            import uuid
+            request_id = f"scheduler_{task['id']}_{uuid.uuid4().hex[:8]}"
+            context["request_id"] = request_id
+        elif channel_type == "feishu":
+            context["receive_id_type"] = "chat_id" if is_group else "open_id"
+            context["msg"] = None
+        
+        # Use Agent to execute the skill
+        try:
+            reply = agent_bridge.agent_reply(query, context=context, on_event=None, clear_history=True)
+            
+            if reply and reply.content:
+                content = reply.content
+                
+                # Add prefix if specified
+                if result_prefix:
+                    content = f"{result_prefix}\n\n{content}"
+                
+                logger.info(f"[Scheduler] Task {task['id']} executed: skill result sent to {receiver}")
+            else:
+                logger.error(f"[Scheduler] Task {task['id']}: No result from skill execution")
+                
+        except Exception as e:
+            logger.error(f"[Scheduler] Failed to execute skill via Agent: {e}")
+            import traceback
+            logger.error(f"[Scheduler] Traceback: {traceback.format_exc()}")
+            
+    except Exception as e:
+        logger.error(f"[Scheduler] Error in _execute_skill_call: {e}")
+        import traceback
+        logger.error(f"[Scheduler] Traceback: {traceback.format_exc()}")
 
 
 def attach_scheduler_to_tool(tool, context: Context = None):

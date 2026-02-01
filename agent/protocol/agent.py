@@ -360,6 +360,9 @@ class Agent:
 
         # Update agent's message history from executor
         self.messages = executor.messages
+        
+        # Store executor reference for agent_bridge to access files_to_send
+        self.stream_executor = executor
 
         # Execute all post-process tools
         self._execute_post_process_tools()

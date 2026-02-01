@@ -365,6 +365,7 @@ class ClaudeAPIBot(Bot, OpenAIImage):
         # Track tool use state
         tool_uses_map = {}  # {index: {id, name, input}}
         current_tool_use_index = -1
+        stop_reason = None  # Track stop reason from Claude
 
         try:
             # Make streaming HTTP request
@@ -440,6 +441,12 @@ class ClaudeAPIBot(Bot, OpenAIImage):
                                         tool_uses_map[current_tool_use_index]["input"] += delta.get("partial_json", "")
 
                             elif event_type == "message_delta":
+                                # Extract stop_reason from delta
+                                delta = event.get("delta", {})
+                                if "stop_reason" in delta:
+                                    stop_reason = delta.get("stop_reason")
+                                    logger.info(f"[Claude] Stream stop_reason: {stop_reason}")
+                                
                                 # Message complete - yield tool calls if any
                                 if tool_uses_map:
                                     for idx in sorted(tool_uses_map.keys()):
@@ -462,9 +469,13 @@ class ClaudeAPIBot(Bot, OpenAIImage):
                                                         }
                                                     }]
                                                 },
-                                                "finish_reason": None
+                                                "finish_reason": stop_reason
                                             }]
                                         }
+                            
+                            elif event_type == "message_stop":
+                                # Final event - log completion
+                                logger.debug(f"[Claude] Stream completed with stop_reason: {stop_reason}")
 
                         except json.JSONDecodeError:
                             continue

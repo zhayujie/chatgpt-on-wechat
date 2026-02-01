@@ -20,23 +20,16 @@ class SchedulerTool(BaseTool):
     
     name: str = "scheduler"
     description: str = (
-        "创建、查询和管理定时任务。支持两种任务类型：\n"
-        "1. 静态消息任务：定时发送预定义的消息\n"
-        "2. 动态工具任务：定时执行工具调用并发送结果（如搜索新闻、查询天气等）\n\n"
+        "创建、查询和管理定时任务。支持固定消息和AI任务两种类型。\n\n"
         "使用方法：\n"
-        "- 创建静态消息任务：action='create', name='任务名', message='消息内容', schedule_type='interval'/'cron'/'once', schedule_value='间隔秒数/cron表达式/时间'\n"
-        "- 创建动态工具任务：action='create', name='任务名', tool_call={'tool_name': '工具名', 'tool_params': {...}, 'result_prefix': '前缀'}, schedule_type='interval'/'cron'/'once', schedule_value='值'\n"
-        "- 查询列表：action='list'\n"
-        "- 查看详情：action='get', task_id='任务ID'\n"
-        "- 删除任务：action='delete', task_id='任务ID'\n"
-        "- 启用任务：action='enable', task_id='任务ID'\n"
-        "- 禁用任务：action='disable', task_id='任务ID'\n\n"
-        "调度类型说明：\n"
-        "- interval: 固定间隔秒数（如3600表示每小时）\n"
-        "- cron: cron表达式（如'0 9 * * *'表示每天9点，'*/10 * * * *'表示每10分钟）\n"
-        "- once: 一次性任务，ISO时间格式（如'2024-12-25T09:00:00'）\n\n"
-        "示例：每天早上8点搜索新闻\n"
-        "action='create', name='每日新闻', tool_call={'tool_name': 'bocha_search', 'tool_params': {'query': '今日新闻'}, 'result_prefix': '📰 今日新闻播报'}, schedule_type='cron', schedule_value='0 8 * * *'"
+        "- 创建：action='create', name='任务名', message/ai_task='内容', schedule_type='once/interval/cron', schedule_value='...'\n"
+        "- 查询：action='list' / action='get', task_id='任务ID'\n"
+        "- 管理：action='delete/enable/disable', task_id='任务ID'\n\n"
+        "调度类型：\n"
+        "- once: 一次性任务，支持相对时间(+5s,+10m,+1h,+1d)或ISO时间\n"
+        "- interval: 固定间隔(秒)，如3600表示每小时\n"
+        "- cron: cron表达式，如'0 8 * * *'表示每天8点\n\n"
+        "注意：'X秒后'用once+相对时间，'每X秒'用interval"
     )
     params: dict = {
         "type": "object",
@@ -56,26 +49,11 @@ class SchedulerTool(BaseTool):
             },
             "message": {
                 "type": "string",
-                "description": "要发送的静态消息内容 (用于 create 操作，与tool_call二选一)"
+                "description": "固定消息内容 (与ai_task二选一)"
             },
-            "tool_call": {
-                "type": "object",
-                "description": "要执行的工具调用 (用于 create 操作，与message二选一)",
-                "properties": {
-                    "tool_name": {
-                        "type": "string",
-                        "description": "工具名称，如 'bocha_search'"
-                    },
-                    "tool_params": {
-                        "type": "object",
-                        "description": "工具参数"
-                    },
-                    "result_prefix": {
-                        "type": "string",
-                        "description": "结果前缀，如 '今日新闻：'"
-                    }
-                },
-                "required": ["tool_name"]
+            "ai_task": {
+                "type": "string",
+                "description": "AI任务描述 (与message二选一)，如'搜索今日新闻'、'查询天气'"
             },
             "schedule_type": {
                 "type": "string",
@@ -84,12 +62,7 @@ class SchedulerTool(BaseTool):
             },
             "schedule_value": {
                 "type": "string",
-                "description": (
-                    "调度值 (用于 create 操作):\n"
-                    "- cron类型: cron表达式，如 '0 9 * * *' (每天9点)，'*/10 * * * *' (每10分钟)\n"
-                    "- interval类型: 间隔秒数，如 '3600' (每小时)，'10' (每10秒)\n"
-                    "- once类型: ISO时间，如 '2024-12-25T09:00:00'"
-                )
+                "description": "调度值: cron表达式/间隔秒数/时间(+5s,+10m,+1h或ISO格式)"
             }
         },
         "required": ["action"]
@@ -151,17 +124,20 @@ class SchedulerTool(BaseTool):
         """Create a new scheduled task"""
         name = kwargs.get("name")
         message = kwargs.get("message")
-        tool_call = kwargs.get("tool_call")
+        ai_task = kwargs.get("ai_task")
         schedule_type = kwargs.get("schedule_type")
         schedule_value = kwargs.get("schedule_value")
         
         # Validate required fields
         if not name:
             return "错误: 缺少任务名称 (name)"
-        if not message and not tool_call:
-            return "错误: 必须提供 message 或 tool_call 之一"
-        if message and tool_call:
-            return "错误: message 和 tool_call 不能同时提供，请选择其一"
+        
+        # Check that exactly one of message/ai_task is provided
+        if not message and not ai_task:
+            return "错误: 必须提供 message（固定消息）或 ai_task（AI任务）之一"
+        if message and ai_task:
+            return "错误: message 和 ai_task 只能提供其中一个"
+        
         if not schedule_type:
             return "错误: 缺少调度类型 (schedule_type)"
         if not schedule_value:
@@ -181,7 +157,7 @@ class SchedulerTool(BaseTool):
         # Create task
         task_id = str(uuid.uuid4())[:8]
         
-        # Build action based on message or tool_call
+        # Build action based on message or ai_task
         if message:
             action = {
                 "type": "send_message",
@@ -191,19 +167,22 @@ class SchedulerTool(BaseTool):
                 "is_group": context.get("isgroup", False),
                 "channel_type": self.config.get("channel_type", "unknown")
             }
-        else:  # tool_call
+        else:  # ai_task
             action = {
-                "type": "tool_call",
-                "tool_name": tool_call.get("tool_name"),
-                "tool_params": tool_call.get("tool_params", {}),
-                "result_prefix": tool_call.get("result_prefix", ""),
+                "type": "agent_task",
+                "task_description": ai_task,
                 "receiver": context.get("receiver"),
                 "receiver_name": self._get_receiver_name(context),
                 "is_group": context.get("isgroup", False),
                 "channel_type": self.config.get("channel_type", "unknown")
             }
         
-        task = {
+        # 针对钉钉单聊，额外存储 sender_staff_id
+        msg = context.kwargs.get("msg")
+        if msg and hasattr(msg, 'sender_staff_id') and not context.get("isgroup", False):
+            action["dingtalk_sender_staff_id"] = msg.sender_staff_id
+        
+        task_data = {
             "id": task_id,
             "name": name,
             "enabled": True,
@@ -214,26 +193,21 @@ class SchedulerTool(BaseTool):
         }
         
         # Calculate initial next_run_at
-        next_run = self._calculate_next_run(task)
+        next_run = self._calculate_next_run(task_data)
         if next_run:
-            task["next_run_at"] = next_run.isoformat()
+            task_data["next_run_at"] = next_run.isoformat()
         
         # Save task
-        self.task_store.add_task(task)
+        self.task_store.add_task(task_data)
         
         # Format response
         schedule_desc = self._format_schedule_description(schedule)
-        receiver_desc = task["action"]["receiver_name"] or task["action"]["receiver"]
+        receiver_desc = task_data["action"]["receiver_name"] or task_data["action"]["receiver"]
         
         if message:
-            content_desc = f"💬 消息: {message}"
+            content_desc = f"💬 固定消息: {message}"
         else:
-            tool_name = tool_call.get("tool_name")
-            tool_params_str = str(tool_call.get("tool_params", {}))
-            prefix = tool_call.get("result_prefix", "")
-            content_desc = f"🔧 工具调用: {tool_name}({tool_params_str})"
-            if prefix:
-                content_desc += f"\n📝 结果前缀: {prefix}"
+            content_desc = f"🤖 AI任务: {ai_task}"
         
         return (
             f"✅ 定时任务创建成功\n\n"
@@ -353,9 +327,38 @@ class SchedulerTool(BaseTool):
                 return {"type": "interval", "seconds": seconds}
             
             elif schedule_type == "once":
-                # Parse datetime
-                datetime.fromisoformat(schedule_value)
-                return {"type": "once", "run_at": schedule_value}
+                # Parse datetime - support both relative and absolute time
+                
+                # Check if it's relative time (e.g., "+5s", "+10m", "+1h", "+1d")
+                if schedule_value.startswith("+"):
+                    import re
+                    match = re.match(r'\+(\d+)([smhd])', schedule_value)
+                    if match:
+                        amount = int(match.group(1))
+                        unit = match.group(2)
+                        
+                        from datetime import timedelta
+                        now = datetime.now()
+                        
+                        if unit == 's':  # seconds
+                            target_time = now + timedelta(seconds=amount)
+                        elif unit == 'm':  # minutes
+                            target_time = now + timedelta(minutes=amount)
+                        elif unit == 'h':  # hours
+                            target_time = now + timedelta(hours=amount)
+                        elif unit == 'd':  # days
+                            target_time = now + timedelta(days=amount)
+                        else:
+                            return None
+                        
+                        return {"type": "once", "run_at": target_time.isoformat()}
+                    else:
+                        logger.error(f"[SchedulerTool] Invalid relative time format: {schedule_value}")
+                        return None
+                else:
+                    # Absolute time in ISO format
+                    datetime.fromisoformat(schedule_value)
+                    return {"type": "once", "run_at": schedule_value}
             
         except Exception as e:
             logger.error(f"[SchedulerTool] Invalid schedule: {e}")

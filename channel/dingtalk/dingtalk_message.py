@@ -22,6 +22,7 @@ class DingTalkMessage(ChatMessage):
         self.create_time = event.create_at
         self.image_content = event.image_content
         self.rich_text_content = event.rich_text_content
+        self.robot_code = event.robot_code  # 机器人编码
         if event.conversation_type == "1":
             self.is_group = False
         else:

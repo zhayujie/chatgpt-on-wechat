@@ -204,10 +204,36 @@ class FeiShuChanel(ChatChannel):
             # 图片上传
             reply_content = self._upload_image_url(reply.content, access_token)
             if not reply_content:
-                logger.warning("[FeiShu] upload file failed")
+                logger.warning("[FeiShu] upload image failed")
                 return
             msg_type = "image"
             content_key = "image_key"
+        elif reply.type == ReplyType.FILE:
+            # 判断是否为视频文件
+            file_path = reply.content
+            if file_path.startswith("file://"):
+                file_path = file_path[7:]
+            
+            is_video = file_path.lower().endswith(('.mp4', '.avi', '.mov', '.wmv', '.flv'))
+            
+            if is_video:
+                # 视频使用 media 类型
+                file_key = self._upload_video_url(reply.content, access_token)
+                if not file_key:
+                    logger.warning("[FeiShu] upload video failed")
+                    return
+                reply_content = file_key
+                msg_type = "media"
+                content_key = "file_key"
+            else:
+                # 其他文件使用 file 类型
+                file_key = self._upload_file_url(reply.content, access_token)
+                if not file_key:
+                    logger.warning("[FeiShu] upload file failed")
+                    return
+                reply_content = file_key
+                msg_type = "file"
+                content_key = "file_key"
         
         # Check if we can reply to an existing message (need msg_id)
         can_reply = is_group and msg and hasattr(msg, 'msg_id') and msg.msg_id
@@ -260,7 +286,34 @@ class FeiShuChanel(ChatChannel):
 
 
     def _upload_image_url(self, img_url, access_token):
-        logger.debug(f"[WX] start download image, img_url={img_url}")
+        logger.debug(f"[FeiShu] start process image, img_url={img_url}")
+        
+        # Check if it's a local file path (file:// protocol)
+        if img_url.startswith("file://"):
+            local_path = img_url[7:]  # Remove "file://" prefix
+            logger.info(f"[FeiShu] uploading local file: {local_path}")
+            
+            if not os.path.exists(local_path):
+                logger.error(f"[FeiShu] local file not found: {local_path}")
+                return None
+            
+            # Upload directly from local file
+            upload_url = "https://open.feishu.cn/open-apis/im/v1/images"
+            data = {'image_type': 'message'}
+            headers = {'Authorization': f'Bearer {access_token}'}
+            
+            with open(local_path, "rb") as file:
+                upload_response = requests.post(upload_url, files={"image": file}, data=data, headers=headers)
+                logger.info(f"[FeiShu] upload file, res={upload_response.content}")
+                
+                response_data = upload_response.json()
+                if response_data.get("code") == 0:
+                    return response_data.get("data").get("image_key")
+                else:
+                    logger.error(f"[FeiShu] upload failed: {response_data}")
+                    return None
+        
+        # Original logic for HTTP URLs
         response = requests.get(img_url)
         suffix = utils.get_path_suffix(img_url)
         temp_name = str(uuid.uuid4()) + "." + suffix
@@ -283,6 +336,207 @@ class FeiShuChanel(ChatChannel):
             os.remove(temp_name)
             return upload_response.json().get("data").get("image_key")
 
+    def _upload_video_url(self, video_url, access_token):
+        """
+        Upload video to Feishu and return file_key (for media type messages)
+        Supports:
+        - file:// URLs for local files
+        - http(s):// URLs (download then upload)
+        """
+        # For file:// URLs (local files), upload directly
+        if video_url.startswith("file://"):
+            local_path = video_url[7:]  # Remove file:// prefix
+            if not os.path.exists(local_path):
+                logger.error(f"[FeiShu] local video file not found: {local_path}")
+                return None
+            
+            file_name = os.path.basename(local_path)
+            file_ext = os.path.splitext(file_name)[1].lower()
+            
+            # Determine file type for Feishu API (for media messages)
+            # Media type only supports mp4
+            file_type_map = {
+                '.mp4': 'mp4',
+            }
+            file_type = file_type_map.get(file_ext, 'mp4')  # Default to mp4
+            
+            # Upload video to Feishu (use file upload API, but send as media type)
+            upload_url = "https://open.feishu.cn/open-apis/im/v1/files"
+            data = {'file_type': file_type, 'file_name': file_name}
+            headers = {'Authorization': f'Bearer {access_token}'}
+            
+            try:
+                with open(local_path, "rb") as file:
+                    upload_response = requests.post(
+                        upload_url, 
+                        files={"file": file}, 
+                        data=data, 
+                        headers=headers,
+                        timeout=(5, 60)  # 5s connect, 60s read timeout (videos are larger)
+                    )
+                    logger.info(f"[FeiShu] upload video response, status={upload_response.status_code}, res={upload_response.content}")
+                    
+                    response_data = upload_response.json()
+                    if response_data.get("code") == 0:
+                        return response_data.get("data").get("file_key")
+                    else:
+                        logger.error(f"[FeiShu] upload video failed: {response_data}")
+                        return None
+            except Exception as e:
+                logger.error(f"[FeiShu] upload video exception: {e}")
+                return None
+        
+        # For HTTP URLs, download first then upload
+        try:
+            logger.info(f"[FeiShu] Downloading video from URL: {video_url}")
+            response = requests.get(video_url, timeout=(5, 60))
+            if response.status_code != 200:
+                logger.error(f"[FeiShu] download video failed, status={response.status_code}")
+                return None
+            
+            # Save to temp file
+            import uuid
+            file_name = os.path.basename(video_url) or "video.mp4"
+            temp_name = str(uuid.uuid4()) + "_" + file_name
+            
+            with open(temp_name, "wb") as file:
+                file.write(response.content)
+            
+            logger.info(f"[FeiShu] Video downloaded, size={len(response.content)} bytes, uploading...")
+            
+            # Upload
+            file_ext = os.path.splitext(file_name)[1].lower()
+            file_type_map = {
+                '.mp4': 'mp4',
+            }
+            file_type = file_type_map.get(file_ext, 'mp4')
+            
+            upload_url = "https://open.feishu.cn/open-apis/im/v1/files"
+            data = {'file_type': file_type, 'file_name': file_name}
+            headers = {'Authorization': f'Bearer {access_token}'}
+            
+            with open(temp_name, "rb") as file:
+                upload_response = requests.post(upload_url, files={"file": file}, data=data, headers=headers, timeout=(5, 60))
+                logger.info(f"[FeiShu] upload video, res={upload_response.content}")
+                
+                response_data = upload_response.json()
+                os.remove(temp_name)  # Clean up temp file
+                
+                if response_data.get("code") == 0:
+                    return response_data.get("data").get("file_key")
+                else:
+                    logger.error(f"[FeiShu] upload video failed: {response_data}")
+                    return None
+        except Exception as e:
+            logger.error(f"[FeiShu] upload video from URL exception: {e}")
+            # Clean up temp file if exists
+            if 'temp_name' in locals() and os.path.exists(temp_name):
+                os.remove(temp_name)
+            return None
+
+    def _upload_file_url(self, file_url, access_token):
+        """
+        Upload file to Feishu
+        Supports both local files (file://) and HTTP URLs
+        """
+        logger.debug(f"[FeiShu] start process file, file_url={file_url}")
+        
+        # Check if it's a local file path (file:// protocol)
+        if file_url.startswith("file://"):
+            local_path = file_url[7:]  # Remove "file://" prefix
+            logger.info(f"[FeiShu] uploading local file: {local_path}")
+            
+            if not os.path.exists(local_path):
+                logger.error(f"[FeiShu] local file not found: {local_path}")
+                return None
+            
+            # Get file info
+            file_name = os.path.basename(local_path)
+            file_ext = os.path.splitext(file_name)[1].lower()
+            
+            # Determine file type for Feishu API
+            # Feishu supports: opus, mp4, pdf, doc, xls, ppt, stream (other types)
+            file_type_map = {
+                '.opus': 'opus',
+                '.mp4': 'mp4',
+                '.pdf': 'pdf',
+                '.doc': 'doc', '.docx': 'doc',
+                '.xls': 'xls', '.xlsx': 'xls',
+                '.ppt': 'ppt', '.pptx': 'ppt',
+            }
+            file_type = file_type_map.get(file_ext, 'stream')  # Default to stream for other types
+            
+            # Upload file to Feishu
+            upload_url = "https://open.feishu.cn/open-apis/im/v1/files"
+            data = {'file_type': file_type, 'file_name': file_name}
+            headers = {'Authorization': f'Bearer {access_token}'}
+            
+            try:
+                with open(local_path, "rb") as file:
+                    upload_response = requests.post(
+                        upload_url, 
+                        files={"file": file}, 
+                        data=data, 
+                        headers=headers,
+                        timeout=(5, 30)  # 5s connect, 30s read timeout
+                    )
+                    logger.info(f"[FeiShu] upload file response, status={upload_response.status_code}, res={upload_response.content}")
+                    
+                    response_data = upload_response.json()
+                    if response_data.get("code") == 0:
+                        return response_data.get("data").get("file_key")
+                    else:
+                        logger.error(f"[FeiShu] upload file failed: {response_data}")
+                        return None
+            except Exception as e:
+                logger.error(f"[FeiShu] upload file exception: {e}")
+                return None
+        
+        # For HTTP URLs, download first then upload
+        try:
+            response = requests.get(file_url, timeout=(5, 30))
+            if response.status_code != 200:
+                logger.error(f"[FeiShu] download file failed, status={response.status_code}")
+                return None
+            
+            # Save to temp file
+            import uuid
+            file_name = os.path.basename(file_url)
+            temp_name = str(uuid.uuid4()) + "_" + file_name
+            
+            with open(temp_name, "wb") as file:
+                file.write(response.content)
+            
+            # Upload
+            file_ext = os.path.splitext(file_name)[1].lower()
+            file_type_map = {
+                '.opus': 'opus', '.mp4': 'mp4', '.pdf': 'pdf',
+                '.doc': 'doc', '.docx': 'doc',
+                '.xls': 'xls', '.xlsx': 'xls',
+                '.ppt': 'ppt', '.pptx': 'ppt',
+            }
+            file_type = file_type_map.get(file_ext, 'stream')
+            
+            upload_url = "https://open.feishu.cn/open-apis/im/v1/files"
+            data = {'file_type': file_type, 'file_name': file_name}
+            headers = {'Authorization': f'Bearer {access_token}'}
+            
+            with open(temp_name, "rb") as file:
+                upload_response = requests.post(upload_url, files={"file": file}, data=data, headers=headers)
+                logger.info(f"[FeiShu] upload file, res={upload_response.content}")
+                
+                response_data = upload_response.json()
+                os.remove(temp_name)  # Clean up temp file
+                
+                if response_data.get("code") == 0:
+                    return response_data.get("data").get("file_key")
+                else:
+                    logger.error(f"[FeiShu] upload file failed: {response_data}")
+                    return None
+        except Exception as e:
+            logger.error(f"[FeiShu] upload file from URL exception: {e}")
+            return None
+
     def _compose_context(self, ctype: ContextType, content, **kwargs):
         context = Context(ctype, content)
         context.kwargs = kwargs
@@ -291,13 +545,18 @@ class FeiShuChanel(ChatChannel):
 
         cmsg = context["msg"]
         
-        # Set session_id based on chat type to ensure proper session isolation
+        # Set session_id based on chat type
         if cmsg.is_group:
-            # Group chat: combine user_id and group_id to create unique session per user per group
-            # This ensures:
-            # - Same user in different groups have separate conversation histories
-            # - Same user in private chat and group chat have separate histories
-            context["session_id"] = f"{cmsg.from_user_id}:{cmsg.other_user_id}"
+            # Group chat: check if group_shared_session is enabled
+            if conf().get("group_shared_session", True):
+                # All users in the group share the same session context
+                context["session_id"] = cmsg.other_user_id  # group_id
+            else:
+                # Each user has their own session within the group
+                # This ensures:
+                # - Same user in different groups have separate conversation histories
+                # - Same user in private chat and group chat have separate histories
+                context["session_id"] = f"{cmsg.from_user_id}:{cmsg.other_user_id}"
         else:
             # Private chat: use user_id only
             context["session_id"] = cmsg.from_user_id

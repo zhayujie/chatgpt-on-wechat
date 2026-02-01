@@ -2,6 +2,7 @@
 Agent Bridge - Integrates Agent system with existing COW bridge
 """
 
+import os
 from typing import Optional, List
 
 from agent.protocol import Agent, LLMModel, LLMRequest
@@ -269,8 +270,11 @@ class AgentBridge:
         # Get workspace from config
         workspace_root = os.path.expanduser(conf().get("agent_workspace", "~/cow"))
 
-        # Load environment variables from workspace .env file
-        env_file = os.path.join(workspace_root, '.env')
+        # Migrate API keys from config.json to environment variables (if not already set)
+        self._migrate_config_to_env(workspace_root)
+        
+        # Load environment variables from secure .env file location
+        env_file = os.path.expanduser("~/.cow/.env")
         if os.path.exists(env_file):
             try:
                 from dotenv import load_dotenv
@@ -280,9 +284,6 @@ class AgentBridge:
                 logger.warning("[AgentBridge] python-dotenv not installed, skipping .env file loading")
             except Exception as e:
                 logger.warning(f"[AgentBridge] Failed to load .env file: {e}")
-        
-        # Migrate API keys from config.json to environment variables (if not already set)
-        self._migrate_config_to_env(workspace_root)
 
         # Initialize workspace and create template files
         from agent.prompt import ensure_workspace, load_context_files, PromptBuilder
@@ -377,7 +378,6 @@ class AgentBridge:
                 if tool_name == "env_config":
                     from agent.tools import EnvConfig
                     tool = EnvConfig({
-                        "workspace_dir": workspace_root,
                         "agent_bridge": self  # Pass self reference for hot reload
                     })
                 else:
@@ -390,12 +390,6 @@ class AgentBridge:
                         tool.cwd = file_config.get("cwd", tool.cwd if hasattr(tool, 'cwd') else None)
                         if 'memory_manager' in file_config:
                             tool.memory_manager = file_config['memory_manager']
-                    # Apply API key for bocha_search tool
-                    elif tool_name == 'bocha_search':
-                        bocha_api_key = conf().get("bocha_api_key", "")
-                        if bocha_api_key:
-                            tool.config = {"bocha_api_key": bocha_api_key}
-                            tool.api_key = bocha_api_key
                     tools.append(tool)
                     logger.debug(f"[AgentBridge] Loaded tool: {tool_name}")
             except Exception as e:
@@ -504,8 +498,11 @@ class AgentBridge:
         # Get workspace from config
         workspace_root = os.path.expanduser(conf().get("agent_workspace", "~/cow"))
 
-        # Load environment variables from workspace .env file
-        env_file = os.path.join(workspace_root, '.env')
+        # Migrate API keys from config.json to environment variables (if not already set)
+        self._migrate_config_to_env(workspace_root)
+        
+        # Load environment variables from secure .env file location
+        env_file = os.path.expanduser("~/.cow/.env")
         if os.path.exists(env_file):
             try:
                 from dotenv import load_dotenv
@@ -609,11 +606,6 @@ class AgentBridge:
                         tool.cwd = file_config.get("cwd", tool.cwd if hasattr(tool, 'cwd') else None)
                         if 'memory_manager' in file_config:
                             tool.memory_manager = file_config['memory_manager']
-                    elif tool_name == 'bocha_search':
-                        bocha_api_key = conf().get("bocha_api_key", "")
-                        if bocha_api_key:
-                            tool.config = {"bocha_api_key": bocha_api_key}
-                            tool.api_key = bocha_api_key
                     tools.append(tool)
             except Exception as e:
                 logger.warning(f"[AgentBridge] Failed to load tool {tool_name} for session {session_id}: {e}")
@@ -767,23 +759,52 @@ class AgentBridge:
             if not agent:
                 return Reply(ReplyType.ERROR, "Failed to initialize super agent")
             
-            # Attach context to scheduler tool if present
-            if context and agent.tools:
-                for tool in agent.tools:
-                    if tool.name == "scheduler":
-                        try:
-                            from agent.tools.scheduler.integration import attach_scheduler_to_tool
-                            attach_scheduler_to_tool(tool, context)
-                        except Exception as e:
-                            logger.warning(f"[AgentBridge] Failed to attach context to scheduler: {e}")
-                        break
+            # Filter tools based on context
+            original_tools = agent.tools
+            filtered_tools = original_tools
             
-            # Use agent's run_stream method
-            response = agent.run_stream(
-                user_message=query,
-                on_event=on_event,
-                clear_history=clear_history
-            )
+            # If this is a scheduled task execution, exclude scheduler tool to prevent recursion
+            if context and context.get("is_scheduled_task"):
+                filtered_tools = [tool for tool in agent.tools if tool.name != "scheduler"]
+                agent.tools = filtered_tools
+                logger.info(f"[AgentBridge] Scheduled task execution: excluded scheduler tool ({len(filtered_tools)}/{len(original_tools)} tools)")
+            else:
+                # Attach context to scheduler tool if present
+                if context and agent.tools:
+                    for tool in agent.tools:
+                        if tool.name == "scheduler":
+                            try:
+                                from agent.tools.scheduler.integration import attach_scheduler_to_tool
+                                attach_scheduler_to_tool(tool, context)
+                            except Exception as e:
+                                logger.warning(f"[AgentBridge] Failed to attach context to scheduler: {e}")
+                            break
+            
+            try:
+                # Use agent's run_stream method
+                response = agent.run_stream(
+                    user_message=query,
+                    on_event=on_event,
+                    clear_history=clear_history
+                )
+            finally:
+                # Restore original tools
+                if context and context.get("is_scheduled_task"):
+                    agent.tools = original_tools
+            
+            # Check if there are files to send (from read tool)
+            if hasattr(agent, 'stream_executor') and hasattr(agent.stream_executor, 'files_to_send'):
+                files_to_send = agent.stream_executor.files_to_send
+                if files_to_send:
+                    # Send the first file (for now, handle one file at a time)
+                    file_info = files_to_send[0]
+                    logger.info(f"[AgentBridge] Sending file: {file_info.get('path')}")
+                    
+                    # Clear files_to_send for next request
+                    agent.stream_executor.files_to_send = []
+                    
+                    # Return file reply based on file type
+                    return self._create_file_reply(file_info, response, context)
             
             return Reply(ReplyType.TEXT, response)
             
@@ -791,12 +812,53 @@ class AgentBridge:
             logger.error(f"Agent reply error: {e}")
             return Reply(ReplyType.ERROR, f"Agent error: {str(e)}")
     
+    def _create_file_reply(self, file_info: dict, text_response: str, context: Context = None) -> Reply:
+        """
+        Create a reply for sending files
+        
+        Args:
+            file_info: File metadata from read tool
+            text_response: Text response from agent
+            context: Context object
+            
+        Returns:
+            Reply object for file sending
+        """
+        file_type = file_info.get("file_type", "file")
+        file_path = file_info.get("path")
+        
+        # For images, use IMAGE_URL type (channel will handle upload)
+        if file_type == "image":
+            # Convert local path to file:// URL for channel processing
+            file_url = f"file://{file_path}"
+            logger.info(f"[AgentBridge] Sending image: {file_url}")
+            reply = Reply(ReplyType.IMAGE_URL, file_url)
+            # Attach text message if present (for channels that support text+image)
+            if text_response:
+                reply.text_content = text_response  # Store accompanying text
+            return reply
+        
+        # For documents (PDF, Excel, Word, PPT), use FILE type
+        if file_type == "document":
+            file_url = f"file://{file_path}"
+            logger.info(f"[AgentBridge] Sending document: {file_url}")
+            reply = Reply(ReplyType.FILE, file_url)
+            reply.file_name = file_info.get("file_name", os.path.basename(file_path))
+            return reply
+        
+        # For other files (video, audio), we need channel-specific handling
+        # For now, return text with file info
+        # TODO: Implement video/audio sending when channel supports it
+        message = text_response or file_info.get("message", "文件已准备")
+        message += f"\n\n[文件: {file_info.get('file_name', file_path)}]"
+        return Reply(ReplyType.TEXT, message)
+    
     def _migrate_config_to_env(self, workspace_root: str):
         """
         Migrate API keys from config.json to .env file if not already set
         
         Args:
-            workspace_root: Workspace directory path
+            workspace_root: Workspace directory path (not used, kept for compatibility)
         """
         from config import conf
         import os
@@ -810,7 +872,8 @@ class AgentBridge:
             "linkai_api_key": "LINKAI_API_KEY",
         }
         
-        env_file = os.path.join(workspace_root, '.env')
+        # Use fixed secure location for .env file
+        env_file = os.path.expanduser("~/.cow/.env")
         
         # Read existing env vars from .env file
         existing_env_vars = {}
@@ -830,19 +893,25 @@ class AgentBridge:
         for config_key, env_key in key_mapping.items():
             # Skip if already in .env file
             if env_key in existing_env_vars:
+                logger.debug(f"[AgentBridge] Skipping {env_key} - already in .env")
                 continue
             
             # Get value from config.json
             value = conf().get(config_key, "")
             if value and value.strip():  # Only migrate non-empty values
                 keys_to_migrate[env_key] = value.strip()
+                logger.debug(f"[AgentBridge] Will migrate {env_key} from config.json")
+            else:
+                logger.debug(f"[AgentBridge] Skipping {env_key} - no value in config.json")
         
         # Write new keys to .env file
         if keys_to_migrate:
             try:
-                # Ensure .env file exists
+                # Ensure ~/.cow directory and .env file exist
+                env_dir = os.path.dirname(env_file)
+                if not os.path.exists(env_dir):
+                    os.makedirs(env_dir, exist_ok=True)
                 if not os.path.exists(env_file):
-                    os.makedirs(os.path.dirname(env_file), exist_ok=True)
                     open(env_file, 'a').close()
                 
                 # Append new keys

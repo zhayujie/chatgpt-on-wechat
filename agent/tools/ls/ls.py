@@ -50,6 +50,13 @@ class Ls(BaseTool):
         # Resolve path
         absolute_path = self._resolve_path(path)
         
+        # Security check: Prevent accessing sensitive config directory
+        env_config_dir = os.path.expanduser("~/.cow")
+        if os.path.abspath(absolute_path) == os.path.abspath(env_config_dir):
+            return ToolResult.fail(
+                "Error: Access denied. API keys and credentials must be accessed through the env_config tool only."
+            )
+        
         if not os.path.exists(absolute_path):
             # Provide helpful hint if using relative path
             if not os.path.isabs(path) and not path.startswith('~'):

@@ -27,7 +27,7 @@ class EnvConfig(BaseTool):
     
     name: str = "env_config"
     description: str = (
-        "Manage API keys and skill configurations stored in the workspace .env file. "
+        "Manage API keys and skill configurations securely. "
         "Use this tool when user wants to configure API keys (like BOCHA_API_KEY, OPENAI_API_KEY), "
         "view configured keys, or manage skill settings. "
         "Actions: 'set' (add/update key), 'get' (view specific key), 'list' (show all configured keys), 'delete' (remove key). "
@@ -65,16 +65,17 @@ class EnvConfig(BaseTool):
     
     def __init__(self, config: dict = None):
         self.config = config or {}
-        self.workspace_dir = self.config.get("workspace_dir", os.path.expanduser("~/cow"))
-        self.env_path = os.path.join(self.workspace_dir, '.env')
+        # Store env config in ~/.cow directory (outside workspace for security)
+        self.env_dir = os.path.expanduser("~/.cow")
+        self.env_path = os.path.join(self.env_dir, '.env')
         self.agent_bridge = self.config.get("agent_bridge")  # Reference to AgentBridge for hot reload
         # Don't create .env file in __init__ to avoid issues during tool discovery
         # It will be created on first use in execute()
     
     def _ensure_env_file(self):
         """Ensure the .env file exists"""
-        # Create workspace directory if it doesn't exist
-        os.makedirs(self.workspace_dir, exist_ok=True)
+        # Create ~/.cow directory if it doesn't exist
+        os.makedirs(self.env_dir, exist_ok=True)
         
         if not os.path.exists(self.env_path):
             Path(self.env_path).touch()

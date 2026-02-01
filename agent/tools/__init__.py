@@ -8,6 +8,7 @@ from agent.tools.write.write import Write
 from agent.tools.edit.edit import Edit
 from agent.tools.bash.bash import Bash
 from agent.tools.ls.ls import Ls
+from agent.tools.send.send import Send
 
 # Import memory tools
 from agent.tools.memory.memory_search import MemorySearchTool
@@ -112,6 +113,7 @@ __all__ = [
     'Edit',
     'Bash',
     'Ls',
+    'Send',
     'MemorySearchTool',
     'MemoryGetTool',
     'EnvConfig',

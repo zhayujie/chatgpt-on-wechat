@@ -58,6 +58,9 @@ class AgentStreamExecutor:
         
         # Tool failure tracking for retry protection
         self.tool_failure_history = []  # List of (tool_name, args_hash, success) tuples
+        
+        # Track files to send (populated by read tool)
+        self.files_to_send = []  # List of file metadata dicts
 
     def _emit_event(self, event_type: str, data: dict = None):
         """Emit event"""
@@ -191,21 +194,47 @@ class AgentStreamExecutor:
                             logger.info(
                                 f"Memory flush recommended: tokens={current_tokens}, turns={self.agent.memory_manager.flush_manager.turn_count}")
 
-                # Call LLM
-                assistant_msg, tool_calls = self._call_llm_stream()
+                # Call LLM (enable retry_on_empty for better reliability)
+                assistant_msg, tool_calls = self._call_llm_stream(retry_on_empty=True)
                 final_response = assistant_msg
 
                 # No tool calls, end loop
                 if not tool_calls:
                     # 检查是否返回了空响应
                     if not assistant_msg:
-                        logger.warning(f"[Agent] LLM returned empty response (no content and no tool calls)")
+                        logger.warning(f"[Agent] LLM returned empty response after retry (no content and no tool calls)")
+                        logger.info(f"[Agent] This usually happens when LLM thinks the task is complete after tool execution")
                         
-                        # 生成通用的友好提示
-                        final_response = (
-                            "抱歉，我暂时无法生成回复。请尝试换一种方式描述你的需求，或稍后再试。"
-                        )
-                        logger.info(f"Generated fallback response for empty LLM output")
+                        # 如果之前有工具调用，强制要求 LLM 生成文本回复
+                        if turn > 1:
+                            logger.info(f"[Agent] Requesting explicit response from LLM...")
+                            
+                            # 添加一条消息，明确要求回复用户
+                            self.messages.append({
+                                "role": "user",
+                                "content": [{
+                                    "type": "text",
+                                    "text": "请向用户说明刚才工具执行的结果或回答用户的问题。"
+                                }]
+                            })
+                            
+                            # 再调用一次 LLM
+                            assistant_msg, tool_calls = self._call_llm_stream(retry_on_empty=False)
+                            final_response = assistant_msg
+                            
+                            # 如果还是空，才使用 fallback
+                            if not assistant_msg and not tool_calls:
+                                logger.warning(f"[Agent] Still empty after explicit request")
+                                final_response = (
+                                    "抱歉，我暂时无法生成回复。请尝试换一种方式描述你的需求，或稍后再试。"
+                                )
+                                logger.info(f"Generated fallback response for empty LLM output")
+                        else:
+                            # 第一轮就空回复，直接 fallback
+                            final_response = (
+                                "抱歉，我暂时无法生成回复。请尝试换一种方式描述你的需求，或稍后再试。"
+                            )
+                            logger.info(f"Generated fallback response for empty LLM output")
                     else:
                         logger.info(f"💭 {assistant_msg[:150]}{'...' if len(assistant_msg) > 150 else ''}")
                     
@@ -234,6 +263,14 @@ class AgentStreamExecutor:
                     for tool_call in tool_calls:
                         result = self._execute_tool(tool_call)
                         tool_results.append(result)
+                        
+                        # Check if this is a file to send (from read tool)
+                        if result.get("status") == "success" and isinstance(result.get("result"), dict):
+                            result_data = result.get("result")
+                            if result_data.get("type") == "file_to_send":
+                                # Store file metadata for later sending
+                                self.files_to_send.append(result_data)
+                                logger.info(f"📎 检测到待发送文件: {result_data.get('file_name', result_data.get('path'))}")
                         
                         # Check for critical error - abort entire conversation
                         if result.get("status") == "critical_error":
@@ -392,6 +429,7 @@ class AgentStreamExecutor:
         # Streaming response
         full_content = ""
         tool_calls_buffer = {}  # {index: {id, name, arguments}}
+        stop_reason = None  # Track why the stream stopped
 
         try:
             stream = self.model.call_stream(request)
@@ -404,21 +442,47 @@ class AgentStreamExecutor:
                     if isinstance(error_data, dict):
                         error_msg = error_data.get("message", chunk.get("message", "Unknown error"))
                         error_code = error_data.get("code", "")
+                        error_type = error_data.get("type", "")
                     else:
                         error_msg = chunk.get("message", str(error_data))
                         error_code = ""
+                        error_type = ""
                     
                     status_code = chunk.get("status_code", "N/A")
-                    logger.error(f"API Error: {error_msg} (Status: {status_code}, Code: {error_code})")
-                    logger.error(f"Full error chunk: {chunk}")
                     
-                    # Raise exception with full error message for retry logic
-                    raise Exception(f"{error_msg} (Status: {status_code})")
+                    # Log error with all available information
+                    logger.error(f"🔴 Stream API Error:")
+                    logger.error(f"   Message: {error_msg}")
+                    logger.error(f"   Status Code: {status_code}")
+                    logger.error(f"   Error Code: {error_code}")
+                    logger.error(f"   Error Type: {error_type}")
+                    logger.error(f"   Full chunk: {chunk}")
+                    
+                    # Check if this is a context overflow error (keyword-based, works for all models)
+                    # Don't rely on specific status codes as different providers use different codes
+                    error_msg_lower = error_msg.lower()
+                    is_overflow = any(keyword in error_msg_lower for keyword in [
+                        'context length exceeded', 'maximum context length', 'prompt is too long',
+                        'context overflow', 'context window', 'too large', 'exceeds model context',
+                        'request_too_large', 'request exceeds the maximum size', 'tokens exceed'
+                    ])
+                    
+                    if is_overflow:
+                        # Mark as context overflow for special handling
+                        raise Exception(f"[CONTEXT_OVERFLOW] {error_msg} (Status: {status_code})")
+                    else:
+                        # Raise exception with full error message for retry logic
+                        raise Exception(f"{error_msg} (Status: {status_code}, Code: {error_code}, Type: {error_type})")
 
                 # Parse chunk
                 if isinstance(chunk, dict) and "choices" in chunk:
                     choice = chunk["choices"][0]
                     delta = choice.get("delta", {})
+                    
+                    # Capture finish_reason if present
+                    finish_reason = choice.get("finish_reason")
+                    if finish_reason:
+                        stop_reason = finish_reason
 
                     # Handle text content
                     if "content" in delta and delta["content"]:
@@ -449,9 +513,46 @@ class AgentStreamExecutor:
                                     tool_calls_buffer[index]["arguments"] += func["arguments"]
 
         except Exception as e:
-            error_str = str(e).lower()
+            error_str = str(e)
+            error_str_lower = error_str.lower()
+            
+            # Check if error is context overflow (non-retryable, needs session reset)
+            # Method 1: Check for special marker (set in stream error handling above)
+            is_context_overflow = '[context_overflow]' in error_str_lower
+            
+            # Method 2: Fallback to keyword matching for non-stream errors
+            if not is_context_overflow:
+                is_context_overflow = any(keyword in error_str_lower for keyword in [
+                    'context length exceeded', 'maximum context length', 'prompt is too long',
+                    'context overflow', 'context window', 'too large', 'exceeds model context',
+                    'request_too_large', 'request exceeds the maximum size'
+                ])
+            
+            # Check if error is message format error (incomplete tool_use/tool_result pairs)
+            # This happens when previous conversation had tool failures
+            is_message_format_error = any(keyword in error_str_lower for keyword in [
+                'tool_use', 'tool_result', 'without', 'immediately after',
+                'corresponding', 'must have', 'each'
+            ]) and 'status: 400' in error_str_lower
+            
+            if is_context_overflow or is_message_format_error:
+                error_type = "context overflow" if is_context_overflow else "message format error"
+                logger.error(f"💥 {error_type} detected: {e}")
+                # Clear message history to recover
+                logger.warning("🔄 Clearing conversation history to recover")
+                self.messages.clear()
+                # Raise special exception with user-friendly message
+                if is_context_overflow:
+                    raise Exception(
+                        "抱歉，对话历史过长导致上下文溢出。我已清空历史记录，请重新描述你的需求。"
+                    )
+                else:
+                    raise Exception(
+                        "抱歉，之前的对话出现了问题。我已清空历史记录，请重新发送你的消息。"
+                    )
+            
             # Check if error is retryable (timeout, connection, rate limit, server busy, etc.)
-            is_retryable = any(keyword in error_str for keyword in [
+            is_retryable = any(keyword in error_str_lower for keyword in [
                 'timeout', 'timed out', 'connection', 'network', 
                 'rate limit', 'overloaded', 'unavailable', 'busy', 'retry',
                 '429', '500', '502', '503', '504', '512'
@@ -505,11 +606,12 @@ class AgentStreamExecutor:
 
         # Check for empty response and retry once if enabled
         if retry_on_empty and not full_content and not tool_calls:
-            logger.warning(f"⚠️  LLM returned empty response, retrying once...")
+            logger.warning(f"⚠️  LLM returned empty response (stop_reason: {stop_reason}), retrying once...")
             self._emit_event("message_end", {
                 "content": "",
                 "tool_calls": [],
-                "empty_retry": True
+                "empty_retry": True,
+                "stop_reason": stop_reason
             })
             # Retry without retry flag to avoid infinite loop
             return self._call_llm_stream(
