@@ -4,8 +4,6 @@ Memory get tool
 Allows agents to read specific sections from memory files
 """
 
-from typing import Dict, Any
-from pathlib import Path
 from agent.tools.base_tool import BaseTool
 
 
@@ -22,7 +20,7 @@ class MemoryGetTool(BaseTool):
         "properties": {
             "path": {
                 "type": "string",
-                "description": "Relative path to the memory file (e.g., 'MEMORY.md', 'memory/2026-01-01.md')"
+                "description": "Relative path to the memory file (e.g. 'memory/2026-01-01.md')"
             },
             "start_line": {
                 "type": "integer",
@@ -70,7 +68,8 @@ class MemoryGetTool(BaseTool):
             workspace_dir = self.memory_manager.config.get_workspace()
             
             # Auto-prepend memory/ if not present and not absolute path
-            if not path.startswith('memory/') and not path.startswith('/'):
+            # Exception: MEMORY.md is in the root directory
+            if not path.startswith('memory/') and not path.startswith('/') and path != 'MEMORY.md':
                 path = f'memory/{path}'
             
             file_path = workspace_dir / path

@@ -214,6 +214,19 @@ These files contain established best practices for effective skill design.
 
 To begin implementation, start with the reusable resources identified above: `scripts/`, `references/`, and `assets/` files. Note that this step may require user input. For example, when implementing a `brand-guidelines` skill, the user may need to provide brand assets or templates to store in `assets/`, or documentation to store in `references/`.
 
+**Available Base Tools**:
+
+The agent has access to these core tools that you can leverage in your skill:
+- **bash**: Execute shell commands (use for curl, ls, grep, sed, awk, bc for calculations, etc.)
+- **read**: Read file contents
+- **write**: Write files
+- **edit**: Edit files with search/replace
+
+**Minimize Dependencies**:
+- ✅ **Prefer bash + curl** for HTTP API calls (no Python dependencies)
+- ✅ **Use bash tools** (grep, sed, awk) for text processing
+- ✅ **Keep scripts simple** - if bash can do it, no need for Python (document packages/versions if Python is used)
+
 **Important Guidelines**:
 - **scripts/**: Only create scripts that will be executed. Test all scripts before including.
 - **references/**: ONLY create if documentation is too large for SKILL.md (>500 lines). Most skills don't need this.

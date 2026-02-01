@@ -70,8 +70,9 @@ class MemoryManager:
             except Exception as e:
                 # Embedding provider failed, but that's OK
                 # We can still use keyword search and file operations
-                print(f"⚠️  Warning: Embedding provider initialization failed: {e}")
-                print(f"ℹ️  Memory will work with keyword search only (no semantic search)")
+                from common.log import logger
+                logger.warning(f"[MemoryManager] Embedding provider initialization failed: {e}")
+                logger.info(f"[MemoryManager] Memory will work with keyword search only (no vector search)")
         
         # Initialize memory flush manager
         workspace_dir = self.config.get_workspace()
@@ -135,13 +136,19 @@ class MemoryManager:
         # Perform vector search (if embedding provider available)
         vector_results = []
         if self.embedding_provider:
-            query_embedding = self.embedding_provider.embed(query)
-            vector_results = self.storage.search_vector(
-                query_embedding=query_embedding,
-                user_id=user_id,
-                scopes=scopes,
-                limit=max_results * 2  # Get more candidates for merging
-            )
+            try:
+                from common.log import logger
+                query_embedding = self.embedding_provider.embed(query)
+                vector_results = self.storage.search_vector(
+                    query_embedding=query_embedding,
+                    user_id=user_id,
+                    scopes=scopes,
+                    limit=max_results * 2  # Get more candidates for merging
+                )
+                logger.info(f"[MemoryManager] Vector search found {len(vector_results)} results for query: {query}")
+            except Exception as e:
+                from common.log import logger
+                logger.warning(f"[MemoryManager] Vector search failed: {e}")
         
         # Perform keyword search
         keyword_results = self.storage.search_keyword(
@@ -150,6 +157,8 @@ class MemoryManager:
             scopes=scopes,
             limit=max_results * 2
         )
+        from common.log import logger
+        logger.info(f"[MemoryManager] Keyword search found {len(keyword_results)} results for query: {query}")
         
         # Merge results
         merged = self._merge_results(
@@ -356,29 +365,29 @@ class MemoryManager:
     
     def should_flush_memory(
         self,
-        current_tokens: int,
-        context_window: int = 128000,
-        reserve_tokens: int = 20000,
-        soft_threshold: int = 4000
+        current_tokens: int = 0
     ) -> bool:
         """
         Check if memory flush should be triggered
         
+        独立的 flush 触发机制，不依赖模型 context window。
+        使用配置中的阈值: flush_token_threshold 和 flush_turn_threshold
+        
         Args:
             current_tokens: Current session token count
-            context_window: Model's context window size (default: 128K)
-            reserve_tokens: Reserve tokens for compaction overhead (default: 20K)
-            soft_threshold: Trigger N tokens before threshold (default: 4K)
             
         Returns:
             True if memory flush should run
         """
         return self.flush_manager.should_flush(
             current_tokens=current_tokens,
-            context_window=context_window,
-            reserve_tokens=reserve_tokens,
-            soft_threshold=soft_threshold
+            token_threshold=self.config.flush_token_threshold,
+            turn_threshold=self.config.flush_turn_threshold
         )
+    
+    def increment_turn(self):
+        """增加对话轮数计数（每次用户消息+AI回复算一轮）"""
+        self.flush_manager.increment_turn()
     
     async def execute_memory_flush(
         self,

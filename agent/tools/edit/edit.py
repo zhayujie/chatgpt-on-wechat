@@ -33,7 +33,7 @@ class Edit(BaseTool):
             },
             "oldText": {
                 "type": "string",
-                "description": "Exact text to find and replace (must match exactly)"
+                "description": "Exact text to find and replace (must match exactly, cannot be empty). To append to end of file, include the last few lines as oldText."
             },
             "newText": {
                 "type": "string",

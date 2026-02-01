@@ -158,7 +158,7 @@ class OpenAIBot(Bot, OpenAIImage, OpenAICompatibleBot):
             
             # Build request parameters for ChatCompletion
             request_params = {
-                "model": kwargs.get("model", conf().get("model") or "gpt-3.5-turbo"),
+                "model": kwargs.get("model", conf().get("model") or "gpt-4.1"),
                 "messages": messages,
                 "temperature": kwargs.get("temperature", conf().get("temperature", 0.9)),
                 "top_p": kwargs.get("top_p", 1),

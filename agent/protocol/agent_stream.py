@@ -7,9 +7,9 @@ import json
 import time
 from typing import List, Dict, Any, Optional, Callable
 
-from common.log import logger
 from agent.protocol.models import LLMRequest, LLMModel
 from agent.tools.base_tool import BaseTool, ToolResult
+from common.log import logger
 
 
 class AgentStreamExecutor:
@@ -164,30 +164,24 @@ class AgentStreamExecutor:
                 self._emit_event("turn_start", {"turn": turn})
 
                 # Check if memory flush is needed (before calling LLM)
+                # 使用独立的 flush 阈值（50K tokens 或 20 轮）
                 if self.agent.memory_manager and hasattr(self.agent, 'last_usage'):
                     usage = self.agent.last_usage
                     if usage and 'input_tokens' in usage:
                         current_tokens = usage.get('input_tokens', 0)
-                        context_window = self.agent._get_model_context_window()
-                        # Use configured reserve_tokens or calculate based on context window
-                        reserve_tokens = self.agent._get_context_reserve_tokens()
-                        # Use smaller soft_threshold to trigger flush earlier (e.g., at 50K tokens)
-                        soft_threshold = 10000  # Trigger 10K tokens before limit
 
                         if self.agent.memory_manager.should_flush_memory(
-                                current_tokens=current_tokens,
-                                context_window=context_window,
-                                reserve_tokens=reserve_tokens,
-                                soft_threshold=soft_threshold
+                                current_tokens=current_tokens
                         ):
                             self._emit_event("memory_flush_start", {
                                 "current_tokens": current_tokens,
-                                "threshold": context_window - reserve_tokens - soft_threshold
+                                "turn_count": self.agent.memory_manager.flush_manager.turn_count
                             })
 
                             # TODO: Execute memory flush in background
                             # This would require async support
-                            logger.info(f"Memory flush recommended at {current_tokens} tokens")
+                            logger.info(
+                                f"Memory flush recommended: tokens={current_tokens}, turns={self.agent.memory_manager.flush_manager.turn_count}")
 
                 # Call LLM
                 assistant_msg, tool_calls = self._call_llm_stream()
@@ -320,6 +314,10 @@ class AgentStreamExecutor:
         finally:
             logger.info(f"🏁 完成({turn}轮)")
             self._emit_event("agent_end", {"final_response": final_response})
+
+            # 每轮对话结束后增加计数（用户消息+AI回复=1轮）
+            if self.agent.memory_manager:
+                self.agent.memory_manager.increment_turn()
 
         return final_response
 
@@ -664,9 +662,11 @@ class AgentStreamExecutor:
         if not self.messages or not self.agent:
             return
 
-        # Get context window and reserve tokens from agent
+        # Get context window from agent (based on model)
         context_window = self.agent._get_model_context_window()
-        reserve_tokens = self.agent._get_context_reserve_tokens()
+
+        # Reserve 10% for response generation
+        reserve_tokens = int(context_window * 0.1)
         max_tokens = context_window - reserve_tokens
 
         # Estimate current tokens

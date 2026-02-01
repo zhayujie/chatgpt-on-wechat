@@ -2,24 +2,16 @@
 from agent.tools.base_tool import BaseTool
 from agent.tools.tool_manager import ToolManager
 
-# Import basic tools (no external dependencies)
-from agent.tools.calculator.calculator import Calculator
-
 # Import file operation tools
 from agent.tools.read.read import Read
 from agent.tools.write.write import Write
 from agent.tools.edit.edit import Edit
 from agent.tools.bash.bash import Bash
-from agent.tools.grep.grep import Grep
-from agent.tools.find.find import Find
 from agent.tools.ls.ls import Ls
 
 # Import memory tools
 from agent.tools.memory.memory_search import MemorySearchTool
 from agent.tools.memory.memory_get import MemoryGetTool
-
-# Import web tools
-from agent.tools.web_fetch.web_fetch import WebFetch
 
 # Import tools with optional dependencies
 def _import_optional_tools():
@@ -80,17 +72,13 @@ BrowserTool = _import_browser_tool()
 __all__ = [
     'BaseTool',
     'ToolManager',
-    'Calculator',
     'Read',
     'Write',
     'Edit',
     'Bash',
-    'Grep',
-    'Find',
     'Ls',
     'MemorySearchTool',
     'MemoryGetTool',
-    'WebFetch',
     # Optional tools (may be None if dependencies not available)
     'GoogleSearch',
     'FileSave',

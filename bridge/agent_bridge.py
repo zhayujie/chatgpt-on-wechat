@@ -283,14 +283,53 @@ class AgentBridge:
             from agent.memory import MemoryManager, MemoryConfig
             from agent.tools import MemorySearchTool, MemoryGetTool
 
-            memory_config = MemoryConfig(
-                workspace_root=workspace_root,
-                embedding_provider="local",  # Use local embedding (no API key needed)
-                embedding_model="all-MiniLM-L6-v2"
-            )
+            # 从 config.json 读取 OpenAI 配置
+            openai_api_key = conf().get("open_ai_api_key", "")
+            openai_api_base = conf().get("open_ai_api_base", "")
             
-            # Create memory manager with the config
-            memory_manager = MemoryManager(memory_config)
+            # 尝试初始化 OpenAI embedding provider
+            embedding_provider = None
+            if openai_api_key:
+                try:
+                    from agent.memory import create_embedding_provider
+                    embedding_provider = create_embedding_provider(
+                        provider="openai",
+                        model="text-embedding-3-small",
+                        api_key=openai_api_key,
+                        api_base=openai_api_base or "https://api.openai.com/v1"
+                    )
+                    logger.info(f"[AgentBridge] OpenAI embedding initialized")
+                except Exception as embed_error:
+                    logger.warning(f"[AgentBridge] OpenAI embedding failed: {embed_error}")
+                    logger.info(f"[AgentBridge] Using keyword-only search")
+            else:
+                logger.info(f"[AgentBridge] No OpenAI API key, using keyword-only search")
+            
+            # 创建 memory config
+            memory_config = MemoryConfig(workspace_root=workspace_root)
+            
+            # 创建 memory manager
+            memory_manager = MemoryManager(memory_config, embedding_provider=embedding_provider)
+            
+            # 初始化时执行一次 sync，确保数据库有数据
+            import asyncio
+            try:
+                # 尝试在当前事件循环中执行
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                    # 如果事件循环正在运行，创建任务
+                    asyncio.create_task(memory_manager.sync())
+                    logger.info("[AgentBridge] Memory sync scheduled")
+                else:
+                    # 如果没有运行的循环，直接执行
+                    loop.run_until_complete(memory_manager.sync())
+                    logger.info("[AgentBridge] Memory synced successfully")
+            except RuntimeError:
+                # 没有事件循环，创建新的
+                asyncio.run(memory_manager.sync())
+                logger.info("[AgentBridge] Memory synced successfully")
+            except Exception as e:
+                logger.warning(f"[AgentBridge] Memory sync failed: {e}")
             
             # Create memory tools
             memory_tools = [
@@ -420,23 +459,65 @@ class AgentBridge:
         memory_tools = []
 
         try:
-            from agent.memory import MemoryManager, MemoryConfig
+            from agent.memory import MemoryManager, MemoryConfig, create_embedding_provider
             from agent.tools import MemorySearchTool, MemoryGetTool
 
-            memory_config = MemoryConfig(
-                workspace_root=workspace_root,
-                embedding_provider="local",
-                embedding_model="all-MiniLM-L6-v2"
-            )
+            # 从 config.json 读取 OpenAI 配置
+            openai_api_key = conf().get("open_ai_api_key", "")
+            openai_api_base = conf().get("open_ai_api_base", "")
             
-            memory_manager = MemoryManager(memory_config)
+            # 尝试初始化 OpenAI embedding provider
+            embedding_provider = None
+            if openai_api_key:
+                try:
+                    embedding_provider = create_embedding_provider(
+                        provider="openai",
+                        model="text-embedding-3-small",
+                        api_key=openai_api_key,
+                        api_base=openai_api_base or "https://api.openai.com/v1"
+                    )
+                    logger.info(f"[AgentBridge] OpenAI embedding initialized for session {session_id}")
+                except Exception as embed_error:
+                    logger.warning(f"[AgentBridge] OpenAI embedding failed for session {session_id}: {embed_error}")
+                    logger.info(f"[AgentBridge] Using keyword-only search for session {session_id}")
+            else:
+                logger.info(f"[AgentBridge] No OpenAI API key, using keyword-only search for session {session_id}")
+            
+            # 创建 memory config
+            memory_config = MemoryConfig(workspace_root=workspace_root)
+            
+            # 创建 memory manager
+            memory_manager = MemoryManager(memory_config, embedding_provider=embedding_provider)
+            
+            # 初始化时执行一次 sync，确保数据库有数据
+            import asyncio
+            try:
+                # 尝试在当前事件循环中执行
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                    # 如果事件循环正在运行，创建任务
+                    asyncio.create_task(memory_manager.sync())
+                    logger.info(f"[AgentBridge] Memory sync scheduled for session {session_id}")
+                else:
+                    # 如果没有运行的循环，直接执行
+                    loop.run_until_complete(memory_manager.sync())
+                    logger.info(f"[AgentBridge] Memory synced successfully for session {session_id}")
+            except RuntimeError:
+                # 没有事件循环，创建新的
+                asyncio.run(memory_manager.sync())
+                logger.info(f"[AgentBridge] Memory synced successfully for session {session_id}")
+            except Exception as sync_error:
+                logger.warning(f"[AgentBridge] Memory sync failed for session {session_id}: {sync_error}")
+            
             memory_tools = [
                 MemorySearchTool(memory_manager),
                 MemoryGetTool(memory_manager)
             ]
             
         except Exception as e:
-            logger.debug(f"[AgentBridge] Memory system not available for session {session_id}: {e}")
+            logger.warning(f"[AgentBridge] Memory system not available for session {session_id}: {e}")
+            import traceback
+            logger.warning(f"[AgentBridge] Memory init traceback: {traceback.format_exc()}")
 
         # Load tools
         from agent.tools import ToolManager
