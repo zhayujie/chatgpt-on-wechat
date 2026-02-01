@@ -21,7 +21,6 @@ from agent.tools.memory.memory_get import MemoryGetTool
 
 # Import web tools
 from agent.tools.web_fetch.web_fetch import WebFetch
-from agent.tools.bocha_search.bocha_search import BochaSearch
 
 # Import tools with optional dependencies
 def _import_optional_tools():
@@ -94,7 +93,6 @@ __all__ = [
     'MemorySearchTool',
     'MemoryGetTool',
     'WebFetch',
-    'BochaSearch',
     # Optional tools (may be None if dependencies not available)
     'GoogleSearch',
     'FileSave',
