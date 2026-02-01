@@ -13,46 +13,70 @@ from agent.tools.ls.ls import Ls
 from agent.tools.memory.memory_search import MemorySearchTool
 from agent.tools.memory.memory_get import MemoryGetTool
 
-# Import env config tool
-from agent.tools.env_config.env_config import EnvConfig
-
 # Import tools with optional dependencies
 def _import_optional_tools():
     """Import tools that have optional dependencies"""
+    from common.log import logger
     tools = {}
+    
+    # EnvConfig Tool (requires python-dotenv)
+    try:
+        from agent.tools.env_config.env_config import EnvConfig
+        tools['EnvConfig'] = EnvConfig
+    except ImportError as e:
+        logger.error(
+            f"[Tools] EnvConfig tool not loaded - missing dependency: {e}\n"
+            f"  To enable environment variable management, run:\n"
+            f"    pip install python-dotenv>=1.0.0"
+        )
+    except Exception as e:
+        logger.error(f"[Tools] EnvConfig tool failed to load: {e}")
     
     # Scheduler Tool (requires croniter)
     try:
         from agent.tools.scheduler.scheduler_tool import SchedulerTool
         tools['SchedulerTool'] = SchedulerTool
-    except ImportError:
-        pass
+    except ImportError as e:
+        logger.error(
+            f"[Tools] Scheduler tool not loaded - missing dependency: {e}\n"
+            f"  To enable scheduled tasks, run:\n"
+            f"    pip install croniter>=2.0.0"
+        )
+    except Exception as e:
+        logger.error(f"[Tools] Scheduler tool failed to load: {e}")
     
     # Google Search (requires requests)
     try:
         from agent.tools.google_search.google_search import GoogleSearch
         tools['GoogleSearch'] = GoogleSearch
-    except ImportError:
-        pass
+    except ImportError as e:
+        logger.warning(f"[Tools] GoogleSearch tool not loaded - missing dependency: {e}")
+    except Exception as e:
+        logger.error(f"[Tools] GoogleSearch tool failed to load: {e}")
     
     # File Save (may have dependencies)
     try:
         from agent.tools.file_save.file_save import FileSave
         tools['FileSave'] = FileSave
-    except ImportError:
-        pass
+    except ImportError as e:
+        logger.warning(f"[Tools] FileSave tool not loaded - missing dependency: {e}")
+    except Exception as e:
+        logger.error(f"[Tools] FileSave tool failed to load: {e}")
     
     # Terminal (basic, should work)
     try:
         from agent.tools.terminal.terminal import Terminal
         tools['Terminal'] = Terminal
-    except ImportError:
-        pass
+    except ImportError as e:
+        logger.warning(f"[Tools] Terminal tool not loaded - missing dependency: {e}")
+    except Exception as e:
+        logger.error(f"[Tools] Terminal tool failed to load: {e}")
     
     return tools
 
 # Load optional tools
 _optional_tools = _import_optional_tools()
+EnvConfig = _optional_tools.get('EnvConfig')
 SchedulerTool = _optional_tools.get('SchedulerTool')
 GoogleSearch = _optional_tools.get('GoogleSearch')
 FileSave = _optional_tools.get('FileSave') 

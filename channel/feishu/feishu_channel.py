@@ -208,8 +208,12 @@ class FeiShuChanel(ChatChannel):
                 return
             msg_type = "image"
             content_key = "image_key"
-        if is_group:
-            # 群聊中直接回复
+        
+        # Check if we can reply to an existing message (need msg_id)
+        can_reply = is_group and msg and hasattr(msg, 'msg_id') and msg.msg_id
+        
+        if can_reply:
+            # 群聊中回复已有消息
             url = f"https://open.feishu.cn/open-apis/im/v1/messages/{msg.msg_id}/reply"
             data = {
                 "msg_type": msg_type,
@@ -217,6 +221,7 @@ class FeiShuChanel(ChatChannel):
             }
             res = requests.post(url=url, headers=headers, json=data, timeout=(5, 10))
         else:
+            # 发送新消息（私聊或群聊中无msg_id的情况，如定时任务）
             url = "https://open.feishu.cn/open-apis/im/v1/messages"
             params = {"receive_id_type": context.get("receive_id_type") or "open_id"}
             data = {

@@ -101,12 +101,21 @@ def _execute_send_message(task: dict, agent_bridge):
         context["isgroup"] = is_group
         context["session_id"] = receiver
         
-        # For web channel, generate a virtual request_id
+        # Channel-specific context setup
         if channel_type == "web":
+            # Web channel needs request_id
             import uuid
             request_id = f"scheduler_{task['id']}_{uuid.uuid4().hex[:8]}"
             context["request_id"] = request_id
             logger.debug(f"[Scheduler] Generated request_id for web channel: {request_id}")
+        elif channel_type == "feishu":
+            # Feishu channel: for scheduled tasks, send as new message (no msg_id to reply to)
+            # Use chat_id for groups, open_id for private chats
+            context["receive_id_type"] = "chat_id" if is_group else "open_id"
+            # Keep isgroup as is, but set msg to None (no original message to reply to)
+            # Feishu channel will detect this and send as new message instead of reply
+            context["msg"] = None
+            logger.debug(f"[Scheduler] Feishu: receive_id_type={context['receive_id_type']}, is_group={is_group}, receiver={receiver}")
         
         # Create reply
         reply = Reply(ReplyType.TEXT, content)
@@ -128,9 +137,13 @@ def _execute_send_message(task: dict, agent_bridge):
                 logger.error(f"[Scheduler] Failed to create channel: {channel_type}")
         except Exception as e:
             logger.error(f"[Scheduler] Failed to send message: {e}")
+            import traceback
+            logger.error(f"[Scheduler] Traceback: {traceback.format_exc()}")
             
     except Exception as e:
         logger.error(f"[Scheduler] Error in _execute_send_message: {e}")
+        import traceback
+        logger.error(f"[Scheduler] Traceback: {traceback.format_exc()}")
 
 
 def _execute_tool_call(task: dict, agent_bridge):
@@ -187,12 +200,18 @@ def _execute_tool_call(task: dict, agent_bridge):
         context["isgroup"] = is_group
         context["session_id"] = receiver
         
-        # For web channel, generate a virtual request_id
+        # Channel-specific context setup
         if channel_type == "web":
+            # Web channel needs request_id
             import uuid
             request_id = f"scheduler_{task['id']}_{uuid.uuid4().hex[:8]}"
             context["request_id"] = request_id
             logger.debug(f"[Scheduler] Generated request_id for web channel: {request_id}")
+        elif channel_type == "feishu":
+            # Feishu channel: for scheduled tasks, send as new message (no msg_id to reply to)
+            context["receive_id_type"] = "chat_id" if is_group else "open_id"
+            context["msg"] = None
+            logger.debug(f"[Scheduler] Feishu: receive_id_type={context['receive_id_type']}, is_group={is_group}, receiver={receiver}")
         
         reply = Reply(ReplyType.TEXT, content)
         
