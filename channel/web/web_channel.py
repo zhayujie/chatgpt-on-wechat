@@ -49,8 +49,6 @@ class WebChannel(ChatChannel):
         self.msg_id_counter = 0  # 添加消息ID计数器
         self.session_queues = {}  # 存储session_id到队列的映射
         self.request_to_session = {}  # 存储request_id到session_id的映射
-        # web channel无需前缀
-        conf()["single_chat_prefix"] = [""]
 
 
     def _generate_msg_id(self):
@@ -122,18 +120,30 @@ class WebChannel(ChatChannel):
             if session_id not in self.session_queues:
                 self.session_queues[session_id] = Queue()
             
+            # Web channel 不需要前缀，确保消息能通过前缀检查
+            trigger_prefixs = conf().get("single_chat_prefix", [""])
+            if check_prefix(prompt, trigger_prefixs) is None:
+                # 如果没有匹配到前缀，给消息加上第一个前缀
+                if trigger_prefixs:
+                    prompt = trigger_prefixs[0] + prompt
+                    logger.debug(f"[WebChannel] Added prefix to message: {prompt}")
+            
             # 创建消息对象
             msg = WebMessage(self._generate_msg_id(), prompt)
             msg.from_user_id = session_id  # 使用会话ID作为用户ID
             
-            # 创建上下文
-            context = self._compose_context(ContextType.TEXT, prompt, msg=msg)
+            # 创建上下文，明确指定 isgroup=False
+            context = self._compose_context(ContextType.TEXT, prompt, msg=msg, isgroup=False)
+            
+            # 检查 context 是否为 None（可能被插件过滤等）
+            if context is None:
+                logger.warning(f"[WebChannel] Context is None for session {session_id}, message may be filtered")
+                return json.dumps({"status": "error", "message": "Message was filtered"})
 
-            # 添加必要的字段
+            # 覆盖必要的字段（_compose_context 会设置默认值，但我们需要使用实际的 session_id）
             context["session_id"] = session_id
+            context["receiver"] = session_id
             context["request_id"] = request_id
-            context["isgroup"] = False  # 添加 isgroup 字段
-            context["receiver"] = session_id  # 添加 receiver 字段
             
             # 异步处理消息 - 只传递上下文
             threading.Thread(target=self.produce, args=(context,)).start()

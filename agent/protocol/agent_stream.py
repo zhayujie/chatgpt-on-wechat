@@ -171,54 +171,75 @@ class AgentStreamExecutor:
                 tool_results = []
                 tool_result_blocks = []
 
-                for tool_call in tool_calls:
-                    result = self._execute_tool(tool_call)
-                    tool_results.append(result)
-                    
-                    # Log tool result in compact format
-                    status_emoji = "✅" if result.get("status") == "success" else "❌"
-                    result_data = result.get('result', '')
-                    # Format result string with proper Chinese character support
-                    if isinstance(result_data, (dict, list)):
-                        result_str = json.dumps(result_data, ensure_ascii=False)
-                    else:
-                        result_str = str(result_data)
-                    logger.info(f"  {status_emoji} {tool_call['name']} ({result.get('execution_time', 0):.2f}s): {result_str[:200]}{'...' if len(result_str) > 200 else ''}")
+                try:
+                    for tool_call in tool_calls:
+                        result = self._execute_tool(tool_call)
+                        tool_results.append(result)
+                        
+                        # Log tool result in compact format
+                        status_emoji = "✅" if result.get("status") == "success" else "❌"
+                        result_data = result.get('result', '')
+                        # Format result string with proper Chinese character support
+                        if isinstance(result_data, (dict, list)):
+                            result_str = json.dumps(result_data, ensure_ascii=False)
+                        else:
+                            result_str = str(result_data)
+                        logger.info(f"  {status_emoji} {tool_call['name']} ({result.get('execution_time', 0):.2f}s): {result_str[:200]}{'...' if len(result_str) > 200 else ''}")
 
-                    # Build tool result block (Claude format)
-                    # Format content in a way that's easy for LLM to understand
-                    is_error = result.get("status") == "error"
-                    
-                    if is_error:
-                        # For errors, provide clear error message
-                        result_content = f"Error: {result.get('result', 'Unknown error')}"
-                    elif isinstance(result.get('result'), dict):
-                        # For dict results, use JSON format
-                        result_content = json.dumps(result.get('result'), ensure_ascii=False)
-                    elif isinstance(result.get('result'), str):
-                        # For string results, use directly
-                        result_content = result.get('result')
-                    else:
-                        # Fallback to full JSON
-                        result_content = json.dumps(result, ensure_ascii=False)
-                    
-                    tool_result_block = {
-                        "type": "tool_result",
-                        "tool_use_id": tool_call["id"],
-                        "content": result_content
-                    }
-                    
-                    # Add is_error field for Claude API (helps model understand failures)
-                    if is_error:
-                        tool_result_block["is_error"] = True
-                    
-                    tool_result_blocks.append(tool_result_block)
-
-                # Add tool results to message history as user message (Claude format)
-                self.messages.append({
-                    "role": "user",
-                    "content": tool_result_blocks
-                })
+                        # Build tool result block (Claude format)
+                        # Format content in a way that's easy for LLM to understand
+                        is_error = result.get("status") == "error"
+                        
+                        if is_error:
+                            # For errors, provide clear error message
+                            result_content = f"Error: {result.get('result', 'Unknown error')}"
+                        elif isinstance(result.get('result'), dict):
+                            # For dict results, use JSON format
+                            result_content = json.dumps(result.get('result'), ensure_ascii=False)
+                        elif isinstance(result.get('result'), str):
+                            # For string results, use directly
+                            result_content = result.get('result')
+                        else:
+                            # Fallback to full JSON
+                            result_content = json.dumps(result, ensure_ascii=False)
+                        
+                        tool_result_block = {
+                            "type": "tool_result",
+                            "tool_use_id": tool_call["id"],
+                            "content": result_content
+                        }
+                        
+                        # Add is_error field for Claude API (helps model understand failures)
+                        if is_error:
+                            tool_result_block["is_error"] = True
+                        
+                        tool_result_blocks.append(tool_result_block)
+                
+                finally:
+                    # CRITICAL: Always add tool_result to maintain message history integrity
+                    # Even if tool execution fails, we must add error results to match tool_use
+                    if tool_result_blocks:
+                        # Add tool results to message history as user message (Claude format)
+                        self.messages.append({
+                            "role": "user",
+                            "content": tool_result_blocks
+                        })
+                    elif tool_calls:
+                        # If we have tool_calls but no tool_result_blocks (unexpected error),
+                        # create error results for all tool calls to maintain message integrity
+                        logger.warning("⚠️ Tool execution interrupted, adding error results to maintain message history")
+                        emergency_blocks = []
+                        for tool_call in tool_calls:
+                            emergency_blocks.append({
+                                "type": "tool_result",
+                                "tool_use_id": tool_call["id"],
+                                "content": "Error: Tool execution was interrupted",
+                                "is_error": True
+                            })
+                        self.messages.append({
+                            "role": "user",
+                            "content": emergency_blocks
+                        })
 
                 self._emit_event("turn_end", {
                     "turn": turn,
@@ -257,6 +278,9 @@ class AgentStreamExecutor:
         Returns:
             (response_text, tool_calls)
         """
+        # Validate and fix message history first
+        self._validate_and_fix_messages()
+        
         # Trim messages if needed (using agent's context management)
         self._trim_messages()
 
@@ -512,6 +536,27 @@ class AgentStreamExecutor:
                 **error_result
             })
             return error_result
+
+    def _validate_and_fix_messages(self):
+        """
+        Validate message history and fix incomplete tool_use/tool_result pairs.
+        Claude API requires each tool_use to have a corresponding tool_result immediately after.
+        """
+        if not self.messages:
+            return
+        
+        # Check last message for incomplete tool_use
+        if len(self.messages) > 0:
+            last_msg = self.messages[-1]
+            if last_msg.get("role") == "assistant":
+                # Check if assistant message has tool_use blocks
+                content = last_msg.get("content", [])
+                if isinstance(content, list):
+                    has_tool_use = any(block.get("type") == "tool_use" for block in content)
+                    if has_tool_use:
+                        # This is incomplete - remove it
+                        logger.warning(f"⚠️ Removing incomplete tool_use message from history")
+                        self.messages.pop()
 
     def _trim_messages(self):
         """
