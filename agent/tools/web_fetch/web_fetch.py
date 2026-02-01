@@ -46,7 +46,7 @@ class WebFetch(BaseTool):
     
     def __init__(self, config: dict = None):
         self.config = config or {}
-        self.timeout = self.config.get("timeout", 30)
+        self.timeout = self.config.get("timeout", 20)
         self.max_redirects = self.config.get("max_redirects", 3)
         self.user_agent = self.config.get(
             "user_agent",

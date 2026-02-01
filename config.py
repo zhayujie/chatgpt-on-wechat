@@ -185,7 +185,8 @@ available_setting = {
     "Minimax_base_url": "",
     "web_port": 9899,
     "agent": False,  # 是否开启Agent模式
-    "agent_workspace": "~/cow"  # agent工作空间路径，用于存储skills、memory等
+    "agent_workspace": "~/cow",  # agent工作空间路径，用于存储skills、memory等
+    "bocha_api_key": ""
 }
 
 

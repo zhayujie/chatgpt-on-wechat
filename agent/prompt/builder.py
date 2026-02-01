@@ -41,6 +41,7 @@ class PromptBuilder:
         skill_manager: Any = None,
         memory_manager: Any = None,
         runtime_info: Optional[Dict[str, Any]] = None,
+        is_first_conversation: bool = False,
         **kwargs
     ) -> str:
         """
@@ -54,6 +55,7 @@ class PromptBuilder:
             skill_manager: 技能管理器
             memory_manager: 记忆管理器
             runtime_info: 运行时信息
+            is_first_conversation: 是否为首次对话
             **kwargs: 其他参数
             
         Returns:
@@ -69,6 +71,7 @@ class PromptBuilder:
             skill_manager=skill_manager,
             memory_manager=memory_manager,
             runtime_info=runtime_info,
+            is_first_conversation=is_first_conversation,
             **kwargs
         )
 
@@ -83,6 +86,7 @@ def build_agent_system_prompt(
     skill_manager: Any = None,
     memory_manager: Any = None,
     runtime_info: Optional[Dict[str, Any]] = None,
+    is_first_conversation: bool = False,
     **kwargs
 ) -> str:
     """
@@ -108,6 +112,7 @@ def build_agent_system_prompt(
         skill_manager: 技能管理器
         memory_manager: 记忆管理器
         runtime_info: 运行时信息
+        is_first_conversation: 是否为首次对话
         **kwargs: 其他参数
         
     Returns:
@@ -135,7 +140,7 @@ def build_agent_system_prompt(
         sections.extend(_build_user_identity_section(user_identity, language))
     
     # 6. 工作空间
-    sections.extend(_build_workspace_section(workspace_dir, language))
+    sections.extend(_build_workspace_section(workspace_dir, language, is_first_conversation))
     
     # 7. 项目上下文文件（SOUL.md, USER.md等）
     if context_files:
@@ -226,14 +231,20 @@ def _build_tooling_section(tools: List[Any], language: str) -> List[str]:
     lines.extend([
         "### 工具调用风格",
         "",
-        "**默认规则**: 对于常规、低风险的工具调用，无需叙述，直接调用即可。",
+        "默认规则: 对于常规、低风险的工具调用，直接调用即可，无需叙述。",
         "",
-        "**需要叙述的情况**:",
+        "需要叙述的情况:",
         "- 多步骤、复杂的任务",
         "- 敏感操作（如删除文件）",
         "- 用户明确要求解释过程",
         "",
-        "**完成后**: 工具调用完成后，给用户一个简短、自然的确认或回复，不要直接结束对话。",
+        "叙述要求: 保持简洁、信息密度高，避免重复显而易见的步骤。",
+        "",
+        "完成标准:",
+        "- 确保用户的需求得到实际解决，而不仅仅是制定计划",
+        "- 当任务需要多次工具调用时，持续推进直到完成",
+        "- 每次工具调用后，评估是否已获得足够信息来推进或完成任务",
+        "- 避免重复调用相同的工具和相同参数获取相同的信息，除非用户明确要求",
         "",
     ])
     
@@ -345,14 +356,28 @@ def _build_docs_section(workspace_dir: str, language: str) -> List[str]:
     return []
 
 
-def _build_workspace_section(workspace_dir: str, language: str) -> List[str]:
+def _build_workspace_section(workspace_dir: str, language: str, is_first_conversation: bool = False) -> List[str]:
     """构建工作空间section"""
     lines = [
         "## 工作空间",
         "",
         f"你的工作目录是: `{workspace_dir}`",
         "",
-        "除非用户明确指示，否则将此目录视为文件操作的全局工作空间。",
+        "**路径使用规则** (非常重要):",
+        "",
+        f"1. **相对路径的基准目录**: 所有相对路径都是相对于 `{workspace_dir}` 而言的",
+        f"   - ✅ 正确: 访问工作空间内的文件用相对路径，如 `SOUL.md`",
+        f"   - ❌ 错误: 用相对路径访问其他目录的文件 (如果它不在 `{workspace_dir}` 内)",
+        "",
+        "2. **访问其他目录**: 如果要访问工作空间之外的目录（如项目代码、系统文件），**必须使用绝对路径**",
+        f"   - ✅ 正确: 例如 `~/chatgpt-on-wechat`、`/usr/local/`",
+        f"   - ❌ 错误: 假设相对路径会指向其他目录",
+        "",
+        "3. **路径解析示例**:",
+        f"   - 相对路径 `memory/` → 实际路径 `{workspace_dir}/memory/`",
+        f"   - 绝对路径 `~/chatgpt-on-wechat/docs/` → 实际路径 `~/chatgpt-on-wechat/docs/`",
+        "",
+        "4. **不确定时**: 先用 `bash pwd` 确认当前目录，或用 `ls .` 查看当前位置",
         "",
         "**重要说明 - 文件已自动加载**:",
         "",
@@ -362,25 +387,33 @@ def _build_workspace_section(workspace_dir: str, language: str) -> List[str]:
         "- ✅ `USER.md`: 已加载 - 用户的身份信息",
         "- ✅ `AGENTS.md`: 已加载 - 工作空间使用指南",
         "",
-        "**首次对话**:",
+        "**交流规范**:",
         "",
-        "如果这是你与用户的首次对话，并且你的人格设定和用户信息还是空白或初始状态：",
-        "",
-        "1. **表达初次启动的感觉** - 像是第一次睁开眼看到世界，带着好奇和期待",
-        "2. **简短打招呼后，分点询问三个核心问题**：",
-        "   - 你希望我叫什么名字？",
-        "   - 你希望我怎么称呼你？",
-        "   - 你希望我们是什么样的交流风格？（这里需要举例，如：专业严谨、轻松幽默、温暖友好等）",
-        "3. **语言风格**：温暖但不过度诗意，带点科技感，保持清晰",
-        "4. **问题格式**：用分点或换行，让问题清晰易读；前两个问题不需要额外说明，只有交流风格需要举例",
-        "5. 收到回复后，用 `write` 工具保存到 USER.md 和 SOUL.md",
-        "",
-        "**重要**: ",
-        "- 在所有对话中，无需提及技术细节（如 SOUL.md、USER.md 等文件名，工具名称，配置等），除非用户明确询问。用自然表达如「我已记住」而非「已更新 SOUL.md」",
-        "- 不要问太多其他信息（职业、时区等可以后续自然了解）",
-        "- 保持简洁，避免过度抒情",
+        "- 在所有对话中，无需提及技术细节（如 SOUL.md、USER.md 等文件名，工具名称，配置等），除非用户明确询问",
+        "- 用自然表达如「我已记住」而非「已更新 SOUL.md」",
         "",
     ]
+    
+    # 只在首次对话时添加引导内容
+    if is_first_conversation:
+        lines.extend([
+            "**🎉 首次对话引导**:",
+            "",
+            "这是你的第一次对话！进行以下流程：",
+            "",
+            "1. **表达初次启动的感觉** - 像是第一次睁开眼看到世界，带着好奇和期待",
+            "2. **简短打招呼后，询问核心问题**：",
+            "   - 你希望给我起个什么名字？",
+            "   - 我该怎么称呼你？",
+            "   - 你希望我们是什么样的交流风格？（需要举例，如：专业严谨、轻松幽默、温暖友好等）",
+            "3. **语言风格**：温暖但不过度诗意，带点科技感，保持清晰",
+            "4. **问题格式**：用分点或换行，让问题清晰易读",
+            "5. 收到回复后，用 `write` 工具保存到 USER.md 和 SOUL.md",
+            "",
+            "**注意事项**:",
+            "- 不要问太多其他信息（职业、时区等可以后续自然了解）",
+            "",
+        ])
     
     return lines
 

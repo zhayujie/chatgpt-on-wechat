@@ -66,14 +66,22 @@ class AgentLLMModel(LLMModel):
         self.bridge = bridge
         self.bot_type = bot_type
         self._bot = None
+        self._use_linkai = conf().get("use_linkai", False) and conf().get("linkai_api_key")
     
     @property
     def bot(self):
         """Lazy load the bot and enhance it with tool calling if needed"""
         if self._bot is None:
-            self._bot = self.bridge.get_bot(self.bot_type)
-            # Automatically add tool calling support if not present
-            self._bot = add_openai_compatible_support(self._bot)
+            # If use_linkai is enabled, use LinkAI bot directly
+            if self._use_linkai:
+                self._bot = self.bridge.find_chat_bot(const.LINKAI)
+            else:
+                self._bot = self.bridge.get_bot(self.bot_type)
+                # Automatically add tool calling support if not present
+                self._bot = add_openai_compatible_support(self._bot)
+            
+            # Log bot info
+            bot_name = type(self._bot).__name__
         return self._bot
 
     def call(self, request: LLMRequest):
@@ -88,11 +96,18 @@ class AgentLLMModel(LLMModel):
                 kwargs = {
                     'messages': request.messages,
                     'tools': getattr(request, 'tools', None),
-                    'stream': False
+                    'stream': False,
+                    'model': self.model  # Pass model parameter
                 }
                 # Only pass max_tokens if it's explicitly set
                 if request.max_tokens is not None:
                     kwargs['max_tokens'] = request.max_tokens
+                
+                # Extract system prompt if present
+                system_prompt = getattr(request, 'system', None)
+                if system_prompt:
+                    kwargs['system'] = system_prompt
+                
                 response = self.bot.call_with_tools(**kwargs)
                 return self._format_response(response)
             else:
@@ -122,7 +137,8 @@ class AgentLLMModel(LLMModel):
                     'messages': request.messages,
                     'tools': getattr(request, 'tools', None),
                     'stream': True,
-                    'max_tokens': max_tokens
+                    'max_tokens': max_tokens,
+                    'model': self.model  # Pass model parameter
                 }
                 
                 # Add system prompt if present
@@ -155,13 +171,15 @@ class AgentLLMModel(LLMModel):
 
 class AgentBridge:
     """
-    Bridge class that integrates single super Agent with COW
+    Bridge class that integrates super Agent with COW
+    Manages multiple agent instances per session for conversation isolation
     """
     
     def __init__(self, bridge: Bridge):
         self.bridge = bridge
+        self.agents = {}  # session_id -> Agent instance mapping
+        self.default_agent = None  # For backward compatibility (no session_id)
         self.agent: Optional[Agent] = None
-    
     def create_agent(self, system_prompt: str, tools: List = None, **kwargs) -> Agent:
         """
         Create the super agent with COW integration
@@ -193,8 +211,8 @@ class AgentBridge:
                 except Exception as e:
                     logger.warning(f"[AgentBridge] Failed to load tool {tool_name}: {e}")
         
-        # Create the single super agent
-        self.agent = Agent(
+        # Create agent instance
+        agent = Agent(
             system_prompt=system_prompt,
             description=kwargs.get("description", "AI Super Agent"),
             model=model,
@@ -209,21 +227,38 @@ class AgentBridge:
         )
 
         # Log skill loading details
-        if self.agent.skill_manager:
+        if agent.skill_manager:
             logger.info(f"[AgentBridge] SkillManager initialized:")
-            logger.info(f"[AgentBridge]   - Managed dir: {self.agent.skill_manager.managed_skills_dir}")
-            logger.info(f"[AgentBridge]   - Workspace dir: {self.agent.skill_manager.workspace_dir}")
-            logger.info(f"[AgentBridge]   - Total skills: {len(self.agent.skill_manager.skills)}")
-            for skill_name in self.agent.skill_manager.skills.keys():
+            logger.info(f"[AgentBridge]   - Managed dir: {agent.skill_manager.managed_skills_dir}")
+            logger.info(f"[AgentBridge]   - Workspace dir: {agent.skill_manager.workspace_dir}")
+            logger.info(f"[AgentBridge]   - Total skills: {len(agent.skill_manager.skills)}")
+            for skill_name in agent.skill_manager.skills.keys():
                 logger.info(f"[AgentBridge]     * {skill_name}")
 
-        return self.agent
+        return agent
     
-    def get_agent(self) -> Optional[Agent]:
-        """Get the super agent, create if not exists"""
-        if self.agent is None:
-            self._init_default_agent()
-        return self.agent
+    def get_agent(self, session_id: str = None) -> Optional[Agent]:
+        """
+        Get agent instance for the given session
+        
+        Args:
+            session_id: Session identifier (e.g., user_id). If None, returns default agent.
+        
+        Returns:
+            Agent instance for this session
+        """
+        # If no session_id, use default agent (backward compatibility)
+        if session_id is None:
+            if self.default_agent is None:
+                self._init_default_agent()
+            return self.default_agent
+        
+        # Check if agent exists for this session
+        if session_id not in self.agents:
+            logger.info(f"[AgentBridge] Creating new agent for session: {session_id}")
+            self._init_agent_for_session(session_id)
+        
+        return self.agents[session_id]
     
     def _init_default_agent(self):
         """Initialize default super agent with new prompt system"""
@@ -291,6 +326,12 @@ class AgentBridge:
                         tool.cwd = file_config.get("cwd", tool.cwd if hasattr(tool, 'cwd') else None)
                         if 'memory_manager' in file_config:
                             tool.memory_manager = file_config['memory_manager']
+                    # Apply API key for bocha_search tool
+                    elif tool_name == 'bocha_search':
+                        bocha_api_key = conf().get("bocha_api_key", "")
+                        if bocha_api_key:
+                            tool.config = {"bocha_api_key": bocha_api_key}
+                            tool.api_key = bocha_api_key
                     tools.append(tool)
                     logger.debug(f"[AgentBridge] Loaded tool: {tool_name}")
             except Exception as e:
@@ -307,6 +348,12 @@ class AgentBridge:
         context_files = load_context_files(workspace_root)
         logger.info(f"[AgentBridge] Loaded {len(context_files)} context files: {[f.path for f in context_files]}")
 
+        # Check if this is the first conversation
+        from agent.prompt.workspace import is_first_conversation, mark_conversation_started
+        is_first = is_first_conversation(workspace_root)
+        if is_first:
+            logger.info("[AgentBridge] First conversation detected")
+        
         # Build system prompt using new prompt builder
         prompt_builder = PromptBuilder(
             workspace_dir=workspace_root,
@@ -317,15 +364,20 @@ class AgentBridge:
         runtime_info = {
             "model": conf().get("model", "unknown"),
             "workspace": workspace_root,
-            "channel": "web"  # TODO: get from actual channel, default to "web" to hide if not specified
+            "channel": conf().get("channel_type", "unknown")  # Get from config
         }
 
         system_prompt = prompt_builder.build(
             tools=tools,
             context_files=context_files,
             memory_manager=memory_manager,
-            runtime_info=runtime_info
+            runtime_info=runtime_info,
+            is_first_conversation=is_first
         )
+        
+        # Mark conversation as started (will be saved after first user message)
+        if is_first:
+            mark_conversation_started(workspace_root)
 
         logger.info("[AgentBridge] System prompt built successfully")
 
@@ -343,6 +395,127 @@ class AgentBridge:
         if memory_manager:
             agent.memory_manager = memory_manager
             logger.info(f"[AgentBridge] Memory manager attached to agent")
+        
+        # Store as default agent
+        self.default_agent = agent
+    
+    def _init_agent_for_session(self, session_id: str):
+        """
+        Initialize agent for a specific session
+        Reuses the same configuration as default agent
+        """
+        from config import conf
+        import os
+
+        # Get workspace from config
+        workspace_root = os.path.expanduser(conf().get("agent_workspace", "~/cow"))
+
+        # Initialize workspace
+        from agent.prompt import ensure_workspace, load_context_files, PromptBuilder
+
+        workspace_files = ensure_workspace(workspace_root, create_templates=True)
+
+        # Setup memory system
+        memory_manager = None
+        memory_tools = []
+
+        try:
+            from agent.memory import MemoryManager, MemoryConfig
+            from agent.tools import MemorySearchTool, MemoryGetTool
+
+            memory_config = MemoryConfig(
+                workspace_root=workspace_root,
+                embedding_provider="local",
+                embedding_model="all-MiniLM-L6-v2"
+            )
+            
+            memory_manager = MemoryManager(memory_config)
+            memory_tools = [
+                MemorySearchTool(memory_manager),
+                MemoryGetTool(memory_manager)
+            ]
+            
+        except Exception as e:
+            logger.debug(f"[AgentBridge] Memory system not available for session {session_id}: {e}")
+
+        # Load tools
+        from agent.tools import ToolManager
+        tool_manager = ToolManager()
+        tool_manager.load_tools()
+
+        tools = []
+        file_config = {
+            "cwd": workspace_root,
+            "memory_manager": memory_manager
+        } if memory_manager else {"cwd": workspace_root}
+
+        for tool_name in tool_manager.tool_classes.keys():
+            try:
+                tool = tool_manager.create_tool(tool_name)
+                if tool:
+                    if tool_name in ['read', 'write', 'edit', 'bash', 'grep', 'find', 'ls']:
+                        tool.config = file_config
+                        tool.cwd = file_config.get("cwd", tool.cwd if hasattr(tool, 'cwd') else None)
+                        if 'memory_manager' in file_config:
+                            tool.memory_manager = file_config['memory_manager']
+                    elif tool_name == 'bocha_search':
+                        bocha_api_key = conf().get("bocha_api_key", "")
+                        if bocha_api_key:
+                            tool.config = {"bocha_api_key": bocha_api_key}
+                            tool.api_key = bocha_api_key
+                    tools.append(tool)
+            except Exception as e:
+                logger.warning(f"[AgentBridge] Failed to load tool {tool_name} for session {session_id}: {e}")
+
+        if memory_tools:
+            tools.extend(memory_tools)
+
+        # Load context files
+        context_files = load_context_files(workspace_root)
+
+        # Check if this is the first conversation
+        from agent.prompt.workspace import is_first_conversation, mark_conversation_started
+        is_first = is_first_conversation(workspace_root)
+        
+        # Build system prompt
+        prompt_builder = PromptBuilder(
+            workspace_dir=workspace_root,
+            language="zh"
+        )
+
+        runtime_info = {
+            "model": conf().get("model", "unknown"),
+            "workspace": workspace_root,
+            "channel": conf().get("channel_type", "unknown")
+        }
+
+        system_prompt = prompt_builder.build(
+            tools=tools,
+            context_files=context_files,
+            memory_manager=memory_manager,
+            runtime_info=runtime_info,
+            is_first_conversation=is_first
+        )
+        
+        if is_first:
+            mark_conversation_started(workspace_root)
+
+        # Create agent for this session
+        agent = self.create_agent(
+            system_prompt=system_prompt,
+            tools=tools,
+            max_steps=50,
+            output_mode="logger",
+            workspace_dir=workspace_root,
+            enable_skills=True
+        )
+
+        if memory_manager:
+            agent.memory_manager = memory_manager
+        
+        # Store agent for this session
+        self.agents[session_id] = agent
+        logger.info(f"[AgentBridge] Agent created for session: {session_id}")
     
     def agent_reply(self, query: str, context: Context = None, 
                    on_event=None, clear_history: bool = False) -> Reply:
@@ -351,7 +524,7 @@ class AgentBridge:
         
         Args:
             query: User query
-            context: COW context (optional)
+            context: COW context (optional, contains session_id for user isolation)
             on_event: Event callback (optional)
             clear_history: Whether to clear conversation history
             
@@ -359,8 +532,13 @@ class AgentBridge:
             Reply object
         """
         try:
-            # Get agent (will auto-initialize if needed)
-            agent = self.get_agent()
+            # Extract session_id from context for user isolation
+            session_id = None
+            if context:
+                session_id = context.kwargs.get("session_id") or context.get("session_id")
+            
+            # Get agent for this session (will auto-initialize if needed)
+            agent = self.get_agent(session_id=session_id)
             if not agent:
                 return Reply(ReplyType.ERROR, "Failed to initialize super agent")
             
@@ -376,3 +554,20 @@ class AgentBridge:
         except Exception as e:
             logger.error(f"Agent reply error: {e}")
             return Reply(ReplyType.ERROR, f"Agent error: {str(e)}")
+    
+    def clear_session(self, session_id: str):
+        """
+        Clear a specific session's agent and conversation history
+        
+        Args:
+            session_id: Session identifier to clear
+        """
+        if session_id in self.agents:
+            logger.info(f"[AgentBridge] Clearing session: {session_id}")
+            del self.agents[session_id]
+    
+    def clear_all_sessions(self):
+        """Clear all agent sessions"""
+        logger.info(f"[AgentBridge] Clearing all sessions ({len(self.agents)} total)")
+        self.agents.clear()
+        self.default_agent = None

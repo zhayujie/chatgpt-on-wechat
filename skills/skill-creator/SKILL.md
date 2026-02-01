@@ -68,10 +68,11 @@ skill-name/
 - Must test scripts before including
 
 **references/** - When to include:
-- Documentation for agent to reference
-- Database schemas, API docs, domain knowledge
+- **ONLY** when documentation is too large for SKILL.md (>500 lines)
+- Database schemas, complex API specs that agent needs to reference
 - Agent reads these files into context as needed
-- For large files (>10k words), include grep patterns in SKILL.md
+- **NOT for**: API reference docs, usage examples, tutorials (put in SKILL.md instead)
+- **Rule of thumb**: If it fits in SKILL.md, don't create a separate reference file
 
 **assets/** - When to include:
 - Files used in output (not loaded to context)
@@ -82,11 +83,15 @@ skill-name/
 
 ### What NOT to Include
 
-Do NOT create auxiliary documentation:
-- README.md
-- INSTALLATION_GUIDE.md
-- CHANGELOG.md
-- Other non-essential files
+Do NOT create auxiliary documentation files:
+- README.md - Instructions belong in SKILL.md
+- INSTALLATION_GUIDE.md - Setup info belongs in SKILL.md
+- CHANGELOG.md - Not needed for local skills
+- API_REFERENCE.md - Put API docs directly in SKILL.md
+- USAGE_EXAMPLES.md - Put examples directly in SKILL.md
+- Any other documentation files - Everything goes in SKILL.md unless it's too large
+
+**Critical Rule**: Only create files that the agent will actually execute (scripts) or that are too large for SKILL.md (references). Documentation, examples, and guides ALL belong in SKILL.md.
 
 ## Skill Creation Process
 
@@ -133,22 +138,31 @@ To turn concrete examples into an effective skill, analyze each example by:
 1. Considering how to execute on the example from scratch
 2. Identifying what scripts, references, and assets would be helpful when executing these workflows repeatedly
 
+**Planning Checklist**:
+- ✅ **Always needed**: SKILL.md with clear description and usage instructions
+- ✅ **scripts/**: Only if code needs to be executed (not just shown as examples)
+- ❌ **references/**: Rarely needed - only if documentation is >500 lines and can't fit in SKILL.md
+- ✅ **assets/**: Only if files are used in output (templates, boilerplate, etc.)
+
 Example: When building a `pdf-editor` skill to handle queries like "Help me rotate this PDF," the analysis shows:
 
 1. Rotating a PDF requires re-writing the same code each time
 2. A `scripts/rotate_pdf.py` script would be helpful to store in the skill
+3. ❌ Don't create `references/api-docs.md` - put API info in SKILL.md instead
 
 Example: When designing a `frontend-webapp-builder` skill for queries like "Build me a todo app" or "Build me a dashboard to track my steps," the analysis shows:
 
 1. Writing a frontend webapp requires the same boilerplate HTML/React each time
 2. An `assets/hello-world/` template containing the boilerplate HTML/React project files would be helpful to store in the skill
+3. ❌ Don't create `references/usage-examples.md` - put examples in SKILL.md instead
 
 Example: When building a `big-query` skill to handle queries like "How many users have logged in today?" the analysis shows:
 
 1. Querying BigQuery requires re-discovering the table schemas and relationships each time
-2. A `references/schema.md` file documenting the table schemas would be helpful to store in the skill
+2. A `references/schema.md` file documenting the table schemas would be helpful to store in the skill (ONLY because schemas are very large)
+3. ❌ Don't create separate `references/query-examples.md` - put examples in SKILL.md instead
 
-To establish the skill's contents, analyze each concrete example to create a list of the reusable resources to include: scripts, references, and assets.
+To establish the skill's contents, analyze each concrete example to create a list of the reusable resources to include: scripts, references, and assets. **Default to putting everything in SKILL.md unless there's a compelling reason to separate it.**
 
 ### Step 3: Initialize the Skill
 
@@ -199,6 +213,12 @@ These files contain established best practices for effective skill design.
 #### Start with Reusable Skill Contents
 
 To begin implementation, start with the reusable resources identified above: `scripts/`, `references/`, and `assets/` files. Note that this step may require user input. For example, when implementing a `brand-guidelines` skill, the user may need to provide brand assets or templates to store in `assets/`, or documentation to store in `references/`.
+
+**Important Guidelines**:
+- **scripts/**: Only create scripts that will be executed. Test all scripts before including.
+- **references/**: ONLY create if documentation is too large for SKILL.md (>500 lines). Most skills don't need this.
+- **assets/**: Only include files used in output (templates, icons, etc.)
+- **Default approach**: Put everything in SKILL.md unless there's a specific reason not to.
 
 Added scripts must be tested by actually running them to ensure there are no bugs and that the output matches what is expected. If there are many similar scripts, only a representative sample needs to be tested to ensure confidence that they all work while balancing time to completion.
 

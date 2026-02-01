@@ -47,6 +47,10 @@ class Channel(object):
             try:
                 logger.info("[Channel] Using agent mode")
 
+                # Add channel_type to context if not present
+                if context and "channel_type" not in context:
+                    context["channel_type"] = self.channel_type
+
                 # Use agent bridge to handle the query
                 return Bridge().fetch_agent_reply(
                     query=query,

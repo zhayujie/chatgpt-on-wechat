@@ -4,6 +4,7 @@
 import re
 import time
 import requests
+import json
 import config
 from bot.bot import Bot
 from bot.openai_compatible_bot import OpenAICompatibleBot
@@ -463,7 +464,7 @@ class LinkAISessionManager(SessionManager):
             session.add_query(query)
         session.add_reply(reply)
         try:
-            max_tokens = conf().get("conversation_max_tokens", 2500)
+            max_tokens = conf().get("conversation_max_tokens", 8000)
             tokens_cnt = session.discard_exceeding(max_tokens, total_tokens)
             logger.debug(f"[LinkAI] chat history, before tokens={total_tokens}, now tokens={tokens_cnt}")
         except Exception as e:
@@ -504,6 +505,26 @@ def _linkai_call_with_tools(self, messages, tools=None, stream=False, **kwargs):
         Formatted response in OpenAI format or generator for streaming
     """
     try:
+        # Convert messages from Claude format to OpenAI format
+        # This is important because Agent uses Claude format internally
+        messages = self._convert_messages_to_openai_format(messages)
+        
+        # Convert tools from Claude format to OpenAI format
+        if tools:
+            tools = self._convert_tools_to_openai_format(tools)
+        
+        # Handle system prompt (OpenAI uses system message, Claude uses separate parameter)
+        system_prompt = kwargs.get('system')
+        if system_prompt:
+            # Add system message at the beginning if not already present
+            if not messages or messages[0].get('role') != 'system':
+                messages = [{"role": "system", "content": system_prompt}] + messages
+            else:
+                # Replace existing system message
+                messages[0] = {"role": "system", "content": system_prompt}
+        
+        logger.debug(f"[LinkAI] messages: {len(messages)}, tools: {len(tools) if tools else 0}, stream: {stream}")
+        
         # Build request parameters (LinkAI uses OpenAI-compatible format)
         body = {
             "messages": messages,
@@ -514,17 +535,7 @@ def _linkai_call_with_tools(self, messages, tools=None, stream=False, **kwargs):
             "presence_penalty": kwargs.get("presence_penalty", conf().get("presence_penalty", 0.0)),
             "stream": stream
         }
-        
-        # Add max_tokens if specified
-        if kwargs.get("max_tokens"):
-            body["max_tokens"] = kwargs["max_tokens"]
-        
-        # Add app_code if provided
-        app_code = kwargs.get("app_code", conf().get("linkai_app_code"))
-        if app_code:
-            body["app_code"] = app_code
-        
-        # Add tools if provided (OpenAI-compatible format)
+
         if tools:
             body["tools"] = tools
             body["tool_choice"] = kwargs.get("tool_choice", "auto")
@@ -567,8 +578,8 @@ def _handle_linkai_sync_response(self, base_url, headers, body):
         
         if res.status_code == 200:
             response = res.json()
-            logger.info(f"[LinkAI] call_with_tools reply, model={response.get('model')}, "
-                       f"total_tokens={response.get('usage', {}).get('total_tokens', 0)}")
+            logger.debug(f"[LinkAI] reply: model={response.get('model')}, "
+                        f"tokens={response.get('usage', {}).get('total_tokens', 0)}")
             
             # LinkAI response is already in OpenAI-compatible format
             return response

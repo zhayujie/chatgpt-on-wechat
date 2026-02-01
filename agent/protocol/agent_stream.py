@@ -78,8 +78,9 @@ class AgentStreamExecutor:
         Returns:
             Final response text
         """
-        # Log user message
-        logger.info(f"\n{'='*50}")
+        # Log user message with model info
+        logger.info(f"{'='*50}")
+        logger.info(f"🤖 Model: {self.model.model}")
         logger.info(f"👤 用户: {user_message}")
         logger.info(f"{'='*50}")
         
@@ -102,7 +103,7 @@ class AgentStreamExecutor:
         try:
             while turn < self.max_turns:
                 turn += 1
-                logger.info(f"\n{'='*50} 第 {turn} 轮 {'='*50}")
+                logger.info(f"第 {turn} 轮")
                 self._emit_event("turn_start", {"turn": turn})
 
                 # Check if memory flush is needed (before calling LLM)
@@ -137,8 +138,18 @@ class AgentStreamExecutor:
 
                 # No tool calls, end loop
                 if not tool_calls:
-                    if assistant_msg:
+                    # 检查是否返回了空响应
+                    if not assistant_msg:
+                        logger.warning(f"[Agent] LLM returned empty response (no content and no tool calls)")
+                        
+                        # 生成通用的友好提示
+                        final_response = (
+                            "抱歉，我暂时无法生成回复。请尝试换一种方式描述你的需求，或稍后再试。"
+                        )
+                        logger.info(f"Generated fallback response for empty LLM output")
+                    else:
                         logger.info(f"💭 {assistant_msg[:150]}{'...' if len(assistant_msg) > 150 else ''}")
+                    
                     logger.info(f"✅ 完成 (无工具调用)")
                     self._emit_event("turn_end", {
                         "turn": turn,
@@ -146,42 +157,89 @@ class AgentStreamExecutor:
                     })
                     break
 
-                # Log tool calls in compact format
-                tool_names = [tc['name'] for tc in tool_calls]
-                logger.info(f"🔧 调用工具: {', '.join(tool_names)}")
+                # Log tool calls with arguments
+                tool_calls_str = []
+                for tc in tool_calls:
+                    args_str = ', '.join([f"{k}={v}" for k, v in tc['arguments'].items()])
+                    if args_str:
+                        tool_calls_str.append(f"{tc['name']}({args_str})")
+                    else:
+                        tool_calls_str.append(tc['name'])
+                logger.info(f"🔧 {', '.join(tool_calls_str)}")
 
                 # Execute tools
                 tool_results = []
                 tool_result_blocks = []
 
-                for tool_call in tool_calls:
-                    result = self._execute_tool(tool_call)
-                    tool_results.append(result)
-                    
-                    # Log tool result in compact format
-                    status_emoji = "✅" if result.get("status") == "success" else "❌"
-                    result_data = result.get('result', '')
-                    # Format result string with proper Chinese character support
-                    if isinstance(result_data, (dict, list)):
-                        result_str = json.dumps(result_data, ensure_ascii=False)
-                    else:
-                        result_str = str(result_data)
-                    logger.info(f"  {status_emoji} {tool_call['name']} ({result.get('execution_time', 0):.2f}s): {result_str[:200]}{'...' if len(result_str) > 200 else ''}")
+                try:
+                    for tool_call in tool_calls:
+                        result = self._execute_tool(tool_call)
+                        tool_results.append(result)
+                        
+                        # Log tool result in compact format
+                        status_emoji = "✅" if result.get("status") == "success" else "❌"
+                        result_data = result.get('result', '')
+                        # Format result string with proper Chinese character support
+                        if isinstance(result_data, (dict, list)):
+                            result_str = json.dumps(result_data, ensure_ascii=False)
+                        else:
+                            result_str = str(result_data)
+                        logger.info(f"  {status_emoji} {tool_call['name']} ({result.get('execution_time', 0):.2f}s): {result_str[:200]}{'...' if len(result_str) > 200 else ''}")
 
-                    # Build tool result block (Claude format)
-                    # Content should be a string representation of the result
-                    result_content = json.dumps(result, ensure_ascii=False) if not isinstance(result, str) else result
-                    tool_result_blocks.append({
-                        "type": "tool_result",
-                        "tool_use_id": tool_call["id"],
-                        "content": result_content
-                    })
-
-                # Add tool results to message history as user message (Claude format)
-                self.messages.append({
-                    "role": "user",
-                    "content": tool_result_blocks
-                })
+                        # Build tool result block (Claude format)
+                        # Format content in a way that's easy for LLM to understand
+                        is_error = result.get("status") == "error"
+                        
+                        if is_error:
+                            # For errors, provide clear error message
+                            result_content = f"Error: {result.get('result', 'Unknown error')}"
+                        elif isinstance(result.get('result'), dict):
+                            # For dict results, use JSON format
+                            result_content = json.dumps(result.get('result'), ensure_ascii=False)
+                        elif isinstance(result.get('result'), str):
+                            # For string results, use directly
+                            result_content = result.get('result')
+                        else:
+                            # Fallback to full JSON
+                            result_content = json.dumps(result, ensure_ascii=False)
+                        
+                        tool_result_block = {
+                            "type": "tool_result",
+                            "tool_use_id": tool_call["id"],
+                            "content": result_content
+                        }
+                        
+                        # Add is_error field for Claude API (helps model understand failures)
+                        if is_error:
+                            tool_result_block["is_error"] = True
+                        
+                        tool_result_blocks.append(tool_result_block)
+                
+                finally:
+                    # CRITICAL: Always add tool_result to maintain message history integrity
+                    # Even if tool execution fails, we must add error results to match tool_use
+                    if tool_result_blocks:
+                        # Add tool results to message history as user message (Claude format)
+                        self.messages.append({
+                            "role": "user",
+                            "content": tool_result_blocks
+                        })
+                    elif tool_calls:
+                        # If we have tool_calls but no tool_result_blocks (unexpected error),
+                        # create error results for all tool calls to maintain message integrity
+                        logger.warning("⚠️ Tool execution interrupted, adding error results to maintain message history")
+                        emergency_blocks = []
+                        for tool_call in tool_calls:
+                            emergency_blocks.append({
+                                "type": "tool_result",
+                                "tool_use_id": tool_call["id"],
+                                "content": "Error: Tool execution was interrupted",
+                                "is_error": True
+                            })
+                        self.messages.append({
+                            "role": "user",
+                            "content": emergency_blocks
+                        })
 
                 self._emit_event("turn_end", {
                     "turn": turn,
@@ -191,6 +249,11 @@ class AgentStreamExecutor:
 
             if turn >= self.max_turns:
                 logger.warning(f"⚠️  已达到最大轮数限制: {self.max_turns}")
+                if not final_response:
+                    final_response = (
+                        "抱歉，我在处理你的请求时遇到了一些困难，尝试了多次仍未能完成。"
+                        "请尝试简化你的问题，或换一种方式描述。"
+                    )
 
         except Exception as e:
             logger.error(f"❌ Agent执行错误: {e}")
@@ -198,18 +261,26 @@ class AgentStreamExecutor:
             raise
 
         finally:
-            logger.info(f"{'='*50} 完成({turn}轮) {'='*50}\n")
+            logger.info(f"🏁 完成({turn}轮)")
             self._emit_event("agent_end", {"final_response": final_response})
 
         return final_response
 
-    def _call_llm_stream(self) -> tuple[str, List[Dict]]:
+    def _call_llm_stream(self, retry_on_empty=True, retry_count=0, max_retries=3) -> tuple[str, List[Dict]]:
         """
-        Call LLM with streaming
+        Call LLM with streaming and automatic retry on errors
+        
+        Args:
+            retry_on_empty: Whether to retry once if empty response is received
+            retry_count: Current retry attempt (internal use)
+            max_retries: Maximum number of retries for API errors
         
         Returns:
             (response_text, tool_calls)
         """
+        # Validate and fix message history first
+        self._validate_and_fix_messages()
+        
         # Trim messages if needed (using agent's context management)
         self._trim_messages()
 
@@ -259,10 +330,20 @@ class AgentStreamExecutor:
             for chunk in stream:
                 # Check for errors
                 if isinstance(chunk, dict) and chunk.get("error"):
-                    error_msg = chunk.get("message", "Unknown error")
+                    # Extract error message from nested structure
+                    error_data = chunk.get("error", {})
+                    if isinstance(error_data, dict):
+                        error_msg = error_data.get("message", chunk.get("message", "Unknown error"))
+                        error_code = error_data.get("code", "")
+                    else:
+                        error_msg = chunk.get("message", str(error_data))
+                        error_code = ""
+                    
                     status_code = chunk.get("status_code", "N/A")
-                    logger.error(f"API Error: {error_msg} (Status: {status_code})")
+                    logger.error(f"API Error: {error_msg} (Status: {status_code}, Code: {error_code})")
                     logger.error(f"Full error chunk: {chunk}")
+                    
+                    # Raise exception with full error message for retry logic
                     raise Exception(f"{error_msg} (Status: {status_code})")
 
                 # Parse chunk
@@ -299,8 +380,30 @@ class AgentStreamExecutor:
                                     tool_calls_buffer[index]["arguments"] += func["arguments"]
 
         except Exception as e:
-            logger.error(f"LLM call error: {e}")
-            raise
+            error_str = str(e).lower()
+            # Check if error is retryable (timeout, connection, rate limit, server busy, etc.)
+            is_retryable = any(keyword in error_str for keyword in [
+                'timeout', 'timed out', 'connection', 'network', 
+                'rate limit', 'overloaded', 'unavailable', 'busy', 'retry',
+                '429', '500', '502', '503', '504', '512'
+            ])
+            
+            if is_retryable and retry_count < max_retries:
+                wait_time = (retry_count + 1) * 2  # Exponential backoff: 2s, 4s, 6s
+                logger.warning(f"⚠️ LLM API error (attempt {retry_count + 1}/{max_retries}): {e}")
+                logger.info(f"Retrying in {wait_time}s...")
+                time.sleep(wait_time)
+                return self._call_llm_stream(
+                    retry_on_empty=retry_on_empty, 
+                    retry_count=retry_count + 1,
+                    max_retries=max_retries
+                )
+            else:
+                if retry_count >= max_retries:
+                    logger.error(f"❌ LLM API error after {max_retries} retries: {e}")
+                else:
+                    logger.error(f"❌ LLM call error (non-retryable): {e}")
+                raise
 
         # Parse tool calls
         tool_calls = []
@@ -317,6 +420,21 @@ class AgentStreamExecutor:
                 "name": tc["name"],
                 "arguments": arguments
             })
+
+        # Check for empty response and retry once if enabled
+        if retry_on_empty and not full_content and not tool_calls:
+            logger.warning(f"⚠️  LLM returned empty response, retrying once...")
+            self._emit_event("message_end", {
+                "content": "",
+                "tool_calls": [],
+                "empty_retry": True
+            })
+            # Retry without retry flag to avoid infinite loop
+            return self._call_llm_stream(
+                retry_on_empty=False, 
+                retry_count=retry_count,
+                max_retries=max_retries
+            )
 
         # Add assistant message to history (Claude format uses content blocks)
         assistant_msg = {"role": "assistant", "content": []}
@@ -393,9 +511,9 @@ class AgentStreamExecutor:
             if tool_name == "bash" and result.status == "success":
                 command = arguments.get("command", "")
                 if "init_skill.py" in command and self.agent.skill_manager:
-                    logger.info("🔄 Detected skill creation, refreshing skills...")
+                    logger.info("Detected skill creation, refreshing skills...")
                     self.agent.refresh_skills()
-                    logger.info(f"✅ Skills refreshed! Now have {len(self.agent.skill_manager.skills)} skills")
+                    logger.info(f"Skills refreshed! Now have {len(self.agent.skill_manager.skills)} skills")
 
             self._emit_event("tool_execution_end", {
                 "tool_call_id": tool_id,
@@ -418,6 +536,27 @@ class AgentStreamExecutor:
                 **error_result
             })
             return error_result
+
+    def _validate_and_fix_messages(self):
+        """
+        Validate message history and fix incomplete tool_use/tool_result pairs.
+        Claude API requires each tool_use to have a corresponding tool_result immediately after.
+        """
+        if not self.messages:
+            return
+        
+        # Check last message for incomplete tool_use
+        if len(self.messages) > 0:
+            last_msg = self.messages[-1]
+            if last_msg.get("role") == "assistant":
+                # Check if assistant message has tool_use blocks
+                content = last_msg.get("content", [])
+                if isinstance(content, list):
+                    has_tool_use = any(block.get("type") == "tool_use" for block in content)
+                    if has_tool_use:
+                        # This is incomplete - remove it
+                        logger.warning(f"⚠️ Removing incomplete tool_use message from history")
+                        self.messages.pop()
 
     def _trim_messages(self):
         """
