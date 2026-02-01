@@ -179,7 +179,7 @@ def _build_tooling_section(tools: List[Any], language: str) -> List[str]:
     tool_map = {}
     tool_descriptions = {
         "read": "读取文件内容",
-        "write": "创建新文件或完全覆盖现有文件（会删除原内容！追加内容请用 edit）",
+        "write": "创建新文件或完全覆盖现有文件（会删除原内容！追加内容请用 edit）。注意：单次 write 内容不要超过 10KB，超大文件请分步创建",
         "edit": "精确编辑文件（追加、修改、删除部分内容）",
         "ls": "列出目录内容",
         "grep": "在文件中搜索内容",

@@ -78,12 +78,15 @@ class AgentStreamExecutor:
         args_str = json.dumps(args, sort_keys=True, ensure_ascii=False)
         return hashlib.md5(args_str.encode()).hexdigest()[:8]
     
-    def _check_consecutive_failures(self, tool_name: str, args: dict) -> tuple[bool, str]:
+    def _check_consecutive_failures(self, tool_name: str, args: dict) -> tuple[bool, str, bool]:
         """
         Check if tool has failed too many times consecutively
         
         Returns:
-            (should_stop, reason)
+            (should_stop, reason, is_critical)
+            - should_stop: Whether to stop tool execution
+            - reason: Reason for stopping
+            - is_critical: Whether to abort entire conversation (True for 8+ failures)
         """
         args_hash = self._hash_args(args)
         
@@ -99,7 +102,7 @@ class AgentStreamExecutor:
                 break  # Different tool or args, stop counting
         
         if same_args_failures >= 3:
-            return True, f"Tool '{tool_name}' with same arguments failed {same_args_failures} times consecutively. Stopping to prevent infinite loop."
+            return True, f"工具 '{tool_name}' 使用相同参数连续失败 {same_args_failures} 次，停止执行以防止无限循环", False
         
         # Count consecutive failures for same tool (any args)
         same_tool_failures = 0
@@ -112,10 +115,15 @@ class AgentStreamExecutor:
             else:
                 break  # Different tool, stop counting
         
-        if same_tool_failures >= 6:
-            return True, f"Tool '{tool_name}' failed {same_tool_failures} times consecutively (with any arguments). Stopping to prevent infinite loop."
+        # Hard stop at 8 failures - abort with critical message
+        if same_tool_failures >= 8:
+            return True, f"抱歉，我没能完成这个任务。可能是我理解有误或者当前方法不太合适。\n\n建议你：\n• 换个方式描述需求试试\n• 把任务拆分成更小的步骤\n• 或者换个思路来解决", True
         
-        return False, ""
+        # Warning at 6 failures
+        if same_tool_failures >= 6:
+            return True, f"工具 '{tool_name}' 连续失败 {same_tool_failures} 次（使用不同参数），停止执行以防止无限循环", False
+        
+        return False, "", False
     
     def _record_tool_result(self, tool_name: str, args: dict, success: bool):
         """Record tool execution result for failure tracking"""
@@ -226,6 +234,12 @@ class AgentStreamExecutor:
                     for tool_call in tool_calls:
                         result = self._execute_tool(tool_call)
                         tool_results.append(result)
+                        
+                        # Check for critical error - abort entire conversation
+                        if result.get("status") == "critical_error":
+                            logger.error(f"💥 检测到严重错误，终止对话")
+                            final_response = result.get('result', '任务执行失败')
+                            return final_response
                         
                         # Log tool result in compact format
                         status_emoji = "✅" if result.get("status") == "success" else "❌"
@@ -467,15 +481,19 @@ class AgentStreamExecutor:
             try:
                 arguments = json.loads(tc["arguments"]) if tc["arguments"] else {}
             except json.JSONDecodeError as e:
-                logger.error(f"Failed to parse tool arguments: {tc['arguments']}")
+                args_preview = tc['arguments'][:200] if len(tc['arguments']) > 200 else tc['arguments']
+                logger.error(f"Failed to parse tool arguments for {tc['name']}")
+                logger.error(f"Arguments length: {len(tc['arguments'])} chars")
+                logger.error(f"Arguments preview: {args_preview}...")
                 logger.error(f"JSON decode error: {e}")
+                
                 # Return a clear error message to the LLM instead of empty dict
                 # This helps the LLM understand what went wrong
                 tool_calls.append({
                     "id": tc["id"],
                     "name": tc["name"],
                     "arguments": {},
-                    "_parse_error": f"Invalid JSON in tool arguments: {tc['arguments'][:100]}... Error: {str(e)}"
+                    "_parse_error": f"Invalid JSON in tool arguments: {args_preview}... Error: {str(e)}. Tip: For large content, consider splitting into smaller chunks or using a different approach."
                 })
                 continue
 
@@ -558,16 +576,25 @@ class AgentStreamExecutor:
             return result
 
         # Check for consecutive failures (retry protection)
-        should_stop, stop_reason = self._check_consecutive_failures(tool_name, arguments)
+        should_stop, stop_reason, is_critical = self._check_consecutive_failures(tool_name, arguments)
         if should_stop:
             logger.error(f"🛑 {stop_reason}")
             self._record_tool_result(tool_name, arguments, False)
-            # 返回错误给 LLM,让它尝试其他方法
-            result = {
-                "status": "error",
-                "result": f"{stop_reason}\n\nThis approach is not working. Please try a completely different method or ask the user for more information/clarification.",
-                "execution_time": 0
-            }
+            
+            if is_critical:
+                # Critical failure - abort entire conversation
+                result = {
+                    "status": "critical_error",
+                    "result": stop_reason,
+                    "execution_time": 0
+                }
+            else:
+                # Normal failure - let LLM try different approach
+                result = {
+                    "status": "error",
+                    "result": f"{stop_reason}\n\n当前方法行不通，请尝试完全不同的方法或向用户询问更多信息。",
+                    "execution_time": 0
+                }
             return result
 
         self._emit_event("tool_execution_start", {
