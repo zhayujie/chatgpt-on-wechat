@@ -473,6 +473,15 @@ class AgentBridge:
         # Load context files
         context_files = load_context_files(workspace_root)
 
+        # Initialize skill manager
+        skill_manager = None
+        try:
+            from agent.skills import SkillManager
+            skill_manager = SkillManager(workspace_dir=workspace_root)
+            logger.info(f"[AgentBridge] Initialized SkillManager with {len(skill_manager.skills)} skills for session {session_id}")
+        except Exception as e:
+            logger.warning(f"[AgentBridge] Failed to initialize SkillManager for session {session_id}: {e}")
+
         # Check if this is the first conversation
         from agent.prompt.workspace import is_first_conversation, mark_conversation_started
         is_first = is_first_conversation(workspace_root)
@@ -483,15 +492,49 @@ class AgentBridge:
             language="zh"
         )
 
+        # Get current time and timezone info
+        import datetime
+        import time
+        
+        now = datetime.datetime.now()
+        
+        # Get timezone info
+        try:
+            offset = -time.timezone if not time.daylight else -time.altzone
+            hours = offset // 3600
+            minutes = (offset % 3600) // 60
+            if minutes:
+                timezone_name = f"UTC{hours:+03d}:{minutes:02d}"
+            else:
+                timezone_name = f"UTC{hours:+03d}"
+        except Exception:
+            timezone_name = "UTC"
+        
+        # Chinese weekday mapping
+        weekday_map = {
+            'Monday': '星期一',
+            'Tuesday': '星期二',
+            'Wednesday': '星期三',
+            'Thursday': '星期四',
+            'Friday': '星期五',
+            'Saturday': '星期六',
+            'Sunday': '星期日'
+        }
+        weekday_zh = weekday_map.get(now.strftime("%A"), now.strftime("%A"))
+        
         runtime_info = {
             "model": conf().get("model", "unknown"),
             "workspace": workspace_root,
-            "channel": conf().get("channel_type", "unknown")
+            "channel": conf().get("channel_type", "unknown"),
+            "current_time": now.strftime("%Y-%m-%d %H:%M:%S"),
+            "weekday": weekday_zh,
+            "timezone": timezone_name
         }
 
         system_prompt = prompt_builder.build(
             tools=tools,
             context_files=context_files,
+            skill_manager=skill_manager,
             memory_manager=memory_manager,
             runtime_info=runtime_info,
             is_first_conversation=is_first
@@ -507,6 +550,7 @@ class AgentBridge:
             max_steps=50,
             output_mode="logger",
             workspace_dir=workspace_root,
+            skill_manager=skill_manager,
             enable_skills=True
         )
 
