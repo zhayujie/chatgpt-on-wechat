@@ -285,7 +285,18 @@ class FeiShuChanel(ChatChannel):
             context["origin_ctype"] = ctype
 
         cmsg = context["msg"]
-        context["session_id"] = cmsg.from_user_id
+        
+        # Set session_id based on chat type to ensure proper session isolation
+        if cmsg.is_group:
+            # Group chat: combine user_id and group_id to create unique session per user per group
+            # This ensures:
+            # - Same user in different groups have separate conversation histories
+            # - Same user in private chat and group chat have separate histories
+            context["session_id"] = f"{cmsg.from_user_id}:{cmsg.other_user_id}"
+        else:
+            # Private chat: use user_id only
+            context["session_id"] = cmsg.from_user_id
+        
         context["receiver"] = cmsg.other_user_id
 
         if ctype == ContextType.TEXT:

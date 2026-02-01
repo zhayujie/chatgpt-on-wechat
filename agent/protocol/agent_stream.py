@@ -55,6 +55,9 @@ class AgentStreamExecutor:
 
         # Message history - use provided messages or create new list
         self.messages = messages if messages is not None else []
+        
+        # Tool failure tracking for retry protection
+        self.tool_failure_history = []  # List of (tool_name, args_hash, success) tuples
 
     def _emit_event(self, event_type: str, data: dict = None):
         """Emit event"""
@@ -67,6 +70,60 @@ class AgentStreamExecutor:
                 })
             except Exception as e:
                 logger.error(f"Event callback error: {e}")
+
+    def _hash_args(self, args: dict) -> str:
+        """Generate a simple hash for tool arguments"""
+        import hashlib
+        # Sort keys for consistent hashing
+        args_str = json.dumps(args, sort_keys=True, ensure_ascii=False)
+        return hashlib.md5(args_str.encode()).hexdigest()[:8]
+    
+    def _check_consecutive_failures(self, tool_name: str, args: dict) -> tuple[bool, str]:
+        """
+        Check if tool has failed too many times consecutively
+        
+        Returns:
+            (should_stop, reason)
+        """
+        args_hash = self._hash_args(args)
+        
+        # Count consecutive failures for same tool + args
+        same_args_failures = 0
+        for name, ahash, success in reversed(self.tool_failure_history):
+            if name == tool_name and ahash == args_hash:
+                if not success:
+                    same_args_failures += 1
+                else:
+                    break  # Stop at first success
+            else:
+                break  # Different tool or args, stop counting
+        
+        if same_args_failures >= 3:
+            return True, f"Tool '{tool_name}' with same arguments failed {same_args_failures} times consecutively. Stopping to prevent infinite loop."
+        
+        # Count consecutive failures for same tool (any args)
+        same_tool_failures = 0
+        for name, ahash, success in reversed(self.tool_failure_history):
+            if name == tool_name:
+                if not success:
+                    same_tool_failures += 1
+                else:
+                    break  # Stop at first success
+            else:
+                break  # Different tool, stop counting
+        
+        if same_tool_failures >= 6:
+            return True, f"Tool '{tool_name}' failed {same_tool_failures} times consecutively (with any arguments). Stopping to prevent infinite loop."
+        
+        return False, ""
+    
+    def _record_tool_result(self, tool_name: str, args: dict, success: bool):
+        """Record tool execution result for failure tracking"""
+        args_hash = self._hash_args(args)
+        self.tool_failure_history.append((tool_name, args_hash, success))
+        # Keep only last 50 records to avoid memory bloat
+        if len(self.tool_failure_history) > 50:
+            self.tool_failure_history = self.tool_failure_history[-50:]
 
     def run_stream(self, user_message: str) -> str:
         """
@@ -413,7 +470,16 @@ class AgentStreamExecutor:
                 arguments = json.loads(tc["arguments"]) if tc["arguments"] else {}
             except json.JSONDecodeError as e:
                 logger.error(f"Failed to parse tool arguments: {tc['arguments']}")
-                arguments = {}
+                logger.error(f"JSON decode error: {e}")
+                # Return a clear error message to the LLM instead of empty dict
+                # This helps the LLM understand what went wrong
+                tool_calls.append({
+                    "id": tc["id"],
+                    "name": tc["name"],
+                    "arguments": {},
+                    "_parse_error": f"Invalid JSON in tool arguments: {tc['arguments'][:100]}... Error: {str(e)}"
+                })
+                continue
 
             tool_calls.append({
                 "id": tc["id"],
@@ -481,6 +547,31 @@ class AgentStreamExecutor:
         tool_id = tool_call["id"]
         arguments = tool_call["arguments"]
 
+        # Check if there was a JSON parse error
+        if "_parse_error" in tool_call:
+            parse_error = tool_call["_parse_error"]
+            logger.error(f"Skipping tool execution due to parse error: {parse_error}")
+            result = {
+                "status": "error",
+                "result": f"Failed to parse tool arguments. {parse_error}. Please ensure your tool call uses valid JSON format with all required parameters.",
+                "execution_time": 0
+            }
+            self._record_tool_result(tool_name, arguments, False)
+            return result
+
+        # Check for consecutive failures (retry protection)
+        should_stop, stop_reason = self._check_consecutive_failures(tool_name, arguments)
+        if should_stop:
+            logger.error(f"🛑 {stop_reason}")
+            self._record_tool_result(tool_name, arguments, False)
+            # 返回错误给 LLM,让它尝试其他方法
+            result = {
+                "status": "error",
+                "result": f"{stop_reason}\n\nThis approach is not working. Please try a completely different method or ask the user for more information/clarification.",
+                "execution_time": 0
+            }
+            return result
+
         self._emit_event("tool_execution_start", {
             "tool_call_id": tool_id,
             "tool_name": tool_name,
@@ -507,6 +598,10 @@ class AgentStreamExecutor:
                 "execution_time": execution_time
             }
 
+            # Record tool result for failure tracking
+            success = result.status == "success"
+            self._record_tool_result(tool_name, arguments, success)
+
             # Auto-refresh skills after skill creation
             if tool_name == "bash" and result.status == "success":
                 command = arguments.get("command", "")
@@ -530,6 +625,9 @@ class AgentStreamExecutor:
                 "result": str(e),
                 "execution_time": 0
             }
+            # Record failure
+            self._record_tool_result(tool_name, arguments, False)
+            
             self._emit_event("tool_execution_end", {
                 "tool_call_id": tool_id,
                 "tool_name": tool_name,

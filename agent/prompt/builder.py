@@ -1,7 +1,7 @@
 """
 System Prompt Builder - 系统提示词构建器
 
-参考 clawdbot 的 system-prompt.ts，实现中文版的模块化提示词构建
+实现模块化的系统提示词构建，支持工具、技能、记忆等多个子系统
 """
 
 import os
@@ -90,22 +90,21 @@ def build_agent_system_prompt(
     **kwargs
 ) -> str:
     """
-    构建Agent系统提示词（精简版，中文）
+    构建Agent系统提示词
     
-    包含的sections:
-    1. 基础身份
-    2. 工具说明
-    3. 技能系统
-    4. 记忆系统
-    5. 用户身份
-    6. 文档路径
-    7. 工作空间
-    8. 项目上下文文件
+    顺序说明（按重要性和逻辑关系排列）:
+    1. 工具系统 - 核心能力，最先介绍
+    2. 技能系统 - 紧跟工具，因为技能需要用 read 工具读取
+    3. 记忆系统 - 独立的记忆能力
+    4. 工作空间 - 工作环境说明
+    5. 用户身份 - 用户信息（可选）
+    6. 项目上下文 - SOUL.md, USER.md, AGENTS.md（定义人格和身份）
+    7. 运行时信息 - 元信息（时间、模型等）
     
     Args:
         workspace_dir: 工作空间目录
         language: 语言 ("zh" 或 "en")
-        base_persona: 基础人格描述
+        base_persona: 基础人格描述（已废弃，由SOUL.md定义）
         user_identity: 用户身份信息
         tools: 工具列表
         context_files: 上下文文件列表
@@ -120,33 +119,30 @@ def build_agent_system_prompt(
     """
     sections = []
     
-    # 1. 基础身份
-    sections.extend(_build_identity_section(base_persona, language))
-    
-    # 2. 工具说明
+    # 1. 工具系统（最重要，放在最前面）
     if tools:
         sections.extend(_build_tooling_section(tools, language))
     
-    # 3. 技能系统
+    # 2. 技能系统（紧跟工具，因为需要用 read 工具）
     if skill_manager:
         sections.extend(_build_skills_section(skill_manager, tools, language))
     
-    # 4. 记忆系统
+    # 3. 记忆系统（独立的记忆能力）
     if memory_manager:
         sections.extend(_build_memory_section(memory_manager, tools, language))
     
-    # 5. 用户身份
+    # 4. 工作空间（工作环境说明）
+    sections.extend(_build_workspace_section(workspace_dir, language, is_first_conversation))
+    
+    # 5. 用户身份（如果有）
     if user_identity:
         sections.extend(_build_user_identity_section(user_identity, language))
     
-    # 6. 工作空间
-    sections.extend(_build_workspace_section(workspace_dir, language, is_first_conversation))
-    
-    # 7. 项目上下文文件（SOUL.md, USER.md等）
+    # 6. 项目上下文文件（SOUL.md, USER.md, AGENTS.md - 定义人格）
     if context_files:
         sections.extend(_build_context_files_section(context_files, language))
     
-    # 8. 运行时信息（如果有）
+    # 7. 运行时信息（元信息，放在最后）
     if runtime_info:
         sections.extend(_build_runtime_section(runtime_info, language))
     
@@ -270,9 +266,9 @@ def _build_skills_section(skill_manager: Any, tools: Optional[List[Any]], langua
         "",
         "在回复之前：扫描下方 <available_skills> 中的 <description> 条目。",
         "",
-        f"- 如果恰好有一个技能明确适用：使用 `{read_tool_name}` 工具读取其 <location> 路径下的 SKILL.md 文件，然后遵循它。",
-        "- 如果多个技能都适用：选择最具体的一个，然后读取并遵循。",
-        "- 如果没有明确适用的：不要读取任何 SKILL.md。",
+        f"- 如果恰好有一个技能明确适用：使用 `{read_tool_name}` 工具读取其 <location> 路径下的 SKILL.md 文件，然后遵循它",
+        "- 如果多个技能都适用：选择最具体的一个，然后读取并遵循",
+        "- 如果没有明确适用的：不要读取任何 SKILL.md",
         "",
         "**约束**: 永远不要一次性读取多个技能；只在选择后再读取。",
         "",
@@ -455,7 +451,27 @@ def _build_runtime_section(runtime_info: Dict[str, Any], language: str) -> List[
     if not runtime_info:
         return []
     
-    # Only include if there's actual runtime info to display
+    lines = [
+        "## 运行时信息",
+        "",
+    ]
+    
+    # Add current time if available
+    if runtime_info.get("current_time"):
+        time_str = runtime_info["current_time"]
+        weekday = runtime_info.get("weekday", "")
+        timezone = runtime_info.get("timezone", "")
+        
+        time_line = f"当前时间: {time_str}"
+        if weekday:
+            time_line += f" {weekday}"
+        if timezone:
+            time_line += f" ({timezone})"
+        
+        lines.append(time_line)
+        lines.append("")
+    
+    # Add other runtime info
     runtime_parts = []
     if runtime_info.get("model"):
         runtime_parts.append(f"模型={runtime_info['model']}")
@@ -465,14 +481,8 @@ def _build_runtime_section(runtime_info: Dict[str, Any], language: str) -> List[
     if runtime_info.get("channel") and runtime_info.get("channel") != "web":
         runtime_parts.append(f"渠道={runtime_info['channel']}")
     
-    if not runtime_parts:
-        return []
-    
-    lines = [
-        "## 运行时信息",
-        "",
-        "运行时: " + " | ".join(runtime_parts),
-        ""
-    ]
+    if runtime_parts:
+        lines.append("运行时: " + " | ".join(runtime_parts))
+        lines.append("")
     
     return lines

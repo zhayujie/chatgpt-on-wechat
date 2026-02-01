@@ -95,15 +95,16 @@ class Agent:
         """
         Get the full system prompt including skills.
         
-        :param skill_filter: Optional list of skill names to include
-        :return: Complete system prompt with skills appended
-        """
-        base_prompt = self.system_prompt
-        skills_prompt = self.get_skills_prompt(skill_filter=skill_filter)
+        Note: Skills are now built into the system prompt by PromptBuilder,
+        so we just return the base prompt directly. This method is kept for
+        backward compatibility.
         
-        if skills_prompt:
-            return base_prompt + "\n" + skills_prompt
-        return base_prompt
+        :param skill_filter: Optional list of skill names to include (deprecated)
+        :return: Complete system prompt
+        """
+        # Skills are now included in system_prompt by PromptBuilder
+        # No need to append them here
+        return self.system_prompt
     
     def refresh_skills(self):
         """Refresh the loaded skills."""

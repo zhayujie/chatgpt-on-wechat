@@ -4,7 +4,6 @@ from agent.tools.tool_manager import ToolManager
 
 # Import basic tools (no external dependencies)
 from agent.tools.calculator.calculator import Calculator
-from agent.tools.current_time.current_time import CurrentTime
 
 # Import file operation tools
 from agent.tools.read.read import Read
@@ -82,7 +81,6 @@ __all__ = [
     'BaseTool',
     'ToolManager',
     'Calculator',
-    'CurrentTime',
     'Read',
     'Write',
     'Edit',
