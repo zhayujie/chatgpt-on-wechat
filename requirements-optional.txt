@@ -33,7 +33,7 @@ broadscope_bailian
 google-generativeai
 
 # zhipuai
-zhipuai>=2.0.1
+zai-sdk
 
 # tongyi qwen new sdk
 dashscope

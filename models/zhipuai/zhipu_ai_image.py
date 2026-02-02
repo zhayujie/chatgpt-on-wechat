@@ -6,8 +6,8 @@ from config import conf
 
 class ZhipuAIImage(object):
     def __init__(self):
-        from zhipuai import ZhipuAI
-        self.client = ZhipuAI(api_key=conf().get("zhipu_ai_api_key"))
+        from zai import ZhipuAiClient
+        self.client = ZhipuAiClient(api_key=conf().get("zhipu_ai_api_key"))
 
     def create_img(self, query, retry_count=0, api_key=None, api_base=None):
         try:

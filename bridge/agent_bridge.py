@@ -6,14 +6,14 @@ import os
 from typing import Optional, List
 
 from agent.protocol import Agent, LLMModel, LLMRequest
-from models.openai_compatible_bot import OpenAICompatibleBot
+from bridge.agent_event_handler import AgentEventHandler
+from bridge.agent_initializer import AgentInitializer
 from bridge.bridge import Bridge
 from bridge.context import Context
 from bridge.reply import Reply, ReplyType
-from bridge.agent_event_handler import AgentEventHandler
-from bridge.agent_initializer import AgentInitializer
 from common import const
 from common.log import logger
+from models.openai_compatible_bot import OpenAICompatibleBot
 
 
 def add_openai_compatible_support(bot_instance):
@@ -22,9 +22,12 @@ def add_openai_compatible_support(bot_instance):
     
     This allows any bot to gain tool calling capability without modifying its code,
     as long as it uses OpenAI-compatible API format.
+    
+    Note: Some bots like ZHIPUAIBot have native tool calling support and don't need enhancement.
     """
     if hasattr(bot_instance, 'call_with_tools'):
-        # Bot already has tool calling support
+        # Bot already has tool calling support (e.g., ZHIPUAIBot)
+        logger.info(f"[AgentBridge] {type(bot_instance).__name__} already has native tool calling support")
         return bot_instance
 
     # Create a temporary mixin class that combines the bot with OpenAI compatibility
