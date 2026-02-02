@@ -296,7 +296,7 @@ def load_config():
     logger.info("| |__| (_) \\ V  V // ___ \\ (_| |  __/ | | | |_ ")
     logger.info(" \\____\\___/ \\_/\\_//_/   \\_\\__, |\\___|_| |_|\\__|")
     logger.info("                          |___/                 ")
-
+    logger.info("")
     config_path = "./config.json"
     if not os.path.exists(config_path):
         logger.info("配置文件不存在，将使用config-template.json模板")
@@ -345,7 +345,7 @@ def load_config():
         workspace = config.get("agent_workspace", "~/cow")
         logger.info("[INIT] Mode: Agent (workspace: {})".format(workspace))
     else:
-        logger.info("[INIT] Mode: Standard")
+        logger.info("[INIT] Mode: Chat (在config.json中设置 \"agent\":true 可启用Agent模式)")
 
     logger.info("[INIT] Debug: {}".format(config.get("debug", False)))
     logger.info("[INIT] ========================================")
