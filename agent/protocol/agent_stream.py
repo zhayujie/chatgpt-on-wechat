@@ -86,7 +86,7 @@ class AgentStreamExecutor:
     
     def _check_consecutive_failures(self, tool_name: str, args: dict) -> tuple[bool, str, bool]:
         """
-        Check if tool has failed too many times consecutively
+        Check if tool has failed too many times consecutively or called repeatedly with same args
         
         Returns:
             (should_stop, reason, is_critical)
@@ -95,6 +95,19 @@ class AgentStreamExecutor:
             - is_critical: Whether to abort entire conversation (True for 8+ failures)
         """
         args_hash = self._hash_args(args)
+        
+        # Count consecutive calls (both success and failure) for same tool + args
+        # This catches infinite loops where tool succeeds but LLM keeps calling it
+        same_args_calls = 0
+        for name, ahash, success in reversed(self.tool_failure_history):
+            if name == tool_name and ahash == args_hash:
+                same_args_calls += 1
+            else:
+                break  # Different tool or args, stop counting
+        
+        # Stop at 3 consecutive calls with same args (whether success or failure)
+        if same_args_calls >= 3:
+            return True, f"工具 '{tool_name}' 使用相同参数已被调用 {same_args_calls} 次，停止执行以防止无限循环。如果需要查看配置，结果已在之前的调用中返回。", False
         
         # Count consecutive failures for same tool + args
         same_args_failures = 0
@@ -269,6 +282,19 @@ class AgentStreamExecutor:
                         result = self._execute_tool(tool_call)
                         tool_results.append(result)
                         
+                        # Debug: Check if tool is being called repeatedly with same args
+                        if turn > 2:
+                            # Check last N tool calls for repeats
+                            repeat_count = sum(
+                                1 for name, ahash, _ in self.tool_failure_history[-10:]
+                                if name == tool_call["name"] and ahash == self._hash_args(tool_call["arguments"])
+                            )
+                            if repeat_count >= 3:
+                                logger.warning(
+                                    f"⚠️  Tool '{tool_call['name']}' has been called {repeat_count} times "
+                                    f"with same arguments. This may indicate a loop."
+                                )
+                        
                         # Check if this is a file to send (from read tool)
                         if result.get("status") == "success" and isinstance(result.get("result"), dict):
                             result_data = result.get("result")
@@ -331,6 +357,33 @@ class AgentStreamExecutor:
                             "role": "user",
                             "content": tool_result_blocks
                         })
+                        
+                        # Detect potential infinite loop: same tool called multiple times with success
+                        # If detected, add a hint to LLM to stop calling tools and provide response
+                        if turn >= 3 and len(tool_calls) > 0:
+                            tool_name = tool_calls[0]["name"]
+                            args_hash = self._hash_args(tool_calls[0]["arguments"])
+                            
+                            # Count recent successful calls with same tool+args
+                            recent_success_count = 0
+                            for name, ahash, success in reversed(self.tool_failure_history[-10:]):
+                                if name == tool_name and ahash == args_hash and success:
+                                    recent_success_count += 1
+                            
+                            # If tool was called successfully 2+ times, add hint to stop loop
+                            if recent_success_count >= 2:
+                                logger.warning(
+                                    f"⚠️  Detected potential loop: '{tool_name}' called {recent_success_count} times "
+                                    f"with same args. Adding hint to LLM to provide final response."
+                                )
+                                # Add a gentle hint message to guide LLM to respond
+                                self.messages.append({
+                                    "role": "user",
+                                    "content": [{
+                                        "type": "text",
+                                        "text": "工具已成功执行并返回结果。请基于这些信息向用户做出回复，不要重复调用相同的工具。"
+                                    }]
+                                })
                     elif tool_calls:
                         # If we have tool_calls but no tool_result_blocks (unexpected error),
                         # create error results for all tool calls to maintain message integrity

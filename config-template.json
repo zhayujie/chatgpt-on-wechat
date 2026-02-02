@@ -8,6 +8,7 @@
   "gemini_api_key": "",
   "gemini_api_base": "https://generativelanguage.googleapis.com",
   "zhipu_ai_api_key": "",
+  "dashscope_api_key": "",
   "voice_to_text": "openai",
   "text_to_voice": "openai",
   "voice_reply_voice": false,
