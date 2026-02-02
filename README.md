@@ -1,4 +1,4 @@
-<p align="center"><img src= "https://github.com/user-attachments/assets/62db6aee-9268-4564-992a-2d27e1b2da09" alt="Chatgpt-on-Wechat" width="600" /></p>
+<p align="center"><img src= "https://github.com/user-attachments/assets/eca9a9ec-8534-4615-9e0f-96c5ac1d10a3" alt="Chatgpt-on-Wechat" width="550" /></p>
 
 <p align="center">
    <a href="https://github.com/zhayujie/chatgpt-on-wechat/releases/latest"><img src="https://img.shields.io/github/v/release/zhayujie/chatgpt-on-wechat" alt="Latest release"></a>
