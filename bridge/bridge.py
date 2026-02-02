@@ -55,7 +55,8 @@ class Bridge(object):
             if model_type in [const.MODELSCOPE]:
                 self.btype["chat"] = const.MODELSCOPE
             
-            if model_type in ["abab6.5-chat"]:
+            # MiniMax models
+            if model_type and (model_type in ["abab6.5-chat", "abab6.5"] or model_type.lower().startswith("minimax")):
                 self.btype["chat"] = const.MiniMax
 
             if conf().get("use_linkai") and conf().get("linkai_api_key"):

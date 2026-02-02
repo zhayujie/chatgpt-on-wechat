@@ -105,8 +105,8 @@ class AgentStreamExecutor:
             else:
                 break  # Different tool or args, stop counting
         
-        # Stop at 3 consecutive calls with same args (whether success or failure)
-        if same_args_calls >= 3:
+        # Stop at 5 consecutive calls with same args (whether success or failure)
+        if same_args_calls >= 5:
             return True, f"工具 '{tool_name}' 使用相同参数已被调用 {same_args_calls} 次，停止执行以防止无限循环。如果需要查看配置，结果已在之前的调用中返回。", False
         
         # Count consecutive failures for same tool + args
@@ -370,8 +370,8 @@ class AgentStreamExecutor:
                                 if name == tool_name and ahash == args_hash and success:
                                     recent_success_count += 1
                             
-                            # If tool was called successfully 2+ times, add hint to stop loop
-                            if recent_success_count >= 2:
+                            # If tool was called successfully 3+ times with same args, add hint to stop loop
+                            if recent_success_count >= 3:
                                 logger.warning(
                                     f"⚠️  Detected potential loop: '{tool_name}' called {recent_success_count} times "
                                     f"with same args. Adding hint to LLM to provide final response."
