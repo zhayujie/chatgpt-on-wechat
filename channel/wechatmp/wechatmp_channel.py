@@ -21,7 +21,11 @@ from common.log import logger
 from common.singleton import singleton
 from common.utils import split_string_by_utf8_length, remove_markdown_symbol
 from config import conf
-from voice.audio_convert import any_to_mp3, split_audio
+
+try:
+    from voice.audio_convert import any_to_mp3, split_audio
+except ImportError as e:
+    logger.debug("import voice.audio_convert failed, voice features will not be supported: {}".format(e))
 
 # If using SSL, uncomment the following lines, and modify the certificate path.
 # from cheroot.server import HTTPServer
@@ -85,26 +89,31 @@ class WechatMPChannel(ChatChannel):
                 logger.info("[wechatmp] text cached, receiver {}\n{}".format(receiver, reply_text))
                 self.cache_dict[receiver].append(("text", reply_text))
             elif reply.type == ReplyType.VOICE:
-                voice_file_path = reply.content
-                duration, files = split_audio(voice_file_path, 60 * 1000)
-                if len(files) > 1:
-                    logger.info("[wechatmp] voice too long {}s > 60s , split into {} parts".format(duration / 1000.0, len(files)))
+                try:
+                    voice_file_path = reply.content
+                    duration, files = split_audio(voice_file_path, 60 * 1000)
+                    if len(files) > 1:
+                        logger.info("[wechatmp] voice too long {}s > 60s , split into {} parts".format(duration / 1000.0, len(files)))
 
-                for path in files:
-                    # support: <2M, <60s, mp3/wma/wav/amr
-                    try:
-                        with open(path, "rb") as f:
-                            response = self.client.material.add("voice", f)
-                            logger.debug("[wechatmp] upload voice response: {}".format(response))
-                            f_size = os.fstat(f.fileno()).st_size
-                            time.sleep(1.0 + 2 * f_size / 1024 / 1024)
-                            # todo check media_id
-                    except WeChatClientException as e:
-                        logger.error("[wechatmp] upload voice failed: {}".format(e))
-                        return
-                    media_id = response["media_id"]
-                    logger.info("[wechatmp] voice uploaded, receiver {}, media_id {}".format(receiver, media_id))
-                    self.cache_dict[receiver].append(("voice", media_id))
+                    for path in files:
+                        # support: <2M, <60s, mp3/wma/wav/amr
+                        try:
+                            with open(path, "rb") as f:
+                                response = self.client.material.add("voice", f)
+                                logger.debug("[wechatmp] upload voice response: {}".format(response))
+                                f_size = os.fstat(f.fileno()).st_size
+                                time.sleep(1.0 + 2 * f_size / 1024 / 1024)
+                                # todo check media_id
+                        except WeChatClientException as e:
+                            logger.error("[wechatmp] upload voice failed: {}".format(e))
+                            return
+                        media_id = response["media_id"]
+                        logger.info("[wechatmp] voice uploaded, receiver {}, media_id {}".format(receiver, media_id))
+                        self.cache_dict[receiver].append(("voice", media_id))
+                except ImportError as e:
+                    logger.error("[wechatmp] voice conversion failed: {}".format(e))
+                    logger.error("[wechatmp] please install pydub: pip install pydub")
+                    return
 
             elif reply.type == ReplyType.IMAGE_URL:  # 从网络下载图片
                 img_url = reply.content
@@ -213,6 +222,10 @@ class WechatMPChannel(ChatChannel):
                         logger.debug("[wechatcom] upload voice response: {}".format(response))
                         media_ids.append(response["media_id"])
                         os.remove(path)
+                except ImportError as e:
+                    logger.error("[wechatmp] voice conversion failed: {}".format(e))
+                    logger.error("[wechatmp] please install pydub: pip install pydub")
+                    return
                 except WeChatClientException as e:
                     logger.error("[wechatmp] upload voice failed: {}".format(e))
                     return

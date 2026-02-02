@@ -40,9 +40,6 @@ def create_bot(bot_type):
         from models.linkai.link_ai_bot import LinkAIBot
         return LinkAIBot()
 
-    elif bot_type == const.CLAUDEAI:
-        from models.claude.claude_ai_bot import ClaudeAIBot
-        return ClaudeAIBot()
     elif bot_type == const.CLAUDEAPI:
         from models.claudeapi.claude_api_bot import ClaudeAPIBot
         return ClaudeAPIBot()

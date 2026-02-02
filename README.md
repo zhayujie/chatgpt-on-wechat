@@ -14,7 +14,7 @@
 
 -  ✅  **复杂任务规划**：能够理解复杂任务并自主规划执行，持续思考和调用工具直到完成目标，支持通过工具操作访问文件、终端、浏览器、定时任务等系统资源
 -  ✅  **长期记忆：** 自动将对话记忆持久化至本地文件和数据库中，包括全局记忆和天级记忆，支持关键词及向量检索
--  ✅  **技能系统：** 内置Skills创造器、网络搜索、图像识别等多种技能，支持通过自然语言对话完成Skills开发
+-  ✅  **技能系统：** 实现了Skills创建和运行的引擎，内置多种技能，并支持通过自然语言对话完成自定义Skills开发
 -  ✅  **多模态消息：** 支持对文本、图片、语音、文件等多类型消息进行解析、处理、生成、发送等操作
 -  ✅  **多模型接入：** 支持OpenAI, Claude, Gemini, DeepSeek, MiniMax、GLM、通义千问, Kimi等国内外主流模型厂商
 -  ✅  **多端部署：** 支持运行在本地计算机或服务器，可集成到网页、飞书、钉钉、微信公众号、企业微信应用中使用
@@ -22,9 +22,10 @@
 
 ## 声明
 
-1. 本项目遵循 [MIT开源协议](/LICENSE)，用于技术研究和学习，使用本项目时需遵守所在地法律法规、相关政策以及企业章程，禁止用于任何违法或侵犯他人权益的行为。任何个人、团队和企业，无论以何种方式使用该项目、对何对象提供服务，所产生的一切后果，本项目均不承担任何责任
+1. 本项目遵循 [MIT开源协议](/LICENSE)，主要用于技术研究和学习，使用本项目时需遵守所在地法律法规、相关政策以及企业章程，禁止用于任何违法或侵犯他人权益的行为。任何个人、团队和企业，无论以何种方式使用该项目、对何对象提供服务，所产生的一切后果，本项目均不承担任何责任
 2. 境内使用该项目时，推荐使用国内厂商的大模型服务，并进行必要的内容安全审核及过滤
 3. 本项目当前主要接入协同办公平台，推荐使用飞书、钉钉、企微自建应用、网页、公众号等接入通道，其他通道持续扩展中，欢迎贡献代码或提交反馈
+4. 成本与安全：Agent模式下Token使用量高于普通对话模式，请根据效果及成本综合选择模型。Agent具有访问所在操作系统的能力，请谨慎选择项目部署环境。同时项目也会持续升级安全机制、并降低模型消耗成本
 
 ## 演示
 
@@ -56,6 +57,8 @@ DEMO视频(对话模式)：https://cdn.link-ai.tech/doc/cow_demo.mp4
 
 # 🏷 更新日志
 
+>**2026.02.03：** 2.0.0版本，正式升级为超级Agent助理，支持多轮任务决策、具备长期记忆、实现多种系统工具、支持Skills框架，新增多种模型并优化了接入渠道。
+
 >**2025.05.23：** [1.7.6版本](https://github.com/zhayujie/chatgpt-on-wechat/releases/tag/1.7.6) 优化web网页channel、新增 [AgentMesh](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/plugins/agent/README.md)多智能体插件、百度语音合成优化、企微应用`access_token`获取优化、支持`claude-4-sonnet`和`claude-4-opus`模型
 
 >**2025.04.11：** [1.7.5版本](https://github.com/zhayujie/chatgpt-on-wechat/releases/tag/1.7.5) 新增支持 [wechatferry](https://github.com/zhayujie/chatgpt-on-wechat/pull/2562) 协议、新增 deepseek 模型、新增支持腾讯云语音能力、新增支持 ModelScope 和 Gitee-AI API接口
@@ -70,7 +73,7 @@ DEMO视频(对话模式)：https://cdn.link-ai.tech/doc/cow_demo.mp4
 
 # 🚀 快速开始
 
-项目提供了一键安装、启动、管理程序的脚本，可以选择使用脚本快速运行，也可以根据详细指引一步步安装运行。
+项目提供了一键安装、配置、启动、管理程序的脚本，推荐使用脚本快速运行，也可以根据下文中的详细指引一步步安装运行。
 
 在终端执行以下命令：
 
@@ -78,22 +81,24 @@ DEMO视频(对话模式)：https://cdn.link-ai.tech/doc/cow_demo.mp4
 bash <(curl -sS https://cdn.link-ai.tech/code/cow/run.sh)
 ```
 
-- 脚本说明文档：[一键安装脚本](https://github.com/zhayujie/chatgpt-on-wechat/wiki/CowAgentQuickStart)
+脚本使用说明：[一键运行脚本](https://github.com/zhayujie/chatgpt-on-wechat/wiki/CowAgentQuickStart)
 
 
 ## 一、准备
 
-### 1. 模型账号
+### 1. 模型API
 
-项目默认使用ChatGPT模型，需前往 [OpenAI平台](https://platform.openai.com/api-keys) 创建API Key并填入项目配置文件中。同时支持其他国内外产商以及第三方自定义模型接口，详情参考：[模型说明](#模型说明)。
+项目支持国内外主流厂商的模型接口，可选模型及配置说明参考：[模型说明](#模型说明)。
 
-同时支持使用 **LinkAI平台** 接口，可聚合使用 OpenAI、Claude、DeepSeek、Kimi、Qwen 等多种常用模型，并支持知识库、工作流、联网搜索、MJ绘图、文档总结等能力。修改配置即可一键启用，参考 [接入文档](https://link-ai.tech/platform/link-app/wechat)。
+> 注：Agent模式下推荐使用以下模型，可根据效果及成本综合选择： Claude(claude-sonnet-4-5、claude-sonnet-4-0)、Gemini(gemini-3-flash-preview、gemini-3-pro-preview)、GLM(glm-4.7)、MiniMAx(MiniMax-M2.1)、Qwen(qwen3-max)
+
+同时支持使用 **LinkAI平台** 接口，可灵活切换 OpenAI、Claude、Gemini、DeepSeek、Qwen、Kimi 等多种常用模型，并支持知识库、工作流、插件等Agent能力，参考 [接口文档](https://docs.link-ai.tech/platform/api)。
 
 ### 2.环境安装
 
-支持 Linux、MacOS、Windows 系统，同时需安装 `Python`，Python版本需要在3.7以上，推荐使用3.9版本。
+支持 Linux、MacOS、Windows 操作系统，可在个人计算机及服务器上运行，需安装 `Python`，Python版本需在3.7 ~ 3.12 之间，推荐使用3.9版本。
 
-> 注意：选择Docker部署则无需安装python环境和下载源码，可直接快进到下一节。
+> 注意：Agent模式推荐使用源码运行，若选择Docker部署则无需安装python环境和下载源码，可直接快进到下一节。
 
 **(1) 克隆项目代码：**
 
@@ -130,51 +135,35 @@ pip3 install -r requirements-optional.txt
 ```bash
 # config.json 文件内容示例
 {
-  "channel_type": "web",                                      # 接入渠道类型，默认为web，支持修改为:terminal, wechatmp, wechatmp_service, wechatcom_app, dingtalk, feishu
-  "model": "gpt-4.1-mini",                                     # 模型名称, 支持 gpt-4o-mini, gpt-4.1, gpt-4o, deepseek-reasoner, wenxin, xunfei, glm-4, claude-3-7-sonnet-latest, moonshot等
-  "open_ai_api_key": "YOUR API KEY",                          # 如果使用openAI模型则填入上面创建的 OpenAI API KEY
-  "open_ai_api_base": "https://api.openai.com/v1",            # OpenAI接口代理地址，修改此项可接入第三方模型接口
-  "proxy": "",                                                # 代理客户端的ip和端口，国内环境开启代理的需要填写该项，如 "127.0.0.1:7890"
-  "single_chat_prefix": ["bot", "@bot"],                      # 私聊时文本需要包含该前缀才能触发机器人回复
-  "single_chat_reply_prefix": "[bot] ",                       # 私聊时自动回复的前缀，用于区分真人
-  "group_chat_prefix": ["@bot"],                              # 群聊时包含该前缀则会触发机器人回复
-  "group_name_white_list": ["ChatGPT测试群", "ChatGPT测试群2"], # 开启自动回复的群名称列表
-  "group_chat_in_one_session": ["ChatGPT测试群"],              # 支持会话上下文共享的群名称  
-  "image_create_prefix": ["画", "看", "找"],                   # 开启图片回复的前缀
-  "conversation_max_tokens": 1000,                            # 支持上下文记忆的最多字符数
+  "channel_type": "web",                                      # 接入渠道类型，默认为web，支持修改为:feishu,dingtalk,wechatcom_app,terminal,wechatmp,wechatmp_service
+  "model": "claude-sonnet-4-5",                               # 模型名称
+  "claude_api_key": "",                                       # Claude API Key
+  "claude_api_base": "https://api.anthropic.com/v1",          # Claude API 地址，修改可接入三方代理平台
+  "open_ai_api_key": "",                                      # OpenAI API Key
+  "open_ai_api_base": "https://api.openai.com/v1",            # OpenAI API 地址
+  "gemini_api_key": "",                                       # Gemini API Key
+  "gemini_api_base": "https://generativelanguage.googleapis.com", # Gemini API地址
+  "zhipu_ai_api_key": "",                                     # 智谱GLM API Key
+  "minimax_api_key": "",                                      # MiniMax API Key
+  "dashscope_api_key": "",                                    # 百炼(通义千问)API Key
+  "linkai_api_key": "",                                       # LinkAI API Key
+  "proxy": "",                                                # 代理客户端的ip和端口，国内环境需要开启代理的可填写该项，如 "127.0.0.1:7890"
   "speech_recognition": false,                                # 是否开启语音识别
   "group_speech_recognition": false,                          # 是否开启群组语音识别
   "voice_reply_voice": false,                                 # 是否使用语音回复语音
-  "character_desc": "你是基于大语言模型的AI智能助手，旨在回答并解决人们的任何问题，并且可以使用多种语言与人交流。",  # 系统提示词
-  # 订阅欢迎语，公众号和企业微信channel中使用，当被订阅时会自动回复以下内容
-  "subscribe_msg": "感谢您的关注！\n这里是AI智能助手，可以自由对话。\n支持语音对话。\n支持图片输入。\n支持图片输出，画字开头的消息将按要求创作图片。\n支持tool、角色扮演和文字冒险等丰富的插件。\n输入{trigger_prefix}#help 查看详细指令。",
-  "use_linkai": false,                                        # 是否使用LinkAI接口，默认关闭，设置为true后可对接LinkAI平台的智能体
-  "linkai_api_key": "",                                       # LinkAI Api Key
-  "linkai_app_code": ""                                       # LinkAI 应用或工作流的code
+  "use_linkai": false,                                        # 是否使用LinkAI接口，默认关闭，设置为true后可对接LinkAI平台接口
+  "agent": true,                                              # 是否启用Agent模式，启用后拥有多轮工具决策、长期记忆、Skills能力等
+  "agent_workspace": "~/cow",                                 # Agent的工作空间路径，用于存储memory、skills、系统设定等
+  "agent_max_context_tokens": 40000,                          # Agent模式下最大上下文tokens，超出将自动丢弃最早的上下文
+  "agent_max_context_turns": 30,                              # Agent模式下最大上下文记忆轮次，每轮包括一次用户提问和AI回复
+  "agent_max_steps": 15                                       # Agent模式下单次任务的最大决策步数，超出后将停止继续调用工具
 }
 ```
 
-**详细配置说明:** 
+**配置补充说明:** 
 
 <details>
-<summary>1. 单聊配置</summary>
-
-+ 个人聊天中，需要以 "bot"或"@bot" 为开头的内容触发机器人，对应配置项 `single_chat_prefix` (如果不需要以前缀触发可以填写  `"single_chat_prefix": [""]`)
-+ 机器人回复的内容会以 "[bot] " 作为前缀， 以区分真人，对应的配置项为 `single_chat_reply_prefix` (如果不需要前缀可以填写 `"single_chat_reply_prefix": ""`)
-</details>
-
-
-<details>
-<summary>2. 群聊配置</summary>
-
-+ 群组聊天中，群名称需配置在 `group_name_white_list ` 中才能开启群聊自动回复。如果想对所有群聊生效，可以直接填写 `"group_name_white_list": ["ALL_GROUP"]`
-+ 默认只要被人 @ 就会触发机器人自动回复；另外群聊天中只要检测到以 "@bot" 开头的内容，同样会自动回复（方便自己触发），这对应配置项 `group_chat_prefix`
-+ 可选配置: `group_name_keyword_white_list`配置项支持模糊匹配群名称，`group_chat_keyword`配置项则支持模糊匹配群消息内容，用法与上述两个配置项相同。（Contributed by [evolay](https://github.com/evolay))
-+ `group_chat_in_one_session`：使群聊共享一个会话上下文，配置 `["ALL_GROUP"]` 则作用于所有群聊
-</details>
-
-<details>
-<summary>3. 语音配置</summary>
+<summary>1. 语音配置</summary>
 
 + 添加 `"speech_recognition": true` 将开启语音识别，默认使用openai的whisper模型识别为文字，同时以文字回复，该参数仅支持私聊 (注意由于语音消息无法匹配前缀，一旦开启将对所有语音自动回复，支持语音触发画图)；
 + 添加 `"group_speech_recognition": true` 将开启群组语音识别，默认使用openai的whisper模型识别为文字，同时以文字回复，参数仅支持群聊 (会匹配group_chat_prefix和group_chat_keyword, 支持语音触发画图)；
@@ -182,30 +171,22 @@ pip3 install -r requirements-optional.txt
 </details>
 
 <details>
-<summary>4. 其他配置</summary>
+<summary>2. 其他配置</summary>
 
-+ `model`: 模型名称，目前支持 `gpt-4o-mini`, `gpt-4.1`, `gpt-4o`, `gpt-3.5-turbo`, `wenxin` , `claude` , `gemini`, `glm-4`,  `xunfei`, `moonshot`等，全部模型名称参考[common/const.py](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/common/const.py)文件
-+ `temperature`,`frequency_penalty`,`presence_penalty`: Chat API接口参数，详情参考[OpenAI官方文档。](https://platform.openai.com/docs/api-reference/chat)
-+ `proxy`：由于目前 `openai` 接口国内无法访问，需配置代理客户端的地址，详情参考  [#351](https://github.com/zhayujie/chatgpt-on-wechat/issues/351)
-+ 对于图像生成，在满足个人或群组触发条件外，还需要额外的关键词前缀来触发，对应配置 `image_create_prefix `
-+ 关于OpenAI对话及图片接口的参数配置（内容自由度、回复字数限制、图片大小等），可以参考 [对话接口](https://beta.openai.com/docs/api-reference/completions) 和 [图像接口](https://beta.openai.com/docs/api-reference/completions)  文档，在[`config.py`](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/config.py)中检查哪些参数在本项目中是可配置的。
-+ `conversation_max_tokens`：表示能够记忆的上下文最大字数（一问一答为一组对话，如果累积的对话字数超出限制，就会优先移除最早的一组对话）
-+ `rate_limit_chatgpt`，`rate_limit_dalle`：每分钟最高问答速率、画图速率，超速后排队按序处理。
-+ `clear_memory_commands`: 对话内指令，主动清空前文记忆，字符串数组可自定义指令别名。
-+ `hot_reload`: 程序退出后，暂存等于状态，默认关闭。
-+ `character_desc` 配置中保存着你对机器人说的一段话，他会记住这段话并作为他的设定，你可以为他定制任何人格      (关于会话上下文的更多内容参考该 [issue](https://github.com/zhayujie/chatgpt-on-wechat/issues/43))
++ `model`: 模型名称，Agent模式下推荐使用 `claude-sonnet-4-5`、`claude-sonnet-4-0`、`gemini-3-flash-preview`、`gemini-3-pro-preview`、`glm-4.7`、`MiniMax-M2.1`、`qwen3-max`，全部模型名称参考[common/const.py](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/common/const.py)文件
++ `character_desc`：普通对话模式下的机器人系统提示词。在Agent模式下该配置不生效，由工作空间中的文件内容构成。
 + `subscribe_msg`：订阅消息，公众号和企业微信channel中请填写，当被订阅时会自动回复， 可使用特殊占位符。目前支持的占位符有{trigger_prefix}，在程序中它会自动替换成bot的触发词。
 </details>
 
 <details>
 <summary>5. LinkAI配置</summary>
 
-+ `use_linkai`: 是否使用LinkAI接口，默认关闭，设置为true后可对接LinkAI平台的Agent，使用知识库、工作流、联网搜索、`Midjourney` 绘画等能力, 参考 [文档](https://link-ai.tech/platform/link-app/wechat)
++ `use_linkai`: 是否使用LinkAI接口，默认关闭，设置为true后可对接LinkAI平台，使用知识库、工作流、插件等能力, 参考[接口文档](https://docs.link-ai.tech/platform/api/chat)
 + `linkai_api_key`: LinkAI Api Key，可在 [控制台](https://link-ai.tech/console/interface) 创建
-+ `linkai_app_code`: LinkAI 应用或工作流的code，选填
++ `linkai_app_code`: LinkAI 应用或工作流的code，选填，普通对话模式中使用。
 </details>
 
-注：完整配置项说明可在 [`config.py`](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/config.py) 文件中查看。
+注：全部配置项说明可在 [`config.py`](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/config.py) 文件中查看。
 
 ## 三、运行
 
@@ -217,9 +198,10 @@ pip3 install -r requirements-optional.txt
 python3 app.py         # windows环境下该命令通常为 python app.py
 ```
 
-运行后默认会启动一个web服务，可以通过访问 `http://localhost:9899/chat` 在网页端对话。如果需要接入其他应用通道只需修改 `config.json` 配置文件中的 `channel_type` 参数，详情参考：[通道说明](#通道说明)。
+运行后默认会启动web服务，可通过访问 `http://localhost:9899/chat` 在网页端对话。
 
-向机器人发送 `#help` 消息可以查看可用指令及插件的说明。
+如果需要接入其他应用通道只需修改 `config.json` 配置文件中的 `channel_type` 参数，详情参考：[通道说明](#通道说明)。
+
 
 ### 2.服务器部署
 
@@ -236,7 +218,7 @@ nohup python3 app.py & tail -f nohup.out
 
 ### 3.Docker部署
 
-使用docker部署无需下载源码和安装依赖，只需要获取 `docker-compose.yml` 配置文件并启动容器即可。
+使用docker部署无需下载源码和安装依赖，只需要获取 `docker-compose.yml` 配置文件并启动容器即可。Agent模式下更推荐使用源码进行部署，以获得更多系统访问能力。
 
 > 前提是需要安装好 `docker` 及 `docker-compose`，安装成功后执行 `docker -v` 和 `docker-compose version` (或 `docker compose version`) 可查看到版本号。安装地址为 [docker官网](https://docs.docker.com/engine/install/) 。
 
@@ -276,8 +258,7 @@ volumes:
 
 ## 模型说明
 
-以下对所有可支持的模型的配置和使用方法进行说明，模型接口实现在项目的 `bot/` 目录下。
->部分模型厂商接入有官方sdk和OpenAI兼容两种方式，建议使用OpenAI兼容的方式。
+以下对所有可支持的模型的配置和使用方法进行说明，模型接口实现在项目的 `models/` 目录下。
 
 <details>
 <summary>OpenAI</summary>
@@ -295,7 +276,7 @@ volumes:
 }
 ```
 
- - `model`: 与OpenAI接口的 [model参数](https://platform.openai.com/docs/models) 一致，支持包括 o系列、gpt-4系列、gpt-3.5系列等模型
+ - `model`: 与OpenAI接口的 [model参数](https://platform.openai.com/docs/models) 一致，支持包括 o系列、gpt-5.2、gpt-5.1、gpt-4.1等系列模型
  - `open_ai_api_base`: 如果需要接入第三方代理接口，可通过修改该参数进行接入
  - `bot_type`: 使用OpenAI相关模型时无需填写。当使用第三方代理接口接入Claude等非OpenAI官方模型时，该参数设为 `chatGPT`
 </details>
@@ -309,16 +290,45 @@ volumes:
 
 ```json
 {
- "use_linkai": true,
- "linkai_api_key": "YOUR API KEY",
- "linkai_app_code": "YOUR APP CODE"
+    "use_linkai": true,
+    "linkai_api_key": "YOUR API KEY",
+    "linkai_app_code": "YOUR APP CODE"
 }
 ```
 
-+ `use_linkai`: 是否使用LinkAI接口，默认关闭，设置为true后可对接LinkAI平台的智能体，使用知识库、工作流、数据库、联网搜索、MCP工具等丰富的Agent能力, 参考 [文档](https://link-ai.tech/platform/link-app/wechat)
++ `use_linkai`: 是否使用LinkAI接口，默认关闭，设置为true后可对接LinkAI平台的智能体，使用知识库、工作流、数据库、MCP插件等丰富的Agent能力
 + `linkai_api_key`: LinkAI平台的API Key，可在 [控制台](https://link-ai.tech/console/interface) 中创建
-+ `linkai_app_code`: LinkAI智能体 (应用或工作流) 的code，选填。智能体创建可参考 [说明文档](https://docs.link-ai.tech/platform/quick-start)
++ `linkai_app_code`: LinkAI智能体 (应用或工作流) 的code，选填，普通对话模式可用。智能体创建可参考 [说明文档](https://docs.link-ai.tech/platform/quick-start)
 + `model`: model字段填写空则直接使用智能体的模型，可在平台中灵活切换，[模型列表](https://link-ai.tech/console/models)中的全部模型均可使用
+</details>
+
+<details>
+<summary>Claude</summary>
+
+1. API Key创建：在 [Claude控制台](https://console.anthropic.com/settings/keys) 创建API Key
+
+2. 填写配置
+
+```json
+{
+    "model": "claude-sonnet-4-5",
+    "claude_api_key": "YOUR_API_KEY"
+}
+```
+ - `model`: 参考 [官方模型ID](https://docs.anthropic.com/en/docs/about-claude/models/overview#model-aliases) ，支持 `claude-sonnet-4-5、claude-sonnet-4-0、claude-opus-4-0、claude-3-5-sonnet-latest` 等
+</details>
+
+<details>
+<summary>Gemini</summary>
+
+API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn) 创建API Key ，配置如下
+```json
+{
+    "model": "gemini-3-flash-preview",
+    "gemini_api_key": ""
+}
+```
+ - `model`: 参考[官方文档-模型列表](https://ai.google.dev/gemini-api/docs/models?hl=zh-cn)，支持 `gemini-3-flash-preview、gemini-3-pro-preview、gemini-2.5-pro、gemini-2.0-flash` 等
 </details>
 
 <details>
@@ -330,23 +340,140 @@ volumes:
 
 ```json
 {
-  "bot_type": "chatGPT",
-  "model": "deepseek-chat",
-  "open_ai_api_key": "sk-xxxxxxxxxxx",
-  "open_ai_api_base": "https://api.deepseek.com/v1"
+    "model": "deepseek-chat",
+    "open_ai_api_key": "sk-xxxxxxxxxxx",
+    "open_ai_api_base": "https://api.deepseek.com/v1", 
+    "bot_type": "chatGPT"
+
 }
 ```
 
  - `bot_type`: OpenAI兼容方式
- - `model`: 可填 `deepseek-chat、deepseek-reasoner`，分别对应的是 V3 和 R1 模型
+ - `model`: 可填 `deepseek-chat、deepseek-reasoner`，分别对应的是 DeepSeek-V3 和 DeepSeek-R1 模型
  - `open_ai_api_key`: DeepSeek平台的 API Key
  - `open_ai_api_base`: DeepSeek平台 BASE URL
 </details>
 
 <details>
+<summary>通义千问 (Qwen)</summary>
+
+方式一：官方SDK接入，配置如下(推荐)：
+
+```json
+{
+    "model": "qwen3-max",
+    "dashscope_api_key": "sk-qVxxxxG"
+}
+```
+ - `model`: 可填写 `qwen3-max、qwen-max、qwen-plus、qwen-turbo、qwen-long、qwq-plus` 等
+ - `dashscope_api_key`: 通义千问的 API-KEY，参考 [官方文档](https://bailian.console.aliyun.com/?tab=api#/api) ，在 [控制台](https://bailian.console.aliyun.com/?tab=model#/api-key) 创建
+ 
+方式二：OpenAI兼容方式接入，配置如下：
+```json
+{
+  "bot_type": "chatGPT",
+  "model": "qwen3-max",
+  "open_ai_api_base": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+  "open_ai_api_key": "sk-qVxxxxG"
+}
+```
+- `bot_type`: OpenAI兼容方式
+- `model`: 支持官方所有模型，参考[模型列表](https://help.aliyun.com/zh/model-studio/models?spm=a2c4g.11186623.0.0.78d84823Kth5on#9f8890ce29g5u)
+- `open_ai_api_base`: 通义千问API的 BASE URL
+- `open_ai_api_key`: 通义千问的 API-KEY
+</details>
+
+<details>
+<summary>MiniMax</summary>
+
+方式一：官方接入，配置如下(推荐)：
+
+```json
+{
+    "model": "MiniMax-M2.1",
+    "minimax_api_key": ""
+}
+```
+ - `model`: 可填写 `MiniMax-M2.1、MiniMax-M2.1-lightning、MiniMax-M2、abab6.5-chat` 等
+ - `minimax_api_key`：MiniMax平台的API-KEY，在 [控制台](https://platform.minimaxi.com/user-center/basic-information/interface-key) 创建
+ 
+方式二：OpenAI兼容方式接入，配置如下：
+```json
+{
+  "bot_type": "chatGPT",
+  "model": "MiniMax-M2.1",
+  "open_ai_api_base": "https://api.minimaxi.com/v1",
+  "open_ai_api_key": ""
+}
+```
+- `bot_type`: OpenAI兼容方式
+- `model`: 可填 `MiniMax-M2.1、MiniMax-M2.1-lightning、MiniMax-M2`，参考[API文档](https://platform.minimaxi.com/document/%E5%AF%B9%E8%AF%9D?key=66701d281d57f38758d581d0#QklxsNSbaf6kM4j6wjO5eEek)
+- `open_ai_api_base`: MiniMax平台API的 BASE URL
+- `open_ai_api_key`: MiniMax平台的API-KEY
+</details>
+
+<details>
+<summary>智谱AI (GLM)</summary>
+
+方式一：官方接入，配置如下(推荐)：
+
+```json
+{
+  "model": "glm-4.7",
+  "zhipu_ai_api_key": ""
+}
+```
+ - `model`: 可填 `glm-4.7、glm-4-plus、glm-4-flash、glm-4-air、glm-4-airx、glm-4-long` 等, 参考 [glm-4系列模型编码](https://bigmodel.cn/dev/api/normal-model/glm-4)
+ - `zhipu_ai_api_key`: 智谱AI平台的 API KEY，在 [控制台](https://www.bigmodel.cn/usercenter/proj-mgmt/apikeys) 创建
+ 
+方式二：OpenAI兼容方式接入，配置如下：
+```json
+{
+  "bot_type": "chatGPT",
+  "model": "glm-4.7",
+  "open_ai_api_base": "https://open.bigmodel.cn/api/paas/v4",
+  "open_ai_api_key": ""
+}
+```
+- `bot_type`: OpenAI兼容方式
+- `model`: 可填 `glm-4.7、glm-4.6、glm-4-plus、glm-4-flash、glm-4-air、glm-4-airx、glm-4-long` 等
+- `open_ai_api_base`: 智谱AI平台的 BASE URL
+- `open_ai_api_key`: 智谱AI平台的 API KEY
+</details>
+
+<details>
+<summary>Kimi (Moonshot)</summary>
+
+方式一：官方接入，配置如下：
+
+```json
+{
+    "model": "moonshot-v1-128k",
+    "moonshot_api_key": ""
+}
+```
+ - `model`: 可填写 `moonshot-v1-8k、moonshot-v1-32k、moonshot-v1-128k`
+ - `moonshot_api_key`: Moonshot的API-KEY，在 [控制台](https://platform.moonshot.cn/console/api-keys) 创建
+ 
+方式二：OpenAI兼容方式接入，配置如下：
+```json
+{
+  "bot_type": "chatGPT",
+  "model": "moonshot-v1-128k",
+  "open_ai_api_base": "https://api.moonshot.cn/v1",
+  "open_ai_api_key": ""
+}
+```
+- `bot_type`: OpenAI兼容方式
+- `model`: 可填写 `moonshot-v1-8k、moonshot-v1-32k、moonshot-v1-128k`
+- `open_ai_api_base`: Moonshot的 BASE URL
+- `open_ai_api_key`: Moonshot的 API-KEY
+</details>
+
+<details>
 <summary>Azure</summary>
 
-1. API Key创建：在 [DeepSeek平台](https://platform.deepseek.com/api_keys) 创建API Key 
+1. API Key创建：在 [Azure平台](https://oai.azure.com/) 创建API Key 
 
 2. 填写配置
 
@@ -354,9 +481,9 @@ volumes:
 {
   "model": "",
   "use_azure_chatgpt": true,
-  "open_ai_api_key": "e7ffc5dd84f14521a53f14a40231ea78",
-  "open_ai_api_base": "https://linkai-240917.openai.azure.com/",
-  "azure_deployment_id": "gpt-4.1",
+  "open_ai_api_key": "",
+  "open_ai_api_base": "",
+  "azure_deployment_id": "",
   "azure_api_version": "2025-01-01-preview"
 }
 ```
@@ -370,99 +497,12 @@ volumes:
 </details>
 
 <details>
-<summary>Claude</summary>
-
-1. API Key创建：在 [Claude控制台](https://console.anthropic.com/settings/keys) 创建API Key
-
-2. 填写配置
-
-```json
-{
-    "model": "claude-sonnet-4-0",
-    "claude_api_key": "YOUR_API_KEY"
-}
-```
- - `model`: 参考 [官方模型ID](https://docs.anthropic.com/en/docs/about-claude/models/overview#model-aliases) ，例如`claude-opus-4-0`、`claude-3-7-sonnet-latest`等
-</details>
-
-<details>
-<summary>通义千问</summary>
-
-方式一：官方SDK接入，配置如下：
-
-```json
-{
-    "model": "qwen-turbo",
-    "dashscope_api_key": "sk-qVxxxxG"
-}
-```
- - `model`: 可填写`qwen-turbo、qwen-plus、qwen-max`
- - `dashscope_api_key`: 通义千问的 API-KEY，参考 [官方文档](https://bailian.console.aliyun.com/?tab=api#/api) ，在 [控制台](https://bailian.console.aliyun.com/?tab=model#/api-key) 创建
- 
-方式二：OpenAI兼容方式接入，配置如下：
-```json
-{
-  "bot_type": "chatGPT",
-  "model": "qwen-turbo",
-  "open_ai_api_base": "https://dashscope.aliyuncs.com/compatible-mode/v1",
-  "open_ai_api_key": "sk-qVxxxxG"
-}
-```
-- `bot_type`: OpenAI兼容方式
-- `model`: 支持官方所有模型，参考[模型列表](https://help.aliyun.com/zh/model-studio/models?spm=a2c4g.11186623.0.0.78d84823Kth5on#9f8890ce29g5u)
-- `open_ai_api_base`: 通义千问API的 BASE URL
-- `open_ai_api_key`: 通义千问的 API-KEY，参考 [官方文档](https://bailian.console.aliyun.com/?tab=api#/api) ，在 [控制台](https://bailian.console.aliyun.com/?tab=model#/api-key) 创建
-</details>
-
-<details>
-<summary>Gemini</summary>
-
-API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn) 创建API Key ，配置如下
-```json
-{
-    "model": "gemini-2.5-pro",
-    "gemini_api_key": ""
-}
-```
- - `model`: 参考[官方文档-模型列表](https://ai.google.dev/gemini-api/docs/models?hl=zh-cn)
-</details>
-
-<details>
-<summary>Moonshot</summary>
-
-方式一：官方接入，配置如下：
-
-```json
-{
-    "model": "moonshot-v1-8k",
-    "moonshot_api_key": "moonshot-v1-8k"
-}
-```
- - `model`: 可填写`moonshot-v1-8k、 moonshot-v1-32k、 moonshot-v1-128k`
- - `moonshot_api_key`: Moonshot的API-KEY，在 [控制台](https://platform.moonshot.cn/console/api-keys) 创建
- 
-方式二：OpenAI兼容方式接入，配置如下：
-```json
-{
-  "bot_type": "chatGPT",
-  "model": "moonshot-v1-8k",
-  "open_ai_api_base": "https://api.moonshot.cn/v1",
-  "open_ai_api_key": ""
-}
-```
-- `bot_type`: OpenAI兼容方式
-- `model`: 可填写`moonshot-v1-8k、 moonshot-v1-32k、 moonshot-v1-128k`
-- `open_ai_api_base`: Moonshot的 BASE URL
-- `open_ai_api_key`: Moonshot的 API-KEY，在 [控制台](https://platform.moonshot.cn/console/api-keys) 创建
-</details>
-
-<details>
 <summary>百度文心</summary>
 方式一：官方SDK接入，配置如下：
 
 ```json
 {
-    "model": "wenxin", 
+    "model": "wenxin-4", 
     "baidu_wenxin_api_key": "IajztZ0bDxgnP9bEykU7lBer",
     "baidu_wenxin_secret_key": "EDPZn6L24uAS9d8RWFfotK47dPvkjD6G"
 }
@@ -475,7 +515,7 @@ API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn)
 ```json
 {
   "bot_type": "chatGPT",
-  "model": "qwen-turbo",
+  "model": "ERNIE-4.0-Turbo-8K",
   "open_ai_api_base": "https://qianfan.baidubce.com/v2",
   "open_ai_api_key": "bce-v3/ALTxxxxxxd2b"
 }
@@ -504,7 +544,7 @@ API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn)
 }
 ```
  - `model`: 填 `xunfei`
- - `xunfei_domain`: 可填写 `4.0Ultra、 generalv3.5、 max-32k、 generalv3、 pro-128k、 lite`
+ - `xunfei_domain`: 可填写 `4.0Ultra、generalv3.5、max-32k、generalv3、pro-128k、lite`
  - `xunfei_spark_url`: 填写参考 [官方文档-请求地址](https://www.xfyun.cn/doc/spark/Web.html#_1-1-%E8%AF%B7%E6%B1%82%E5%9C%B0%E5%9D%80) 的说明
  
 方式二：OpenAI兼容方式接入，配置如下：
@@ -517,69 +557,9 @@ API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn)
 }
 ```
 - `bot_type`: OpenAI兼容方式
-- `model`: 可填写 `4.0Ultra、 generalv3.5、 max-32k、 generalv3、 pro-128k、 lite`
+- `model`: 可填写 `4.0Ultra、generalv3.5、max-32k、generalv3、pro-128k、lite`
 - `open_ai_api_base`: 讯飞星火平台的 BASE URL
 - `open_ai_api_key`: 讯飞星火平台的[APIPassword](https://console.xfyun.cn/services/bm3) ，因模型而已
-</details>
-
-<details>
-<summary>智谱AI</summary>
-
-方式一：官方接入，配置如下：
-
-```json
-{
-  "model": "glm-4-plus",
-  "zhipu_ai_api_key": ""
-}
-```
- - `model`: 可填 `glm-4-plus、glm-4-air-250414、glm-4-airx、glm-4-long 、glm-4-flashx 、glm-4-flash-250414`, 参考 [glm-4系列模型编码](https://bigmodel.cn/dev/api/normal-model/glm-4)
- - `zhipu_ai_api_key`: 智谱AI平台的 API KEY，在 [控制台](https://www.bigmodel.cn/usercenter/proj-mgmt/apikeys) 创建
- 
-方式二：OpenAI兼容方式接入，配置如下：
-```json
-{
-  "bot_type": "chatGPT",
-  "model": "glm-4-plus",
-  "open_ai_api_base": "https://open.bigmodel.cn/api/paas/v4",
-  "open_ai_api_key": ""
-}
-```
-- `bot_type`: OpenAI兼容方式
-- `model`: 可填 `glm-4-plus、glm-4-air-250414、glm-4-airx、glm-4-long 、glm-4-flashx 、glm-4-flash-250414`, 参考 [glm-4系列模型编码](https://bigmodel.cn/dev/api/normal-model/glm-4) 
-- `open_ai_api_base`: 智谱AI平台的 BASE URL
-- `open_ai_api_key`: 智谱AI平台的 API KEY，在 [控制台](https://www.bigmodel.cn/usercenter/proj-mgmt/apikeys) 创建
-</details>
-
-<details>
-<summary>MiniMax</summary>
-
-方式一：官方接入，配置如下：
-
-```json
-{
-    "model": "abab6.5-chat",
-    "Minimax_api_key": "",
-    "Minimax_group_id": ""
-}
-```
- - `model`: 可填写`abab6.5-chat`
- - `Minimax_api_key`：MiniMax平台的API-KEY，在 [控制台](https://platform.minimaxi.com/user-center/basic-information/interface-key) 创建
- - `Minimax_group_id`: 在 [账户信息](https://platform.minimaxi.com/user-center/basic-information) 右上角获取
- 
-方式二：OpenAI兼容方式接入，配置如下：
-```json
-{
-  "bot_type": "chatGPT",
-  "model": "MiniMax-M1",
-  "open_ai_api_base": "https://api.minimaxi.com/v1",
-  "open_ai_api_key": ""
-}
-```
-- `bot_type`: OpenAI兼容方式
-- `model`: 可填`MiniMax-M1、MiniMax-Text-01`，参考[API文档](https://platform.minimaxi.com/document/%E5%AF%B9%E8%AF%9D?key=66701d281d57f38758d581d0#QklxsNSbaf6kM4j6wjO5eEek)
-- `open_ai_api_base`: MiniMax平台API的 BASE URL
-- `open_ai_api_key`: MiniMax平台的API-KEY，在 [控制台](https://platform.minimaxi.com/user-center/basic-information/interface-key) 创建
 </details>
 
 <details>
@@ -608,9 +588,9 @@ API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn)
 以下对可接入通道的配置方式进行说明，应用通道代码在项目的 `channel/` 目录下。
 
 <details>
-<summary>Web</summary>
+<summary>1. Web</summary>
 
-项目启动后默认运行web通道，配置如下：
+项目启动后默认运行Web通道，配置如下：
 
 ```json
 {
@@ -618,49 +598,65 @@ API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn)
     "web_port": 9899
 }
 ```
+
 - `web_port`: 默认为 9899，可按需更改，需要服务器防火墙和安全组放行该端口
-- 如本地运行，启动后请访问 `http://localhost:port/chat` ；如服务器运行，请访问 `http://ip:port/chat` 
+- 如本地运行，启动后请访问 `http://localhost:9899/chat` ；如服务器运行，请访问 `http://ip:9899/chat` 
 > 注：请将上述 url 中的 ip 或者 port 替换为实际的值
 </details>
 
 <details>
-<summary>Terminal</summary>
+<summary>2. Feishu - 飞书</summary>
 
-修改 `config.json` 中的 `channel_type` 字段：
+飞书支持两种事件接收模式：WebSocket 长连接（推荐）和 Webhook。
+
+**方式一：WebSocket 模式（推荐，无需公网 IP）**
 
 ```json
 {
-    "channel_type": "terminal"
+    "channel_type": "feishu",
+    "feishu_app_id": "APP_ID",
+    "feishu_app_secret": "APP_SECRET",
+    "feishu_event_mode": "websocket"
 }
 ```
 
-运行后可在终端与机器人进行对话。
+**方式二：Webhook 模式（需要公网 IP）**
+
+```json
+{
+    "channel_type": "feishu",
+    "feishu_app_id": "APP_ID",
+    "feishu_app_secret": "APP_SECRET",
+    "feishu_token": "VERIFICATION_TOKEN",
+    "feishu_event_mode": "webhook",
+    "feishu_port": 9891
+}
+```
+
+- `feishu_event_mode`: 事件接收模式，`websocket`（推荐）或 `webhook`
+- WebSocket 模式需安装依赖：`pip3 install lark-oapi`
+
+详细步骤和参数说明参考 [飞书接入](https://docs.link-ai.tech/cow/multi-platform/feishu)
 
 </details>
 
 <details>
-<summary>微信公众号</summary>
+<summary>3. DingTalk - 钉钉</summary>
 
-本项目支持订阅号和服务号两种公众号，通过服务号(`wechatmp_service`)体验更佳。将下列配置加入 `config.json`：
+钉钉需要在开放平台创建智能机器人应用，将以下配置填入 `config.json`：
 
 ```json
 {
-    "channel_type": "wechatmp",
-    "wechatmp_token": "TOKEN",
-    "wechatmp_port": 80,
-    "wechatmp_app_id": "APPID",
-    "wechatmp_app_secret": "APPSECRET",
-    "wechatmp_aes_key": ""
+    "channel_type": "dingtalk",
+    "dingtalk_client_id": "CLIENT_ID",
+    "dingtalk_client_secret": "CLIENT_SECRET"
 }
 ```
-- `channel_type`: 个人订阅号为`wechatmp`，企业服务号为`wechatmp_service`
-
-详细步骤和参数说明参考 [微信公众号接入](https://docs.link-ai.tech/cow/multi-platform/wechat-mp)
-
+详细步骤和参数说明参考 [钉钉接入](https://docs.link-ai.tech/cow/multi-platform/dingtalk)
 </details>
 
 <details>
-<summary>企业微信应用</summary>
+<summary>4. WeCom App - 企业微信应用</summary>
 
 企业微信自建应用接入需在后台创建应用并启用消息回调，配置示例：
 
@@ -680,35 +676,53 @@ API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn)
 </details>
 
 <details>
-<summary>钉钉</summary>
+<summary>5. WeChat MP - 微信公众号</summary>
 
-钉钉需要在开放平台创建智能机器人应用，将以下配置填入 `config.json`：
+本项目支持订阅号和服务号两种公众号，通过服务号（`wechatmp_service`）体验更佳。
+
+**个人订阅号（wechatmp）**
 
 ```json
 {
-    "channel_type": "dingtalk",
-    "dingtalk_client_id": "CLIENT_ID",
-    "dingtalk_client_secret": "CLIENT_SECRET"
+    "channel_type": "wechatmp",
+    "wechatmp_token": "TOKEN",
+    "wechatmp_port": 80,
+    "wechatmp_app_id": "APPID",
+    "wechatmp_app_secret": "APPSECRET",
+    "wechatmp_aes_key": ""
 }
 ```
-详细步骤和参数说明参考 [钉钉接入](https://docs.link-ai.tech/cow/multi-platform/dingtalk)
+
+**企业服务号（wechatmp_service）**
+
+```json
+{
+    "channel_type": "wechatmp_service",
+    "wechatmp_token": "TOKEN",
+    "wechatmp_port": 80,
+    "wechatmp_app_id": "APPID",
+    "wechatmp_app_secret": "APPSECRET",
+    "wechatmp_aes_key": ""
+}
+```
+
+详细步骤和参数说明参考 [微信公众号接入](https://docs.link-ai.tech/cow/multi-platform/wechat-mp)
+
 </details>
 
 <details>
-<summary>飞书</summary>
+<summary>6. Terminal - 终端</summary>
 
-通过自建应用接入AI相关能力到飞书应用中，默认已是飞书的企业用户，且具有企业管理权限，将以下配置填入 `config.json`：：
+修改 `config.json` 中的 `channel_type` 字段：
 
 ```json
 {
-    "channel_type": "feishu",
-    "feishu_app_id": "APP_ID",
-    "feishu_app_secret": "APP_SECRET",
-    "feishu_token": "VERIFICATION_TOKEN",
-    "feishu_port": 80
+    "channel_type": "terminal"
 }
 ```
-详细步骤和参数说明参考 [飞书接入](https://docs.link-ai.tech/cow/multi-platform/feishu)
+
+运行后可在终端与机器人进行对话。
+
 </details>
 
 <br/>
@@ -728,7 +742,7 @@ FAQs： <https://github.com/zhayujie/chatgpt-on-wechat/wiki/FAQs>
 
 # 🛠️ 开发
 
-欢迎接入更多应用通道，参考 [Terminal代码](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/channel/terminal/terminal_channel.py) 新增自定义通道，实现接收和发送消息逻辑即可完成接入。 同时欢迎贡献新的插件，参考 [插件开发文档](https://github.com/zhayujie/chatgpt-on-wechat/tree/master/plugins)。
+欢迎接入更多应用通道，参考 [飞书通道](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/channel/feishu/feishu_channel.py) 新增自定义通道，实现接收和发送消息逻辑即可完成接入。 同时欢迎贡献新的Skills，参考 [Skill创造器说明](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/skills/skill-creator/SKILL.md)。
 
 # ✉ 联系
 

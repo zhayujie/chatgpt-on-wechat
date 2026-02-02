@@ -3,6 +3,7 @@ import time
 import web
 import json
 import uuid
+import io
 from queue import Queue, Empty
 from bridge.context import *
 from bridge.reply import Reply, ReplyType
@@ -197,46 +198,50 @@ class WebChannel(ChatChannel):
 
     def startup(self):
         port = conf().get("web_port", 9899)
-        logger.info("""[WebChannel] 当前channel为web，可修改 config.json 配置文件中的 channel_type 字段进行切换。全部可用类型为：
-        1. web: 网页
-        2. terminal: 终端
-        3. feishu: 飞书
-        4. dingtalk: 钉钉
-        5. wechatcom_app: 企微自建应用
-        6. wechatmp: 个人公众号
-        7. wechatmp_service: 企业公众号""")
-        logger.info(f"✅ Web对话网页已运行, 请使用浏览器访问 http://localhost:{port}/chat (本地运行) 或 http://ip:{port}/chat (服务器运行)")
+        
+        # 打印可用渠道类型提示
+        logger.info("[WebChannel] 当前channel为web，可修改 config.json 配置文件中的 channel_type 字段进行切换。全部可用类型为：")
+        logger.info("[WebChannel]   1. web              - 网页")
+        logger.info("[WebChannel]   2. terminal         - 终端")
+        logger.info("[WebChannel]   3. feishu           - 飞书")
+        logger.info("[WebChannel]   4. dingtalk         - 钉钉")
+        logger.info("[WebChannel]   5. wechatcom_app    - 企微自建应用")
+        logger.info("[WebChannel]   6. wechatmp         - 个人公众号")
+        logger.info("[WebChannel]   7. wechatmp_service - 企业公众号")
+        logger.info(f"[WebChannel] 🌐 本地访问: http://localhost:{port}/chat")
+        logger.info(f"[WebChannel] 🌍 服务器访问: http://YOUR_IP:{port}/chat (请将YOUR_IP替换为服务器IP)")
+        logger.info("[WebChannel] ✅ Web对话网页已运行")
         
         # 确保静态文件目录存在
         static_dir = os.path.join(os.path.dirname(__file__), 'static')
         if not os.path.exists(static_dir):
             os.makedirs(static_dir)
-            logger.info(f"Created static directory: {static_dir}")
+            logger.debug(f"[WebChannel] Created static directory: {static_dir}")
         
         urls = (
-            '/', 'RootHandler',  # 添加根路径处理器
+            '/', 'RootHandler',
             '/message', 'MessageHandler',
-            '/poll', 'PollHandler',  # 添加轮询处理器
+            '/poll', 'PollHandler',
             '/chat', 'ChatHandler',
-            '/config', 'ConfigHandler',  # 添加配置处理器
-            '/assets/(.*)', 'AssetsHandler',  # 匹配 /assets/任何路径
+            '/config', 'ConfigHandler',
+            '/assets/(.*)', 'AssetsHandler',
         )
         app = web.application(urls, globals(), autoreload=False)
         
         # 完全禁用web.py的HTTP日志输出
-        # 创建一个空的日志处理函数
-        def null_log_function(status, environ):
-            pass
-        
-        # 替换web.py的日志函数
         web.httpserver.LogMiddleware.log = lambda self, status, environ: None
         
         # 配置web.py的日志级别为ERROR
         logging.getLogger("web").setLevel(logging.ERROR)
         logging.getLogger("web.httpserver").setLevel(logging.ERROR)
         
-        # 启动服务器
-        web.httpserver.runsimple(app.wsgifunc(), ("0.0.0.0", port))
+        # 抑制 web.py 默认的服务器启动消息
+        old_stdout = sys.stdout
+        sys.stdout = io.StringIO()
+        try:
+            web.httpserver.runsimple(app.wsgifunc(), ("0.0.0.0", port))
+        finally:
+            sys.stdout = old_stdout
 
 
 class RootHandler:

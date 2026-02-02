@@ -397,8 +397,8 @@ def _build_workspace_section(workspace_dir: str, language: str, is_first_convers
         "",
         "**交流规范**:",
         "",
-        "- 在对话中，非必要不输出工作空间技术细节（如 SOUL.md、USER.md等文件名称，工具名称，配置等），除非用户明确询问",
-        "- 例如用自然表达如「我已记住」而非「已更新 MEMORY.md」",
+        "- 在对话中，不要直接输出工作空间中的技术细节，特别是不要输出 SOUL.md、USER.md、MEMORY.md 等文件名称",
+        "- 例如用自然表达例如「我已记住」而不是「已更新 MEMORY.md」",
         "",
     ]
     

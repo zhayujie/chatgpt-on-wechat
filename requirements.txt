@@ -13,6 +13,10 @@ python-dotenv>=1.0.0
 PyYAML>=6.0
 croniter>=2.0.0
 
+# wechatcom & wechatmp
+web.py
+wechatpy
+
 # zhipuai
 zai-sdk
 # tongyi qwen sdk

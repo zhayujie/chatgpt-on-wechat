@@ -1,6 +1,7 @@
 # -*- coding=utf-8 -*-
 import io
 import os
+import sys
 import time
 
 import requests
@@ -35,9 +36,8 @@ class WechatComAppChannel(ChatChannel):
         self.agent_id = conf().get("wechatcomapp_agent_id")
         self.token = conf().get("wechatcomapp_token")
         self.aes_key = conf().get("wechatcomapp_aes_key")
-        print(self.corp_id, self.secret, self.agent_id, self.token, self.aes_key)
         logger.info(
-            "[wechatcom] init: corp_id: {}, secret: {}, agent_id: {}, token: {}, aes_key: {}".format(self.corp_id, self.secret, self.agent_id, self.token, self.aes_key)
+            "[wechatcom] Initializing WeCom app channel, corp_id: {}, agent_id: {}".format(self.corp_id, self.agent_id)
         )
         self.crypto = WeChatCrypto(self.token, self.aes_key, self.corp_id)
         self.client = WechatComAppClient(self.corp_id, self.secret)
@@ -47,7 +47,17 @@ class WechatComAppChannel(ChatChannel):
         urls = ("/wxcomapp/?", "channel.wechatcom.wechatcomapp_channel.Query")
         app = web.application(urls, globals(), autoreload=False)
         port = conf().get("wechatcomapp_port", 9898)
-        web.httpserver.runsimple(app.wsgifunc(), ("0.0.0.0", port))
+        logger.info("[wechatcom] ✅ WeCom app channel started successfully")
+        logger.info("[wechatcom] 📡 Listening on http://0.0.0.0:{}/wxcomapp/".format(port))
+        logger.info("[wechatcom] 🤖 Ready to receive messages")
+        
+        # Suppress web.py's default server startup message
+        old_stdout = sys.stdout
+        sys.stdout = io.StringIO()
+        try:
+            web.httpserver.runsimple(app.wsgifunc(), ("0.0.0.0", port))
+        finally:
+            sys.stdout = old_stdout
 
     def send(self, reply: Reply, context: Context):
         receiver = context["receiver"]
@@ -74,6 +84,10 @@ class WechatComAppChannel(ChatChannel):
                     response = self.client.media.upload("voice", open(path, "rb"))
                     logger.debug("[wechatcom] upload voice response: {}".format(response))
                     media_ids.append(response["media_id"])
+            except ImportError as e:
+                logger.error("[wechatcom] voice conversion failed: {}".format(e))
+                logger.error("[wechatcom] please install pydub: pip install pydub")
+                return
             except WeChatClientException as e:
                 logger.error("[wechatcom] upload voice failed: {}".format(e))
                 return

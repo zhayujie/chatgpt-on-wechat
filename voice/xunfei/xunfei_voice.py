@@ -28,9 +28,15 @@ from config import conf
 from voice.voice import Voice
 from .xunfei_asr import xunfei_asr
 from .xunfei_tts import xunfei_tts
-from voice.audio_convert import any_to_mp3
 import shutil
-from pydub import AudioSegment
+
+try:
+    from voice.audio_convert import any_to_mp3
+    from pydub import AudioSegment
+    _audio_available = True
+except ImportError as e:
+    logger.debug("import audio libraries failed: {}".format(e))
+    _audio_available = False
 
 
 class XunfeiVoice(Voice):

@@ -21,5 +21,6 @@ services:
       EXPIRES_IN_SECONDS: 3600
       USE_GLOBAL_PLUGIN_CONFIG: 'True'
       USE_LINKAI: 'False'
+      AGENT: 'True'
       LINKAI_API_KEY: ''
       LINKAI_APP_CODE: ''

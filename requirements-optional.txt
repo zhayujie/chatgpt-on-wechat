@@ -12,10 +12,6 @@ numpy<=1.24.2
 langid # language detect
 elevenlabs==1.0.3 # elevenlabs TTS
 
-# wechatcom & wechatmp
-web.py
-wechatpy
-
 #install plugin
 dulwich
 
