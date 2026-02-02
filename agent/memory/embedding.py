@@ -45,8 +45,9 @@ class OpenAIEmbeddingProvider(EmbeddingProvider):
         self.api_key = api_key
         self.api_base = api_base or "https://api.openai.com/v1"
 
-        if not self.api_key:
-            raise ValueError("OpenAI API key is required")
+        # Validate API key
+        if not self.api_key or self.api_key in ["", "YOUR API KEY", "YOUR_API_KEY"]:
+            raise ValueError("OpenAI API key is not configured. Please set 'open_ai_api_key' in config.json")
 
         # Set dimensions based on model
         self._dimensions = 1536 if "small" in model else 3072
@@ -65,9 +66,21 @@ class OpenAIEmbeddingProvider(EmbeddingProvider):
             "model": self.model
         }
 
-        response = requests.post(url, headers=headers, json=data, timeout=30)
-        response.raise_for_status()
-        return response.json()
+        try:
+            response = requests.post(url, headers=headers, json=data, timeout=5)
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.ConnectionError as e:
+            raise ConnectionError(f"Failed to connect to OpenAI API at {url}. Please check your network connection and api_base configuration. Error: {str(e)}")
+        except requests.exceptions.Timeout as e:
+            raise TimeoutError(f"OpenAI API request timed out after 10s. Please check your network connection. Error: {str(e)}")
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 401:
+                raise ValueError(f"Invalid OpenAI API key. Please check your 'open_ai_api_key' in config.json")
+            elif e.response.status_code == 429:
+                raise ValueError(f"OpenAI API rate limit exceeded. Please try again later.")
+            else:
+                raise ValueError(f"OpenAI API request failed: {e.response.status_code} - {e.response.text}")
 
     def embed(self, text: str) -> List[float]:
         """Generate embedding for text"""

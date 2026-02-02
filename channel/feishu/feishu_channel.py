@@ -251,6 +251,14 @@ class FeiShuChanel(ChatChannel):
             msg_type = "image"
             content_key = "image_key"
         elif reply.type == ReplyType.FILE:
+            # 如果有附加的文本内容，先发送文本
+            if hasattr(reply, 'text_content') and reply.text_content:
+                logger.info(f"[FeiShu] Sending text before file: {reply.text_content[:50]}...")
+                text_reply = Reply(ReplyType.TEXT, reply.text_content)
+                self._send(text_reply, context)
+                import time
+                time.sleep(0.3)  # 短暂延迟，确保文本先到达
+            
             # 判断是否为视频文件
             file_path = reply.content
             if file_path.startswith("file://"):
@@ -259,20 +267,18 @@ class FeiShuChanel(ChatChannel):
             is_video = file_path.lower().endswith(('.mp4', '.avi', '.mov', '.wmv', '.flv'))
             
             if is_video:
-                # 视频使用 media 类型，需要上传并获取 file_key 和 duration
-                video_info = self._upload_video_url(reply.content, access_token)
-                if not video_info or not video_info.get('file_key'):
+                # 视频上传（包含duration信息）
+                upload_data = self._upload_video_url(reply.content, access_token)
+                if not upload_data or not upload_data.get('file_key'):
                     logger.warning("[FeiShu] upload video failed")
                     return
                 
-                # media 类型需要特殊的 content 格式
+                # 视频使用 media 类型（根据官方文档）
+                # 错误码 230055 说明：上传 mp4 时必须使用 msg_type="media"
                 msg_type = "media"
-                # 注意：media 类型的 content 不使用 content_key，而是完整的 JSON 对象
-                reply_content = {
-                    "file_key": video_info['file_key'],
-                    "duration": video_info.get('duration', 0)  # 视频时长（毫秒）
-                }
-                content_key = None  # media 类型不使用单一的 key
+                reply_content = upload_data  # 完整的上传响应数据（包含file_key和duration）
+                logger.info(f"[FeiShu] Sending video: file_key={upload_data.get('file_key')}, duration={upload_data.get('duration')}ms")
+                content_key = None  # 直接序列化整个对象
             else:
                 # 其他文件使用 file 类型
                 file_key = self._upload_file_url(reply.content, access_token)
@@ -286,12 +292,16 @@ class FeiShuChanel(ChatChannel):
         # Check if we can reply to an existing message (need msg_id)
         can_reply = is_group and msg and hasattr(msg, 'msg_id') and msg.msg_id
         
+        # Build content JSON
+        content_json = json.dumps(reply_content) if content_key is None else json.dumps({content_key: reply_content})
+        logger.debug(f"[FeiShu] Sending message: msg_type={msg_type}, content={content_json[:200]}")
+        
         if can_reply:
             # 群聊中回复已有消息
             url = f"https://open.feishu.cn/open-apis/im/v1/messages/{msg.msg_id}/reply"
             data = {
                 "msg_type": msg_type,
-                "content": json.dumps(reply_content) if content_key is None else json.dumps({content_key: reply_content})
+                "content": content_json
             }
             res = requests.post(url=url, headers=headers, json=data, timeout=(5, 10))
         else:
@@ -301,7 +311,7 @@ class FeiShuChanel(ChatChannel):
             data = {
                 "receive_id": context.get("receiver"),
                 "msg_type": msg_type,
-                "content": json.dumps(reply_content) if content_key is None else json.dumps({content_key: reply_content})
+                "content": content_json
             }
             res = requests.post(url=url, headers=headers, params=params, json=data, timeout=(5, 10))
         res = res.json()
@@ -471,8 +481,17 @@ class FeiShuChanel(ChatChannel):
             file_type = file_type_map.get(file_ext, 'mp4')
             
             upload_url = "https://open.feishu.cn/open-apis/im/v1/files"
-            data = {'file_type': file_type, 'file_name': file_name}
+            data = {
+                'file_type': file_type, 
+                'file_name': file_name
+            }
+            # Add duration only if available (required for video/audio)
+            if duration:
+                data['duration'] = duration  # Must be int, not string
+            
             headers = {'Authorization': f'Bearer {access_token}'}
+            
+            logger.info(f"[FeiShu] Uploading video: file_name={file_name}, duration={duration}ms")
             
             with open(local_path, "rb") as file:
                 upload_response = requests.post(
@@ -486,11 +505,11 @@ class FeiShuChanel(ChatChannel):
                 
                 response_data = upload_response.json()
                 if response_data.get("code") == 0:
-                    file_key = response_data.get("data").get("file_key")
-                    return {
-                        'file_key': file_key,
-                        'duration': duration
-                    }
+                    # Add duration to the response data (API doesn't return it)
+                    upload_data = response_data.get("data")
+                    upload_data['duration'] = duration  # Add our calculated duration
+                    logger.info(f"[FeiShu] Upload complete: file_key={upload_data.get('file_key')}, duration={duration}ms")
+                    return upload_data
                 else:
                     logger.error(f"[FeiShu] upload video failed: {response_data}")
                     return None

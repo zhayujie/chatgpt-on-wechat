@@ -762,7 +762,7 @@
                     <i class="fas fa-bars"></i>
                 </button>
                 <img id="header-logo" src="assets/logo.jpg" alt="AI Assistant Logo">
-                <div id="chat-title">AI 助手</div>
+                <div id="chat-title" class="agent-title">AI 助手</div>
                 <a id="github-link" href="https://github.com/zhayujie/chatgpt-on-wechat" target="_blank" rel="noopener noreferrer">
                     <img id="github-icon" src="assets/github.png" alt="GitHub">
                 </a>
@@ -771,21 +771,21 @@
             <div id="messages">
                 <!-- 初始欢迎界面 -->
                 <div id="welcome-screen">
-                    <h1 id="welcome-title">AI 助手</h1>
-                    <p id="welcome-subtitle">我可以回答问题、提供信息或者帮助您完成各种任务</p>
+                    <h1 id="welcome-title" class="agent-title">AI 助手</h1>
+                    <p id="welcome-subtitle" class="agent-subtitle">我可以回答问题、提供信息或者帮助您完成各种任务</p>
                     
                     <div class="examples-container">
                         <div class="example-card">
-                            <div class="example-title">解释复杂概念</div>
-                            <div class="example-text">用简单的语言解释量子计算</div>
+                            <div class="example-title">📁 系统管理</div>
+                            <div class="example-text">帮我查看工作空间里有哪些文件</div>
                         </div>
                         <div class="example-card">
-                            <div class="example-title">创意写作</div>
-                            <div class="example-text">写一个关于未来城市的短篇故事</div>
+                            <div class="example-title">⏰ 智能任务</div>
+                            <div class="example-text">提醒我5分钟后查看服务器情况</div>
                         </div>
                         <div class="example-card">
-                            <div class="example-title">编程帮助</div>
-                            <div class="example-text">如何用Python写一个简单的网络爬虫</div>
+                            <div class="example-title">💻 编程助手</div>
+                            <div class="example-text">帮我编写一个Python爬虫脚本</div>
                         </div>
                         <!-- <div class="example-card">
                             <div class="example-title">生活建议</div>
@@ -829,6 +829,45 @@
         // 生成初始会话ID
         let sessionId = generateSessionId();
         console.log('Session ID:', sessionId);
+
+        // 获取配置并更新标题
+        let appConfig = {
+            use_agent: false,
+            title: "AI 助手",
+            subtitle: "我可以回答问题、提供信息或者帮助您完成各种任务"
+        };
+
+        // 从服务器获取配置
+        axios.get('/config')
+            .then(response => {
+                if (response.data.status === "success") {
+                    appConfig = response.data;
+                    updateTitle(appConfig.title, appConfig.subtitle);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading config:', error);
+            });
+
+        // 更新标题的函数
+        function updateTitle(title, subtitle) {
+            // 更新顶部标题
+            const chatTitle = document.getElementById('chat-title');
+            if (chatTitle) {
+                chatTitle.textContent = title;
+            }
+
+            // 更新欢迎屏幕标题
+            const welcomeTitle = document.getElementById('welcome-title');
+            if (welcomeTitle) {
+                welcomeTitle.textContent = title;
+            }
+
+            const welcomeSubtitle = document.getElementById('welcome-subtitle');
+            if (welcomeSubtitle) {
+                welcomeSubtitle.textContent = subtitle;
+            }
+        }
 
         // 添加一个变量来跟踪输入法状态
         let isComposing = false;
@@ -1215,21 +1254,21 @@
             const newWelcomeScreen = document.createElement('div');
             newWelcomeScreen.id = 'welcome-screen';
             newWelcomeScreen.innerHTML = `
-                <h1 id="welcome-title">AI 助手</h1>
-                <p id="welcome-subtitle">我可以回答问题、提供信息或者帮助您完成各种任务</p>
+                <h1 id="welcome-title" class="agent-title">${appConfig.title}</h1>
+                <p id="welcome-subtitle" class="agent-subtitle">${appConfig.subtitle}</p>
                 
                 <div class="examples-container">
                     <div class="example-card">
-                        <div class="example-title">解释复杂概念</div>
-                        <div class="example-text">用简单的语言解释量子计算</div>
+                        <div class="example-title">📁 系统管理</div>
+                        <div class="example-text">帮我查看工作空间里有哪些文件</div>
                     </div>
                     <div class="example-card">
-                        <div class="example-title">创意写作</div>
-                        <div class="example-text">写一个关于未来城市的短篇故事</div>
+                        <div class="example-title">⏰ 智能任务</div>
+                        <div class="example-text">提醒我5分钟后查看服务器情况</div>
                     </div>
                     <div class="example-card">
-                        <div class="example-title">编程帮助</div>
-                        <div class="example-text">如何用Python写一个简单的网络爬虫</div>
+                        <div class="example-title">💻 编程助手</div>
+                        <div class="example-text">帮我编写一个Python爬虫脚本</div>
                     </div>
                 </div>
             `;

@@ -279,11 +279,16 @@ def _build_skills_section(skill_manager: Any, tools: Optional[List[Any]], langua
     # 添加技能列表（通过skill_manager获取）
     try:
         skills_prompt = skill_manager.build_skills_prompt()
+        logger.debug(f"[PromptBuilder] Skills prompt length: {len(skills_prompt) if skills_prompt else 0}")
         if skills_prompt:
             lines.append(skills_prompt.strip())
             lines.append("")
+        else:
+            logger.warning("[PromptBuilder] No skills prompt generated - skills_prompt is empty")
     except Exception as e:
         logger.warning(f"Failed to build skills prompt: {e}")
+        import traceback
+        logger.debug(f"Skills prompt error traceback: {traceback.format_exc()}")
     
     return lines
 
@@ -404,15 +409,17 @@ def _build_workspace_section(workspace_dir: str, language: str, is_first_convers
             "这是你的第一次对话！进行以下流程：",
             "",
             "1. **表达初次启动的感觉** - 像是第一次睁开眼看到世界，带着好奇和期待",
-            "2. **简短打招呼后，询问核心问题**：",
+            "2. **简短介绍能力**：一行说明你能帮助解答问题、管理计算机、创造技能，且拥有长期记忆能不断成长",
+            "3. **询问核心问题**：",
             "   - 你希望给我起个什么名字？",
             "   - 我该怎么称呼你？",
-            "   - 你希望我们是什么样的交流风格？（需要举例，如：专业严谨、轻松幽默、温暖友好等）",
-            "3. **语言风格**：温暖但不过度诗意，带点科技感，保持清晰",
-            "4. **问题格式**：用分点或换行，让问题清晰易读",
+            "   - 你希望我们是什么样的交流风格？（一行列举选项：如专业严谨、轻松幽默、温暖友好、简洁高效等）",
+            "4. **风格要求**：温暖自然、简洁清晰，整体控制在 100 字以内",
             "5. 收到回复后，用 `write` 工具保存到 USER.md 和 SOUL.md",
             "",
-            "**注意事项**:",
+            "**重要提醒**:",
+            "- SOUL.md 和 USER.md 已经在系统提示词中加载，无需再次读取",
+            "- 能力介绍和交流风格选项都只要一行，保持精简",
             "- 不要问太多其他信息（职业、时区等可以后续自然了解）",
             "",
         ])

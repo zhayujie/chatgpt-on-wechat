@@ -1,11 +1,11 @@
 {
   "channel_type": "web",
   "model": "claude-sonnet-4-5",
-  "open_ai_api_key": "YOUR API KEY",
+  "open_ai_api_key": "",
   "open_ai_api_base": "https://api.openai.com/v1",
-  "claude_api_key": "YOUR API KEY",
+  "claude_api_key": "",
   "claude_api_base": "https://api.anthropic.com/v1",
-  "gemini_api_key": "YOUR API KEY",
+  "gemini_api_key": "",
   "gemini_api_base": "https://generativelanguage.googleapis.com",
   "voice_to_text": "openai",
   "text_to_voice": "openai",
@@ -13,7 +13,7 @@
   "speech_recognition": true,
   "group_speech_recognition": false,
   "use_linkai": false,
-  "linkai_api_key": "YOUR API KEY",
+  "linkai_api_key": "",
   "linkai_app_code": "",
   "feishu_bot_name": "CowAgent",
   "feishu_app_id": "",
@@ -22,6 +22,6 @@
   "dingtalk_client_secret":"",
   "agent": true,
   "agent_max_context_tokens": 40000,
-  "agent_max_context_turns": 30,
+  "agent_max_context_turns": 20,
   "agent_max_steps": 15
 }

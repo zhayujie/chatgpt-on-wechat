@@ -137,6 +137,18 @@ class SkillLoader:
         name = frontmatter.get('name', parent_dir_name)
         description = frontmatter.get('description', '')
         
+        # Normalize name (handle both string and list)
+        if isinstance(name, list):
+            name = name[0] if name else parent_dir_name
+        elif not isinstance(name, str):
+            name = str(name) if name else parent_dir_name
+        
+        # Normalize description (handle both string and list)
+        if isinstance(description, list):
+            description = ' '.join(str(d) for d in description if d)
+        elif not isinstance(description, str):
+            description = str(description) if description else ''
+        
         # Special handling for linkai-agent: dynamically load apps from config.json
         if name == 'linkai-agent':
             description = self._load_linkai_agent_description(skill_dir, description)

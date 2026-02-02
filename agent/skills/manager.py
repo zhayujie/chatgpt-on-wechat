@@ -103,7 +103,21 @@ class SkillManager:
         
         # Apply skill filter
         if skill_filter is not None:
-            normalized = [name.strip() for name in skill_filter if name.strip()]
+            # Flatten and normalize skill names (handle both strings and nested lists)
+            normalized = []
+            for item in skill_filter:
+                if isinstance(item, str):
+                    name = item.strip()
+                    if name:
+                        normalized.append(name)
+                elif isinstance(item, list):
+                    # Handle nested lists
+                    for subitem in item:
+                        if isinstance(subitem, str):
+                            name = subitem.strip()
+                            if name:
+                                normalized.append(name)
+            
             if normalized:
                 entries = [e for e in entries if e.skill.name in normalized]
         
@@ -123,8 +137,15 @@ class SkillManager:
         :param skill_filter: Optional list of skill names to include
         :return: Formatted skills prompt
         """
+        from common.log import logger
         entries = self.filter_skills(skill_filter=skill_filter, include_disabled=False)
-        return format_skill_entries_for_prompt(entries)
+        logger.debug(f"[SkillManager] Filtered {len(entries)} skills for prompt (total: {len(self.skills)})")
+        if entries:
+            skill_names = [e.skill.name for e in entries]
+            logger.debug(f"[SkillManager] Skills to include: {skill_names}")
+        result = format_skill_entries_for_prompt(entries)
+        logger.debug(f"[SkillManager] Generated prompt length: {len(result)}")
+        return result
     
     def build_skill_snapshot(
         self,

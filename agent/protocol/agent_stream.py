@@ -248,9 +248,14 @@ class AgentStreamExecutor:
                 # Log tool calls with arguments
                 tool_calls_str = []
                 for tc in tool_calls:
-                    args_str = ', '.join([f"{k}={v}" for k, v in tc['arguments'].items()])
-                    if args_str:
-                        tool_calls_str.append(f"{tc['name']}({args_str})")
+                    # Safely handle None or missing arguments
+                    args = tc.get('arguments') or {}
+                    if isinstance(args, dict):
+                        args_str = ', '.join([f"{k}={v}" for k, v in args.items()])
+                        if args_str:
+                            tool_calls_str.append(f"{tc['name']}({args_str})")
+                        else:
+                            tool_calls_str.append(tc['name'])
                     else:
                         tool_calls_str.append(tc['name'])
                 logger.info(f"🔧 {', '.join(tool_calls_str)}")
@@ -511,13 +516,13 @@ class AgentStreamExecutor:
                         stop_reason = finish_reason
 
                     # Handle text content
-                    if "content" in delta and delta["content"]:
-                        content_delta = delta["content"]
+                    content_delta = delta.get("content") or ""
+                    if content_delta:
                         full_content += content_delta
                         self._emit_event("message_update", {"delta": content_delta})
 
                     # Handle tool calls
-                    if "tool_calls" in delta:
+                    if "tool_calls" in delta and delta["tool_calls"]:
                         for tc_delta in delta["tool_calls"]:
                             index = tc_delta.get("index", 0)
 
@@ -577,7 +582,10 @@ class AgentStreamExecutor:
                         "抱歉，之前的对话出现了问题。我已清空历史记录，请重新发送你的消息。"
                     )
             
-            # Check if error is retryable (timeout, connection, rate limit, server busy, etc.)
+            # Check if error is rate limit (429)
+            is_rate_limit = '429' in error_str_lower or 'rate limit' in error_str_lower
+            
+            # Check if error is retryable (timeout, connection, server busy, etc.)
             is_retryable = any(keyword in error_str_lower for keyword in [
                 'timeout', 'timed out', 'connection', 'network', 
                 'rate limit', 'overloaded', 'unavailable', 'busy', 'retry',
@@ -585,7 +593,12 @@ class AgentStreamExecutor:
             ])
             
             if is_retryable and retry_count < max_retries:
-                wait_time = (retry_count + 1) * 2  # Exponential backoff: 2s, 4s, 6s
+                # Rate limit needs longer wait time
+                if is_rate_limit:
+                    wait_time = 30 + (retry_count * 15)  # 30s, 45s, 60s for rate limit
+                else:
+                    wait_time = (retry_count + 1) * 2  # 2s, 4s, 6s for other errors
+                
                 logger.warning(f"⚠️ LLM API error (attempt {retry_count + 1}/{max_retries}): {e}")
                 logger.info(f"Retrying in {wait_time}s...")
                 time.sleep(wait_time)
@@ -606,11 +619,15 @@ class AgentStreamExecutor:
         for idx in sorted(tool_calls_buffer.keys()):
             tc = tool_calls_buffer[idx]
             try:
-                arguments = json.loads(tc["arguments"]) if tc["arguments"] else {}
+                # Safely get arguments, handle None case
+                args_str = tc.get("arguments") or ""
+                arguments = json.loads(args_str) if args_str else {}
             except json.JSONDecodeError as e:
-                args_preview = tc['arguments'][:200] if len(tc['arguments']) > 200 else tc['arguments']
+                # Handle None or invalid arguments safely
+                args_str = tc.get('arguments') or ""
+                args_preview = args_str[:200] if len(args_str) > 200 else args_str
                 logger.error(f"Failed to parse tool arguments for {tc['name']}")
-                logger.error(f"Arguments length: {len(tc['arguments'])} chars")
+                logger.error(f"Arguments length: {len(args_str)} chars")
                 logger.error(f"Arguments preview: {args_preview}...")
                 logger.error(f"JSON decode error: {e}")
                 
@@ -661,9 +678,9 @@ class AgentStreamExecutor:
             for tc in tool_calls:
                 assistant_msg["content"].append({
                     "type": "tool_use",
-                    "id": tc["id"],
-                    "name": tc["name"],
-                    "input": tc["arguments"]
+                    "id": tc.get("id", ""),
+                    "name": tc.get("name", ""),
+                    "input": tc.get("arguments", {})
                 })
         
         # Only append if content is not empty

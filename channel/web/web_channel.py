@@ -218,6 +218,7 @@ class WebChannel(ChatChannel):
             '/message', 'MessageHandler',
             '/poll', 'PollHandler',  # 添加轮询处理器
             '/chat', 'ChatHandler',
+            '/config', 'ConfigHandler',  # 添加配置处理器
             '/assets/(.*)', 'AssetsHandler',  # 匹配 /assets/任何路径
         )
         app = web.application(urls, globals(), autoreload=False)
@@ -260,6 +261,30 @@ class ChatHandler:
         file_path = os.path.join(os.path.dirname(__file__), 'chat.html')
         with open(file_path, 'r', encoding='utf-8') as f:
             return f.read()
+
+
+class ConfigHandler:
+    def GET(self):
+        """返回前端需要的配置信息"""
+        try:
+            use_agent = conf().get("agent", False)
+            
+            if use_agent:
+                title = "CowAgent"
+                subtitle = "我可以帮你解答问题、管理计算机、创造和执行技能，并通过长期记忆不断成长"
+            else:
+                title = "AI 助手"
+                subtitle = "我可以回答问题、提供信息或者帮助您完成各种任务"
+            
+            return json.dumps({
+                "status": "success",
+                "use_agent": use_agent,
+                "title": title,
+                "subtitle": subtitle
+            })
+        except Exception as e:
+            logger.error(f"Error getting config: {e}")
+            return json.dumps({"status": "error", "message": str(e)})
 
 
 class AssetsHandler:

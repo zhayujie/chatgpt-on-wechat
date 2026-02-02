@@ -80,7 +80,7 @@ else
         # Use sips (macOS) or convert (ImageMagick) to compress
         if command -v sips &> /dev/null; then
             # macOS: resize to max 800px on longest side
-            sips -Z 800 "$image_input" --out "$temp_compressed" &> /dev/null
+            $(command -v sips) -Z 800 "$image_input" --out "$temp_compressed" &> /dev/null
             if [ $? -eq 0 ]; then
                 image_to_encode="$temp_compressed"
                 >&2 echo "[vision.sh] Compressed large image ($(($file_size / 1024))KB) to avoid parameter limit"
@@ -123,7 +123,8 @@ else
     # Encode image to base64
     if command -v base64 &> /dev/null; then
         # macOS and most Linux systems
-        base64_image=$(base64 -i "$image_to_encode" 2>/dev/null || base64 "$image_to_encode" 2>/dev/null)
+        base64_cmd=$(command -v base64)
+        base64_image=$($base64_cmd -i "$image_to_encode" 2>/dev/null || $base64_cmd "$image_to_encode" 2>/dev/null)
     else
         echo '{"error": "base64 command not found", "help": "Please install base64 utility"}'
         # Clean up temp file if exists
@@ -171,7 +172,8 @@ EOF
 fi
 
 # Call OpenAI API
-response=$(curl -sS --max-time 60 \
+curl_cmd=$(command -v curl)
+response=$($curl_cmd -sS --max-time 60 \
     -X POST \
     -H "Authorization: Bearer $OPENAI_API_KEY" \
     -H "Content-Type: application/json" \
