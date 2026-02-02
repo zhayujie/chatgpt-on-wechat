@@ -8,7 +8,7 @@ Truncation is based on two independent limits - whichever is hit first wins:
 Never returns partial lines (except bash tail truncation edge case).
 """
 
-from typing import Dict, Any, Optional, Literal
+from typing import Dict, Any, Optional, Literal, Tuple
 
 
 DEFAULT_MAX_LINES = 2000
@@ -278,7 +278,7 @@ def _truncate_string_to_bytes_from_end(text: str, max_bytes: int) -> str:
     return encoded[start:].decode('utf-8', errors='ignore')
 
 
-def truncate_line(line: str, max_chars: int = GREP_MAX_LINE_LENGTH) -> tuple[str, bool]:
+def truncate_line(line: str, max_chars: int = GREP_MAX_LINE_LENGTH) -> Tuple[str, bool]:
     """
     Truncate single line to max characters, add [truncated] suffix.
     Used for grep match lines.

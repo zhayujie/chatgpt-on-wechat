@@ -5,7 +5,7 @@ Provides streaming output, event system, and complete tool-call loop
 """
 import json
 import time
-from typing import List, Dict, Any, Optional, Callable
+from typing import List, Dict, Any, Optional, Callable, Tuple
 
 from agent.protocol.models import LLMRequest, LLMModel
 from agent.tools.base_tool import BaseTool, ToolResult
@@ -84,7 +84,7 @@ class AgentStreamExecutor:
         args_str = json.dumps(args, sort_keys=True, ensure_ascii=False)
         return hashlib.md5(args_str.encode()).hexdigest()[:8]
     
-    def _check_consecutive_failures(self, tool_name: str, args: dict) -> tuple[bool, str, bool]:
+    def _check_consecutive_failures(self, tool_name: str, args: dict) -> Tuple[bool, str, bool]:
         """
         Check if tool has failed too many times consecutively or called repeatedly with same args
         
@@ -456,7 +456,7 @@ class AgentStreamExecutor:
 
         return final_response
 
-    def _call_llm_stream(self, retry_on_empty=True, retry_count=0, max_retries=3) -> tuple[str, List[Dict]]:
+    def _call_llm_stream(self, retry_on_empty=True, retry_count=0, max_retries=3) -> Tuple[str, List[Dict]]:
         """
         Call LLM with streaming and automatic retry on errors
         
