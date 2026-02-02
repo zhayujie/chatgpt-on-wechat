@@ -33,14 +33,11 @@ class GoogleGeminiBot(Bot):
         if self.model == "gemini":
             self.model = "gemini-pro"
         
-        # 支持自定义API base地址，复用open_ai_api_base配置
-        self.api_base = conf().get("open_ai_api_base", "").strip()
+        # 支持自定义API base地址
+        self.api_base = conf().get("gemini_api_base", "").strip()
         if self.api_base:
             # 移除末尾的斜杠
             self.api_base = self.api_base.rstrip('/')
-            # 如果配置的是OpenAI的地址，则使用默认的Gemini地址
-            if "api.openai.com" in self.api_base or not self.api_base:
-                self.api_base = "https://generativelanguage.googleapis.com"
             logger.info(f"[Gemini] Using custom API base: {self.api_base}")
         else:
             self.api_base = "https://generativelanguage.googleapis.com"
@@ -254,7 +251,6 @@ class GoogleGeminiBot(Bot):
                 gemini_tools = self._convert_tools_to_gemini_rest_format(tools)
                 if gemini_tools:
                     payload["tools"] = gemini_tools
-                    logger.debug(f"[Gemini] Added {len(tools)} tools to request")
             
             # Make REST API call
             base_url = f"{self.api_base}/v1beta"
@@ -266,8 +262,6 @@ class GoogleGeminiBot(Bot):
                 "x-goog-api-key": self.api_key,
                 "Content-Type": "application/json"
             }
-            
-            logger.debug(f"[Gemini] REST API call: {endpoint}")
             
             response = requests.post(
                 endpoint,
@@ -338,8 +332,6 @@ class GoogleGeminiBot(Bot):
             if not name:
                 logger.warning(f"[Gemini] Skipping tool without name: {tool}")
                 continue
-            
-            logger.debug(f"[Gemini] Converting tool: {name}")
             
             function_declarations.append({
                 "name": name,
@@ -464,7 +456,6 @@ class GoogleGeminiBot(Bot):
                 try:
                     chunk_data = json.loads(line)
                     chunk_count += 1
-                    logger.debug(f"[Gemini] Stream chunk: {json.dumps(chunk_data, ensure_ascii=False)[:200]}")
                     
                     candidates = chunk_data.get("candidates", [])
                     if not candidates:
@@ -489,7 +480,6 @@ class GoogleGeminiBot(Bot):
                     for part in parts:
                         if "text" in part and part["text"]:
                             has_content = True
-                            logger.debug(f"[Gemini] Streaming text: {part['text'][:50]}...")
                             yield {
                                 "id": f"chatcmpl-{time.time()}",
                                 "object": "chat.completion.chunk",
@@ -505,7 +495,7 @@ class GoogleGeminiBot(Bot):
                         # Collect function calls
                         if "functionCall" in part:
                             fc = part["functionCall"]
-                            logger.debug(f"[Gemini] Function call detected: {fc.get('name')}")
+                            logger.info(f"[Gemini] Function call: {fc.get('name')}")
                             all_tool_calls.append({
                                 "index": len(all_tool_calls),  # Add index to differentiate multiple tool calls
                                 "id": f"call_{int(time.time() * 1000000)}_{len(all_tool_calls)}",
@@ -522,7 +512,6 @@ class GoogleGeminiBot(Bot):
             
             # Send tool calls if any were collected
             if all_tool_calls and not has_sent_tool_calls:
-                logger.debug(f"[Gemini] Stream detected {len(all_tool_calls)} tool calls")
                 yield {
                     "id": f"chatcmpl-{time.time()}",
                     "object": "chat.completion.chunk",
@@ -535,14 +524,6 @@ class GoogleGeminiBot(Bot):
                     }]
                 }
                 has_sent_tool_calls = True
-            
-            # Log summary (only if there's something interesting)
-            if not has_content and not all_tool_calls:
-                logger.debug(f"[Gemini] Stream complete: has_content={has_content}, tool_calls={len(all_tool_calls)}")
-            elif all_tool_calls:
-                logger.debug(f"[Gemini] Stream complete: {len(all_tool_calls)} tool calls")
-            else:
-                logger.debug(f"[Gemini] Stream complete: text response")
             
             # 如果返回空响应，记录详细警告
             if not has_content and not all_tool_calls:

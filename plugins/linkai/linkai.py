@@ -32,7 +32,7 @@ class LinkAI(Plugin):
         self.sum_config = {}
         if self.config:
             self.sum_config = self.config.get("summary")
-        logger.info(f"[LinkAI] inited, config={self.config}")
+        logger.debug(f"[LinkAI] inited, config={self.config}")
 
     def on_handle_context(self, e_context: EventContext):
         """

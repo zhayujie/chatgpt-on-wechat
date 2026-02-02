@@ -31,7 +31,8 @@ class AgentStreamExecutor:
             tools: List[BaseTool],
             max_turns: int = 50,
             on_event: Optional[Callable] = None,
-            messages: Optional[List[Dict]] = None
+            messages: Optional[List[Dict]] = None,
+            max_context_turns: int = 30
     ):
         """
         Initialize stream executor
@@ -44,6 +45,7 @@ class AgentStreamExecutor:
             max_turns: Maximum number of turns
             on_event: Event callback function
             messages: Optional existing message history (for persistent conversations)
+            max_context_turns: Maximum number of conversation turns to keep in context
         """
         self.agent = agent
         self.model = model
@@ -52,6 +54,7 @@ class AgentStreamExecutor:
         self.tools = {tool.name: tool for tool in tools} if isinstance(tools, list) else tools
         self.max_turns = max_turns
         self.on_event = on_event
+        self.max_context_turns = max_context_turns
 
         # Message history - use provided messages or create new list
         self.messages = messages if messages is not None else []
@@ -147,10 +150,7 @@ class AgentStreamExecutor:
             Final response text
         """
         # Log user message with model info
-        logger.info(f"{'='*50}")
-        logger.info(f"🤖 Model: {self.model.model}")
-        logger.info(f"👤 用户: {user_message}")
-        logger.info(f"{'='*50}")
+        logger.info(f"🤖 {self.model.model} | 👤 {user_message}")
         
         # Add user message (Claude format - use content blocks for consistency)
         self.messages.append({
@@ -171,7 +171,7 @@ class AgentStreamExecutor:
         try:
             while turn < self.max_turns:
                 turn += 1
-                logger.info(f"第 {turn} 轮")
+                logger.debug(f"第 {turn} 轮")
                 self._emit_event("turn_start", {"turn": turn})
 
                 # Check if memory flush is needed (before calling LLM)
@@ -238,7 +238,7 @@ class AgentStreamExecutor:
                     else:
                         logger.info(f"💭 {assistant_msg[:150]}{'...' if len(assistant_msg) > 150 else ''}")
                     
-                    logger.info(f"✅ 完成 (无工具调用)")
+                    logger.debug(f"✅ 完成 (无工具调用)")
                     self._emit_event("turn_end", {
                         "turn": turn,
                         "has_tool_calls": False
@@ -350,11 +350,37 @@ class AgentStreamExecutor:
                 })
 
             if turn >= self.max_turns:
-                logger.warning(f"⚠️  已达到最大轮数限制: {self.max_turns}")
-                if not final_response:
+                logger.warning(f"⚠️  已达到最大决策步数限制: {self.max_turns}")
+                
+                # Force model to summarize without tool calls
+                logger.info(f"[Agent] Requesting summary from LLM after reaching max steps...")
+                
+                # Add a system message to force summary
+                self.messages.append({
+                    "role": "user",
+                    "content": [{
+                        "type": "text",
+                        "text": f"你已经执行了{turn}个决策步骤，达到了单次运行的最大步数限制。请总结一下你目前的执行过程和结果，告诉用户当前的进展情况。不要再调用工具，直接用文字回复。"
+                    }]
+                })
+                
+                # Call LLM one more time to get summary (without retry to avoid loops)
+                try:
+                    summary_response, summary_tools = self._call_llm_stream(retry_on_empty=False)
+                    if summary_response:
+                        final_response = summary_response
+                        logger.info(f"💭 Summary: {summary_response[:150]}{'...' if len(summary_response) > 150 else ''}")
+                    else:
+                        # Fallback if model still doesn't respond
+                        final_response = (
+                            f"我已经执行了{turn}个决策步骤，达到了单次运行的步数上限。"
+                            "任务可能还未完全完成，建议你将任务拆分成更小的步骤，或者换一种方式描述需求。"
+                        )
+                except Exception as e:
+                    logger.warning(f"Failed to get summary from LLM: {e}")
                     final_response = (
-                        "抱歉，我在处理你的请求时遇到了一些困难，尝试了多次仍未能完成。"
-                        "请尝试简化你的问题，或换一种方式描述。"
+                        f"我已经执行了{turn}个决策步骤，达到了单次运行的步数上限。"
+                        "任务可能还未完全完成，建议你将任务拆分成更小的步骤，或者换一种方式描述需求。"
                     )
 
         except Exception as e:
@@ -363,7 +389,7 @@ class AgentStreamExecutor:
             raise
 
         finally:
-            logger.info(f"🏁 完成({turn}轮)")
+            logger.debug(f"🏁 完成({turn}轮)")
             self._emit_event("agent_end", {"final_response": final_response})
 
             # 每轮对话结束后增加计数（用户消息+AI回复=1轮）
@@ -783,54 +809,174 @@ class AgentStreamExecutor:
                         logger.warning(f"⚠️ Removing incomplete tool_use message from history")
                         self.messages.pop()
 
+    def _identify_complete_turns(self) -> List[Dict]:
+        """
+        识别完整的对话轮次
+        
+        一个完整轮次包括：
+        1. 用户消息（text）
+        2. AI 回复（可能包含 tool_use）
+        3. 工具结果（tool_result，如果有）
+        4. 后续 AI 回复（如果有）
+        
+        Returns:
+            List of turns, each turn is a dict with 'messages' list
+        """
+        turns = []
+        current_turn = {'messages': []}
+        
+        for msg in self.messages:
+            role = msg.get('role')
+            content = msg.get('content', [])
+            
+            if role == 'user':
+                # 检查是否是用户查询（不是工具结果）
+                is_user_query = False
+                if isinstance(content, list):
+                    is_user_query = any(
+                        block.get('type') == 'text' 
+                        for block in content 
+                        if isinstance(block, dict)
+                    )
+                elif isinstance(content, str):
+                    is_user_query = True
+                
+                if is_user_query:
+                    # 开始新轮次
+                    if current_turn['messages']:
+                        turns.append(current_turn)
+                    current_turn = {'messages': [msg]}
+                else:
+                    # 工具结果，属于当前轮次
+                    current_turn['messages'].append(msg)
+            else:
+                # AI 回复，属于当前轮次
+                current_turn['messages'].append(msg)
+        
+        # 添加最后一个轮次
+        if current_turn['messages']:
+            turns.append(current_turn)
+        
+        return turns
+    
+    def _estimate_turn_tokens(self, turn: Dict) -> int:
+        """估算一个轮次的 tokens"""
+        return sum(
+            self.agent._estimate_message_tokens(msg) 
+            for msg in turn['messages']
+        )
+
     def _trim_messages(self):
         """
-        Trim message history to stay within context limits.
-        Uses agent's context management configuration.
+        智能清理消息历史，保持对话完整性
+        
+        使用完整轮次作为清理单位，确保：
+        1. 不会在对话中间截断
+        2. 工具调用链（tool_use + tool_result）保持完整
+        3. 每轮对话都是完整的（用户消息 + AI回复 + 工具调用）
         """
         if not self.messages or not self.agent:
             return
 
+        # Step 1: 识别完整轮次
+        turns = self._identify_complete_turns()
+        
+        if not turns:
+            return
+        
+        # Step 2: 轮次限制 - 保留最近 N 轮
+        if len(turns) > self.max_context_turns:
+            removed_turns = len(turns) - self.max_context_turns
+            turns = turns[-self.max_context_turns:]  # 保留最近的轮次
+            
+            logger.info(
+                f"💾 上下文轮次超限: {len(turns) + removed_turns} > {self.max_context_turns}，"
+                f"移除最早的 {removed_turns} 轮完整对话"
+            )
+
+        # Step 3: Token 限制 - 保留完整轮次
         # Get context window from agent (based on model)
         context_window = self.agent._get_model_context_window()
 
-        # Reserve 10% for response generation
-        reserve_tokens = int(context_window * 0.1)
-        max_tokens = context_window - reserve_tokens
+        # Use configured max_context_tokens if available
+        if hasattr(self.agent, 'max_context_tokens') and self.agent.max_context_tokens:
+            max_tokens = self.agent.max_context_tokens
+        else:
+            # Reserve 10% for response generation
+            reserve_tokens = int(context_window * 0.1)
+            max_tokens = context_window - reserve_tokens
 
-        # Estimate current tokens
-        current_tokens = sum(self.agent._estimate_message_tokens(msg) for msg in self.messages)
-
-        # Add system prompt tokens
+        # Estimate system prompt tokens
         system_tokens = self.agent._estimate_message_tokens({"role": "system", "content": self.system_prompt})
-        current_tokens += system_tokens
+        available_tokens = max_tokens - system_tokens
 
-        # If under limit, no need to trim
-        if current_tokens <= max_tokens:
+        # Calculate current tokens
+        current_tokens = sum(self._estimate_turn_tokens(turn) for turn in turns)
+        
+        # If under limit, reconstruct messages and return
+        if current_tokens + system_tokens <= max_tokens:
+            # Reconstruct message list from turns
+            new_messages = []
+            for turn in turns:
+                new_messages.extend(turn['messages'])
+            
+            old_count = len(self.messages)
+            self.messages = new_messages
+            
+            # Log if we removed messages due to turn limit
+            if old_count > len(self.messages):
+                logger.info(f"   重建消息列表: {old_count} -> {len(self.messages)} 条消息")
             return
 
-        # Keep messages from newest, accumulating tokens
-        available_tokens = max_tokens - system_tokens
-        kept_messages = []
+        # Token limit exceeded - keep complete turns from newest
+        logger.info(
+            f"🔄 上下文tokens超限: ~{current_tokens + system_tokens} > {max_tokens}，"
+            f"将按完整轮次移除最早的对话"
+        )
+
+        # 从最新轮次开始，反向累加（保持完整轮次）
+        kept_turns = []
         accumulated_tokens = 0
-
-        for msg in reversed(self.messages):
-            msg_tokens = self.agent._estimate_message_tokens(msg)
-            if accumulated_tokens + msg_tokens <= available_tokens:
-                kept_messages.insert(0, msg)
-                accumulated_tokens += msg_tokens
+        min_turns = 3  # 尽量保留至少 3 轮，但不强制（避免超出 token 限制）
+        
+        for i, turn in enumerate(reversed(turns)):
+            turn_tokens = self._estimate_turn_tokens(turn)
+            turns_from_end = i + 1
+            
+            # 检查是否超出限制
+            if accumulated_tokens + turn_tokens <= available_tokens:
+                kept_turns.insert(0, turn)
+                accumulated_tokens += turn_tokens
             else:
+                # 超出限制
+                # 如果还没有保留足够的轮次，且这是最后的机会，尝试保留
+                if len(kept_turns) < min_turns and turns_from_end <= min_turns:
+                    # 检查是否严重超出（超出 20% 以上则放弃）
+                    overflow_ratio = (accumulated_tokens + turn_tokens - available_tokens) / available_tokens
+                    if overflow_ratio < 0.2:  # 允许最多超出 20%
+                        kept_turns.insert(0, turn)
+                        accumulated_tokens += turn_tokens
+                        logger.debug(f"   为保留最少轮次，允许超出 {overflow_ratio*100:.1f}%")
+                        continue
+                # 停止保留更早的轮次
                 break
-
+        
+        # 重建消息列表
+        new_messages = []
+        for turn in kept_turns:
+            new_messages.extend(turn['messages'])
+        
         old_count = len(self.messages)
-        self.messages = kept_messages
+        old_turn_count = len(turns)
+        self.messages = new_messages
         new_count = len(self.messages)
-
+        new_turn_count = len(kept_turns)
+        
         if old_count > new_count:
             logger.info(
-                f"Context trimmed: {old_count} -> {new_count} messages "
-                f"(~{current_tokens} -> ~{system_tokens + accumulated_tokens} tokens, "
-                f"limit: {max_tokens})"
+                f"   移除了 {old_turn_count - new_turn_count} 轮对话 "
+                f"({old_count} -> {new_count} 条消息，"
+                f"~{current_tokens + system_tokens} -> ~{accumulated_tokens + system_tokens} tokens)"
             )
 
     def _prepare_messages(self) -> List[Dict[str, Any]]:

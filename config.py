@@ -15,6 +15,8 @@ available_setting = {
     "open_ai_api_key": "",  # openai api key
     # openai apibase，当use_azure_chatgpt为true时，需要设置对应的api base
     "open_ai_api_base": "https://api.openai.com/v1",
+    "claude_api_base": "https://api.anthropic.com/v1",  # claude api base
+    "gemini_api_base": "https://generativelanguage.googleapis.com",  # gemini api base
     "proxy": "",  # openai使用的代理
     # chatgpt模型， 当use_azure_chatgpt为true时，其名称为Azure上model deployment名称
     "model": "gpt-3.5-turbo",  # 可选择: gpt-4o, pt-4o-mini, gpt-4-turbo, claude-3-sonnet, wenxin, moonshot, qwen-turbo, xunfei, glm-4, minimax, gemini等模型，全部可选模型详见common/const.py文件
@@ -204,13 +206,13 @@ class Config(dict):
     def __getitem__(self, key):
         # 跳过以下划线开头的注释字段
         if not key.startswith("_") and key not in available_setting:
-            raise Exception("key {} not in available_setting".format(key))
+            logger.warning("[Config] key '{}' not in available_setting, may not take effect".format(key))
         return super().__getitem__(key)
 
     def __setitem__(self, key, value):
         # 跳过以下划线开头的注释字段
         if not key.startswith("_") and key not in available_setting:
-            raise Exception("key {} not in available_setting".format(key))
+            logger.warning("[Config] key '{}' not in available_setting, may not take effect".format(key))
         return super().__setitem__(key, value)
 
     def get(self, key, default=None):

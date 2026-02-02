@@ -25,13 +25,33 @@ class FeishuMessage(ChatMessage):
             content = json.loads(msg.get('content'))
             self.content = content.get("text").strip()
         elif msg_type == "image":
-            # 单张图片消息，不处理和存储
+            # 单张图片消息：下载并缓存，等待用户提问时一起发送
             self.ctype = ContextType.IMAGE
             content = json.loads(msg.get("content"))
             image_key = content.get("image_key")
-            # 仅记录图片key，不下载
-            self.content = f"[图片: {image_key}]"
-            logger.info(f"[FeiShu] Received single image message, key={image_key}, skipped download")
+            
+            # 下载图片到工作空间临时目录
+            workspace_root = os.path.expanduser(conf().get("agent_workspace", "~/cow"))
+            tmp_dir = os.path.join(workspace_root, "tmp")
+            os.makedirs(tmp_dir, exist_ok=True)
+            image_path = os.path.join(tmp_dir, f"{image_key}.png")
+            
+            # 下载图片
+            url = f"https://open.feishu.cn/open-apis/im/v1/messages/{msg.get('message_id')}/resources/{image_key}"
+            headers = {"Authorization": "Bearer " + access_token}
+            params = {"type": "image"}
+            response = requests.get(url=url, headers=headers, params=params)
+            
+            if response.status_code == 200:
+                with open(image_path, "wb") as f:
+                    f.write(response.content)
+                logger.info(f"[FeiShu] Downloaded single image, key={image_key}, path={image_path}")
+                self.content = image_path
+                self.image_path = image_path  # 保存图片路径
+            else:
+                logger.error(f"[FeiShu] Failed to download single image, key={image_key}, status={response.status_code}")
+                self.content = f"[图片下载失败: {image_key}]"
+                self.image_path = None
         elif msg_type == "post":
             # 富文本消息，可能包含图片、文本等多种元素
             content = json.loads(msg.get("content"))

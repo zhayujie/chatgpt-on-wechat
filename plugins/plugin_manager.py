@@ -38,7 +38,7 @@ class PluginManager:
             if self.current_plugin_path == None:
                 raise Exception("Plugin path not set")
             self.plugins[name.upper()] = plugincls
-            logger.info("Plugin %s_v%s registered, path=%s" % (name, plugincls.version, plugincls.path))
+            logger.debug("Plugin %s_v%s registered, path=%s" % (name, plugincls.version, plugincls.path))
 
         return wrapper
 
@@ -47,7 +47,7 @@ class PluginManager:
             json.dump(self.pconf, f, indent=4, ensure_ascii=False)
 
     def load_config(self):
-        logger.info("Loading plugins config...")
+        logger.debug("Loading plugins config...")
 
         modified = False
         if os.path.exists("./plugins/plugins.json"):
@@ -85,7 +85,7 @@ class PluginManager:
             logger.error(e)
 
     def scan_plugins(self):
-        logger.info("Scaning plugins ...")
+        logger.debug("Scanning plugins ...")
         plugins_dir = "./plugins"
         raws = [self.plugins[name] for name in self.plugins]
         for plugin_name in os.listdir(plugins_dir):

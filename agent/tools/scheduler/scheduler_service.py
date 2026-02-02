@@ -39,7 +39,7 @@ class SchedulerService:
             self.running = True
             self.thread = threading.Thread(target=self._run_loop, daemon=True)
             self.thread.start()
-            logger.info("[Scheduler] Service started")
+            logger.debug("[Scheduler] Service started")
     
     def stop(self):
         """Stop the scheduler service"""
@@ -54,7 +54,7 @@ class SchedulerService:
     
     def _run_loop(self):
         """Main scheduler loop"""
-        logger.info("[Scheduler] Scheduler loop started")
+        logger.debug("[Scheduler] Scheduler loop started")
         
         while self.running:
             try:

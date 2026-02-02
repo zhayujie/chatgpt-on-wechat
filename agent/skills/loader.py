@@ -259,7 +259,7 @@ class SkillLoader:
             for diag in all_diagnostics[:5]:  # Log first 5
                 logger.debug(f"  - {diag}")
         
-        logger.info(f"Loaded {len(skill_map)} skills from all sources")
+        logger.debug(f"Loaded {len(skill_map)} skills from all sources")
         
         return skill_map
     

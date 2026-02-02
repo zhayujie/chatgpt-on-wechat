@@ -53,7 +53,7 @@ class Dungeon(Plugin):
     def __init__(self):
         super().__init__()
         self.handlers[Event.ON_HANDLE_CONTEXT] = self.on_handle_context
-        logger.info("[Dungeon] inited")
+        logger.debug("[Dungeon] inited")
         # 目前没有设计session过期事件，这里先暂时使用过期字典
         if conf().get("expires_in_seconds"):
             self.games = ExpiredDict(conf().get("expires_in_seconds"))

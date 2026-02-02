@@ -37,9 +37,9 @@ class Keyword(Plugin):
             # 加载关键词
             self.keyword = conf["keyword"]
 
-            logger.info("[keyword] {}".format(self.keyword))
+            logger.debug("[keyword] {}".format(self.keyword))
             self.handlers[Event.ON_HANDLE_CONTEXT] = self.on_handle_context
-            logger.info("[keyword] inited.")
+            logger.debug("[keyword] inited.")
         except Exception as e:
             logger.warn("[keyword] init failed, ignore or see https://github.com/zhayujie/chatgpt-on-wechat/tree/master/plugins/keyword .")
             raise e

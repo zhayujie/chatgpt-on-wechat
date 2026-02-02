@@ -59,7 +59,7 @@ class SkillManager:
             extra_dirs=self.extra_dirs,
         )
         
-        logger.info(f"SkillManager: Loaded {len(self.skills)} skills")
+        logger.debug(f"SkillManager: Loaded {len(self.skills)} skills")
     
     def get_skill(self, name: str) -> Optional[SkillEntry]:
         """

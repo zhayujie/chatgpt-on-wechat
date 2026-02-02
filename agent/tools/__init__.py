@@ -46,32 +46,6 @@ def _import_optional_tools():
     except Exception as e:
         logger.error(f"[Tools] Scheduler tool failed to load: {e}")
     
-    # Google Search (requires requests)
-    try:
-        from agent.tools.google_search.google_search import GoogleSearch
-        tools['GoogleSearch'] = GoogleSearch
-    except ImportError as e:
-        logger.warning(f"[Tools] GoogleSearch tool not loaded - missing dependency: {e}")
-    except Exception as e:
-        logger.error(f"[Tools] GoogleSearch tool failed to load: {e}")
-    
-    # File Save (may have dependencies)
-    try:
-        from agent.tools.file_save.file_save import FileSave
-        tools['FileSave'] = FileSave
-    except ImportError as e:
-        logger.warning(f"[Tools] FileSave tool not loaded - missing dependency: {e}")
-    except Exception as e:
-        logger.error(f"[Tools] FileSave tool failed to load: {e}")
-    
-    # Terminal (basic, should work)
-    try:
-        from agent.tools.terminal.terminal import Terminal
-        tools['Terminal'] = Terminal
-    except ImportError as e:
-        logger.warning(f"[Tools] Terminal tool not loaded - missing dependency: {e}")
-    except Exception as e:
-        logger.error(f"[Tools] Terminal tool failed to load: {e}")
     
     return tools
 
@@ -102,7 +76,7 @@ def _import_browser_tool():
 
 
 # Dynamically set BrowserTool
-BrowserTool = _import_browser_tool()
+# BrowserTool = _import_browser_tool()
 
 # Export all tools (including optional ones that might be None)
 __all__ = [
@@ -119,10 +93,7 @@ __all__ = [
     'EnvConfig',
     'SchedulerTool',
     # Optional tools (may be None if dependencies not available)
-    'GoogleSearch',
-    'FileSave',
-    'Terminal',
-    'BrowserTool'
+    # 'BrowserTool'
 ]
 
 """

@@ -173,11 +173,11 @@ class ChatChannel(Channel):
     def _handle(self, context: Context):
         if context is None or not context.content:
             return
-        logger.debug("[chat_channel] ready to handle context: {}".format(context))
+        logger.debug("[chat_channel] handling context: {}".format(context))
         # reply的构建步骤
         reply = self._generate_reply(context)
 
-        logger.debug("[chat_channel] ready to decorate reply: {}".format(reply))
+        logger.debug("[chat_channel] decorating reply: {}".format(reply))
 
         # reply的包装步骤
         if reply and reply.content:
@@ -195,7 +195,7 @@ class ChatChannel(Channel):
         )
         reply = e_context["reply"]
         if not e_context.is_pass():
-            logger.debug("[chat_channel] ready to handle context: type={}, content={}".format(context.type, context.content))
+            logger.debug("[chat_channel] type={}, content={}".format(context.type, context.content))
             if context.type == ContextType.TEXT or context.type == ContextType.IMAGE_CREATE:  # 文字和图片消息
                 context["channel"] = e_context["channel"]
                 reply = super().build_reply_content(context.content, context)
@@ -289,7 +289,7 @@ class ChatChannel(Channel):
             )
             reply = e_context["reply"]
             if not e_context.is_pass() and reply and reply.type:
-                logger.debug("[chat_channel] ready to send reply: {}, context: {}".format(reply, context))
+                logger.debug("[chat_channel] sending reply: {}, context: {}".format(reply, context))
                 
                 # 如果是文本回复，尝试提取并发送图片
                 if reply.type == ReplyType.TEXT:
@@ -343,7 +343,9 @@ class ChatChannel(Channel):
             logger.info(f"[chat_channel] Extracted {len(media_items)} media item(s) from reply")
             
             # 先发送文本（保持原文本不变）
+            logger.info(f"[chat_channel] Sending text content before media: {reply.content[:100]}...")
             self._send(reply, context)
+            logger.info(f"[chat_channel] Text sent, now sending {len(media_items)} media item(s)")
             
             # 然后逐个发送媒体文件
             for i, (url, media_type) in enumerate(media_items):
@@ -381,7 +383,7 @@ class ChatChannel(Channel):
                     logger.error(f"[chat_channel] Failed to send {media_type} {url}: {e}")
         else:
             # 没有媒体文件，正常发送文本
-            self._send(reply, context)
+                self._send(reply, context)
 
     def _send(self, reply: Reply, context: Context, retry_cnt=0):
         try:

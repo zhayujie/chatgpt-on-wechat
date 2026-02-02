@@ -36,7 +36,7 @@ def init_scheduler(agent_bridge) -> bool:
         
         # Create task store
         _task_store = TaskStore(store_path)
-        logger.info(f"[Scheduler] Task store initialized: {store_path}")
+        logger.debug(f"[Scheduler] Task store initialized: {store_path}")
         
         # Create execute callback
         def execute_task_callback(task: dict):
@@ -65,7 +65,7 @@ def init_scheduler(agent_bridge) -> bool:
         _scheduler_service = SchedulerService(_task_store, execute_task_callback)
         _scheduler_service.start()
         
-        logger.info("[Scheduler] Scheduler service initialized and started")
+        logger.debug("[Scheduler] Scheduler service initialized and started")
         return True
         
     except Exception as e:

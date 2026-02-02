@@ -230,12 +230,7 @@ class AgentBridge:
 
         # Log skill loading details
         if agent.skill_manager:
-            logger.info(f"[AgentBridge] SkillManager initialized:")
-            logger.info(f"[AgentBridge]   - Managed dir: {agent.skill_manager.managed_skills_dir}")
-            logger.info(f"[AgentBridge]   - Workspace dir: {agent.skill_manager.workspace_dir}")
-            logger.info(f"[AgentBridge]   - Total skills: {len(agent.skill_manager.skills)}")
-            for skill_name in agent.skill_manager.skills.keys():
-                logger.info(f"[AgentBridge]     * {skill_name}")
+            logger.debug(f"[AgentBridge] SkillManager initialized with {len(agent.skill_manager.skills)} skills")
 
         return agent
     
@@ -469,14 +464,19 @@ class AgentBridge:
 
         logger.info("[AgentBridge] System prompt built successfully")
 
+        # Get cost control parameters from config
+        max_steps = conf().get("agent_max_steps", 20)
+        max_context_tokens = conf().get("agent_max_context_tokens", 50000)
+        
         # Create agent with configured tools and workspace
         agent = self.create_agent(
             system_prompt=system_prompt,
             tools=tools,
-            max_steps=50,
+            max_steps=max_steps,
             output_mode="logger",
             workspace_dir=workspace_root,  # Pass workspace to agent for skills loading
-            enable_skills=True  # Enable skills auto-loading
+            enable_skills=True,  # Enable skills auto-loading
+            max_context_tokens=max_context_tokens
         )
 
         # Attach memory manager to agent if available
@@ -507,7 +507,7 @@ class AgentBridge:
             try:
                 from dotenv import load_dotenv
                 load_dotenv(env_file, override=True)
-                logger.info(f"[AgentBridge] Loaded environment variables from {env_file} for session {session_id}")
+                logger.debug(f"[AgentBridge] Loaded environment variables from {env_file} for session {session_id}")
             except ImportError:
                 logger.warning(f"[AgentBridge] python-dotenv not installed, skipping .env file loading for session {session_id}")
             except Exception as e:
@@ -543,12 +543,12 @@ class AgentBridge:
                         api_key=openai_api_key,
                         api_base=openai_api_base or "https://api.openai.com/v1"
                     )
-                    logger.info(f"[AgentBridge] OpenAI embedding initialized for session {session_id}")
+                    logger.debug(f"[AgentBridge] OpenAI embedding initialized for session {session_id}")
                 except Exception as embed_error:
                     logger.warning(f"[AgentBridge] OpenAI embedding failed for session {session_id}: {embed_error}")
                     logger.info(f"[AgentBridge] Using keyword-only search for session {session_id}")
             else:
-                logger.info(f"[AgentBridge] No OpenAI API key, using keyword-only search for session {session_id}")
+                logger.debug(f"[AgentBridge] No OpenAI API key, using keyword-only search for session {session_id}")
             
             # 创建 memory config
             memory_config = MemoryConfig(workspace_root=workspace_root)
@@ -564,15 +564,15 @@ class AgentBridge:
                 if loop.is_running():
                     # 如果事件循环正在运行，创建任务
                     asyncio.create_task(memory_manager.sync())
-                    logger.info(f"[AgentBridge] Memory sync scheduled for session {session_id}")
+                    logger.debug(f"[AgentBridge] Memory sync scheduled for session {session_id}")
                 else:
                     # 如果没有运行的循环，直接执行
                     loop.run_until_complete(memory_manager.sync())
-                    logger.info(f"[AgentBridge] Memory synced successfully for session {session_id}")
+                    logger.debug(f"[AgentBridge] Memory synced successfully for session {session_id}")
             except RuntimeError:
                 # 没有事件循环，创建新的
                 asyncio.run(memory_manager.sync())
-                logger.info(f"[AgentBridge] Memory synced successfully for session {session_id}")
+                logger.debug(f"[AgentBridge] Memory synced successfully for session {session_id}")
             except Exception as sync_error:
                 logger.warning(f"[AgentBridge] Memory sync failed for session {session_id}: {sync_error}")
             
@@ -619,7 +619,7 @@ class AgentBridge:
                 from agent.tools.scheduler.integration import init_scheduler
                 if init_scheduler(self):
                     self.scheduler_initialized = True
-                    logger.info(f"[AgentBridge] Scheduler service initialized for session {session_id}")
+                    logger.debug(f"[AgentBridge] Scheduler service initialized for session {session_id}")
             except Exception as e:
                 logger.warning(f"[AgentBridge] Failed to initialize scheduler for session {session_id}: {e}")
         
@@ -651,7 +651,7 @@ class AgentBridge:
         try:
             from agent.skills import SkillManager
             skill_manager = SkillManager(workspace_dir=workspace_root)
-            logger.info(f"[AgentBridge] Initialized SkillManager with {len(skill_manager.skills)} skills for session {session_id}")
+            logger.debug(f"[AgentBridge] Initialized SkillManager with {len(skill_manager.skills)} skills for session {session_id}")
         except Exception as e:
             logger.warning(f"[AgentBridge] Failed to initialize SkillManager for session {session_id}: {e}")
 
@@ -716,15 +716,20 @@ class AgentBridge:
         if is_first:
             mark_conversation_started(workspace_root)
 
+        # Get cost control parameters from config
+        max_steps = conf().get("agent_max_steps", 20)
+        max_context_tokens = conf().get("agent_max_context_tokens", 50000)
+
         # Create agent for this session
         agent = self.create_agent(
             system_prompt=system_prompt,
             tools=tools,
-            max_steps=50,
+            max_steps=max_steps,
             output_mode="logger",
             workspace_dir=workspace_root,
             skill_manager=skill_manager,
-            enable_skills=True
+            enable_skills=True,
+            max_context_tokens=max_context_tokens
         )
 
         if memory_manager:
@@ -893,16 +898,16 @@ class AgentBridge:
         for config_key, env_key in key_mapping.items():
             # Skip if already in .env file
             if env_key in existing_env_vars:
-                logger.debug(f"[AgentBridge] Skipping {env_key} - already in .env")
                 continue
             
             # Get value from config.json
             value = conf().get(config_key, "")
             if value and value.strip():  # Only migrate non-empty values
                 keys_to_migrate[env_key] = value.strip()
-                logger.debug(f"[AgentBridge] Will migrate {env_key} from config.json")
-            else:
-                logger.debug(f"[AgentBridge] Skipping {env_key} - no value in config.json")
+        
+        # Log summary if there are keys to skip
+        if existing_env_vars:
+            logger.debug(f"[AgentBridge] {len(existing_env_vars)} env vars already in .env")
         
         # Write new keys to .env file
         if keys_to_migrate:

@@ -32,7 +32,7 @@ class AgentPlugin(Plugin):
         self.config = self._load_config()
         self.tool_manager = ToolManager()
         self.tool_manager.load_tools(config_dict=self.config.get("tools"))
-        logger.info("[agent] inited")
+        logger.debug("[agent] inited")
     
     def _load_config(self) -> Dict:
         """Load configuration from config.yaml file."""

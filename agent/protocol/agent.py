@@ -1,5 +1,6 @@
 import json
 import time
+import threading
 
 from common.log import logger
 from agent.protocol.models import LLMRequest, LLMModel
@@ -43,6 +44,7 @@ class Agent:
         self.output_mode = output_mode
         self.last_usage = None  # Store last API response usage info
         self.messages = []  # Unified message history for stream mode
+        self.messages_lock = threading.Lock()  # Lock for thread-safe message operations
         self.memory_manager = memory_manager  # Memory manager for auto memory flush
         self.workspace_dir = workspace_dir  # Workspace directory
         self.enable_skills = enable_skills  # Skills enabled flag
@@ -57,7 +59,7 @@ class Agent:
                 try:
                     from agent.skills import SkillManager
                     self.skill_manager = SkillManager(workspace_dir=workspace_dir)
-                    logger.info(f"Initialized SkillManager with {len(self.skill_manager.skills)} skills")
+                    logger.debug(f"Initialized SkillManager with {len(self.skill_manager.skills)} skills")
                 except Exception as e:
                     logger.warning(f"Failed to initialize SkillManager: {e}")
         
@@ -335,7 +337,8 @@ class Agent:
         """
         # Clear history if requested
         if clear_history:
-            self.messages = []
+            with self.messages_lock:
+                self.messages = []
 
         # Get model to use
         if not self.model:
@@ -344,7 +347,17 @@ class Agent:
         # Get full system prompt with skills
         full_system_prompt = self.get_full_system_prompt(skill_filter=skill_filter)
 
-        # Create stream executor with agent's message history
+        # Create a copy of messages for this execution to avoid concurrent modification
+        # Record the original length to track which messages are new
+        with self.messages_lock:
+            messages_copy = self.messages.copy()
+            original_length = len(self.messages)
+
+        # Get max_context_turns from config
+        from config import conf
+        max_context_turns = conf().get("agent_max_context_turns", 30)
+        
+        # Create stream executor with copied message history
         executor = AgentStreamExecutor(
             agent=self,
             model=self.model,
@@ -352,14 +365,18 @@ class Agent:
             tools=self.tools,
             max_turns=self.max_steps,
             on_event=on_event,
-            messages=self.messages  # Pass agent's message history
+            messages=messages_copy,  # Pass copied message history
+            max_context_turns=max_context_turns
         )
 
         # Execute
         response = executor.run_stream(user_message)
 
-        # Update agent's message history from executor
-        self.messages = executor.messages
+        # Append only the NEW messages from this execution (thread-safe)
+        # This allows concurrent requests to both contribute to history
+        with self.messages_lock:
+            new_messages = executor.messages[original_length:]
+            self.messages.extend(new_messages)
         
         # Store executor reference for agent_bridge to access files_to_send
         self.stream_executor = executor
