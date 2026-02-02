@@ -243,7 +243,7 @@ class Config(dict):
         try:
             with open(os.path.join(get_appdata_dir(), "user_datas.pkl"), "rb") as f:
                 self.user_datas = pickle.load(f)
-                logger.info("[Config] User datas loaded.")
+                logger.debug("[Config] User datas loaded.")
         except FileNotFoundError as e:
             logger.info("[Config] User datas file not found, ignore.")
         except Exception as e:
@@ -288,6 +288,15 @@ def drag_sensitive(config):
 
 def load_config():
     global config
+
+    # 打印 ASCII Logo
+    logger.info("  ____                _                    _   ")
+    logger.info(" / ___|_____      __ / \\   __ _  ___ _ __ | |_ ")
+    logger.info("| |   / _ \\ \\ /\\ / // _ \\ / _` |/ _ \\ '_ \\| __|")
+    logger.info("| |__| (_) \\ V  V // ___ \\ (_| |  __/ | | | |_ ")
+    logger.info(" \\____\\___/ \\_/\\_//_/   \\_\\__, |\\___|_| |_|\\__|")
+    logger.info("                          |___/                 ")
+
     config_path = "./config.json"
     if not os.path.exists(config_path):
         logger.info("配置文件不存在，将使用config-template.json模板")
@@ -323,6 +332,23 @@ def load_config():
         logger.debug("[INIT] set log level to DEBUG")
 
     logger.info("[INIT] load config: {}".format(drag_sensitive(config)))
+
+    # 打印系统初始化信息
+    logger.info("[INIT] ========================================")
+    logger.info("[INIT] System Initialization")
+    logger.info("[INIT] ========================================")
+    logger.info("[INIT] Channel: {}".format(config.get("channel_type", "unknown")))
+    logger.info("[INIT] Model: {}".format(config.get("model", "unknown")))
+
+    # Agent模式信息
+    if config.get("agent", False):
+        workspace = config.get("agent_workspace", "~/cow")
+        logger.info("[INIT] Mode: Agent (workspace: {})".format(workspace))
+    else:
+        logger.info("[INIT] Mode: Standard")
+
+    logger.info("[INIT] Debug: {}".format(config.get("debug", False)))
+    logger.info("[INIT] ========================================")
 
     config.load_user_datas()
 

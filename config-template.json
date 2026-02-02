@@ -14,7 +14,7 @@
   "group_speech_recognition": false,
   "proxy": "",
   "use_linkai": false,
-  "linkai_api_key": "",
+  "linkai_api_key": "YOUR API KEY",
   "linkai_app_code": "",
   "agent": true,
   "agent_max_context_tokens": 40000,
