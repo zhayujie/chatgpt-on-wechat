@@ -138,48 +138,84 @@ def download_image_file(image_url, temp_dir):
             logger.error("[DingTalk] Missing dingtalk_client_id or dingtalk_client_secret")
             return None
         
-        # 获取 access_token
-        token_url = "https://oapi.dingtalk.com/gettoken"
-        token_params = {
-            "appkey": client_id,
-            "appsecret": client_secret
+        # 解析 robot_code 和 download_code
+        parts = download_code.split(":", 1)
+        if len(parts) != 2:
+            logger.error(f"[DingTalk] Invalid download_code format (expected robot_code:download_code): {download_code[:50]}")
+            return None
+        
+        robot_code, actual_download_code = parts
+        
+        # 获取 access_token（使用新版 API）
+        token_url = "https://api.dingtalk.com/v1.0/oauth2/accessToken"
+        token_headers = {
+            "Content-Type": "application/json"
+        }
+        token_body = {
+            "appKey": client_id,
+            "appSecret": client_secret
         }
         
         try:
-            token_response = requests.get(token_url, params=token_params, timeout=10)
-            token_data = token_response.json()
+            token_response = requests.post(token_url, json=token_body, headers=token_headers, timeout=10)
             
-            if token_data.get("errcode") == 0:
-                access_token = token_data.get("access_token")
+            if token_response.status_code == 200:
+                token_data = token_response.json()
+                access_token = token_data.get("accessToken")
                 
-                # 下载图片
-                download_url = f"https://oapi.dingtalk.com/robot/messageFiles/download"
-                download_params = {
-                    "access_token": access_token,
-                    "downloadCode": download_code
+                if not access_token:
+                    logger.error(f"[DingTalk] Failed to get access token: {token_data}")
+                    return None
+                
+                # 获取下载 URL（使用新版 API）
+                download_api_url = "https://api.dingtalk.com/v1.0/robot/messageFiles/download"
+                download_headers = {
+                    "x-acs-dingtalk-access-token": access_token,
+                    "Content-Type": "application/json"
+                }
+                download_body = {
+                    "downloadCode": actual_download_code,
+                    "robotCode": robot_code
                 }
                 
-                response = requests.get(download_url, params=download_params, stream=True, timeout=60)
-                if response.status_code == 200:
-                    # 生成文件名（使用 download_code 的 hash，避免特殊字符）
-                    import hashlib
-                    file_hash = hashlib.md5(download_code.encode()).hexdigest()[:16]
-                    file_name = f"{file_hash}.png"
-                    file_path = os.path.join(temp_dir, file_name)
+                download_response = requests.post(download_api_url, json=download_body, headers=download_headers, timeout=10)
+                
+                if download_response.status_code == 200:
+                    download_data = download_response.json()
+                    download_url = download_data.get("downloadUrl")
                     
-                    with open(file_path, 'wb') as file:
-                        file.write(response.content)
+                    if not download_url:
+                        logger.error(f"[DingTalk] No downloadUrl in response: {download_data}")
+                        return None
                     
-                    logger.info(f"[DingTalk] Image downloaded successfully: {file_path}")
-                    return file_path
+                    # 从 downloadUrl 下载实际图片
+                    image_response = requests.get(download_url, stream=True, timeout=60)
+                    
+                    if image_response.status_code == 200:
+                        # 生成文件名（使用 download_code 的 hash，避免特殊字符）
+                        import hashlib
+                        file_hash = hashlib.md5(actual_download_code.encode()).hexdigest()[:16]
+                        file_name = f"{file_hash}.png"
+                        file_path = os.path.join(temp_dir, file_name)
+                        
+                        with open(file_path, 'wb') as file:
+                            file.write(image_response.content)
+                        
+                        logger.info(f"[DingTalk] Image downloaded successfully: {file_path}")
+                        return file_path
+                    else:
+                        logger.error(f"[DingTalk] Failed to download image from URL: {image_response.status_code}")
+                        return None
                 else:
-                    logger.error(f"[DingTalk] Failed to download image: {response.status_code}")
+                    logger.error(f"[DingTalk] Failed to get download URL: {download_response.status_code}, {download_response.text}")
                     return None
             else:
-                logger.error(f"[DingTalk] Failed to get access token: {token_data}")
+                logger.error(f"[DingTalk] Failed to get access token: {token_response.status_code}, {token_response.text}")
                 return None
         except Exception as e:
             logger.error(f"[DingTalk] Exception downloading image: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
             return None
     
     # 普通 HTTP(S) URL

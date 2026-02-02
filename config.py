@@ -187,9 +187,11 @@ available_setting = {
     "Minimax_group_id": "",
     "Minimax_base_url": "",
     "web_port": 9899,
-    "agent": False,  # 是否开启Agent模式
+    "agent": True,  # 是否开启Agent模式
     "agent_workspace": "~/cow",  # agent工作空间路径，用于存储skills、memory等
-    "bocha_api_key": ""
+    "agent_max_context_tokens": 40000,  # Agent模式下最大上下文tokens
+    "agent_max_context_turns": 30,  # Agent模式下最大上下文轮次
+    "agent_max_steps": 20,  # Agent模式下单次运行最大决策步数
 }
 
 

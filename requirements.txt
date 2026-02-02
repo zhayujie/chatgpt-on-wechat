@@ -15,3 +15,5 @@ croniter>=2.0.0
 
 # feishu websocket mode
 lark-oapi
+# dingtalk
+dingtalk_stream

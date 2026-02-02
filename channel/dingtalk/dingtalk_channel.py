@@ -437,37 +437,30 @@ class DingTalkChanel(ChatChannel, dingtalk_stream.ChatbotHandler):
     def get_image_download_url(self, download_code: str) -> str:
         """
         获取图片下载地址
-        使用钉钉 API: https://open.dingtalk.com/document/orgapp/download-the-robot-to-receive-the-file
+        返回一个特殊的 URL 格式：dingtalk://download/{robot_code}:{download_code}
+        后续会在 download_image_file 中使用新版 API 下载
         """
-        access_token = self.get_access_token()
-        if not access_token:
-            logger.error("[DingTalk] Cannot get access token for image download")
+        # 获取 robot_code
+        if not hasattr(self, '_robot_code_cache'):
+            self._robot_code_cache = None
+        
+        robot_code = self._robot_code_cache
+        
+        if not robot_code:
+            logger.error("[DingTalk] robot_code not available for image download")
             return None
         
-        url = f"https://oapi.dingtalk.com/robot/messageFiles/download"
-        params = {
-            "access_token": access_token,
-            "downloadCode": download_code
-        }
-        
-        try:
-            response = requests.get(url, params=params, timeout=10)
-            if response.status_code == 200:
-                # 返回图片的直接下载 URL（实际上这个 API 直接返回文件内容）
-                # 我们需要保存文件并返回本地路径
-                logger.info(f"[DingTalk] Successfully got image download URL for code: {download_code}")
-                # 返回一个特殊的 URL，包含 download_code，后续会用它来下载
-                return f"dingtalk://download/{download_code}"
-            else:
-                logger.error(f"[DingTalk] Failed to get image download URL: {response.text}")
-                return None
-        except Exception as e:
-            logger.error(f"[DingTalk] Exception getting image download URL: {e}")
-            return None
+        # 返回一个特殊的 URL，包含 robot_code 和 download_code
+        logger.info(f"[DingTalk] Successfully got image download URL for code: {download_code}")
+        return f"dingtalk://download/{robot_code}:{download_code}"
 
     async def process(self, callback: dingtalk_stream.CallbackMessage):
         try:
             incoming_message = dingtalk_stream.ChatbotMessage.from_dict(callback.data)
+            
+            # 缓存 robot_code，用于后续图片下载
+            if hasattr(incoming_message, 'robot_code'):
+                self._robot_code_cache = incoming_message.robot_code
             
             # Debug: 打印完整的 event 数据
             logger.debug(f"[DingTalk] ===== Incoming Message Debug =====")
