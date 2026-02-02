@@ -4,6 +4,7 @@ Storage layer for memory using SQLite + FTS5
 Provides vector and keyword search capabilities
 """
 
+from __future__ import annotations
 import sqlite3
 import json
 import hashlib

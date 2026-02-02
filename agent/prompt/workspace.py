@@ -4,6 +4,7 @@ Workspace Management - 工作空间管理模块
 负责初始化工作空间、创建模板文件、加载上下文文件
 """
 
+from __future__ import annotations
 import os
 import json
 from typing import List, Optional, Dict

@@ -4,6 +4,7 @@ Text chunking utilities for memory
 Splits text into chunks with token limits and overlap
 """
 
+from __future__ import annotations
 from typing import List, Tuple
 from dataclasses import dataclass
 

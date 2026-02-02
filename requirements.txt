@@ -18,9 +18,6 @@ zai-sdk
 # tongyi qwen sdk
 dashscope
 
-# wechatcom & wechatmp
-web.py
-wechatpy
 # feishu websocket mode
 lark-oapi
 # dingtalk

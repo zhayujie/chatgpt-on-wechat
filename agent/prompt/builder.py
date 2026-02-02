@@ -4,6 +4,7 @@ System Prompt Builder - 系统提示词构建器
 实现模块化的系统提示词构建，支持工具、技能、记忆等多个子系统
 """
 
+from __future__ import annotations
 import os
 from typing import List, Dict, Optional, Any
 from dataclasses import dataclass
