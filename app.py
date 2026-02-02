@@ -59,6 +59,23 @@ def run():
             os.environ["WECHATY_LOG"] = "warn"
 
         start_channel(channel_name)
+        
+        # 打印系统运行成功信息
+        logger.info("")
+        logger.info("=" * 50)
+        if conf().get("agent", False):
+            logger.info("✅ System started successfully!")
+            logger.info("🐮 Cow Agent is running")
+            logger.info(f"   Channel: {channel_name}")
+            logger.info(f"   Model: {conf().get('model', 'unknown')}")
+            logger.info(f"   Workspace: {conf().get('agent_workspace', '~/cow')}")
+        else:
+            logger.info("✅ System started successfully!")
+            logger.info("🤖 ChatBot is running")
+            logger.info(f"   Channel: {channel_name}")
+            logger.info(f"   Model: {conf().get('model', 'unknown')}")
+        logger.info("=" * 50)
+        logger.info("")
 
         while True:
             time.sleep(1)

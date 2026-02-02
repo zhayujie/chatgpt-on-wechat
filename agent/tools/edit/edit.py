@@ -22,7 +22,7 @@ class Edit(BaseTool):
     """Tool for precise file editing"""
     
     name: str = "edit"
-    description: str = "Edit a file by replacing exact text. The oldText must match exactly (including whitespace). Use this for precise, surgical edits."
+    description: str = "Edit a file by replacing exact text, or append to end if oldText is empty. For append: use empty oldText. For replace: oldText must match exactly (including whitespace)."
     
     params: dict = {
         "type": "object",
@@ -33,7 +33,7 @@ class Edit(BaseTool):
             },
             "oldText": {
                 "type": "string",
-                "description": "Exact text to find and replace (must match exactly)"
+                "description": "Text to find and replace. Use empty string to append to end of file. For replacement: must match exactly including whitespace."
             },
             "newText": {
                 "type": "string",
@@ -89,33 +89,44 @@ class Edit(BaseTool):
             normalized_old_text = normalize_to_lf(old_text)
             normalized_new_text = normalize_to_lf(new_text)
             
-            # Use fuzzy matching to find old text (try exact match first, then fuzzy match)
-            match_result = fuzzy_find_text(normalized_content, normalized_old_text)
-            
-            if not match_result.found:
-                return ToolResult.fail(
-                    f"Error: Could not find the exact text in {path}. "
-                    "The old text must match exactly including all whitespace and newlines."
+            # Special case: empty oldText means append to end of file
+            if not old_text or not old_text.strip():
+                # Append mode: add newText to the end
+                # Add newline before newText if file doesn't end with one
+                if normalized_content and not normalized_content.endswith('\n'):
+                    new_content = normalized_content + '\n' + normalized_new_text
+                else:
+                    new_content = normalized_content + normalized_new_text
+                base_content = normalized_content  # For verification
+            else:
+                # Normal edit mode: find and replace
+                # Use fuzzy matching to find old text (try exact match first, then fuzzy match)
+                match_result = fuzzy_find_text(normalized_content, normalized_old_text)
+                
+                if not match_result.found:
+                    return ToolResult.fail(
+                        f"Error: Could not find the exact text in {path}. "
+                        "The old text must match exactly including all whitespace and newlines."
+                    )
+                
+                # Calculate occurrence count (use fuzzy normalized content for consistency)
+                fuzzy_content = normalize_for_fuzzy_match(normalized_content)
+                fuzzy_old_text = normalize_for_fuzzy_match(normalized_old_text)
+                occurrences = fuzzy_content.count(fuzzy_old_text)
+                
+                if occurrences > 1:
+                    return ToolResult.fail(
+                        f"Error: Found {occurrences} occurrences of the text in {path}. "
+                        "The text must be unique. Please provide more context to make it unique."
+                    )
+                
+                # Execute replacement (use matched text position)
+                base_content = match_result.content_for_replacement
+                new_content = (
+                    base_content[:match_result.index] +
+                    normalized_new_text +
+                    base_content[match_result.index + match_result.match_length:]
                 )
-            
-            # Calculate occurrence count (use fuzzy normalized content for consistency)
-            fuzzy_content = normalize_for_fuzzy_match(normalized_content)
-            fuzzy_old_text = normalize_for_fuzzy_match(normalized_old_text)
-            occurrences = fuzzy_content.count(fuzzy_old_text)
-            
-            if occurrences > 1:
-                return ToolResult.fail(
-                    f"Error: Found {occurrences} occurrences of the text in {path}. "
-                    "The text must be unique. Please provide more context to make it unique."
-                )
-            
-            # Execute replacement (use matched text position)
-            base_content = match_result.content_for_replacement
-            new_content = (
-                base_content[:match_result.index] +
-                normalized_new_text +
-                base_content[match_result.index + match_result.match_length:]
-            )
             
             # Verify replacement actually changed content
             if base_content == new_content:

@@ -4,20 +4,19 @@ Embedding providers for memory
 Supports OpenAI and local embedding models
 """
 
-from typing import List, Optional
-from abc import ABC, abstractmethod
 import hashlib
-import json
+from abc import ABC, abstractmethod
+from typing import List, Optional
 
 
 class EmbeddingProvider(ABC):
     """Base class for embedding providers"""
-    
+
     @abstractmethod
     def embed(self, text: str) -> List[float]:
         """Generate embedding for text"""
         pass
-    
+
     @abstractmethod
     def embed_batch(self, texts: List[str]) -> List[List[float]]:
         """Generate embeddings for multiple texts"""
@@ -31,7 +30,7 @@ class EmbeddingProvider(ABC):
 
 
 class OpenAIEmbeddingProvider(EmbeddingProvider):
-    """OpenAI embedding provider"""
+    """OpenAI embedding provider using REST API"""
     
     def __init__(self, model: str = "text-embedding-3-small", api_key: Optional[str] = None, api_base: Optional[str] = None):
         """
@@ -45,87 +44,58 @@ class OpenAIEmbeddingProvider(EmbeddingProvider):
         self.model = model
         self.api_key = api_key
         self.api_base = api_base or "https://api.openai.com/v1"
-        
-        # Lazy import to avoid dependency issues
-        try:
-            from openai import OpenAI
-            self.client = OpenAI(api_key=api_key, base_url=api_base)
-        except ImportError:
-            raise ImportError("OpenAI package not installed. Install with: pip install openai")
-        
+
+        if not self.api_key:
+            raise ValueError("OpenAI API key is required")
+
         # Set dimensions based on model
         self._dimensions = 1536 if "small" in model else 3072
-    
+
+    def _call_api(self, input_data):
+        """Call OpenAI embedding API using requests"""
+        import requests
+
+        url = f"{self.api_base}/embeddings"
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.api_key}"
+        }
+        data = {
+            "input": input_data,
+            "model": self.model
+        }
+
+        response = requests.post(url, headers=headers, json=data, timeout=30)
+        response.raise_for_status()
+        return response.json()
+
     def embed(self, text: str) -> List[float]:
         """Generate embedding for text"""
-        response = self.client.embeddings.create(
-            input=text,
-            model=self.model
-        )
-        return response.data[0].embedding
-    
+        result = self._call_api(text)
+        return result["data"][0]["embedding"]
+
     def embed_batch(self, texts: List[str]) -> List[List[float]]:
         """Generate embeddings for multiple texts"""
         if not texts:
             return []
-        
-        response = self.client.embeddings.create(
-            input=texts,
-            model=self.model
-        )
-        return [item.embedding for item in response.data]
-    
+
+        result = self._call_api(texts)
+        return [item["embedding"] for item in result["data"]]
+
     @property
     def dimensions(self) -> int:
         return self._dimensions
 
 
-class LocalEmbeddingProvider(EmbeddingProvider):
-    """Local embedding provider using sentence-transformers"""
-    
-    def __init__(self, model: str = "all-MiniLM-L6-v2"):
-        """
-        Initialize local embedding provider
-        
-        Args:
-            model: Model name from sentence-transformers
-        """
-        self.model_name = model
-        
-        try:
-            from sentence_transformers import SentenceTransformer
-            self.model = SentenceTransformer(model)
-            self._dimensions = self.model.get_sentence_embedding_dimension()
-        except ImportError:
-            raise ImportError(
-                "sentence-transformers not installed. "
-                "Install with: pip install sentence-transformers"
-            )
-    
-    def embed(self, text: str) -> List[float]:
-        """Generate embedding for text"""
-        embedding = self.model.encode(text, convert_to_numpy=True)
-        return embedding.tolist()
-    
-    def embed_batch(self, texts: List[str]) -> List[List[float]]:
-        """Generate embeddings for multiple texts"""
-        if not texts:
-            return []
-        
-        embeddings = self.model.encode(texts, convert_to_numpy=True)
-        return embeddings.tolist()
-    
-    @property
-    def dimensions(self) -> int:
-        return self._dimensions
+# LocalEmbeddingProvider removed - only use OpenAI embedding or keyword search
 
 
 class EmbeddingCache:
     """Cache for embeddings to avoid recomputation"""
-    
+
     def __init__(self):
         self.cache = {}
-    
+
     def get(self, text: str, provider: str, model: str) -> Optional[List[float]]:
         """Get cached embedding"""
         key = self._compute_key(text, provider, model)
@@ -156,20 +126,23 @@ def create_embedding_provider(
     """
     Factory function to create embedding provider
     
+    Only supports OpenAI embedding via REST API.
+    If initialization fails, caller should fall back to keyword-only search.
+    
     Args:
-        provider: Provider name ("openai" or "local")
-        model: Model name (provider-specific)
-        api_key: API key for remote providers
-        api_base: API base URL for remote providers
+        provider: Provider name (only "openai" is supported)
+        model: Model name (default: text-embedding-3-small)
+        api_key: OpenAI API key (required)
+        api_base: API base URL (default: https://api.openai.com/v1)
         
     Returns:
         EmbeddingProvider instance
+        
+    Raises:
+        ValueError: If provider is not "openai" or api_key is missing
     """
-    if provider == "openai":
-        model = model or "text-embedding-3-small"
-        return OpenAIEmbeddingProvider(model=model, api_key=api_key, api_base=api_base)
-    elif provider == "local":
-        model = model or "all-MiniLM-L6-v2"
-        return LocalEmbeddingProvider(model=model)
-    else:
-        raise ValueError(f"Unknown embedding provider: {provider}")
+    if provider != "openai":
+        raise ValueError(f"Only 'openai' provider is supported, got: {provider}")
+
+    model = model or "text-embedding-3-small"
+    return OpenAIEmbeddingProvider(model=model, api_key=api_key, api_base=api_base)

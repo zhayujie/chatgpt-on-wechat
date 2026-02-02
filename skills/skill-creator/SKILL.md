@@ -214,6 +214,19 @@ These files contain established best practices for effective skill design.
 
 To begin implementation, start with the reusable resources identified above: `scripts/`, `references/`, and `assets/` files. Note that this step may require user input. For example, when implementing a `brand-guidelines` skill, the user may need to provide brand assets or templates to store in `assets/`, or documentation to store in `references/`.
 
+**Available Base Tools**:
+
+The agent has access to these core tools that you can leverage in your skill:
+- **bash**: Execute shell commands (use for curl, ls, grep, sed, awk, bc for calculations, etc.)
+- **read**: Read file contents
+- **write**: Write files
+- **edit**: Edit files with search/replace
+
+**Minimize Dependencies**:
+- ✅ **Prefer bash + curl** for HTTP API calls (no Python dependencies)
+- ✅ **Use bash tools** (grep, sed, awk) for text processing
+- ✅ **Keep scripts simple** - if bash can do it, no need for Python (document packages/versions if Python is used)
+
 **Important Guidelines**:
 - **scripts/**: Only create scripts that will be executed. Test all scripts before including.
 - **references/**: ONLY create if documentation is too large for SKILL.md (>500 lines). Most skills don't need this.
@@ -230,19 +243,86 @@ If you used `--examples`, delete any placeholder files that are not needed for t
 
 ##### Frontmatter
 
-Write the YAML frontmatter with `name` and `description`:
+Write the YAML frontmatter with `name`, `description`, and optional `metadata`:
 
 - `name`: The skill name
 - `description`: This is the primary triggering mechanism for your skill, and helps the agent understand when to use the skill.
   - Include both what the Skill does and specific triggers/contexts for when to use it.
   - Include all "when to use" information here - Not in the body. The body is only loaded after triggering, so "When to Use This Skill" sections in the body are not helpful to the agent.
   - Example description for a `docx` skill: "Comprehensive document creation, editing, and analysis with support for tracked changes, comments, formatting preservation, and text extraction. Use when the agent needs to work with professional documents (.docx files) for: (1) Creating new documents, (2) Modifying or editing content, (3) Working with tracked changes, (4) Adding comments, or any other document tasks"
+- `metadata`: (Optional) Specify requirements and configuration
+  - `requires.bins`: Required binaries (e.g., `["curl", "jq"]`)
+  - `requires.env`: Required environment variables (e.g., `["OPENAI_API_KEY"]`)
+  - `primaryEnv`: Primary environment variable name (for API keys)
+  - `always`: Set to `true` to always load regardless of requirements
+  - `emoji`: Skill icon (optional)
 
-Do not include any other fields in YAML frontmatter.
+**API Key Requirements**:
+
+If your skill needs an API key, declare it in metadata:
+
+```yaml
+---
+name: my-search
+description: Search using MyAPI
+metadata:
+  requires:
+    bins: ["curl"]
+    env: ["MYAPI_KEY"]
+  primaryEnv: "MYAPI_KEY"
+---
+```
+
+**Auto-enable rule**: Skills are automatically enabled when required environment variables are set, and automatically disabled when missing. No manual configuration needed.
 
 ##### Body
 
 Write instructions for using the skill and its bundled resources.
+
+**If your skill requires an API key**, include setup instructions in the body:
+
+```markdown
+## Setup
+
+This skill requires an API key from [Service Name].
+
+1. Visit https://service.com to get an API key
+2. Configure it using: `env_config(action="set", key="SERVICE_API_KEY", value="your-key")`
+3. Or manually add to `~/cow/.env`: `SERVICE_API_KEY=your-key`
+4. Restart the agent for changes to take effect
+
+## Usage
+...
+```
+
+The bash script should check for the key and provide helpful error messages:
+
+```bash
+#!/usr/bin/env bash
+if [ -z "${SERVICE_API_KEY:-}" ]; then
+    echo "Error: SERVICE_API_KEY not set"
+    echo "Please configure your API key first (see SKILL.md)"
+    exit 1
+fi
+
+curl -H "Authorization: Bearer $SERVICE_API_KEY" ...
+```
+
+**Script Path Convention**:
+
+When writing SKILL.md instructions, remember that:
+- Skills are listed in `<available_skills>` with a `<base_dir>` path
+- Scripts should be referenced as: `<base_dir>/scripts/script_name.sh`
+- The AI will see the base_dir and can construct the full path
+
+Example instruction in SKILL.md:
+```markdown
+## Usage
+
+Scripts are in this skill's base directory (shown in skill listing).
+
+bash "<base_dir>/scripts/my_script.sh" <args>
+```
 
 ### Step 5: Validate (Optional)
 

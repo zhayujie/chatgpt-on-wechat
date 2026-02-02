@@ -46,13 +46,31 @@ class MemoryStorage:
     def __init__(self, db_path: Path):
         self.db_path = db_path
         self.conn: Optional[sqlite3.Connection] = None
+        self.fts5_available = False  # Track FTS5 availability
         self._init_db()
+    
+    def _check_fts5_support(self) -> bool:
+        """Check if SQLite has FTS5 support"""
+        try:
+            self.conn.execute("CREATE VIRTUAL TABLE IF NOT EXISTS fts5_test USING fts5(test)")
+            self.conn.execute("DROP TABLE IF EXISTS fts5_test")
+            return True
+        except sqlite3.OperationalError as e:
+            if "no such module: fts5" in str(e):
+                return False
+            raise
     
     def _init_db(self):
         """Initialize database with schema"""
         try:
             self.conn = sqlite3.connect(str(self.db_path), check_same_thread=False)
             self.conn.row_factory = sqlite3.Row
+            
+            # Check FTS5 support
+            self.fts5_available = self._check_fts5_support()
+            if not self.fts5_available:
+                from common.log import logger
+                logger.warning("[MemoryStorage] FTS5 not available, using LIKE-based keyword search")
             
             # Check database integrity
             try:
@@ -125,43 +143,44 @@ class MemoryStorage:
             ON chunks(path, hash)
         """)
         
-        # Create FTS5 virtual table for keyword search
-        # Use default unicode61 tokenizer (stable and compatible)
-        # For CJK support, we'll use LIKE queries as fallback
-        self.conn.execute("""
-            CREATE VIRTUAL TABLE IF NOT EXISTS chunks_fts USING fts5(
-                text,
-                id UNINDEXED,
-                user_id UNINDEXED,
-                path UNINDEXED,
-                source UNINDEXED,
-                scope UNINDEXED,
-                content='chunks',
-                content_rowid='rowid'
-            )
-        """)
-        
-        # Create triggers to keep FTS in sync
-        self.conn.execute("""
-            CREATE TRIGGER IF NOT EXISTS chunks_ai AFTER INSERT ON chunks BEGIN
-                INSERT INTO chunks_fts(rowid, text, id, user_id, path, source, scope)
-                VALUES (new.rowid, new.text, new.id, new.user_id, new.path, new.source, new.scope);
-            END
-        """)
-        
-        self.conn.execute("""
-            CREATE TRIGGER IF NOT EXISTS chunks_ad AFTER DELETE ON chunks BEGIN
-                DELETE FROM chunks_fts WHERE rowid = old.rowid;
-            END
-        """)
-        
-        self.conn.execute("""
-            CREATE TRIGGER IF NOT EXISTS chunks_au AFTER UPDATE ON chunks BEGIN
-                UPDATE chunks_fts SET text = new.text, id = new.id,
-                                     user_id = new.user_id, path = new.path, source = new.source, scope = new.scope
-                WHERE rowid = new.rowid;
-            END
-        """)
+        # Create FTS5 virtual table for keyword search (only if supported)
+        if self.fts5_available:
+            # Use default unicode61 tokenizer (stable and compatible)
+            # For CJK support, we'll use LIKE queries as fallback
+            self.conn.execute("""
+                CREATE VIRTUAL TABLE IF NOT EXISTS chunks_fts USING fts5(
+                    text,
+                    id UNINDEXED,
+                    user_id UNINDEXED,
+                    path UNINDEXED,
+                    source UNINDEXED,
+                    scope UNINDEXED,
+                    content='chunks',
+                    content_rowid='rowid'
+                )
+            """)
+            
+            # Create triggers to keep FTS in sync
+            self.conn.execute("""
+                CREATE TRIGGER IF NOT EXISTS chunks_ai AFTER INSERT ON chunks BEGIN
+                    INSERT INTO chunks_fts(rowid, text, id, user_id, path, source, scope)
+                    VALUES (new.rowid, new.text, new.id, new.user_id, new.path, new.source, new.scope);
+                END
+            """)
+            
+            self.conn.execute("""
+                CREATE TRIGGER IF NOT EXISTS chunks_ad AFTER DELETE ON chunks BEGIN
+                    DELETE FROM chunks_fts WHERE rowid = old.rowid;
+                END
+            """)
+            
+            self.conn.execute("""
+                CREATE TRIGGER IF NOT EXISTS chunks_au AFTER UPDATE ON chunks BEGIN
+                    UPDATE chunks_fts SET text = new.text, id = new.id,
+                                         user_id = new.user_id, path = new.path, source = new.source, scope = new.scope
+                    WHERE rowid = new.rowid;
+                END
+            """)
         
         # Create files metadata table
         self.conn.execute("""
@@ -301,21 +320,22 @@ class MemoryStorage:
         Keyword search using FTS5 + LIKE fallback
         
         Strategy:
-        1. Try FTS5 search first (good for English and word-based languages)
-        2. If no results and query contains CJK characters, use LIKE search
+        1. If FTS5 available: Try FTS5 search first (good for English and word-based languages)
+        2. If no FTS5 or no results and query contains CJK: Use LIKE search
         """
         if scopes is None:
             scopes = ["shared"]
             if user_id:
                 scopes.append("user")
         
-        # Try FTS5 search first
-        fts_results = self._search_fts5(query, user_id, scopes, limit)
-        if fts_results:
-            return fts_results
+        # Try FTS5 search first (if available)
+        if self.fts5_available:
+            fts_results = self._search_fts5(query, user_id, scopes, limit)
+            if fts_results:
+                return fts_results
         
-        # Fallback to LIKE search for CJK characters
-        if MemoryStorage._contains_cjk(query):
+        # Fallback to LIKE search (always for CJK, or if FTS5 not available)
+        if not self.fts5_available or MemoryStorage._contains_cjk(query):
             return self._search_like(query, user_id, scopes, limit)
         
         return []

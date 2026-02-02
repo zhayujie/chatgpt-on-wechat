@@ -2,10 +2,11 @@
 Agent Bridge - Integrates Agent system with existing COW bridge
 """
 
+import os
 from typing import Optional, List
 
 from agent.protocol import Agent, LLMModel, LLMRequest
-from bot.openai_compatible_bot import OpenAICompatibleBot
+from models.openai_compatible_bot import OpenAICompatibleBot
 from bridge.bridge import Bridge
 from bridge.context import Context
 from bridge.reply import Reply, ReplyType
@@ -180,6 +181,7 @@ class AgentBridge:
         self.agents = {}  # session_id -> Agent instance mapping
         self.default_agent = None  # For backward compatibility (no session_id)
         self.agent: Optional[Agent] = None
+        self.scheduler_initialized = False
     def create_agent(self, system_prompt: str, tools: List = None, **kwargs) -> Agent:
         """
         Create the super agent with COW integration
@@ -228,12 +230,7 @@ class AgentBridge:
 
         # Log skill loading details
         if agent.skill_manager:
-            logger.info(f"[AgentBridge] SkillManager initialized:")
-            logger.info(f"[AgentBridge]   - Managed dir: {agent.skill_manager.managed_skills_dir}")
-            logger.info(f"[AgentBridge]   - Workspace dir: {agent.skill_manager.workspace_dir}")
-            logger.info(f"[AgentBridge]   - Total skills: {len(agent.skill_manager.skills)}")
-            for skill_name in agent.skill_manager.skills.keys():
-                logger.info(f"[AgentBridge]     * {skill_name}")
+            logger.debug(f"[AgentBridge] SkillManager initialized with {len(agent.skill_manager.skills)} skills")
 
         return agent
     
@@ -268,6 +265,21 @@ class AgentBridge:
         # Get workspace from config
         workspace_root = os.path.expanduser(conf().get("agent_workspace", "~/cow"))
 
+        # Migrate API keys from config.json to environment variables (if not already set)
+        self._migrate_config_to_env(workspace_root)
+        
+        # Load environment variables from secure .env file location
+        env_file = os.path.expanduser("~/.cow/.env")
+        if os.path.exists(env_file):
+            try:
+                from dotenv import load_dotenv
+                load_dotenv(env_file, override=True)
+                logger.info(f"[AgentBridge] Loaded environment variables from {env_file}")
+            except ImportError:
+                logger.warning("[AgentBridge] python-dotenv not installed, skipping .env file loading")
+            except Exception as e:
+                logger.warning(f"[AgentBridge] Failed to load .env file: {e}")
+
         # Initialize workspace and create template files
         from agent.prompt import ensure_workspace, load_context_files, PromptBuilder
 
@@ -283,14 +295,53 @@ class AgentBridge:
             from agent.memory import MemoryManager, MemoryConfig
             from agent.tools import MemorySearchTool, MemoryGetTool
 
-            memory_config = MemoryConfig(
-                workspace_root=workspace_root,
-                embedding_provider="local",  # Use local embedding (no API key needed)
-                embedding_model="all-MiniLM-L6-v2"
-            )
+            # 从 config.json 读取 OpenAI 配置
+            openai_api_key = conf().get("open_ai_api_key", "")
+            openai_api_base = conf().get("open_ai_api_base", "")
             
-            # Create memory manager with the config
-            memory_manager = MemoryManager(memory_config)
+            # 尝试初始化 OpenAI embedding provider
+            embedding_provider = None
+            if openai_api_key:
+                try:
+                    from agent.memory import create_embedding_provider
+                    embedding_provider = create_embedding_provider(
+                        provider="openai",
+                        model="text-embedding-3-small",
+                        api_key=openai_api_key,
+                        api_base=openai_api_base or "https://api.openai.com/v1"
+                    )
+                    logger.info(f"[AgentBridge] OpenAI embedding initialized")
+                except Exception as embed_error:
+                    logger.warning(f"[AgentBridge] OpenAI embedding failed: {embed_error}")
+                    logger.info(f"[AgentBridge] Using keyword-only search")
+            else:
+                logger.info(f"[AgentBridge] No OpenAI API key, using keyword-only search")
+            
+            # 创建 memory config
+            memory_config = MemoryConfig(workspace_root=workspace_root)
+            
+            # 创建 memory manager
+            memory_manager = MemoryManager(memory_config, embedding_provider=embedding_provider)
+            
+            # 初始化时执行一次 sync，确保数据库有数据
+            import asyncio
+            try:
+                # 尝试在当前事件循环中执行
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                    # 如果事件循环正在运行，创建任务
+                    asyncio.create_task(memory_manager.sync())
+                    logger.info("[AgentBridge] Memory sync scheduled")
+                else:
+                    # 如果没有运行的循环，直接执行
+                    loop.run_until_complete(memory_manager.sync())
+                    logger.info("[AgentBridge] Memory synced successfully")
+            except RuntimeError:
+                # 没有事件循环，创建新的
+                asyncio.run(memory_manager.sync())
+                logger.info("[AgentBridge] Memory synced successfully")
+            except Exception as e:
+                logger.warning(f"[AgentBridge] Memory sync failed: {e}")
             
             # Create memory tools
             memory_tools = [
@@ -318,7 +369,15 @@ class AgentBridge:
 
         for tool_name in tool_manager.tool_classes.keys():
             try:
-                tool = tool_manager.create_tool(tool_name)
+                # Special handling for EnvConfig tool - pass agent_bridge reference
+                if tool_name == "env_config":
+                    from agent.tools import EnvConfig
+                    tool = EnvConfig({
+                        "agent_bridge": self  # Pass self reference for hot reload
+                    })
+                else:
+                    tool = tool_manager.create_tool(tool_name)
+                
                 if tool:
                     # Apply workspace config to file operation tools
                     if tool_name in ['read', 'write', 'edit', 'bash', 'grep', 'find', 'ls']:
@@ -326,12 +385,6 @@ class AgentBridge:
                         tool.cwd = file_config.get("cwd", tool.cwd if hasattr(tool, 'cwd') else None)
                         if 'memory_manager' in file_config:
                             tool.memory_manager = file_config['memory_manager']
-                    # Apply API key for bocha_search tool
-                    elif tool_name == 'bocha_search':
-                        bocha_api_key = conf().get("bocha_api_key", "")
-                        if bocha_api_key:
-                            tool.config = {"bocha_api_key": bocha_api_key}
-                            tool.api_key = bocha_api_key
                     tools.append(tool)
                     logger.debug(f"[AgentBridge] Loaded tool: {tool_name}")
             except Exception as e:
@@ -341,6 +394,36 @@ class AgentBridge:
         if memory_tools:
             tools.extend(memory_tools)
             logger.info(f"[AgentBridge] Added {len(memory_tools)} memory tools")
+
+        # Initialize scheduler service (once)
+        if not self.scheduler_initialized:
+            try:
+                from agent.tools.scheduler.integration import init_scheduler
+                if init_scheduler(self):
+                    self.scheduler_initialized = True
+                    logger.info("[AgentBridge] Scheduler service initialized")
+            except Exception as e:
+                logger.warning(f"[AgentBridge] Failed to initialize scheduler: {e}")
+        
+        # Inject scheduler dependencies into SchedulerTool instances
+        if self.scheduler_initialized:
+            try:
+                from agent.tools.scheduler.integration import get_task_store, get_scheduler_service
+                from agent.tools import SchedulerTool
+                
+                task_store = get_task_store()
+                scheduler_service = get_scheduler_service()
+                
+                for tool in tools:
+                    if isinstance(tool, SchedulerTool):
+                        tool.task_store = task_store
+                        tool.scheduler_service = scheduler_service
+                        if not tool.config:
+                            tool.config = {}
+                        tool.config["channel_type"] = conf().get("channel_type", "unknown")
+                        logger.debug("[AgentBridge] Injected scheduler dependencies into SchedulerTool")
+            except Exception as e:
+                logger.warning(f"[AgentBridge] Failed to inject scheduler dependencies: {e}")
 
         logger.info(f"[AgentBridge] Loaded {len(tools)} tools: {[t.name for t in tools]}")
 
@@ -381,14 +464,19 @@ class AgentBridge:
 
         logger.info("[AgentBridge] System prompt built successfully")
 
+        # Get cost control parameters from config
+        max_steps = conf().get("agent_max_steps", 20)
+        max_context_tokens = conf().get("agent_max_context_tokens", 50000)
+        
         # Create agent with configured tools and workspace
         agent = self.create_agent(
             system_prompt=system_prompt,
             tools=tools,
-            max_steps=50,
+            max_steps=max_steps,
             output_mode="logger",
             workspace_dir=workspace_root,  # Pass workspace to agent for skills loading
-            enable_skills=True  # Enable skills auto-loading
+            enable_skills=True,  # Enable skills auto-loading
+            max_context_tokens=max_context_tokens
         )
 
         # Attach memory manager to agent if available
@@ -410,6 +498,24 @@ class AgentBridge:
         # Get workspace from config
         workspace_root = os.path.expanduser(conf().get("agent_workspace", "~/cow"))
 
+        # Migrate API keys from config.json to environment variables (if not already set)
+        self._migrate_config_to_env(workspace_root)
+        
+        # Load environment variables from secure .env file location
+        env_file = os.path.expanduser("~/.cow/.env")
+        if os.path.exists(env_file):
+            try:
+                from dotenv import load_dotenv
+                load_dotenv(env_file, override=True)
+                logger.debug(f"[AgentBridge] Loaded environment variables from {env_file} for session {session_id}")
+            except ImportError:
+                logger.warning(f"[AgentBridge] python-dotenv not installed, skipping .env file loading for session {session_id}")
+            except Exception as e:
+                logger.warning(f"[AgentBridge] Failed to load .env file for session {session_id}: {e}")
+        
+        # Migrate API keys from config.json to environment variables (if not already set)
+        self._migrate_config_to_env(workspace_root)
+
         # Initialize workspace
         from agent.prompt import ensure_workspace, load_context_files, PromptBuilder
 
@@ -420,23 +526,65 @@ class AgentBridge:
         memory_tools = []
 
         try:
-            from agent.memory import MemoryManager, MemoryConfig
+            from agent.memory import MemoryManager, MemoryConfig, create_embedding_provider
             from agent.tools import MemorySearchTool, MemoryGetTool
 
-            memory_config = MemoryConfig(
-                workspace_root=workspace_root,
-                embedding_provider="local",
-                embedding_model="all-MiniLM-L6-v2"
-            )
+            # 从 config.json 读取 OpenAI 配置
+            openai_api_key = conf().get("open_ai_api_key", "")
+            openai_api_base = conf().get("open_ai_api_base", "")
             
-            memory_manager = MemoryManager(memory_config)
+            # 尝试初始化 OpenAI embedding provider
+            embedding_provider = None
+            if openai_api_key:
+                try:
+                    embedding_provider = create_embedding_provider(
+                        provider="openai",
+                        model="text-embedding-3-small",
+                        api_key=openai_api_key,
+                        api_base=openai_api_base or "https://api.openai.com/v1"
+                    )
+                    logger.debug(f"[AgentBridge] OpenAI embedding initialized for session {session_id}")
+                except Exception as embed_error:
+                    logger.warning(f"[AgentBridge] OpenAI embedding failed for session {session_id}: {embed_error}")
+                    logger.info(f"[AgentBridge] Using keyword-only search for session {session_id}")
+            else:
+                logger.debug(f"[AgentBridge] No OpenAI API key, using keyword-only search for session {session_id}")
+            
+            # 创建 memory config
+            memory_config = MemoryConfig(workspace_root=workspace_root)
+            
+            # 创建 memory manager
+            memory_manager = MemoryManager(memory_config, embedding_provider=embedding_provider)
+            
+            # 初始化时执行一次 sync，确保数据库有数据
+            import asyncio
+            try:
+                # 尝试在当前事件循环中执行
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                    # 如果事件循环正在运行，创建任务
+                    asyncio.create_task(memory_manager.sync())
+                    logger.debug(f"[AgentBridge] Memory sync scheduled for session {session_id}")
+                else:
+                    # 如果没有运行的循环，直接执行
+                    loop.run_until_complete(memory_manager.sync())
+                    logger.debug(f"[AgentBridge] Memory synced successfully for session {session_id}")
+            except RuntimeError:
+                # 没有事件循环，创建新的
+                asyncio.run(memory_manager.sync())
+                logger.debug(f"[AgentBridge] Memory synced successfully for session {session_id}")
+            except Exception as sync_error:
+                logger.warning(f"[AgentBridge] Memory sync failed for session {session_id}: {sync_error}")
+            
             memory_tools = [
                 MemorySearchTool(memory_manager),
                 MemoryGetTool(memory_manager)
             ]
             
         except Exception as e:
-            logger.debug(f"[AgentBridge] Memory system not available for session {session_id}: {e}")
+            logger.warning(f"[AgentBridge] Memory system not available for session {session_id}: {e}")
+            import traceback
+            logger.warning(f"[AgentBridge] Memory init traceback: {traceback.format_exc()}")
 
         # Load tools
         from agent.tools import ToolManager
@@ -458,17 +606,42 @@ class AgentBridge:
                         tool.cwd = file_config.get("cwd", tool.cwd if hasattr(tool, 'cwd') else None)
                         if 'memory_manager' in file_config:
                             tool.memory_manager = file_config['memory_manager']
-                    elif tool_name == 'bocha_search':
-                        bocha_api_key = conf().get("bocha_api_key", "")
-                        if bocha_api_key:
-                            tool.config = {"bocha_api_key": bocha_api_key}
-                            tool.api_key = bocha_api_key
                     tools.append(tool)
             except Exception as e:
                 logger.warning(f"[AgentBridge] Failed to load tool {tool_name} for session {session_id}: {e}")
 
         if memory_tools:
             tools.extend(memory_tools)
+        
+        # Initialize scheduler service (once, if not already initialized)
+        if not self.scheduler_initialized:
+            try:
+                from agent.tools.scheduler.integration import init_scheduler
+                if init_scheduler(self):
+                    self.scheduler_initialized = True
+                    logger.debug(f"[AgentBridge] Scheduler service initialized for session {session_id}")
+            except Exception as e:
+                logger.warning(f"[AgentBridge] Failed to initialize scheduler for session {session_id}: {e}")
+        
+        # Inject scheduler dependencies into SchedulerTool instances
+        if self.scheduler_initialized:
+            try:
+                from agent.tools.scheduler.integration import get_task_store, get_scheduler_service
+                from agent.tools import SchedulerTool
+                
+                task_store = get_task_store()
+                scheduler_service = get_scheduler_service()
+                
+                for tool in tools:
+                    if isinstance(tool, SchedulerTool):
+                        tool.task_store = task_store
+                        tool.scheduler_service = scheduler_service
+                        if not tool.config:
+                            tool.config = {}
+                        tool.config["channel_type"] = conf().get("channel_type", "unknown")
+                        logger.debug(f"[AgentBridge] Injected scheduler dependencies for session {session_id}")
+            except Exception as e:
+                logger.warning(f"[AgentBridge] Failed to inject scheduler dependencies for session {session_id}: {e}")
 
         # Load context files
         context_files = load_context_files(workspace_root)
@@ -478,7 +651,7 @@ class AgentBridge:
         try:
             from agent.skills import SkillManager
             skill_manager = SkillManager(workspace_dir=workspace_root)
-            logger.info(f"[AgentBridge] Initialized SkillManager with {len(skill_manager.skills)} skills for session {session_id}")
+            logger.debug(f"[AgentBridge] Initialized SkillManager with {len(skill_manager.skills)} skills for session {session_id}")
         except Exception as e:
             logger.warning(f"[AgentBridge] Failed to initialize SkillManager for session {session_id}: {e}")
 
@@ -543,15 +716,20 @@ class AgentBridge:
         if is_first:
             mark_conversation_started(workspace_root)
 
+        # Get cost control parameters from config
+        max_steps = conf().get("agent_max_steps", 20)
+        max_context_tokens = conf().get("agent_max_context_tokens", 50000)
+
         # Create agent for this session
         agent = self.create_agent(
             system_prompt=system_prompt,
             tools=tools,
-            max_steps=50,
+            max_steps=max_steps,
             output_mode="logger",
             workspace_dir=workspace_root,
             skill_manager=skill_manager,
-            enable_skills=True
+            enable_skills=True,
+            max_context_tokens=max_context_tokens
         )
 
         if memory_manager:
@@ -586,18 +764,172 @@ class AgentBridge:
             if not agent:
                 return Reply(ReplyType.ERROR, "Failed to initialize super agent")
             
-            # Use agent's run_stream method
-            response = agent.run_stream(
-                user_message=query,
-                on_event=on_event,
-                clear_history=clear_history
-            )
+            # Filter tools based on context
+            original_tools = agent.tools
+            filtered_tools = original_tools
+            
+            # If this is a scheduled task execution, exclude scheduler tool to prevent recursion
+            if context and context.get("is_scheduled_task"):
+                filtered_tools = [tool for tool in agent.tools if tool.name != "scheduler"]
+                agent.tools = filtered_tools
+                logger.info(f"[AgentBridge] Scheduled task execution: excluded scheduler tool ({len(filtered_tools)}/{len(original_tools)} tools)")
+            else:
+                # Attach context to scheduler tool if present
+                if context and agent.tools:
+                    for tool in agent.tools:
+                        if tool.name == "scheduler":
+                            try:
+                                from agent.tools.scheduler.integration import attach_scheduler_to_tool
+                                attach_scheduler_to_tool(tool, context)
+                            except Exception as e:
+                                logger.warning(f"[AgentBridge] Failed to attach context to scheduler: {e}")
+                            break
+            
+            try:
+                # Use agent's run_stream method
+                response = agent.run_stream(
+                    user_message=query,
+                    on_event=on_event,
+                    clear_history=clear_history
+                )
+            finally:
+                # Restore original tools
+                if context and context.get("is_scheduled_task"):
+                    agent.tools = original_tools
+            
+            # Check if there are files to send (from read tool)
+            if hasattr(agent, 'stream_executor') and hasattr(agent.stream_executor, 'files_to_send'):
+                files_to_send = agent.stream_executor.files_to_send
+                if files_to_send:
+                    # Send the first file (for now, handle one file at a time)
+                    file_info = files_to_send[0]
+                    logger.info(f"[AgentBridge] Sending file: {file_info.get('path')}")
+                    
+                    # Clear files_to_send for next request
+                    agent.stream_executor.files_to_send = []
+                    
+                    # Return file reply based on file type
+                    return self._create_file_reply(file_info, response, context)
             
             return Reply(ReplyType.TEXT, response)
             
         except Exception as e:
             logger.error(f"Agent reply error: {e}")
             return Reply(ReplyType.ERROR, f"Agent error: {str(e)}")
+    
+    def _create_file_reply(self, file_info: dict, text_response: str, context: Context = None) -> Reply:
+        """
+        Create a reply for sending files
+        
+        Args:
+            file_info: File metadata from read tool
+            text_response: Text response from agent
+            context: Context object
+            
+        Returns:
+            Reply object for file sending
+        """
+        file_type = file_info.get("file_type", "file")
+        file_path = file_info.get("path")
+        
+        # For images, use IMAGE_URL type (channel will handle upload)
+        if file_type == "image":
+            # Convert local path to file:// URL for channel processing
+            file_url = f"file://{file_path}"
+            logger.info(f"[AgentBridge] Sending image: {file_url}")
+            reply = Reply(ReplyType.IMAGE_URL, file_url)
+            # Attach text message if present (for channels that support text+image)
+            if text_response:
+                reply.text_content = text_response  # Store accompanying text
+            return reply
+        
+        # For documents (PDF, Excel, Word, PPT), use FILE type
+        if file_type == "document":
+            file_url = f"file://{file_path}"
+            logger.info(f"[AgentBridge] Sending document: {file_url}")
+            reply = Reply(ReplyType.FILE, file_url)
+            reply.file_name = file_info.get("file_name", os.path.basename(file_path))
+            return reply
+        
+        # For other files (video, audio), we need channel-specific handling
+        # For now, return text with file info
+        # TODO: Implement video/audio sending when channel supports it
+        message = text_response or file_info.get("message", "文件已准备")
+        message += f"\n\n[文件: {file_info.get('file_name', file_path)}]"
+        return Reply(ReplyType.TEXT, message)
+    
+    def _migrate_config_to_env(self, workspace_root: str):
+        """
+        Migrate API keys from config.json to .env file if not already set
+        
+        Args:
+            workspace_root: Workspace directory path (not used, kept for compatibility)
+        """
+        from config import conf
+        import os
+        
+        # Mapping from config.json keys to environment variable names
+        key_mapping = {
+            "open_ai_api_key": "OPENAI_API_KEY",
+            "open_ai_api_base": "OPENAI_API_BASE",
+            "gemini_api_key": "GEMINI_API_KEY",
+            "claude_api_key": "CLAUDE_API_KEY",
+            "linkai_api_key": "LINKAI_API_KEY",
+        }
+        
+        # Use fixed secure location for .env file
+        env_file = os.path.expanduser("~/.cow/.env")
+        
+        # Read existing env vars from .env file
+        existing_env_vars = {}
+        if os.path.exists(env_file):
+            try:
+                with open(env_file, 'r', encoding='utf-8') as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith('#') and '=' in line:
+                            key, _ = line.split('=', 1)
+                            existing_env_vars[key.strip()] = True
+            except Exception as e:
+                logger.warning(f"[AgentBridge] Failed to read .env file: {e}")
+        
+        # Check which keys need to be migrated
+        keys_to_migrate = {}
+        for config_key, env_key in key_mapping.items():
+            # Skip if already in .env file
+            if env_key in existing_env_vars:
+                continue
+            
+            # Get value from config.json
+            value = conf().get(config_key, "")
+            if value and value.strip():  # Only migrate non-empty values
+                keys_to_migrate[env_key] = value.strip()
+        
+        # Log summary if there are keys to skip
+        if existing_env_vars:
+            logger.debug(f"[AgentBridge] {len(existing_env_vars)} env vars already in .env")
+        
+        # Write new keys to .env file
+        if keys_to_migrate:
+            try:
+                # Ensure ~/.cow directory and .env file exist
+                env_dir = os.path.dirname(env_file)
+                if not os.path.exists(env_dir):
+                    os.makedirs(env_dir, exist_ok=True)
+                if not os.path.exists(env_file):
+                    open(env_file, 'a').close()
+                
+                # Append new keys
+                with open(env_file, 'a', encoding='utf-8') as f:
+                    f.write('\n# Auto-migrated from config.json\n')
+                    for key, value in keys_to_migrate.items():
+                        f.write(f'{key}={value}\n')
+                        # Also set in current process
+                        os.environ[key] = value
+                
+                logger.info(f"[AgentBridge] Migrated {len(keys_to_migrate)} API keys from config.json to .env: {list(keys_to_migrate.keys())}")
+            except Exception as e:
+                logger.warning(f"[AgentBridge] Failed to migrate API keys: {e}")
     
     def clear_session(self, session_id: str):
         """
@@ -615,3 +947,42 @@ class AgentBridge:
         logger.info(f"[AgentBridge] Clearing all sessions ({len(self.agents)} total)")
         self.agents.clear()
         self.default_agent = None
+    
+    def refresh_all_skills(self) -> int:
+        """
+        Refresh skills in all agent instances after environment variable changes.
+        This allows hot-reload of skills without restarting the agent.
+        
+        Returns:
+            Number of agent instances refreshed
+        """
+        import os
+        from dotenv import load_dotenv
+        from config import conf
+        
+        # Reload environment variables from .env file
+        workspace_root = os.path.expanduser(conf().get("agent_workspace", "~/cow"))
+        env_file = os.path.join(workspace_root, '.env')
+        
+        if os.path.exists(env_file):
+            load_dotenv(env_file, override=True)
+            logger.info(f"[AgentBridge] Reloaded environment variables from {env_file}")
+        
+        refreshed_count = 0
+        
+        # Refresh default agent
+        if self.default_agent and hasattr(self.default_agent, 'skill_manager'):
+            self.default_agent.skill_manager.refresh_skills()
+            refreshed_count += 1
+            logger.info("[AgentBridge] Refreshed skills in default agent")
+        
+        # Refresh all session agents
+        for session_id, agent in self.agents.items():
+            if hasattr(agent, 'skill_manager'):
+                agent.skill_manager.refresh_skills()
+                refreshed_count += 1
+        
+        if refreshed_count > 0:
+            logger.info(f"[AgentBridge] Refreshed skills in {refreshed_count} agent instance(s)")
+        
+        return refreshed_count

@@ -64,15 +64,22 @@ class ChatChannel(Channel):
                         check_contain(group_name, group_name_keyword_white_list),
                     ]
                 ):
-                    group_chat_in_one_session = conf().get("group_chat_in_one_session", [])
-                    session_id = cmsg.actual_user_id
-                    if any(
-                        [
-                            group_name in group_chat_in_one_session,
-                            "ALL_GROUP" in group_chat_in_one_session,
-                        ]
-                    ):
+                    # Check global group_shared_session config first
+                    group_shared_session = conf().get("group_shared_session", True)
+                    if group_shared_session:
+                        # All users in the group share the same session
                         session_id = group_id
+                    else:
+                        # Check group-specific whitelist (legacy behavior)
+                        group_chat_in_one_session = conf().get("group_chat_in_one_session", [])
+                        session_id = cmsg.actual_user_id
+                        if any(
+                            [
+                                group_name in group_chat_in_one_session,
+                                "ALL_GROUP" in group_chat_in_one_session,
+                            ]
+                        ):
+                            session_id = group_id
                 else:
                     logger.debug(f"No need reply, groupName not in whitelist, group_name={group_name}")
                     return None
@@ -166,11 +173,11 @@ class ChatChannel(Channel):
     def _handle(self, context: Context):
         if context is None or not context.content:
             return
-        logger.debug("[chat_channel] ready to handle context: {}".format(context))
+        logger.debug("[chat_channel] handling context: {}".format(context))
         # reply的构建步骤
         reply = self._generate_reply(context)
 
-        logger.debug("[chat_channel] ready to decorate reply: {}".format(reply))
+        logger.debug("[chat_channel] decorating reply: {}".format(reply))
 
         # reply的包装步骤
         if reply and reply.content:
@@ -188,7 +195,7 @@ class ChatChannel(Channel):
         )
         reply = e_context["reply"]
         if not e_context.is_pass():
-            logger.debug("[chat_channel] ready to handle context: type={}, content={}".format(context.type, context.content))
+            logger.debug("[chat_channel] type={}, content={}".format(context.type, context.content))
             if context.type == ContextType.TEXT or context.type == ContextType.IMAGE_CREATE:  # 文字和图片消息
                 context["channel"] = e_context["channel"]
                 reply = super().build_reply_content(context.content, context)
@@ -282,7 +289,100 @@ class ChatChannel(Channel):
             )
             reply = e_context["reply"]
             if not e_context.is_pass() and reply and reply.type:
-                logger.debug("[chat_channel] ready to send reply: {}, context: {}".format(reply, context))
+                logger.debug("[chat_channel] sending reply: {}, context: {}".format(reply, context))
+                
+                # 如果是文本回复，尝试提取并发送图片
+                if reply.type == ReplyType.TEXT:
+                    self._extract_and_send_images(reply, context)
+                # 如果是图片回复但带有文本内容，先发文本再发图片
+                elif reply.type == ReplyType.IMAGE_URL and hasattr(reply, 'text_content') and reply.text_content:
+                    # 先发送文本
+                    text_reply = Reply(ReplyType.TEXT, reply.text_content)
+                    self._send(text_reply, context)
+                    # 短暂延迟后发送图片
+                    time.sleep(0.3)
+                    self._send(reply, context)
+                else:
+                    self._send(reply, context)
+    
+    def _extract_and_send_images(self, reply: Reply, context: Context):
+        """
+        从文本回复中提取图片/视频URL并单独发送
+        支持格式：[图片: /path/to/image.png], [视频: /path/to/video.mp4], ![](url), <img src="url">
+        最多发送5个媒体文件
+        """
+        content = reply.content
+        media_items = []  # [(url, type), ...]
+        
+        # 正则提取各种格式的媒体URL
+        patterns = [
+            (r'\[图片:\s*([^\]]+)\]', 'image'),   # [图片: /path/to/image.png]
+            (r'\[视频:\s*([^\]]+)\]', 'video'),   # [视频: /path/to/video.mp4]
+            (r'!\[.*?\]\(([^\)]+)\)', 'image'),   # ![alt](url) - 默认图片
+            (r'<img[^>]+src=["\']([^"\']+)["\']', 'image'),  # <img src="url">
+            (r'<video[^>]+src=["\']([^"\']+)["\']', 'video'),  # <video src="url">
+            (r'https?://[^\s]+\.(?:jpg|jpeg|png|gif|webp)', 'image'),  # 直接的图片URL
+            (r'https?://[^\s]+\.(?:mp4|avi|mov|wmv|flv)', 'video'),  # 直接的视频URL
+        ]
+        
+        for pattern, media_type in patterns:
+            matches = re.findall(pattern, content, re.IGNORECASE)
+            for match in matches:
+                media_items.append((match, media_type))
+        
+        # 去重（保持顺序）并限制最多5个
+        seen = set()
+        unique_items = []
+        for url, mtype in media_items:
+            if url not in seen:
+                seen.add(url)
+                unique_items.append((url, mtype))
+        media_items = unique_items[:5]
+        
+        if media_items:
+            logger.info(f"[chat_channel] Extracted {len(media_items)} media item(s) from reply")
+            
+            # 先发送文本（保持原文本不变）
+            logger.info(f"[chat_channel] Sending text content before media: {reply.content[:100]}...")
+            self._send(reply, context)
+            logger.info(f"[chat_channel] Text sent, now sending {len(media_items)} media item(s)")
+            
+            # 然后逐个发送媒体文件
+            for i, (url, media_type) in enumerate(media_items):
+                try:
+                    # 判断是本地文件还是URL
+                    if url.startswith(('http://', 'https://')):
+                        # 网络资源
+                        if media_type == 'video':
+                            # 视频使用 FILE 类型发送
+                            media_reply = Reply(ReplyType.FILE, url)
+                            media_reply.file_name = os.path.basename(url)
+                        else:
+                            # 图片使用 IMAGE_URL 类型
+                            media_reply = Reply(ReplyType.IMAGE_URL, url)
+                    elif os.path.exists(url):
+                        # 本地文件
+                        if media_type == 'video':
+                            # 视频使用 FILE 类型，转换为 file:// URL
+                            media_reply = Reply(ReplyType.FILE, f"file://{url}")
+                            media_reply.file_name = os.path.basename(url)
+                        else:
+                            # 图片使用 IMAGE_URL 类型，转换为 file:// URL
+                            media_reply = Reply(ReplyType.IMAGE_URL, f"file://{url}")
+                    else:
+                        logger.warning(f"[chat_channel] Media file not found or invalid URL: {url}")
+                        continue
+                    
+                    # 发送媒体文件（添加小延迟避免频率限制）
+                    if i > 0:
+                        time.sleep(0.5)
+                    self._send(media_reply, context)
+                    logger.info(f"[chat_channel] Sent {media_type} {i+1}/{len(media_items)}: {url[:50]}...")
+                    
+                except Exception as e:
+                    logger.error(f"[chat_channel] Failed to send {media_type} {url}: {e}")
+        else:
+            # 没有媒体文件，正常发送文本
                 self._send(reply, context)
 
     def _send(self, reply: Reply, context: Context, retry_cnt=0):

@@ -137,6 +137,10 @@ class SkillLoader:
         name = frontmatter.get('name', parent_dir_name)
         description = frontmatter.get('description', '')
         
+        # Special handling for linkai-agent: dynamically load apps from config.json
+        if name == 'linkai-agent':
+            description = self._load_linkai_agent_description(skill_dir, description)
+        
         if not description or not description.strip():
             diagnostics.append(f"Skill {name} has no description: {file_path}")
             return LoadSkillsResult(skills=[], diagnostics=diagnostics)
@@ -160,6 +164,45 @@ class SkillLoader:
         )
         
         return LoadSkillsResult(skills=[skill], diagnostics=diagnostics)
+    
+    def _load_linkai_agent_description(self, skill_dir: str, default_description: str) -> str:
+        """
+        Dynamically load LinkAI agent description from config.json
+        
+        :param skill_dir: Skill directory
+        :param default_description: Default description from SKILL.md
+        :return: Dynamic description with app list
+        """
+        import json
+        
+        config_path = os.path.join(skill_dir, "config.json")
+        template_path = os.path.join(skill_dir, "config.json.template")
+        
+        # Try to load config.json or fallback to template
+        config_file = config_path if os.path.exists(config_path) else template_path
+        
+        if not os.path.exists(config_file):
+            return default_description
+        
+        try:
+            with open(config_file, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+            
+            apps = config.get("apps", [])
+            if not apps:
+                return default_description
+            
+            # Build dynamic description with app details
+            app_descriptions = "; ".join([
+                f"{app['app_name']}({app['app_code']}: {app['app_description']})"
+                for app in apps
+            ])
+            
+            return f"Call LinkAI apps/workflows. {app_descriptions}"
+        
+        except Exception as e:
+            logger.warning(f"[SkillLoader] Failed to load linkai-agent config: {e}")
+            return default_description
     
     def load_all_skills(
         self,
@@ -216,7 +259,7 @@ class SkillLoader:
             for diag in all_diagnostics[:5]:  # Log first 5
                 logger.debug(f"  - {diag}")
         
-        logger.info(f"Loaded {len(skill_map)} skills from all sources")
+        logger.debug(f"Loaded {len(skill_map)} skills from all sources")
         
         return skill_map
     

@@ -1,4 +1,4 @@
-from bot.bot_factory import create_bot
+from models.bot_factory import create_bot
 from bridge.context import Context
 from bridge.reply import Reply
 from common import const

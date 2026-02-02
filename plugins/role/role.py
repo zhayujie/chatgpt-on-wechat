@@ -66,7 +66,7 @@ class Role(Plugin):
                 raise Exception("no role found")
             self.handlers[Event.ON_HANDLE_CONTEXT] = self.on_handle_context
             self.roleplays = {}
-            logger.info("[Role] inited")
+            logger.debug("[Role] inited")
         except Exception as e:
             if isinstance(e, FileNotFoundError):
                 logger.warn(f"[Role] init failed, {config_path} not found, ignore or see https://github.com/zhayujie/chatgpt-on-wechat/tree/master/plugins/role .")

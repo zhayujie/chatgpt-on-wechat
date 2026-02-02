@@ -64,7 +64,7 @@ def ensure_workspace(workspace_dir: str, create_templates: bool = True) -> Works
         _create_template_if_missing(agents_path, _get_agents_template())
         _create_template_if_missing(memory_path, _get_memory_template())
         
-        logger.info(f"[Workspace] Initialized workspace at: {workspace_dir}")
+        logger.debug(f"[Workspace] Initialized workspace at: {workspace_dir}")
     
     return WorkspaceFiles(
         soul_path=soul_path,
@@ -270,14 +270,9 @@ def _get_agents_template() -> str:
 2. **动态记忆 → MEMORY.md**（爱好、偏好、决策、目标、项目、教训、待办事项）
 3. **当天对话 → memory/YYYY-MM-DD.md**（今天聊的内容）
 
-**重要**: 
-- 爱好（唱歌、篮球等）→ MEMORY.md，不是 USER.md
-- 近期计划（下周要做什么）→ MEMORY.md，不是 USER.md
-- USER.md 只存放不会变的基本信息
-
 ## 安全
 
-- 永远不要泄露私人数据
+- 永远不要泄露秘钥等私人数据
 - 不要在未经询问的情况下运行破坏性命令
 - 当有疑问时，先问
 

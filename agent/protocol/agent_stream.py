@@ -7,9 +7,9 @@ import json
 import time
 from typing import List, Dict, Any, Optional, Callable
 
-from common.log import logger
 from agent.protocol.models import LLMRequest, LLMModel
 from agent.tools.base_tool import BaseTool, ToolResult
+from common.log import logger
 
 
 class AgentStreamExecutor:
@@ -31,7 +31,8 @@ class AgentStreamExecutor:
             tools: List[BaseTool],
             max_turns: int = 50,
             on_event: Optional[Callable] = None,
-            messages: Optional[List[Dict]] = None
+            messages: Optional[List[Dict]] = None,
+            max_context_turns: int = 30
     ):
         """
         Initialize stream executor
@@ -44,6 +45,7 @@ class AgentStreamExecutor:
             max_turns: Maximum number of turns
             on_event: Event callback function
             messages: Optional existing message history (for persistent conversations)
+            max_context_turns: Maximum number of conversation turns to keep in context
         """
         self.agent = agent
         self.model = model
@@ -52,12 +54,16 @@ class AgentStreamExecutor:
         self.tools = {tool.name: tool for tool in tools} if isinstance(tools, list) else tools
         self.max_turns = max_turns
         self.on_event = on_event
+        self.max_context_turns = max_context_turns
 
         # Message history - use provided messages or create new list
         self.messages = messages if messages is not None else []
         
         # Tool failure tracking for retry protection
         self.tool_failure_history = []  # List of (tool_name, args_hash, success) tuples
+        
+        # Track files to send (populated by read tool)
+        self.files_to_send = []  # List of file metadata dicts
 
     def _emit_event(self, event_type: str, data: dict = None):
         """Emit event"""
@@ -78,12 +84,15 @@ class AgentStreamExecutor:
         args_str = json.dumps(args, sort_keys=True, ensure_ascii=False)
         return hashlib.md5(args_str.encode()).hexdigest()[:8]
     
-    def _check_consecutive_failures(self, tool_name: str, args: dict) -> tuple[bool, str]:
+    def _check_consecutive_failures(self, tool_name: str, args: dict) -> tuple[bool, str, bool]:
         """
         Check if tool has failed too many times consecutively
         
         Returns:
-            (should_stop, reason)
+            (should_stop, reason, is_critical)
+            - should_stop: Whether to stop tool execution
+            - reason: Reason for stopping
+            - is_critical: Whether to abort entire conversation (True for 8+ failures)
         """
         args_hash = self._hash_args(args)
         
@@ -99,7 +108,7 @@ class AgentStreamExecutor:
                 break  # Different tool or args, stop counting
         
         if same_args_failures >= 3:
-            return True, f"Tool '{tool_name}' with same arguments failed {same_args_failures} times consecutively. Stopping to prevent infinite loop."
+            return True, f"工具 '{tool_name}' 使用相同参数连续失败 {same_args_failures} 次，停止执行以防止无限循环", False
         
         # Count consecutive failures for same tool (any args)
         same_tool_failures = 0
@@ -112,10 +121,15 @@ class AgentStreamExecutor:
             else:
                 break  # Different tool, stop counting
         
-        if same_tool_failures >= 6:
-            return True, f"Tool '{tool_name}' failed {same_tool_failures} times consecutively (with any arguments). Stopping to prevent infinite loop."
+        # Hard stop at 8 failures - abort with critical message
+        if same_tool_failures >= 8:
+            return True, f"抱歉，我没能完成这个任务。可能是我理解有误或者当前方法不太合适。\n\n建议你：\n• 换个方式描述需求试试\n• 把任务拆分成更小的步骤\n• 或者换个思路来解决", True
         
-        return False, ""
+        # Warning at 6 failures
+        if same_tool_failures >= 6:
+            return True, f"工具 '{tool_name}' 连续失败 {same_tool_failures} 次（使用不同参数），停止执行以防止无限循环", False
+        
+        return False, "", False
     
     def _record_tool_result(self, tool_name: str, args: dict, success: bool):
         """Record tool execution result for failure tracking"""
@@ -136,10 +150,7 @@ class AgentStreamExecutor:
             Final response text
         """
         # Log user message with model info
-        logger.info(f"{'='*50}")
-        logger.info(f"🤖 Model: {self.model.model}")
-        logger.info(f"👤 用户: {user_message}")
-        logger.info(f"{'='*50}")
+        logger.info(f"🤖 {self.model.model} | 👤 {user_message}")
         
         # Add user message (Claude format - use content blocks for consistency)
         self.messages.append({
@@ -160,54 +171,74 @@ class AgentStreamExecutor:
         try:
             while turn < self.max_turns:
                 turn += 1
-                logger.info(f"第 {turn} 轮")
+                logger.debug(f"第 {turn} 轮")
                 self._emit_event("turn_start", {"turn": turn})
 
                 # Check if memory flush is needed (before calling LLM)
+                # 使用独立的 flush 阈值（50K tokens 或 20 轮）
                 if self.agent.memory_manager and hasattr(self.agent, 'last_usage'):
                     usage = self.agent.last_usage
                     if usage and 'input_tokens' in usage:
                         current_tokens = usage.get('input_tokens', 0)
-                        context_window = self.agent._get_model_context_window()
-                        # Use configured reserve_tokens or calculate based on context window
-                        reserve_tokens = self.agent._get_context_reserve_tokens()
-                        # Use smaller soft_threshold to trigger flush earlier (e.g., at 50K tokens)
-                        soft_threshold = 10000  # Trigger 10K tokens before limit
 
                         if self.agent.memory_manager.should_flush_memory(
-                                current_tokens=current_tokens,
-                                context_window=context_window,
-                                reserve_tokens=reserve_tokens,
-                                soft_threshold=soft_threshold
+                                current_tokens=current_tokens
                         ):
                             self._emit_event("memory_flush_start", {
                                 "current_tokens": current_tokens,
-                                "threshold": context_window - reserve_tokens - soft_threshold
+                                "turn_count": self.agent.memory_manager.flush_manager.turn_count
                             })
 
                             # TODO: Execute memory flush in background
                             # This would require async support
-                            logger.info(f"Memory flush recommended at {current_tokens} tokens")
+                            logger.info(
+                                f"Memory flush recommended: tokens={current_tokens}, turns={self.agent.memory_manager.flush_manager.turn_count}")
 
-                # Call LLM
-                assistant_msg, tool_calls = self._call_llm_stream()
+                # Call LLM (enable retry_on_empty for better reliability)
+                assistant_msg, tool_calls = self._call_llm_stream(retry_on_empty=True)
                 final_response = assistant_msg
 
                 # No tool calls, end loop
                 if not tool_calls:
                     # 检查是否返回了空响应
                     if not assistant_msg:
-                        logger.warning(f"[Agent] LLM returned empty response (no content and no tool calls)")
+                        logger.warning(f"[Agent] LLM returned empty response after retry (no content and no tool calls)")
+                        logger.info(f"[Agent] This usually happens when LLM thinks the task is complete after tool execution")
                         
-                        # 生成通用的友好提示
-                        final_response = (
-                            "抱歉，我暂时无法生成回复。请尝试换一种方式描述你的需求，或稍后再试。"
-                        )
-                        logger.info(f"Generated fallback response for empty LLM output")
+                        # 如果之前有工具调用，强制要求 LLM 生成文本回复
+                        if turn > 1:
+                            logger.info(f"[Agent] Requesting explicit response from LLM...")
+                            
+                            # 添加一条消息，明确要求回复用户
+                            self.messages.append({
+                                "role": "user",
+                                "content": [{
+                                    "type": "text",
+                                    "text": "请向用户说明刚才工具执行的结果或回答用户的问题。"
+                                }]
+                            })
+                            
+                            # 再调用一次 LLM
+                            assistant_msg, tool_calls = self._call_llm_stream(retry_on_empty=False)
+                            final_response = assistant_msg
+                            
+                            # 如果还是空，才使用 fallback
+                            if not assistant_msg and not tool_calls:
+                                logger.warning(f"[Agent] Still empty after explicit request")
+                                final_response = (
+                                    "抱歉，我暂时无法生成回复。请尝试换一种方式描述你的需求，或稍后再试。"
+                                )
+                                logger.info(f"Generated fallback response for empty LLM output")
+                        else:
+                            # 第一轮就空回复，直接 fallback
+                            final_response = (
+                                "抱歉，我暂时无法生成回复。请尝试换一种方式描述你的需求，或稍后再试。"
+                            )
+                            logger.info(f"Generated fallback response for empty LLM output")
                     else:
                         logger.info(f"💭 {assistant_msg[:150]}{'...' if len(assistant_msg) > 150 else ''}")
                     
-                    logger.info(f"✅ 完成 (无工具调用)")
+                    logger.debug(f"✅ 完成 (无工具调用)")
                     self._emit_event("turn_end", {
                         "turn": turn,
                         "has_tool_calls": False
@@ -232,6 +263,20 @@ class AgentStreamExecutor:
                     for tool_call in tool_calls:
                         result = self._execute_tool(tool_call)
                         tool_results.append(result)
+                        
+                        # Check if this is a file to send (from read tool)
+                        if result.get("status") == "success" and isinstance(result.get("result"), dict):
+                            result_data = result.get("result")
+                            if result_data.get("type") == "file_to_send":
+                                # Store file metadata for later sending
+                                self.files_to_send.append(result_data)
+                                logger.info(f"📎 检测到待发送文件: {result_data.get('file_name', result_data.get('path'))}")
+                        
+                        # Check for critical error - abort entire conversation
+                        if result.get("status") == "critical_error":
+                            logger.error(f"💥 检测到严重错误，终止对话")
+                            final_response = result.get('result', '任务执行失败')
+                            return final_response
                         
                         # Log tool result in compact format
                         status_emoji = "✅" if result.get("status") == "success" else "❌"
@@ -305,11 +350,37 @@ class AgentStreamExecutor:
                 })
 
             if turn >= self.max_turns:
-                logger.warning(f"⚠️  已达到最大轮数限制: {self.max_turns}")
-                if not final_response:
+                logger.warning(f"⚠️  已达到最大决策步数限制: {self.max_turns}")
+                
+                # Force model to summarize without tool calls
+                logger.info(f"[Agent] Requesting summary from LLM after reaching max steps...")
+                
+                # Add a system message to force summary
+                self.messages.append({
+                    "role": "user",
+                    "content": [{
+                        "type": "text",
+                        "text": f"你已经执行了{turn}个决策步骤，达到了单次运行的最大步数限制。请总结一下你目前的执行过程和结果，告诉用户当前的进展情况。不要再调用工具，直接用文字回复。"
+                    }]
+                })
+                
+                # Call LLM one more time to get summary (without retry to avoid loops)
+                try:
+                    summary_response, summary_tools = self._call_llm_stream(retry_on_empty=False)
+                    if summary_response:
+                        final_response = summary_response
+                        logger.info(f"💭 Summary: {summary_response[:150]}{'...' if len(summary_response) > 150 else ''}")
+                    else:
+                        # Fallback if model still doesn't respond
+                        final_response = (
+                            f"我已经执行了{turn}个决策步骤，达到了单次运行的步数上限。"
+                            "任务可能还未完全完成，建议你将任务拆分成更小的步骤，或者换一种方式描述需求。"
+                        )
+                except Exception as e:
+                    logger.warning(f"Failed to get summary from LLM: {e}")
                     final_response = (
-                        "抱歉，我在处理你的请求时遇到了一些困难，尝试了多次仍未能完成。"
-                        "请尝试简化你的问题，或换一种方式描述。"
+                        f"我已经执行了{turn}个决策步骤，达到了单次运行的步数上限。"
+                        "任务可能还未完全完成，建议你将任务拆分成更小的步骤，或者换一种方式描述需求。"
                     )
 
         except Exception as e:
@@ -318,8 +389,12 @@ class AgentStreamExecutor:
             raise
 
         finally:
-            logger.info(f"🏁 完成({turn}轮)")
+            logger.debug(f"🏁 完成({turn}轮)")
             self._emit_event("agent_end", {"final_response": final_response})
+
+            # 每轮对话结束后增加计数（用户消息+AI回复=1轮）
+            if self.agent.memory_manager:
+                self.agent.memory_manager.increment_turn()
 
         return final_response
 
@@ -380,6 +455,7 @@ class AgentStreamExecutor:
         # Streaming response
         full_content = ""
         tool_calls_buffer = {}  # {index: {id, name, arguments}}
+        stop_reason = None  # Track why the stream stopped
 
         try:
             stream = self.model.call_stream(request)
@@ -392,21 +468,47 @@ class AgentStreamExecutor:
                     if isinstance(error_data, dict):
                         error_msg = error_data.get("message", chunk.get("message", "Unknown error"))
                         error_code = error_data.get("code", "")
+                        error_type = error_data.get("type", "")
                     else:
                         error_msg = chunk.get("message", str(error_data))
                         error_code = ""
+                        error_type = ""
                     
                     status_code = chunk.get("status_code", "N/A")
-                    logger.error(f"API Error: {error_msg} (Status: {status_code}, Code: {error_code})")
-                    logger.error(f"Full error chunk: {chunk}")
                     
-                    # Raise exception with full error message for retry logic
-                    raise Exception(f"{error_msg} (Status: {status_code})")
+                    # Log error with all available information
+                    logger.error(f"🔴 Stream API Error:")
+                    logger.error(f"   Message: {error_msg}")
+                    logger.error(f"   Status Code: {status_code}")
+                    logger.error(f"   Error Code: {error_code}")
+                    logger.error(f"   Error Type: {error_type}")
+                    logger.error(f"   Full chunk: {chunk}")
+                    
+                    # Check if this is a context overflow error (keyword-based, works for all models)
+                    # Don't rely on specific status codes as different providers use different codes
+                    error_msg_lower = error_msg.lower()
+                    is_overflow = any(keyword in error_msg_lower for keyword in [
+                        'context length exceeded', 'maximum context length', 'prompt is too long',
+                        'context overflow', 'context window', 'too large', 'exceeds model context',
+                        'request_too_large', 'request exceeds the maximum size', 'tokens exceed'
+                    ])
+                    
+                    if is_overflow:
+                        # Mark as context overflow for special handling
+                        raise Exception(f"[CONTEXT_OVERFLOW] {error_msg} (Status: {status_code})")
+                    else:
+                        # Raise exception with full error message for retry logic
+                        raise Exception(f"{error_msg} (Status: {status_code}, Code: {error_code}, Type: {error_type})")
 
                 # Parse chunk
                 if isinstance(chunk, dict) and "choices" in chunk:
                     choice = chunk["choices"][0]
                     delta = choice.get("delta", {})
+                    
+                    # Capture finish_reason if present
+                    finish_reason = choice.get("finish_reason")
+                    if finish_reason:
+                        stop_reason = finish_reason
 
                     # Handle text content
                     if "content" in delta and delta["content"]:
@@ -437,9 +539,46 @@ class AgentStreamExecutor:
                                     tool_calls_buffer[index]["arguments"] += func["arguments"]
 
         except Exception as e:
-            error_str = str(e).lower()
+            error_str = str(e)
+            error_str_lower = error_str.lower()
+            
+            # Check if error is context overflow (non-retryable, needs session reset)
+            # Method 1: Check for special marker (set in stream error handling above)
+            is_context_overflow = '[context_overflow]' in error_str_lower
+            
+            # Method 2: Fallback to keyword matching for non-stream errors
+            if not is_context_overflow:
+                is_context_overflow = any(keyword in error_str_lower for keyword in [
+                    'context length exceeded', 'maximum context length', 'prompt is too long',
+                    'context overflow', 'context window', 'too large', 'exceeds model context',
+                    'request_too_large', 'request exceeds the maximum size'
+                ])
+            
+            # Check if error is message format error (incomplete tool_use/tool_result pairs)
+            # This happens when previous conversation had tool failures
+            is_message_format_error = any(keyword in error_str_lower for keyword in [
+                'tool_use', 'tool_result', 'without', 'immediately after',
+                'corresponding', 'must have', 'each'
+            ]) and 'status: 400' in error_str_lower
+            
+            if is_context_overflow or is_message_format_error:
+                error_type = "context overflow" if is_context_overflow else "message format error"
+                logger.error(f"💥 {error_type} detected: {e}")
+                # Clear message history to recover
+                logger.warning("🔄 Clearing conversation history to recover")
+                self.messages.clear()
+                # Raise special exception with user-friendly message
+                if is_context_overflow:
+                    raise Exception(
+                        "抱歉，对话历史过长导致上下文溢出。我已清空历史记录，请重新描述你的需求。"
+                    )
+                else:
+                    raise Exception(
+                        "抱歉，之前的对话出现了问题。我已清空历史记录，请重新发送你的消息。"
+                    )
+            
             # Check if error is retryable (timeout, connection, rate limit, server busy, etc.)
-            is_retryable = any(keyword in error_str for keyword in [
+            is_retryable = any(keyword in error_str_lower for keyword in [
                 'timeout', 'timed out', 'connection', 'network', 
                 'rate limit', 'overloaded', 'unavailable', 'busy', 'retry',
                 '429', '500', '502', '503', '504', '512'
@@ -469,15 +608,19 @@ class AgentStreamExecutor:
             try:
                 arguments = json.loads(tc["arguments"]) if tc["arguments"] else {}
             except json.JSONDecodeError as e:
-                logger.error(f"Failed to parse tool arguments: {tc['arguments']}")
+                args_preview = tc['arguments'][:200] if len(tc['arguments']) > 200 else tc['arguments']
+                logger.error(f"Failed to parse tool arguments for {tc['name']}")
+                logger.error(f"Arguments length: {len(tc['arguments'])} chars")
+                logger.error(f"Arguments preview: {args_preview}...")
                 logger.error(f"JSON decode error: {e}")
+                
                 # Return a clear error message to the LLM instead of empty dict
                 # This helps the LLM understand what went wrong
                 tool_calls.append({
                     "id": tc["id"],
                     "name": tc["name"],
                     "arguments": {},
-                    "_parse_error": f"Invalid JSON in tool arguments: {tc['arguments'][:100]}... Error: {str(e)}"
+                    "_parse_error": f"Invalid JSON in tool arguments: {args_preview}... Error: {str(e)}. Tip: For large content, consider splitting into smaller chunks or using a different approach."
                 })
                 continue
 
@@ -489,11 +632,12 @@ class AgentStreamExecutor:
 
         # Check for empty response and retry once if enabled
         if retry_on_empty and not full_content and not tool_calls:
-            logger.warning(f"⚠️  LLM returned empty response, retrying once...")
+            logger.warning(f"⚠️  LLM returned empty response (stop_reason: {stop_reason}), retrying once...")
             self._emit_event("message_end", {
                 "content": "",
                 "tool_calls": [],
-                "empty_retry": True
+                "empty_retry": True,
+                "stop_reason": stop_reason
             })
             # Retry without retry flag to avoid infinite loop
             return self._call_llm_stream(
@@ -560,16 +704,25 @@ class AgentStreamExecutor:
             return result
 
         # Check for consecutive failures (retry protection)
-        should_stop, stop_reason = self._check_consecutive_failures(tool_name, arguments)
+        should_stop, stop_reason, is_critical = self._check_consecutive_failures(tool_name, arguments)
         if should_stop:
             logger.error(f"🛑 {stop_reason}")
             self._record_tool_result(tool_name, arguments, False)
-            # 返回错误给 LLM,让它尝试其他方法
-            result = {
-                "status": "error",
-                "result": f"{stop_reason}\n\nThis approach is not working. Please try a completely different method or ask the user for more information/clarification.",
-                "execution_time": 0
-            }
+            
+            if is_critical:
+                # Critical failure - abort entire conversation
+                result = {
+                    "status": "critical_error",
+                    "result": stop_reason,
+                    "execution_time": 0
+                }
+            else:
+                # Normal failure - let LLM try different approach
+                result = {
+                    "status": "error",
+                    "result": f"{stop_reason}\n\n当前方法行不通，请尝试完全不同的方法或向用户询问更多信息。",
+                    "execution_time": 0
+                }
             return result
 
         self._emit_event("tool_execution_start", {
@@ -656,52 +809,174 @@ class AgentStreamExecutor:
                         logger.warning(f"⚠️ Removing incomplete tool_use message from history")
                         self.messages.pop()
 
+    def _identify_complete_turns(self) -> List[Dict]:
+        """
+        识别完整的对话轮次
+        
+        一个完整轮次包括：
+        1. 用户消息（text）
+        2. AI 回复（可能包含 tool_use）
+        3. 工具结果（tool_result，如果有）
+        4. 后续 AI 回复（如果有）
+        
+        Returns:
+            List of turns, each turn is a dict with 'messages' list
+        """
+        turns = []
+        current_turn = {'messages': []}
+        
+        for msg in self.messages:
+            role = msg.get('role')
+            content = msg.get('content', [])
+            
+            if role == 'user':
+                # 检查是否是用户查询（不是工具结果）
+                is_user_query = False
+                if isinstance(content, list):
+                    is_user_query = any(
+                        block.get('type') == 'text' 
+                        for block in content 
+                        if isinstance(block, dict)
+                    )
+                elif isinstance(content, str):
+                    is_user_query = True
+                
+                if is_user_query:
+                    # 开始新轮次
+                    if current_turn['messages']:
+                        turns.append(current_turn)
+                    current_turn = {'messages': [msg]}
+                else:
+                    # 工具结果，属于当前轮次
+                    current_turn['messages'].append(msg)
+            else:
+                # AI 回复，属于当前轮次
+                current_turn['messages'].append(msg)
+        
+        # 添加最后一个轮次
+        if current_turn['messages']:
+            turns.append(current_turn)
+        
+        return turns
+    
+    def _estimate_turn_tokens(self, turn: Dict) -> int:
+        """估算一个轮次的 tokens"""
+        return sum(
+            self.agent._estimate_message_tokens(msg) 
+            for msg in turn['messages']
+        )
+
     def _trim_messages(self):
         """
-        Trim message history to stay within context limits.
-        Uses agent's context management configuration.
+        智能清理消息历史，保持对话完整性
+        
+        使用完整轮次作为清理单位，确保：
+        1. 不会在对话中间截断
+        2. 工具调用链（tool_use + tool_result）保持完整
+        3. 每轮对话都是完整的（用户消息 + AI回复 + 工具调用）
         """
         if not self.messages or not self.agent:
             return
 
-        # Get context window and reserve tokens from agent
+        # Step 1: 识别完整轮次
+        turns = self._identify_complete_turns()
+        
+        if not turns:
+            return
+        
+        # Step 2: 轮次限制 - 保留最近 N 轮
+        if len(turns) > self.max_context_turns:
+            removed_turns = len(turns) - self.max_context_turns
+            turns = turns[-self.max_context_turns:]  # 保留最近的轮次
+            
+            logger.info(
+                f"💾 上下文轮次超限: {len(turns) + removed_turns} > {self.max_context_turns}，"
+                f"移除最早的 {removed_turns} 轮完整对话"
+            )
+
+        # Step 3: Token 限制 - 保留完整轮次
+        # Get context window from agent (based on model)
         context_window = self.agent._get_model_context_window()
-        reserve_tokens = self.agent._get_context_reserve_tokens()
-        max_tokens = context_window - reserve_tokens
 
-        # Estimate current tokens
-        current_tokens = sum(self.agent._estimate_message_tokens(msg) for msg in self.messages)
+        # Use configured max_context_tokens if available
+        if hasattr(self.agent, 'max_context_tokens') and self.agent.max_context_tokens:
+            max_tokens = self.agent.max_context_tokens
+        else:
+            # Reserve 10% for response generation
+            reserve_tokens = int(context_window * 0.1)
+            max_tokens = context_window - reserve_tokens
 
-        # Add system prompt tokens
+        # Estimate system prompt tokens
         system_tokens = self.agent._estimate_message_tokens({"role": "system", "content": self.system_prompt})
-        current_tokens += system_tokens
+        available_tokens = max_tokens - system_tokens
 
-        # If under limit, no need to trim
-        if current_tokens <= max_tokens:
+        # Calculate current tokens
+        current_tokens = sum(self._estimate_turn_tokens(turn) for turn in turns)
+        
+        # If under limit, reconstruct messages and return
+        if current_tokens + system_tokens <= max_tokens:
+            # Reconstruct message list from turns
+            new_messages = []
+            for turn in turns:
+                new_messages.extend(turn['messages'])
+            
+            old_count = len(self.messages)
+            self.messages = new_messages
+            
+            # Log if we removed messages due to turn limit
+            if old_count > len(self.messages):
+                logger.info(f"   重建消息列表: {old_count} -> {len(self.messages)} 条消息")
             return
 
-        # Keep messages from newest, accumulating tokens
-        available_tokens = max_tokens - system_tokens
-        kept_messages = []
+        # Token limit exceeded - keep complete turns from newest
+        logger.info(
+            f"🔄 上下文tokens超限: ~{current_tokens + system_tokens} > {max_tokens}，"
+            f"将按完整轮次移除最早的对话"
+        )
+
+        # 从最新轮次开始，反向累加（保持完整轮次）
+        kept_turns = []
         accumulated_tokens = 0
-
-        for msg in reversed(self.messages):
-            msg_tokens = self.agent._estimate_message_tokens(msg)
-            if accumulated_tokens + msg_tokens <= available_tokens:
-                kept_messages.insert(0, msg)
-                accumulated_tokens += msg_tokens
+        min_turns = 3  # 尽量保留至少 3 轮，但不强制（避免超出 token 限制）
+        
+        for i, turn in enumerate(reversed(turns)):
+            turn_tokens = self._estimate_turn_tokens(turn)
+            turns_from_end = i + 1
+            
+            # 检查是否超出限制
+            if accumulated_tokens + turn_tokens <= available_tokens:
+                kept_turns.insert(0, turn)
+                accumulated_tokens += turn_tokens
             else:
+                # 超出限制
+                # 如果还没有保留足够的轮次，且这是最后的机会，尝试保留
+                if len(kept_turns) < min_turns and turns_from_end <= min_turns:
+                    # 检查是否严重超出（超出 20% 以上则放弃）
+                    overflow_ratio = (accumulated_tokens + turn_tokens - available_tokens) / available_tokens
+                    if overflow_ratio < 0.2:  # 允许最多超出 20%
+                        kept_turns.insert(0, turn)
+                        accumulated_tokens += turn_tokens
+                        logger.debug(f"   为保留最少轮次，允许超出 {overflow_ratio*100:.1f}%")
+                        continue
+                # 停止保留更早的轮次
                 break
-
+        
+        # 重建消息列表
+        new_messages = []
+        for turn in kept_turns:
+            new_messages.extend(turn['messages'])
+        
         old_count = len(self.messages)
-        self.messages = kept_messages
+        old_turn_count = len(turns)
+        self.messages = new_messages
         new_count = len(self.messages)
-
+        new_turn_count = len(kept_turns)
+        
         if old_count > new_count:
             logger.info(
-                f"Context trimmed: {old_count} -> {new_count} messages "
-                f"(~{current_tokens} -> ~{system_tokens + accumulated_tokens} tokens, "
-                f"limit: {max_tokens})"
+                f"   移除了 {old_turn_count - new_turn_count} 轮对话 "
+                f"({old_count} -> {new_count} 条消息，"
+                f"~{current_tokens + system_tokens} -> ~{accumulated_tokens + system_tokens} tokens)"
             )
 
     def _prepare_messages(self) -> List[Dict[str, Any]]:

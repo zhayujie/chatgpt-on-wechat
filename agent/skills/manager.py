@@ -59,7 +59,7 @@ class SkillManager:
             extra_dirs=self.extra_dirs,
         )
         
-        logger.info(f"SkillManager: Loaded {len(self.skills)} skills")
+        logger.debug(f"SkillManager: Loaded {len(self.skills)} skills")
     
     def get_skill(self, name: str) -> Optional[SkillEntry]:
         """
@@ -82,32 +82,24 @@ class SkillManager:
         self,
         skill_filter: Optional[List[str]] = None,
         include_disabled: bool = False,
-        check_requirements: bool = False,  # Changed default to False for lenient loading
-        lenient: bool = True,  # New parameter for lenient mode
     ) -> List[SkillEntry]:
         """
         Filter skills based on criteria.
         
-        By default (lenient=True), all skills are loaded regardless of missing requirements.
-        Skills will fail gracefully at runtime if requirements are not met.
+        Simple rule: Skills are auto-enabled if requirements are met.
+        - Has required API keys → included
+        - Missing API keys → excluded
         
         :param skill_filter: List of skill names to include (None = all)
         :param include_disabled: Whether to include skills with disable_model_invocation=True
-        :param check_requirements: Whether to check skill requirements (default: False)
-        :param lenient: If True, ignore missing requirements (default: True)
         :return: Filtered list of skill entries
         """
         from agent.skills.config import should_include_skill
         
         entries = list(self.skills.values())
         
-        # Check requirements (platform, explicit disable, etc.)
-        # In lenient mode, only checks platform and explicit disable
-        if check_requirements or not lenient:
-            entries = [e for e in entries if should_include_skill(e, self.config, lenient=lenient)]
-        else:
-            # Lenient mode: only check explicit disable and platform
-            entries = [e for e in entries if should_include_skill(e, self.config, lenient=True)]
+        # Check requirements (platform, binaries, env vars)
+        entries = [e for e in entries if should_include_skill(e, self.config)]
         
         # Apply skill filter
         if skill_filter is not None:

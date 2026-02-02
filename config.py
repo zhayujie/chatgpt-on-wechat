@@ -15,6 +15,8 @@ available_setting = {
     "open_ai_api_key": "",  # openai api key
     # openai apibase，当use_azure_chatgpt为true时，需要设置对应的api base
     "open_ai_api_base": "https://api.openai.com/v1",
+    "claude_api_base": "https://api.anthropic.com/v1",  # claude api base
+    "gemini_api_base": "https://generativelanguage.googleapis.com",  # gemini api base
     "proxy": "",  # openai使用的代理
     # chatgpt模型， 当use_azure_chatgpt为true时，其名称为Azure上model deployment名称
     "model": "gpt-3.5-turbo",  # 可选择: gpt-4o, pt-4o-mini, gpt-4-turbo, claude-3-sonnet, wenxin, moonshot, qwen-turbo, xunfei, glm-4, minimax, gemini等模型，全部可选模型详见common/const.py文件
@@ -35,6 +37,7 @@ available_setting = {
     "group_name_white_list": ["ChatGPT测试群", "ChatGPT测试群2"],  # 开启自动回复的群名称列表
     "group_name_keyword_white_list": [],  # 开启自动回复的群名称关键词列表
     "group_chat_in_one_session": ["ChatGPT测试群"],  # 支持会话上下文共享的群名称
+    "group_shared_session": True,  # 群聊是否共享会话上下文（所有成员共享），默认为True。False时每个用户在群内有独立会话
     "nick_name_black_list": [],  # 用户昵称黑名单
     "group_welcome_msg": "",  # 配置新人进群固定欢迎语，不配置则使用随机风格欢迎
     "trigger_by_self": False,  # 是否允许机器人触发
@@ -184,9 +187,11 @@ available_setting = {
     "Minimax_group_id": "",
     "Minimax_base_url": "",
     "web_port": 9899,
-    "agent": False,  # 是否开启Agent模式
+    "agent": True,  # 是否开启Agent模式
     "agent_workspace": "~/cow",  # agent工作空间路径，用于存储skills、memory等
-    "bocha_api_key": ""
+    "agent_max_context_tokens": 40000,  # Agent模式下最大上下文tokens
+    "agent_max_context_turns": 30,  # Agent模式下最大上下文轮次
+    "agent_max_steps": 20,  # Agent模式下单次运行最大决策步数
 }
 
 
@@ -203,13 +208,13 @@ class Config(dict):
     def __getitem__(self, key):
         # 跳过以下划线开头的注释字段
         if not key.startswith("_") and key not in available_setting:
-            raise Exception("key {} not in available_setting".format(key))
+            logger.warning("[Config] key '{}' not in available_setting, may not take effect".format(key))
         return super().__getitem__(key)
 
     def __setitem__(self, key, value):
         # 跳过以下划线开头的注释字段
         if not key.startswith("_") and key not in available_setting:
-            raise Exception("key {} not in available_setting".format(key))
+            logger.warning("[Config] key '{}' not in available_setting, may not take effect".format(key))
         return super().__setitem__(key, value)
 
     def get(self, key, default=None):

@@ -15,7 +15,7 @@ class Read(BaseTool):
     """Tool for reading file contents"""
     
     name: str = "read"
-    description: str = f"Read the contents of a file. Supports text files, PDF files, and images (jpg, png, gif, webp). For text files, output is truncated to {DEFAULT_MAX_LINES} lines or {DEFAULT_MAX_BYTES // 1024}KB (whichever is hit first). Use offset/limit for large files."
+    description: str = f"Read or inspect file contents. For text/PDF files, returns content (truncated to {DEFAULT_MAX_LINES} lines or {DEFAULT_MAX_BYTES // 1024}KB). For images/videos/audio, returns metadata only (file info, size, type). Use offset/limit for large text files."
     
     params: dict = {
         "type": "object",
@@ -26,7 +26,7 @@ class Read(BaseTool):
             },
             "offset": {
                 "type": "integer",
-                "description": "Line number to start reading from (1-indexed, optional)"
+                "description": "Line number to start reading from (1-indexed, optional). Use negative values to read from end (e.g. -20 for last 20 lines)"
             },
             "limit": {
                 "type": "integer",
@@ -39,10 +39,25 @@ class Read(BaseTool):
     def __init__(self, config: dict = None):
         self.config = config or {}
         self.cwd = self.config.get("cwd", os.getcwd())
-        # Supported image formats
-        self.image_extensions = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
-        # Supported PDF format
+        
+        # File type categories
+        self.image_extensions = {'.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.svg', '.ico'}
+        self.video_extensions = {'.mp4', '.avi', '.mov', '.mkv', '.flv', '.wmv', '.webm', '.m4v'}
+        self.audio_extensions = {'.mp3', '.wav', '.ogg', '.m4a', '.flac', '.aac', '.wma'}
+        self.binary_extensions = {'.exe', '.dll', '.so', '.dylib', '.bin', '.dat', '.db', '.sqlite'}
+        self.archive_extensions = {'.zip', '.tar', '.gz', '.rar', '.7z', '.bz2', '.xz'}
         self.pdf_extensions = {'.pdf'}
+        
+        # Readable text formats (will be read with truncation)
+        self.text_extensions = {
+            '.txt', '.md', '.markdown', '.rst', '.log', '.csv', '.tsv', '.json', '.xml', '.yaml', '.yml',
+            '.py', '.js', '.ts', '.java', '.c', '.cpp', '.h', '.hpp', '.go', '.rs', '.rb', '.php',
+            '.html', '.css', '.scss', '.sass', '.less', '.vue', '.jsx', '.tsx',
+            '.sh', '.bash', '.zsh', '.fish', '.ps1', '.bat', '.cmd',
+            '.sql', '.r', '.m', '.swift', '.kt', '.scala', '.clj', '.erl', '.ex',
+            '.dockerfile', '.makefile', '.cmake', '.gradle', '.properties', '.ini', '.conf', '.cfg',
+            '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx'  # Office documents
+        }
     
     def execute(self, args: Dict[str, Any]) -> ToolResult:
         """
@@ -61,6 +76,13 @@ class Read(BaseTool):
         # Resolve path
         absolute_path = self._resolve_path(path)
         
+        # Security check: Prevent reading sensitive config files
+        env_config_path = os.path.expanduser("~/.cow/.env")
+        if os.path.abspath(absolute_path) == os.path.abspath(env_config_path):
+            return ToolResult.fail(
+                "Error: Access denied. API keys and credentials must be accessed through the env_config tool only."
+            )
+        
         # Check if file exists
         if not os.path.exists(absolute_path):
             # Provide helpful hint if using relative path
@@ -78,16 +100,25 @@ class Read(BaseTool):
         
         # Check file type
         file_ext = Path(absolute_path).suffix.lower()
+        file_size = os.path.getsize(absolute_path)
         
-        # Check if image
+        # Check if image - return metadata for sending
         if file_ext in self.image_extensions:
             return self._read_image(absolute_path, file_ext)
+        
+        # Check if video/audio/binary/archive - return metadata only
+        if file_ext in self.video_extensions:
+            return self._return_file_metadata(absolute_path, "video", file_size)
+        if file_ext in self.audio_extensions:
+            return self._return_file_metadata(absolute_path, "audio", file_size)
+        if file_ext in self.binary_extensions or file_ext in self.archive_extensions:
+            return self._return_file_metadata(absolute_path, "binary", file_size)
         
         # Check if PDF
         if file_ext in self.pdf_extensions:
             return self._read_pdf(absolute_path, path, offset, limit)
         
-        # Read text file
+        # Read text file (with truncation for large files)
         return self._read_text(absolute_path, path, offset, limit)
     
     def _resolve_path(self, path: str) -> str:
@@ -103,25 +134,56 @@ class Read(BaseTool):
             return path
         return os.path.abspath(os.path.join(self.cwd, path))
     
+    def _return_file_metadata(self, absolute_path: str, file_type: str, file_size: int) -> ToolResult:
+        """
+        Return file metadata for non-readable files (video, audio, binary, etc.)
+        
+        :param absolute_path: Absolute path to the file
+        :param file_type: Type of file (video, audio, binary, etc.)
+        :param file_size: File size in bytes
+        :return: File metadata
+        """
+        file_name = Path(absolute_path).name
+        file_ext = Path(absolute_path).suffix.lower()
+        
+        # Determine MIME type
+        mime_types = {
+            # Video
+            '.mp4': 'video/mp4', '.avi': 'video/x-msvideo', '.mov': 'video/quicktime',
+            '.mkv': 'video/x-matroska', '.webm': 'video/webm',
+            # Audio
+            '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.ogg': 'audio/ogg',
+            '.m4a': 'audio/mp4', '.flac': 'audio/flac',
+            # Binary
+            '.zip': 'application/zip', '.tar': 'application/x-tar',
+            '.gz': 'application/gzip', '.rar': 'application/x-rar-compressed',
+        }
+        mime_type = mime_types.get(file_ext, 'application/octet-stream')
+        
+        result = {
+            "type": f"{file_type}_metadata",
+            "file_type": file_type,
+            "path": absolute_path,
+            "file_name": file_name,
+            "mime_type": mime_type,
+            "size": file_size,
+            "size_formatted": format_size(file_size),
+            "message": f"{file_type.capitalize()} 文件: {file_name} ({format_size(file_size)})\n提示: 如果需要发送此文件，请使用 send 工具。"
+        }
+        
+        return ToolResult.success(result)
+    
     def _read_image(self, absolute_path: str, file_ext: str) -> ToolResult:
         """
-        Read image file
+        Read image file - always return metadata only (images should be sent, not read into context)
         
         :param absolute_path: Absolute path to the image file
         :param file_ext: File extension
-        :return: Result containing image information
+        :return: Result containing image metadata for sending
         """
         try:
-            # Read image file
-            with open(absolute_path, 'rb') as f:
-                image_data = f.read()
-            
             # Get file size
-            file_size = len(image_data)
-            
-            # Return image information (actual image data can be base64 encoded when needed)
-            import base64
-            base64_data = base64.b64encode(image_data).decode('utf-8')
+            file_size = os.path.getsize(absolute_path)
             
             # Determine MIME type
             mime_type_map = {
@@ -133,12 +195,15 @@ class Read(BaseTool):
             }
             mime_type = mime_type_map.get(file_ext, 'image/jpeg')
             
+            # Return metadata for images (NOT file_to_send - use send tool to actually send)
             result = {
-                "type": "image",
+                "type": "image_metadata",
+                "file_type": "image",
+                "path": absolute_path,
                 "mime_type": mime_type,
                 "size": file_size,
                 "size_formatted": format_size(file_size),
-                "data": base64_data  # Base64 encoded image data
+                "message": f"图片文件: {Path(absolute_path).name} ({format_size(file_size)})\n提示: 如果需要发送此图片，请使用 send 工具。"
             }
             
             return ToolResult.success(result)
@@ -157,9 +222,31 @@ class Read(BaseTool):
         :return: File content or error message
         """
         try:
+            # Check file size first
+            file_size = os.path.getsize(absolute_path)
+            MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
+            
+            if file_size > MAX_FILE_SIZE:
+                # File too large, return metadata only
+                return ToolResult.success({
+                    "type": "file_to_send",
+                    "file_type": "document",
+                    "path": absolute_path,
+                    "size": file_size,
+                    "size_formatted": format_size(file_size),
+                    "message": f"文件过大 ({format_size(file_size)} > 50MB)，无法读取内容。文件路径: {absolute_path}"
+                })
+            
             # Read file
             with open(absolute_path, 'r', encoding='utf-8') as f:
                 content = f.read()
+            
+            # Truncate content if too long (20K characters max for model context)
+            MAX_CONTENT_CHARS = 20 * 1024  # 20K characters
+            content_truncated = False
+            if len(content) > MAX_CONTENT_CHARS:
+                content = content[:MAX_CONTENT_CHARS]
+                content_truncated = True
             
             all_lines = content.split('\n')
             total_file_lines = len(all_lines)
@@ -167,11 +254,17 @@ class Read(BaseTool):
             # Apply offset (if specified)
             start_line = 0
             if offset is not None:
-                start_line = max(0, offset - 1)  # Convert to 0-indexed
-                if start_line >= total_file_lines:
-                    return ToolResult.fail(
-                        f"Error: Offset {offset} is beyond end of file ({total_file_lines} lines total)"
-                    )
+                if offset < 0:
+                    # Negative offset: read from end
+                    # -20 means "last 20 lines" → start from (total - 20)
+                    start_line = max(0, total_file_lines + offset)
+                else:
+                    # Positive offset: read from start (1-indexed)
+                    start_line = max(0, offset - 1)  # Convert to 0-indexed
+                    if start_line >= total_file_lines:
+                        return ToolResult.fail(
+                            f"Error: Offset {offset} is beyond end of file ({total_file_lines} lines total)"
+                        )
             
             start_line_display = start_line + 1  # For display (1-indexed)
             
@@ -190,6 +283,10 @@ class Read(BaseTool):
             
             output_text = ""
             details = {}
+            
+            # Add truncation warning if content was truncated
+            if content_truncated:
+                output_text = f"[文件内容已截断到前 {format_size(MAX_CONTENT_CHARS)}，完整文件大小: {format_size(file_size)}]\n\n"
             
             if truncation.first_line_exceeds_limit:
                 # First line exceeds 30KB limit

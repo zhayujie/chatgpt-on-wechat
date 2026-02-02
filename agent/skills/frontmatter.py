@@ -23,7 +23,22 @@ def parse_frontmatter(content: str) -> Dict[str, Any]:
     
     frontmatter_text = match.group(1)
     
-    # Simple YAML-like parsing (supports key: value format)
+    # Try to use PyYAML for proper YAML parsing
+    try:
+        import yaml
+        frontmatter = yaml.safe_load(frontmatter_text)
+        if not isinstance(frontmatter, dict):
+            frontmatter = {}
+        return frontmatter
+    except ImportError:
+        # Fallback to simple parsing if PyYAML not available
+        pass
+    except Exception:
+        # If YAML parsing fails, fall back to simple parsing
+        pass
+    
+    # Simple YAML-like parsing (supports key: value format only)
+    # This is a fallback for when PyYAML is not available
     for line in frontmatter_text.split('\n'):
         line = line.strip()
         if not line or line.startswith('#'):
@@ -72,10 +87,8 @@ def parse_metadata(frontmatter: Dict[str, Any]) -> Optional[SkillMetadata]:
     if not isinstance(metadata_raw, dict):
         return None
     
-    # Support both 'moltbot' and 'cow' keys for compatibility
-    meta_obj = metadata_raw.get('moltbot') or metadata_raw.get('cow')
-    if not meta_obj or not isinstance(meta_obj, dict):
-        return None
+    # Use metadata_raw directly (COW format)
+    meta_obj = metadata_raw
     
     # Parse install specs
     install_specs = []

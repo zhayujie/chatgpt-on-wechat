@@ -2,55 +2,57 @@
 from agent.tools.base_tool import BaseTool
 from agent.tools.tool_manager import ToolManager
 
-# Import basic tools (no external dependencies)
-from agent.tools.calculator.calculator import Calculator
-
 # Import file operation tools
 from agent.tools.read.read import Read
 from agent.tools.write.write import Write
 from agent.tools.edit.edit import Edit
 from agent.tools.bash.bash import Bash
-from agent.tools.grep.grep import Grep
-from agent.tools.find.find import Find
 from agent.tools.ls.ls import Ls
+from agent.tools.send.send import Send
 
 # Import memory tools
 from agent.tools.memory.memory_search import MemorySearchTool
 from agent.tools.memory.memory_get import MemoryGetTool
 
-# Import web tools
-from agent.tools.web_fetch.web_fetch import WebFetch
-
 # Import tools with optional dependencies
 def _import_optional_tools():
     """Import tools that have optional dependencies"""
+    from common.log import logger
     tools = {}
     
-    # Google Search (requires requests)
+    # EnvConfig Tool (requires python-dotenv)
     try:
-        from agent.tools.google_search.google_search import GoogleSearch
-        tools['GoogleSearch'] = GoogleSearch
-    except ImportError:
-        pass
+        from agent.tools.env_config.env_config import EnvConfig
+        tools['EnvConfig'] = EnvConfig
+    except ImportError as e:
+        logger.error(
+            f"[Tools] EnvConfig tool not loaded - missing dependency: {e}\n"
+            f"  To enable environment variable management, run:\n"
+            f"    pip install python-dotenv>=1.0.0"
+        )
+    except Exception as e:
+        logger.error(f"[Tools] EnvConfig tool failed to load: {e}")
     
-    # File Save (may have dependencies)
+    # Scheduler Tool (requires croniter)
     try:
-        from agent.tools.file_save.file_save import FileSave
-        tools['FileSave'] = FileSave
-    except ImportError:
-        pass
+        from agent.tools.scheduler.scheduler_tool import SchedulerTool
+        tools['SchedulerTool'] = SchedulerTool
+    except ImportError as e:
+        logger.error(
+            f"[Tools] Scheduler tool not loaded - missing dependency: {e}\n"
+            f"  To enable scheduled tasks, run:\n"
+            f"    pip install croniter>=2.0.0"
+        )
+    except Exception as e:
+        logger.error(f"[Tools] Scheduler tool failed to load: {e}")
     
-    # Terminal (basic, should work)
-    try:
-        from agent.tools.terminal.terminal import Terminal
-        tools['Terminal'] = Terminal
-    except ImportError:
-        pass
     
     return tools
 
 # Load optional tools
 _optional_tools = _import_optional_tools()
+EnvConfig = _optional_tools.get('EnvConfig')
+SchedulerTool = _optional_tools.get('SchedulerTool')
 GoogleSearch = _optional_tools.get('GoogleSearch')
 FileSave = _optional_tools.get('FileSave') 
 Terminal = _optional_tools.get('Terminal')
@@ -74,28 +76,24 @@ def _import_browser_tool():
 
 
 # Dynamically set BrowserTool
-BrowserTool = _import_browser_tool()
+# BrowserTool = _import_browser_tool()
 
 # Export all tools (including optional ones that might be None)
 __all__ = [
     'BaseTool',
     'ToolManager',
-    'Calculator',
     'Read',
     'Write',
     'Edit',
     'Bash',
-    'Grep',
-    'Find',
     'Ls',
+    'Send',
     'MemorySearchTool',
     'MemoryGetTool',
-    'WebFetch',
+    'EnvConfig',
+    'SchedulerTool',
     # Optional tools (may be None if dependencies not available)
-    'GoogleSearch',
-    'FileSave',
-    'Terminal',
-    'BrowserTool'
+    # 'BrowserTool'
 ]
 
 """

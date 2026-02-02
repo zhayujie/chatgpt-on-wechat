@@ -1,10 +1,12 @@
 from bridge.context import ContextType
 from channel.chat_message import ChatMessage
 import json
+import os
 import requests
 from common.log import logger
 from common.tmp_dir import TmpDir
 from common import utils
+from config import conf
 
 
 class FeishuMessage(ChatMessage):
@@ -22,6 +24,119 @@ class FeishuMessage(ChatMessage):
             self.ctype = ContextType.TEXT
             content = json.loads(msg.get('content'))
             self.content = content.get("text").strip()
+        elif msg_type == "image":
+            # 单张图片消息：下载并缓存，等待用户提问时一起发送
+            self.ctype = ContextType.IMAGE
+            content = json.loads(msg.get("content"))
+            image_key = content.get("image_key")
+            
+            # 下载图片到工作空间临时目录
+            workspace_root = os.path.expanduser(conf().get("agent_workspace", "~/cow"))
+            tmp_dir = os.path.join(workspace_root, "tmp")
+            os.makedirs(tmp_dir, exist_ok=True)
+            image_path = os.path.join(tmp_dir, f"{image_key}.png")
+            
+            # 下载图片
+            url = f"https://open.feishu.cn/open-apis/im/v1/messages/{msg.get('message_id')}/resources/{image_key}"
+            headers = {"Authorization": "Bearer " + access_token}
+            params = {"type": "image"}
+            response = requests.get(url=url, headers=headers, params=params)
+            
+            if response.status_code == 200:
+                with open(image_path, "wb") as f:
+                    f.write(response.content)
+                logger.info(f"[FeiShu] Downloaded single image, key={image_key}, path={image_path}")
+                self.content = image_path
+                self.image_path = image_path  # 保存图片路径
+            else:
+                logger.error(f"[FeiShu] Failed to download single image, key={image_key}, status={response.status_code}")
+                self.content = f"[图片下载失败: {image_key}]"
+                self.image_path = None
+        elif msg_type == "post":
+            # 富文本消息，可能包含图片、文本等多种元素
+            content = json.loads(msg.get("content"))
+            
+            # 飞书富文本消息结构：content 直接包含 title 和 content 数组
+            # 不是嵌套在 post 字段下
+            title = content.get("title", "")
+            content_list = content.get("content", [])
+            
+            logger.info(f"[FeiShu] Post message - title: '{title}', content_list length: {len(content_list)}")
+            
+            # 收集所有图片和文本
+            image_keys = []
+            text_parts = []
+            
+            if title:
+                text_parts.append(title)
+            
+            for block in content_list:
+                logger.debug(f"[FeiShu] Processing block: {block}")
+                # block 本身就是元素列表
+                if not isinstance(block, list):
+                    continue
+                    
+                for element in block:
+                    element_tag = element.get("tag")
+                    logger.debug(f"[FeiShu] Element tag: {element_tag}, element: {element}")
+                    if element_tag == "img":
+                        # 找到图片元素
+                        image_key = element.get("image_key")
+                        if image_key:
+                            image_keys.append(image_key)
+                    elif element_tag == "text":
+                        # 文本元素
+                        text_content = element.get("text", "")
+                        if text_content:
+                            text_parts.append(text_content)
+            
+            logger.info(f"[FeiShu] Parsed - images: {len(image_keys)}, text_parts: {text_parts}")
+            
+            # 富文本消息统一作为文本消息处理
+            self.ctype = ContextType.TEXT
+            
+            if image_keys:
+                # 如果包含图片，下载并在文本中引用本地路径
+                workspace_root = os.path.expanduser(conf().get("agent_workspace", "~/cow"))
+                tmp_dir = os.path.join(workspace_root, "tmp")
+                os.makedirs(tmp_dir, exist_ok=True)
+                
+                # 保存图片路径映射
+                self.image_paths = {}
+                for image_key in image_keys:
+                    image_path = os.path.join(tmp_dir, f"{image_key}.png")
+                    self.image_paths[image_key] = image_path
+                
+                def _download_images():
+                    for image_key, image_path in self.image_paths.items():
+                        url = f"https://open.feishu.cn/open-apis/im/v1/messages/{self.msg_id}/resources/{image_key}"
+                        headers = {"Authorization": "Bearer " + access_token}
+                        params = {"type": "image"}
+                        response = requests.get(url=url, headers=headers, params=params)
+                        if response.status_code == 200:
+                            with open(image_path, "wb") as f:
+                                f.write(response.content)
+                            logger.info(f"[FeiShu] Image downloaded from post message, key={image_key}, path={image_path}")
+                        else:
+                            logger.error(f"[FeiShu] Failed to download image from post, key={image_key}, status={response.status_code}")
+                
+                # 立即下载图片，不使用延迟下载
+                # 因为 TEXT 类型消息不会调用 prepare()
+                _download_images()
+                
+                # 构建消息内容：文本 + 图片路径
+                content_parts = []
+                if text_parts:
+                    content_parts.append("\n".join(text_parts).strip())
+                for image_key, image_path in self.image_paths.items():
+                    content_parts.append(f"[图片: {image_path}]")
+                
+                self.content = "\n".join(content_parts)
+                logger.info(f"[FeiShu] Received post message with {len(image_keys)} image(s) and text: {self.content}")
+            else:
+                # 纯文本富文本消息
+                self.content = "\n".join(text_parts).strip() if text_parts else "[富文本消息]"
+                logger.info(f"[FeiShu] Received post message (text only): {self.content}")
         elif msg_type == "file":
             self.ctype = ContextType.FILE
             content = json.loads(msg.get("content"))

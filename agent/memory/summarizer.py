@@ -41,46 +41,42 @@ class MemoryFlushManager:
         # Tracking
         self.last_flush_token_count: Optional[int] = None
         self.last_flush_timestamp: Optional[datetime] = None
+        self.turn_count: int = 0  # 对话轮数计数器
     
     def should_flush(
         self,
-        current_tokens: int,
-        context_window: int,
-        reserve_tokens: int = 20000,
-        soft_threshold: int = 4000
+        current_tokens: int = 0,
+        token_threshold: int = 50000,
+        turn_threshold: int = 20
     ) -> bool:
         """
         Determine if memory flush should be triggered
         
-        Similar to clawdbot's shouldRunMemoryFlush logic:
-        threshold = contextWindow - reserveTokens - softThreshold
+        独立的 flush 触发机制，不依赖模型 context window:
+        - Token 阈值: 达到 50K tokens 时触发
+        - 轮次阈值: 达到 20 轮对话时触发
         
         Args:
             current_tokens: Current session token count
-            context_window: Model's context window size
-            reserve_tokens: Reserve tokens for compaction overhead
-            soft_threshold: Trigger flush N tokens before threshold
+            token_threshold: Token threshold to trigger flush (default: 50K)
+            turn_threshold: Turn threshold to trigger flush (default: 20)
             
         Returns:
             True if flush should run
         """
-        if current_tokens <= 0:
-            return False
+        # 检查 token 阈值
+        if current_tokens > 0 and current_tokens >= token_threshold:
+            # 避免重复 flush
+            if self.last_flush_token_count is not None:
+                if current_tokens <= self.last_flush_token_count + 5000:
+                    return False
+            return True
         
-        threshold = max(0, context_window - reserve_tokens - soft_threshold)
-        if threshold <= 0:
-            return False
+        # 检查轮次阈值
+        if self.turn_count >= turn_threshold:
+            return True
         
-        # Check if we've crossed the threshold
-        if current_tokens < threshold:
-            return False
-        
-        # Avoid duplicate flush in same compaction cycle
-        if self.last_flush_token_count is not None:
-            if current_tokens <= self.last_flush_token_count + soft_threshold:
-                return False
-        
-        return True
+        return False
     
     def get_today_memory_file(self, user_id: Optional[str] = None) -> Path:
         """
@@ -130,7 +126,12 @@ class MemoryFlushManager:
             f"Pre-compaction memory flush. "
             f"Store durable memories now (use memory/{today}.md for daily notes; "
             f"create memory/ if needed). "
-            f"If nothing to store, reply with NO_REPLY."
+            f"\n\n"
+            f"重要提示:\n"
+            f"- MEMORY.md: 记录最核心、最常用的信息（例如重要规则、偏好、决策、要求等）\n"
+            f"  如果 MEMORY.md 过长，可以精简或移除不再重要的内容。避免冗长描述，用关键词和要点形式记录\n"
+            f"- memory/{today}.md: 记录当天发生的事件、关键信息、经验教训、对话过程摘要等，突出重点\n"
+            f"- 如果没有重要内容需要记录，回复 NO_REPLY\n"
         )
     
     def create_flush_system_prompt(self) -> str:
@@ -142,6 +143,20 @@ class MemoryFlushManager:
         return (
             "Pre-compaction memory flush turn. "
             "The session is near auto-compaction; capture durable memories to disk. "
+            "\n\n"
+            "记忆写入原则:\n"
+            "1. MEMORY.md 精简原则: 只记录核心信息（<2000 tokens）\n"
+            "   - 记录重要规则、偏好、决策、要求等需要长期记住的关键信息，无需记录过多细节\n"
+            "   - 如果 MEMORY.md 过长，可以根据需要精简或删除过时内容\n"
+            "\n"
+            "2. 天级记忆 (memory/YYYY-MM-DD.md):\n"
+            "   - 记录当天的重要事件、关键信息、经验教训、对话过程摘要等，确保核心信息点被完整记录\n"
+            "\n"
+            "3. 判断标准:\n"
+            "   - 这个信息未来会经常用到吗？→ MEMORY.md\n"
+            "   - 这是今天的重要事件或决策吗？→ memory/YYYY-MM-DD.md\n"
+            "   - 这是临时性的、不重要的内容吗？→ 不记录\n"
+            "\n"
             "You may reply, but usually NO_REPLY is correct."
         )
     
@@ -180,12 +195,17 @@ class MemoryFlushManager:
             # Track flush
             self.last_flush_token_count = current_tokens
             self.last_flush_timestamp = datetime.now()
+            self.turn_count = 0  # 重置轮数计数器
             
             return True
             
         except Exception as e:
             print(f"Memory flush failed: {e}")
             return False
+    
+    def increment_turn(self):
+        """增加对话轮数计数"""
+        self.turn_count += 1
     
     def get_status(self) -> dict:
         """Get memory flush status"""

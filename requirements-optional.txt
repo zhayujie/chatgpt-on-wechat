@@ -32,9 +32,6 @@ broadscope_bailian
 # google
 google-generativeai
 
-# dingtalk
-dingtalk_stream
-
 # zhipuai
 zhipuai>=2.0.1
 

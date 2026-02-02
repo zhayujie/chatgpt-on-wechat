@@ -1,0 +1,14 @@
+{
+  "apps": [
+    {
+      "app_code": "G7z6vKwp",
+      "app_name": "LinkAI客服助手",
+      "app_description": "当用户需要了解LinkAI平台相关问题时才选择该助手，基于LinkAI知识库进行回答"
+    },
+    {
+      "app_code": "SFY5x7JR",
+      "app_name": "内容创作助手",
+      "app_description": "当用户需要创作图片或视频时才使用该助手，支持Nano Banana、Seedream、即梦、Veo、可灵等多种模型"
+    }
+  ]
+}

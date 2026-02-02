@@ -34,6 +34,7 @@ def format_skills_for_prompt(skills: List[Skill]) -> str:
         lines.append(f"    <name>{_escape_xml(skill.name)}</name>")
         lines.append(f"    <description>{_escape_xml(skill.description)}</description>")
         lines.append(f"    <location>{_escape_xml(skill.file_path)}</location>")
+        lines.append(f"    <base_dir>{_escape_xml(skill.base_dir)}</base_dir>")
         lines.append("  </skill>")
     
     lines.append("</available_skills>")
