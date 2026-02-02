@@ -1,4 +1,4 @@
-<p align="center"><img src= "https://github.com/user-attachments/assets/31fb4eab-3be4-477d-aa76-82cf62bfd12c" alt="Chatgpt-on-Wechat" width="600" /></p>
+<p align="center"><img src= "https://github.com/user-attachments/assets/62db6aee-9268-4564-992a-2d27e1b2da09" alt="Chatgpt-on-Wechat" width="600" /></p>
 
 <p align="center">
    <a href="https://github.com/zhayujie/chatgpt-on-wechat/releases/latest"><img src="https://img.shields.io/github/v/release/zhayujie/chatgpt-on-wechat" alt="Latest release"></a>
@@ -6,11 +6,11 @@
   <a href="https://github.com/zhayujie/chatgpt-on-wechat"><img src="https://img.shields.io/github/stars/zhayujie/chatgpt-on-wechat?style=flat-square" alt="Stars"></a> <br/>
 </p>
 
-**chatgpt-on-wechat**（简称CoW）项目是基于大模型的智能对话机器人，支持自由切换多种模型，可接入网页、微信公众号、企业微信应用、飞书、钉钉中使用，能处理文本、语音、图片、文件等多模态消息，支持通过插件访问操作系统和互联网等外部资源，以及基于自有知识库定制企业AI应用。
+**CowAgent** 是基于大模型的超级AI助理，能够主动思考和任务规划、操作计算机和外部资源、创造和执行Skill、拥有长期记忆并不断成长。CowAgent 支持灵活切换多种模型，能处理文本、语音、图片、文件等多模态消息，可接入网页、飞书、钉钉、企业微信应用、微信公众号中使用，7*24小时运行于你的个人电脑或服务器中。
 
 # 简介
 
-> 该项目既是一个可以开箱即用的对话机器人，也是一个支持高度扩展的AI应用框架，可以通过为项目添加大模型接口、接入渠道、自定义插件来灵活实现各种定制需求。支持的功能如下：
+> 该项目既是一个可以开箱即用的AI助理，也是一个支持高度扩展的Agent框架，可以通过为项目扩展大模型接口、接入渠道、内置工具、Skill系统来灵活实现各种定制需求。核心功能如下：
 
 -  ✅   **多端部署：** 有多种部署方式可选择且功能完备，目前已支持网页、微信公众号、企业微信应用、飞书、钉钉等部署方式
 -  ✅   **基础对话：** 私聊及群聊的AI智能回复，支持多轮会话上下文记忆，基础模型支持OpenAI, Claude, Gemini, DeepSeek, 通义千问, Kimi, 文心一言, 讯飞星火, ChatGLM, MiniMax, GiteeAI, ModelScope, LinkAI
@@ -22,13 +22,15 @@
 
 ## 声明
 
-1. 本项目遵循 [MIT开源协议](/LICENSE)，仅用于技术研究和学习，使用本项目时需遵守所在地法律法规、相关政策以及企业章程，禁止用于任何违法或侵犯他人权益的行为。任何个人、团队和企业，无论以何种方式使用该项目、对何对象提供服务，所产生的一切后果，本项目均不承担任何责任
-2. 境内使用该项目时，建议使用国内厂商的大模型服务，并进行必要的内容安全审核及过滤
-3. 本项目当前主要接入协同办公平台，推荐使用网页、公众号、企微自建应用、钉钉、飞书等接入通道，其他通道为历史产物暂不维护
+1. 本项目遵循 [MIT开源协议](/LICENSE)，用于技术研究和学习，使用本项目时需遵守所在地法律法规、相关政策以及企业章程，禁止用于任何违法或侵犯他人权益的行为。任何个人、团队和企业，无论以何种方式使用该项目、对何对象提供服务，所产生的一切后果，本项目均不承担任何责任
+2. 境内使用该项目时，推荐使用国内厂商的大模型服务，并进行必要的内容安全审核及过滤
+3. 本项目当前主要接入协同办公平台，推荐使用飞书、钉钉、企微自建应用、网页、公众号等接入通道，其他通道持续扩展中，欢迎贡献代码或提交反馈
 
 ## 演示
 
-DEMO视频：https://cdn.link-ai.tech/doc/cow_demo.mp4
+使用说明(Agent模式)：[CowAgent介绍](/docs/agent.md)
+
+DEMO视频(对话模式)：https://cdn.link-ai.tech/doc/cow_demo.mp4
 
 ## 社区
 

@@ -183,7 +183,7 @@ available_setting = {
     "linkai_api_key": "",
     "linkai_app_code": "",
     "linkai_api_base": "https://api.link-ai.tech",  # linkAI服务地址
-    "Minimax_api_key": "",
+    "minimax_api_key": "",
     "Minimax_group_id": "",
     "Minimax_base_url": "",
     "web_port": 9899,

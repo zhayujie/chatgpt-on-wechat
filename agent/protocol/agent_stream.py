@@ -476,17 +476,7 @@ class AgentStreamExecutor:
 
         # Prepare messages
         messages = self._prepare_messages()
-        
-        # Debug: log message structure
         logger.debug(f"Sending {len(messages)} messages to LLM")
-        for i, msg in enumerate(messages):
-            role = msg.get("role", "unknown")
-            content = msg.get("content", "")
-            if isinstance(content, list):
-                content_types = [c.get("type") for c in content if isinstance(c, dict)]
-                logger.debug(f"  Message {i}: role={role}, content_blocks={content_types}")
-            else:
-                logger.debug(f"  Message {i}: role={role}, content_length={len(str(content))}")
 
         # Prepare tool definitions (OpenAI/Claude format)
         tools_schema = None

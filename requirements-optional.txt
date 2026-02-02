@@ -15,10 +15,6 @@ elevenlabs==1.0.3 # elevenlabs TTS
 #install plugin
 dulwich
 
-# wechatmp && wechatcom && feishu
-web.py
-wechatpy
-
 # xunfei spark
 websocket-client==1.2.0
 
@@ -31,12 +27,6 @@ broadscope_bailian
 
 # google
 google-generativeai
-
-# zhipuai
-zai-sdk
-
-# tongyi qwen new sdk
-dashscope
 
 # tencentcloud sdk
 tencentcloud-sdk-python>=3.0.0

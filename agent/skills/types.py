@@ -2,6 +2,7 @@
 Type definitions for skills system.
 """
 
+from __future__ import annotations
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
 

@@ -13,6 +13,14 @@ python-dotenv>=1.0.0
 PyYAML>=6.0
 croniter>=2.0.0
 
+# zhipuai
+zai-sdk
+# tongyi qwen sdk
+dashscope
+
+# wechatcom & wechatmp
+web.py
+wechatpy
 # feishu websocket mode
 lark-oapi
 # dingtalk
