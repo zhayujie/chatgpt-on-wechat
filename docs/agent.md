@@ -5,7 +5,7 @@
 Cow项目从简单的聊天机器人全面升级为超级智能助理 **CowAgent**，能够主动规思考和规划任务、拥有长期记忆、操作计算机和外部资源、创造和执行Skill，真正理解你并和你一起成长。CowAgent能够长期运行在个人电脑或服务器中，通过飞书、钉钉、企业微信、网页等多种方式进行交互。核心能力如下：
 
 - **复杂任务规划**：能够理解复杂任务并自主规划执行，持续思考和调用工具直到完成目标，支持多轮推理和上下文理解
-- **工具系统**：内置实现10+种工具，包括文件操作、bash终端、浏览器、文件发送、定时任务、记忆管理等
+- **工具系统**：内置实现10+种工具，包括文件读写、bash终端、浏览器、定时任务、记忆管理等，通过Agent管理你的计算机或服务器
 - **长期记忆**：自动将对话记忆持久化至本地文件和数据库中，包括全局记忆和天级记忆，支持关键词及向量检索
 - **Skills系统**：新增Skill运行引擎，内置多种技能，并支持通过自然语言对话完成自定义Skills开发
 - **多渠道和多模型支持**：支持在Web、飞书、钉钉、企微等多渠道与Agent交互，支持Claude、Gemini、OpenAI、GLM、MiniMax、Qwen 等多种国内外主流模型
@@ -149,13 +149,13 @@ Agent模式推荐使用以下模型，可根据效果及成本综合选择：
 
 Agent模式的核心配置项如下，在 `config.json` 中配置：
 
-```json
+```bash
 {
-  "agent": true,                           // 是否启用Agent模式
-  "agent_workspace": "~/cow",              // Agent工作空间路径
-  "agent_max_context_tokens": 40000,       // 最大上下文tokens
-  "agent_max_context_turns": 30,           // 最大上下文记忆轮次
-  "agent_max_steps": 15                    // 单次任务最大决策步数
+  "agent": true,                           # 是否启用Agent模式
+  "agent_workspace": "~/cow",              # Agent工作空间路径
+  "agent_max_context_tokens": 40000,       # 最大上下文tokens
+  "agent_max_context_turns": 30,           # 最大上下文记忆轮次
+  "agent_max_steps": 15                    # 单次任务最大决策步数
 }
 ```
 
