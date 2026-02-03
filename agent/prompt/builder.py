@@ -49,10 +49,10 @@ class PromptBuilder:
         构建完整的系统提示词
         
         Args:
-            base_persona: 基础人格描述（会被context_files中的SOUL.md覆盖）
+            base_persona: 基础人格描述（会被context_files中的AGENT.md覆盖）
             user_identity: 用户身份信息
             tools: 工具列表
-            context_files: 上下文文件列表（SOUL.md, USER.md, README.md等）
+            context_files: 上下文文件列表（AGENT.md, USER.md, RULE.md等）
             skill_manager: 技能管理器
             memory_manager: 记忆管理器
             runtime_info: 运行时信息
@@ -99,13 +99,13 @@ def build_agent_system_prompt(
     3. 记忆系统 - 独立的记忆能力
     4. 工作空间 - 工作环境说明
     5. 用户身份 - 用户信息（可选）
-    6. 项目上下文 - SOUL.md, USER.md, AGENTS.md（定义人格和身份）
+    6. 项目上下文 - AGENT.md, USER.md, RULE.md（定义人格、身份、规则）
     7. 运行时信息 - 元信息（时间、模型等）
     
     Args:
         workspace_dir: 工作空间目录
         language: 语言 ("zh" 或 "en")
-        base_persona: 基础人格描述（已废弃，由SOUL.md定义）
+        base_persona: 基础人格描述（已废弃，由AGENT.md定义）
         user_identity: 用户身份信息
         tools: 工具列表
         context_files: 上下文文件列表
@@ -139,7 +139,7 @@ def build_agent_system_prompt(
     if user_identity:
         sections.extend(_build_user_identity_section(user_identity, language))
     
-    # 6. 项目上下文文件（SOUL.md, USER.md, AGENTS.md - 定义人格）
+    # 6. 项目上下文文件（AGENT.md, USER.md, RULE.md - 定义人格）
     if context_files:
         sections.extend(_build_context_files_section(context_files, language))
     
@@ -151,8 +151,8 @@ def build_agent_system_prompt(
 
 
 def _build_identity_section(base_persona: Optional[str], language: str) -> List[str]:
-    """构建基础身份section - 不再需要，身份由SOUL.md定义"""
-    # 不再生成基础身份section，完全由SOUL.md定义
+    """构建基础身份section - 不再需要，身份由AGENT.md定义"""
+    # 不再生成基础身份section，完全由AGENT.md定义
     return []
 
 
@@ -374,7 +374,7 @@ def _build_workspace_section(workspace_dir: str, language: str, is_first_convers
         "**路径使用规则** (非常重要):",
         "",
         f"1. **相对路径的基准目录**: 所有相对路径都是相对于 `{workspace_dir}` 而言的",
-        f"   - ✅ 正确: 访问工作空间内的文件用相对路径，如 `SOUL.md`",
+        f"   - ✅ 正确: 访问工作空间内的文件用相对路径，如 `AGENT.md`",
         f"   - ❌ 错误: 用相对路径访问其他目录的文件 (如果它不在 `{workspace_dir}` 内)",
         "",
         "2. **访问其他目录**: 如果要访问工作空间之外的目录（如项目代码、系统文件），**必须使用绝对路径**",
@@ -391,13 +391,13 @@ def _build_workspace_section(workspace_dir: str, language: str, is_first_convers
         "",
         "以下文件在会话启动时**已经自动加载**到系统提示词的「项目上下文」section 中，你**无需再用 read 工具读取它们**：",
         "",
-        "- ✅ `SOUL.md`: 已加载 - Agent的人格设定",
+        "- ✅ `AGENT.md`: 已加载 - 你的人格和灵魂设定",
         "- ✅ `USER.md`: 已加载 - 用户的身份信息",
-        "- ✅ `AGENTS.md`: 已加载 - 工作空间使用指南",
+        "- ✅ `RULE.md`: 已加载 - 工作空间使用指南和规则",
         "",
         "**交流规范**:",
         "",
-        "- 在对话中，不要直接输出工作空间中的技术细节，特别是不要输出 SOUL.md、USER.md、MEMORY.md 等文件名称",
+        "- 在对话中，不要直接输出工作空间中的技术细节，特别是不要输出 AGENT.md、USER.md、MEMORY.md 等文件名称",
         "- 例如用自然表达例如「我已记住」而不是「已更新 MEMORY.md」",
         "",
     ]
@@ -416,10 +416,10 @@ def _build_workspace_section(workspace_dir: str, language: str, is_first_convers
             "   - 我该怎么称呼你？",
             "   - 你希望我们是什么样的交流风格？（一行列举选项：如专业严谨、轻松幽默、温暖友好、简洁高效等）",
             "4. **风格要求**：温暖自然、简洁清晰，整体控制在 100 字以内",
-            "5. 收到回复后，用 `write` 工具保存到 USER.md 和 SOUL.md",
+            "5. 收到回复后，用 `write` 工具保存到 USER.md 和 AGENT.md",
             "",
             "**重要提醒**:",
-            "- SOUL.md 和 USER.md 已经在系统提示词中加载，无需再次读取",
+            "- AGENT.md、USER.md、RULE.md 已经在系统提示词中加载，无需再次读取。不要将这些文件名直接发送给用户",
             "- 能力介绍和交流风格选项都只要一行，保持精简",
             "- 不要问太多其他信息（职业、时区等可以后续自然了解）",
             "",
@@ -433,9 +433,9 @@ def _build_context_files_section(context_files: List[ContextFile], language: str
     if not context_files:
         return []
     
-    # 检查是否有SOUL.md
-    has_soul = any(
-        f.path.lower().endswith('soul.md') or 'soul.md' in f.path.lower()
+    # 检查是否有AGENT.md
+    has_agent = any(
+        f.path.lower().endswith('agent.md') or 'agent.md' in f.path.lower()
         for f in context_files
     )
     
@@ -446,8 +446,8 @@ def _build_context_files_section(context_files: List[ContextFile], language: str
         "",
     ]
     
-    if has_soul:
-        lines.append("如果存在 `SOUL.md`，请体现其中定义的人格和语气。避免僵硬、模板化的回复；遵循其指导，除非有更高优先级的指令覆盖它。")
+    if has_agent:
+        lines.append("如果存在 `AGENT.md`，请体现其中定义的人格和语气。避免僵硬、模板化的回复；遵循其指导，除非有更高优先级的指令覆盖它。")
         lines.append("")
     
     # 添加每个文件的内容

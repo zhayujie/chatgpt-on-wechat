@@ -15,9 +15,9 @@ from .builder import ContextFile
 
 
 # 默认文件名常量
-DEFAULT_SOUL_FILENAME = "SOUL.md"
+DEFAULT_AGENT_FILENAME = "AGENT.md"
 DEFAULT_USER_FILENAME = "USER.md"
-DEFAULT_AGENTS_FILENAME = "AGENTS.md"
+DEFAULT_RULE_FILENAME = "RULE.md"
 DEFAULT_MEMORY_FILENAME = "MEMORY.md"
 DEFAULT_STATE_FILENAME = ".agent_state.json"
 
@@ -25,9 +25,9 @@ DEFAULT_STATE_FILENAME = ".agent_state.json"
 @dataclass
 class WorkspaceFiles:
     """工作空间文件路径"""
-    soul_path: str
+    agent_path: str
     user_path: str
-    agents_path: str
+    rule_path: str
     memory_path: str
     memory_dir: str
     state_path: str
@@ -48,9 +48,9 @@ def ensure_workspace(workspace_dir: str, create_templates: bool = True) -> Works
     os.makedirs(workspace_dir, exist_ok=True)
     
     # 定义文件路径
-    soul_path = os.path.join(workspace_dir, DEFAULT_SOUL_FILENAME)
+    agent_path = os.path.join(workspace_dir, DEFAULT_AGENT_FILENAME)
     user_path = os.path.join(workspace_dir, DEFAULT_USER_FILENAME)
-    agents_path = os.path.join(workspace_dir, DEFAULT_AGENTS_FILENAME)
+    rule_path = os.path.join(workspace_dir, DEFAULT_RULE_FILENAME)
     memory_path = os.path.join(workspace_dir, DEFAULT_MEMORY_FILENAME)  # MEMORY.md 在根目录
     memory_dir = os.path.join(workspace_dir, "memory")  # 每日记忆子目录
     state_path = os.path.join(workspace_dir, DEFAULT_STATE_FILENAME)  # 状态文件
@@ -60,17 +60,17 @@ def ensure_workspace(workspace_dir: str, create_templates: bool = True) -> Works
     
     # 如果需要，创建模板文件
     if create_templates:
-        _create_template_if_missing(soul_path, _get_soul_template())
+        _create_template_if_missing(agent_path, _get_agent_template())
         _create_template_if_missing(user_path, _get_user_template())
-        _create_template_if_missing(agents_path, _get_agents_template())
+        _create_template_if_missing(rule_path, _get_rule_template())
         _create_template_if_missing(memory_path, _get_memory_template())
         
         logger.debug(f"[Workspace] Initialized workspace at: {workspace_dir}")
     
     return WorkspaceFiles(
-        soul_path=soul_path,
+        agent_path=agent_path,
         user_path=user_path,
-        agents_path=agents_path,
+        rule_path=rule_path,
         memory_path=memory_path,
         memory_dir=memory_dir,
         state_path=state_path
@@ -91,9 +91,9 @@ def load_context_files(workspace_dir: str, files_to_load: Optional[List[str]] = 
     if files_to_load is None:
         # 默认加载的文件（按优先级排序）
         files_to_load = [
-            DEFAULT_SOUL_FILENAME,
+            DEFAULT_AGENT_FILENAME,
             DEFAULT_USER_FILENAME,
-            DEFAULT_AGENTS_FILENAME,
+            DEFAULT_RULE_FILENAME,
         ]
     
     context_files = []
@@ -160,9 +160,9 @@ def _is_template_placeholder(content: str) -> bool:
 
 # ============= 模板内容 =============
 
-def _get_soul_template() -> str:
+def _get_agent_template() -> str:
     """Agent人格设定模板"""
-    return """# SOUL.md - 我是谁？
+    return """# AGENT.md - 我是谁？
 
 *在首次对话时与用户一起填写这个文件，定义你的身份和性格。*
 
@@ -231,9 +231,9 @@ def _get_user_template() -> str:
 """
 
 
-def _get_agents_template() -> str:
-    """工作空间指南模板"""
-    return """# AGENTS.md - 工作空间指南
+def _get_rule_template() -> str:
+    """工作空间规则模板"""
+    return """# RULE.md - 工作空间规则
 
 这个文件夹是你的家。好好对待它。
 
@@ -259,9 +259,8 @@ def _get_agents_template() -> str:
 - **记忆是有限的** - 如果你想记住某事，写入文件
 - "记在心里"不会在会话重启后保留，文件才会
 - 当有人说"记住这个" → 更新 `MEMORY.md` 或 `memory/YYYY-MM-DD.md`
-- 当你学到教训 → 更新 AGENTS.md 或相关技能
-- 当你犯错 → 记录下来，这样未来的你不会重复
-- **文字 > 大脑** 📝
+- 当你学到教训 → 更新 RULE.md 或相关技能
+- 当你犯错 → 记录下来，这样未来的你不会重复，**文字 > 大脑** 📝
 
 ### 存储规则
 
@@ -279,7 +278,7 @@ def _get_agents_template() -> str:
 
 ## 工作空间演化
 
-这个工作空间会随着你的使用而不断成长。当你学到新东西、发现更好的方式，或者犯错后改正时，记录下来。
+这个工作空间会随着你的使用而不断成长。当你学到新东西、发现更好的方式，或者犯错后改正时，记录下来。你可以随时更新这个规则文件。
 """
 
 

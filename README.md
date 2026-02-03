@@ -10,7 +10,7 @@
 
 # 简介
 
-> 该项目既是一个可以开箱即用的超级AI助理，也是一个支持高度扩展的Agent框架，可以通过为项目扩展大模型接口、接入渠道、内置工具、Skills系统来灵活实现各种定制需求。核心能力如下：
+> 该项目既是一个可以开箱即用的超级AI助理，也是一个支持高FTS5 not available, using LIKE-based keyword searc度扩展的Agent框架，可以通过为项目扩展大模型接口、接入渠道、内置工具、Skills系统来灵活实现各种定制需求。核心能力如下：
 
 -  ✅  **复杂任务规划**：能够理解复杂任务并自主规划执行，持续思考和调用工具直到完成目标，支持通过工具操作访问文件、终端、浏览器、定时任务等系统资源
 -  ✅  **长期记忆：** 自动将对话记忆持久化至本地文件和数据库中，包括全局记忆和天级记忆，支持关键词及向量检索
@@ -65,7 +65,7 @@ DEMO视频(对话模式)：https://cdn.link-ai.tech/doc/cow_demo.mp4
 
 >**2024.10.31：** [1.7.3版本](https://github.com/zhayujie/chatgpt-on-wechat/releases/tag/1.7.3) 程序稳定性提升、数据库功能、Claude模型优化、linkai插件优化、离线通知
 
-更多更新历史请查看: [更新日志](/docs/version/release-notes.md)
+更多更新历史请查看: [更新日志](/docs/release/history.md)
 
 <br/>
 

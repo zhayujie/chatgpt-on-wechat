@@ -71,7 +71,7 @@ class MemoryStorage:
             self.fts5_available = self._check_fts5_support()
             if not self.fts5_available:
                 from common.log import logger
-                logger.warning("[MemoryStorage] FTS5 not available, using LIKE-based keyword search")
+                logger.debug("[MemoryStorage] FTS5 not available, using LIKE-based keyword search")
             
             # Check database integrity
             try:

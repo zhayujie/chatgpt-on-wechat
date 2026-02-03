@@ -2,13 +2,12 @@
 
 ## 概述
 
-Cow项目从简单的聊天机器人全面升级为超级智能助理 **CowAgent**，能够主动思考和规划任务、拥有长期记忆、操作计算机和外部资源、创造和执行Skill，真正理解你并和你一起成长。CowAgent能够长期运行在个人电脑或服务器中，通过飞书、钉钉、企业微信、网页等多种方式进行交互。核心能力如下：
-
+Cow项目从简单的聊天机器人全面升级为超级智能助理 **CowAgent**，能够主动规思考和规划任务、拥有长期记忆、操作计算机和外部资源、创造和执行Skill，真正理解你并和你一起成长。CowAgent能够长期运行在个人电脑或服务器中，通过飞书、钉钉、企业微信、网页等多种方式进行交互。核心能力如下：
 
 - **复杂任务规划**：能够理解复杂任务并自主规划执行，持续思考和调用工具直到完成目标，支持多轮推理和上下文理解
-- **工具系统**：内置 10+ 种工具，包括文件操作、bash终端、浏览器、文件发送、定时任务、记忆管理等
-- **长期记忆**：持久化记忆自动保存到本地，通过文件存储和向量数据库实现智能检索，分为核心记忆、每日记忆、用户记忆三个层次
-- **Skills系统**：可无限扩展的技能系统，内置技能创造器、网络搜索、图像识别等技能，支持通过自然语言完成技能创造
+- **工具系统**：内置实现10+种工具，包括文件操作、bash终端、浏览器、文件发送、定时任务、记忆管理等
+- **长期记忆**：自动将对话记忆持久化至本地文件和数据库中，包括全局记忆和天级记忆，支持关键词及向量检索
+- **Skills系统**：新增Skill运行引擎，内置多种技能，并支持通过自然语言对话完成自定义Skills开发
 - **多渠道和多模型支持**：支持在Web、飞书、钉钉、企微等多渠道与Agent交互，支持Claude、Gemini、OpenAI、GLM、MiniMax、Qwen 等多种国内外主流模型
 - **安全和成本**：通过秘钥管理工具、提示词控制、系统权限等手段控制Agent的访问安全；通过最大记忆轮次、最大上下文token、工具执行步数对token成本进行限制
 
@@ -27,6 +26,7 @@ Cow项目从简单的聊天机器人全面升级为超级智能助理 **CowAgent
 <img width="800" src="https://cdn.link-ai.tech/doc/20260203000455.png">
 
 
+
 ### 2. 任务规划和工具调用
 
 工具是Agent访问操作系统资源的核心，Agent会根据任务需求智能选择和调用工具，完成文件读写、命令执行、定时任务等各类操作。内置工具的视线在项目的 `tools` 目录下。
@@ -43,7 +43,8 @@ Cow项目从简单的聊天机器人全面升级为超级智能助理 **CowAgent
 
 基于编程能力和系统访问能力，Agent可以实现从信息搜索、图片等素材生成、编码、测试、部署、Nginx配置修改、发布的 Vibecoding 全流程，通过手机端简单的一句命令完成应用的快速demo：
 
-[TODO]
+
+<img width="800" src="https://cdn.link-ai.tech/doc/20260203121008.png">
 
 
 
@@ -117,4 +118,63 @@ Agent可根据智能体的名称和描述进行决策，并通过 app_code 调�
 注：需通过 `env_config` 配置 `LINKAI_API_KEY`，或在config.json中添加 `linkai_api_key` 配置。
 
 
+## 使用方式
 
+> 详细使用方式参考项目README.md文档进行
+
+### 1.项目运行
+
+在命令行中执行：
+
+```bash
+bash <(curl -sS https://cdn.link-ai.tech/code/cow/run.sh)
+```
+
+详细说明及后续程序管理参考：[项目启动脚本](https://github.com/zhayujie/chatgpt-on-wechat/wiki/CowAgentQuickStart)
+
+
+### 2.模型选择
+
+Agent模式推荐使用以下模型，可根据效果及成本综合选择：
+
+- **Claude**: `claude-sonnet-4-5`、`claude-sonnet-4-0`
+- **Gemini**: `gemini-3-flash-preview`、`gemini-3-pro-preview`
+- **GLM**: `glm-4.7`
+- **MiniMax**: `MiniMax-M2.1`
+- **Qwen**: `qwen3-max`
+
+详细模型配置方式参考 [README.md 模型说明](../README.md#模型说明)
+
+### 3.Agent核心配置
+
+Agent模式的核心配置项如下，在 `config.json` 中配置：
+
+```json
+{
+  "agent": true,                           // 是否启用Agent模式
+  "agent_workspace": "~/cow",              // Agent工作空间路径
+  "agent_max_context_tokens": 40000,       // 最大上下文tokens
+  "agent_max_context_turns": 30,           // 最大上下文记忆轮次
+  "agent_max_steps": 15                    // 单次任务最大决策步数
+}
+```
+
+**配置说明：**
+
+- `agent`: 设为 `true` 启用Agent模式，获得多轮工具决策、长期记忆、Skills等能力
+- `agent_workspace`: 工作空间路径，用于存储 memory、skills、其他系统设定提示词
+- `agent_max_context_tokens`: 上下文token上限，超出将自动丢弃最早的对话
+- `agent_max_context_turns`: 上下文记忆轮次，每轮包括一次提问和回复
+- `agent_max_steps`: 单次任务最大工具调用步数，防止无限循环
+
+
+### 4.渠道接入
+
+Agent支持在多种渠道中使用，只需修改 `config.json` 中的 `channel_type` 配置即可切换。
+
+- **Web网页**：默认使用该渠道，运行后监听本地端口，通过浏览器访问
+- **飞书接入**：[飞书接入文档](https://docs.link-ai.tech/cow/multi-platform/feishu)
+- **钉钉接入**：[钉钉接入文档](https://docs.link-ai.tech/cow/multi-platform/dingtalk)
+- **企业微信应用接入**：[企微应用文档](https://docs.link-ai.tech/cow/multi-platform/wechat-com)
+
+更多渠道配置参考：[通道说明](../README.md#通道说明)
