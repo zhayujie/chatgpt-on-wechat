@@ -607,7 +607,7 @@ class DingTalkChanel(ChatChannel, dingtalk_stream.ChatbotHandler):
 
 
     def send(self, reply: Reply, context: Context):
-        logger.info(f"[DingTalk] send() called with reply.type={reply.type}, content_length={len(str(reply.content))}")
+        logger.debug(f"[DingTalk] send() called with reply.type={reply.type}, content_length={len(str(reply.content))}")
         receiver = context["receiver"]
         
         # Check if msg exists (for scheduled tasks, msg might be None)
@@ -647,7 +647,7 @@ class DingTalkChanel(ChatChannel, dingtalk_stream.ChatbotHandler):
             robot_code = msg.robot_code
             if robot_code and robot_code != self._robot_code:
                 self._robot_code = robot_code
-                logger.info(f"[DingTalk] Cached robot_code: {robot_code}")
+                logger.debug(f"[DingTalk] Cached robot_code: {robot_code}")
         
         isgroup = msg.is_group
         incoming_message = msg.incoming_message

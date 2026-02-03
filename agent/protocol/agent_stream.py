@@ -184,7 +184,7 @@ class AgentStreamExecutor:
         try:
             while turn < self.max_turns:
                 turn += 1
-                logger.debug(f"第 {turn} 轮")
+                logger.info(f"[Agent] 第 {turn} 轮")
                 self._emit_event("turn_start", {"turn": turn})
 
                 # Check if memory flush is needed (before calling LLM)
@@ -447,7 +447,7 @@ class AgentStreamExecutor:
             raise
 
         finally:
-            logger.debug(f"🏁 完成({turn}轮)")
+            logger.info(f"[Agent] 🏁 完成 ({turn}轮)")
             self._emit_event("agent_end", {"final_response": final_response})
 
             # 每轮对话结束后增加计数（用户消息+AI回复=1轮）
