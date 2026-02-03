@@ -112,11 +112,15 @@ def _execute_agent_task(task: dict, agent_bridge):
         
         logger.info(f"[Scheduler] Task {task['id']}: Executing agent task '{task_description}'")
         
+        # Create a unique session_id for this scheduled task to avoid polluting user's conversation
+        # Format: scheduler_<receiver>_<task_id> to ensure isolation
+        scheduler_session_id = f"scheduler_{receiver}_{task['id']}"
+        
         # Create context for Agent
         context = Context(ContextType.TEXT, task_description)
         context["receiver"] = receiver
         context["isgroup"] = is_group
-        context["session_id"] = receiver
+        context["session_id"] = scheduler_session_id
         
         # Channel-specific setup
         if channel_type == "web":
@@ -140,7 +144,8 @@ def _execute_agent_task(task: dict, agent_bridge):
         context["is_scheduled_task"] = True
         
         try:
-            reply = agent_bridge.agent_reply(task_description, context=context, on_event=None, clear_history=True)
+            # Don't clear history - scheduler tasks use isolated session_id so they won't pollute user conversations
+            reply = agent_bridge.agent_reply(task_description, context=context, on_event=None, clear_history=False)
             
             if reply and reply.content:
                 # Send the reply via channel
@@ -378,6 +383,10 @@ def _execute_skill_call(task: dict, agent_bridge):
         
         logger.info(f"[Scheduler] Task {task['id']}: Executing skill '{skill_name}' with params {skill_params}")
         
+        # Create a unique session_id for this scheduled task to avoid polluting user's conversation
+        # Format: scheduler_<receiver>_<task_id> to ensure isolation
+        scheduler_session_id = f"scheduler_{receiver}_{task['id']}"
+        
         # Build a natural language query for the Agent to execute the skill
         # Format: "Use skill-name to do something with params"
         param_str = ", ".join([f"{k}={v}" for k, v in skill_params.items()])
@@ -389,7 +398,7 @@ def _execute_skill_call(task: dict, agent_bridge):
         context = Context(ContextType.TEXT, query)
         context["receiver"] = receiver
         context["isgroup"] = is_group
-        context["session_id"] = receiver
+        context["session_id"] = scheduler_session_id
         
         # Channel-specific setup
         if channel_type == "web":
@@ -402,7 +411,8 @@ def _execute_skill_call(task: dict, agent_bridge):
         
         # Use Agent to execute the skill
         try:
-            reply = agent_bridge.agent_reply(query, context=context, on_event=None, clear_history=True)
+            # Don't clear history - scheduler tasks use isolated session_id so they won't pollute user conversations
+            reply = agent_bridge.agent_reply(query, context=context, on_event=None, clear_history=False)
             
             if reply and reply.content:
                 content = reply.content
