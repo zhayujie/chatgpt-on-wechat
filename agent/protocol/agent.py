@@ -13,7 +13,8 @@ class Agent:
     def __init__(self, system_prompt: str, description: str = "AI Agent", model: LLMModel = None,
                  tools=None, output_mode="print", max_steps=100, max_context_tokens=None, 
                  context_reserve_tokens=None, memory_manager=None, name: str = None,
-                 workspace_dir: str = None, skill_manager=None, enable_skills: bool = True):
+                 workspace_dir: str = None, skill_manager=None, enable_skills: bool = True,
+                 runtime_info: dict = None):
         """
         Initialize the Agent with system prompt, model, description.
 
@@ -31,6 +32,7 @@ class Agent:
         :param workspace_dir: Optional workspace directory for workspace-specific skills
         :param skill_manager: Optional SkillManager instance (will be created if None and enable_skills=True)
         :param enable_skills: Whether to enable skills support (default: True)
+        :param runtime_info: Optional runtime info dict (with _get_current_time callable for dynamic time)
         """
         self.name = name or "Agent"
         self.system_prompt = system_prompt
@@ -48,6 +50,7 @@ class Agent:
         self.memory_manager = memory_manager  # Memory manager for auto memory flush
         self.workspace_dir = workspace_dir  # Workspace directory
         self.enable_skills = enable_skills  # Skills enabled flag
+        self.runtime_info = runtime_info  # Runtime info for dynamic time update
         
         # Initialize skill manager
         self.skill_manager = None
@@ -105,8 +108,57 @@ class Agent:
         :return: Complete system prompt
         """
         # Skills are now included in system_prompt by PromptBuilder
-        # No need to append them here
+        # If runtime_info contains dynamic time function, rebuild runtime section
+        if self.runtime_info and callable(self.runtime_info.get('_get_current_time')):
+            return self._rebuild_runtime_section(self.system_prompt)
         return self.system_prompt
+    
+    def _rebuild_runtime_section(self, prompt: str) -> str:
+        """
+        Rebuild runtime info section with current time.
+        
+        This method dynamically updates the runtime info section by calling
+        the _get_current_time function from runtime_info.
+        
+        :param prompt: Original system prompt
+        :return: Updated system prompt with current runtime info
+        """
+        try:
+            # Get current time dynamically
+            time_info = self.runtime_info['_get_current_time']()
+            
+            # Build new runtime section
+            runtime_lines = [
+                "\n## 运行时信息\n",
+                "\n",
+                f"当前时间: {time_info['time']} {time_info['weekday']} ({time_info['timezone']})\n",
+                "\n"
+            ]
+            
+            # Add other runtime info
+            runtime_parts = []
+            if self.runtime_info.get("model"):
+                runtime_parts.append(f"模型={self.runtime_info['model']}")
+            if self.runtime_info.get("workspace"):
+                runtime_parts.append(f"工作空间={self.runtime_info['workspace']}")
+            if self.runtime_info.get("channel") and self.runtime_info.get("channel") != "web":
+                runtime_parts.append(f"渠道={self.runtime_info['channel']}")
+            
+            if runtime_parts:
+                runtime_lines.append("运行时: " + " | ".join(runtime_parts) + "\n")
+                runtime_lines.append("\n")
+            
+            new_runtime_section = "".join(runtime_lines)
+            
+            # Find and replace the runtime section
+            import re
+            pattern = r'\n## 运行时信息\s*\n.*?(?=\n##|\Z)'
+            updated_prompt = re.sub(pattern, new_runtime_section.rstrip('\n'), prompt, flags=re.DOTALL)
+            
+            return updated_prompt
+        except Exception as e:
+            logger.warning(f"Failed to rebuild runtime section: {e}")
+            return prompt
     
     def refresh_skills(self):
         """Refresh the loaded skills."""
