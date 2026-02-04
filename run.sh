@@ -14,6 +14,15 @@ CYAN='\033[0;36m'
 BOLD='\033[1m'
 NC='\033[0m'
 
+# Emojis
+EMOJI_ROCKET="🚀"
+EMOJI_COW="🐄"
+EMOJI_CHECK="✅"
+EMOJI_CROSS="❌"
+EMOJI_WARN="⚠️"
+EMOJI_STOP="🛑"
+EMOJI_WRENCH="🔧"
+
 # Check if using Bash
 if [ -z "$BASH_VERSION" ]; then
     echo -e "${RED}❌ Please run this script with Bash.${NC}"
@@ -123,7 +132,8 @@ clone_project() {
 
     if [ -d "chatgpt-on-wechat" ]; then
         echo -e "${YELLOW}⚠️  Directory 'chatgpt-on-wechat' already exists.${NC}"
-        read -p "Choose action: overwrite(o), backup(b), or quit(q)? [o/b/q]: " choice
+        read -p "Choose action: overwrite(o), backup(b), or quit(q)? [press Enter for default: b]: " choice
+        choice=${choice:-b}
         case "$choice" in
             o|O)
                 echo -e "${YELLOW}🗑️  Overwriting 'chatgpt-on-wechat' directory...${NC}"
@@ -260,17 +270,18 @@ select_model() {
     echo -e "${CYAN}${BOLD}=========================================${NC}"
     echo -e "${CYAN}${BOLD}   Select AI Model${NC}"
     echo -e "${CYAN}${BOLD}=========================================${NC}"
-    echo -e "${YELLOW}1) Claude (claude-sonnet-4-5, claude-opus-4-0, etc.)${NC}"
+    echo -e "${YELLOW}1) MiniMax (MiniMax-M2.1, MiniMax-M2.1-lightning, etc.)${NC}"
     echo -e "${YELLOW}2) Zhipu AI (glm-4.7, glm-4.6, etc.)${NC}"
-    echo -e "${YELLOW}3) Gemini (gemini-3-flash-preview, gemini-2.5-pro, etc.)${NC}"
-    echo -e "${YELLOW}4) OpenAI GPT (gpt-5.2, gpt-4.1, etc.)${NC}"
-    echo -e "${YELLOW}5) Qwen (qwen3-max, qwen-plus, qwq-plus, etc.)${NC}"
-    echo -e "${YELLOW}6) MiniMax (MiniMax-M2.1, MiniMax-M2.1-lightning, etc.)${NC}"
+    echo -e "${YELLOW}3) Qwen (qwen3-max, qwen-plus, qwq-plus, etc.)${NC}"
+    echo -e "${YELLOW}4) Claude (claude-sonnet-4-5, claude-opus-4-0, etc.)${NC}"
+    echo -e "${YELLOW}5) Gemini (gemini-3-flash-preview, gemini-2.5-pro, etc.)${NC}"
+    echo -e "${YELLOW}6) OpenAI GPT (gpt-5.2, gpt-4.1, etc.)${NC}"
     echo -e "${YELLOW}7) LinkAI (access multiple models via one API)${NC}"
     echo ""
     
     while true; do
-        read -p "Enter your choice [1-7]: " model_choice
+        read -p "Enter your choice [press Enter for default: 1 - MiniMax]: " model_choice
+        model_choice=${model_choice:-1}
         case "$model_choice" in
             1|2|3|4|5|6|7)
                 break
@@ -286,17 +297,14 @@ select_model() {
 configure_model() {
     case "$model_choice" in
         1)
-            # Claude
-            echo -e "${GREEN}Configuring Claude...${NC}"
-            read -p "Enter Claude API Key: " claude_key
-            read -p "Enter model name [press Enter for default: claude-sonnet-4-5]: " model_name
-            model_name=${model_name:-claude-sonnet-4-5}
-            read -p "Enter API Base URL [press Enter for default: https://api.anthropic.com/v1]: " api_base
-            api_base=${api_base:-https://api.anthropic.com/v1}
+            # MiniMax
+            echo -e "${GREEN}Configuring MiniMax...${NC}"
+            read -p "Enter MiniMax API Key: " minimax_key
+            read -p "Enter model name [press Enter for default: MiniMax-M2.1]: " model_name
+            model_name=${model_name:-MiniMax-M2.1}
             
             MODEL_NAME="$model_name"
-            CLAUDE_KEY="$claude_key"
-            CLAUDE_BASE="$api_base"
+            MINIMAX_KEY="$minimax_key"
             ;;
         2)
             # Zhipu AI
@@ -309,6 +317,29 @@ configure_model() {
             ZHIPU_KEY="$zhipu_key"
             ;;
         3)
+            # Qwen (DashScope)
+            echo -e "${GREEN}Configuring Qwen (DashScope)...${NC}"
+            read -p "Enter DashScope API Key: " dashscope_key
+            read -p "Enter model name [press Enter for default: qwen3-max]: " model_name
+            model_name=${model_name:-qwen3-max}
+            
+            MODEL_NAME="$model_name"
+            DASHSCOPE_KEY="$dashscope_key"
+            ;;
+        4)
+            # Claude
+            echo -e "${GREEN}Configuring Claude...${NC}"
+            read -p "Enter Claude API Key: " claude_key
+            read -p "Enter model name [press Enter for default: claude-sonnet-4-5]: " model_name
+            model_name=${model_name:-claude-sonnet-4-5}
+            read -p "Enter API Base URL [press Enter for default: https://api.anthropic.com/v1]: " api_base
+            api_base=${api_base:-https://api.anthropic.com/v1}
+            
+            MODEL_NAME="$model_name"
+            CLAUDE_KEY="$claude_key"
+            CLAUDE_BASE="$api_base"
+            ;;
+        5)
             # Gemini
             echo -e "${GREEN}Configuring Gemini...${NC}"
             read -p "Enter Gemini API Key: " gemini_key
@@ -321,7 +352,7 @@ configure_model() {
             GEMINI_KEY="$gemini_key"
             GEMINI_BASE="$api_base"
             ;;
-        4)
+        6)
             # OpenAI
             echo -e "${GREEN}Configuring OpenAI GPT...${NC}"
             read -p "Enter OpenAI API Key: " openai_key
@@ -334,32 +365,12 @@ configure_model() {
             OPENAI_KEY="$openai_key"
             OPENAI_BASE="$api_base"
             ;;
-        5)
-            # Qwen (DashScope)
-            echo -e "${GREEN}Configuring Qwen (DashScope)...${NC}"
-            read -p "Enter DashScope API Key: " dashscope_key
-            read -p "Enter model name [press Enter for default: qwen3-max]: " model_name
-            model_name=${model_name:-qwen3-max}
-            
-            MODEL_NAME="$model_name"
-            DASHSCOPE_KEY="$dashscope_key"
-            ;;
-        6)
-            # MiniMax
-            echo -e "${GREEN}Configuring MiniMax...${NC}"
-            read -p "Enter MiniMax API Key: " minimax_key
-            read -p "Enter model name [press Enter for default: MiniMax-M2.1]: " model_name
-            model_name=${model_name:-MiniMax-M2.1}
-            
-            MODEL_NAME="$model_name"
-            MINIMAX_KEY="$minimax_key"
-            ;;
         7)
             # LinkAI
             echo -e "${GREEN}Configuring LinkAI...${NC}"
             read -p "Enter LinkAI API Key: " linkai_key
-            read -p "Enter model name [press Enter for default: claude-sonnet-4-5]: " model_name
-            model_name=${model_name:-claude-sonnet-4-5}
+            read -p "Enter model name [press Enter for default: MiniMax-M2.1]: " model_name
+            model_name=${model_name:-MiniMax-M2.1}
             
             MODEL_NAME="$model_name"
             USE_LINKAI="true"
@@ -381,7 +392,7 @@ select_channel() {
     echo ""
     
     while true; do
-        read -p "Enter your choice [1-4, default: 1]: " channel_choice
+        read -p "Enter your choice [press Enter for default: 1 - Feishu]: " channel_choice
         channel_choice=${channel_choice:-1}
         case "$channel_choice" in
             1|2|3|4)
@@ -498,7 +509,7 @@ EOF
             cat > config.json <<EOF
 {
   "channel_type": "web",
-  "web_port": 9899,
+  "web_port": ${WEB_PORT},
   "model": "${MODEL_NAME}",
   "open_ai_api_key": "${OPENAI_KEY:-}",
   "open_ai_api_base": "${OPENAI_BASE:-https://api.openai.com/v1}",
@@ -876,13 +887,20 @@ install_mode() {
     configure_channel
     create_config_file
     
-    # Show completion message
     echo ""
-    echo -e "${CYAN}${BOLD}=========================================${NC}"
-    echo -e "${GREEN}${BOLD}✅ Installation Complete!${NC}"
-    echo -e "${CYAN}${BOLD}=========================================${NC}"
-    echo ""
-    show_usage
+    read -p "Start CowAgent now? [Y/n]: " start_now
+    if [[ ! $start_now == [Nn]* ]]; then
+        start_project
+    else
+        echo -e "${GREEN}✅ Installation complete!${NC}"
+        echo ""
+        echo -e "${CYAN}${BOLD}To start manually:${NC}"
+        echo -e "${YELLOW}  cd ${BASE_DIR}${NC}"
+        echo -e "${YELLOW}  ./run.sh start${NC}"
+        echo ""
+        echo -e "${CYAN}Or use nohup directly:${NC}"
+        echo -e "${YELLOW}  nohup $PYTHON_CMD app.py > nohup.out 2>&1 & tail -f nohup.out${NC}"
+    fi
 }
 
 # Main function
