@@ -1,6 +1,8 @@
 import json
 import time
 import threading
+import datetime
+import re
 
 from common.log import logger
 from agent.protocol.models import LLMRequest, LLMModel
@@ -105,8 +107,51 @@ class Agent:
         :return: Complete system prompt
         """
         # Skills are now included in system_prompt by PromptBuilder
-        # No need to append them here
-        return self.system_prompt
+        # Update runtime info (timestamp) dynamically before returning
+        return self._update_runtime_info(self.system_prompt)
+    
+    def _update_runtime_info(self, prompt: str) -> str:
+        """
+        Update runtime information (timestamp) in the system prompt.
+        
+        This ensures the model always has the current time, even if the
+        agent was initialized hours ago.
+        
+        :param prompt: Original system prompt
+        :return: Updated system prompt with current time
+        """
+        # Find the runtime info section
+        runtime_section_pattern = r'(## 运行时信息\s*\n\s*\n)(当前时间: )([^\n]+)(\s+星期[一二三四五六日])(\s+\([^)]+\))?'
+        
+        # Get current time info
+        now = datetime.datetime.now()
+        
+        # Get timezone
+        try:
+            offset = -time.timezone if not time.daylight else -time.altzone
+            hours = offset // 3600
+            minutes = (offset % 3600) // 60
+            timezone_name = f"UTC{hours:+03d}:{minutes:02d}" if minutes else f"UTC{hours:+03d}"
+        except Exception:
+            timezone_name = "UTC"
+        
+        # Chinese weekday mapping
+        weekday_map = {
+            'Monday': '星期一', 'Tuesday': '星期二', 'Wednesday': '星期三',
+            'Thursday': '星期四', 'Friday': '星期五', 'Saturday': '星期六', 'Sunday': '星期日'
+        }
+        weekday_zh = weekday_map.get(now.strftime("%A"), now.strftime("%A"))
+        
+        # Build new time string
+        new_time = now.strftime("%Y-%m-%d %H:%M:%S")
+        
+        # Replace the time in the prompt
+        def replace_time(match):
+            return f"{match.group(1)}{match.group(2)}{new_time} {weekday_zh} ({timezone_name})"
+        
+        updated_prompt = re.sub(runtime_section_pattern, replace_time, prompt)
+        
+        return updated_prompt
     
     def refresh_skills(self):
         """Refresh the loaded skills."""
