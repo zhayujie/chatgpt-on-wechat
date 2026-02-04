@@ -339,6 +339,7 @@ class AgentStreamExecutor:
                         tool_result_block = {
                             "type": "tool_result",
                             "tool_use_id": tool_call["id"],
+                            "name": tool_call["name"],  # Add function name for Gemini compatibility
                             "content": result_content
                         }
                         

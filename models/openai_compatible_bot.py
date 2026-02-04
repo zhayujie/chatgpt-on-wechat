@@ -230,14 +230,30 @@ class OpenAICompatibleBot:
             if isinstance(content, list):
                 # Check if this is a tool result message (user role with tool_result blocks)
                 if role == "user" and any(block.get("type") == "tool_result" for block in content):
-                    # Convert each tool_result block to a separate tool message
+                    # Separate text content and tool_result blocks
+                    text_parts = []
+                    tool_results = []
+                    
                     for block in content:
-                        if block.get("type") == "tool_result":
-                            openai_messages.append({
-                                "role": "tool",
-                                "tool_call_id": block.get("tool_use_id"),
-                                "content": block.get("content", "")
-                            })
+                        if block.get("type") == "text":
+                            text_parts.append(block.get("text", ""))
+                        elif block.get("type") == "tool_result":
+                            tool_results.append(block)
+                    
+                    # First, add tool result messages (must come immediately after assistant with tool_calls)
+                    for block in tool_results:
+                        openai_messages.append({
+                            "role": "tool",
+                            "tool_call_id": block.get("tool_use_id"),
+                            "content": block.get("content", "")
+                        })
+                    
+                    # Then, add text content as a separate user message if present
+                    if text_parts:
+                        openai_messages.append({
+                            "role": "user",
+                            "content": " ".join(text_parts)
+                        })
                 
                 # Check if this is an assistant message with tool_use blocks
                 elif role == "assistant":
