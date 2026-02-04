@@ -111,50 +111,47 @@ class FeiShuChanel(ChatChannel):
         # 尝试连接，如果遇到SSL错误则自动禁用证书验证
         def start_client_with_retry():
             """启动websocket客户端，自动处理SSL证书错误"""
-            for use_ssl_verify in [True, False]:
+            # 全局禁用SSL证书验证（在导入lark_oapi之前设置）
+            import ssl as ssl_module
+
+            # 保存原始的SSL上下文创建方法
+            original_create_default_context = ssl_module.create_default_context
+
+            def create_unverified_context(*args, **kwargs):
+                """创建一个不验证证书的SSL上下文"""
+                context = original_create_default_context(*args, **kwargs)
+                context.check_hostname = False
+                context.verify_mode = ssl.CERT_NONE
+                return context
+
+            # 尝试正常连接，如果失败则禁用SSL验证
+            for attempt in range(2):
                 try:
-                    # 如果不验证SSL，通过monkey patch禁用证书验证
-                    original_wrap_socket = None
-                    if not use_ssl_verify:
+                    if attempt == 1:
+                        # 第二次尝试：禁用SSL验证
                         logger.warning("[FeiShu] SSL certificate verification disabled due to certificate error. "
                                        "This may happen when using corporate proxy or self-signed certificates.")
-                        # 保存原始的wrap_socket方法
-                        import ssl as ssl_module
-                        original_wrap_socket = ssl_module.SSLContext.wrap_socket
+                        ssl_module.create_default_context = create_unverified_context
+                        ssl_module._create_unverified_context = create_unverified_context
 
-                        # 创建一个不验证证书的wrap_socket方法
-                        def wrap_socket_no_verify(self, sock, *args, **kwargs):
-                            self.check_hostname = False
-                            self.verify_mode = ssl.CERT_NONE
-                            return original_wrap_socket(self, sock, *args, **kwargs)
+                    ws_client = lark.ws.Client(
+                        self.feishu_app_id,
+                        self.feishu_app_secret,
+                        event_handler=event_handler,
+                        log_level=lark.LogLevel.DEBUG if conf().get("debug") else lark.LogLevel.INFO
+                    )
 
-                        # 替换wrap_socket方法
-                        ssl_module.SSLContext.wrap_socket = wrap_socket_no_verify
-
-                    try:
-                        ws_client = lark.ws.Client(
-                            self.feishu_app_id,
-                            self.feishu_app_secret,
-                            event_handler=event_handler,
-                            log_level=lark.LogLevel.DEBUG if conf().get("debug") else lark.LogLevel.INFO
-                        )
-
-                        logger.debug("[FeiShu] Websocket client starting...")
-                        ws_client.start()
-                        # 如果成功启动，跳出循环
-                        break
-                    finally:
-                        # 恢复原始的wrap_socket方法
-                        if original_wrap_socket is not None:
-                            import ssl as ssl_module
-                            ssl_module.SSLContext.wrap_socket = original_wrap_socket
+                    logger.debug("[FeiShu] Websocket client starting...")
+                    ws_client.start()
+                    # 如果成功启动，跳出循环
+                    break
 
                 except Exception as e:
                     error_msg = str(e)
                     # 检查是否是SSL证书验证错误
                     is_ssl_error = "CERTIFICATE_VERIFY_FAILED" in error_msg or "certificate verify failed" in error_msg.lower()
 
-                    if is_ssl_error and use_ssl_verify:
+                    if is_ssl_error and attempt == 0:
                         # 第一次遇到SSL错误，记录日志并继续循环（下次会禁用验证）
                         logger.warning(f"[FeiShu] SSL certificate verification failed: {error_msg}")
                         logger.info("[FeiShu] Retrying connection with SSL verification disabled...")
@@ -162,7 +159,11 @@ class FeiShuChanel(ChatChannel):
                     else:
                         # 其他错误或禁用验证后仍失败，抛出异常
                         logger.error(f"[FeiShu] Websocket client error: {e}", exc_info=True)
+                        # 恢复原始方法
+                        ssl_module.create_default_context = original_create_default_context
                         raise
+
+            # 注意：不恢复原始方法，因为ws_client.start()会持续运行
 
         # 在新线程中启动客户端，避免阻塞主线程
         ws_thread = threading.Thread(target=start_client_with_retry, daemon=True)
