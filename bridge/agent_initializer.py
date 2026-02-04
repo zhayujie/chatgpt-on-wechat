@@ -110,7 +110,8 @@ class AgentInitializer:
             workspace_dir=workspace_root,
             skill_manager=skill_manager,
             enable_skills=True,
-            max_context_tokens=max_context_tokens
+            max_context_tokens=max_context_tokens,
+            runtime_info=runtime_info  # Pass runtime_info for dynamic time updates
         )
         
         # Attach memory manager
@@ -289,34 +290,40 @@ class AgentInitializer:
             return None
     
     def _get_runtime_info(self, workspace_root: str):
-        """Get runtime information"""
+        """Get runtime information with dynamic time support"""
         from config import conf
         
-        now = datetime.datetime.now()
-        
-        # Get timezone info
-        try:
-            offset = -time.timezone if not time.daylight else -time.altzone
-            hours = offset // 3600
-            minutes = (offset % 3600) // 60
-            timezone_name = f"UTC{hours:+03d}:{minutes:02d}" if minutes else f"UTC{hours:+03d}"
-        except Exception:
-            timezone_name = "UTC"
-        
-        # Chinese weekday mapping
-        weekday_map = {
-            'Monday': '星期一', 'Tuesday': '星期二', 'Wednesday': '星期三',
-            'Thursday': '星期四', 'Friday': '星期五', 'Saturday': '星期六', 'Sunday': '星期日'
-        }
-        weekday_zh = weekday_map.get(now.strftime("%A"), now.strftime("%A"))
+        def get_current_time():
+            """Get current time dynamically - called each time system prompt is accessed"""
+            now = datetime.datetime.now()
+            
+            # Get timezone info
+            try:
+                offset = -time.timezone if not time.daylight else -time.altzone
+                hours = offset // 3600
+                minutes = (offset % 3600) // 60
+                timezone_name = f"UTC{hours:+03d}:{minutes:02d}" if minutes else f"UTC{hours:+03d}"
+            except Exception:
+                timezone_name = "UTC"
+            
+            # Chinese weekday mapping
+            weekday_map = {
+                'Monday': '星期一', 'Tuesday': '星期二', 'Wednesday': '星期三',
+                'Thursday': '星期四', 'Friday': '星期五', 'Saturday': '星期六', 'Sunday': '星期日'
+            }
+            weekday_zh = weekday_map.get(now.strftime("%A"), now.strftime("%A"))
+            
+            return {
+                'time': now.strftime("%Y-%m-%d %H:%M:%S"),
+                'weekday': weekday_zh,
+                'timezone': timezone_name
+            }
         
         return {
             "model": conf().get("model", "unknown"),
             "workspace": workspace_root,
             "channel": conf().get("channel_type", "unknown"),
-            "current_time": now.strftime("%Y-%m-%d %H:%M:%S"),
-            "weekday": weekday_zh,
-            "timezone": timezone_name
+            "_get_current_time": get_current_time  # Dynamic time function
         }
     
     def _migrate_config_to_env(self, workspace_root: str):

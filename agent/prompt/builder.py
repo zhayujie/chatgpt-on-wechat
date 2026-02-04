@@ -461,7 +461,7 @@ def _build_context_files_section(context_files: List[ContextFile], language: str
 
 
 def _build_runtime_section(runtime_info: Dict[str, Any], language: str) -> List[str]:
-    """构建运行时信息section"""
+    """构建运行时信息section - 支持动态时间"""
     if not runtime_info:
         return []
     
@@ -471,7 +471,17 @@ def _build_runtime_section(runtime_info: Dict[str, Any], language: str) -> List[
     ]
     
     # Add current time if available
-    if runtime_info.get("current_time"):
+    # Support dynamic time via callable function
+    if callable(runtime_info.get("_get_current_time")):
+        try:
+            time_info = runtime_info["_get_current_time"]()
+            time_line = f"当前时间: {time_info['time']} {time_info['weekday']} ({time_info['timezone']})"
+            lines.append(time_line)
+            lines.append("")
+        except Exception as e:
+            logger.warning(f"[PromptBuilder] Failed to get dynamic time: {e}")
+    elif runtime_info.get("current_time"):
+        # Fallback to static time for backward compatibility
         time_str = runtime_info["current_time"]
         weekday = runtime_info.get("weekday", "")
         timezone = runtime_info.get("timezone", "")

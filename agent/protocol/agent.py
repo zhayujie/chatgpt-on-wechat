@@ -1,8 +1,6 @@
 import json
 import time
 import threading
-import datetime
-import re
 
 from common.log import logger
 from agent.protocol.models import LLMRequest, LLMModel
@@ -15,7 +13,8 @@ class Agent:
     def __init__(self, system_prompt: str, description: str = "AI Agent", model: LLMModel = None,
                  tools=None, output_mode="print", max_steps=100, max_context_tokens=None, 
                  context_reserve_tokens=None, memory_manager=None, name: str = None,
-                 workspace_dir: str = None, skill_manager=None, enable_skills: bool = True):
+                 workspace_dir: str = None, skill_manager=None, enable_skills: bool = True,
+                 runtime_info: dict = None):
         """
         Initialize the Agent with system prompt, model, description.
 
@@ -33,6 +32,7 @@ class Agent:
         :param workspace_dir: Optional workspace directory for workspace-specific skills
         :param skill_manager: Optional SkillManager instance (will be created if None and enable_skills=True)
         :param enable_skills: Whether to enable skills support (default: True)
+        :param runtime_info: Optional runtime info dict (with _get_current_time callable for dynamic time)
         """
         self.name = name or "Agent"
         self.system_prompt = system_prompt
@@ -50,6 +50,7 @@ class Agent:
         self.memory_manager = memory_manager  # Memory manager for auto memory flush
         self.workspace_dir = workspace_dir  # Workspace directory
         self.enable_skills = enable_skills  # Skills enabled flag
+        self.runtime_info = runtime_info  # Runtime info for dynamic time update
         
         # Initialize skill manager
         self.skill_manager = None
@@ -107,51 +108,57 @@ class Agent:
         :return: Complete system prompt
         """
         # Skills are now included in system_prompt by PromptBuilder
-        # Update runtime info (timestamp) dynamically before returning
-        return self._update_runtime_info(self.system_prompt)
+        # If runtime_info contains dynamic time function, rebuild runtime section
+        if self.runtime_info and callable(self.runtime_info.get('_get_current_time')):
+            return self._rebuild_runtime_section(self.system_prompt)
+        return self.system_prompt
     
-    def _update_runtime_info(self, prompt: str) -> str:
+    def _rebuild_runtime_section(self, prompt: str) -> str:
         """
-        Update runtime information (timestamp) in the system prompt.
+        Rebuild runtime info section with current time.
         
-        This ensures the model always has the current time, even if the
-        agent was initialized hours ago.
+        This method dynamically updates the runtime info section by calling
+        the _get_current_time function from runtime_info.
         
         :param prompt: Original system prompt
-        :return: Updated system prompt with current time
+        :return: Updated system prompt with current runtime info
         """
-        # Find the runtime info section
-        runtime_section_pattern = r'(## 运行时信息\s*\n\s*\n)(当前时间: )([^\n]+)(\s+星期[一二三四五六日])(\s+\([^)]+\))?'
-        
-        # Get current time info
-        now = datetime.datetime.now()
-        
-        # Get timezone
         try:
-            offset = -time.timezone if not time.daylight else -time.altzone
-            hours = offset // 3600
-            minutes = (offset % 3600) // 60
-            timezone_name = f"UTC{hours:+03d}:{minutes:02d}" if minutes else f"UTC{hours:+03d}"
-        except Exception:
-            timezone_name = "UTC"
-        
-        # Chinese weekday mapping
-        weekday_map = {
-            'Monday': '星期一', 'Tuesday': '星期二', 'Wednesday': '星期三',
-            'Thursday': '星期四', 'Friday': '星期五', 'Saturday': '星期六', 'Sunday': '星期日'
-        }
-        weekday_zh = weekday_map.get(now.strftime("%A"), now.strftime("%A"))
-        
-        # Build new time string
-        new_time = now.strftime("%Y-%m-%d %H:%M:%S")
-        
-        # Replace the time in the prompt
-        def replace_time(match):
-            return f"{match.group(1)}{match.group(2)}{new_time} {weekday_zh} ({timezone_name})"
-        
-        updated_prompt = re.sub(runtime_section_pattern, replace_time, prompt)
-        
-        return updated_prompt
+            # Get current time dynamically
+            time_info = self.runtime_info['_get_current_time']()
+            
+            # Build new runtime section
+            runtime_lines = [
+                "\n## 运行时信息\n",
+                "\n",
+                f"当前时间: {time_info['time']} {time_info['weekday']} ({time_info['timezone']})\n",
+                "\n"
+            ]
+            
+            # Add other runtime info
+            runtime_parts = []
+            if self.runtime_info.get("model"):
+                runtime_parts.append(f"模型={self.runtime_info['model']}")
+            if self.runtime_info.get("workspace"):
+                runtime_parts.append(f"工作空间={self.runtime_info['workspace']}")
+            if self.runtime_info.get("channel") and self.runtime_info.get("channel") != "web":
+                runtime_parts.append(f"渠道={self.runtime_info['channel']}")
+            
+            if runtime_parts:
+                runtime_lines.append("运行时: " + " | ".join(runtime_parts) + "\n")
+                runtime_lines.append("\n")
+            
+            new_runtime_section = "".join(runtime_lines)
+            
+            # Find and replace the runtime section
+            import re
+            pattern = r'\n## 运行时信息\s*\n.*?(?=\n##|\Z)'
+            updated_prompt = re.sub(pattern, new_runtime_section.rstrip('\n'), prompt, flags=re.DOTALL)
+            
+            return updated_prompt
+        except Exception as e:
+            logger.warning(f"Failed to rebuild runtime section: {e}")
+            return prompt
     
     def refresh_skills(self):
         """Refresh the loaded skills."""
