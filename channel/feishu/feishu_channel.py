@@ -13,6 +13,7 @@
 
 import json
 import os
+import ssl
 import threading
 # -*- coding=utf-8 -*-
 import uuid
@@ -107,23 +108,64 @@ class FeiShuChanel(ChatChannel):
             .register_p2_im_message_receive_v1(handle_message_event) \
             .build()
 
-        # 创建长连接客户端
-        ws_client = lark.ws.Client(
-            self.feishu_app_id,
-            self.feishu_app_secret,
-            event_handler=event_handler,
-            log_level=lark.LogLevel.DEBUG if conf().get("debug") else lark.LogLevel.INFO
-        )
+        # 尝试连接，如果遇到SSL错误则自动禁用证书验证
+        def start_client_with_retry():
+            """启动websocket客户端，自动处理SSL证书错误"""
+            for use_ssl_verify in [True, False]:
+                try:
+                    # 如果不验证SSL，通过monkey patch禁用证书验证
+                    original_wrap_socket = None
+                    if not use_ssl_verify:
+                        logger.warning("[FeiShu] SSL certificate verification disabled due to certificate error. "
+                                       "This may happen when using corporate proxy or self-signed certificates.")
+                        # 保存原始的wrap_socket方法
+                        import ssl as ssl_module
+                        original_wrap_socket = ssl_module.SSLContext.wrap_socket
+
+                        # 创建一个不验证证书的wrap_socket方法
+                        def wrap_socket_no_verify(self, sock, *args, **kwargs):
+                            self.check_hostname = False
+                            self.verify_mode = ssl.CERT_NONE
+                            return original_wrap_socket(self, sock, *args, **kwargs)
+
+                        # 替换wrap_socket方法
+                        ssl_module.SSLContext.wrap_socket = wrap_socket_no_verify
+
+                    try:
+                        ws_client = lark.ws.Client(
+                            self.feishu_app_id,
+                            self.feishu_app_secret,
+                            event_handler=event_handler,
+                            log_level=lark.LogLevel.DEBUG if conf().get("debug") else lark.LogLevel.INFO
+                        )
+
+                        logger.debug("[FeiShu] Websocket client starting...")
+                        ws_client.start()
+                        # 如果成功启动，跳出循环
+                        break
+                    finally:
+                        # 恢复原始的wrap_socket方法
+                        if original_wrap_socket is not None:
+                            import ssl as ssl_module
+                            ssl_module.SSLContext.wrap_socket = original_wrap_socket
+
+                except Exception as e:
+                    error_msg = str(e)
+                    # 检查是否是SSL证书验证错误
+                    is_ssl_error = "CERTIFICATE_VERIFY_FAILED" in error_msg or "certificate verify failed" in error_msg.lower()
+
+                    if is_ssl_error and use_ssl_verify:
+                        # 第一次遇到SSL错误，记录日志并继续循环（下次会禁用验证）
+                        logger.warning(f"[FeiShu] SSL certificate verification failed: {error_msg}")
+                        logger.info("[FeiShu] Retrying connection with SSL verification disabled...")
+                        continue
+                    else:
+                        # 其他错误或禁用验证后仍失败，抛出异常
+                        logger.error(f"[FeiShu] Websocket client error: {e}", exc_info=True)
+                        raise
 
         # 在新线程中启动客户端，避免阻塞主线程
-        def start_client():
-            try:
-                logger.debug("[FeiShu] Websocket client starting...")
-                ws_client.start()
-            except Exception as e:
-                logger.error(f"[FeiShu] Websocket client error: {e}", exc_info=True)
-
-        ws_thread = threading.Thread(target=start_client, daemon=True)
+        ws_thread = threading.Thread(target=start_client_with_retry, daemon=True)
         ws_thread.start()
 
         # 保持主线程运行
@@ -176,7 +218,7 @@ class FeiShuChanel(ChatChannel):
         # 处理文件缓存逻辑
         from channel.file_cache import get_file_cache
         file_cache = get_file_cache()
-        
+
         # 获取 session_id（用于缓存关联）
         if is_group:
             if conf().get("group_shared_session", True):
@@ -185,7 +227,7 @@ class FeiShuChanel(ChatChannel):
                 session_id = feishu_msg.from_user_id + "_" + msg.get("chat_id")
         else:
             session_id = feishu_msg.from_user_id
-        
+
         # 如果是单张图片消息，缓存起来
         if feishu_msg.ctype == ContextType.IMAGE:
             if hasattr(feishu_msg, 'image_path') and feishu_msg.image_path:
@@ -193,7 +235,7 @@ class FeiShuChanel(ChatChannel):
                 logger.info(f"[FeiShu] Image cached for session {session_id}, waiting for user query...")
             # 单张图片不直接处理，等待用户提问
             return
-        
+
         # 如果是文本消息，检查是否有缓存的文件
         if feishu_msg.ctype == ContextType.TEXT:
             cached_files = file_cache.get(session_id)
@@ -209,7 +251,7 @@ class FeiShuChanel(ChatChannel):
                         file_refs.append(f"[视频: {file_path}]")
                     else:
                         file_refs.append(f"[文件: {file_path}]")
-                
+
                 feishu_msg.content = feishu_msg.content + "\n" + "\n".join(file_refs)
                 logger.info(f"[FeiShu] Attached {len(cached_files)} cached file(s) to user query")
                 # 清除缓存
@@ -258,26 +300,27 @@ class FeiShuChanel(ChatChannel):
                 self._send(text_reply, context)
                 import time
                 time.sleep(0.3)  # 短暂延迟，确保文本先到达
-            
+
             # 判断是否为视频文件
             file_path = reply.content
             if file_path.startswith("file://"):
                 file_path = file_path[7:]
-            
+
             is_video = file_path.lower().endswith(('.mp4', '.avi', '.mov', '.wmv', '.flv'))
-            
+
             if is_video:
                 # 视频上传（包含duration信息）
                 upload_data = self._upload_video_url(reply.content, access_token)
                 if not upload_data or not upload_data.get('file_key'):
                     logger.warning("[FeiShu] upload video failed")
                     return
-                
+
                 # 视频使用 media 类型（根据官方文档）
                 # 错误码 230055 说明：上传 mp4 时必须使用 msg_type="media"
                 msg_type = "media"
                 reply_content = upload_data  # 完整的上传响应数据（包含file_key和duration）
-                logger.info(f"[FeiShu] Sending video: file_key={upload_data.get('file_key')}, duration={upload_data.get('duration')}ms")
+                logger.info(
+                    f"[FeiShu] Sending video: file_key={upload_data.get('file_key')}, duration={upload_data.get('duration')}ms")
                 content_key = None  # 直接序列化整个对象
             else:
                 # 其他文件使用 file 类型
@@ -288,14 +331,14 @@ class FeiShuChanel(ChatChannel):
                 reply_content = file_key
                 msg_type = "file"
                 content_key = "file_key"
-        
+
         # Check if we can reply to an existing message (need msg_id)
         can_reply = is_group and msg and hasattr(msg, 'msg_id') and msg.msg_id
-        
+
         # Build content JSON
         content_json = json.dumps(reply_content) if content_key is None else json.dumps({content_key: reply_content})
         logger.debug(f"[FeiShu] Sending message: msg_type={msg_type}, content={content_json[:200]}")
-        
+
         if can_reply:
             # 群聊中回复已有消息
             url = f"https://open.feishu.cn/open-apis/im/v1/messages/{msg.msg_id}/reply"
@@ -320,7 +363,6 @@ class FeiShuChanel(ChatChannel):
         else:
             logger.error(f"[FeiShu] send message failed, code={res.get('code')}, msg={res.get('msg')}")
 
-
     def fetch_access_token(self) -> str:
         url = "https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal/"
         headers = {
@@ -342,35 +384,34 @@ class FeiShuChanel(ChatChannel):
         else:
             logger.error(f"[FeiShu] fetch token error, res={response}")
 
-
     def _upload_image_url(self, img_url, access_token):
         logger.debug(f"[FeiShu] start process image, img_url={img_url}")
-        
+
         # Check if it's a local file path (file:// protocol)
         if img_url.startswith("file://"):
             local_path = img_url[7:]  # Remove "file://" prefix
             logger.info(f"[FeiShu] uploading local file: {local_path}")
-            
+
             if not os.path.exists(local_path):
                 logger.error(f"[FeiShu] local file not found: {local_path}")
                 return None
-            
+
             # Upload directly from local file
             upload_url = "https://open.feishu.cn/open-apis/im/v1/images"
             data = {'image_type': 'message'}
             headers = {'Authorization': f'Bearer {access_token}'}
-            
+
             with open(local_path, "rb") as file:
                 upload_response = requests.post(upload_url, files={"image": file}, data=data, headers=headers)
                 logger.info(f"[FeiShu] upload file, res={upload_response.content}")
-                
+
                 response_data = upload_response.json()
                 if response_data.get("code") == 0:
                     return response_data.get("data").get("image_key")
                 else:
                     logger.error(f"[FeiShu] upload failed: {response_data}")
                     return None
-        
+
         # Original logic for HTTP URLs
         response = requests.get(img_url)
         suffix = utils.get_path_suffix(img_url)
@@ -406,7 +447,7 @@ class FeiShuChanel(ChatChannel):
         """
         try:
             import subprocess
-            
+
             # 使用 ffprobe 获取视频时长
             cmd = [
                 'ffprobe',
@@ -415,7 +456,7 @@ class FeiShuChanel(ChatChannel):
                 '-of', 'default=noprint_wrappers=1:nokey=1',
                 file_path
             ]
-            
+
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
             if result.returncode == 0:
                 duration_seconds = float(result.stdout.strip())
@@ -444,7 +485,7 @@ class FeiShuChanel(ChatChannel):
         """
         local_path = None
         temp_file = None
-        
+
         try:
             # For file:// URLs (local files), upload directly
             if video_url.startswith("file://"):
@@ -459,65 +500,67 @@ class FeiShuChanel(ChatChannel):
                 if response.status_code != 200:
                     logger.error(f"[FeiShu] download video failed, status={response.status_code}")
                     return None
-                
+
                 # Save to temp file
                 import uuid
                 file_name = os.path.basename(video_url) or "video.mp4"
                 temp_file = str(uuid.uuid4()) + "_" + file_name
-                
+
                 with open(temp_file, "wb") as file:
                     file.write(response.content)
-                
+
                 logger.info(f"[FeiShu] Video downloaded, size={len(response.content)} bytes")
                 local_path = temp_file
-            
+
             # Get video duration
             duration = self._get_video_duration(local_path)
-            
+
             # Upload to Feishu
             file_name = os.path.basename(local_path)
             file_ext = os.path.splitext(file_name)[1].lower()
             file_type_map = {'.mp4': 'mp4'}
             file_type = file_type_map.get(file_ext, 'mp4')
-            
+
             upload_url = "https://open.feishu.cn/open-apis/im/v1/files"
             data = {
-                'file_type': file_type, 
+                'file_type': file_type,
                 'file_name': file_name
             }
             # Add duration only if available (required for video/audio)
             if duration:
                 data['duration'] = duration  # Must be int, not string
-            
+
             headers = {'Authorization': f'Bearer {access_token}'}
-            
+
             logger.info(f"[FeiShu] Uploading video: file_name={file_name}, duration={duration}ms")
-            
+
             with open(local_path, "rb") as file:
                 upload_response = requests.post(
-                    upload_url, 
-                    files={"file": file}, 
-                    data=data, 
-                    headers=headers, 
+                    upload_url,
+                    files={"file": file},
+                    data=data,
+                    headers=headers,
                     timeout=(5, 60)
                 )
-                logger.info(f"[FeiShu] upload video response, status={upload_response.status_code}, res={upload_response.content}")
-                
+                logger.info(
+                    f"[FeiShu] upload video response, status={upload_response.status_code}, res={upload_response.content}")
+
                 response_data = upload_response.json()
                 if response_data.get("code") == 0:
                     # Add duration to the response data (API doesn't return it)
                     upload_data = response_data.get("data")
                     upload_data['duration'] = duration  # Add our calculated duration
-                    logger.info(f"[FeiShu] Upload complete: file_key={upload_data.get('file_key')}, duration={duration}ms")
+                    logger.info(
+                        f"[FeiShu] Upload complete: file_key={upload_data.get('file_key')}, duration={duration}ms")
                     return upload_data
                 else:
                     logger.error(f"[FeiShu] upload video failed: {response_data}")
                     return None
-        
+
         except Exception as e:
             logger.error(f"[FeiShu] upload video exception: {e}")
             return None
-        
+
         finally:
             # Clean up temp file
             if temp_file and os.path.exists(temp_file):
@@ -532,20 +575,20 @@ class FeiShuChanel(ChatChannel):
         Supports both local files (file://) and HTTP URLs
         """
         logger.debug(f"[FeiShu] start process file, file_url={file_url}")
-        
+
         # Check if it's a local file path (file:// protocol)
         if file_url.startswith("file://"):
             local_path = file_url[7:]  # Remove "file://" prefix
             logger.info(f"[FeiShu] uploading local file: {local_path}")
-            
+
             if not os.path.exists(local_path):
                 logger.error(f"[FeiShu] local file not found: {local_path}")
                 return None
-            
+
             # Get file info
             file_name = os.path.basename(local_path)
             file_ext = os.path.splitext(file_name)[1].lower()
-            
+
             # Determine file type for Feishu API
             # Feishu supports: opus, mp4, pdf, doc, xls, ppt, stream (other types)
             file_type_map = {
@@ -557,23 +600,24 @@ class FeiShuChanel(ChatChannel):
                 '.ppt': 'ppt', '.pptx': 'ppt',
             }
             file_type = file_type_map.get(file_ext, 'stream')  # Default to stream for other types
-            
+
             # Upload file to Feishu
             upload_url = "https://open.feishu.cn/open-apis/im/v1/files"
             data = {'file_type': file_type, 'file_name': file_name}
             headers = {'Authorization': f'Bearer {access_token}'}
-            
+
             try:
                 with open(local_path, "rb") as file:
                     upload_response = requests.post(
-                        upload_url, 
-                        files={"file": file}, 
-                        data=data, 
+                        upload_url,
+                        files={"file": file},
+                        data=data,
                         headers=headers,
                         timeout=(5, 30)  # 5s connect, 30s read timeout
                     )
-                    logger.info(f"[FeiShu] upload file response, status={upload_response.status_code}, res={upload_response.content}")
-                    
+                    logger.info(
+                        f"[FeiShu] upload file response, status={upload_response.status_code}, res={upload_response.content}")
+
                     response_data = upload_response.json()
                     if response_data.get("code") == 0:
                         return response_data.get("data").get("file_key")
@@ -583,22 +627,22 @@ class FeiShuChanel(ChatChannel):
             except Exception as e:
                 logger.error(f"[FeiShu] upload file exception: {e}")
                 return None
-        
+
         # For HTTP URLs, download first then upload
         try:
             response = requests.get(file_url, timeout=(5, 30))
             if response.status_code != 200:
                 logger.error(f"[FeiShu] download file failed, status={response.status_code}")
                 return None
-            
+
             # Save to temp file
             import uuid
             file_name = os.path.basename(file_url)
             temp_name = str(uuid.uuid4()) + "_" + file_name
-            
+
             with open(temp_name, "wb") as file:
                 file.write(response.content)
-            
+
             # Upload
             file_ext = os.path.splitext(file_name)[1].lower()
             file_type_map = {
@@ -608,18 +652,18 @@ class FeiShuChanel(ChatChannel):
                 '.ppt': 'ppt', '.pptx': 'ppt',
             }
             file_type = file_type_map.get(file_ext, 'stream')
-            
+
             upload_url = "https://open.feishu.cn/open-apis/im/v1/files"
             data = {'file_type': file_type, 'file_name': file_name}
             headers = {'Authorization': f'Bearer {access_token}'}
-            
+
             with open(temp_name, "rb") as file:
                 upload_response = requests.post(upload_url, files={"file": file}, data=data, headers=headers)
                 logger.info(f"[FeiShu] upload file, res={upload_response.content}")
-                
+
                 response_data = upload_response.json()
                 os.remove(temp_name)  # Clean up temp file
-                
+
                 if response_data.get("code") == 0:
                     return response_data.get("data").get("file_key")
                 else:
@@ -636,7 +680,7 @@ class FeiShuChanel(ChatChannel):
             context["origin_ctype"] = ctype
 
         cmsg = context["msg"]
-        
+
         # Set session_id based on chat type
         if cmsg.is_group:
             # Group chat: check if group_shared_session is enabled
@@ -652,7 +696,7 @@ class FeiShuChanel(ChatChannel):
         else:
             # Private chat: use user_id only
             context["session_id"] = cmsg.from_user_id
-        
+
         context["receiver"] = cmsg.other_user_id
 
         if ctype == ContextType.TEXT:

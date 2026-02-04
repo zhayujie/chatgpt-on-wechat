@@ -140,6 +140,23 @@ python3 app.py
 
 **解决**: 安装依赖 `pip install lark-oapi`
 
+### SSL证书验证失败
+
+```
+[Lark][ERROR] connect failed, err:[SSL:CERTIFICATE_VERIFY_FAILED] certificate verify failed: self signed certificate in certificate chain
+```
+
+**原因**: 网络环境中存在自签名证书或SSL中间人代理(如企业代理、VPN等)
+
+**解决**: 程序会自动检测SSL证书验证失败，并自动重试禁用证书验证的连接。无需手动配置。
+
+当遇到证书错误时，日志会显示：
+```
+[FeiShu] SSL certificate verification disabled due to certificate error. This may happen when using corporate proxy or self-signed certificates.
+```
+
+这是正常现象，程序会自动处理并继续运行。
+
 ### Webhook模式端口被占用
 
 ```

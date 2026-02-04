@@ -51,7 +51,7 @@ class Banwords(Plugin):
                 self.reply_action = conf.get("reply_action", "ignore")
             logger.debug("[Banwords] inited")
         except Exception as e:
-            logger.warn("[Banwords] init failed, ignore or see https://github.com/zhayujie/chatgpt-on-wechat/tree/master/plugins/banwords .")
+            logger.debug("[Banwords] init failed, ignore or see https://github.com/zhayujie/chatgpt-on-wechat/tree/master/plugins/banwords .")
             raise e
 
     def on_handle_context(self, e_context: EventContext):
