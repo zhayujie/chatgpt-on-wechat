@@ -205,7 +205,7 @@ class ZHIPUAIBot(Bot, ZhipuAIImage):
                 request_params["thinking"] = thinking
             elif "glm-4.7" in request_params["model"]:
                 # Enable thinking by default for GLM-4.7
-                request_params["thinking"] = {"type": "enabled"}
+                request_params["thinking"] = {"type": "disabled"}
             
             # Make API call with ZhipuAI SDK
             if stream:

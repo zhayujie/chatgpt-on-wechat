@@ -236,7 +236,7 @@ class MinimaxBot(Bot):
             logger.debug(f"[MINIMAX] API call: model={model}, tools={len(converted_tools) if converted_tools else 0}, stream={stream}")
 
             # Check if we should show thinking process
-            show_thinking = kwargs.pop("show_thinking", conf().get("minimax_show_thinking", True))
+            show_thinking = kwargs.pop("show_thinking", conf().get("minimax_show_thinking", False))
             
             if stream:
                 return self._handle_stream_response(request_body, show_thinking=show_thinking)
