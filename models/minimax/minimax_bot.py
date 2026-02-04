@@ -2,6 +2,7 @@
 
 import time
 import json
+from pydantic.types import T
 import requests
 
 from models.bot import Bot
@@ -235,7 +236,7 @@ class MinimaxBot(Bot):
             logger.debug(f"[MINIMAX] API call: model={model}, tools={len(converted_tools) if converted_tools else 0}, stream={stream}")
 
             # Check if we should show thinking process
-            show_thinking = kwargs.pop("show_thinking", conf().get("minimax_show_thinking", False))
+            show_thinking = kwargs.pop("show_thinking", conf().get("minimax_show_thinking", True))
             
             if stream:
                 return self._handle_stream_response(request_body, show_thinking=show_thinking)
@@ -276,7 +277,7 @@ class MinimaxBot(Bot):
                 if isinstance(content, list):
                     # Extract text from content blocks
                     text_parts = []
-                    tool_result = None
+                    tool_results = []
 
                     for block in content:
                         if isinstance(block, dict):
@@ -284,11 +285,11 @@ class MinimaxBot(Bot):
                                 text_parts.append(block.get("text", ""))
                             elif block.get("type") == "tool_result":
                                 # Tool result should be a separate message with role="tool"
-                                tool_result = {
+                                tool_results.append({
                                     "role": "tool",
                                     "tool_call_id": block.get("tool_use_id"),
                                     "content": str(block.get("content", ""))
-                                }
+                                })
 
                     if text_parts:
                         converted.append({
@@ -296,7 +297,8 @@ class MinimaxBot(Bot):
                             "content": "\n".join(text_parts)
                         })
 
-                    if tool_result:
+                    # Add all tool results (not just the last one)
+                    for tool_result in tool_results:
                         converted.append(tool_result)
                 else:
                     # Simple text content
@@ -546,16 +548,14 @@ class MinimaxBot(Bot):
 
                             # Optionally yield thinking as visible content
                             if show_thinking:
-                                # Format thinking text for display
-                                formatted_thinking = f"💭 {reasoning_text}"
-                                
-                                # Yield as OpenAI-format content delta
+                                # Yield thinking text as-is (without emoji decoration)
+                                # The reasoning text will be displayed to users
                                 yield {
                                     "choices": [{
                                         "index": 0,
                                         "delta": {
                                             "role": "assistant",
-                                            "content": formatted_thinking
+                                            "content": reasoning_text
                                         }
                                     }]
                                 }

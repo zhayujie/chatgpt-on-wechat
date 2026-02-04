@@ -137,11 +137,11 @@ bash <(curl -sS https://cdn.link-ai.tech/code/cow/run.sh)
 
 Agent模式推荐使用以下模型，可根据效果及成本综合选择：
 
+- **MiniMax**: `MiniMax-M2.1`
+- **GLM**: `glm-4.7`
+- **Qwen**: `qwen3-max`
 - **Claude**: `claude-sonnet-4-5`、`claude-sonnet-4-0`
 - **Gemini**: `gemini-3-flash-preview`、`gemini-3-pro-preview`
-- **GLM**: `glm-4.7`
-- **MiniMax**: `MiniMax-M2.1`
-- **Qwen**: `qwen3-max`
 
 详细模型配置方式参考 [README.md 模型说明](../README.md#模型说明)
 

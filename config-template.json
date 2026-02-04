@@ -1,6 +1,6 @@
 {
   "channel_type": "web",
-  "model": "claude-sonnet-4-5",
+  "model": "MiniMax-M2.1",
   "claude_api_key": "",
   "claude_api_base": "https://api.anthropic.com/v1",
   "open_ai_api_key": "",

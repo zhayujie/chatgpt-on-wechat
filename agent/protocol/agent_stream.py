@@ -76,6 +76,20 @@ class AgentStreamExecutor:
                 })
             except Exception as e:
                 logger.error(f"Event callback error: {e}")
+    
+    def _filter_think_tags(self, text: str) -> str:
+        """
+        Remove <think> and </think> tags but keep the content inside.
+        Some LLM providers (e.g., MiniMax) may return thinking process wrapped in <think> tags.
+        We only remove the tags themselves, keeping the actual thinking content.
+        """
+        if not text:
+            return text
+        import re
+        # Remove only the <think> and </think> tags, keep the content
+        text = re.sub(r'<think>', '', text)
+        text = re.sub(r'</think>', '', text)
+        return text
 
     def _hash_args(self, args: dict) -> str:
         """Generate a simple hash for tool arguments"""
@@ -562,8 +576,11 @@ class AgentStreamExecutor:
                     # Handle text content
                     content_delta = delta.get("content") or ""
                     if content_delta:
-                        full_content += content_delta
-                        self._emit_event("message_update", {"delta": content_delta})
+                        # Filter out <think> tags from content
+                        filtered_delta = self._filter_think_tags(content_delta)
+                        full_content += filtered_delta
+                        if filtered_delta:  # Only emit if there's content after filtering
+                            self._emit_event("message_update", {"delta": filtered_delta})
 
                     # Handle tool calls
                     if "tool_calls" in delta and delta["tool_calls"]:
@@ -707,6 +724,9 @@ class AgentStreamExecutor:
                 max_retries=max_retries
             )
 
+        # Filter full_content one more time (in case tags were split across chunks)
+        full_content = self._filter_think_tags(full_content)
+        
         # Add assistant message to history (Claude format uses content blocks)
         assistant_msg = {"role": "assistant", "content": []}
 
