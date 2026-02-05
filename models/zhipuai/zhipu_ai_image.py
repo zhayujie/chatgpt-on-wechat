@@ -7,7 +7,16 @@ from config import conf
 class ZhipuAIImage(object):
     def __init__(self):
         from zai import ZhipuAiClient
-        self.client = ZhipuAiClient(api_key=conf().get("zhipu_ai_api_key"))
+        # 初始化客户端，支持自定义 API base URL（例如智谱国际版 z.ai）
+        api_key = conf().get("zhipu_ai_api_key")
+        api_base = conf().get("zhipu_ai_api_base")
+        
+        if api_base:
+            self.client = ZhipuAiClient(api_key=api_key, base_url=api_base)
+            logger.info(f"[ZHIPU_AI_IMAGE] 使用自定义 API Base URL: {api_base}")
+        else:
+            self.client = ZhipuAiClient(api_key=api_key)
+            logger.info("[ZHIPU_AI_IMAGE] 使用默认 API Base URL")
 
     def create_img(self, query, retry_count=0, api_key=None, api_base=None):
         try:
