@@ -25,6 +25,7 @@ CLAUDE_35_SONNET = "claude-3-5-sonnet-latest"  # 带 latest 标签的模型名�
 CLAUDE_35_SONNET_1022 = "claude-3-5-sonnet-20241022"  # 带具体日期的模型名称，会固定为该日期发布的模型
 CLAUDE_35_SONNET_0620 = "claude-3-5-sonnet-20240620"
 CLAUDE_4_OPUS = "claude-opus-4-0"
+CLAUDE_4_6_OPUS = "claude-opus-4-6"      # Claude Opus 4.6 - Agent推荐模型
 CLAUDE_4_SONNET = "claude-sonnet-4-0"    # Claude Sonnet 4.0 - Agent推荐模型
 CLAUDE_4_5_SONNET = "claude-sonnet-4-5"  # Claude Sonnet 4.5 - Agent推荐模型
 
@@ -120,7 +121,7 @@ MODELSCOPE_MODEL_LIST = ["LLM-Research/c4ai-command-r-plus-08-2024","mistralai/M
 
 MODEL_LIST = [
               # Claude
-              CLAUDE3, CLAUDE_4_OPUS, CLAUDE_4_5_SONNET, CLAUDE_4_SONNET, CLAUDE_3_OPUS, CLAUDE_3_OPUS_0229, 
+              CLAUDE3, CLAUDE_4_6_OPUS, CLAUDE_4_OPUS, CLAUDE_4_5_SONNET, CLAUDE_4_SONNET, CLAUDE_3_OPUS, CLAUDE_3_OPUS_0229, 
               CLAUDE_35_SONNET, CLAUDE_35_SONNET_1022, CLAUDE_35_SONNET_0620, CLAUDE_3_SONNET, CLAUDE_3_HAIKU, 
               "claude", "claude-3-haiku", "claude-3-sonnet", "claude-3-opus", "claude-3.5-sonnet",
               
