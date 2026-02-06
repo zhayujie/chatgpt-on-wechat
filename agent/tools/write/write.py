@@ -8,6 +8,7 @@ from typing import Dict, Any
 from pathlib import Path
 
 from agent.tools.base_tool import BaseTool, ToolResult
+from common.utils import expand_path
 
 
 class Write(BaseTool):
@@ -90,7 +91,7 @@ class Write(BaseTool):
         :return: Absolute path
         """
         # Expand ~ to user home directory
-        path = os.path.expanduser(path)
+        path = expand_path(path)
         if os.path.isabs(path):
             return path
         return os.path.abspath(os.path.join(self.cwd, path))

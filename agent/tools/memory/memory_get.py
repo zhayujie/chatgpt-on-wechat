@@ -77,7 +77,7 @@ class MemoryGetTool(BaseTool):
             if not file_path.exists():
                 return ToolResult.fail(f"Error: File not found: {path}")
             
-            content = file_path.read_text()
+            content = file_path.read_text(encoding='utf-8')
             lines = content.split('\n')
             
             # Handle line range

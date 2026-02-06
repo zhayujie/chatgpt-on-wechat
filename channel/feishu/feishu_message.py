@@ -6,6 +6,7 @@ import requests
 from common.log import logger
 from common.tmp_dir import TmpDir
 from common import utils
+from common.utils import expand_path
 from config import conf
 
 
@@ -31,7 +32,7 @@ class FeishuMessage(ChatMessage):
             image_key = content.get("image_key")
             
             # 下载图片到工作空间临时目录
-            workspace_root = os.path.expanduser(conf().get("agent_workspace", "~/cow"))
+            workspace_root = expand_path(conf().get("agent_workspace", "~/cow"))
             tmp_dir = os.path.join(workspace_root, "tmp")
             os.makedirs(tmp_dir, exist_ok=True)
             image_path = os.path.join(tmp_dir, f"{image_key}.png")
@@ -97,7 +98,7 @@ class FeishuMessage(ChatMessage):
             
             if image_keys:
                 # 如果包含图片，下载并在文本中引用本地路径
-                workspace_root = os.path.expanduser(conf().get("agent_workspace", "~/cow"))
+                workspace_root = expand_path(conf().get("agent_workspace", "~/cow"))
                 tmp_dir = os.path.join(workspace_root, "tmp")
                 os.makedirs(tmp_dir, exist_ok=True)
                 

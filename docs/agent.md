@@ -82,7 +82,7 @@ Cow项目从简单的聊天机器人全面升级为超级智能助理 **CowAgent
 
 #### 3.2 搜索和图像识别
 
-- **搜索技能：** 系统内置实现了 `bocha-search`(博查搜索)的Skill，依赖环境变量 `BOCHA_SEARCH_API_KEY`，可在[控制台]()进行创建，并发送给Agent完成配置
+- **搜索技能：** 系统内置实现了 `bocha-search`(博查搜索)的Skill，依赖环境变量 `BOCHA_SEARCH_API_KEY`，可在[控制台](https://open.bochaai.com/)进行创建，并发送给Agent完成配置
 - **图像识别技能：** 实现了 `openai-image-vision` 插件，可使用 gpt-4.1-mini、gpt-4.1 等图像识别模型。依赖秘钥 `OPENAI_API_KEY`，可通过config.json或env_config工具进行维护。
 
 <img width="800" src="https://cdn.link-ai.tech/doc/20260202213219.png">

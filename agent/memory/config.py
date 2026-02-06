@@ -11,12 +11,18 @@ from typing import Optional, List
 from pathlib import Path
 
 
+def _default_workspace():
+    """Get default workspace path with proper Windows support"""
+    from common.utils import expand_path
+    return expand_path("~/cow")
+
+
 @dataclass
 class MemoryConfig:
     """Configuration for memory storage and search"""
     
     # Storage paths (default: ~/cow)
-    workspace_root: str = field(default_factory=lambda: os.path.expanduser("~/cow"))
+    workspace_root: str = field(default_factory=_default_workspace)
     
     # Embedding config
     embedding_provider: str = "openai"  # "openai" | "local"

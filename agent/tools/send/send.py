@@ -7,6 +7,7 @@ from typing import Dict, Any
 from pathlib import Path
 
 from agent.tools.base_tool import BaseTool, ToolResult
+from common.utils import expand_path
 
 
 class Send(BaseTool):
@@ -102,7 +103,7 @@ class Send(BaseTool):
     
     def _resolve_path(self, path: str) -> str:
         """Resolve path to absolute path"""
-        path = os.path.expanduser(path)
+        path = expand_path(path)
         if os.path.isabs(path):
             return path
         return os.path.abspath(os.path.join(self.cwd, path))

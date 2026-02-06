@@ -11,6 +11,7 @@ from typing import Dict, Any
 from agent.tools.base_tool import BaseTool, ToolResult
 from agent.tools.utils.truncate import truncate_tail, format_size, DEFAULT_MAX_LINES, DEFAULT_MAX_BYTES
 from common.log import logger
+from common.utils import expand_path
 
 
 class Bash(BaseTool):
@@ -80,7 +81,7 @@ IMPORTANT SAFETY GUIDELINES:
             env = os.environ.copy()
             
             # Load environment variables from ~/.cow/.env if it exists
-            env_file = os.path.expanduser("~/.cow/.env")
+            env_file = expand_path("~/.cow/.env")
             if os.path.exists(env_file):
                 try:
                     from dotenv import dotenv_values

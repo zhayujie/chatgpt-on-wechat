@@ -13,6 +13,7 @@ from bridge.context import Context
 from bridge.reply import Reply, ReplyType
 from common import const
 from common.log import logger
+from common.utils import expand_path
 from models.openai_compatible_bot import OpenAICompatibleBot
 
 
@@ -421,7 +422,7 @@ class AgentBridge:
         }
         
         # Use fixed secure location for .env file
-        env_file = os.path.expanduser("~/.cow/.env")
+        env_file = expand_path("~/.cow/.env")
         
         # Read existing env vars from .env file
         existing_env_vars = {}
@@ -504,7 +505,7 @@ class AgentBridge:
         from config import conf
         
         # Reload environment variables from .env file
-        workspace_root = os.path.expanduser(conf().get("agent_workspace", "~/cow"))
+        workspace_root = expand_path(conf().get("agent_workspace", "~/cow"))
         env_file = os.path.join(workspace_root, '.env')
         
         if os.path.exists(env_file):

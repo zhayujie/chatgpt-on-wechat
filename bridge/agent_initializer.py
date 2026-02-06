@@ -11,6 +11,7 @@ from typing import Optional, List
 from agent.protocol import Agent
 from agent.tools import ToolManager
 from common.log import logger
+from common.utils import expand_path
 
 
 class AgentInitializer:
@@ -46,7 +47,7 @@ class AgentInitializer:
         from config import conf
         
         # Get workspace from config
-        workspace_root = os.path.expanduser(conf().get("agent_workspace", "~/cow"))
+        workspace_root = expand_path(conf().get("agent_workspace", "~/cow"))
         
         # Migrate API keys
         self._migrate_config_to_env(workspace_root)
@@ -122,7 +123,7 @@ class AgentInitializer:
     
     def _load_env_file(self):
         """Load environment variables from .env file"""
-        env_file = os.path.expanduser("~/.cow/.env")
+        env_file = expand_path("~/.cow/.env")
         if os.path.exists(env_file):
             try:
                 from dotenv import load_dotenv
@@ -338,7 +339,7 @@ class AgentInitializer:
             "linkai_api_key": "LINKAI_API_KEY",
         }
         
-        env_file = os.path.expanduser("~/.cow/.env")
+        env_file = expand_path("~/.cow/.env")
         
         # Read existing env vars
         existing_env_vars = {}

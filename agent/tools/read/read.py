@@ -9,6 +9,7 @@ from pathlib import Path
 
 from agent.tools.base_tool import BaseTool, ToolResult
 from agent.tools.utils.truncate import truncate_head, format_size, DEFAULT_MAX_LINES, DEFAULT_MAX_BYTES
+from common.utils import expand_path
 
 
 class Read(BaseTool):
@@ -77,7 +78,7 @@ class Read(BaseTool):
         absolute_path = self._resolve_path(path)
         
         # Security check: Prevent reading sensitive config files
-        env_config_path = os.path.expanduser("~/.cow/.env")
+        env_config_path = expand_path("~/.cow/.env")
         if os.path.abspath(absolute_path) == os.path.abspath(env_config_path):
             return ToolResult.fail(
                 "Error: Access denied. API keys and credentials must be accessed through the env_config tool only."
@@ -129,7 +130,7 @@ class Read(BaseTool):
         :return: Absolute path
         """
         # Expand ~ to user home directory
-        path = os.path.expanduser(path)
+        path = expand_path(path)
         if os.path.isabs(path):
             return path
         return os.path.abspath(os.path.join(self.cwd, path))

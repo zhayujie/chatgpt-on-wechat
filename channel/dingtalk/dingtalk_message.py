@@ -9,6 +9,7 @@ from channel.chat_message import ChatMessage
 # -*- coding=utf-8 -*-
 from common.log import logger
 from common.tmp_dir import TmpDir
+from common.utils import expand_path
 from config import conf
 
 
@@ -49,7 +50,7 @@ class DingTalkMessage(ChatMessage):
                 download_url = image_download_handler.get_image_download_url(download_code)
                 
                 # 下载到工作空间 tmp 目录
-                workspace_root = os.path.expanduser(conf().get("agent_workspace", "~/cow"))
+                workspace_root = expand_path(conf().get("agent_workspace", "~/cow"))
                 tmp_dir = os.path.join(workspace_root, "tmp")
                 os.makedirs(tmp_dir, exist_ok=True)
                 
@@ -67,7 +68,7 @@ class DingTalkMessage(ChatMessage):
                 self.ctype = ContextType.TEXT
                 
                 # 下载到工作空间 tmp 目录
-                workspace_root = os.path.expanduser(conf().get("agent_workspace", "~/cow"))
+                workspace_root = expand_path(conf().get("agent_workspace", "~/cow"))
                 tmp_dir = os.path.join(workspace_root, "tmp")
                 os.makedirs(tmp_dir, exist_ok=True)
                 

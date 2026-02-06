@@ -304,7 +304,7 @@ class MemoryManager:
     ):
         """Sync a single file"""
         # Compute file hash
-        content = file_path.read_text()
+        content = file_path.read_text(encoding='utf-8')
         file_hash = MemoryStorage.compute_hash(content)
         
         # Get relative path

@@ -8,6 +8,7 @@ import threading
 from datetime import datetime
 from typing import Dict, List, Optional
 from pathlib import Path
+from common.utils import expand_path
 
 
 class TaskStore:
@@ -24,7 +25,7 @@ class TaskStore:
         """
         if store_path is None:
             # Default to ~/cow/scheduler/tasks.json
-            home = os.path.expanduser("~")
+            home = expand_path("~")
             store_path = os.path.join(home, "cow", "scheduler", "tasks.json")
         
         self.store_path = store_path

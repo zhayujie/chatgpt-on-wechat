@@ -7,6 +7,7 @@ import os
 from typing import Dict, Any
 
 from agent.tools.base_tool import BaseTool, ToolResult
+from common.utils import expand_path
 from agent.tools.utils.diff import (
     strip_bom,
     detect_line_ending,
@@ -178,7 +179,7 @@ class Edit(BaseTool):
         :return: Absolute path
         """
         # Expand ~ to user home directory
-        path = os.path.expanduser(path)
+        path = expand_path(path)
         if os.path.isabs(path):
             return path
         return os.path.abspath(os.path.join(self.cwd, path))
