@@ -369,7 +369,7 @@ class AgentInitializer:
                 if not os.path.exists(env_dir):
                     os.makedirs(env_dir, exist_ok=True)
                 if not os.path.exists(env_file):
-                    open(env_file, 'a').close()
+                    open(env_file, 'a', encoding='utf-8').close()
                 
                 with open(env_file, 'a', encoding='utf-8') as f:
                     f.write('\n# Auto-migrated from config.json\n')

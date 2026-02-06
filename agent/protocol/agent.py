@@ -140,7 +140,9 @@ class Agent:
             if self.runtime_info.get("model"):
                 runtime_parts.append(f"模型={self.runtime_info['model']}")
             if self.runtime_info.get("workspace"):
-                runtime_parts.append(f"工作空间={self.runtime_info['workspace']}")
+                # Use forward slashes to avoid escape issues on Windows
+                workspace = self.runtime_info['workspace'].replace('\\', '/')
+                runtime_parts.append(f"工作空间={workspace}")
             if self.runtime_info.get("channel") and self.runtime_info.get("channel") != "web":
                 runtime_parts.append(f"渠道={self.runtime_info['channel']}")
             
