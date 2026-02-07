@@ -424,7 +424,17 @@ class Agent:
         )
 
         # Execute
-        response = executor.run_stream(user_message)
+        try:
+            response = executor.run_stream(user_message)
+        except Exception:
+            # If executor cleared its messages (context overflow / message format error),
+            # sync that back to the Agent's own message list so the next request
+            # starts fresh instead of hitting the same overflow forever.
+            if len(executor.messages) == 0:
+                with self.messages_lock:
+                    self.messages.clear()
+                    logger.info("[Agent] Cleared Agent message history after executor recovery")
+            raise
 
         # Append only the NEW messages from this execution (thread-safe)
         # This allows concurrent requests to both contribute to history

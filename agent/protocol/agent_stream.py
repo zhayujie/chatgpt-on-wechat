@@ -350,14 +350,14 @@ class AgentStreamExecutor:
                             # Fallback to full JSON
                             result_content = json.dumps(result, ensure_ascii=False)
 
-                        # Truncate large tool results to prevent message bloat
-                        # Keep tool results under 50KB to avoid context window issues
-                        MAX_TOOL_RESULT_CHARS = 20000
-                        if len(result_content) > MAX_TOOL_RESULT_CHARS:
+                        # Truncate excessively large tool results for the current turn
+                        # Historical turns will be further truncated in _trim_messages()
+                        MAX_CURRENT_TURN_RESULT_CHARS = 50000
+                        if len(result_content) > MAX_CURRENT_TURN_RESULT_CHARS:
                             truncated_len = len(result_content)
-                            result_content = result_content[:MAX_TOOL_RESULT_CHARS] + \
-                                f"\n\n[Output truncated: {truncated_len} chars total, showing first {MAX_TOOL_RESULT_CHARS} chars]"
-                            logger.info(f"📎 Truncated tool result for '{tool_call['name']}': {truncated_len} -> {MAX_TOOL_RESULT_CHARS} chars")
+                            result_content = result_content[:MAX_CURRENT_TURN_RESULT_CHARS] + \
+                                f"\n\n[Output truncated: {truncated_len} chars total, showing first {MAX_CURRENT_TURN_RESULT_CHARS} chars]"
+                            logger.info(f"📎 Truncated tool result for '{tool_call['name']}': {truncated_len} -> {MAX_CURRENT_TURN_RESULT_CHARS} chars")
 
                         tool_result_block = {
                             "type": "tool_result",
@@ -963,10 +963,62 @@ class AgentStreamExecutor:
             for msg in turn['messages']
         )
 
+    def _truncate_historical_tool_results(self):
+        """
+        Truncate tool_result content in historical messages to reduce context size.
+
+        Current turn results are kept at 30K chars (truncated at creation time).
+        Historical turn results are further truncated to 10K chars here.
+        This runs before token-based trimming so that we first shrink oversized
+        results, potentially avoiding the need to drop entire turns.
+        """
+        MAX_HISTORY_RESULT_CHARS = 20000
+
+        if len(self.messages) < 2:
+            return
+
+        # Find where the last user text message starts (= current turn boundary)
+        # We skip the current turn's messages to preserve their full content
+        current_turn_start = len(self.messages)
+        for i in range(len(self.messages) - 1, -1, -1):
+            msg = self.messages[i]
+            if msg.get("role") == "user":
+                content = msg.get("content", [])
+                if isinstance(content, list) and any(
+                    isinstance(b, dict) and b.get("type") == "text" for b in content
+                ):
+                    current_turn_start = i
+                    break
+                elif isinstance(content, str):
+                    current_turn_start = i
+                    break
+
+        truncated_count = 0
+        for i in range(current_turn_start):
+            msg = self.messages[i]
+            if msg.get("role") != "user":
+                continue
+            content = msg.get("content", [])
+            if not isinstance(content, list):
+                continue
+
+            for block in content:
+                if not isinstance(block, dict) or block.get("type") != "tool_result":
+                    continue
+                result_str = block.get("content", "")
+                if isinstance(result_str, str) and len(result_str) > MAX_HISTORY_RESULT_CHARS:
+                    original_len = len(result_str)
+                    block["content"] = result_str[:MAX_HISTORY_RESULT_CHARS] + \
+                        f"\n\n[Historical output truncated: {original_len} -> {MAX_HISTORY_RESULT_CHARS} chars]"
+                    truncated_count += 1
+
+        if truncated_count > 0:
+            logger.info(f"📎 Truncated {truncated_count} historical tool result(s) to {MAX_HISTORY_RESULT_CHARS} chars")
+
     def _trim_messages(self):
         """
         智能清理消息历史，保持对话完整性
-        
+
         使用完整轮次作为清理单位，确保：
         1. 不会在对话中间截断
         2. 工具调用链（tool_use + tool_result）保持完整
@@ -974,6 +1026,9 @@ class AgentStreamExecutor:
         """
         if not self.messages or not self.agent:
             return
+
+        # Step 0: Truncate large tool results in historical turns (30K -> 10K)
+        self._truncate_historical_tool_results()
 
         # Step 1: 识别完整轮次
         turns = self._identify_complete_turns()
