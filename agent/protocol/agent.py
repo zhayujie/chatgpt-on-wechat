@@ -247,26 +247,66 @@ class Agent:
 
     def _estimate_message_tokens(self, message: dict) -> int:
         """
-        Estimate token count for a message using chars/4 heuristic.
-        This is a conservative estimate (tends to overestimate).
+        Estimate token count for a message.
+
+        Uses chars/3 for Chinese-heavy content and chars/4 for ASCII-heavy content,
+        plus per-block overhead for tool_use / tool_result structures.
 
         :param message: Message dict with 'role' and 'content'
         :return: Estimated token count
         """
         content = message.get('content', '')
         if isinstance(content, str):
-            return max(1, len(content) // 4)
+            return max(1, self._estimate_text_tokens(content))
         elif isinstance(content, list):
-            # Handle multi-part content (text + images)
-            total_chars = 0
+            total_tokens = 0
             for part in content:
-                if isinstance(part, dict) and part.get('type') == 'text':
-                    total_chars += len(part.get('text', ''))
-                elif isinstance(part, dict) and part.get('type') == 'image':
-                    # Estimate images as ~1200 tokens
-                    total_chars += 4800
-            return max(1, total_chars // 4)
+                if not isinstance(part, dict):
+                    continue
+                block_type = part.get('type', '')
+                if block_type == 'text':
+                    total_tokens += self._estimate_text_tokens(part.get('text', ''))
+                elif block_type == 'image':
+                    total_tokens += 1200
+                elif block_type == 'tool_use':
+                    # tool_use has id + name + input (JSON-encoded)
+                    total_tokens += 50  # overhead for structure
+                    input_data = part.get('input', {})
+                    if isinstance(input_data, dict):
+                        import json
+                        input_str = json.dumps(input_data, ensure_ascii=False)
+                        total_tokens += self._estimate_text_tokens(input_str)
+                elif block_type == 'tool_result':
+                    # tool_result has tool_use_id + content
+                    total_tokens += 30  # overhead for structure
+                    result_content = part.get('content', '')
+                    if isinstance(result_content, str):
+                        total_tokens += self._estimate_text_tokens(result_content)
+                else:
+                    # Unknown block type, estimate conservatively
+                    total_tokens += 10
+            return max(1, total_tokens)
         return 1
+
+    @staticmethod
+    def _estimate_text_tokens(text: str) -> int:
+        """
+        Estimate token count for a text string.
+
+        Chinese / CJK characters typically use ~1.5 tokens each,
+        while ASCII uses ~0.25 tokens per char (4 chars/token).
+        We use a weighted average based on the character mix.
+
+        :param text: Input text
+        :return: Estimated token count
+        """
+        if not text:
+            return 0
+        # Count non-ASCII characters (CJK, emoji, etc.)
+        non_ascii = sum(1 for c in text if ord(c) > 127)
+        ascii_count = len(text) - non_ascii
+        # CJK chars: ~1.5 tokens each; ASCII: ~0.25 tokens per char
+        return int(non_ascii * 1.5 + ascii_count * 0.25) + 1
 
     def _find_tool(self, tool_name: str):
         """Find and return a tool with the specified name"""
