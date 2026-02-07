@@ -285,10 +285,16 @@ class MinimaxBot(Bot):
                                 text_parts.append(block.get("text", ""))
                             elif block.get("type") == "tool_result":
                                 # Tool result should be a separate message with role="tool"
+                                tool_call_id = block.get("tool_use_id") or ""
+                                if not tool_call_id:
+                                    logger.warning(f"[MINIMAX] tool_result missing tool_use_id")
+                                result_content = block.get("content", "")
+                                if not isinstance(result_content, str):
+                                    result_content = json.dumps(result_content, ensure_ascii=False)
                                 tool_results.append({
                                     "role": "tool",
-                                    "tool_call_id": block.get("tool_use_id"),
-                                    "content": str(block.get("content", ""))
+                                    "tool_call_id": tool_call_id,
+                                    "content": result_content
                                 })
 
                     if text_parts:

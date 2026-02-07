@@ -628,9 +628,28 @@ def _handle_linkai_stream_response(self, base_url, headers, body):
                         break
                     try:
                         chunk = json.loads(line)
-                        yield chunk
                     except json.JSONDecodeError:
                         continue
+
+                    # Check for error responses within the stream
+                    # Some providers (e.g., MiniMax via LinkAI) return errors as:
+                    # {'type': 'error', 'error': {'type': '...', 'message': '...', 'http_code': '400'}}
+                    if chunk.get("type") == "error" or (
+                        isinstance(chunk.get("error"), dict) and "message" in chunk.get("error", {})
+                    ):
+                        error_data = chunk.get("error", {})
+                        error_msg = error_data.get("message", "Unknown error") if isinstance(error_data, dict) else str(error_data)
+                        http_code = error_data.get("http_code", "") if isinstance(error_data, dict) else ""
+                        status_code = int(http_code) if http_code and str(http_code).isdigit() else 400
+                        logger.error(f"[LinkAI] stream error: {error_msg} (http_code={http_code})")
+                        yield {
+                            "error": True,
+                            "message": error_msg,
+                            "status_code": status_code
+                        }
+                        return
+
+                    yield chunk
                         
     except Exception as e:
         logger.error(f"[LinkAI] stream response error: {e}")

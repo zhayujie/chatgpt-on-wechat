@@ -336,7 +336,7 @@ class AgentStreamExecutor:
                         # Build tool result block (Claude format)
                         # Format content in a way that's easy for LLM to understand
                         is_error = result.get("status") == "error"
-                        
+
                         if is_error:
                             # For errors, provide clear error message
                             result_content = f"Error: {result.get('result', 'Unknown error')}"
@@ -349,7 +349,16 @@ class AgentStreamExecutor:
                         else:
                             # Fallback to full JSON
                             result_content = json.dumps(result, ensure_ascii=False)
-                        
+
+                        # Truncate large tool results to prevent message bloat
+                        # Keep tool results under 50KB to avoid context window issues
+                        MAX_TOOL_RESULT_CHARS = 20000
+                        if len(result_content) > MAX_TOOL_RESULT_CHARS:
+                            truncated_len = len(result_content)
+                            result_content = result_content[:MAX_TOOL_RESULT_CHARS] + \
+                                f"\n\n[Output truncated: {truncated_len} chars total, showing first {MAX_TOOL_RESULT_CHARS} chars]"
+                            logger.info(f"📎 Truncated tool result for '{tool_call['name']}': {truncated_len} -> {MAX_TOOL_RESULT_CHARS} chars")
+
                         tool_result_block = {
                             "type": "tool_result",
                             "tool_use_id": tool_call["id"],
@@ -678,6 +687,14 @@ class AgentStreamExecutor:
         tool_calls = []
         for idx in sorted(tool_calls_buffer.keys()):
             tc = tool_calls_buffer[idx]
+
+            # Ensure tool call has a valid ID (some providers return empty/None IDs)
+            tool_id = tc.get("id") or ""
+            if not tool_id:
+                import uuid
+                tool_id = f"call_{uuid.uuid4().hex[:24]}"
+                logger.debug(f"⚠️ Tool call missing ID for '{tc.get('name')}', generated fallback: {tool_id}")
+
             try:
                 # Safely get arguments, handle None case
                 args_str = tc.get("arguments") or ""
@@ -690,11 +707,11 @@ class AgentStreamExecutor:
                 logger.error(f"Arguments length: {len(args_str)} chars")
                 logger.error(f"Arguments preview: {args_preview}...")
                 logger.error(f"JSON decode error: {e}")
-                
+
                 # Return a clear error message to the LLM instead of empty dict
                 # This helps the LLM understand what went wrong
                 tool_calls.append({
-                    "id": tc["id"],
+                    "id": tool_id,
                     "name": tc["name"],
                     "arguments": {},
                     "_parse_error": f"Invalid JSON in tool arguments: {args_preview}... Error: {str(e)}. Tip: For large content, consider splitting into smaller chunks or using a different approach."
@@ -702,7 +719,7 @@ class AgentStreamExecutor:
                 continue
 
             tool_calls.append({
-                "id": tc["id"],
+                "id": tool_id,
                 "name": tc["name"],
                 "arguments": arguments
             })
