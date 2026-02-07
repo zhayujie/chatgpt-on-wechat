@@ -99,7 +99,11 @@ IMPORTANT SAFETY GUIDELINES:
             logger.debug(f"[Bash] OPENAI_API_KEY in env: {'OPENAI_API_KEY' in env}")
             logger.debug(f"[Bash] SHELL: {env.get('SHELL', 'not set')}")
             logger.debug(f"[Bash] Python executable: {sys.executable}")
-            logger.debug(f"[Bash] Process UID: {os.getuid()}")
+            # getuid() only exists on Unix-like systems
+            if hasattr(os, 'getuid'):
+                logger.debug(f"[Bash] Process UID: {os.getuid()}")
+            else:
+                logger.debug(f"[Bash] Process User: {os.environ.get('USERNAME', os.environ.get('USER', 'unknown'))}")
             
             # Execute command with inherited environment variables
             result = subprocess.run(
