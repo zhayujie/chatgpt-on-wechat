@@ -188,16 +188,14 @@ class SkillLoader:
         import json
         
         config_path = os.path.join(skill_dir, "config.json")
-        template_path = os.path.join(skill_dir, "config.json.template")
         
-        # Try to load config.json or fallback to template
-        config_file = config_path if os.path.exists(config_path) else template_path
-        
-        if not os.path.exists(config_file):
-            return default_description
+        # Without config.json, skip this skill entirely (return empty to trigger exclusion)
+        if not os.path.exists(config_path):
+            logger.debug(f"[SkillLoader] linkai-agent skipped: no config.json found")
+            return ""
         
         try:
-            with open(config_file, 'r', encoding='utf-8') as f:
+            with open(config_path, 'r', encoding='utf-8') as f:
                 config = json.load(f)
             
             apps = config.get("apps", [])

@@ -157,96 +157,66 @@ def _build_identity_section(base_persona: Optional[str], language: str) -> List[
 
 
 def _build_tooling_section(tools: List[Any], language: str) -> List[str]:
-    """构建工具说明section"""
+    """Build tooling section with concise tool list and call style guide."""
+    # One-line summaries for known tools (details are in the tool schema)
+    core_summaries = {
+        "read": "读取文件内容",
+        "write": "创建或覆盖文件",
+        "edit": "精确编辑文件",
+        "ls": "列出目录内容",
+        "grep": "搜索文件内容",
+        "find": "按模式查找文件",
+        "bash": "执行shell命令",
+        "terminal": "管理后台进程",
+        "web_search": "网络搜索",
+        "web_fetch": "获取URL内容",
+        "browser": "控制浏览器",
+        "memory_search": "搜索记忆",
+        "memory_get": "读取记忆内容",
+        "env_config": "管理API密钥和技能配置",
+        "scheduler": "管理定时任务和提醒",
+        "send": "发送文件给用户",
+    }
+
+    # Preferred display order
+    tool_order = [
+        "read", "write", "edit", "ls", "grep", "find",
+        "bash", "terminal",
+        "web_search", "web_fetch", "browser",
+        "memory_search", "memory_get",
+        "env_config", "scheduler", "send",
+    ]
+
+    # Build name -> summary mapping for available tools
+    available = {}
+    for tool in tools:
+        name = tool.name if hasattr(tool, 'name') else str(tool)
+        available[name] = core_summaries.get(name, "")
+
+    # Generate tool lines: ordered tools first, then extras
+    tool_lines = []
+    for name in tool_order:
+        if name in available:
+            summary = available.pop(name)
+            tool_lines.append(f"- {name}: {summary}" if summary else f"- {name}")
+    for name in sorted(available):
+        summary = available[name]
+        tool_lines.append(f"- {name}: {summary}" if summary else f"- {name}")
+
     lines = [
         "## 工具系统",
         "",
-        "你可以使用以下工具来完成任务。工具名称是大小写敏感的，请严格按照列表中的名称调用。",
+        "可用工具（名称大小写敏感，严格按列表调用）:",
+        "\n".join(tool_lines),
         "",
-        "### 可用工具",
+        "工具调用风格：",
+        "",
+        "- 在多步骤任务、敏感操作或用户要求时简要解释决策过程",
+        "- 持续推进直到任务完成，完成后向用户报告结果。",
+        "- 回复中涉及密钥、令牌等敏感信息必须脱敏。",
         "",
     ]
-    
-    # 工具分类和排序
-    tool_categories = {
-        "文件操作": ["read", "write", "edit", "ls", "grep", "find"],
-        "命令执行": ["bash", "terminal"],
-        "网络搜索": ["web_search", "web_fetch", "browser"],
-        "记忆系统": ["memory_search", "memory_get"],
-        "其他": []
-    }
-    
-    # 构建工具映射
-    tool_map = {}
-    tool_descriptions = {
-        "read": "读取文件内容",
-        "write": "创建新文件或完全覆盖现有文件（会删除原内容！追加内容请用 edit）。注意：单次 write 内容不要超过 10KB，超大文件请分步创建",
-        "edit": "精确编辑文件（追加、修改、删除部分内容）",
-        "ls": "列出目录内容",
-        "grep": "在文件中搜索内容",
-        "find": "按照模式查找文件",
-        "bash": "执行shell命令",
-        "terminal": "管理后台进程",
-        "web_search": "网络搜索（使用搜索引擎）",
-        "web_fetch": "获取URL内容",
-        "browser": "控制浏览器",
-        "memory_search": "搜索记忆文件",
-        "memory_get": "获取记忆文件内容",
-        "calculator": "计算器",
-        "current_time": "获取当前时间",
-    }
-    
-    for tool in tools:
-        tool_name = tool.name if hasattr(tool, 'name') else str(tool)
-        tool_desc = tool.description if hasattr(tool, 'description') else tool_descriptions.get(tool_name, "")
-        tool_map[tool_name] = tool_desc
-    
-    # 按分类添加工具
-    for category, tool_names in tool_categories.items():
-        category_tools = [(name, tool_map.get(name, "")) for name in tool_names if name in tool_map]
-        if category_tools:
-            lines.append(f"**{category}**:")
-            for name, desc in category_tools:
-                if desc:
-                    lines.append(f"- `{name}`: {desc}")
-                else:
-                    lines.append(f"- `{name}`")
-                del tool_map[name]  # 移除已添加的工具
-            lines.append("")
-    
-    # 添加其他未分类的工具
-    if tool_map:
-        lines.append("**其他工具**:")
-        for name, desc in sorted(tool_map.items()):
-            if desc:
-                lines.append(f"- `{name}`: {desc}")
-            else:
-                lines.append(f"- `{name}`")
-        lines.append("")
-    
-    # 工具使用指南
-    lines.extend([
-        "### 工具调用风格",
-        "",
-        "默认规则: 对于常规、低风险的工具调用，直接调用即可，无需叙述。",
-        "",
-        "需要叙述的情况:",
-        "- 多步骤、复杂的任务",
-        "- 敏感操作（如删除文件）",
-        "- 用户明确要求解释过程",
-        "",
-        "叙述要求: 保持简洁、信息密度高，避免重复显而易见的步骤。",
-        "",
-        "完成标准:",
-        "- 确保用户的需求得到实际解决，而不仅仅是制定计划。",
-        "- 当任务需要多次工具调用时，持续推进直到完成, 解决完后向用户报告结果或回复用户的问题",
-        "- 每次工具调用后，评估是否已获得足够信息来推进或完成任务",
-        "- 避免重复调用相同的工具和相同参数获取相同的信息，除非用户明确要求",
-        "",
-        "**安全提醒**: 回复中涉及密钥、令牌、密码等敏感信息时，必须脱敏处理，禁止直接显示完整内容。",
-        "",
-    ])
-    
+
     return lines
 
 
@@ -265,16 +235,17 @@ def _build_skills_section(skill_manager: Any, tools: Optional[List[Any]], langua
                 break
     
     lines = [
-        "## 技能系统",
+        "## 技能系统（mandatory）",
         "",
         "在回复之前：扫描下方 <available_skills> 中的 <description> 条目。",
         "",
-        f"- 如果恰好有一个技能明确适用：使用 `{read_tool_name}` 工具读取其 <location> 路径下的 SKILL.md 文件，然后遵循它",
-        "- 如果多个技能都适用：选择最具体的一个，然后读取并遵循",
-        "- 如果没有明确适用的：不要读取任何 SKILL.md",
+        f"- 如果恰好有一个技能(Skill)明确适用：使用 `{read_tool_name}` 读取其 <location> 处的 SKILL.md，然后严格遵循它",
+        "- 如果多个技能都适用则选择最匹配的一个，如果没有明确适用的则不要读取任何 SKILL.md",
+        "- 读取 SKILL.md 后直接按其指令执行，无需多余的预检查",
         "",
-        "**约束**: 永远不要一次性读取多个技能；只在选择后再读取。",
+        "**注意**: 永远不要一次性读取多个技能，只在选择后再读取。技能和工具不同，必须先读取其SKILL.md并按照文件内容运行。",
         "",
+        "以下是可用技能："
     ]
     
     # 添加技能列表（通过skill_manager获取）

@@ -202,7 +202,8 @@ class EnvConfig(BaseTool):
                         "key": key,
                         "value": self._mask_value(value),
                         "description": description,
-                        "exists": True
+                        "exists": True,
+                        "note": f"Value is masked for security. In bash, use ${key} directly — it is auto-injected."
                     })
                 else:
                     return ToolResult.success({

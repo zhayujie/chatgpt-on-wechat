@@ -20,10 +20,11 @@ class Bash(BaseTool):
     name: str = "bash"
     description: str = f"""Execute a bash command in the current working directory. Returns stdout and stderr. Output is truncated to last {DEFAULT_MAX_LINES} lines or {DEFAULT_MAX_BYTES // 1024}KB (whichever is hit first). If truncated, full output is saved to a temp file.
 
-IMPORTANT SAFETY GUIDELINES:
-- You can freely create, modify, and delete files within the current workspace
-- For operations outside the workspace or potentially destructive commands (rm -rf, system commands, etc.), always explain what you're about to do and ask for user confirmation first
-- When in doubt, describe the command's purpose and ask for permission before executing"""
+ENVIRONMENT: All API keys from env_config are auto-injected. Use $VAR_NAME directly.
+
+SAFETY:
+- Freely create/modify/delete files within the workspace
+- For destructive and out-of-workspace commands, explain and confirm first"""
 
     params: dict = {
         "type": "object",
@@ -92,13 +93,7 @@ IMPORTANT SAFETY GUIDELINES:
                     logger.debug("[Bash] python-dotenv not installed, skipping .env loading")
                 except Exception as e:
                     logger.debug(f"[Bash] Failed to load .env: {e}")
-            
-            # Debug logging
-            logger.debug(f"[Bash] CWD: {self.cwd}")
-            logger.debug(f"[Bash] Command: {command[:500]}")
-            logger.debug(f"[Bash] OPENAI_API_KEY in env: {'OPENAI_API_KEY' in env}")
-            logger.debug(f"[Bash] SHELL: {env.get('SHELL', 'not set')}")
-            logger.debug(f"[Bash] Python executable: {sys.executable}")
+
             # getuid() only exists on Unix-like systems
             if hasattr(os, 'getuid'):
                 logger.debug(f"[Bash] Process UID: {os.getuid()}")

@@ -23,18 +23,15 @@ def format_skills_for_prompt(skills: List[Skill]) -> str:
         return ""
     
     lines = [
-        "\n\nThe following skills provide specialized instructions for specific tasks.",
-        "Use the read tool to load a skill's file when the task matches its description.",
         "",
         "<available_skills>",
     ]
-    
+
     for skill in visible_skills:
         lines.append("  <skill>")
         lines.append(f"    <name>{_escape_xml(skill.name)}</name>")
         lines.append(f"    <description>{_escape_xml(skill.description)}</description>")
         lines.append(f"    <location>{_escape_xml(skill.file_path)}</location>")
-        lines.append(f"    <base_dir>{_escape_xml(skill.base_dir)}</base_dir>")
         lines.append("  </skill>")
     
     lines.append("</available_skills>")

@@ -57,6 +57,10 @@ def ensure_workspace(workspace_dir: str, create_templates: bool = True) -> Works
     
     # 创建memory子目录
     os.makedirs(memory_dir, exist_ok=True)
+
+    # 创建skills子目录 (for workspace-level skills installed by agent)
+    skills_dir = os.path.join(workspace_dir, "skills")
+    os.makedirs(skills_dir, exist_ok=True)
     
     # 如果需要，创建模板文件
     if create_templates:

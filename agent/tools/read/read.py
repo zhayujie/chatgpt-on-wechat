@@ -67,10 +67,12 @@ class Read(BaseTool):
         :param args: Contains file path and optional offset/limit parameters
         :return: File content or error message
         """
-        path = args.get("path", "").strip()
+        # Support 'location' as alias for 'path' (LLM may use it from skill listing)
+        path = args.get("path", "") or args.get("location", "")
+        path = path.strip() if isinstance(path, str) else ""
         offset = args.get("offset")
         limit = args.get("limit")
-        
+
         if not path:
             return ToolResult.fail("Error: path parameter is required")
         

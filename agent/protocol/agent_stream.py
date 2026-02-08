@@ -708,7 +708,6 @@ class AgentStreamExecutor:
             if not tool_id:
                 import uuid
                 tool_id = f"call_{uuid.uuid4().hex[:24]}"
-                logger.debug(f"⚠️ Tool call missing ID for '{tc.get('name')}', generated fallback: {tool_id}")
 
             try:
                 # Safely get arguments, handle None case

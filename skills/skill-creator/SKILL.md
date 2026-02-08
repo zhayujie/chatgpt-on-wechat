@@ -1,6 +1,6 @@
 ---
 name: skill-creator
-description: Create or update skills. Use when designing, structuring, or packaging skills with scripts, references, and assets. COW simplified version - skills are used locally in workspace.
+description: Create, install, or update skills in the workspace. Use when (1) installing a skill from a URL or remote source, (2) creating a new skill from scratch, (3) updating or restructuring existing skills. Always use this skill for any skill installation or creation task.
 license: Complete terms in LICENSE.txt
 ---
 
@@ -93,9 +93,16 @@ Do NOT create auxiliary documentation files:
 
 **Critical Rule**: Only create files that the agent will actually execute (scripts) or that are too large for SKILL.md (references). Documentation, examples, and guides ALL belong in SKILL.md.
 
-## Skill Creation Process
+## Installing a Skill from URL
 
-**COW Simplified Version** - Skills are used locally, no packaging/sharing needed.
+1. Fetch the URL content (curl or web-fetch skill)
+2. Extract `name` from YAML frontmatter
+3. Create directory `<workspace>/skills/<name>/` and save content as `SKILL.md`
+4. Check the saved SKILL.md for an installation/setup section — if it defines additional steps (e.g., downloading scripts, installing dependencies), execute them; otherwise installation is complete
+
+The `<workspace>` is the working directory from the "工作空间" section.
+
+## Skill Creation Process (from scratch)
 
 1. **Understand** - Clarify use cases with concrete examples
 2. **Plan** - Identify needed scripts, references, assets
@@ -181,10 +188,12 @@ scripts/init_skill.py <skill-name> --path <output-directory> [--resources script
 Examples:
 
 ```bash
-scripts/init_skill.py my-skill --path ~/cow/skills
-scripts/init_skill.py my-skill --path ~/cow/skills --resources scripts,references
-scripts/init_skill.py my-skill --path ~/cow/skills --resources scripts --examples
+scripts/init_skill.py my-skill --path <workspace>/skills
+scripts/init_skill.py my-skill --path <workspace>/skills --resources scripts,references
+scripts/init_skill.py my-skill --path <workspace>/skills --resources scripts --examples
 ```
+
+Where `<workspace>` is your workspace directory shown in the "工作空间" section of the system prompt.
 
 The script:
 
@@ -195,7 +204,7 @@ The script:
 
 After initialization, customize the SKILL.md and add resources as needed. If you used `--examples`, replace or delete placeholder files.
 
-**Important**: Always create skills in workspace directory (`~/cow/skills`), NOT in project directory.
+**Important**: Always create skills in workspace skills directory (`<workspace>/skills`), NOT in project directory. Check the "工作空间" section for the actual workspace path.
 
 ### Step 4: Edit the Skill
 
@@ -335,7 +344,7 @@ scripts/quick_validate.py <path/to/skill-folder>
 Example:
 
 ```bash
-scripts/quick_validate.py ~/cow/skills/weather-api
+scripts/quick_validate.py <workspace>/skills/weather-api
 ```
 
 Validation checks:

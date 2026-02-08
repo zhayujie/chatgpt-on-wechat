@@ -1,6 +1,6 @@
 {
   "channel_type": "web",
-  "model": "MiniMax-M2.1",
+  "model": "glm-4.7",
   "claude_api_key": "",
   "claude_api_base": "https://api.anthropic.com/v1",
   "open_ai_api_key": "",
