@@ -20,7 +20,8 @@ class SchedulerTool(BaseTool):
     
     name: str = "scheduler"
     description: str = (
-        "创建、查询和管理定时任务。支持固定消息和AI任务两种类型。\n\n"
+        "创建、查询和管理定时任务（提醒、周期性任务等）。\n\n"
+        "⚠️ 重要：仅当需要「定时/提醒/每天/每周/X分钟后/X点」等延迟或周期执行时才使用此工具。"
         "使用方法：\n"
         "- 创建：action='create', name='任务名', message/ai_task='内容', schedule_type='once/interval/cron', schedule_value='...'\n"
         "- 查询：action='list' / action='get', task_id='任务ID'\n"
@@ -53,7 +54,7 @@ class SchedulerTool(BaseTool):
             },
             "ai_task": {
                 "type": "string",
-                "description": "AI任务描述 (与message二选一)，如'搜索今日新闻'、'查询天气'"
+                "description": "AI任务描述 (与message二选一)，用于定时让AI执行的任务"
             },
             "schedule_type": {
                 "type": "string",

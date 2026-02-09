@@ -494,39 +494,70 @@ class AgentBridge:
     
     def refresh_all_skills(self) -> int:
         """
-        Refresh skills in all agent instances after environment variable changes.
-        This allows hot-reload of skills without restarting the agent.
-        
+        Refresh skills and conditional tools in all agent instances after
+        environment variable changes. This allows hot-reload without restarting.
+
         Returns:
             Number of agent instances refreshed
         """
         import os
         from dotenv import load_dotenv
         from config import conf
-        
+
         # Reload environment variables from .env file
         workspace_root = expand_path(conf().get("agent_workspace", "~/cow"))
         env_file = os.path.join(workspace_root, '.env')
-        
+
         if os.path.exists(env_file):
             load_dotenv(env_file, override=True)
             logger.info(f"[AgentBridge] Reloaded environment variables from {env_file}")
-        
+
         refreshed_count = 0
-        
-        # Refresh default agent
-        if self.default_agent and hasattr(self.default_agent, 'skill_manager'):
-            self.default_agent.skill_manager.refresh_skills()
-            refreshed_count += 1
-            logger.info("[AgentBridge] Refreshed skills in default agent")
-        
-        # Refresh all session agents
+
+        # Collect all agent instances to refresh
+        agents_to_refresh = []
+        if self.default_agent:
+            agents_to_refresh.append(("default", self.default_agent))
         for session_id, agent in self.agents.items():
-            if hasattr(agent, 'skill_manager'):
+            agents_to_refresh.append((session_id, agent))
+
+        for label, agent in agents_to_refresh:
+            # Refresh skills
+            if hasattr(agent, 'skill_manager') and agent.skill_manager:
                 agent.skill_manager.refresh_skills()
-                refreshed_count += 1
-        
+
+            # Refresh conditional tools (e.g. web_search depends on API keys)
+            self._refresh_conditional_tools(agent)
+
+            refreshed_count += 1
+
         if refreshed_count > 0:
-            logger.info(f"[AgentBridge] Refreshed skills in {refreshed_count} agent instance(s)")
-        
+            logger.info(f"[AgentBridge] Refreshed skills & tools in {refreshed_count} agent instance(s)")
+
         return refreshed_count
+
+    @staticmethod
+    def _refresh_conditional_tools(agent):
+        """
+        Add or remove conditional tools based on current environment variables.
+        For example, web_search should only be present when BOCHA_API_KEY or
+        LINKAI_API_KEY is set.
+        """
+        try:
+            from agent.tools.web_search.web_search import WebSearch
+
+            has_tool = any(t.name == "web_search" for t in agent.tools)
+            available = WebSearch.is_available()
+
+            if available and not has_tool:
+                # API key was added - inject the tool
+                tool = WebSearch()
+                tool.model = agent.model
+                agent.tools.append(tool)
+                logger.info("[AgentBridge] web_search tool added (API key now available)")
+            elif not available and has_tool:
+                # API key was removed - remove the tool
+                agent.tools = [t for t in agent.tools if t.name != "web_search"]
+                logger.info("[AgentBridge] web_search tool removed (API key no longer available)")
+        except Exception as e:
+            logger.debug(f"[AgentBridge] Failed to refresh conditional tools: {e}")

@@ -45,16 +45,25 @@ def _import_optional_tools():
         )
     except Exception as e:
         logger.error(f"[Tools] Scheduler tool failed to load: {e}")
-    
-    
+
+    # WebSearch Tool (conditionally loaded based on API key availability at init time)
+    try:
+        from agent.tools.web_search.web_search import WebSearch
+        tools['WebSearch'] = WebSearch
+    except ImportError as e:
+        logger.error(f"[Tools] WebSearch not loaded - missing dependency: {e}")
+    except Exception as e:
+        logger.error(f"[Tools] WebSearch failed to load: {e}")
+
     return tools
 
 # Load optional tools
 _optional_tools = _import_optional_tools()
 EnvConfig = _optional_tools.get('EnvConfig')
 SchedulerTool = _optional_tools.get('SchedulerTool')
+WebSearch = _optional_tools.get('WebSearch')
 GoogleSearch = _optional_tools.get('GoogleSearch')
-FileSave = _optional_tools.get('FileSave') 
+FileSave = _optional_tools.get('FileSave')
 Terminal = _optional_tools.get('Terminal')
 
 
@@ -92,6 +101,7 @@ __all__ = [
     'MemoryGetTool',
     'EnvConfig',
     'SchedulerTool',
+    'WebSearch',
     # Optional tools (may be None if dependencies not available)
     # 'BrowserTool'
 ]

@@ -219,13 +219,20 @@ class AgentInitializer:
         
         for tool_name in tool_manager.tool_classes.keys():
             try:
+                # Skip web_search if no API key is available
+                if tool_name == "web_search":
+                    from agent.tools.web_search.web_search import WebSearch
+                    if not WebSearch.is_available():
+                        logger.debug("[AgentInitializer] WebSearch skipped - no BOCHA_API_KEY or LINKAI_API_KEY")
+                        continue
+
                 # Special handling for EnvConfig tool
                 if tool_name == "env_config":
                     from agent.tools import EnvConfig
                     tool = EnvConfig({"agent_bridge": self.agent_bridge})
                 else:
                     tool = tool_manager.create_tool(tool_name)
-                
+
                 if tool:
                     # Apply workspace config to file operation tools
                     if tool_name in ['read', 'write', 'edit', 'bash', 'grep', 'find', 'ls']:

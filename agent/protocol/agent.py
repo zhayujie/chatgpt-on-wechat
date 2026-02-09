@@ -99,19 +99,24 @@ class Agent:
     def get_full_system_prompt(self, skill_filter=None) -> str:
         """
         Get the full system prompt including skills.
-        
+
         Note: Skills are now built into the system prompt by PromptBuilder,
         so we just return the base prompt directly. This method is kept for
         backward compatibility.
-        
+
         :param skill_filter: Optional list of skill names to include (deprecated)
         :return: Complete system prompt
         """
-        # Skills are now included in system_prompt by PromptBuilder
+        prompt = self.system_prompt
+
+        # Rebuild tool list section to reflect current self.tools
+        prompt = self._rebuild_tool_list_section(prompt)
+
         # If runtime_info contains dynamic time function, rebuild runtime section
         if self.runtime_info and callable(self.runtime_info.get('_get_current_time')):
-            return self._rebuild_runtime_section(self.system_prompt)
-        return self.system_prompt
+            prompt = self._rebuild_runtime_section(prompt)
+
+        return prompt
     
     def _rebuild_runtime_section(self, prompt: str) -> str:
         """
@@ -161,7 +166,31 @@ class Agent:
         except Exception as e:
             logger.warning(f"Failed to rebuild runtime section: {e}")
             return prompt
-    
+
+    def _rebuild_tool_list_section(self, prompt: str) -> str:
+        """
+        Rebuild the tool list inside the '## 工具系统' section so that it
+        always reflects the current ``self.tools`` (handles dynamic add/remove
+        of conditional tools like web_search).
+        """
+        import re
+        from agent.prompt.builder import _build_tooling_section
+
+        try:
+            if not self.tools:
+                return prompt
+
+            new_lines = _build_tooling_section(self.tools, "zh")
+            new_section = "\n".join(new_lines).rstrip("\n")
+
+            # Replace existing tooling section
+            pattern = r'## 工具系统\s*\n.*?(?=\n## |\Z)'
+            updated = re.sub(pattern, new_section, prompt, count=1, flags=re.DOTALL)
+            return updated
+        except Exception as e:
+            logger.warning(f"Failed to rebuild tool list section: {e}")
+            return prompt
+
     def refresh_skills(self):
         """Refresh the loaded skills."""
         if self.skill_manager:
