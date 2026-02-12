@@ -125,9 +125,99 @@ class ChatGPTBot(Bot, OpenAIImage, OpenAICompatibleBot):
             else:
                 reply = Reply(ReplyType.ERROR, retstring)
             return reply
+        elif context.type == ContextType.IMAGE:
+            logger.info("[CHATGPT] Image message received")
+            reply = self.reply_image(context)
+            return reply
         else:
             reply = Reply(ReplyType.ERROR, "Bot不支持处理{}类型的消息".format(context.type))
             return reply
+
+    def reply_image(self, context):
+        """
+        Process image message using OpenAI Vision API
+        """
+        import base64
+        import os
+        
+        try:
+            image_path = context.content
+            logger.info(f"[CHATGPT] Processing image: {image_path}")
+            
+            # Check if file exists
+            if not os.path.exists(image_path):
+                logger.error(f"[CHATGPT] Image file not found: {image_path}")
+                return Reply(ReplyType.ERROR, "图片文件不存在")
+            
+            # Read and encode image
+            with open(image_path, "rb") as f:
+                image_data = f.read()
+                image_base64 = base64.b64encode(image_data).decode("utf-8")
+            
+            # Detect image format
+            extension = os.path.splitext(image_path)[1].lower()
+            mime_type_map = {
+                ".jpg": "image/jpeg",
+                ".jpeg": "image/jpeg", 
+                ".png": "image/png",
+                ".gif": "image/gif",
+                ".webp": "image/webp"
+            }
+            mime_type = mime_type_map.get(extension, "image/jpeg")
+            
+            # Get model and API config
+            model = context.get("gpt_model") or conf().get("model", "gpt-4o")
+            api_key = context.get("openai_api_key") or conf().get("open_ai_api_key")
+            api_base = conf().get("open_ai_api_base")
+            
+            # Build vision request
+            messages = [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": "请描述这张图片的内容"},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:{mime_type};base64,{image_base64}"
+                            }
+                        }
+                    ]
+                }
+            ]
+            
+            logger.info(f"[CHATGPT] Calling vision API with model: {model}")
+            
+            # Call OpenAI API
+            kwargs = {
+                "model": model,
+                "messages": messages,
+                "max_tokens": 1000
+            }
+            if api_key:
+                kwargs["api_key"] = api_key
+            if api_base:
+                kwargs["api_base"] = api_base
+            
+            response = openai.ChatCompletion.create(**kwargs)
+            
+            content = response.choices[0]["message"]["content"]
+            logger.info(f"[CHATGPT] Vision API response: {content[:100]}...")
+            
+            # Clean up temp file
+            try:
+                os.remove(image_path)
+                logger.debug(f"[CHATGPT] Removed temp image file: {image_path}")
+            except:
+                pass
+            
+            return Reply(ReplyType.TEXT, content)
+            
+        except Exception as e:
+            logger.error(f"[CHATGPT] Image processing error: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
+            return Reply(ReplyType.ERROR, f"图片识别失败: {str(e)}")
 
     def reply_text(self, session: ChatGPTSession, api_key=None, args=None, retry_count=0) -> dict:
         """
