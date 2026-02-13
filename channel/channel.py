@@ -19,6 +19,12 @@ class Channel(object):
         """
         raise NotImplementedError
 
+    def stop(self):
+        """
+        stop channel gracefully, called before restart
+        """
+        pass
+
     def handle_text(self, msg):
         """
         process received msg

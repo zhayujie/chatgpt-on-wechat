@@ -50,6 +50,7 @@ class WebChannel(ChatChannel):
         self.msg_id_counter = 0  # 添加消息ID计数器
         self.session_queues = {}  # 存储session_id到队列的映射
         self.request_to_session = {}  # 存储request_id到session_id的映射
+        self._http_server = None
 
 
     def _generate_msg_id(self):
@@ -235,13 +236,24 @@ class WebChannel(ChatChannel):
         logging.getLogger("web").setLevel(logging.ERROR)
         logging.getLogger("web.httpserver").setLevel(logging.ERROR)
         
-        # 抑制 web.py 默认的服务器启动消息
-        old_stdout = sys.stdout
-        sys.stdout = io.StringIO()
+        # Build WSGI app with middleware (same as runsimple but without print)
+        func = web.httpserver.StaticMiddleware(app.wsgifunc())
+        func = web.httpserver.LogMiddleware(func)
+        server = web.httpserver.WSGIServer(("0.0.0.0", port), func)
+        self._http_server = server
         try:
-            web.httpserver.runsimple(app.wsgifunc(), ("0.0.0.0", port))
-        finally:
-            sys.stdout = old_stdout
+            server.start()
+        except (KeyboardInterrupt, SystemExit):
+            server.stop()
+
+    def stop(self):
+        if self._http_server:
+            try:
+                self._http_server.stop()
+                logger.info("[WebChannel] HTTP server stopped")
+            except Exception as e:
+                logger.warning(f"[WebChannel] Error stopping HTTP server: {e}")
+            self._http_server = None
 
 
 class RootHandler:
