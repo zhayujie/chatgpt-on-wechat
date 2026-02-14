@@ -1,4 +1,5 @@
 openai==0.27.8
+aiohttp>=3.8.6,<3.10
 HTMLParser>=0.0.2
 PyQRCode==1.2.1
 qrcode==7.4.2

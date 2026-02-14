@@ -2,7 +2,6 @@ import io
 import os
 import re
 from urllib.parse import urlparse
-from PIL import Image
 from common.log import logger
 
 def fsize(file):
@@ -23,6 +22,7 @@ def fsize(file):
 def compress_imgfile(file, max_size):
     if fsize(file) <= max_size:
         return file
+    from PIL import Image
     file.seek(0)
     img = Image.open(file)
     rgb_image = img.convert("RGB")

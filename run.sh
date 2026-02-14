@@ -270,24 +270,26 @@ select_model() {
     echo -e "${CYAN}${BOLD}=========================================${NC}"
     echo -e "${CYAN}${BOLD}   Select AI Model${NC}"
     echo -e "${CYAN}${BOLD}=========================================${NC}"
-    echo -e "${YELLOW}1) MiniMax (MiniMax-M2.1, MiniMax-M2.1-lightning, etc.)${NC}"
-    echo -e "${YELLOW}2) Zhipu AI (glm-4.7, glm-4.6, etc.)${NC}"
-    echo -e "${YELLOW}3) Qwen (qwen3-max, qwen-plus, qwq-plus, etc.)${NC}"
-    echo -e "${YELLOW}4) Claude (claude-sonnet-4-5, claude-opus-4-0, etc.)${NC}"
-    echo -e "${YELLOW}5) Gemini (gemini-3-flash-preview, gemini-2.5-pro, etc.)${NC}"
-    echo -e "${YELLOW}6) OpenAI GPT (gpt-5.2, gpt-4.1, etc.)${NC}"
-    echo -e "${YELLOW}7) LinkAI (access multiple models via one API)${NC}"
+    echo -e "${YELLOW}1) MiniMax (MiniMax-M2.5, MiniMax-M2.1, etc.)${NC}"
+    echo -e "${YELLOW}2) Zhipu AI (glm-5, glm-4.7, etc.)${NC}"
+    echo -e "${YELLOW}3) Kimi (kimi-k2.5, kimi-k2, etc.)${NC}"
+    echo -e "${YELLOW}4) Doubao (doubao-seed-2-0-code-preview-260215, etc.)${NC}"
+    echo -e "${YELLOW}5) Qwen (qwen3-max, qwen-plus, qwq-plus, etc.)${NC}"
+    echo -e "${YELLOW}6) Claude (claude-sonnet-4-5, claude-opus-4-0, etc.)${NC}"
+    echo -e "${YELLOW}7) Gemini (gemini-3-flash-preview, gemini-2.5-pro, etc.)${NC}"
+    echo -e "${YELLOW}8) OpenAI GPT (gpt-5.2, gpt-4.1, etc.)${NC}"
+    echo -e "${YELLOW}9) LinkAI (access multiple models via one API)${NC}"
     echo ""
     
     while true; do
         read -p "Enter your choice [press Enter for default: 1 - MiniMax]: " model_choice
         model_choice=${model_choice:-1}
         case "$model_choice" in
-            1|2|3|4|5|6|7)
+            1|2|3|4|5|6|7|8|9)
                 break
                 ;;
             *)
-                echo -e "${RED}Invalid choice. Please enter 1-7.${NC}"
+                echo -e "${RED}Invalid choice. Please enter 1-9.${NC}"
                 ;;
         esac
     done
@@ -300,8 +302,8 @@ configure_model() {
             # MiniMax
             echo -e "${GREEN}Configuring MiniMax...${NC}"
             read -p "Enter MiniMax API Key: " minimax_key
-            read -p "Enter model name [press Enter for default: MiniMax-M2.1]: " model_name
-            model_name=${model_name:-MiniMax-M2.1}
+            read -p "Enter model name [press Enter for default: MiniMax-M2.5]: " model_name
+            model_name=${model_name:-MiniMax-M2.5}
             
             MODEL_NAME="$model_name"
             MINIMAX_KEY="$minimax_key"
@@ -310,13 +312,33 @@ configure_model() {
             # Zhipu AI
             echo -e "${GREEN}Configuring Zhipu AI...${NC}"
             read -p "Enter Zhipu AI API Key: " zhipu_key
-            read -p "Enter model name [press Enter for default: glm-4.7]: " model_name
-            model_name=${model_name:-glm-4.7}
+            read -p "Enter model name [press Enter for default: glm-5]: " model_name
+            model_name=${model_name:-glm-5}
             
             MODEL_NAME="$model_name"
             ZHIPU_KEY="$zhipu_key"
             ;;
         3)
+            # Kimi (Moonshot)
+            echo -e "${GREEN}Configuring Kimi (Moonshot)...${NC}"
+            read -p "Enter Moonshot API Key: " moonshot_key
+            read -p "Enter model name [press Enter for default: kimi-k2.5]: " model_name
+            model_name=${model_name:-kimi-k2.5}
+            
+            MODEL_NAME="$model_name"
+            MOONSHOT_KEY="$moonshot_key"
+            ;;
+        4)
+            # Doubao (Volcengine Ark)
+            echo -e "${GREEN}Configuring Doubao (Volcengine Ark)...${NC}"
+            read -p "Enter Ark API Key: " ark_key
+            read -p "Enter model name [press Enter for default: doubao-seed-2-0-code-preview-260215]: " model_name
+            model_name=${model_name:-doubao-seed-2-0-code-preview-260215}
+            
+            MODEL_NAME="$model_name"
+            ARK_KEY="$ark_key"
+            ;;
+        5)
             # Qwen (DashScope)
             echo -e "${GREEN}Configuring Qwen (DashScope)...${NC}"
             read -p "Enter DashScope API Key: " dashscope_key
@@ -326,7 +348,7 @@ configure_model() {
             MODEL_NAME="$model_name"
             DASHSCOPE_KEY="$dashscope_key"
             ;;
-        4)
+        6)
             # Claude
             echo -e "${GREEN}Configuring Claude...${NC}"
             read -p "Enter Claude API Key: " claude_key
@@ -339,7 +361,7 @@ configure_model() {
             CLAUDE_KEY="$claude_key"
             CLAUDE_BASE="$api_base"
             ;;
-        5)
+        7)
             # Gemini
             echo -e "${GREEN}Configuring Gemini...${NC}"
             read -p "Enter Gemini API Key: " gemini_key
@@ -352,7 +374,7 @@ configure_model() {
             GEMINI_KEY="$gemini_key"
             GEMINI_BASE="$api_base"
             ;;
-        6)
+        8)
             # OpenAI
             echo -e "${GREEN}Configuring OpenAI GPT...${NC}"
             read -p "Enter OpenAI API Key: " openai_key
@@ -365,12 +387,12 @@ configure_model() {
             OPENAI_KEY="$openai_key"
             OPENAI_BASE="$api_base"
             ;;
-        7)
+        9)
             # LinkAI
             echo -e "${GREEN}Configuring LinkAI...${NC}"
             read -p "Enter LinkAI API Key: " linkai_key
-            read -p "Enter model name [press Enter for default: MiniMax-M2.1]: " model_name
-            model_name=${model_name:-MiniMax-M2.1}
+            read -p "Enter model name [press Enter for default: MiniMax-M2.5]: " model_name
+            model_name=${model_name:-MiniMax-M2.5}
             
             MODEL_NAME="$model_name"
             USE_LINKAI="true"
@@ -483,6 +505,8 @@ create_config_file() {
   "gemini_api_key": "${GEMINI_KEY:-}",
   "gemini_api_base": "${GEMINI_BASE:-https://generativelanguage.googleapis.com}",
   "zhipu_ai_api_key": "${ZHIPU_KEY:-}",
+  "moonshot_api_key": "${MOONSHOT_KEY:-}",
+  "ark_api_key": "${ARK_KEY:-}",
   "dashscope_api_key": "${DASHSCOPE_KEY:-}",
   "minimax_api_key": "${MINIMAX_KEY:-}",
   "voice_to_text": "openai",
@@ -518,6 +542,8 @@ EOF
   "gemini_api_key": "${GEMINI_KEY:-}",
   "gemini_api_base": "${GEMINI_BASE:-https://generativelanguage.googleapis.com}",
   "zhipu_ai_api_key": "${ZHIPU_KEY:-}",
+  "moonshot_api_key": "${MOONSHOT_KEY:-}",
+  "ark_api_key": "${ARK_KEY:-}",
   "dashscope_api_key": "${DASHSCOPE_KEY:-}",
   "minimax_api_key": "${MINIMAX_KEY:-}",
   "voice_to_text": "openai",
@@ -552,6 +578,8 @@ EOF
   "gemini_api_key": "${GEMINI_KEY:-}",
   "gemini_api_base": "${GEMINI_BASE:-https://generativelanguage.googleapis.com}",
   "zhipu_ai_api_key": "${ZHIPU_KEY:-}",
+  "moonshot_api_key": "${MOONSHOT_KEY:-}",
+  "ark_api_key": "${ARK_KEY:-}",
   "dashscope_api_key": "${DASHSCOPE_KEY:-}",
   "minimax_api_key": "${MINIMAX_KEY:-}",
   "voice_to_text": "openai",
@@ -592,6 +620,8 @@ EOF
   "gemini_api_key": "${GEMINI_KEY:-}",
   "gemini_api_base": "${GEMINI_BASE:-https://generativelanguage.googleapis.com}",
   "zhipu_ai_api_key": "${ZHIPU_KEY:-}",
+  "moonshot_api_key": "${MOONSHOT_KEY:-}",
+  "ark_api_key": "${ARK_KEY:-}",
   "dashscope_api_key": "${DASHSCOPE_KEY:-}",
   "minimax_api_key": "${MINIMAX_KEY:-}",
   "voice_to_text": "openai",
