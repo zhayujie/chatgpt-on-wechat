@@ -90,7 +90,7 @@ bash <(curl -sS https://cdn.link-ai.tech/code/cow/run.sh)
 
 项目支持国内外主流厂商的模型接口，可选模型及配置说明参考：[模型说明](#模型说明)。
 
-> 注：Agent模式下推荐使用以下模型，可根据效果及成本综合选择：MiniMax(MiniMax-M2.5)、GLM(glm-5)、Kimi(kimi-k2.5)、Qwen(qwen3-max)、Claude(claude-sonnet-4-5)、Gemini(gemini-3-flash-preview)
+> 注：Agent模式下推荐使用以下模型，可根据效果及成本综合选择：MiniMax-M2.5、glm-5、kimi-k2.5、qwen3-max、claude-sonnet-4-5、gemini-3-flash-preview
 
 同时支持使用 **LinkAI平台** 接口，可灵活切换 OpenAI、Claude、Gemini、DeepSeek、Qwen、Kimi 等多种常用模型，并支持知识库、工作流、插件等Agent能力，参考 [接口文档](https://docs.link-ai.tech/platform/api)。
 
@@ -181,7 +181,7 @@ pip3 install -r requirements-optional.txt
 </details>
 
 <details>
-<summary>5. LinkAI配置</summary>
+<summary>3. LinkAI配置</summary>
 
 + `use_linkai`: 是否使用LinkAI接口，默认关闭，设置为true后可对接LinkAI平台，使用知识库、工作流、插件等能力, 参考[接口文档](https://docs.link-ai.tech/platform/api/chat)
 + `linkai_api_key`: LinkAI Api Key，可在 [控制台](https://link-ai.tech/console/interface) 创建
@@ -392,6 +392,53 @@ volumes:
 </details>
 
 <details>
+<summary>Kimi (Moonshot)</summary>
+
+方式一：官方接入，配置如下：
+
+```json
+{
+    "model": "kimi-k2.5",
+    "moonshot_api_key": ""
+}
+```
+ - `model`: 可填写 `kimi-k2.5、kimi-k2、moonshot-v1-8k、moonshot-v1-32k、moonshot-v1-128k`
+ - `moonshot_api_key`: Moonshot的API-KEY，在 [控制台](https://platform.moonshot.cn/console/api-keys) 创建
+ 
+方式二：OpenAI兼容方式接入，配置如下：
+```json
+{
+  "bot_type": "chatGPT",
+  "model": "kimi-k2.5",
+  "open_ai_api_base": "https://api.moonshot.cn/v1",
+  "open_ai_api_key": ""
+}
+```
+- `bot_type`: OpenAI兼容方式
+- `model`: 可填写 `kimi-k2.5、kimi-k2、moonshot-v1-8k、moonshot-v1-32k、moonshot-v1-128k`
+- `open_ai_api_base`: Moonshot的 BASE URL
+- `open_ai_api_key`: Moonshot的 API-KEY
+</details>
+
+<details>
+<summary>豆包 (Doubao)</summary>
+
+1. API Key创建：在 [火山方舟控制台](https://console.volcengine.com/ark/region:ark+cn-beijing/apikey) 创建API Key
+
+2. 填写配置
+
+```json
+{
+    "model": "doubao-seed-2-0-code-preview-260215",
+    "ark_api_key": "YOUR_API_KEY"
+}
+```
+ - `model`: 可填写 `doubao-seed-2-0-code-preview-260215、doubao-seed-2-0-pro-260215、doubao-seed-2-0-lite-260215、doubao-seed-2-0-mini-260215` 等
+ - `ark_api_key`: 火山方舟平台的 API Key，在 [控制台](https://console.volcengine.com/ark/region:ark+cn-beijing/apikey) 创建
+ - `ark_base_url`: 可选，默认为 `https://ark.cn-beijing.volces.com/api/v3`
+</details>
+
+<details>
 <summary>Claude</summary>
 
 1. API Key创建：在 [Claude控制台](https://console.anthropic.com/settings/keys) 创建API Key
@@ -441,53 +488,6 @@ API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn)
  - `model`: 可填 `deepseek-chat、deepseek-reasoner`，分别对应的是 DeepSeek-V3 和 DeepSeek-R1 模型
  - `open_ai_api_key`: DeepSeek平台的 API Key
  - `open_ai_api_base`: DeepSeek平台 BASE URL
-</details>
-
-<details>
-<summary>Kimi (Moonshot)</summary>
-
-方式一：官方接入，配置如下：
-
-```json
-{
-    "model": "kimi-k2.5",
-    "moonshot_api_key": ""
-}
-```
- - `model`: 可填写 `kimi-k2.5、kimi-k2、moonshot-v1-8k、moonshot-v1-32k、moonshot-v1-128k`
- - `moonshot_api_key`: Moonshot的API-KEY，在 [控制台](https://platform.moonshot.cn/console/api-keys) 创建
- 
-方式二：OpenAI兼容方式接入，配置如下：
-```json
-{
-  "bot_type": "chatGPT",
-  "model": "kimi-k2.5",
-  "open_ai_api_base": "https://api.moonshot.cn/v1",
-  "open_ai_api_key": ""
-}
-```
-- `bot_type`: OpenAI兼容方式
-- `model`: 可填写 `kimi-k2.5、kimi-k2、moonshot-v1-8k、moonshot-v1-32k、moonshot-v1-128k`
-- `open_ai_api_base`: Moonshot的 BASE URL
-- `open_ai_api_key`: Moonshot的 API-KEY
-</details>
-
-<details>
-<summary>豆包 (Doubao)</summary>
-
-1. API Key创建：在 [火山方舟控制台](https://console.volcengine.com/ark/region:ark+cn-beijing/apikey) 创建API Key
-
-2. 填写配置
-
-```json
-{
-    "model": "doubao-seed-2-0-code-preview-260215",
-    "ark_api_key": "YOUR_API_KEY"
-}
-```
- - `model`: 可填写 `doubao-seed-2-0-code-preview-260215、doubao-seed-2-0-pro-260215、doubao-seed-2-0-lite-260215、doubao-seed-2-0-mini-260215` 等
- - `ark_api_key`: 火山方舟平台的 API Key，在 [控制台](https://console.volcengine.com/ark/region:ark+cn-beijing/apikey) 创建
- - `ark_base_url`: 可选，默认为 `https://ark.cn-beijing.volces.com/api/v3`
 </details>
 
 <details>
