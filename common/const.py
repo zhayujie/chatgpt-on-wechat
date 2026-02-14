@@ -101,6 +101,8 @@ GLM_4_7 = "glm-4.7"  # 智谱 GLM-4.7 - Agent推荐模型
 
 # Kimi (Moonshot)
 MOONSHOT = "moonshot"
+KIMI_K2 = "kimi-k2"
+KIMI_K2_5 = "kimi-k2.5"
 
 # 其他模型
 WEN_XIN = "wenxin"
@@ -153,6 +155,7 @@ MODEL_LIST = [
               
               # Kimi
               MOONSHOT, "moonshot-v1-8k", "moonshot-v1-32k", "moonshot-v1-128k",
+              KIMI_K2, KIMI_K2_5,
               
               # 其他模型
               WEN_XIN, WEN_XIN_4, XUNFEI,

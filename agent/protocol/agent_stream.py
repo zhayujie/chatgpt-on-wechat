@@ -583,6 +583,11 @@ class AgentStreamExecutor:
                     if finish_reason:
                         stop_reason = finish_reason
 
+                    # Skip reasoning_content (internal thinking from models like GLM-5)
+                    reasoning_delta = delta.get("reasoning_content") or ""
+                    # if reasoning_delta:
+                    #     logger.debug(f"🧠 [thinking] {reasoning_delta[:100]}...")
+
                     # Handle text content
                     content_delta = delta.get("content") or ""
                     if content_delta:
