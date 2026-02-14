@@ -83,12 +83,14 @@ QWEN3_MAX = "qwen3-max"  # Qwen3 Max - Agent推荐模型
 QWQ_PLUS = "qwq-plus"
 
 # MiniMax
+MINIMAX_M2_5 = "MiniMax-M2.5"  # MiniMax M2.5 - Latest
 MINIMAX_M2_1 = "MiniMax-M2.1"  # MiniMax M2.1 - Agent推荐模型
 MINIMAX_M2_1_LIGHTNING = "MiniMax-M2.1-lightning"  # MiniMax M2.1 极速版
 MINIMAX_M2 = "MiniMax-M2"  # MiniMax M2
 MINIMAX_ABAB6_5 = "abab6.5-chat"  # MiniMax abab6.5
 
 # GLM (智谱AI)
+GLM_5 = "glm-5"  # 智谱 GLM-5 - Latest
 GLM_4 = "glm-4"
 GLM_4_PLUS = "glm-4-plus"
 GLM_4_flash = "glm-4-flash"
@@ -103,6 +105,13 @@ GLM_4_7 = "glm-4.7"  # 智谱 GLM-4.7 - Agent推荐模型
 MOONSHOT = "moonshot"
 KIMI_K2 = "kimi-k2"
 KIMI_K2_5 = "kimi-k2.5"
+
+# Doubao (Volcengine Ark)
+DOUBAO = "doubao"
+DOUBAO_SEED_2_CODE = "doubao-seed-2-0-code-preview-260215"
+DOUBAO_SEED_2_PRO = "doubao-seed-2-0-pro-260215"
+DOUBAO_SEED_2_LITE = "doubao-seed-2-0-lite-260215"
+DOUBAO_SEED_2_MINI = "doubao-seed-2-0-mini-260215"
 
 # 其他模型
 WEN_XIN = "wenxin"
@@ -147,16 +156,19 @@ MODEL_LIST = [
               QWEN, QWEN_TURBO, QWEN_PLUS, QWEN_MAX, QWEN_LONG, QWEN3_MAX,
               
               # MiniMax
-              MiniMax, MINIMAX_M2_1, MINIMAX_M2_1_LIGHTNING, MINIMAX_M2, MINIMAX_ABAB6_5,
-              
+              MiniMax, MINIMAX_M2_5, MINIMAX_M2_1, MINIMAX_M2_1_LIGHTNING, MINIMAX_M2, MINIMAX_ABAB6_5,
+
               # GLM
-              ZHIPU_AI, GLM_4, GLM_4_PLUS, GLM_4_flash, GLM_4_LONG, GLM_4_ALLTOOLS, 
+              ZHIPU_AI, GLM_5, GLM_4, GLM_4_PLUS, GLM_4_flash, GLM_4_LONG, GLM_4_ALLTOOLS,
               GLM_4_0520, GLM_4_AIR, GLM_4_AIRX, GLM_4_7,
-              
+
               # Kimi
               MOONSHOT, "moonshot-v1-8k", "moonshot-v1-32k", "moonshot-v1-128k",
               KIMI_K2, KIMI_K2_5,
-              
+
+              # Doubao
+              DOUBAO, DOUBAO_SEED_2_CODE, DOUBAO_SEED_2_PRO, DOUBAO_SEED_2_LITE, DOUBAO_SEED_2_MINI,
+
               # 其他模型
               WEN_XIN, WEN_XIN_4, XUNFEI,
               LINKAI_35, LINKAI_4_TURBO, LINKAI_4o,

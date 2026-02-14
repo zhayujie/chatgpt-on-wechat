@@ -69,5 +69,8 @@ def create_bot(bot_type):
         from models.modelscope.modelscope_bot import ModelScopeBot
         return ModelScopeBot()
 
+    elif bot_type == const.DOUBAO:
+        from models.doubao.doubao_bot import DoubaoBot
+        return DoubaoBot()
 
     raise RuntimeError
