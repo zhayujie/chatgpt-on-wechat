@@ -14,21 +14,16 @@ from http import HTTPStatus
 
 
 
+# Legacy model name mapping for older dashscope SDK constants.
+# New models don't need to be added here — they use their name string directly.
 dashscope_models = {
     "qwen-turbo": dashscope.Generation.Models.qwen_turbo,
     "qwen-plus": dashscope.Generation.Models.qwen_plus,
     "qwen-max": dashscope.Generation.Models.qwen_max,
     "qwen-bailian-v1": dashscope.Generation.Models.bailian_v1,
-    # Qwen3 series models - use string directly as model name
-    "qwen3-max": "qwen3-max",
-    "qwen3-plus": "qwen3-plus", 
-    "qwen3-turbo": "qwen3-turbo",
-    # Other new models
-    "qwen-long": "qwen-long",
-    "qwq-32b-preview": "qwq-32b-preview",
-    "qvq-72b-preview": "qvq-72b-preview"
 }
-# ZhipuAI对话模型API
+
+# Qwen对话模型API
 class DashscopeBot(Bot):
     def __init__(self):
         super().__init__()
@@ -94,7 +89,7 @@ class DashscopeBot(Bot):
         try:
             dashscope.api_key = self.api_key
             response = self.client.call(
-                dashscope_models[self.model_name],
+                dashscope_models.get(self.model_name, self.model_name),
                 messages=session.messages,
                 result_format="message"
             )
