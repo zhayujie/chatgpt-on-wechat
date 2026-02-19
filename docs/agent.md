@@ -141,7 +141,7 @@ Agent模式推荐使用以下模型，可根据效果及成本综合选择：
 - **GLM**: `glm-5`
 - **Kimi**: `kimi-k2.5`
 - **Doubao**: `doubao-seed-2-0-code-preview-260215`
-- **Qwen**: `qwen3-max`
+- **Qwen**: `qwen3.5-plus`
 - **Claude**: `claude-sonnet-4-5`
 - **Gemini**: `gemini-3-flash-preview`
 

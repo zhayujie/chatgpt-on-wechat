@@ -274,7 +274,7 @@ select_model() {
     echo -e "${YELLOW}2) Zhipu AI (glm-5, glm-4.7, etc.)${NC}"
     echo -e "${YELLOW}3) Kimi (kimi-k2.5, kimi-k2, etc.)${NC}"
     echo -e "${YELLOW}4) Doubao (doubao-seed-2-0-code-preview-260215, etc.)${NC}"
-    echo -e "${YELLOW}5) Qwen (qwen3-max, qwen-plus, qwq-plus, etc.)${NC}"
+    echo -e "${YELLOW}5) Qwen (qwen3.5-plus, qwen3-max, qwq-plus, etc.)${NC}"
     echo -e "${YELLOW}6) Claude (claude-sonnet-4-5, claude-opus-4-0, etc.)${NC}"
     echo -e "${YELLOW}7) Gemini (gemini-3-flash-preview, gemini-2.5-pro, etc.)${NC}"
     echo -e "${YELLOW}8) OpenAI GPT (gpt-5.2, gpt-4.1, etc.)${NC}"
@@ -342,8 +342,8 @@ configure_model() {
             # Qwen (DashScope)
             echo -e "${GREEN}Configuring Qwen (DashScope)...${NC}"
             read -p "Enter DashScope API Key: " dashscope_key
-            read -p "Enter model name [press Enter for default: qwen3-max]: " model_name
-            model_name=${model_name:-qwen3-max}
+            read -p "Enter model name [press Enter for default: qwen3.5-plus]: " model_name
+            model_name=${model_name:-qwen3.5-plus}
             
             MODEL_NAME="$model_name"
             DASHSCOPE_KEY="$dashscope_key"

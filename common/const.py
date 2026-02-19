@@ -80,6 +80,7 @@ QWEN_PLUS = "qwen-plus"
 QWEN_MAX = "qwen-max"
 QWEN_LONG = "qwen-long"
 QWEN3_MAX = "qwen3-max"  # Qwen3 Max - Agent推荐模型
+QWEN35_PLUS = "qwen3.5-plus"  # Qwen3.5 Plus - Omni model (MultiModalConversation)
 QWQ_PLUS = "qwq-plus"
 
 # MiniMax
@@ -153,7 +154,7 @@ MODEL_LIST = [
               DEEPSEEK_CHAT, DEEPSEEK_REASONER,
               
               # Qwen
-              QWEN, QWEN_TURBO, QWEN_PLUS, QWEN_MAX, QWEN_LONG, QWEN3_MAX,
+              QWEN, QWEN_TURBO, QWEN_PLUS, QWEN_MAX, QWEN_LONG, QWEN3_MAX, QWEN35_PLUS,
               
               # MiniMax
               MiniMax, MINIMAX_M2_5, MINIMAX_M2_1, MINIMAX_M2_1_LIGHTNING, MINIMAX_M2, MINIMAX_ABAB6_5,

@@ -90,7 +90,7 @@ bash <(curl -sS https://cdn.link-ai.tech/code/cow/run.sh)
 
 项目支持国内外主流厂商的模型接口，可选模型及配置说明参考：[模型说明](#模型说明)。
 
-> 注：Agent模式下推荐使用以下模型，可根据效果及成本综合选择：MiniMax-M2.5、glm-5、kimi-k2.5、qwen3-max、claude-sonnet-4-5、gemini-3-flash-preview
+> 注：Agent模式下推荐使用以下模型，可根据效果及成本综合选择：MiniMax-M2.5、glm-5、kimi-k2.5、qwen3.5-plus、claude-sonnet-4-5、gemini-3-flash-preview
 
 同时支持使用 **LinkAI平台** 接口，可灵活切换 OpenAI、Claude、Gemini、DeepSeek、Qwen、Kimi 等多种常用模型，并支持知识库、工作流、插件等Agent能力，参考 [接口文档](https://docs.link-ai.tech/platform/api)。
 
@@ -175,7 +175,7 @@ pip3 install -r requirements-optional.txt
 <details>
 <summary>2. 其他配置</summary>
 
-+ `model`: 模型名称，Agent模式下推荐使用 `MiniMax-M2.5`、`glm-5`、`kimi-k2.5`、`qwen3-max`、`claude-sonnet-4-5`、`gemini-3-flash-preview`，全部模型名称参考[common/const.py](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/common/const.py)文件
++ `model`: 模型名称，Agent模式下推荐使用 `MiniMax-M2.5`、`glm-5`、`kimi-k2.5`、`qwen3.5-plus`、`claude-sonnet-4-5`、`gemini-3-flash-preview`，全部模型名称参考[common/const.py](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/common/const.py)文件
 + `character_desc`：普通对话模式下的机器人系统提示词。在Agent模式下该配置不生效，由工作空间中的文件内容构成。
 + `subscribe_msg`：订阅消息，公众号和企业微信channel中请填写，当被订阅时会自动回复， 可使用特殊占位符。目前支持的占位符有{trigger_prefix}，在程序中它会自动替换成bot的触发词。
 </details>
@@ -369,18 +369,18 @@ volumes:
 
 ```json
 {
-    "model": "qwen3-max",
+    "model": "qwen3.5-plus",
     "dashscope_api_key": "sk-qVxxxxG"
 }
 ```
- - `model`: 可填写 `qwen3-max、qwen-max、qwen-plus、qwen-turbo、qwen-long、qwq-plus` 等
+ - `model`: 可填写 `qwen3.5-plus、qwen3-max、qwen-max、qwen-plus、qwen-turbo、qwen-long、qwq-plus` 等
  - `dashscope_api_key`: 通义千问的 API-KEY，参考 [官方文档](https://bailian.console.aliyun.com/?tab=api#/api) ，在 [控制台](https://bailian.console.aliyun.com/?tab=model#/api-key) 创建
 
 方式二：OpenAI兼容方式接入，配置如下：
 ```json
 {
   "bot_type": "chatGPT",
-  "model": "qwen3-max",
+  "model": "qwen3.5-plus",
   "open_ai_api_base": "https://dashscope.aliyuncs.com/compatible-mode/v1",
   "open_ai_api_key": "sk-qVxxxxG"
 }
