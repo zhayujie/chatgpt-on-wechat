@@ -27,6 +27,7 @@ class CloudClient(LinkAIClient):
         self.client_type = channel.channel_type
         self.channel_mgr = None
         self._skill_service = None
+        self._memory_service = None
 
     @property
     def skill_service(self):
@@ -44,6 +45,21 @@ class CloudClient(LinkAIClient):
             except Exception as e:
                 logger.error(f"[CloudClient] Failed to init SkillService: {e}")
         return self._skill_service
+
+    @property
+    def memory_service(self):
+        """Lazy-init MemoryService."""
+        if self._memory_service is None:
+            try:
+                from agent.memory.service import MemoryService
+                from config import conf
+                from common.utils import expand_path
+                workspace_root = expand_path(conf().get("agent_workspace", "~/cow"))
+                self._memory_service = MemoryService(workspace_root)
+                logger.debug("[CloudClient] MemoryService initialised")
+            except Exception as e:
+                logger.error(f"[CloudClient] Failed to init MemoryService: {e}")
+        return self._memory_service
 
     # ------------------------------------------------------------------
     # message push callback
@@ -183,6 +199,27 @@ class CloudClient(LinkAIClient):
         svc = self.skill_service
         if svc is None:
             return {"action": action, "code": 500, "message": "SkillService not available", "payload": None}
+
+        return svc.dispatch(action, payload)
+
+    # ------------------------------------------------------------------
+    # memory callback
+    # ------------------------------------------------------------------
+    def on_memory(self, data: dict) -> dict:
+        """
+        Handle MEMORY messages from the cloud console.
+        Delegates to MemoryService.dispatch for the actual operations.
+
+        :param data: message data with 'action', 'clientId', 'payload'
+        :return: response dict
+        """
+        action = data.get("action", "")
+        payload = data.get("payload")
+        logger.info(f"[CloudClient] on_memory: action={action}")
+
+        svc = self.memory_service
+        if svc is None:
+            return {"action": action, "code": 500, "message": "MemoryService not available", "payload": None}
 
         return svc.dispatch(action, payload)
 
