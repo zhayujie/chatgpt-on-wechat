@@ -28,6 +28,7 @@ class CloudClient(LinkAIClient):
         self.channel_mgr = None
         self._skill_service = None
         self._memory_service = None
+        self._chat_service = None
 
     @property
     def skill_service(self):
@@ -60,6 +61,20 @@ class CloudClient(LinkAIClient):
             except Exception as e:
                 logger.error(f"[CloudClient] Failed to init MemoryService: {e}")
         return self._memory_service
+
+    @property
+    def chat_service(self):
+        """Lazy-init ChatService (requires AgentBridge via Bridge singleton)."""
+        if self._chat_service is None:
+            try:
+                from agent.chat.service import ChatService
+                from bridge.bridge import Bridge
+                agent_bridge = Bridge().get_agent_bridge()
+                self._chat_service = ChatService(agent_bridge)
+                logger.debug("[CloudClient] ChatService initialised")
+            except Exception as e:
+                logger.error(f"[CloudClient] Failed to init ChatService: {e}")
+        return self._chat_service
 
     # ------------------------------------------------------------------
     # message push callback
@@ -222,6 +237,28 @@ class CloudClient(LinkAIClient):
             return {"action": action, "code": 500, "message": "MemoryService not available", "payload": None}
 
         return svc.dispatch(action, payload)
+
+    # ------------------------------------------------------------------
+    # chat callback
+    # ------------------------------------------------------------------
+    def on_chat(self, data: dict, send_chunk_fn):
+        """
+        Handle CHAT messages from the cloud console.
+        Runs the agent in streaming mode and sends chunks back via send_chunk_fn.
+
+        :param data: message data with 'action' and 'payload' (query, session_id)
+        :param send_chunk_fn: callable(chunk_data: dict) to send one streaming chunk
+        """
+        payload = data.get("payload", {})
+        query = payload.get("query", "")
+        session_id = payload.get("session_id", "cloud_console")
+        logger.info(f"[CloudClient] on_chat: session={session_id}, query={query[:80]}")
+
+        svc = self.chat_service
+        if svc is None:
+            raise RuntimeError("ChatService not available")
+
+        svc.run(query=query, session_id=session_id, send_chunk_fn=send_chunk_fn)
 
     # ------------------------------------------------------------------
     # channel restart helpers

@@ -74,7 +74,7 @@ class AgentEventHandler:
         # Only send thinking process if followed by tool calls
         if tool_calls:
             if self.current_thinking.strip():
-                logger.debug(f"💭 {self.current_thinking.strip()[:200]}{'...' if len(self.current_thinking) > 200 else ''}")
+                logger.info(f"💭 {self.current_thinking.strip()[:200]}{'...' if len(self.current_thinking) > 200 else ''}")
                 # Send thinking process to channel
                 self._send_to_channel(f"{self.current_thinking.strip()}")
         else:
