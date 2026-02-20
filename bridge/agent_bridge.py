@@ -28,7 +28,7 @@ def add_openai_compatible_support(bot_instance):
     """
     if hasattr(bot_instance, 'call_with_tools'):
         # Bot already has tool calling support (e.g., ZHIPUAIBot)
-        logger.info(f"[AgentBridge] {type(bot_instance).__name__} already has native tool calling support")
+        logger.debug(f"[AgentBridge] {type(bot_instance).__name__} already has native tool calling support")
         return bot_instance
 
     # Create a temporary mixin class that combines the bot with OpenAI compatibility

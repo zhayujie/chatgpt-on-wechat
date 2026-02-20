@@ -3,6 +3,7 @@ Skill manager for managing skill lifecycle and operations.
 """
 
 import os
+import json
 from typing import Dict, List, Optional
 from pathlib import Path
 from common.log import logger
@@ -10,56 +11,131 @@ from agent.skills.types import Skill, SkillEntry, SkillSnapshot
 from agent.skills.loader import SkillLoader
 from agent.skills.formatter import format_skill_entries_for_prompt
 
+SKILLS_CONFIG_FILE = "skills_config.json"
+
 
 class SkillManager:
     """Manages skills for an agent."""
-    
+
     def __init__(
         self,
-        workspace_dir: Optional[str] = None,
-        managed_skills_dir: Optional[str] = None,
-        extra_dirs: Optional[List[str]] = None,
+        builtin_dir: Optional[str] = None,
+        custom_dir: Optional[str] = None,
         config: Optional[Dict] = None,
     ):
         """
         Initialize the skill manager.
-        
-        :param workspace_dir: Agent workspace directory
-        :param managed_skills_dir: Managed skills directory (e.g., ~/.cow/skills)
-        :param extra_dirs: Additional skill directories
+
+        :param builtin_dir: Built-in skills directory (project root ``skills/``)
+        :param custom_dir: Custom skills directory (workspace ``skills/``)
         :param config: Configuration dictionary
         """
-        self.workspace_dir = workspace_dir
-        self.managed_skills_dir = managed_skills_dir or self._get_default_managed_dir()
-        self.extra_dirs = extra_dirs or []
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        self.builtin_dir = builtin_dir or os.path.join(project_root, 'skills')
+        self.custom_dir = custom_dir or os.path.join(project_root, 'workspace', 'skills')
         self.config = config or {}
-        
-        self.loader = SkillLoader(workspace_dir=workspace_dir)
+        self._skills_config_path = os.path.join(self.custom_dir, SKILLS_CONFIG_FILE)
+
+        # skills_config: full skill metadata keyed by name
+        # { "web-fetch": {"name": ..., "description": ..., "source": ..., "enabled": true}, ... }
+        self.skills_config: Dict[str, dict] = {}
+
+        self.loader = SkillLoader()
         self.skills: Dict[str, SkillEntry] = {}
-        
+
         # Load skills on initialization
         self.refresh_skills()
-    
-    def _get_default_managed_dir(self) -> str:
-        """Get the default managed skills directory."""
-        # Use project root skills directory as default
-        import os
-        project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        return os.path.join(project_root, 'skills')
-    
+
     def refresh_skills(self):
-        """Reload all skills from configured directories."""
-        workspace_skills_dir = None
-        if self.workspace_dir:
-            workspace_skills_dir = os.path.join(self.workspace_dir, 'skills')
-        
+        """Reload all skills from builtin and custom directories, then sync config."""
         self.skills = self.loader.load_all_skills(
-            managed_dir=self.managed_skills_dir,
-            workspace_skills_dir=workspace_skills_dir,
-            extra_dirs=self.extra_dirs,
+            builtin_dir=self.builtin_dir,
+            custom_dir=self.custom_dir,
         )
-        
+        self._sync_skills_config()
         logger.debug(f"SkillManager: Loaded {len(self.skills)} skills")
+
+    # ------------------------------------------------------------------
+    # skills_config.json management
+    # ------------------------------------------------------------------
+    def _load_skills_config(self) -> Dict[str, dict]:
+        """Load skills_config.json from custom_dir. Returns empty dict if not found."""
+        if not os.path.exists(self._skills_config_path):
+            return {}
+        try:
+            with open(self._skills_config_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            if isinstance(data, dict):
+                return data
+        except Exception as e:
+            logger.warning(f"[SkillManager] Failed to load {SKILLS_CONFIG_FILE}: {e}")
+        return {}
+
+    def _save_skills_config(self):
+        """Persist skills_config to custom_dir/skills_config.json."""
+        os.makedirs(self.custom_dir, exist_ok=True)
+        try:
+            with open(self._skills_config_path, "w", encoding="utf-8") as f:
+                json.dump(self.skills_config, f, indent=4, ensure_ascii=False)
+        except Exception as e:
+            logger.error(f"[SkillManager] Failed to save {SKILLS_CONFIG_FILE}: {e}")
+
+    def _sync_skills_config(self):
+        """
+        Merge directory-scanned skills with the persisted config file.
+
+        - New skills discovered on disk are added with enabled=True.
+        - Skills that no longer exist on disk are removed.
+        - Existing entries preserve their enabled state; name/description/source
+          are refreshed from the latest scan.
+        """
+        saved = self._load_skills_config()
+        merged: Dict[str, dict] = {}
+
+        for name, entry in self.skills.items():
+            skill = entry.skill
+            prev = saved.get(name, {})
+            merged[name] = {
+                "name": name,
+                "description": skill.description,
+                "source": skill.source,
+                "enabled": prev.get("enabled", True),
+            }
+
+        self.skills_config = merged
+        self._save_skills_config()
+
+    def is_skill_enabled(self, name: str) -> bool:
+        """
+        Check if a skill is enabled according to skills_config.
+
+        :param name: skill name
+        :return: True if enabled (default True if not in config)
+        """
+        entry = self.skills_config.get(name)
+        if entry is None:
+            return True
+        return entry.get("enabled", True)
+
+    def set_skill_enabled(self, name: str, enabled: bool):
+        """
+        Set a skill's enabled state and persist.
+
+        :param name: skill name
+        :param enabled: True to enable, False to disable
+        """
+        if name not in self.skills_config:
+            raise ValueError(f"skill '{name}' not found in config")
+        self.skills_config[name]["enabled"] = enabled
+        self._save_skills_config()
+
+    def get_skills_config(self) -> Dict[str, dict]:
+        """
+        Return the full skills_config dict (for query API).
+
+        :return: copy of skills_config
+        """
+        return dict(self.skills_config)
     
     def get_skill(self, name: str) -> Optional[SkillEntry]:
         """
@@ -85,25 +161,24 @@ class SkillManager:
     ) -> List[SkillEntry]:
         """
         Filter skills based on criteria.
-        
+
         Simple rule: Skills are auto-enabled if requirements are met.
-        - Has required API keys → included
-        - Missing API keys → excluded
-        
+        - Has required API keys -> included
+        - Missing API keys -> excluded
+
         :param skill_filter: List of skill names to include (None = all)
-        :param include_disabled: Whether to include skills with disable_model_invocation=True
+        :param include_disabled: Whether to include disabled skills
         :return: Filtered list of skill entries
         """
         from agent.skills.config import should_include_skill
-        
+
         entries = list(self.skills.values())
-        
+
         # Check requirements (platform, binaries, env vars)
         entries = [e for e in entries if should_include_skill(e, self.config)]
-        
+
         # Apply skill filter
         if skill_filter is not None:
-            # Flatten and normalize skill names (handle both strings and nested lists)
             normalized = []
             for item in skill_filter:
                 if isinstance(item, str):
@@ -111,20 +186,18 @@ class SkillManager:
                     if name:
                         normalized.append(name)
                 elif isinstance(item, list):
-                    # Handle nested lists
                     for subitem in item:
                         if isinstance(subitem, str):
                             name = subitem.strip()
                             if name:
                                 normalized.append(name)
-            
             if normalized:
                 entries = [e for e in entries if e.skill.name in normalized]
-        
-        # Filter out disabled skills unless explicitly requested
+
+        # Filter out disabled skills based on skills_config.json
         if not include_disabled:
-            entries = [e for e in entries if not e.skill.disable_model_invocation]
-        
+            entries = [e for e in entries if self.is_skill_enabled(e.skill.name)]
+
         return entries
     
     def build_skills_prompt(

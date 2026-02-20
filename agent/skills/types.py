@@ -45,7 +45,7 @@ class Skill:
     description: str
     file_path: str
     base_dir: str
-    source: str  # managed, workspace, bundled, etc.
+    source: str  # builtin or custom
     content: str  # Full markdown content
     disable_model_invocation: bool = False
     frontmatter: Dict[str, Any] = field(default_factory=dict)

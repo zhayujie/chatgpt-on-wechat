@@ -54,8 +54,8 @@ class ChannelManager:
 
                 if conf().get("use_linkai"):
                     try:
-                        from common import linkai_client
-                        threading.Thread(target=linkai_client.start, args=(channel, self), daemon=True).start()
+                        from common import cloud_client
+                        threading.Thread(target=cloud_client.start, args=(channel, self), daemon=True).start()
                     except Exception as e:
                         pass
 
@@ -64,7 +64,7 @@ class ChannelManager:
                 target=self._run_channel, args=(channel,), daemon=True
             )
             self._channel_thread.start()
-            logger.info(f"[ChannelManager] Channel '{channel_name}' started in sub-thread")
+            logger.debug(f"[ChannelManager] Channel '{channel_name}' started in sub-thread")
 
     def _run_channel(self, channel):
         try:

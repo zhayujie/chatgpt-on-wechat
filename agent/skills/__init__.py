@@ -15,6 +15,7 @@ from agent.skills.types import (
 )
 from agent.skills.loader import SkillLoader
 from agent.skills.manager import SkillManager
+from agent.skills.service import SkillService
 from agent.skills.formatter import format_skills_for_prompt
 
 __all__ = [
@@ -25,5 +26,6 @@ __all__ = [
     "LoadSkillsResult",
     "SkillLoader",
     "SkillManager",
+    "SkillService",
     "format_skills_for_prompt",
 ]

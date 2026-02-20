@@ -151,7 +151,7 @@ class WechatChannel(ChatChannel):
 
     def exitCallback(self):
         try:
-            from common.linkai_client import chat_client
+            from common.cloud_client import chat_client
             if chat_client.client_id and conf().get("use_linkai"):
                 _send_logout()
                 time.sleep(2)
@@ -283,7 +283,7 @@ class WechatChannel(ChatChannel):
 
 def _send_login_success():
     try:
-        from common.linkai_client import chat_client
+        from common.cloud_client import chat_client
         if chat_client.client_id:
             chat_client.send_login_success()
     except Exception as e:
@@ -292,7 +292,7 @@ def _send_login_success():
 
 def _send_logout():
     try:
-        from common.linkai_client import chat_client
+        from common.cloud_client import chat_client
         if chat_client.client_id:
             chat_client.send_logout()
     except Exception as e:
@@ -301,7 +301,7 @@ def _send_logout():
 
 def _send_qr_code(qrcode_list: list):
     try:
-        from common.linkai_client import chat_client
+        from common.cloud_client import chat_client
         if chat_client.client_id:
             chat_client.send_qrcode(qrcode_list)
     except Exception as e:
