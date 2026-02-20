@@ -8,7 +8,7 @@ Cow项目从简单的聊天机器人全面升级为超级智能助理 **CowAgent
 - **工具系统**：内置实现10+种工具，包括文件读写、bash终端、浏览器、定时任务、记忆管理等，通过Agent管理你的计算机或服务器
 - **长期记忆**：自动将对话记忆持久化至本地文件和数据库中，包括全局记忆和天级记忆，支持关键词及向量检索
 - **Skills系统**：新增Skill运行引擎，内置多种技能，并支持通过自然语言对话完成自定义Skills开发
-- **多渠道和多模型支持**：支持在Web、飞书、钉钉、企微等多渠道与Agent交互，支持Claude、Gemini、OpenAI、GLM、MiniMax、Qwen 等多种国内外主流模型
+- **多渠道和多模型支持**：支持在Web、飞书、钉钉、企微等多渠道与Agent交互，支持Claude、Gemini、OpenAI、GLM、MiniMax、Qwen、Kimi、Doubao 等多种国内外主流模型
 - **安全和成本**：通过秘钥管理工具、提示词控制、系统权限等手段控制Agent的访问安全；通过最大记忆轮次、最大上下文token、工具执行步数对token成本进行限制
 
 
@@ -137,11 +137,13 @@ bash <(curl -sS https://cdn.link-ai.tech/code/cow/run.sh)
 
 Agent模式推荐使用以下模型，可根据效果及成本综合选择：
 
-- **MiniMax**: `MiniMax-M2.1`
-- **GLM**: `glm-4.7`
-- **Qwen**: `qwen3-max`
-- **Claude**: `claude-sonnet-4-5`、`claude-sonnet-4-0`
-- **Gemini**: `gemini-3-flash-preview`、`gemini-3-pro-preview`
+- **MiniMax**: `MiniMax-M2.5`
+- **GLM**: `glm-5`
+- **Kimi**: `kimi-k2.5`
+- **Doubao**: `doubao-seed-2-0-code-preview-260215`
+- **Qwen**: `qwen3.5-plus`
+- **Claude**: `claude-sonnet-4-6`
+- **Gemini**: `gemini-3.1-pro-preview`
 
 详细模型配置方式参考 [README.md 模型说明](../README.md#模型说明)
 

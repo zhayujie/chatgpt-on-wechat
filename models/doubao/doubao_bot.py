@@ -10,25 +10,23 @@ from bridge.context import ContextType
 from bridge.reply import Reply, ReplyType
 from common.log import logger
 from config import conf, load_config
-from .moonshot_session import MoonshotSession
+from .doubao_session import DoubaoSession
 
 
-# Moonshot (Kimi) API Bot
-class MoonshotBot(Bot):
+# Doubao (火山方舟 / Volcengine Ark) API Bot
+class DoubaoBot(Bot):
     def __init__(self):
         super().__init__()
-        self.sessions = SessionManager(MoonshotSession, model=conf().get("model") or "moonshot-v1-128k")
-        model = conf().get("model") or "moonshot-v1-128k"
-        if model == "moonshot":
-            model = "moonshot-v1-32k"
+        self.sessions = SessionManager(DoubaoSession, model=conf().get("model") or "doubao-seed-2-0-pro-260215")
+        model = conf().get("model") or "doubao-seed-2-0-pro-260215"
         self.args = {
             "model": model,
-            "temperature": conf().get("temperature", 0.3),
+            "temperature": conf().get("temperature", 0.8),
             "top_p": conf().get("top_p", 1.0),
         }
-        self.api_key = conf().get("moonshot_api_key")
-        self.base_url = conf().get("moonshot_base_url", "https://api.moonshot.cn/v1")
-        # Ensure base_url does not end with /chat/completions (backward compat)
+        self.api_key = conf().get("ark_api_key")
+        self.base_url = conf().get("ark_base_url", "https://ark.cn-beijing.volces.com/api/v3")
+        # Ensure base_url does not end with /chat/completions
         if self.base_url.endswith("/chat/completions"):
             self.base_url = self.base_url.rsplit("/chat/completions", 1)[0]
         if self.base_url.endswith("/"):
@@ -37,7 +35,7 @@ class MoonshotBot(Bot):
     def reply(self, query, context=None):
         # acquire reply content
         if context.type == ContextType.TEXT:
-            logger.info("[MOONSHOT] query={}".format(query))
+            logger.info("[DOUBAO] query={}".format(query))
 
             session_id = context["session_id"]
             reply = None
@@ -54,16 +52,16 @@ class MoonshotBot(Bot):
             if reply:
                 return reply
             session = self.sessions.session_query(query, session_id)
-            logger.debug("[MOONSHOT] session query={}".format(session.messages))
+            logger.debug("[DOUBAO] session query={}".format(session.messages))
 
-            model = context.get("moonshot_model")
+            model = context.get("doubao_model")
             new_args = self.args.copy()
             if model:
                 new_args["model"] = model
 
             reply_content = self.reply_text(session, args=new_args)
             logger.debug(
-                "[MOONSHOT] new_query={}, session_id={}, reply_cont={}, completion_tokens={}".format(
+                "[DOUBAO] new_query={}, session_id={}, reply_cont={}, completion_tokens={}".format(
                     session.messages,
                     session_id,
                     reply_content["content"],
@@ -77,15 +75,15 @@ class MoonshotBot(Bot):
                 reply = Reply(ReplyType.TEXT, reply_content["content"])
             else:
                 reply = Reply(ReplyType.ERROR, reply_content["content"])
-                logger.debug("[MOONSHOT] reply {} used 0 tokens.".format(reply_content))
+                logger.debug("[DOUBAO] reply {} used 0 tokens.".format(reply_content))
             return reply
         else:
             reply = Reply(ReplyType.ERROR, "Bot不支持处理{}类型的消息".format(context.type))
             return reply
 
-    def reply_text(self, session: MoonshotSession, args=None, retry_count: int = 0) -> dict:
+    def reply_text(self, session: DoubaoSession, args=None, retry_count: int = 0) -> dict:
         """
-        Call Moonshot chat completion API to get the answer
+        Call Doubao chat completion API to get the answer
         :param session: a conversation session
         :param args: model args
         :param retry_count: retry count
@@ -96,8 +94,10 @@ class MoonshotBot(Bot):
                 "Content-Type": "application/json",
                 "Authorization": "Bearer " + self.api_key
             }
-            body = args
+            body = args.copy()
             body["messages"] = session.messages
+            # Disable thinking by default for better efficiency
+            body["thinking"] = {"type": "disabled"}
             res = requests.post(
                 f"{self.base_url}/chat/completions",
                 headers=headers,
@@ -112,14 +112,14 @@ class MoonshotBot(Bot):
                 }
             else:
                 response = res.json()
-                error = response.get("error")
-                logger.error(f"[MOONSHOT] chat failed, status_code={res.status_code}, "
+                error = response.get("error", {})
+                logger.error(f"[DOUBAO] chat failed, status_code={res.status_code}, "
                              f"msg={error.get('message')}, type={error.get('type')}")
 
                 result = {"completion_tokens": 0, "content": "提问太快啦，请休息一下再问我吧"}
                 need_retry = False
                 if res.status_code >= 500:
-                    logger.warn(f"[MOONSHOT] do retry, times={retry_count}")
+                    logger.warn(f"[DOUBAO] do retry, times={retry_count}")
                     need_retry = retry_count < 2
                 elif res.status_code == 401:
                     result["content"] = "授权失败，请检查API Key是否正确"
@@ -147,13 +147,13 @@ class MoonshotBot(Bot):
 
     def call_with_tools(self, messages, tools=None, stream: bool = False, **kwargs):
         """
-        Call Moonshot API with tool support for agent integration.
+        Call Doubao API with tool support for agent integration.
 
         This method handles:
         1. Format conversion (Claude format -> OpenAI format)
         2. System prompt injection
         3. Streaming SSE response with tool_calls
-        4. Thinking (reasoning) is disabled by default to avoid tool_choice conflicts
+        4. Thinking (reasoning) is disabled by default for efficiency
 
         Args:
             messages: List of messages (may be in Claude format from agent)
@@ -184,7 +184,7 @@ class MoonshotBot(Bot):
             # Resolve model / temperature
             model = kwargs.pop("model", None) or self.args["model"]
             max_tokens = kwargs.pop("max_tokens", None)
-            # Don't pop temperature, just ignore it
+            # Don't pop temperature, just ignore it - let API use default
             kwargs.pop("temperature", None)
 
             # Build request body (omit temperature, let the API use its own default)
@@ -201,12 +201,11 @@ class MoonshotBot(Bot):
                 request_body["tools"] = converted_tools
                 request_body["tool_choice"] = "auto"
 
-            # Explicitly disable thinking to avoid reasoning_content issues in multi-turn tool calls.
-            # kimi-k2.5 may enable thinking by default; without preserving reasoning_content
-            # in conversation history the API will reject subsequent requests.
+            # Explicitly disable thinking to avoid reasoning_content issues
+            # in multi-turn tool calls
             request_body["thinking"] = {"type": "disabled"}
 
-            logger.debug(f"[MOONSHOT] API call: model={model}, "
+            logger.debug(f"[DOUBAO] API call: model={model}, "
                          f"tools={len(converted_tools) if converted_tools else 0}, stream={stream}")
 
             if stream:
@@ -215,7 +214,7 @@ class MoonshotBot(Bot):
                 return self._handle_sync_response(request_body)
 
         except Exception as e:
-            logger.error(f"[MOONSHOT] call_with_tools error: {e}")
+            logger.error(f"[DOUBAO] call_with_tools error: {e}")
             import traceback
             logger.error(traceback.format_exc())
 
@@ -226,7 +225,7 @@ class MoonshotBot(Bot):
     # -------------------- streaming --------------------
 
     def _handle_stream_response(self, request_body: dict):
-        """Handle streaming SSE response from Moonshot API and yield OpenAI-format chunks."""
+        """Handle streaming SSE response from Doubao API and yield OpenAI-format chunks."""
         try:
             headers = {
                 "Content-Type": "application/json",
@@ -238,7 +237,7 @@ class MoonshotBot(Bot):
 
             if response.status_code != 200:
                 error_msg = response.text
-                logger.error(f"[MOONSHOT] API error: status={response.status_code}, msg={error_msg}")
+                logger.error(f"[DOUBAO] API error: status={response.status_code}, msg={error_msg}")
                 yield {"error": True, "message": error_msg, "status_code": response.status_code}
                 return
 
@@ -260,14 +259,14 @@ class MoonshotBot(Bot):
                 try:
                     chunk = json.loads(data_str)
                 except json.JSONDecodeError as e:
-                    logger.warning(f"[MOONSHOT] JSON decode error: {e}, data: {data_str[:200]}")
+                    logger.warning(f"[DOUBAO] JSON decode error: {e}, data: {data_str[:200]}")
                     continue
 
                 # Check for error in chunk
                 if chunk.get("error"):
                     error_data = chunk["error"]
                     error_msg = error_data.get("message", "Unknown error") if isinstance(error_data, dict) else str(error_data)
-                    logger.error(f"[MOONSHOT] stream error: {error_msg}")
+                    logger.error(f"[DOUBAO] stream error: {error_msg}")
                     yield {"error": True, "message": error_msg, "status_code": 500}
                     return
 
@@ -277,7 +276,7 @@ class MoonshotBot(Bot):
                 choice = chunk["choices"][0]
                 delta = choice.get("delta", {})
 
-                # Skip reasoning_content (thinking) – don't log or forward
+                # Skip reasoning_content (thinking) - don't log or forward
                 if delta.get("reasoning_content"):
                     continue
 
@@ -333,10 +332,10 @@ class MoonshotBot(Bot):
             }
 
         except requests.exceptions.Timeout:
-            logger.error("[MOONSHOT] Request timeout")
+            logger.error("[DOUBAO] Request timeout")
             yield {"error": True, "message": "Request timeout", "status_code": 500}
         except Exception as e:
-            logger.error(f"[MOONSHOT] stream response error: {e}")
+            logger.error(f"[DOUBAO] stream response error: {e}")
             import traceback
             logger.error(traceback.format_exc())
             yield {"error": True, "message": str(e), "status_code": 500}
@@ -357,7 +356,7 @@ class MoonshotBot(Bot):
 
             if response.status_code != 200:
                 error_msg = response.text
-                logger.error(f"[MOONSHOT] API error: status={response.status_code}, msg={error_msg}")
+                logger.error(f"[DOUBAO] API error: status={response.status_code}, msg={error_msg}")
                 yield {"error": True, "message": error_msg, "status_code": response.status_code}
                 return
 
@@ -395,10 +394,10 @@ class MoonshotBot(Bot):
             yield response_data
 
         except requests.exceptions.Timeout:
-            logger.error("[MOONSHOT] Request timeout")
+            logger.error("[DOUBAO] Request timeout")
             yield {"error": True, "message": "Request timeout", "status_code": 500}
         except Exception as e:
-            logger.error(f"[MOONSHOT] sync response error: {e}")
+            logger.error(f"[DOUBAO] sync response error: {e}")
             import traceback
             logger.error(traceback.format_exc())
             yield {"error": True, "message": str(e), "status_code": 500}
@@ -421,7 +420,7 @@ class MoonshotBot(Bot):
             role = msg.get("role")
             content = msg.get("content")
 
-            # Already a simple string – pass through
+            # Already a simple string - pass through
             if isinstance(content, str):
                 converted.append(msg)
                 continue

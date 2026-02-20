@@ -18,7 +18,7 @@
 -  ✅  **长期记忆：** 自动将对话记忆持久化至本地文件和数据库中，包括全局记忆和天级记忆，支持关键词及向量检索
 -  ✅  **技能系统：** 实现了Skills创建和运行的引擎，内置多种技能，并支持通过自然语言对话完成自定义Skills开发
 -  ✅  **多模态消息：** 支持对文本、图片、语音、文件等多类型消息进行解析、处理、生成、发送等操作
--  ✅  **多模型接入：** 支持OpenAI, Claude, Gemini, DeepSeek, MiniMax、GLM、Qwen、Kimi等国内外主流模型厂商
+-  ✅  **多模型接入：** 支持OpenAI, Claude, Gemini, DeepSeek, MiniMax、GLM、Qwen、Kimi、Doubao等国内外主流模型厂商
 -  ✅  **多端部署：** 支持运行在本地计算机或服务器，可集成到网页、飞书、钉钉、微信公众号、企业微信应用中使用
 -  ✅  **知识库：** 集成企业知识库能力，让Agent成为专属数字员工，基于[LinkAI](https://link-ai.tech)平台实现
 
@@ -90,7 +90,7 @@ bash <(curl -sS https://cdn.link-ai.tech/code/cow/run.sh)
 
 项目支持国内外主流厂商的模型接口，可选模型及配置说明参考：[模型说明](#模型说明)。
 
-> 注：Agent模式下推荐使用以下模型，可根据效果及成本综合选择：GLM(glm-4.7)、MiniMAx(MiniMax-M2.1)、Qwen(qwen3-max)、Claude(claude-opus-4-6、claude-sonnet-4-5、claude-sonnet-4-0)、Gemini(gemini-3-flash-preview、gemini-3-pro-preview)
+> 注：Agent模式下推荐使用以下模型，可根据效果及成本综合选择：MiniMax-M2.5、glm-5、kimi-k2.5、qwen3.5-plus、claude-sonnet-4-6、gemini-3.1-pro-preview
 
 同时支持使用 **LinkAI平台** 接口，可灵活切换 OpenAI、Claude、Gemini、DeepSeek、Qwen、Kimi 等多种常用模型，并支持知识库、工作流、插件等Agent能力，参考 [接口文档](https://docs.link-ai.tech/platform/api)。
 
@@ -136,9 +136,11 @@ pip3 install -r requirements-optional.txt
 # config.json 文件内容示例
 {
   "channel_type": "web",                                      # 接入渠道类型，默认为web，支持修改为:feishu,dingtalk,wechatcom_app,terminal,wechatmp,wechatmp_service
-  "model": "MiniMax-M2.1",                                    # 模型名称
+  "model": "MiniMax-M2.5",                                    # 模型名称
   "minimax_api_key": "",                                      # MiniMax API Key
   "zhipu_ai_api_key": "",                                     # 智谱GLM API Key
+  "moonshot_api_key": "",                                     # Kimi/Moonshot API Key
+  "ark_api_key": "",                                          # 豆包(火山方舟) API Key
   "dashscope_api_key": "",                                    # 百炼(通义千问)API Key
   "claude_api_key": "",                                       # Claude API Key
   "claude_api_base": "https://api.anthropic.com/v1",          # Claude API 地址，修改可接入三方代理平台
@@ -173,13 +175,13 @@ pip3 install -r requirements-optional.txt
 <details>
 <summary>2. 其他配置</summary>
 
-+ `model`: 模型名称，Agent模式下推荐使用 `glm-4.7`、`MiniMax-M2.1`、`qwen3-max`、`claude-opus-4-6`、`claude-sonnet-4-5`、`claude-sonnet-4-0`、`gemini-3-flash-preview`、`gemini-3-pro-preview`，全部模型名称参考[common/const.py](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/common/const.py)文件
++ `model`: 模型名称，Agent模式下推荐使用 `MiniMax-M2.5`、`glm-5`、`kimi-k2.5`、`qwen3.5-plus`、`claude-sonnet-4-6`、`gemini-3.1-pro-preview`，全部模型名称参考[common/const.py](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/common/const.py)文件
 + `character_desc`：普通对话模式下的机器人系统提示词。在Agent模式下该配置不生效，由工作空间中的文件内容构成。
 + `subscribe_msg`：订阅消息，公众号和企业微信channel中请填写，当被订阅时会自动回复， 可使用特殊占位符。目前支持的占位符有{trigger_prefix}，在程序中它会自动替换成bot的触发词。
 </details>
 
 <details>
-<summary>5. LinkAI配置</summary>
+<summary>3. LinkAI配置</summary>
 
 + `use_linkai`: 是否使用LinkAI接口，默认关闭，设置为true后可对接LinkAI平台，使用知识库、工作流、插件等能力, 参考[接口文档](https://docs.link-ai.tech/platform/api/chat)
 + `linkai_api_key`: LinkAI Api Key，可在 [控制台](https://link-ai.tech/console/interface) 创建
@@ -309,24 +311,24 @@ volumes:
 
 ```json
 {
-    "model": "MiniMax-M2.1",
+    "model": "MiniMax-M2.5",
     "minimax_api_key": ""
 }
 ```
- - `model`: 可填写 `MiniMax-M2.1、MiniMax-M2.1-lightning、MiniMax-M2、abab6.5-chat` 等
+ - `model`: 可填写 `MiniMax-M2.5、MiniMax-M2.1、MiniMax-M2.1-lightning、MiniMax-M2、abab6.5-chat` 等
  - `minimax_api_key`：MiniMax平台的API-KEY，在 [控制台](https://platform.minimaxi.com/user-center/basic-information/interface-key) 创建
 
 方式二：OpenAI兼容方式接入，配置如下：
 ```json
 {
   "bot_type": "chatGPT",
-  "model": "MiniMax-M2.1",
+  "model": "MiniMax-M2.5",
   "open_ai_api_base": "https://api.minimaxi.com/v1",
   "open_ai_api_key": ""
 }
 ```
 - `bot_type`: OpenAI兼容方式
-- `model`: 可填 `MiniMax-M2.1、MiniMax-M2.1-lightning、MiniMax-M2`，参考[API文档](https://platform.minimaxi.com/document/%E5%AF%B9%E8%AF%9D?key=66701d281d57f38758d581d0#QklxsNSbaf6kM4j6wjO5eEek)
+- `model`: 可填 `MiniMax-M2.5、MiniMax-M2.1、MiniMax-M2.1-lightning、MiniMax-M2`，参考[API文档](https://platform.minimaxi.com/document/%E5%AF%B9%E8%AF%9D?key=66701d281d57f38758d581d0#QklxsNSbaf6kM4j6wjO5eEek)
 - `open_ai_api_base`: MiniMax平台API的 BASE URL
 - `open_ai_api_key`: MiniMax平台的API-KEY
 </details>
@@ -338,24 +340,24 @@ volumes:
 
 ```json
 {
-  "model": "glm-4.7",
+  "model": "glm-5",
   "zhipu_ai_api_key": ""
 }
 ```
- - `model`: 可填 `glm-4.7、glm-4-plus、glm-4-flash、glm-4-air、glm-4-airx、glm-4-long` 等, 参考 [glm-4系列模型编码](https://bigmodel.cn/dev/api/normal-model/glm-4)
+ - `model`: 可填 `glm-5、glm-4.7、glm-4-plus、glm-4-flash、glm-4-air、glm-4-airx、glm-4-long` 等, 参考 [glm系列模型编码](https://bigmodel.cn/dev/api/normal-model/glm-4)
  - `zhipu_ai_api_key`: 智谱AI平台的 API KEY，在 [控制台](https://www.bigmodel.cn/usercenter/proj-mgmt/apikeys) 创建
 
 方式二：OpenAI兼容方式接入，配置如下：
 ```json
 {
   "bot_type": "chatGPT",
-  "model": "glm-4.7",
+  "model": "glm-5",
   "open_ai_api_base": "https://open.bigmodel.cn/api/paas/v4",
   "open_ai_api_key": ""
 }
 ```
 - `bot_type`: OpenAI兼容方式
-- `model`: 可填 `glm-4.7、glm-4.6、glm-4-plus、glm-4-flash、glm-4-air、glm-4-airx、glm-4-long` 等
+- `model`: 可填 `glm-5、glm-4.7、glm-4-plus、glm-4-flash、glm-4-air、glm-4-airx、glm-4-long` 等
 - `open_ai_api_base`: 智谱AI平台的 BASE URL
 - `open_ai_api_key`: 智谱AI平台的 API KEY
 </details>
@@ -367,18 +369,18 @@ volumes:
 
 ```json
 {
-    "model": "qwen3-max",
+    "model": "qwen3.5-plus",
     "dashscope_api_key": "sk-qVxxxxG"
 }
 ```
- - `model`: 可填写 `qwen3-max、qwen-max、qwen-plus、qwen-turbo、qwen-long、qwq-plus` 等
+ - `model`: 可填写 `qwen3.5-plus、qwen3-max、qwen-max、qwen-plus、qwen-turbo、qwen-long、qwq-plus` 等
  - `dashscope_api_key`: 通义千问的 API-KEY，参考 [官方文档](https://bailian.console.aliyun.com/?tab=api#/api) ，在 [控制台](https://bailian.console.aliyun.com/?tab=model#/api-key) 创建
 
 方式二：OpenAI兼容方式接入，配置如下：
 ```json
 {
   "bot_type": "chatGPT",
-  "model": "qwen3-max",
+  "model": "qwen3.5-plus",
   "open_ai_api_base": "https://dashscope.aliyuncs.com/compatible-mode/v1",
   "open_ai_api_key": "sk-qVxxxxG"
 }
@@ -390,6 +392,53 @@ volumes:
 </details>
 
 <details>
+<summary>Kimi (Moonshot)</summary>
+
+方式一：官方接入，配置如下：
+
+```json
+{
+    "model": "kimi-k2.5",
+    "moonshot_api_key": ""
+}
+```
+ - `model`: 可填写 `kimi-k2.5、kimi-k2、moonshot-v1-8k、moonshot-v1-32k、moonshot-v1-128k`
+ - `moonshot_api_key`: Moonshot的API-KEY，在 [控制台](https://platform.moonshot.cn/console/api-keys) 创建
+ 
+方式二：OpenAI兼容方式接入，配置如下：
+```json
+{
+  "bot_type": "chatGPT",
+  "model": "kimi-k2.5",
+  "open_ai_api_base": "https://api.moonshot.cn/v1",
+  "open_ai_api_key": ""
+}
+```
+- `bot_type`: OpenAI兼容方式
+- `model`: 可填写 `kimi-k2.5、kimi-k2、moonshot-v1-8k、moonshot-v1-32k、moonshot-v1-128k`
+- `open_ai_api_base`: Moonshot的 BASE URL
+- `open_ai_api_key`: Moonshot的 API-KEY
+</details>
+
+<details>
+<summary>豆包 (Doubao)</summary>
+
+1. API Key创建：在 [火山方舟控制台](https://console.volcengine.com/ark/region:ark+cn-beijing/apikey) 创建API Key
+
+2. 填写配置
+
+```json
+{
+    "model": "doubao-seed-2-0-code-preview-260215",
+    "ark_api_key": "YOUR_API_KEY"
+}
+```
+ - `model`: 可填写 `doubao-seed-2-0-code-preview-260215、doubao-seed-2-0-pro-260215、doubao-seed-2-0-lite-260215、doubao-seed-2-0-mini-260215` 等
+ - `ark_api_key`: 火山方舟平台的 API Key，在 [控制台](https://console.volcengine.com/ark/region:ark+cn-beijing/apikey) 创建
+ - `ark_base_url`: 可选，默认为 `https://ark.cn-beijing.volces.com/api/v3`
+</details>
+
+<details>
 <summary>Claude</summary>
 
 1. API Key创建：在 [Claude控制台](https://console.anthropic.com/settings/keys) 创建API Key
@@ -398,11 +447,11 @@ volumes:
 
 ```json
 {
-    "model": "claude-sonnet-4-5",
+    "model": "claude-sonnet-4-6",
     "claude_api_key": "YOUR_API_KEY"
 }
 ```
- - `model`: 参考 [官方模型ID](https://docs.anthropic.com/en/docs/about-claude/models/overview#model-aliases) ，支持 `claude-opus-4-6、claude-sonnet-4-5、claude-sonnet-4-0、claude-opus-4-0、claude-3-5-sonnet-latest` 等
+ - `model`: 参考 [官方模型ID](https://docs.anthropic.com/en/docs/about-claude/models/overview#model-aliases) ，支持 `claude-sonnet-4-6、claude-opus-4-6、claude-sonnet-4-5、claude-sonnet-4-0、claude-opus-4-0、claude-3-5-sonnet-latest` 等
 </details>
 
 <details>
@@ -411,11 +460,11 @@ volumes:
 API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn) 创建API Key ，配置如下
 ```json
 {
-    "model": "gemini-3-flash-preview",
+    "model": "gemini-3.1-pro-preview",
     "gemini_api_key": ""
 }
 ```
- - `model`: 参考[官方文档-模型列表](https://ai.google.dev/gemini-api/docs/models?hl=zh-cn)，支持 `gemini-3-flash-preview、gemini-3-pro-preview、gemini-2.5-pro、gemini-2.0-flash` 等
+ - `model`: 参考[官方文档-模型列表](https://ai.google.dev/gemini-api/docs/models?hl=zh-cn)，支持 `gemini-3.1-pro-preview、gemini-3-flash-preview、gemini-3-pro-preview、gemini-2.5-pro、gemini-2.0-flash` 等
 </details>
 
 <details>
@@ -439,35 +488,6 @@ API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn)
  - `model`: 可填 `deepseek-chat、deepseek-reasoner`，分别对应的是 DeepSeek-V3 和 DeepSeek-R1 模型
  - `open_ai_api_key`: DeepSeek平台的 API Key
  - `open_ai_api_base`: DeepSeek平台 BASE URL
-</details>
-
-<details>
-<summary>Kimi (Moonshot)</summary>
-
-方式一：官方接入，配置如下：
-
-```json
-{
-    "model": "moonshot-v1-128k",
-    "moonshot_api_key": ""
-}
-```
- - `model`: 可填写 `moonshot-v1-8k、moonshot-v1-32k、moonshot-v1-128k`
- - `moonshot_api_key`: Moonshot的API-KEY，在 [控制台](https://platform.moonshot.cn/console/api-keys) 创建
- 
-方式二：OpenAI兼容方式接入，配置如下：
-```json
-{
-  "bot_type": "chatGPT",
-  "model": "moonshot-v1-128k",
-  "open_ai_api_base": "https://api.moonshot.cn/v1",
-  "open_ai_api_key": ""
-}
-```
-- `bot_type`: OpenAI兼容方式
-- `model`: 可填写 `moonshot-v1-8k、moonshot-v1-32k、moonshot-v1-128k`
-- `open_ai_api_base`: Moonshot的 BASE URL
-- `open_ai_api_key`: Moonshot的 API-KEY
 </details>
 
 <details>

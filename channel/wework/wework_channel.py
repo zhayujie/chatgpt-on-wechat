@@ -20,7 +20,6 @@ from common.utils import compress_imgfile, fsize
 from config import conf
 from channel.wework.run import wework
 from channel.wework import run
-from PIL import Image
 
 
 def get_wxid_by_name(room_members, group_wxid, name):
@@ -55,6 +54,7 @@ def download_and_compress_image(url, filename, quality=30):
     image_storage.seek(0)
 
     # 读取并保存图片
+    from PIL import Image
     image = Image.open(image_storage)
     image_path = os.path.join(directory, f"{filename}.png")
     image.save(image_path, "png")

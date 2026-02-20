@@ -310,13 +310,9 @@ class ZHIPUAIBot(Bot, ZhipuAIImage):
                 if hasattr(delta, 'content') and delta.content:
                     openai_chunk["choices"][0]["delta"]["content"] = delta.content
                 
-                # Add reasoning_content if present (GLM-4.7 specific)
+                # Add reasoning_content as separate field if present (GLM-5/GLM-4.7 thinking)
                 if hasattr(delta, 'reasoning_content') and delta.reasoning_content:
-                    # Store reasoning in content or metadata
-                    if "content" not in openai_chunk["choices"][0]["delta"]:
-                        openai_chunk["choices"][0]["delta"]["content"] = ""
-                    # Prepend reasoning to content
-                    openai_chunk["choices"][0]["delta"]["content"] = delta.reasoning_content + openai_chunk["choices"][0]["delta"].get("content", "")
+                    openai_chunk["choices"][0]["delta"]["reasoning_content"] = delta.reasoning_content
                 
                 # Add tool_calls if present
                 if hasattr(delta, 'tool_calls') and delta.tool_calls:
