@@ -275,8 +275,8 @@ select_model() {
     echo -e "${YELLOW}3) Kimi (kimi-k2.5, kimi-k2, etc.)${NC}"
     echo -e "${YELLOW}4) Doubao (doubao-seed-2-0-code-preview-260215, etc.)${NC}"
     echo -e "${YELLOW}5) Qwen (qwen3.5-plus, qwen3-max, qwq-plus, etc.)${NC}"
-    echo -e "${YELLOW}6) Claude (claude-sonnet-4-5, claude-opus-4-0, etc.)${NC}"
-    echo -e "${YELLOW}7) Gemini (gemini-3-flash-preview, gemini-2.5-pro, etc.)${NC}"
+    echo -e "${YELLOW}6) Claude (claude-sonnet-4-6, claude-opus-4-6, etc.)${NC}"
+    echo -e "${YELLOW}7) Gemini (gemini-3.1-pro-preview, gemini-3-flash-preview, etc.)${NC}"
     echo -e "${YELLOW}8) OpenAI GPT (gpt-5.2, gpt-4.1, etc.)${NC}"
     echo -e "${YELLOW}9) LinkAI (access multiple models via one API)${NC}"
     echo ""
@@ -352,8 +352,8 @@ configure_model() {
             # Claude
             echo -e "${GREEN}Configuring Claude...${NC}"
             read -p "Enter Claude API Key: " claude_key
-            read -p "Enter model name [press Enter for default: claude-sonnet-4-5]: " model_name
-            model_name=${model_name:-claude-sonnet-4-5}
+            read -p "Enter model name [press Enter for default: claude-sonnet-4-6]: " model_name
+            model_name=${model_name:-claude-sonnet-4-6}
             read -p "Enter API Base URL [press Enter for default: https://api.anthropic.com/v1]: " api_base
             api_base=${api_base:-https://api.anthropic.com/v1}
             
@@ -365,8 +365,8 @@ configure_model() {
             # Gemini
             echo -e "${GREEN}Configuring Gemini...${NC}"
             read -p "Enter Gemini API Key: " gemini_key
-            read -p "Enter model name [press Enter for default: gemini-3-flash-preview]: " model_name
-            model_name=${model_name:-gemini-3-flash-preview}
+            read -p "Enter model name [press Enter for default: gemini-3.1-pro-preview]: " model_name
+            model_name=${model_name:-gemini-3.1-pro-preview}
             read -p "Enter API Base URL [press Enter for default: https://generativelanguage.googleapis.com]: " api_base
             api_base=${api_base:-https://generativelanguage.googleapis.com}
             

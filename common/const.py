@@ -26,8 +26,9 @@ CLAUDE_35_SONNET_1022 = "claude-3-5-sonnet-20241022"  # 带具体日期的模型
 CLAUDE_35_SONNET_0620 = "claude-3-5-sonnet-20240620"
 CLAUDE_4_OPUS = "claude-opus-4-0"
 CLAUDE_4_6_OPUS = "claude-opus-4-6"      # Claude Opus 4.6 - Agent推荐模型
-CLAUDE_4_SONNET = "claude-sonnet-4-0"    # Claude Sonnet 4.0 - Agent推荐模型
+CLAUDE_4_SONNET = "claude-sonnet-4-0"    # Claude Sonnet 4.0
 CLAUDE_4_5_SONNET = "claude-sonnet-4-5"  # Claude Sonnet 4.5 - Agent推荐模型
+CLAUDE_4_6_SONNET = "claude-sonnet-4-6"  # Claude Sonnet 4.6 - Agent推荐模型
 
 # Gemini (Google)
 GEMINI_PRO = "gemini-1.0-pro"
@@ -35,10 +36,11 @@ GEMINI_15_flash = "gemini-1.5-flash"
 GEMINI_15_PRO = "gemini-1.5-pro"
 GEMINI_20_flash_exp = "gemini-2.0-flash-exp"  # exp结尾为实验模型，会逐步不再支持
 GEMINI_20_FLASH = "gemini-2.0-flash"  # 正式版模型
-GEMINI_25_FLASH_PRE = "gemini-2.5-flash-preview-05-20"  # preview为预览版模型，主要是新能力体验
+GEMINI_25_FLASH_PRE = "gemini-2.5-flash-preview-05-20"
 GEMINI_25_PRO_PRE = "gemini-2.5-pro-preview-05-06"
 GEMINI_3_FLASH_PRE = "gemini-3-flash-preview"  # Gemini 3 Flash Preview - Agent推荐模型
-GEMINI_3_PRO_PRE = "gemini-3-pro-preview"  # Gemini 3 Pro Preview - Agent推荐模型
+GEMINI_3_PRO_PRE = "gemini-3-pro-preview"  # Gemini 3 Pro Preview
+GEMINI_31_PRO_PRE = "gemini-3.1-pro-preview"  # Gemini 3.1 Pro Preview - Agent推荐模型
 
 # OpenAI
 GPT35 = "gpt-3.5-turbo"
@@ -133,12 +135,12 @@ MODELSCOPE_MODEL_LIST = ["LLM-Research/c4ai-command-r-plus-08-2024","mistralai/M
 
 MODEL_LIST = [
               # Claude
-              CLAUDE3, CLAUDE_4_6_OPUS, CLAUDE_4_OPUS, CLAUDE_4_5_SONNET, CLAUDE_4_SONNET, CLAUDE_3_OPUS, CLAUDE_3_OPUS_0229, 
+              CLAUDE3, CLAUDE_4_6_SONNET, CLAUDE_4_6_OPUS, CLAUDE_4_OPUS, CLAUDE_4_5_SONNET, CLAUDE_4_SONNET, CLAUDE_3_OPUS, CLAUDE_3_OPUS_0229, 
               CLAUDE_35_SONNET, CLAUDE_35_SONNET_1022, CLAUDE_35_SONNET_0620, CLAUDE_3_SONNET, CLAUDE_3_HAIKU, 
               "claude", "claude-3-haiku", "claude-3-sonnet", "claude-3-opus", "claude-3.5-sonnet",
               
               # Gemini
-              GEMINI_3_PRO_PRE, GEMINI_3_FLASH_PRE, GEMINI_25_PRO_PRE, GEMINI_25_FLASH_PRE, 
+              GEMINI_31_PRO_PRE, GEMINI_3_PRO_PRE, GEMINI_3_FLASH_PRE, GEMINI_25_PRO_PRE, GEMINI_25_FLASH_PRE, 
               GEMINI_20_FLASH, GEMINI_20_flash_exp, GEMINI_15_PRO, GEMINI_15_flash, GEMINI_PRO, GEMINI,
               
               # OpenAI
