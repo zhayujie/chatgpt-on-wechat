@@ -291,7 +291,7 @@ class AgentInitializer:
         """Initialize skill manager"""
         try:
             from agent.skills import SkillManager
-            skill_manager = SkillManager(workspace_dir=workspace_root)
+            skill_manager = SkillManager(custom_dir=os.path.join(workspace_root, "skills"))
             return skill_manager
         except Exception as e:
             logger.warning(f"[AgentInitializer] Failed to initialize SkillManager: {e}")

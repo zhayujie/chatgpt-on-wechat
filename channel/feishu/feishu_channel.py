@@ -12,6 +12,7 @@
 """
 
 import json
+import logging
 import os
 import ssl
 import threading
@@ -31,6 +32,9 @@ from common.expired_dict import ExpiredDict
 from common.log import logger
 from common.singleton import singleton
 from config import conf
+
+# Suppress verbose logs from Lark SDK
+logging.getLogger("Lark").setLevel(logging.WARNING)
 
 URL_VERIFICATION = "url_verification"
 
@@ -56,6 +60,7 @@ class FeiShuChanel(ChatChannel):
         super().__init__()
         # 历史消息id暂存，用于幂等控制
         self.receivedMsgs = ExpiredDict(60 * 60 * 7.1)
+        self._http_server = None
         logger.debug("[FeiShu] app_id={}, app_secret={}, verification_token={}, event_mode={}".format(
             self.feishu_app_id, self.feishu_app_secret, self.feishu_token, self.feishu_event_mode))
         # 无需群校验和前缀
@@ -73,6 +78,15 @@ class FeiShuChanel(ChatChannel):
         else:
             self._startup_webhook()
 
+    def stop(self):
+        if self._http_server:
+            try:
+                self._http_server.stop()
+                logger.info("[FeiShu] HTTP server stopped")
+            except Exception as e:
+                logger.warning(f"[FeiShu] Error stopping HTTP server: {e}")
+            self._http_server = None
+
     def _startup_webhook(self):
         """启动HTTP服务器接收事件(webhook模式)"""
         logger.debug("[FeiShu] Starting in webhook mode...")
@@ -81,7 +95,14 @@ class FeiShuChanel(ChatChannel):
         )
         app = web.application(urls, globals(), autoreload=False)
         port = conf().get("feishu_port", 9891)
-        web.httpserver.runsimple(app.wsgifunc(), ("0.0.0.0", port))
+        func = web.httpserver.StaticMiddleware(app.wsgifunc())
+        func = web.httpserver.LogMiddleware(func)
+        server = web.httpserver.WSGIServer(("0.0.0.0", port), func)
+        self._http_server = server
+        try:
+            server.start()
+        except (KeyboardInterrupt, SystemExit):
+            server.stop()
 
     def _startup_websocket(self):
         """启动长连接接收事件(websocket模式)"""
@@ -138,7 +159,7 @@ class FeiShuChanel(ChatChannel):
                         self.feishu_app_id,
                         self.feishu_app_secret,
                         event_handler=event_handler,
-                        log_level=lark.LogLevel.DEBUG if conf().get("debug") else lark.LogLevel.INFO
+                        log_level=lark.LogLevel.DEBUG if conf().get("debug") else lark.LogLevel.WARNING
                     )
 
                     logger.debug("[FeiShu] Websocket client starting...")

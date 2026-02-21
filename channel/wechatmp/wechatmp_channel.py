@@ -41,6 +41,7 @@ class WechatMPChannel(ChatChannel):
         super().__init__()
         self.passive_reply = passive_reply
         self.NOT_SUPPORT_REPLYTYPE = []
+        self._http_server = None
         appid = conf().get("wechatmp_app_id")
         secret = conf().get("wechatmp_app_secret")
         token = conf().get("wechatmp_token")
@@ -69,7 +70,23 @@ class WechatMPChannel(ChatChannel):
             urls = ("/wx", "channel.wechatmp.active_reply.Query")
         app = web.application(urls, globals(), autoreload=False)
         port = conf().get("wechatmp_port", 8080)
-        web.httpserver.runsimple(app.wsgifunc(), ("0.0.0.0", port))
+        func = web.httpserver.StaticMiddleware(app.wsgifunc())
+        func = web.httpserver.LogMiddleware(func)
+        server = web.httpserver.WSGIServer(("0.0.0.0", port), func)
+        self._http_server = server
+        try:
+            server.start()
+        except (KeyboardInterrupt, SystemExit):
+            server.stop()
+
+    def stop(self):
+        if self._http_server:
+            try:
+                self._http_server.stop()
+                logger.info("[wechatmp] HTTP server stopped")
+            except Exception as e:
+                logger.warning(f"[wechatmp] Error stopping HTTP server: {e}")
+            self._http_server = None
 
     def start_loop(self, loop):
         asyncio.set_event_loop(loop)

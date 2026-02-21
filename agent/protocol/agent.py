@@ -1,4 +1,5 @@
 import json
+import os
 import time
 import threading
 
@@ -61,7 +62,8 @@ class Agent:
                 # Auto-create skill manager
                 try:
                     from agent.skills import SkillManager
-                    self.skill_manager = SkillManager(workspace_dir=workspace_dir)
+                    custom_dir = os.path.join(workspace_dir, "skills") if workspace_dir else None
+                    self.skill_manager = SkillManager(custom_dir=custom_dir)
                     logger.debug(f"Initialized SkillManager with {len(self.skill_manager.skills)} skills")
                 except Exception as e:
                     logger.warning(f"Failed to initialize SkillManager: {e}")
