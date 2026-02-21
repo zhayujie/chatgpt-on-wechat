@@ -282,22 +282,26 @@ class ChatHandler:
 
 class ConfigHandler:
     def GET(self):
-        """返回前端需要的配置信息"""
+        """Return configuration info for the web console."""
         try:
-            use_agent = conf().get("agent", False)
-            
+            local_config = conf()
+            use_agent = local_config.get("agent", False)
+
             if use_agent:
                 title = "CowAgent"
-                subtitle = "我可以帮你解答问题、管理计算机、创造和执行技能，并通过长期记忆不断成长"
             else:
-                title = "AI 助手"
-                subtitle = "我可以回答问题、提供信息或者帮助您完成各种任务"
-            
+                title = "AI Assistant"
+
             return json.dumps({
                 "status": "success",
                 "use_agent": use_agent,
                 "title": title,
-                "subtitle": subtitle
+                "model": local_config.get("model", ""),
+                "open_ai_api_base": local_config.get("open_ai_api_base", ""),
+                "channel_type": local_config.get("channel_type", ""),
+                "agent_max_context_tokens": local_config.get("agent_max_context_tokens", ""),
+                "agent_max_context_turns": local_config.get("agent_max_context_turns", ""),
+                "agent_max_steps": local_config.get("agent_max_steps", ""),
             })
         except Exception as e:
             logger.error(f"Error getting config: {e}")
