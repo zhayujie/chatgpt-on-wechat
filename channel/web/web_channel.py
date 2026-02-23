@@ -3,7 +3,6 @@ import time
 import web
 import json
 import uuid
-import io
 from queue import Queue, Empty
 from bridge.context import *
 from bridge.reply import Reply, ReplyType
@@ -13,7 +12,7 @@ from common.log import logger
 from common.singleton import singleton
 from config import conf
 import os
-import mimetypes  # 添加这行来处理MIME类型
+import mimetypes
 import threading
 import logging
 
@@ -47,9 +46,10 @@ class WebChannel(ChatChannel):
 
     def __init__(self):
         super().__init__()
-        self.msg_id_counter = 0  # 添加消息ID计数器
-        self.session_queues = {}  # 存储session_id到队列的映射
-        self.request_to_session = {}  # 存储request_id到session_id的映射
+        self.msg_id_counter = 0
+        self.session_queues = {}       # session_id -> Queue (fallback polling)
+        self.request_to_session = {}   # request_id -> session_id
+        self.sse_queues = {}           # request_id -> Queue (SSE streaming)
         self._http_server = None
 
 
@@ -71,22 +71,30 @@ class WebChannel(ChatChannel):
             if reply.type == ReplyType.IMAGE_URL:
                 time.sleep(0.5)
 
-            # 获取请求ID和会话ID
             request_id = context.get("request_id", None)
-            
             if not request_id:
                 logger.error("No request_id found in context, cannot send message")
                 return
-                
-            # 通过request_id获取session_id
+
             session_id = self.request_to_session.get(request_id)
             if not session_id:
                 logger.error(f"No session_id found for request {request_id}")
                 return
-            
-            # 检查是否有会话队列
+
+            # SSE mode: push done event to SSE queue
+            if request_id in self.sse_queues:
+                content = reply.content if reply.content is not None else ""
+                self.sse_queues[request_id].put({
+                    "type": "done",
+                    "content": content,
+                    "request_id": request_id,
+                    "timestamp": time.time()
+                })
+                logger.debug(f"SSE done sent for request {request_id}")
+                return
+
+            # Fallback: polling mode
             if session_id in self.session_queues:
-                # 创建响应数据，包含请求ID以区分不同请求的响应
                 response_data = {
                     "type": str(reply.type),
                     "content": reply.content,
@@ -94,12 +102,50 @@ class WebChannel(ChatChannel):
                     "request_id": request_id
                 }
                 self.session_queues[session_id].put(response_data)
-                logger.debug(f"Response sent to queue for session {session_id}, request {request_id}")
+                logger.debug(f"Response sent to poll queue for session {session_id}, request {request_id}")
             else:
                 logger.warning(f"No response queue found for session {session_id}, response dropped")
-            
+
         except Exception as e:
             logger.error(f"Error in send method: {e}")
+
+    def _make_sse_callback(self, request_id: str):
+        """Build an on_event callback that pushes agent stream events into the SSE queue."""
+        def on_event(event: dict):
+            if request_id not in self.sse_queues:
+                return
+            q = self.sse_queues[request_id]
+            event_type = event.get("type")
+            data = event.get("data", {})
+
+            if event_type == "message_update":
+                delta = data.get("delta", "")
+                if delta:
+                    q.put({"type": "delta", "content": delta})
+
+            elif event_type == "tool_execution_start":
+                tool_name = data.get("tool_name", "tool")
+                arguments = data.get("arguments", {})
+                q.put({"type": "tool_start", "tool": tool_name, "arguments": arguments})
+
+            elif event_type == "tool_execution_end":
+                tool_name = data.get("tool_name", "tool")
+                status = data.get("status", "success")
+                result = data.get("result", "")
+                exec_time = data.get("execution_time", 0)
+                # Truncate long results to avoid huge SSE payloads
+                result_str = str(result)
+                if len(result_str) > 2000:
+                    result_str = result_str[:2000] + "…"
+                q.put({
+                    "type": "tool_end",
+                    "tool": tool_name,
+                    "status": status,
+                    "result": result_str,
+                    "execution_time": round(exec_time, 2)
+                })
+
+        return on_event
 
     def post_message(self):
         """
@@ -107,55 +153,81 @@ class WebChannel(ChatChannel):
         Returns a request_id for tracking this specific request.
         """
         try:
-            data = web.data()  # 获取原始POST数据
+            data = web.data()
             json_data = json.loads(data)
             session_id = json_data.get('session_id', f'session_{int(time.time())}')
             prompt = json_data.get('message', '')
-            
-            # 生成请求ID
+            use_sse = json_data.get('stream', True)
+
             request_id = self._generate_request_id()
-            
-            # 将请求ID与会话ID关联
             self.request_to_session[request_id] = session_id
-            
-            # 确保会话队列存在
+
             if session_id not in self.session_queues:
                 self.session_queues[session_id] = Queue()
-            
-            # Web channel 不需要前缀，确保消息能通过前缀检查
+
+            if use_sse:
+                self.sse_queues[request_id] = Queue()
+
             trigger_prefixs = conf().get("single_chat_prefix", [""])
             if check_prefix(prompt, trigger_prefixs) is None:
-                # 如果没有匹配到前缀，给消息加上第一个前缀
                 if trigger_prefixs:
                     prompt = trigger_prefixs[0] + prompt
                     logger.debug(f"[WebChannel] Added prefix to message: {prompt}")
-            
-            # 创建消息对象
+
             msg = WebMessage(self._generate_msg_id(), prompt)
-            msg.from_user_id = session_id  # 使用会话ID作为用户ID
-            
-            # 创建上下文，明确指定 isgroup=False
+            msg.from_user_id = session_id
+
             context = self._compose_context(ContextType.TEXT, prompt, msg=msg, isgroup=False)
-            
-            # 检查 context 是否为 None（可能被插件过滤等）
+
             if context is None:
                 logger.warning(f"[WebChannel] Context is None for session {session_id}, message may be filtered")
+                if request_id in self.sse_queues:
+                    del self.sse_queues[request_id]
                 return json.dumps({"status": "error", "message": "Message was filtered"})
 
-            # 覆盖必要的字段（_compose_context 会设置默认值，但我们需要使用实际的 session_id）
             context["session_id"] = session_id
             context["receiver"] = session_id
             context["request_id"] = request_id
-            
-            # 异步处理消息 - 只传递上下文
+
+            if use_sse:
+                context["on_event"] = self._make_sse_callback(request_id)
+
             threading.Thread(target=self.produce, args=(context,)).start()
-            
-            # 返回请求ID
-            return json.dumps({"status": "success", "request_id": request_id})
-            
+
+            return json.dumps({"status": "success", "request_id": request_id, "stream": use_sse})
+
         except Exception as e:
             logger.error(f"Error processing message: {e}")
             return json.dumps({"status": "error", "message": str(e)})
+
+    def stream_response(self, request_id: str):
+        """
+        SSE generator for a given request_id.
+        Yields UTF-8 encoded bytes to avoid WSGI Latin-1 mangling.
+        """
+        if request_id not in self.sse_queues:
+            yield b"data: {\"type\": \"error\", \"message\": \"invalid request_id\"}\n\n"
+            return
+
+        q = self.sse_queues[request_id]
+        timeout = 300  # 5 minutes max
+        deadline = time.time() + timeout
+
+        try:
+            while time.time() < deadline:
+                try:
+                    item = q.get(timeout=1)
+                except Empty:
+                    yield b": keepalive\n\n"
+                    continue
+
+                payload = json.dumps(item, ensure_ascii=False)
+                yield f"data: {payload}\n\n".encode("utf-8")
+
+                if item.get("type") == "done":
+                    break
+        finally:
+            self.sse_queues.pop(request_id, None)
 
     def poll_response(self):
         """
@@ -209,8 +281,8 @@ class WebChannel(ChatChannel):
         logger.info("[WebChannel]   5. wechatcom_app    - 企微自建应用")
         logger.info("[WebChannel]   6. wechatmp         - 个人公众号")
         logger.info("[WebChannel]   7. wechatmp_service - 企业公众号")
-        logger.info(f"[WebChannel] 🌐 本地访问: http://localhost:{port}/chat")
-        logger.info(f"[WebChannel] 🌍 服务器访问: http://YOUR_IP:{port}/chat (请将YOUR_IP替换为服务器IP)")
+        logger.info(f"[WebChannel] 🌐 本地访问: http://localhost:{port}")
+        logger.info(f"[WebChannel] 🌍 服务器访问: http://YOUR_IP:{port} (请将YOUR_IP替换为服务器IP)")
         logger.info("[WebChannel] ✅ Web对话网页已运行")
         
         # 确保静态文件目录存在
@@ -223,8 +295,14 @@ class WebChannel(ChatChannel):
             '/', 'RootHandler',
             '/message', 'MessageHandler',
             '/poll', 'PollHandler',
+            '/stream', 'StreamHandler',
             '/chat', 'ChatHandler',
             '/config', 'ConfigHandler',
+            '/api/skills', 'SkillsHandler',
+            '/api/memory', 'MemoryHandler',
+            '/api/memory/content', 'MemoryContentHandler',
+            '/api/scheduler', 'SchedulerHandler',
+            '/api/logs', 'LogsHandler',
             '/assets/(.*)', 'AssetsHandler',
         )
         app = web.application(urls, globals(), autoreload=False)
@@ -272,6 +350,21 @@ class PollHandler:
         return WebChannel().poll_response()
 
 
+class StreamHandler:
+    def GET(self):
+        params = web.input(request_id='')
+        request_id = params.request_id
+        if not request_id:
+            raise web.badrequest()
+
+        web.header('Content-Type', 'text/event-stream; charset=utf-8')
+        web.header('Cache-Control', 'no-cache')
+        web.header('X-Accel-Buffering', 'no')
+        web.header('Access-Control-Allow-Origin', '*')
+
+        return WebChannel().stream_response(request_id)
+
+
 class ChatHandler:
     def GET(self):
         # 正常返回聊天页面
@@ -282,26 +375,148 @@ class ChatHandler:
 
 class ConfigHandler:
     def GET(self):
-        """返回前端需要的配置信息"""
+        """Return configuration info for the web console."""
         try:
-            use_agent = conf().get("agent", False)
-            
+            local_config = conf()
+            use_agent = local_config.get("agent", False)
+
             if use_agent:
                 title = "CowAgent"
-                subtitle = "我可以帮你解答问题、管理计算机、创造和执行技能，并通过长期记忆不断成长"
             else:
-                title = "AI 助手"
-                subtitle = "我可以回答问题、提供信息或者帮助您完成各种任务"
-            
+                title = "AI Assistant"
+
             return json.dumps({
                 "status": "success",
                 "use_agent": use_agent,
                 "title": title,
-                "subtitle": subtitle
+                "model": local_config.get("model", ""),
+                "channel_type": local_config.get("channel_type", ""),
+                "agent_max_context_tokens": local_config.get("agent_max_context_tokens", ""),
+                "agent_max_context_turns": local_config.get("agent_max_context_turns", ""),
+                "agent_max_steps": local_config.get("agent_max_steps", ""),
             })
         except Exception as e:
             logger.error(f"Error getting config: {e}")
             return json.dumps({"status": "error", "message": str(e)})
+
+
+def _get_workspace_root():
+    """Resolve the agent workspace directory."""
+    from common.utils import expand_path
+    return expand_path(conf().get("agent_workspace", "~/cow"))
+
+
+class SkillsHandler:
+    def GET(self):
+        web.header('Content-Type', 'application/json; charset=utf-8')
+        try:
+            from agent.skills.service import SkillService
+            from agent.skills.manager import SkillManager
+            workspace_root = _get_workspace_root()
+            manager = SkillManager(custom_dir=os.path.join(workspace_root, "skills"))
+            service = SkillService(manager)
+            skills = service.query()
+            return json.dumps({"status": "success", "skills": skills}, ensure_ascii=False)
+        except Exception as e:
+            logger.error(f"[WebChannel] Skills API error: {e}")
+            return json.dumps({"status": "error", "message": str(e)})
+
+
+class MemoryHandler:
+    def GET(self):
+        web.header('Content-Type', 'application/json; charset=utf-8')
+        try:
+            from agent.memory.service import MemoryService
+            params = web.input(page='1', page_size='20')
+            workspace_root = _get_workspace_root()
+            service = MemoryService(workspace_root)
+            result = service.list_files(page=int(params.page), page_size=int(params.page_size))
+            return json.dumps({"status": "success", **result}, ensure_ascii=False)
+        except Exception as e:
+            logger.error(f"[WebChannel] Memory API error: {e}")
+            return json.dumps({"status": "error", "message": str(e)})
+
+
+class MemoryContentHandler:
+    def GET(self):
+        web.header('Content-Type', 'application/json; charset=utf-8')
+        try:
+            from agent.memory.service import MemoryService
+            params = web.input(filename='')
+            if not params.filename:
+                return json.dumps({"status": "error", "message": "filename required"})
+            workspace_root = _get_workspace_root()
+            service = MemoryService(workspace_root)
+            result = service.get_content(params.filename)
+            return json.dumps({"status": "success", **result}, ensure_ascii=False)
+        except FileNotFoundError:
+            return json.dumps({"status": "error", "message": "file not found"})
+        except Exception as e:
+            logger.error(f"[WebChannel] Memory content API error: {e}")
+            return json.dumps({"status": "error", "message": str(e)})
+
+
+class SchedulerHandler:
+    def GET(self):
+        web.header('Content-Type', 'application/json; charset=utf-8')
+        try:
+            from agent.tools.scheduler.task_store import TaskStore
+            workspace_root = _get_workspace_root()
+            store_path = os.path.join(workspace_root, "scheduler", "tasks.json")
+            store = TaskStore(store_path)
+            tasks = store.list_tasks()
+            return json.dumps({"status": "success", "tasks": tasks}, ensure_ascii=False)
+        except Exception as e:
+            logger.error(f"[WebChannel] Scheduler API error: {e}")
+            return json.dumps({"status": "error", "message": str(e)})
+
+
+class LogsHandler:
+    def GET(self):
+        """Stream the last N lines of run.log as SSE, then tail new lines."""
+        web.header('Content-Type', 'text/event-stream; charset=utf-8')
+        web.header('Cache-Control', 'no-cache')
+        web.header('X-Accel-Buffering', 'no')
+
+        from config import get_root
+        log_path = os.path.join(get_root(), "run.log")
+
+        def generate():
+            if not os.path.isfile(log_path):
+                yield b"data: {\"type\": \"error\", \"message\": \"run.log not found\"}\n\n"
+                return
+
+            # Read last 200 lines for initial display
+            try:
+                with open(log_path, 'r', encoding='utf-8', errors='replace') as f:
+                    lines = f.readlines()
+                tail_lines = lines[-200:]
+                chunk = ''.join(tail_lines)
+                payload = json.dumps({"type": "init", "content": chunk}, ensure_ascii=False)
+                yield f"data: {payload}\n\n".encode('utf-8')
+            except Exception as e:
+                yield f"data: {{\"type\": \"error\", \"message\": \"{e}\"}}\n\n".encode('utf-8')
+                return
+
+            # Tail new lines
+            try:
+                with open(log_path, 'r', encoding='utf-8', errors='replace') as f:
+                    f.seek(0, 2)  # seek to end
+                    deadline = time.time() + 600  # 10 min max
+                    while time.time() < deadline:
+                        line = f.readline()
+                        if line:
+                            payload = json.dumps({"type": "line", "content": line}, ensure_ascii=False)
+                            yield f"data: {payload}\n\n".encode('utf-8')
+                        else:
+                            yield b": keepalive\n\n"
+                            time.sleep(1)
+            except GeneratorExit:
+                return
+            except Exception:
+                return
+
+        return generate()
 
 
 class AssetsHandler:

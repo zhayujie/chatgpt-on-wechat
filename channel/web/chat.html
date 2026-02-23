@@ -1,1545 +1,524 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh" class="">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CowAgent - Personal AI Agent</title>
+    <title>CowAgent Console</title>
     <link rel="icon" href="assets/favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/markdown-it@13.0.1/dist/markdown-it.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/python.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/javascript.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/java.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/go.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/cpp.min.js"></script>
-    <script src="assets/axios.min.js"></script>
-    <style>
-        :root {
-            --primary-color: #10a37f;
-            --primary-hover: #0d8a6c;
-            --bg-color: #f7f7f8;
-            --chat-bg: #ffffff;
-            --user-msg-bg: #10a37f;
-            --bot-msg-bg: #f7f7f8;
-            --border-color: #e5e5e5;
-            --text-color: #343541;
-            --text-light: #6e6e80;
-            --shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: var(--text-color);
-            background-color: var(--bg-color);
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            margin: 0;
-            overflow: hidden;
-        }
-
-        #app-container {
-            display: flex;
-            height: 100vh;
-            width: 100%;
-        }
-
-        #sidebar {
-            width: 260px;
-            background-color: #202123;
-            color: white;
-            display: flex;
-            flex-direction: column;
-            transition: all 0.3s ease;
-        }
-
-        #new-chat {
-            margin: 15px;
-            padding: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        #new-chat:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-        }
-
-        #new-chat i {
-            margin-right: 10px;
-        }
-
-        #chat-history {
-            flex: 1;
-            overflow-y: auto;
-            padding: 10px 15px;
-        }
-
-        .history-item {
-            padding: 10px;
-            border-radius: 6px;
-            margin-bottom: 5px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .history-item:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-        }
-
-        .history-item i {
-            margin-right: 10px;
-        }
-
-        #sidebar-footer {
-            padding: 15px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        #user-info {
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-            padding: 5px;
-            border-radius: 6px;
-        }
-
-        #user-info:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-        }
-
-        #user-avatar {
-            width: 30px;
-            height: 30px;
-            background-color: #10a37f;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 10px;
-        }
-
-        #main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            position: relative;
-        }
-
-        #chat-header {
-            padding: 15px 20px;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            align-items: center;
-            background-color: var(--chat-bg);
-        }
-
-        #menu-toggle {
-            display: none;
-            background: none;
-            border: none;
-            font-size: 20px;
-            cursor: pointer;
-            color: var(--text-color);
-            margin-right: 15px;
-        }
-
-        #header-logo {
-            height: 30px;
-            margin-right: 10px;
-        }
-
-        #chat-title {
-            font-weight: 600;
-            flex: 1;
-        }
-
-        #github-link {
-            display: flex;
-            align-items: center;
-            margin-left: 15px;
-            color: var(--text-color);
-            text-decoration: none;
-            transition: opacity 0.2s;
-        }
-
-        #github-link:hover {
-            opacity: 0.8;
-        }
-
-        #github-icon {
-            height: 24px;
-            width: 24px;
-        }
-
-        #messages {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            background-color: var(--chat-bg);
-        }
-
-        .message-container {
-            display: flex;
-            padding: 15px 20px;
-            width: 100%;
-            max-width: 800px;
-            margin: 0 auto;
-            align-items: flex-start;
-        }
-
-        .bot-container {
-            background-color: var(--bot-msg-bg);
-            /* border-bottom: 1px solid var(--border-color); */
-            width: 100%;
-            margin: 0;
-            padding: 20px;
-        }
-
-        .user-container {
-            display: flex;
-            justify-content: flex-end;
-            margin: 10px 0;
-            padding: 0 0;
-        }
-
-        .user-container .message-container {
-            flex-direction: row-reverse;
-            text-align: right;
-        }
-
-        .user-container .avatar {
-            margin-left: 20px;
-            margin-right: 0;
-        }
-
-        .user-container .message-content {
-            align-items: flex-end;
-        }
-
-        .user-container .message {
-            padding: 13px 16px;
-            background-color: var(--bot-msg-bg);
-            border-radius: 10px;
-            margin-bottom: 8px;
-        }
-
-        .bot-container .message {
-            background-color: var(--bot-msg-bg);
-            border-radius: 10px 10px 10px 0;
-            margin-bottom: 8px;
-        }
-
-        .avatar {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background-color: #e0e0e0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 15px;
-            flex-shrink: 0;
-        }
-
-        .bot-avatar {
-            background-color: #10a37f;
-            color: white;
-            margin-top: 4px; /* 微调头像位置，使其与文本更好地对齐 */
-        }
-
-        .user-avatar {
-            background-color: #d9d9e3;
-            color: #40414f;
-        }
-
-        .message-content {
-            display: flex;
-            flex-direction: column;
-            flex: 1;
-            padding-top: 0; /* 移除顶部内边距 */
-        }
-
-        .bot-container .message-content {
-            align-items: flex-start;
-            margin-top: 0; /* 确保没有顶部外边距 */
-        }
-
-        .message {
-            padding: 5px 16px;
-            border-radius: 10px;
-            margin-top: 0;
-            margin-bottom: 8px;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-            line-height: 1.5;
-        }
-
-        .message p {
-            margin: 0.8em 0;
-            line-height: 1.6;
-        }
-
-        .message p:first-child {
-            margin-top: 0;
-        }
-
-        .message p:last-child {
-            margin-bottom: 0;
-        }
-
-        .message h1, .message h2, .message h3, .message h4, .message h5, .message h6 {
-            margin-top: 1.5em;
-            margin-bottom: 0.75em;
-            font-weight: 600;
-            line-height: 1.25;
-        }
-
-        .message h1 {
-            font-size: 1.5em;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 0.3em;
-        }
-
-        .message h2 {
-            font-size: 1.3em;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 0.3em;
-        }
-
-        .message h3 {
-            font-size: 1.15em;
-        }
-
-        .message h4 {
-            font-size: 1em;
-        }
-
-        .message ul, .message ol {
-            margin: 0.8em 0;
-            padding-left: 2em;
-        }
-
-        .message li {
-            margin: 0.3em 0;
-        }
-
-        .message li > p {
-            margin: 0.3em 0;
-        }
-
-        .message pre {
-            background-color: #f0f0f0;
-            padding: 12px;
-            border-radius: 6px;
-            overflow-x: auto;
-            margin: 1em 0;
-        }
-
-        .message code {
-            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-            background-color: rgba(0, 0, 0, 0.05);
-            padding: 2px 4px;
-            border-radius: 3px;
-            font-size: 0.9em;
-        }
-
-        .message pre code {
-            background-color: transparent;
-            padding: 0;
-            border-radius: 0;
-            font-size: 0.9em;
-            line-height: 1.5;
-        }
-
-        .message blockquote {
-            border-left: 4px solid #ddd;
-            padding: 0 0 0 1em;
-            margin: 1em 0;
-            color: #777;
-        }
-
-        .message blockquote > :first-child {
-            margin-top: 0;
-        }
-
-        .message blockquote > :last-child {
-            margin-bottom: 0;
-        }
-
-        .message table {
-            border-collapse: collapse;
-            width: 100%;
-            margin: 1em 0;
-            overflow-x: auto;
-            display: block;
-        }
-
-        .message th, .message td {
-            border: 1px solid #ddd;
-            padding: 8px 12px;
-            text-align: left;
-        }
-
-        .message th {
-            background-color: #f2f2f2;
-            font-weight: 600;
-        }
-
-        .message tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-
-        .message hr {
-            height: 1px;
-            background-color: var(--border-color);
-            border: none;
-            margin: 1.5em 0;
-        }
-
-        .message img {
-            max-width: 100%;
-            height: auto;
-            margin: 0 0;
-        }
-
-        .timestamp {
-            font-size: 0.75rem;
-            color: var(--text-light);
-            padding-left: 2px;
-        }
-
-        /* 为机器人消息的时间戳添加左对齐 */
-        .bot-container .timestamp {
-            align-self: flex-start;
-            margin-left: 15px;
-        }
-
-        /* 为用户消息的时间戳添加右对齐 */
-        .user-container .timestamp {
-            align-self: flex-end;
-            padding-right: 2px;
-            padding-left: 0;
-        }
-
-        #input-container {
-            padding: 15px 20px;
-            background-color: var(--chat-bg);
-            border-top: 1px solid var(--border-color);
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        #input-wrapper {
-            position: relative;
-            width: 100%;
-            max-width: 768px;
-            margin: 0 auto;
-        }
-
-        #input {
-            width: 100%;
-            padding: 12px 45px 12px 15px;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            font-size: 16px;
-            line-height: 1.5;
-            color: var(--text-color);
-            background-color: var(--chat-bg);
-            resize: none;
-            height: 52px;
-            max-height: 200px;
-            overflow-y: auto;
-            box-shadow: var(--shadow);
-            transition: border-color 0.3s;
-        }
-
-        #input:focus {
-            outline: none;
-            border-color: var(--primary-color);
-        }
-
-        #send {
-            position: absolute;
-            top: 0;
-            right: 10px;
-            height: 100%;
-            background-color: transparent;
-            border: none;
-            color: var(--primary-color);
-            font-size: 20px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 32px;
-            border-radius: 4px;
-            transition: background-color 0.2s;
-        }
-
-        #send:hover {
-            background-color: rgba(16, 163, 127, 0.1);
-        }
-
-        #send:disabled {
-            color: var(--border-color);
-            cursor: not-allowed;
-        }
-
-        #welcome-screen {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            text-align: center;
-            padding: 20px;
-        }
-
-        #welcome-title {
-            font-size: 2rem;
-            margin-bottom: 20px;
-            font-weight: 600;
-        }
-
-        #welcome-subtitle {
-            font-size: 1.2rem;
-            color: var(--text-light);
-            margin-bottom: 40px;
-        }
-
-        .examples-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 15px;
-            width: 100%;
-            max-width: 900px;
-        }
-
-        .example-card {
-            background-color: white;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 15px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .example-card:hover {
-            background-color: #f0f0f0;
-        }
-
-        .example-title {
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-
-        .example-text {
-            color: var(--text-light);
-            font-size: 0.9rem;
-        }
-
-        /* Responsive styles */
-        @media (max-width: 768px) {
-            #sidebar {
-                position: fixed;
-                left: -260px;
-                height: 100%;
-                z-index: 1000;
-                transition: left 0.3s ease;
-            }
-
-            #sidebar.active {
-                left: 0;
-                box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
-            }
-
-            #menu-toggle {
-                display: block;
-            }
-
-            .message-container {
-                padding: 10px 0 10px 0;
-            }
-
-            .bot-container {
-                padding: 15px;
-            }
-
-            #input-container {
-                padding: 10px;
-            }
-
-            .examples-container {
-                grid-template-columns: 1fr;
-            }
-
-            #header-logo {
-                height: 24px;
-            }
-            
-            /* 添加遮罩层，当侧边栏打开时显示 */
-            #sidebar-overlay {
-                display: none;
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background-color: rgba(0, 0, 0, 0.5);
-                z-index: 999;
-                cursor: pointer;
-            }
-            
-            #sidebar.active + #sidebar-overlay {
-                display: block;
-            }
-        }
-
-        /* Dark mode support */
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --bg-color: #343541;
-                --chat-bg: #444654;
-                --bot-msg-bg: #444654;
-                --border-color: #565869;
-                --text-color: #ececf1;
-                --text-light: #acacbe;
-            }
-
-            #input {
-                background-color: #40414f;
-            }
-
-            .example-card {
-                background-color: #40414f;
-            }
-
-            .example-card:hover {
-                background-color: #565869;
-            }
-
-            .message pre {
-                background-color: #2d2d2d;
-            }
-            
-            .message code {
-                background-color: rgba(255, 255, 255, 0.1);
-            }
-            
-            .message blockquote {
-                border-left-color: #555;
-                color: #aaa;
-            }
-            
-            .message th, .message td {
-                border-color: #555;
-            }
-            
-            .message th {
-                background-color: #3a3a3a;
-            }
-
-            .hljs {
-                background: #2d2d2d !important;
-                color: #d4d4d4 !important;
-            }
-        }
-
-        .typing-indicator {
-            display: inline-flex;
-            align-items: center;
-            margin-left: 0;
-            justify-content: flex-start;
-            width: auto;
-            position: relative;
-            top: -5px;
-            left: -10px;
-            margin-top: 10px;
-            margin-bottom: 5px;
-        }
-
-        .typing-indicator span {
-            height: 8px;
-            width: 8px;
-            margin: 0 2px;
-            background-color: var(--text-light);
-            border-radius: 50%;
-            display: inline-block;
-            opacity: 0.4;
-        }
-
-        .typing-indicator span:nth-child(1) {
-            animation: pulse 1s infinite;
-        }
-
-        .typing-indicator span:nth-child(2) {
-            animation: pulse 1s infinite 0.2s;
-        }
-
-        .typing-indicator span:nth-child(3) {
-            animation: pulse 1s infinite 0.4s;
-        }
-
-        @keyframes pulse {
-            0% {
-                opacity: 0.4;
-                transform: scale(1);
-            }
-            50% {
-                opacity: 1;
-                transform: scale(1.2);
-            }
-            100% {
-                opacity: 0.4;
-                transform: scale(1);
-            }
-        }
-
-        .history-divider {
-            padding: 10px;
-            color: var(--text-light);
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-top: 10px;
-        }
-
-        .history-item.active {
-            background-color: rgba(255, 255, 255, 0.1);
-            font-weight: bold;
-        }
-
-        /* 确保代码块内的文本不会溢出 */
-        .hljs {
-            white-space: pre-wrap;
-            word-break: break-all;
-        }
-    </style>
-</head>
-<body>
-    <div id="app-container">
-        <div id="sidebar">
-            <div id="new-chat">
-                <i class="fas fa-plus"></i>
-                <span>新对话</span>
-            </div>
-            <div id="chat-history">
-                <!-- 历史对话将在这里动态添加 -->
-            </div>
-            <div id="sidebar-footer">
-                <div id="user-info">
-                    <div id="user-avatar">U</div>
-                    <span>用户</span>
-                </div>
-            </div>
-        </div>
-        <div id="sidebar-overlay"></div>
-        <div id="main-content">
-            <div id="chat-header">
-                <button id="menu-toggle">
-                    <i class="fas fa-bars"></i>
-                </button>
-                <img id="header-logo" src="assets/logo.jpg" alt="AI Assistant Logo">
-                <div id="chat-title" class="agent-title">AI 助手</div>
-                <a id="github-link" href="https://github.com/zhayujie/chatgpt-on-wechat" target="_blank" rel="noopener noreferrer">
-                    <img id="github-icon" src="assets/github.png" alt="GitHub">
-                </a>
-            </div>
-
-            <div id="messages">
-                <!-- 初始欢迎界面 -->
-                <div id="welcome-screen">
-                    <h1 id="welcome-title" class="agent-title">AI 助手</h1>
-                    <p id="welcome-subtitle" class="agent-subtitle">我可以回答问题、提供信息或者帮助您完成各种任务</p>
-                    
-                    <div class="examples-container">
-                        <div class="example-card">
-                            <div class="example-title">📁 系统管理</div>
-                            <div class="example-text">帮我查看工作空间里有哪些文件</div>
-                        </div>
-                        <div class="example-card">
-                            <div class="example-title">⏰ 智能任务</div>
-                            <div class="example-text">提醒我5分钟后查看服务器情况</div>
-                        </div>
-                        <div class="example-card">
-                            <div class="example-title">💻 编程助手</div>
-                            <div class="example-text">帮我编写一个Python爬虫脚本</div>
-                        </div>
-                        <!-- <div class="example-card">
-                            <div class="example-title">生活建议</div>
-                            <div class="example-text">推荐一些提高工作效率的方法</div>
-                        </div> -->
-                    </div>
-                </div>
-                <!-- 消息将在这里动态添加 -->
-            </div>
-
-            <div id="input-container">
-                <div id="input-wrapper">
-                    <textarea id="input" placeholder="发送消息..." rows="1"></textarea>
-                    <button id="send" disabled>
-                        <i class="fas fa-paper-plane"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
+    <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" disabled>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/java.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
     <script>
-        // DOM 元素
-        const messagesDiv = document.getElementById('messages');
-        const input = document.getElementById('input');
-        const sendButton = document.getElementById('send');
-        const menuToggle = document.getElementById('menu-toggle');
-        const sidebar = document.getElementById('sidebar');
-        const welcomeScreen = document.getElementById('welcome-screen');
-        const exampleCards = document.querySelectorAll('.example-card');
-        const newChatButton = document.getElementById('new-chat');
-        const chatHistory = document.getElementById('chat-history');
-
-        // 生成新的会话ID
-        function generateSessionId() {
-            return 'session_' + ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
-                (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
-            );
-        }
-
-        // 生成初始会话ID
-        let sessionId = generateSessionId();
-        console.log('Session ID:', sessionId);
-
-        // 获取配置并更新标题
-        let appConfig = {
-            use_agent: false,
-            title: "AI 助手",
-            subtitle: "我可以回答问题、提供信息或者帮助您完成各种任务"
-        };
-
-        // 从服务器获取配置
-        axios.get('/config')
-            .then(response => {
-                if (response.data.status === "success") {
-                    appConfig = response.data;
-                    updateTitle(appConfig.title, appConfig.subtitle);
+    tailwind.config = {
+        darkMode: 'class',
+        theme: {
+            extend: {
+                fontFamily: {
+                    sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                    mono: ['"JetBrains Mono"', '"Fira Code"', 'Consolas', 'monospace'],
+                },
+                colors: {
+                    primary: {
+                        50: '#EDFDF3', 100: '#D4FAE2', 200: '#ABF4C7', 300: '#74E9A4',
+                        400: '#4ABE6E', 500: '#35A85B', 600: '#228547', 700: '#1C6B3B',
+                        800: '#1A5532', 900: '#16462A',
+                    }
+                },
+                animation: {
+                    'pulse-dot': 'pulseDot 1.4s infinite ease-in-out both',
                 }
-            })
-            .catch(error => {
-                console.error('Error loading config:', error);
-            });
-
-        // 更新标题的函数
-        function updateTitle(title, subtitle) {
-            // 更新顶部标题
-            const chatTitle = document.getElementById('chat-title');
-            if (chatTitle) {
-                chatTitle.textContent = title;
-            }
-
-            // 更新欢迎屏幕标题
-            const welcomeTitle = document.getElementById('welcome-title');
-            if (welcomeTitle) {
-                welcomeTitle.textContent = title;
-            }
-
-            const welcomeSubtitle = document.getElementById('welcome-subtitle');
-            if (welcomeSubtitle) {
-                welcomeSubtitle.textContent = subtitle;
             }
         }
+    }
+    </script>
+    <link rel="stylesheet" href="assets/css/console.css">
+</head>
+<body class="h-screen overflow-hidden bg-gray-50 dark:bg-[#111111] text-slate-800 dark:text-slate-200 font-sans transition-colors duration-200">
+    <div id="app" class="flex h-screen">
 
-        // 添加一个变量来跟踪输入法状态
-        let isComposing = false;
-
-        // 监听输入法组合状态开始
-        input.addEventListener('compositionstart', function() {
-            isComposing = true;
-        });
-
-        // 监听输入法组合状态结束
-        input.addEventListener('compositionend', function() {
-            isComposing = false;
-        });
-
-        // 自动调整文本区域高度
-        input.addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = (this.scrollHeight) + 'px';
-            
-            // 启用/禁用发送按钮
-            sendButton.disabled = !this.value.trim();
-        });
-
-        // 处理示例卡片点击
-        exampleCards.forEach(card => {
-            card.addEventListener('click', function() {
-                const exampleText = this.querySelector('.example-text').textContent;
-                input.value = exampleText;
-                input.dispatchEvent(new Event('input'));
-                input.focus();
-            });
-        });
-
-        // 处理菜单切换
-        menuToggle.addEventListener('click', function(event) {
-            event.stopPropagation(); // 防止事件冒泡到 main-content
-            sidebar.classList.toggle('active');
-        });
-
-        // 处理新对话按钮 - 创建新的会话ID和清空当前对话
-        newChatButton.addEventListener('click', function() {
-            // 生成新的会话ID
-            sessionId = generateSessionId();
-            // 将新的会话ID保存到全局变量，供轮询函数使用
-            window.sessionId = sessionId;
-            console.log('New conversation started with new session ID:', sessionId);
-            
-            // 清空聊天记录
-            clearChat();
-        });
-
-        // 发送按钮点击事件
-        sendButton.addEventListener('click', function() {
-            sendMessage();
-        });
-
-        // 输入框按键事件
-        input.addEventListener('keydown', function(event) {
-            // Ctrl+Enter 或 Shift+Enter 添加换行
-            if ((event.ctrlKey || event.shiftKey) && event.key === 'Enter') {
-                const start = this.selectionStart;
-                const end = this.selectionEnd;
-                const value = this.value;
-                
-                this.value = value.substring(0, start) + '\n' + value.substring(end);
-                this.selectionStart = this.selectionEnd = start + 1;
-                
-                event.preventDefault();
-            } 
-            // Enter 键发送消息，但只在不是输入法组合状态时
-            else if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey && !isComposing) {
-                sendMessage();
-                event.preventDefault();
-            }
-        });
-
-        // 在发送消息函数前添加调试代码
-        console.log('Axios loaded:', typeof axios !== 'undefined');
-
-        // 发送消息函数
-        function sendMessage() {
-            console.log('Send message function called');
-            const userMessage = input.value.trim();
-            if (userMessage) {
-                // 隐藏欢迎屏幕
-                const welcomeScreenElement = document.getElementById('welcome-screen');
-                if (welcomeScreenElement) {
-                    welcomeScreenElement.remove();
-                }
-                
-                const timestamp = new Date();
-                
-                // 添加用户消息到界面
-                addUserMessage(userMessage, timestamp);
-                
-                // 添加一个等待中的机器人消息
-                const loadingContainer = addLoadingMessage();
-                
-                // 清空输入框并重置高度 - 移到这里，确保发送后立即清空
-                input.value = '';
-                input.style.height = '52px';
-                sendButton.disabled = true;
-                
-                // 使用当前的全局会话ID
-                const currentSessionId = window.sessionId || sessionId;
-                
-                // 发送到服务器并获取请求ID
-                axios({
-                    method: 'post',
-                    url: '/message',
-                    data: { 
-                        session_id: currentSessionId,  // 使用最新的会话ID
-                        message: userMessage, 
-                        timestamp: timestamp.toISOString()
-                    },
-                    timeout: 10000  // 10秒超时
-                })
-                .then(response => {
-                    if (response.data.status === "success") {
-                        // 保存当前请求ID，用于识别响应
-                        const currentRequestId = response.data.request_id;
-                        
-                        // 如果还没有开始轮询，则开始轮询
-                        if (!window.isPolling) {
-                            startPolling(currentSessionId);
-                        }
-                        
-                        // 将请求ID和加载容器关联起来
-                        window.loadingContainers = window.loadingContainers || {};
-                        window.loadingContainers[currentRequestId] = loadingContainer;
-                        
-                        // 初始化请求的响应容器映射
-                        window.requestContainers = window.requestContainers || {};
-                    } else {
-                        // 处理错误
-                        if (loadingContainer.parentNode) {
-                            messagesDiv.removeChild(loadingContainer);
-                        }
-                        addBotMessage("抱歉，发生了错误，请稍后再试。", new Date());
-                    }
-                })
-                .catch(error => {
-                    console.error('Error sending message:', error);
-                    // 移除加载消息
-                    if (loadingContainer.parentNode) {
-                        messagesDiv.removeChild(loadingContainer);
-                    }
-                    // 显示错误消息
-                    if (error.code === 'ECONNABORTED') {
-                        addBotMessage("请求超时，请再试一次吧。", new Date());
-                    } else {
-                        addBotMessage("抱歉，发生了错误，请稍后再试。", new Date());
-                    }
-                });
-            }
-        }
-
-        // 修改轮询函数，确保正确处理多条回复
-        function startPolling(sessionId) {
-            if (window.isPolling) return;
-            
-            window.isPolling = true;
-            console.log('Starting polling with session ID:', sessionId);
-            
-            function poll() {
-                if (!window.isPolling) return;
-                
-                // 如果页面已关闭或导航离开，停止轮询
-                if (document.hidden) {
-                    setTimeout(poll, 5000); // 页面不可见时降低轮询频率
-                    return;
-                }
-                
-                // 使用当前的会话ID，而不是闭包中的sessionId
-                const currentSessionId = window.sessionId || sessionId;
-                
-                axios({
-                    method: 'post',
-                    url: '/poll',
-                    data: { 
-                        session_id: currentSessionId
-                    },
-                    timeout: 5000
-                })
-                .then(response => {
-                    if (response.data.status === "success") {
-                        if (response.data.has_content) {
-                            console.log('Received response:', response.data);
-                            
-                            // 获取请求ID和内容
-                            const requestId = response.data.request_id;
-                            const content = response.data.content;
-                            const timestamp = new Date(response.data.timestamp * 1000);
-                            
-                            // 检查是否有对应的加载容器
-                            if (window.loadingContainers && window.loadingContainers[requestId]) {
-                                // 移除加载容器
-                                const loadingContainer = window.loadingContainers[requestId];
-                                if (loadingContainer && loadingContainer.parentNode) {
-                                    messagesDiv.removeChild(loadingContainer);
-                                }
-                                
-                                // 删除已处理的加载容器引用
-                                delete window.loadingContainers[requestId];
-                            }
-                            
-                            // 始终创建新的消息，无论是否是同一个请求的后续回复
-                            addBotMessage(content, timestamp, requestId);
-                            
-                            // 滚动到底部
-                            scrollToBottom();
-                        }
-                        
-                        // 继续轮询，使用原来的2秒间隔
-                        setTimeout(poll, 2000);
-                    } else {
-                        // 处理错误但继续轮询
-                        console.error('Error in polling response:', response.data.message);
-                        setTimeout(poll, 3000);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error polling for response:', error);
-                    // 出错后继续轮询，但间隔更长
-                    setTimeout(poll, 3000);
-                });
-            }
-            
-            // 开始轮询
-            poll();
-        }
-
-        // 添加机器人消息的函数 (保存到localStorage)，增加requestId参数
-        function addBotMessage(content, timestamp, requestId) {
-            // 显示消息
-            displayBotMessage(content, timestamp, requestId);
-            
-            // 保存到localStorage
-            saveMessageToLocalStorage({
-                role: 'assistant',
-                content: content,
-                timestamp: timestamp.getTime(),
-                requestId: requestId
-            });
-        }
-
-        // 修改显示机器人消息的函数，增加requestId参数
-        function displayBotMessage(content, timestamp, requestId) {
-            const botContainer = document.createElement('div');
-            botContainer.className = 'bot-container';
-            
-            // 如果有requestId，将其存储在数据属性中
-            if (requestId) {
-                botContainer.dataset.requestId = requestId;
-            }
-            
-            const messageContainer = document.createElement('div');
-            messageContainer.className = 'message-container';
-            
-            // 安全地格式化消息
-            let formattedContent;
-            try {
-                formattedContent = formatMessage(content);
-            } catch (e) {
-                console.error('Error formatting bot message:', e);
-                formattedContent = `<p>${content.replace(/\n/g, '<br>')}</p>`;
-            }
-            
-            messageContainer.innerHTML = `
-                <div class="avatar bot-avatar">
-                    <i class="fas fa-robot"></i>
+        <!-- ================================================================ -->
+        <!-- SIDEBAR                                                          -->
+        <!-- ================================================================ -->
+        <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-[#0A0A0A] text-neutral-400 flex flex-col
+                                    transform -translate-x-full lg:relative lg:translate-x-0
+                                    transition-transform duration-300 ease-in-out">
+            <!-- Logo -->
+            <div class="flex items-center gap-3 px-5 h-14 border-b border-white/10 flex-shrink-0">
+                <img src="assets/logo.jpg" alt="CowAgent" class="w-8 h-8 rounded-lg flex-shrink-0">
+                <div class="flex flex-col min-w-0">
+                    <span class="text-white font-semibold text-sm truncate">CowAgent</span>
+                    <span class="text-neutral-500 text-xs" data-i18n="console">Console</span>
                 </div>
-                <div class="message-content">
-                    <div class="message">${formattedContent}</div>
-                    <div class="timestamp">${formatTimestamp(timestamp)}</div>
-                </div>
-            `;
-            
-            botContainer.appendChild(messageContainer);
-            messagesDiv.appendChild(botContainer);
-            
-            // 应用代码高亮
-            setTimeout(() => {
-                applyHighlighting();
-            }, 0);
-            
-            scrollToBottom();
-        }
+            </div>
 
-        // 处理响应
-        function handleResponse(requestId, content) {
-            // 获取该请求的加载容器
-            const loadingContainer = window.loadingContainers && window.loadingContainers[requestId];
-            
-            // 如果有加载容器，移除它
-            if (loadingContainer && loadingContainer.parentNode) {
-                messagesDiv.removeChild(loadingContainer);
-                delete window.loadingContainers[requestId];
-            }
-            
-            // 为每个请求创建一个新的消息容器
-            if (!window.requestContainers[requestId]) {
-                window.requestContainers[requestId] = createBotMessageContainer(content, new Date());
-            } else {
-                // 更新现有消息容器
-                updateBotMessageContent(window.requestContainers[requestId], content);
-            }
-            
-            // 保存消息到localStorage
-            saveMessageToLocalStorage({
-                role: 'assistant',
-                content: content,
-                timestamp: new Date().getTime(),
-                request_id: requestId
-            });
-        }
-
-        // 修改createBotMessageContainer函数，使其返回创建的容器
-        function createBotMessageContainer(content, timestamp) {
-            const botContainer = document.createElement('div');
-            botContainer.className = 'bot-container';
-            
-            const messageContainer = document.createElement('div');
-            messageContainer.className = 'message-container';
-            
-            // 安全地格式化消息
-            let formattedContent;
-            try {
-                formattedContent = formatMessage(content);
-            } catch (e) {
-                console.error('Error formatting bot message:', e);
-                formattedContent = `<p>${content.replace(/\n/g, '<br>')}</p>`;
-            }
-            
-            messageContainer.innerHTML = `
-                <div class="avatar bot-avatar">
-                    <i class="fas fa-robot"></i>
-                </div>
-                <div class="message-content">
-                    <div class="message">${formattedContent}</div>
-                    <div class="timestamp">${formatTimestamp(timestamp)}</div>
-                </div>
-            `;
-            
-            botContainer.appendChild(messageContainer);
-            messagesDiv.appendChild(botContainer);
-            
-            // 应用代码高亮
-            setTimeout(() => {
-                applyHighlighting();
-            }, 0);
-            
-            scrollToBottom();
-            
-            return botContainer;
-        }
-
-        // 格式化时间戳
-        function formatTimestamp(date) {
-            return date.toLocaleTimeString();
-        }
-
-        // 滚动到底部
-        function scrollToBottom() {
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        }
-
-        // 处理窗口大小变化
-        window.addEventListener('resize', function() {
-            if (window.innerWidth > 768) {
-                sidebar.classList.remove('active');
-            }
-        });
-
-        // 初始化
-        input.focus();
-
-        // 清空聊天记录并显示欢迎屏幕
-        function clearChat() {
-            // 清空消息区域
-            messagesDiv.innerHTML = '';
-            
-            // 创建欢迎屏幕
-            const newWelcomeScreen = document.createElement('div');
-            newWelcomeScreen.id = 'welcome-screen';
-            newWelcomeScreen.innerHTML = `
-                <h1 id="welcome-title" class="agent-title">${appConfig.title}</h1>
-                <p id="welcome-subtitle" class="agent-subtitle">${appConfig.subtitle}</p>
-                
-                <div class="examples-container">
-                    <div class="example-card">
-                        <div class="example-title">📁 系统管理</div>
-                        <div class="example-text">帮我查看工作空间里有哪些文件</div>
-                    </div>
-                    <div class="example-card">
-                        <div class="example-title">⏰ 智能任务</div>
-                        <div class="example-text">提醒我5分钟后查看服务器情况</div>
-                    </div>
-                    <div class="example-card">
-                        <div class="example-title">💻 编程助手</div>
-                        <div class="example-text">帮我编写一个Python爬虫脚本</div>
+            <!-- Navigation -->
+            <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+                <!-- Chat Group -->
+                <div class="menu-group open" data-group="chat">
+                    <button class="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-neutral-500 hover:text-neutral-300 cursor-pointer transition-colors duration-150">
+                        <i class="fas fa-chevron-right text-[10px] chevron"></i>
+                        <span data-i18n="nav_chat">Chat</span>
+                    </button>
+                    <div class="menu-group-items pl-2">
+                        <a class="sidebar-item active flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all duration-150 hover:bg-white/5 hover:text-neutral-200 text-[14px]"
+                           data-view="chat">
+                            <i class="fas fa-message item-icon text-xs w-5 text-center"></i>
+                            <span data-i18n="menu_chat">Chat</span>
+                        </a>
                     </div>
                 </div>
-            `;
-            
-            // 设置样式
-            newWelcomeScreen.style.display = 'flex';
-            newWelcomeScreen.style.flexDirection = 'column';
-            newWelcomeScreen.style.alignItems = 'center';
-            newWelcomeScreen.style.justifyContent = 'center';
-            newWelcomeScreen.style.height = '100%';
-            newWelcomeScreen.style.textAlign = 'center';
-            newWelcomeScreen.style.padding = '20px';
-            
-            // 添加到DOM
-            messagesDiv.appendChild(newWelcomeScreen);
-            
-            // 绑定示例卡片事件
-            newWelcomeScreen.querySelectorAll('.example-card').forEach(card => {
-                card.addEventListener('click', function() {
-                    const exampleText = this.querySelector('.example-text').textContent;
-                    input.value = exampleText;
-                    input.dispatchEvent(new Event('input'));
-                    input.focus();
-                });
-            });
-            
-            // 清空localStorage中的消息 - 使用会话ID作为键
-            localStorage.setItem(`chatMessages_${sessionId}`, JSON.stringify([]));
-            
-            // 在移动设备上关闭侧边栏
-            if (window.innerWidth <= 768) {
-                sidebar.classList.remove('active');
-            }
-        }
 
-        // 从localStorage加载消息 - 使用会话ID作为键
-        function loadMessagesFromLocalStorage() {
-            try {
-                return JSON.parse(localStorage.getItem(`chatMessages_${sessionId}`) || '[]');
-            } catch (error) {
-                console.error('Error loading messages from localStorage:', error);
-                return [];
-            }
-        }
-
-        // 保存消息到localStorage - 使用会话ID作为键
-        function saveMessageToLocalStorage(message) {
-            try {
-                const messages = loadMessagesFromLocalStorage();
-                messages.push(message);
-                localStorage.setItem(`chatMessages_${sessionId}`, JSON.stringify(messages));
-            } catch (error) {
-                console.error('Error saving message to localStorage:', error);
-            }
-        }
-
-        // 添加用户消息的函数 (保存到localStorage)
-        function addUserMessage(content, timestamp) {
-            // 显示消息
-            displayUserMessage(content, timestamp);
-            
-            // 保存到localStorage
-            saveMessageToLocalStorage({
-                role: 'user',
-                content: content,
-                timestamp: timestamp.getTime()
-            });
-        }
-
-        // 只显示用户消息而不保存到localStorage
-        function displayUserMessage(content, timestamp) {
-            const userContainer = document.createElement('div');
-            userContainer.className = 'user-container';
-            
-            const messageContainer = document.createElement('div');
-            messageContainer.className = 'message-container';
-            
-            // 安全地格式化消息
-            let formattedContent;
-            try {
-                formattedContent = formatMessage(content);
-            } catch (e) {
-                console.error('Error formatting user message:', e);
-                formattedContent = `<p>${content.replace(/\n/g, '<br>')}</p>`;
-            }
-            
-            messageContainer.innerHTML = `
-                <div class="avatar user-avatar">
-                    <i class="fas fa-user"></i>
+                <!-- Management Group -->
+                <div class="menu-group open" data-group="manage">
+                    <button class="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-neutral-500 hover:text-neutral-300 cursor-pointer transition-colors duration-150">
+                        <i class="fas fa-chevron-right text-[10px] chevron"></i>
+                        <span data-i18n="nav_manage">Management</span>
+                    </button>
+                    <div class="menu-group-items pl-2">
+                        <a class="sidebar-item flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all duration-150 hover:bg-white/5 hover:text-neutral-200 text-[14px]"
+                           data-view="config">
+                            <i class="fas fa-sliders item-icon text-xs w-5 text-center"></i>
+                            <span data-i18n="menu_config">Config</span>
+                        </a>
+                        <a class="sidebar-item flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all duration-150 hover:bg-white/5 hover:text-neutral-200 text-[14px]"
+                           data-view="skills">
+                            <i class="fas fa-bolt item-icon text-xs w-5 text-center"></i>
+                            <span data-i18n="menu_skills">Skills</span>
+                        </a>
+                        <a class="sidebar-item flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all duration-150 hover:bg-white/5 hover:text-neutral-200 text-[14px]"
+                           data-view="memory">
+                            <i class="fas fa-brain item-icon text-xs w-5 text-center"></i>
+                            <span data-i18n="menu_memory">Memory</span>
+                        </a>
+                        <a class="sidebar-item flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all duration-150 hover:bg-white/5 hover:text-neutral-200 text-[14px]"
+                           data-view="channels">
+                            <i class="fas fa-tower-broadcast item-icon text-xs w-5 text-center"></i>
+                            <span data-i18n="menu_channels">Channels</span>
+                        </a>
+                        <a class="sidebar-item flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all duration-150 hover:bg-white/5 hover:text-neutral-200 text-[14px]"
+                           data-view="tasks">
+                            <i class="fas fa-clock item-icon text-xs w-5 text-center"></i>
+                            <span data-i18n="menu_tasks">Tasks</span>
+                        </a>
+                    </div>
                 </div>
-                <div class="message-content">
-                    <div class="message">${formattedContent}</div>
-                    <div class="timestamp">${formatTimestamp(timestamp)}</div>
-                </div>
-            `;
-            
-            userContainer.appendChild(messageContainer);
-            messagesDiv.appendChild(userContainer);
-            
-            // 应用代码高亮
-            setTimeout(() => {
-                applyHighlighting();
-            }, 0);
-            
-            scrollToBottom();
-        }
 
-        // 添加加载中的消息
-        function addLoadingMessage() {
-            const botContainer = document.createElement('div');
-            botContainer.className = 'bot-container loading-container';
-            
-            const messageContainer = document.createElement('div');
-            messageContainer.className = 'message-container';
-            
-            messageContainer.innerHTML = `
-                <div class="avatar bot-avatar">
-                    <i class="fas fa-robot"></i>
+                <!-- Monitor Group -->
+                <div class="menu-group open" data-group="monitor">
+                    <button class="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-neutral-500 hover:text-neutral-300 cursor-pointer transition-colors duration-150">
+                        <i class="fas fa-chevron-right text-[10px] chevron"></i>
+                        <span data-i18n="nav_monitor">Monitor</span>
+                    </button>
+                    <div class="menu-group-items pl-2">
+                        <a class="sidebar-item flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all duration-150 hover:bg-white/5 hover:text-neutral-200 text-[14px]"
+                           data-view="logs">
+                            <i class="fas fa-terminal item-icon text-xs w-5 text-center"></i>
+                            <span data-i18n="menu_logs">Logs</span>
+                        </a>
+                    </div>
                 </div>
-                <div class="message-content">
-                    <div class="message">
-                        <div class="typing-indicator">
-                            <span></span>
-                            <span></span>
-                            <span></span>
+            </nav>
+
+            <!-- Sidebar Footer -->
+            <div class="px-4 py-3 border-t border-white/10 flex-shrink-0">
+                <div class="flex items-center gap-2 text-xs text-neutral-600">
+                    <i class="fas fa-circle text-[6px] text-primary-400"></i>
+                    <a id="sidebar-version"
+                       href="https://github.com/zhayujie/chatgpt-on-wechat/releases"
+                       target="_blank" rel="noopener noreferrer"
+                       class="hover:text-primary-400 transition-colors duration-150 cursor-pointer"></a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Mobile Overlay -->
+        <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden lg:hidden cursor-pointer" onclick="toggleSidebar()"></div>
+
+        <!-- ================================================================ -->
+        <!-- MAIN CONTENT                                                     -->
+        <!-- ================================================================ -->
+        <div id="main-content" class="flex-1 flex flex-col min-w-0 h-screen">
+            <!-- Top Header -->
+            <header class="h-14 flex items-center gap-3 px-4 border-b border-slate-200 dark:border-white/10 bg-white dark:bg-[#1A1A1A] flex-shrink-0 z-10">
+                <!-- Mobile menu toggle -->
+                <button id="menu-toggle" class="lg:hidden p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 cursor-pointer transition-colors duration-150"
+                        onclick="toggleSidebar()">
+                    <i class="fas fa-bars text-slate-600 dark:text-slate-300"></i>
+                </button>
+
+                <!-- Breadcrumb -->
+                <div class="flex items-center gap-2 text-sm min-w-0">
+                    <span id="breadcrumb-group" class="text-slate-400 dark:text-slate-500 truncate" data-i18n="nav_chat">Chat</span>
+                    <i class="fas fa-chevron-right text-[10px] text-slate-300 dark:text-slate-600"></i>
+                    <span id="breadcrumb-page" class="font-medium text-slate-700 dark:text-slate-200 truncate" data-i18n="menu_chat">Chat</span>
+                </div>
+
+                <div class="flex-1"></div>
+
+                <!-- Language Toggle -->
+                <button id="lang-toggle" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium
+                                                 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10
+                                                 cursor-pointer transition-colors duration-150"
+                        onclick="toggleLanguage()">
+                    <i class="fas fa-globe text-xs"></i>
+                    <span id="lang-label">EN</span>
+                </button>
+
+                <!-- Theme Toggle -->
+                <button id="theme-toggle" class="p-2 rounded-lg text-slate-500 dark:text-slate-400
+                                                  hover:bg-slate-100 dark:hover:bg-white/10
+                                                  cursor-pointer transition-colors duration-150"
+                        onclick="toggleTheme()">
+                    <i id="theme-icon" class="fas fa-moon"></i>
+                </button>
+
+                <!-- GitHub Link -->
+                <a href="https://github.com/zhayujie/chatgpt-on-wechat" target="_blank" rel="noopener noreferrer"
+                   class="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10
+                          cursor-pointer transition-colors duration-150">
+                    <i class="fab fa-github text-lg"></i>
+                </a>
+            </header>
+
+            <!-- Content Area -->
+            <div id="content-area" class="flex-1 overflow-hidden">
+
+                <!-- ====================================================== -->
+                <!-- VIEW: Chat                                              -->
+                <!-- ====================================================== -->
+                <div id="view-chat" class="view active">
+                    <!-- Messages -->
+                    <div id="chat-messages" class="flex-1 overflow-y-auto">
+                        <!-- Welcome Screen -->
+                        <div id="welcome-screen" class="flex flex-col items-center justify-center h-full px-6 py-12">
+                            <img src="assets/logo.jpg" alt="CowAgent" class="w-16 h-16 rounded-2xl mb-6 shadow-lg shadow-primary-500/20">
+                            <h1 id="welcome-title" class="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-3">CowAgent</h1>
+                            <p id="welcome-subtitle" class="text-slate-500 dark:text-slate-400 text-center max-w-lg mb-10 leading-relaxed"
+                               data-i18n-html="welcome_subtitle">I can help you answer questions, manage your computer, create and execute skills,<br>and keep growing through long-term memory.</p>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-2xl">
+                                <div class="example-card group bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 rounded-xl p-4
+                                            cursor-pointer hover:border-primary-300 dark:hover:border-primary-600 hover:shadow-md transition-all duration-200">
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <div class="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
+                                            <i class="fas fa-folder-open text-blue-500 text-xs"></i>
+                                        </div>
+                                        <span class="font-medium text-sm text-slate-700 dark:text-slate-200" data-i18n="example_sys_title">System</span>
+                                    </div>
+                                    <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed" data-i18n="example_sys_text">Show me the files in the workspace</p>
+                                </div>
+                                <div class="example-card group bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 rounded-xl p-4
+                                            cursor-pointer hover:border-primary-300 dark:hover:border-primary-600 hover:shadow-md transition-all duration-200">
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <div class="w-7 h-7 rounded-lg bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center">
+                                            <i class="fas fa-clock text-amber-500 text-xs"></i>
+                                        </div>
+                                        <span class="font-medium text-sm text-slate-700 dark:text-slate-200" data-i18n="example_task_title">Smart Task</span>
+                                    </div>
+                                    <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed" data-i18n="example_task_text">Remind me to check the server in 5 minutes</p>
+                                </div>
+                                <div class="example-card group bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 rounded-xl p-4
+                                            cursor-pointer hover:border-primary-300 dark:hover:border-primary-600 hover:shadow-md transition-all duration-200">
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <div class="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center">
+                                            <i class="fas fa-code text-emerald-500 text-xs"></i>
+                                        </div>
+                                        <span class="font-medium text-sm text-slate-700 dark:text-slate-200" data-i18n="example_code_title">Coding</span>
+                                    </div>
+                                    <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed" data-i18n="example_code_text">Write a Python web scraper script</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chat Input -->
+                    <div class="flex-shrink-0 border-t border-slate-200 dark:border-white/10 bg-white dark:bg-[#1A1A1A] px-4 py-3">
+                        <div class="max-w-3xl mx-auto flex items-center gap-2">
+                            <button id="new-chat-btn" class="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg
+                                                             text-slate-400 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20
+                                                             cursor-pointer transition-colors duration-150" title="New Chat"
+                                    onclick="newChat()">
+                                <i class="fas fa-plus text-base"></i>
+                            </button>
+                            <textarea id="chat-input"
+                                      class="flex-1 min-w-0 px-4 py-[10px] rounded-xl border border-slate-200 dark:border-slate-600
+                                             bg-slate-50 dark:bg-white/5 text-slate-800 dark:text-slate-100
+                                             placeholder:text-slate-400 dark:placeholder:text-slate-500
+                                             focus:outline-none focus:ring-0 focus:border-primary-600
+                                             text-sm leading-relaxed"
+                                      rows="1"
+                                      data-i18n-placeholder="input_placeholder"
+                                      placeholder="Type a message..."></textarea>
+                            <button id="send-btn"
+                                    class="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg
+                                           bg-primary-400 text-white hover:bg-primary-500
+                                           disabled:bg-slate-300 dark:disabled:bg-slate-600
+                                           disabled:cursor-not-allowed cursor-pointer transition-colors duration-150"
+                                    disabled onclick="sendMessage()">
+                                <i class="fas fa-paper-plane text-sm"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
-            `;
-            
-            botContainer.appendChild(messageContainer);
-            messagesDiv.appendChild(botContainer);
-            scrollToBottom();
-            
-            return botContainer;
-        }
 
-        // 自动将链接设置为在新标签页打开
-        const externalLinksPlugin = (md) => {
-            // 保存原始的链接渲染器
-            const defaultRender = md.renderer.rules.link_open || function(tokens, idx, options, env, self) {
-                return self.renderToken(tokens, idx, options);
-            };
+                <!-- ====================================================== -->
+                <!-- VIEW: Config                                            -->
+                <!-- ====================================================== -->
+                <div id="view-config" class="view">
+                    <div class="flex-1 overflow-y-auto p-6">
+                        <div class="max-w-4xl mx-auto">
+                            <div class="flex items-center justify-between mb-6">
+                                <div>
+                                    <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100" data-i18n="config_title">Configuration</h2>
+                                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1" data-i18n="config_desc">Manage model and agent settings</p>
+                                </div>
+                            </div>
+                            <div class="grid gap-6">
+                                <!-- Model Config Card -->
+                                <div class="placeholder-card bg-white dark:bg-[#1A1A1A] rounded-xl border border-slate-200 dark:border-white/10 p-6">
+                                    <div class="flex items-center gap-3 mb-4">
+                                        <div class="w-9 h-9 rounded-lg bg-primary-50 dark:bg-primary-900/30 flex items-center justify-center">
+                                            <i class="fas fa-microchip text-primary-500 text-sm"></i>
+                                        </div>
+                                        <h3 class="font-semibold text-slate-800 dark:text-slate-100" data-i18n="config_model">Model Configuration</h3>
+                                    </div>
+                                    <div class="space-y-4">
+                                        <div class="flex items-center gap-4 p-3 rounded-lg bg-slate-50 dark:bg-white/5">
+                                            <span class="text-sm font-medium text-slate-500 dark:text-slate-400 w-32 flex-shrink-0">Model</span>
+                                            <span class="text-sm text-slate-700 dark:text-slate-200 flex-1 font-mono" id="cfg-model">--</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Agent Config Card -->
+                                <div class="placeholder-card bg-white dark:bg-[#1A1A1A] rounded-xl border border-slate-200 dark:border-white/10 p-6">
+                                    <div class="flex items-center gap-3 mb-4">
+                                        <div class="w-9 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center">
+                                            <i class="fas fa-robot text-emerald-500 text-sm"></i>
+                                        </div>
+                                        <h3 class="font-semibold text-slate-800 dark:text-slate-100" data-i18n="config_agent">Agent Configuration</h3>
+                                    </div>
+                                    <div class="space-y-4">
+                                        <div class="flex items-center gap-4 p-3 rounded-lg bg-slate-50 dark:bg-white/5">
+                                            <span class="text-sm font-medium text-slate-500 dark:text-slate-400 w-32 flex-shrink-0" data-i18n="config_agent_enabled">Agent Mode</span>
+                                            <span class="text-sm text-slate-700 dark:text-slate-200 flex-1" id="cfg-agent">--</span>
+                                        </div>
+                                        <div class="flex items-center gap-4 p-3 rounded-lg bg-slate-50 dark:bg-white/5">
+                                            <span class="text-sm font-medium text-slate-500 dark:text-slate-400 w-32 flex-shrink-0" data-i18n="config_max_tokens">Max Tokens</span>
+                                            <span class="text-sm text-slate-700 dark:text-slate-200 flex-1 font-mono" id="cfg-max-tokens">--</span>
+                                        </div>
+                                        <div class="flex items-center gap-4 p-3 rounded-lg bg-slate-50 dark:bg-white/5">
+                                            <span class="text-sm font-medium text-slate-500 dark:text-slate-400 w-32 flex-shrink-0" data-i18n="config_max_turns">Max Turns</span>
+                                            <span class="text-sm text-slate-700 dark:text-slate-200 flex-1 font-mono" id="cfg-max-turns">--</span>
+                                        </div>
+                                        <div class="flex items-center gap-4 p-3 rounded-lg bg-slate-50 dark:bg-white/5">
+                                            <span class="text-sm font-medium text-slate-500 dark:text-slate-400 w-32 flex-shrink-0" data-i18n="config_max_steps">Max Steps</span>
+                                            <span class="text-sm text-slate-700 dark:text-slate-200 flex-1 font-mono" id="cfg-max-steps">--</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Channel Config Card -->
+                                <div class="placeholder-card bg-white dark:bg-[#1A1A1A] rounded-xl border border-slate-200 dark:border-white/10 p-6">
+                                    <div class="flex items-center gap-3 mb-4">
+                                        <div class="w-9 h-9 rounded-lg bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center">
+                                            <i class="fas fa-tower-broadcast text-amber-500 text-sm"></i>
+                                        </div>
+                                        <h3 class="font-semibold text-slate-800 dark:text-slate-100" data-i18n="config_channel">Channel Configuration</h3>
+                                    </div>
+                                    <div class="space-y-4">
+                                        <div class="flex items-center gap-4 p-3 rounded-lg bg-slate-50 dark:bg-white/5">
+                                            <span class="text-sm font-medium text-slate-500 dark:text-slate-400 w-32 flex-shrink-0" data-i18n="config_channel_type">Channel Type</span>
+                                            <span class="text-sm text-slate-700 dark:text-slate-200 flex-1 font-mono" id="cfg-channel">--</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Coming Soon Banner -->
+                            <div class="mt-6 p-4 rounded-xl bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800/50 flex items-center gap-3">
+                                <i class="fas fa-info-circle text-primary-500"></i>
+                                <span class="text-sm text-primary-700 dark:text-primary-300" data-i18n="config_coming_soon">Full editing capability coming soon. Currently displaying read-only configuration.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-            // 重写链接渲染器
-            md.renderer.rules.link_open = function(tokens, idx, options, env, self) {
-                // 为所有链接添加 target="_blank" 和 rel="noopener noreferrer"
-                const token = tokens[idx];
-                
-                // 添加 target="_blank" 属性
-                token.attrPush(['target', '_blank']);
-                
-                // 添加 rel="noopener noreferrer" 以提高安全性
-                token.attrPush(['rel', 'noopener noreferrer']);
-                
-                // 调用默认渲染器
-                return defaultRender(tokens, idx, options, env, self);
-            };
-        };
+                <!-- ====================================================== -->
+                <!-- VIEW: Skills                                            -->
+                <!-- ====================================================== -->
+                <div id="view-skills" class="view">
+                    <div class="flex-1 overflow-y-auto p-6">
+                        <div class="max-w-4xl mx-auto">
+                            <div class="flex items-center justify-between mb-6">
+                                <div>
+                                    <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100" data-i18n="skills_title">Skills</h2>
+                                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1" data-i18n="skills_desc">View, enable, or disable agent skills</p>
+                                </div>
+                            </div>
+                            <div id="skills-empty" class="flex flex-col items-center justify-center py-20">
+                                <div class="w-16 h-16 rounded-2xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center mb-4">
+                                    <i class="fas fa-bolt text-amber-400 text-xl"></i>
+                                </div>
+                                <p class="text-slate-500 dark:text-slate-400 font-medium" data-i18n="skills_loading">Loading skills...</p>
+                                <p class="text-sm text-slate-400 dark:text-slate-500 mt-1" data-i18n="skills_loading_desc">Skills will be displayed here after loading</p>
+                            </div>
+                            <div id="skills-list" class="grid gap-4 sm:grid-cols-2"></div>
+                        </div>
+                    </div>
+                </div>
 
-        // 替换 formatMessage 函数，使用 markdown-it 替代 marked
-        function formatMessage(content) {
-            try {
-                // 初始化 markdown-it 实例
-                const md = window.markdownit({
-                    html: false,        // 禁用 HTML 标签
-                    xhtmlOut: false,    // 使用 '/' 关闭单标签
-                    breaks: true,       // 将换行符转换为 <br>
-                    linkify: true,      // 自动将 URL 转换为链接
-                    typographer: true,  // 启用一些语言中性的替换和引号美化
-                    highlight: function(str, lang) {
-                        if (lang && hljs.getLanguage(lang)) {
-                            try {
-                                return hljs.highlight(str, { language: lang }).value;
-                            } catch (e) {
-                                console.error('Error highlighting code:', e);
-                            }
-                        }
-                        return hljs.highlightAuto(str).value;
-                    }
-                });
+                <!-- ====================================================== -->
+                <!-- VIEW: Memory                                            -->
+                <!-- ====================================================== -->
+                <div id="view-memory" class="view">
+                    <div class="flex-1 overflow-y-auto p-6">
+                        <div class="max-w-4xl mx-auto">
 
-                // 自动将图片URL转换为图片标签
-                const autoImagePlugin = (md) => {
-                    const defaultRender = md.renderer.rules.text || function(tokens, idx, options, env, self) {
-                        return self.renderToken(tokens, idx, options);
-                    };
+                            <!-- Panel: list -->
+                            <div id="memory-panel-list">
+                                <div class="flex items-center justify-between mb-6">
+                                    <div>
+                                        <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100" data-i18n="memory_title">Memory</h2>
+                                        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1" data-i18n="memory_desc">View agent memory files and contents</p>
+                                    </div>
+                                </div>
+                                <div id="memory-empty" class="flex flex-col items-center justify-center py-20">
+                                    <div class="w-16 h-16 rounded-2xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center mb-4">
+                                        <i class="fas fa-brain text-purple-400 text-xl"></i>
+                                    </div>
+                                    <p class="text-slate-500 dark:text-slate-400 font-medium" data-i18n="memory_loading">Loading memory files...</p>
+                                    <p class="text-sm text-slate-400 dark:text-slate-500 mt-1" data-i18n="memory_loading_desc">Memory files will be displayed here</p>
+                                </div>
+                                <div id="memory-list" class="hidden">
+                                    <div class="bg-white dark:bg-[#1A1A1A] rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden">
+                                        <table class="w-full">
+                                            <thead>
+                                                <tr class="border-b border-slate-200 dark:border-white/10">
+                                                    <th class="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400" data-i18n="memory_col_name">Filename</th>
+                                                    <th class="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400" data-i18n="memory_col_type">Type</th>
+                                                    <th class="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400" data-i18n="memory_col_size">Size</th>
+                                                    <th class="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400" data-i18n="memory_col_updated">Updated</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="memory-table-body"></tbody>
+                                        </table>
+                                    </div>
+                                    <div id="memory-pagination" class="flex items-center justify-between mt-4 text-sm text-slate-500 dark:text-slate-400"></div>
+                                </div>
+                            </div>
 
-                    md.renderer.rules.text = function(tokens, idx, options, env, self) {
-                        const token = tokens[idx];
-                        const text = token.content.trim();
-                        
-                        // 检测是否完全是一个图片链接 (以https://开头，以图片扩展名结尾)
-                        const imageRegex = /^https?:\/\/\S+\.(jpg|jpeg|png|gif|webp)(\?\S*)?$/i;
-                        if (imageRegex.test(text)) {
-                            return `<img src="${text}" alt="Image" style="max-width: 100%; height: auto;" />`;
-                        }
-                        
-                        // 使用默认渲染
-                        return defaultRender(tokens, idx, options, env, self);
-                    };
-                };
+                            <!-- Panel: file viewer (replaces list) -->
+                            <div id="memory-panel-viewer" class="hidden">
+                                <div class="flex items-center gap-3 mb-6">
+                                    <button onclick="closeMemoryViewer()"
+                                            class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm
+                                                   text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10
+                                                   border border-slate-200 dark:border-white/10 transition-colors cursor-pointer">
+                                        <i class="fas fa-arrow-left text-xs"></i>
+                                        <span data-i18n="memory_back">Back</span>
+                                    </button>
+                                    <h2 id="memory-viewer-title"
+                                        class="text-base font-semibold text-slate-800 dark:text-slate-100 font-mono truncate"></h2>
+                                </div>
+                                <div class="bg-white dark:bg-[#1A1A1A] rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden">
+                                    <div id="memory-viewer-content"
+                                         class="p-5 overflow-y-auto text-sm msg-content text-slate-700 dark:text-slate-200"
+                                         style="max-height: calc(100vh - 220px)"></div>
+                                </div>
+                            </div>
 
-                // 应用插件
-                md.use(autoImagePlugin);
-                
-                // 应用外部链接插件
-                md.use(externalLinksPlugin);
+                        </div>
+                    </div>
+                </div>
 
-                // 渲染 Markdown
-                return md.render(content);
-            } catch (e) {
-                console.error('Error parsing markdown:', e);
-                // 如果解析失败，至少确保换行符正确显示
-                return content.replace(/\n/g, '<br>');
-            }
-        }
+                <!-- ====================================================== -->
+                <!-- VIEW: Channels                                          -->
+                <!-- ====================================================== -->
+                <div id="view-channels" class="view">
+                    <div class="flex-1 overflow-y-auto p-6">
+                        <div class="max-w-4xl mx-auto">
+                            <div class="flex items-center justify-between mb-6">
+                                <div>
+                                    <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100" data-i18n="channels_title">Channels</h2>
+                                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1" data-i18n="channels_desc">View and manage messaging channels</p>
+                                </div>
+                            </div>
+                            <div id="channels-content" class="grid gap-4"></div>
+                        </div>
+                    </div>
+                </div>
 
-        // 更新 applyHighlighting 函数
-        function applyHighlighting() {
-            try {
-                document.querySelectorAll('pre code').forEach((block) => {
-                    // 确保代码块有正确的类
-                    if (!block.classList.contains('hljs')) {
-                        block.classList.add('hljs');
-                    }
+                <!-- ====================================================== -->
+                <!-- VIEW: Tasks                                             -->
+                <!-- ====================================================== -->
+                <div id="view-tasks" class="view">
+                    <div class="flex-1 overflow-y-auto p-6">
+                        <div class="max-w-4xl mx-auto">
+                            <div class="flex items-center justify-between mb-6">
+                                <div>
+                                    <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100" data-i18n="tasks_title">Scheduled Tasks</h2>
+                                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1" data-i18n="tasks_desc">View and manage scheduled tasks</p>
+                                </div>
+                            </div>
+                            <div id="tasks-empty" class="flex flex-col items-center justify-center py-20">
+                                <div class="w-16 h-16 rounded-2xl bg-rose-50 dark:bg-rose-900/20 flex items-center justify-center mb-4">
+                                    <i class="fas fa-clock text-rose-400 text-xl"></i>
+                                </div>
+                                <p class="text-slate-500 dark:text-slate-400 font-medium">Loading...</p>
+                            </div>
+                            <div id="tasks-list" class="grid gap-4 hidden"></div>
+                        </div>
+                    </div>
+                </div>
 
-                    // 尝试获取语言
-                    let language = '';
-                    block.classList.forEach(cls => {
-                        if (cls.startsWith('language-')) {
-                            language = cls.replace('language-', '');
-                        }
-                    });
-                    
-                    // 应用高亮
-                    if (language && hljs.getLanguage(language)) {
-                        try {
-                            hljs.highlightBlock(block);
-                        } catch (e) {
-                            console.error('Error highlighting specific language:', e);
-                            hljs.highlightAuto(block);
-                        }
-                    } else {
-                        hljs.highlightAuto(block);
-                    }
-                });
-            } catch (e) {
-                console.error('Error applying code highlighting:', e);
-            }
-        }
+                <!-- ====================================================== -->
+                <!-- VIEW: Logs                                              -->
+                <!-- ====================================================== -->
+                <div id="view-logs" class="view">
+                    <div class="flex-1 overflow-y-auto p-6">
+                        <div class="max-w-5xl mx-auto">
+                            <div class="flex items-center justify-between mb-6">
+                                <div>
+                                    <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100" data-i18n="logs_title">Logs</h2>
+                                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1" data-i18n="logs_desc">Real-time log output (run.log)</p>
+                                </div>
+                            </div>
+                            <!-- Log Terminal -->
+                            <div class="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden shadow-lg">
+                                <div class="flex items-center gap-2 px-4 py-2.5 bg-slate-800 border-b border-slate-700">
+                                    <div class="flex gap-1.5">
+                                        <span class="w-3 h-3 rounded-full bg-red-500/80"></span>
+                                        <span class="w-3 h-3 rounded-full bg-amber-500/80"></span>
+                                        <span class="w-3 h-3 rounded-full bg-emerald-500/80"></span>
+                                    </div>
+                                    <span class="text-xs text-slate-400 ml-2 font-mono">run.log</span>
+                                    <div class="flex-1"></div>
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                        <span class="text-xs text-slate-500" data-i18n="logs_live">Live</span>
+                                    </div>
+                                </div>
+                                <div id="log-output" class="p-4 overflow-y-auto font-mono text-xs leading-relaxed text-slate-300 whitespace-pre-wrap break-all" style="height: calc(100vh - 272px)">
+                                    <p class="text-slate-500" data-i18n="logs_coming_msg">Log streaming will be available here. Connects to run.log for real-time output similar to tail -f.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-        // 在 #main-content 上添加点击事件，用于关闭侧边栏
-        document.getElementById('main-content').addEventListener('click', function(event) {
-            // 只在移动视图下且侧边栏打开时处理
-            if (window.innerWidth <= 768 && sidebar.classList.contains('active')) {
-                sidebar.classList.remove('active');
-            }
-        });
+            </div><!-- /content-area -->
+        </div><!-- /main-content -->
+    </div><!-- /app -->
 
-        // 阻止侧边栏内部点击事件冒泡到 main-content
-        document.getElementById('sidebar').addEventListener('click', function(event) {
-            event.stopPropagation();
-        });
-
-        // 添加遮罩层点击事件，用于关闭侧边栏
-        document.getElementById('sidebar-overlay').addEventListener('click', function() {
-            if (sidebar.classList.contains('active')) {
-                sidebar.classList.remove('active');
-            }
-        });
-    </script>
+    <script src="assets/js/console.js"></script>
 </body>
 </html>
