@@ -95,7 +95,7 @@ function toggleLanguage() {
 // =====================================================================
 // Theme
 // =====================================================================
-let currentTheme = localStorage.getItem('cow_theme') || 'light';
+let currentTheme = localStorage.getItem('cow_theme') || 'dark';
 
 function applyTheme() {
     const root = document.documentElement;
