@@ -3,6 +3,11 @@
    ===================================================================== */
 
 // =====================================================================
+// Version — update this before each release
+// =====================================================================
+const APP_VERSION = 'v2.0.1';
+
+// =====================================================================
 // i18n
 // =====================================================================
 const I18N = {
@@ -10,9 +15,9 @@ const I18N = {
         console: '控制台',
         nav_chat: '对话', nav_manage: '管理', nav_monitor: '监控',
         menu_chat: '对话', menu_config: '配置', menu_skills: '技能',
-        menu_memory: '记忆', menu_channels: '通道', menu_tasks: '定时任务',
+        menu_memory: '记忆', menu_channels: '通道', menu_tasks: '定时',
         menu_logs: '日志',
-        welcome_subtitle: '我可以帮你解答问题、管理计算机、创造和执行技能，并通过长期记忆不断成长',
+        welcome_subtitle: '我可以帮你解答问题、管理计算机、创造和执行技能，并通过长期记忆<br>不断成长',
         example_sys_title: '系统管理', example_sys_text: '帮我查看工作空间里有哪些文件',
         example_task_title: '智能任务', example_task_text: '提醒我5分钟后查看服务器情况',
         example_code_title: '编程助手', example_code_text: '帮我编写一个Python爬虫脚本',
@@ -28,6 +33,7 @@ const I18N = {
         skills_loading: '加载技能中...', skills_loading_desc: '技能加载后将显示在此处',
         memory_title: '记忆管理', memory_desc: '查看 Agent 记忆文件和内容',
         memory_loading: '加载记忆文件中...', memory_loading_desc: '记忆文件将显示在此处',
+        memory_back: '返回列表',
         memory_col_name: '文件名', memory_col_type: '类型', memory_col_size: '大小', memory_col_updated: '更新时间',
         channels_title: '通道管理', channels_desc: '查看和管理消息通道',
         channels_coming: '即将推出', channels_coming_desc: '通道管理功能即将在此提供',
@@ -43,7 +49,7 @@ const I18N = {
         menu_chat: 'Chat', menu_config: 'Config', menu_skills: 'Skills',
         menu_memory: 'Memory', menu_channels: 'Channels', menu_tasks: 'Tasks',
         menu_logs: 'Logs',
-        welcome_subtitle: 'I can help you answer questions, manage your computer, create and execute skills, and keep growing through long-term memory.',
+        welcome_subtitle: 'I can help you answer questions, manage your computer, create and execute skills, and keep growing through <br> long-term memory.',
         example_sys_title: 'System', example_sys_text: 'Show me the files in the workspace',
         example_task_title: 'Smart Task', example_task_text: 'Remind me to check the server in 5 minutes',
         example_code_title: 'Coding', example_code_text: 'Write a Python web scraper script',
@@ -59,6 +65,7 @@ const I18N = {
         skills_loading: 'Loading skills...', skills_loading_desc: 'Skills will be displayed here after loading',
         memory_title: 'Memory', memory_desc: 'View agent memory files and contents',
         memory_loading: 'Loading memory files...', memory_loading_desc: 'Memory files will be displayed here',
+        memory_back: 'Back to list',
         memory_col_name: 'Filename', memory_col_type: 'Type', memory_col_size: 'Size', memory_col_updated: 'Updated',
         channels_title: 'Channels', channels_desc: 'View and manage messaging channels',
         channels_coming: 'Coming Soon', channels_coming_desc: 'Channel management will be available here',
@@ -79,6 +86,9 @@ function t(key) {
 function applyI18n() {
     document.querySelectorAll('[data-i18n]').forEach(el => {
         el.textContent = t(el.dataset.i18n);
+    });
+    document.querySelectorAll('[data-i18n-html]').forEach(el => {
+        el.innerHTML = t(el.dataset.i18nHtml);
     });
     document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
         el.placeholder = t(el.dataset['i18nPlaceholder']);
@@ -241,7 +251,6 @@ fetch('/config').then(r => r.json()).then(data => {
         const title = data.title || 'CowAgent';
         document.getElementById('welcome-title').textContent = title;
         document.getElementById('cfg-model').textContent = data.model || '--';
-        document.getElementById('cfg-api-base').textContent = data.open_ai_api_base || '--';
         document.getElementById('cfg-agent').textContent = data.use_agent ? 'Enabled' : 'Disabled';
         document.getElementById('cfg-max-tokens').textContent = data.agent_max_context_tokens || '--';
         document.getElementById('cfg-max-turns').textContent = data.agent_max_context_turns || '--';
@@ -676,7 +685,6 @@ function loadConfigView() {
     fetch('/config').then(r => r.json()).then(data => {
         if (data.status !== 'success') return;
         document.getElementById('cfg-model').textContent = data.model || '--';
-        document.getElementById('cfg-api-base').textContent = data.open_ai_api_base || '--';
         document.getElementById('cfg-agent').textContent = data.use_agent ? 'Enabled' : 'Disabled';
         document.getElementById('cfg-max-tokens').textContent = data.agent_max_context_tokens || '--';
         document.getElementById('cfg-max-turns').textContent = data.agent_max_context_turns || '--';
@@ -686,8 +694,278 @@ function loadConfigView() {
 }
 
 // =====================================================================
+// Skills View
+// =====================================================================
+let skillsLoaded = false;
+function loadSkillsView() {
+    if (skillsLoaded) return;
+    fetch('/api/skills').then(r => r.json()).then(data => {
+        if (data.status !== 'success') return;
+        const emptyEl = document.getElementById('skills-empty');
+        const listEl = document.getElementById('skills-list');
+        const skills = data.skills || [];
+        if (skills.length === 0) {
+            emptyEl.querySelector('p').textContent = currentLang === 'zh' ? '暂无技能' : 'No skills found';
+            return;
+        }
+        emptyEl.classList.add('hidden');
+        listEl.innerHTML = '';
+
+        const builtins = skills.filter(s => s.source === 'builtin');
+        const customs = skills.filter(s => s.source !== 'builtin');
+
+        function renderGroup(title, items) {
+            if (items.length === 0) return;
+            const header = document.createElement('div');
+            header.className = 'sm:col-span-2 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mt-2';
+            header.textContent = title;
+            listEl.appendChild(header);
+            items.forEach(sk => {
+                const card = document.createElement('div');
+                card.className = 'bg-white dark:bg-[#1A1A1A] rounded-xl border border-slate-200 dark:border-white/10 p-4 flex items-start gap-3';
+                const iconColor = sk.enabled ? 'text-primary-400' : 'text-slate-300 dark:text-slate-600';
+                const statusDot = sk.enabled
+                    ? '<span class="w-2 h-2 rounded-full bg-primary-400 flex-shrink-0 mt-1"></span>'
+                    : '<span class="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600 flex-shrink-0 mt-1"></span>';
+                card.innerHTML = `
+                    <div class="w-9 h-9 rounded-lg bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-bolt ${iconColor} text-sm"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2">
+                            <span class="font-medium text-sm text-slate-700 dark:text-slate-200 truncate">${escapeHtml(sk.name)}</span>
+                            ${statusDot}
+                        </div>
+                        <p class="text-xs text-slate-400 dark:text-slate-500 mt-1 line-clamp-2">${escapeHtml(sk.description || '--')}</p>
+                    </div>`;
+                listEl.appendChild(card);
+            });
+        }
+        renderGroup(currentLang === 'zh' ? '内置技能' : 'Built-in Skills', builtins);
+        renderGroup(currentLang === 'zh' ? '自定义技能' : 'Custom Skills', customs);
+        skillsLoaded = true;
+    }).catch(() => {});
+}
+
+// =====================================================================
+// Memory View
+// =====================================================================
+let memoryPage = 1;
+const memoryPageSize = 10;
+
+function loadMemoryView(page) {
+    page = page || 1;
+    memoryPage = page;
+    fetch(`/api/memory?page=${page}&page_size=${memoryPageSize}`).then(r => r.json()).then(data => {
+        if (data.status !== 'success') return;
+        const emptyEl = document.getElementById('memory-empty');
+        const listEl = document.getElementById('memory-list');
+        const files = data.list || [];
+        const total = data.total || 0;
+
+        if (total === 0) {
+            emptyEl.querySelector('p').textContent = currentLang === 'zh' ? '暂无记忆文件' : 'No memory files';
+            emptyEl.classList.remove('hidden');
+            listEl.classList.add('hidden');
+            return;
+        }
+        emptyEl.classList.add('hidden');
+        listEl.classList.remove('hidden');
+
+        const tbody = document.getElementById('memory-table-body');
+        tbody.innerHTML = '';
+        files.forEach(f => {
+            const tr = document.createElement('tr');
+            tr.className = 'border-b border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer transition-colors';
+            tr.onclick = () => openMemoryFile(f.filename);
+            const typeLabel = f.type === 'global'
+                ? '<span class="px-2 py-0.5 rounded-full text-xs bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400">Global</span>'
+                : '<span class="px-2 py-0.5 rounded-full text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">Daily</span>';
+            const sizeStr = f.size < 1024 ? f.size + ' B' : (f.size / 1024).toFixed(1) + ' KB';
+            tr.innerHTML = `
+                <td class="px-4 py-3 text-sm font-mono text-slate-700 dark:text-slate-200">${escapeHtml(f.filename)}</td>
+                <td class="px-4 py-3 text-sm">${typeLabel}</td>
+                <td class="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">${sizeStr}</td>
+                <td class="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">${escapeHtml(f.updated_at)}</td>`;
+            tbody.appendChild(tr);
+        });
+
+        // Pagination
+        const totalPages = Math.ceil(total / memoryPageSize);
+        const pagEl = document.getElementById('memory-pagination');
+        if (totalPages <= 1) { pagEl.innerHTML = ''; return; }
+        let pagHtml = `<span>${page} / ${totalPages}</span><div class="flex gap-2">`;
+        if (page > 1) pagHtml += `<button onclick="loadMemoryView(${page - 1})" class="px-3 py-1 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10 text-xs">Prev</button>`;
+        if (page < totalPages) pagHtml += `<button onclick="loadMemoryView(${page + 1})" class="px-3 py-1 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10 text-xs">Next</button>`;
+        pagHtml += '</div>';
+        pagEl.innerHTML = pagHtml;
+    }).catch(() => {});
+}
+
+function openMemoryFile(filename) {
+    fetch(`/api/memory/content?filename=${encodeURIComponent(filename)}`).then(r => r.json()).then(data => {
+        if (data.status !== 'success') return;
+        document.getElementById('memory-panel-list').classList.add('hidden');
+        const panel = document.getElementById('memory-panel-viewer');
+        document.getElementById('memory-viewer-title').textContent = filename;
+        document.getElementById('memory-viewer-content').innerHTML = renderMarkdown(data.content || '');
+        panel.classList.remove('hidden');
+        applyHighlighting(panel);
+    }).catch(() => {});
+}
+
+function closeMemoryViewer() {
+    document.getElementById('memory-panel-viewer').classList.add('hidden');
+    document.getElementById('memory-panel-list').classList.remove('hidden');
+}
+
+// =====================================================================
+// Channels View
+// =====================================================================
+function loadChannelsView() {
+    const container = document.getElementById('channels-content');
+    const channelType = appConfig.channel_type || 'web';
+    const channelMap = {
+        web: { name: 'Web', icon: 'fa-globe', color: 'primary' },
+        terminal: { name: 'Terminal', icon: 'fa-terminal', color: 'slate' },
+        feishu: { name: 'Feishu', icon: 'fa-paper-plane', color: 'blue' },
+        dingtalk: { name: 'DingTalk', icon: 'fa-comments', color: 'blue' },
+        wechatcom_app: { name: 'WeCom', icon: 'fa-building', color: 'emerald' },
+        wechatmp: { name: 'WeChat MP', icon: 'fa-comment-dots', color: 'emerald' },
+        wechatmp_service: { name: 'WeChat Service', icon: 'fa-comment-dots', color: 'emerald' },
+    };
+    const info = channelMap[channelType] || { name: channelType, icon: 'fa-tower-broadcast', color: 'sky' };
+    container.innerHTML = `
+        <div class="bg-white dark:bg-[#1A1A1A] rounded-xl border border-slate-200 dark:border-white/10 p-6 flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-${info.color}-50 dark:bg-${info.color}-900/20 flex items-center justify-center">
+                <i class="fas ${info.icon} text-${info.color}-500 text-lg"></i>
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <span class="font-semibold text-slate-800 dark:text-slate-100">${info.name}</span>
+                    <span class="w-2 h-2 rounded-full bg-primary-400"></span>
+                    <span class="text-xs text-primary-500">Active</span>
+                </div>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5 font-mono">${escapeHtml(channelType)}</p>
+            </div>
+        </div>`;
+}
+
+// =====================================================================
+// Scheduler View
+// =====================================================================
+let tasksLoaded = false;
+function loadTasksView() {
+    if (tasksLoaded) return;
+    fetch('/api/scheduler').then(r => r.json()).then(data => {
+        if (data.status !== 'success') return;
+        const emptyEl = document.getElementById('tasks-empty');
+        const listEl = document.getElementById('tasks-list');
+        const allTasks = data.tasks || [];
+        // Only show active (enabled) tasks
+        const tasks = allTasks.filter(t => t.enabled !== false);
+        if (tasks.length === 0) {
+            emptyEl.querySelector('p').textContent = currentLang === 'zh' ? '暂无定时任务' : 'No scheduled tasks';
+            return;
+        }
+        emptyEl.classList.add('hidden');
+        listEl.classList.remove('hidden');
+        listEl.innerHTML = '';
+
+        tasks.forEach(task => {
+            const card = document.createElement('div');
+            card.className = 'bg-white dark:bg-[#1A1A1A] rounded-xl border border-slate-200 dark:border-white/10 p-4';
+            const typeLabel = task.type === 'cron'
+                ? `<span class="text-xs font-mono text-slate-400">${escapeHtml(task.cron || '')}</span>`
+                : `<span class="text-xs text-slate-400">${escapeHtml(task.type || 'once')}</span>`;
+            let nextRun = '--';
+            if (task.next_run_at) {
+                // next_run_at is an ISO string, not a Unix timestamp
+                const d = new Date(task.next_run_at);
+                if (!isNaN(d.getTime())) nextRun = d.toLocaleString();
+            }
+            card.innerHTML = `
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="w-2 h-2 rounded-full bg-primary-400"></span>
+                    <span class="font-medium text-sm text-slate-700 dark:text-slate-200">${escapeHtml(task.name || task.id || '--')}</span>
+                    <div class="flex-1"></div>
+                    ${typeLabel}
+                </div>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mb-2 line-clamp-2">${escapeHtml(task.prompt || task.description || '')}</p>
+                <div class="flex items-center gap-4 text-xs text-slate-400 dark:text-slate-500">
+                    <span><i class="fas fa-clock mr-1"></i>${currentLang === 'zh' ? '下次执行' : 'Next run'}: ${nextRun}</span>
+                </div>`;
+            listEl.appendChild(card);
+        });
+        tasksLoaded = true;
+    }).catch(() => {});
+}
+
+// =====================================================================
+// Logs View
+// =====================================================================
+let logEventSource = null;
+
+function startLogStream() {
+    if (logEventSource) return;
+    const output = document.getElementById('log-output');
+    output.innerHTML = '';
+
+    logEventSource = new EventSource('/api/logs');
+    logEventSource.onmessage = function(e) {
+        let item;
+        try { item = JSON.parse(e.data); } catch (_) { return; }
+
+        if (item.type === 'init') {
+            output.textContent = item.content || '';
+            output.scrollTop = output.scrollHeight;
+        } else if (item.type === 'line') {
+            output.textContent += item.content;
+            output.scrollTop = output.scrollHeight;
+        } else if (item.type === 'error') {
+            output.textContent = item.message || 'Error loading logs';
+        }
+    };
+    logEventSource.onerror = function() {
+        logEventSource.close();
+        logEventSource = null;
+    };
+}
+
+function stopLogStream() {
+    if (logEventSource) {
+        logEventSource.close();
+        logEventSource = null;
+    }
+}
+
+// =====================================================================
+// View Navigation Hook
+// =====================================================================
+const _origNavigateTo = navigateTo;
+navigateTo = function(viewId) {
+    // Stop log stream when leaving logs view
+    if (currentView === 'logs' && viewId !== 'logs') stopLogStream();
+
+    _origNavigateTo(viewId);
+
+    // Lazy-load view data
+    if (viewId === 'skills') loadSkillsView();
+    else if (viewId === 'memory') {
+        // Always start from the list panel when navigating to memory
+        document.getElementById('memory-panel-viewer').classList.add('hidden');
+        document.getElementById('memory-panel-list').classList.remove('hidden');
+        loadMemoryView(1);
+    }
+    else if (viewId === 'channels') loadChannelsView();
+    else if (viewId === 'tasks') loadTasksView();
+    else if (viewId === 'logs') startLogStream();
+};
+
+// =====================================================================
 // Initialization
 // =====================================================================
 applyTheme();
 applyI18n();
+document.getElementById('sidebar-version').textContent = `CowAgent ${APP_VERSION}`;
 chatInput.focus();

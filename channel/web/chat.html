@@ -54,7 +54,7 @@
                                     transform -translate-x-full lg:relative lg:translate-x-0
                                     transition-transform duration-300 ease-in-out">
             <!-- Logo -->
-            <div class="flex items-center gap-3 px-5 h-16 border-b border-white/10 flex-shrink-0">
+            <div class="flex items-center gap-3 px-5 h-14 border-b border-white/10 flex-shrink-0">
                 <img src="assets/logo.jpg" alt="CowAgent" class="w-8 h-8 rounded-lg flex-shrink-0">
                 <div class="flex flex-col min-w-0">
                     <span class="text-white font-semibold text-sm truncate">CowAgent</span>
@@ -134,7 +134,10 @@
             <div class="px-4 py-3 border-t border-white/10 flex-shrink-0">
                 <div class="flex items-center gap-2 text-xs text-neutral-600">
                     <i class="fas fa-circle text-[6px] text-primary-400"></i>
-                    <span>CowAgent v1.0</span>
+                    <a id="sidebar-version"
+                       href="https://github.com/zhayujie/chatgpt-on-wechat/releases"
+                       target="_blank" rel="noopener noreferrer"
+                       class="hover:text-primary-400 transition-colors duration-150 cursor-pointer"></a>
                 </div>
             </div>
         </aside>
@@ -202,7 +205,7 @@
                             <img src="assets/logo.jpg" alt="CowAgent" class="w-16 h-16 rounded-2xl mb-6 shadow-lg shadow-primary-500/20">
                             <h1 id="welcome-title" class="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-3">CowAgent</h1>
                             <p id="welcome-subtitle" class="text-slate-500 dark:text-slate-400 text-center max-w-lg mb-10 leading-relaxed"
-                               data-i18n="welcome_subtitle">I can help you answer questions, manage your computer, create and execute skills, and keep growing through long-term memory.</p>
+                               data-i18n-html="welcome_subtitle">I can help you answer questions, manage your computer, create and execute skills,<br>and keep growing through long-term memory.</p>
 
                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-2xl">
                                 <div class="example-card group bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 rounded-xl p-4
@@ -295,10 +298,6 @@
                                             <span class="text-sm font-medium text-slate-500 dark:text-slate-400 w-32 flex-shrink-0">Model</span>
                                             <span class="text-sm text-slate-700 dark:text-slate-200 flex-1 font-mono" id="cfg-model">--</span>
                                         </div>
-                                        <div class="flex items-center gap-4 p-3 rounded-lg bg-slate-50 dark:bg-white/5">
-                                            <span class="text-sm font-medium text-slate-500 dark:text-slate-400 w-32 flex-shrink-0">API Base</span>
-                                            <span class="text-sm text-slate-700 dark:text-slate-200 flex-1 font-mono truncate" id="cfg-api-base">--</span>
-                                        </div>
                                     </div>
                                 </div>
                                 <!-- Agent Config Card -->
@@ -383,34 +382,60 @@
                 <div id="view-memory" class="view">
                     <div class="flex-1 overflow-y-auto p-6">
                         <div class="max-w-4xl mx-auto">
-                            <div class="flex items-center justify-between mb-6">
-                                <div>
-                                    <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100" data-i18n="memory_title">Memory</h2>
-                                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1" data-i18n="memory_desc">View agent memory files and contents</p>
+
+                            <!-- Panel: list -->
+                            <div id="memory-panel-list">
+                                <div class="flex items-center justify-between mb-6">
+                                    <div>
+                                        <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100" data-i18n="memory_title">Memory</h2>
+                                        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1" data-i18n="memory_desc">View agent memory files and contents</p>
+                                    </div>
+                                </div>
+                                <div id="memory-empty" class="flex flex-col items-center justify-center py-20">
+                                    <div class="w-16 h-16 rounded-2xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center mb-4">
+                                        <i class="fas fa-brain text-purple-400 text-xl"></i>
+                                    </div>
+                                    <p class="text-slate-500 dark:text-slate-400 font-medium" data-i18n="memory_loading">Loading memory files...</p>
+                                    <p class="text-sm text-slate-400 dark:text-slate-500 mt-1" data-i18n="memory_loading_desc">Memory files will be displayed here</p>
+                                </div>
+                                <div id="memory-list" class="hidden">
+                                    <div class="bg-white dark:bg-[#1A1A1A] rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden">
+                                        <table class="w-full">
+                                            <thead>
+                                                <tr class="border-b border-slate-200 dark:border-white/10">
+                                                    <th class="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400" data-i18n="memory_col_name">Filename</th>
+                                                    <th class="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400" data-i18n="memory_col_type">Type</th>
+                                                    <th class="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400" data-i18n="memory_col_size">Size</th>
+                                                    <th class="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400" data-i18n="memory_col_updated">Updated</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="memory-table-body"></tbody>
+                                        </table>
+                                    </div>
+                                    <div id="memory-pagination" class="flex items-center justify-between mt-4 text-sm text-slate-500 dark:text-slate-400"></div>
                                 </div>
                             </div>
-                            <div id="memory-empty" class="flex flex-col items-center justify-center py-20">
-                                <div class="w-16 h-16 rounded-2xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center mb-4">
-                                    <i class="fas fa-brain text-purple-400 text-xl"></i>
+
+                            <!-- Panel: file viewer (replaces list) -->
+                            <div id="memory-panel-viewer" class="hidden">
+                                <div class="flex items-center gap-3 mb-6">
+                                    <button onclick="closeMemoryViewer()"
+                                            class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm
+                                                   text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10
+                                                   border border-slate-200 dark:border-white/10 transition-colors cursor-pointer">
+                                        <i class="fas fa-arrow-left text-xs"></i>
+                                        <span data-i18n="memory_back">Back</span>
+                                    </button>
+                                    <h2 id="memory-viewer-title"
+                                        class="text-base font-semibold text-slate-800 dark:text-slate-100 font-mono truncate"></h2>
                                 </div>
-                                <p class="text-slate-500 dark:text-slate-400 font-medium" data-i18n="memory_loading">Loading memory files...</p>
-                                <p class="text-sm text-slate-400 dark:text-slate-500 mt-1" data-i18n="memory_loading_desc">Memory files will be displayed here</p>
-                            </div>
-                            <div id="memory-list" class="hidden">
                                 <div class="bg-white dark:bg-[#1A1A1A] rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden">
-                                    <table class="w-full">
-                                        <thead>
-                                            <tr class="border-b border-slate-200 dark:border-white/10">
-                                                <th class="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400" data-i18n="memory_col_name">Filename</th>
-                                                <th class="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400" data-i18n="memory_col_type">Type</th>
-                                                <th class="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400" data-i18n="memory_col_size">Size</th>
-                                                <th class="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400" data-i18n="memory_col_updated">Updated</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="memory-table-body"></tbody>
-                                    </table>
+                                    <div id="memory-viewer-content"
+                                         class="p-5 overflow-y-auto text-sm msg-content text-slate-700 dark:text-slate-200"
+                                         style="max-height: calc(100vh - 220px)"></div>
                                 </div>
                             </div>
+
                         </div>
                     </div>
                 </div>
@@ -427,13 +452,7 @@
                                     <p class="text-sm text-slate-500 dark:text-slate-400 mt-1" data-i18n="channels_desc">View and manage messaging channels</p>
                                 </div>
                             </div>
-                            <div class="flex flex-col items-center justify-center py-20">
-                                <div class="w-16 h-16 rounded-2xl bg-sky-50 dark:bg-sky-900/20 flex items-center justify-center mb-4">
-                                    <i class="fas fa-tower-broadcast text-sky-400 text-xl"></i>
-                                </div>
-                                <p class="text-slate-500 dark:text-slate-400 font-medium" data-i18n="channels_coming">Coming Soon</p>
-                                <p class="text-sm text-slate-400 dark:text-slate-500 mt-1" data-i18n="channels_coming_desc">Channel management will be available here</p>
-                            </div>
+                            <div id="channels-content" class="grid gap-4"></div>
                         </div>
                     </div>
                 </div>
@@ -450,13 +469,13 @@
                                     <p class="text-sm text-slate-500 dark:text-slate-400 mt-1" data-i18n="tasks_desc">View and manage scheduled tasks</p>
                                 </div>
                             </div>
-                            <div class="flex flex-col items-center justify-center py-20">
+                            <div id="tasks-empty" class="flex flex-col items-center justify-center py-20">
                                 <div class="w-16 h-16 rounded-2xl bg-rose-50 dark:bg-rose-900/20 flex items-center justify-center mb-4">
                                     <i class="fas fa-clock text-rose-400 text-xl"></i>
                                 </div>
-                                <p class="text-slate-500 dark:text-slate-400 font-medium" data-i18n="tasks_coming">Coming Soon</p>
-                                <p class="text-sm text-slate-400 dark:text-slate-500 mt-1" data-i18n="tasks_coming_desc">Scheduled task management will be available here</p>
+                                <p class="text-slate-500 dark:text-slate-400 font-medium">Loading...</p>
                             </div>
+                            <div id="tasks-list" class="grid gap-4 hidden"></div>
                         </div>
                     </div>
                 </div>
@@ -488,7 +507,7 @@
                                         <span class="text-xs text-slate-500" data-i18n="logs_live">Live</span>
                                     </div>
                                 </div>
-                                <div id="log-output" class="p-4 h-[500px] overflow-y-auto font-mono text-xs leading-relaxed text-slate-300">
+                                <div id="log-output" class="p-4 overflow-y-auto font-mono text-xs leading-relaxed text-slate-300 whitespace-pre-wrap break-all" style="height: calc(100vh - 272px)">
                                     <p class="text-slate-500" data-i18n="logs_coming_msg">Log streaming will be available here. Connects to run.log for real-time output similar to tail -f.</p>
                                 </div>
                             </div>

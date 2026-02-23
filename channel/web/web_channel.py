@@ -281,8 +281,8 @@ class WebChannel(ChatChannel):
         logger.info("[WebChannel]   5. wechatcom_app    - 企微自建应用")
         logger.info("[WebChannel]   6. wechatmp         - 个人公众号")
         logger.info("[WebChannel]   7. wechatmp_service - 企业公众号")
-        logger.info(f"[WebChannel] 🌐 本地访问: http://localhost:{port}/chat")
-        logger.info(f"[WebChannel] 🌍 服务器访问: http://YOUR_IP:{port}/chat (请将YOUR_IP替换为服务器IP)")
+        logger.info(f"[WebChannel] 🌐 本地访问: http://localhost:{port}")
+        logger.info(f"[WebChannel] 🌍 服务器访问: http://YOUR_IP:{port} (请将YOUR_IP替换为服务器IP)")
         logger.info("[WebChannel] ✅ Web对话网页已运行")
         
         # 确保静态文件目录存在
@@ -298,6 +298,11 @@ class WebChannel(ChatChannel):
             '/stream', 'StreamHandler',
             '/chat', 'ChatHandler',
             '/config', 'ConfigHandler',
+            '/api/skills', 'SkillsHandler',
+            '/api/memory', 'MemoryHandler',
+            '/api/memory/content', 'MemoryContentHandler',
+            '/api/scheduler', 'SchedulerHandler',
+            '/api/logs', 'LogsHandler',
             '/assets/(.*)', 'AssetsHandler',
         )
         app = web.application(urls, globals(), autoreload=False)
@@ -385,7 +390,6 @@ class ConfigHandler:
                 "use_agent": use_agent,
                 "title": title,
                 "model": local_config.get("model", ""),
-                "open_ai_api_base": local_config.get("open_ai_api_base", ""),
                 "channel_type": local_config.get("channel_type", ""),
                 "agent_max_context_tokens": local_config.get("agent_max_context_tokens", ""),
                 "agent_max_context_turns": local_config.get("agent_max_context_turns", ""),
@@ -394,6 +398,125 @@ class ConfigHandler:
         except Exception as e:
             logger.error(f"Error getting config: {e}")
             return json.dumps({"status": "error", "message": str(e)})
+
+
+def _get_workspace_root():
+    """Resolve the agent workspace directory."""
+    from common.utils import expand_path
+    return expand_path(conf().get("agent_workspace", "~/cow"))
+
+
+class SkillsHandler:
+    def GET(self):
+        web.header('Content-Type', 'application/json; charset=utf-8')
+        try:
+            from agent.skills.service import SkillService
+            from agent.skills.manager import SkillManager
+            workspace_root = _get_workspace_root()
+            manager = SkillManager(custom_dir=os.path.join(workspace_root, "skills"))
+            service = SkillService(manager)
+            skills = service.query()
+            return json.dumps({"status": "success", "skills": skills}, ensure_ascii=False)
+        except Exception as e:
+            logger.error(f"[WebChannel] Skills API error: {e}")
+            return json.dumps({"status": "error", "message": str(e)})
+
+
+class MemoryHandler:
+    def GET(self):
+        web.header('Content-Type', 'application/json; charset=utf-8')
+        try:
+            from agent.memory.service import MemoryService
+            params = web.input(page='1', page_size='20')
+            workspace_root = _get_workspace_root()
+            service = MemoryService(workspace_root)
+            result = service.list_files(page=int(params.page), page_size=int(params.page_size))
+            return json.dumps({"status": "success", **result}, ensure_ascii=False)
+        except Exception as e:
+            logger.error(f"[WebChannel] Memory API error: {e}")
+            return json.dumps({"status": "error", "message": str(e)})
+
+
+class MemoryContentHandler:
+    def GET(self):
+        web.header('Content-Type', 'application/json; charset=utf-8')
+        try:
+            from agent.memory.service import MemoryService
+            params = web.input(filename='')
+            if not params.filename:
+                return json.dumps({"status": "error", "message": "filename required"})
+            workspace_root = _get_workspace_root()
+            service = MemoryService(workspace_root)
+            result = service.get_content(params.filename)
+            return json.dumps({"status": "success", **result}, ensure_ascii=False)
+        except FileNotFoundError:
+            return json.dumps({"status": "error", "message": "file not found"})
+        except Exception as e:
+            logger.error(f"[WebChannel] Memory content API error: {e}")
+            return json.dumps({"status": "error", "message": str(e)})
+
+
+class SchedulerHandler:
+    def GET(self):
+        web.header('Content-Type', 'application/json; charset=utf-8')
+        try:
+            from agent.tools.scheduler.task_store import TaskStore
+            workspace_root = _get_workspace_root()
+            store_path = os.path.join(workspace_root, "scheduler", "tasks.json")
+            store = TaskStore(store_path)
+            tasks = store.list_tasks()
+            return json.dumps({"status": "success", "tasks": tasks}, ensure_ascii=False)
+        except Exception as e:
+            logger.error(f"[WebChannel] Scheduler API error: {e}")
+            return json.dumps({"status": "error", "message": str(e)})
+
+
+class LogsHandler:
+    def GET(self):
+        """Stream the last N lines of run.log as SSE, then tail new lines."""
+        web.header('Content-Type', 'text/event-stream; charset=utf-8')
+        web.header('Cache-Control', 'no-cache')
+        web.header('X-Accel-Buffering', 'no')
+
+        from config import get_root
+        log_path = os.path.join(get_root(), "run.log")
+
+        def generate():
+            if not os.path.isfile(log_path):
+                yield b"data: {\"type\": \"error\", \"message\": \"run.log not found\"}\n\n"
+                return
+
+            # Read last 200 lines for initial display
+            try:
+                with open(log_path, 'r', encoding='utf-8', errors='replace') as f:
+                    lines = f.readlines()
+                tail_lines = lines[-200:]
+                chunk = ''.join(tail_lines)
+                payload = json.dumps({"type": "init", "content": chunk}, ensure_ascii=False)
+                yield f"data: {payload}\n\n".encode('utf-8')
+            except Exception as e:
+                yield f"data: {{\"type\": \"error\", \"message\": \"{e}\"}}\n\n".encode('utf-8')
+                return
+
+            # Tail new lines
+            try:
+                with open(log_path, 'r', encoding='utf-8', errors='replace') as f:
+                    f.seek(0, 2)  # seek to end
+                    deadline = time.time() + 600  # 10 min max
+                    while time.time() < deadline:
+                        line = f.readline()
+                        if line:
+                            payload = json.dumps({"type": "line", "content": line}, ensure_ascii=False)
+                            yield f"data: {payload}\n\n".encode('utf-8')
+                        else:
+                            yield b": keepalive\n\n"
+                            time.sleep(1)
+            except GeneratorExit:
+                return
+            except Exception:
+                return
+
+        return generate()
 
 
 class AssetsHandler:
