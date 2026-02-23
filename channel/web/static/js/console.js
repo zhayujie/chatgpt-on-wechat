@@ -225,6 +225,7 @@ function renderMarkdown(text) {
 let sessionId = generateSessionId();
 let isPolling = false;
 let loadingContainers = {};
+let activeStreams = {};   // request_id -> EventSource
 let isComposing = false;
 let appConfig = { use_agent: false, title: 'CowAgent', subtitle: '' };
 
@@ -310,13 +311,17 @@ function sendMessage() {
     fetch('/message', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ session_id: sessionId, message: text, timestamp: timestamp.toISOString() })
+        body: JSON.stringify({ session_id: sessionId, message: text, stream: true, timestamp: timestamp.toISOString() })
     })
     .then(r => r.json())
     .then(data => {
         if (data.status === 'success') {
-            loadingContainers[data.request_id] = loadingEl;
-            if (!isPolling) startPolling();
+            if (data.stream) {
+                startSSE(data.request_id, loadingEl, timestamp);
+            } else {
+                loadingContainers[data.request_id] = loadingEl;
+                if (!isPolling) startPolling();
+            }
         } else {
             loadingEl.remove();
             addBotMessage(t('error_send'), new Date());
@@ -326,6 +331,163 @@ function sendMessage() {
         loadingEl.remove();
         addBotMessage(err.name === 'AbortError' ? t('error_timeout') : t('error_send'), new Date());
     });
+}
+
+function startSSE(requestId, loadingEl, timestamp) {
+    const es = new EventSource(`/stream?request_id=${encodeURIComponent(requestId)}`);
+    activeStreams[requestId] = es;
+
+    let botEl = null;
+    let stepsEl = null;    // .agent-steps  (thinking summaries + tool indicators)
+    let contentEl = null;  // .answer-content (final streaming answer)
+    let accumulatedText = '';
+    let currentToolEl = null;
+
+    function ensureBotEl() {
+        if (botEl) return;
+        if (loadingEl) { loadingEl.remove(); loadingEl = null; }
+        botEl = document.createElement('div');
+        botEl.className = 'flex gap-3 px-4 sm:px-6 py-3';
+        botEl.dataset.requestId = requestId;
+        botEl.innerHTML = `
+            <img src="assets/logo.jpg" alt="CowAgent" class="w-8 h-8 rounded-lg flex-shrink-0">
+            <div class="min-w-0 flex-1 max-w-[85%]">
+                <div class="bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-3 text-sm leading-relaxed msg-content text-slate-700 dark:text-slate-200">
+                    <div class="agent-steps"></div>
+                    <div class="answer-content sse-streaming"></div>
+                </div>
+                <div class="text-xs text-slate-400 dark:text-slate-500 mt-1.5">${formatTime(timestamp)}</div>
+            </div>
+        `;
+        messagesDiv.appendChild(botEl);
+        stepsEl = botEl.querySelector('.agent-steps');
+        contentEl = botEl.querySelector('.answer-content');
+    }
+
+    es.onmessage = function(e) {
+        let item;
+        try { item = JSON.parse(e.data); } catch (_) { return; }
+
+        if (item.type === 'delta') {
+            ensureBotEl();
+            accumulatedText += item.content;
+            contentEl.innerHTML = renderMarkdown(accumulatedText);
+            scrollChatToBottom();
+
+        } else if (item.type === 'tool_start') {
+            ensureBotEl();
+
+            // Save current thinking as a collapsible step
+            if (accumulatedText.trim()) {
+                const fullText = accumulatedText.trim();
+                const oneLine = fullText.replace(/\n+/g, ' ');
+                const needsTruncate = oneLine.length > 80;
+                const stepEl = document.createElement('div');
+                stepEl.className = 'agent-step agent-thinking-step' + (needsTruncate ? '' : ' no-expand');
+                if (needsTruncate) {
+                    const truncated = oneLine.substring(0, 80) + '…';
+                    stepEl.innerHTML = `
+                        <div class="thinking-header" onclick="this.parentElement.classList.toggle('expanded')">
+                            <i class="fas fa-lightbulb text-amber-400 flex-shrink-0"></i>
+                            <span class="thinking-summary">${escapeHtml(truncated)}</span>
+                            <i class="fas fa-chevron-right thinking-chevron"></i>
+                        </div>
+                        <div class="thinking-full">${renderMarkdown(fullText)}</div>`;
+                } else {
+                    stepEl.innerHTML = `
+                        <div class="thinking-header no-toggle">
+                            <i class="fas fa-lightbulb text-amber-400 flex-shrink-0"></i>
+                            <span>${escapeHtml(oneLine)}</span>
+                        </div>`;
+                }
+                stepsEl.appendChild(stepEl);
+            }
+            accumulatedText = '';
+            contentEl.innerHTML = '';
+
+            // Add tool execution indicator (collapsible)
+            currentToolEl = document.createElement('div');
+            currentToolEl.className = 'agent-step agent-tool-step';
+            const argsStr = formatToolArgs(item.arguments || {});
+            currentToolEl.innerHTML = `
+                <div class="tool-header" onclick="this.parentElement.classList.toggle('expanded')">
+                    <i class="fas fa-cog fa-spin text-primary-400 flex-shrink-0 tool-icon"></i>
+                    <span class="tool-name">${item.tool}</span>
+                    <i class="fas fa-chevron-right tool-chevron"></i>
+                </div>
+                <div class="tool-detail">
+                    <div class="tool-detail-section">
+                        <div class="tool-detail-label">Input</div>
+                        <pre class="tool-detail-content">${argsStr}</pre>
+                    </div>
+                    <div class="tool-detail-section tool-output-section"></div>
+                </div>`;
+            stepsEl.appendChild(currentToolEl);
+
+            scrollChatToBottom();
+
+        } else if (item.type === 'tool_end') {
+            if (currentToolEl) {
+                const isError = item.status !== 'success';
+                const icon = currentToolEl.querySelector('.tool-icon');
+                icon.className = isError
+                    ? 'fas fa-times text-red-400 flex-shrink-0 tool-icon'
+                    : 'fas fa-check text-primary-400 flex-shrink-0 tool-icon';
+
+                // Show execution time
+                const nameEl = currentToolEl.querySelector('.tool-name');
+                if (item.execution_time !== undefined) {
+                    nameEl.innerHTML += ` <span class="tool-time">${item.execution_time}s</span>`;
+                }
+
+                // Fill output section
+                const outputSection = currentToolEl.querySelector('.tool-output-section');
+                if (outputSection && item.result) {
+                    outputSection.innerHTML = `
+                        <div class="tool-detail-label">${isError ? 'Error' : 'Output'}</div>
+                        <pre class="tool-detail-content ${isError ? 'tool-error-text' : ''}">${escapeHtml(String(item.result))}</pre>`;
+                }
+
+                if (isError) currentToolEl.classList.add('tool-failed');
+                currentToolEl = null;
+            }
+
+        } else if (item.type === 'done') {
+            es.close();
+            delete activeStreams[requestId];
+
+            const finalText = item.content || accumulatedText;
+
+            if (!botEl && finalText) {
+                if (loadingEl) { loadingEl.remove(); loadingEl = null; }
+                addBotMessage(finalText, new Date((item.timestamp || Date.now() / 1000) * 1000), requestId);
+            } else if (botEl) {
+                contentEl.classList.remove('sse-streaming');
+                if (finalText) contentEl.innerHTML = renderMarkdown(finalText);
+                applyHighlighting(botEl);
+            }
+            scrollChatToBottom();
+
+        } else if (item.type === 'error') {
+            es.close();
+            delete activeStreams[requestId];
+            if (loadingEl) { loadingEl.remove(); loadingEl = null; }
+            addBotMessage(t('error_send'), new Date());
+        }
+    };
+
+    es.onerror = function() {
+        es.close();
+        delete activeStreams[requestId];
+        if (loadingEl) { loadingEl.remove(); loadingEl = null; }
+        if (!botEl) {
+            addBotMessage(t('error_send'), new Date());
+        } else if (accumulatedText) {
+            contentEl.classList.remove('sse-streaming');
+            contentEl.innerHTML = renderMarkdown(accumulatedText);
+            applyHighlighting(botEl);
+        }
+    };
 }
 
 function startPolling() {
@@ -379,7 +541,7 @@ function addBotMessage(content, timestamp, requestId) {
     el.className = 'flex gap-3 px-4 sm:px-6 py-3';
     if (requestId) el.dataset.requestId = requestId;
     el.innerHTML = `
-        <img src="assets/logo.jpg" alt="CowAgent" class="w-8 h-8 rounded-lg flex-shrink-0 mt-1">
+        <img src="assets/logo.jpg" alt="CowAgent" class="w-8 h-8 rounded-lg flex-shrink-0">
         <div class="min-w-0 flex-1 max-w-[85%]">
             <div class="bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-3 text-sm leading-relaxed msg-content text-slate-700 dark:text-slate-200">
                 ${renderMarkdown(content)}
@@ -396,7 +558,7 @@ function addLoadingIndicator() {
     const el = document.createElement('div');
     el.className = 'flex gap-3 px-4 sm:px-6 py-3';
     el.innerHTML = `
-        <img src="assets/logo.jpg" alt="CowAgent" class="w-8 h-8 rounded-lg flex-shrink-0 mt-1">
+        <img src="assets/logo.jpg" alt="CowAgent" class="w-8 h-8 rounded-lg flex-shrink-0">
         <div class="bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-3">
             <div class="flex items-center gap-1.5">
                 <span class="w-2 h-2 rounded-full bg-primary-400 animate-pulse-dot" style="animation-delay: 0s"></span>
@@ -411,6 +573,10 @@ function addLoadingIndicator() {
 }
 
 function newChat() {
+    // Close all active SSE connections for the current session
+    Object.values(activeStreams).forEach(es => { try { es.close(); } catch (_) {} });
+    activeStreams = {};
+
     sessionId = generateSessionId();
     isPolling = false;
     loadingContainers = {};
@@ -471,6 +637,21 @@ function newChat() {
 // =====================================================================
 function formatTime(date) {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.appendChild(document.createTextNode(str));
+    return div.innerHTML;
+}
+
+function formatToolArgs(args) {
+    if (!args || Object.keys(args).length === 0) return '(none)';
+    try {
+        return escapeHtml(JSON.stringify(args, null, 2));
+    } catch (_) {
+        return escapeHtml(String(args));
+    }
 }
 
 function scrollChatToBottom() {

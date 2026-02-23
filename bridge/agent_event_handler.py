@@ -94,15 +94,15 @@ class AgentEventHandler:
     
     def _send_to_channel(self, message):
         """
-        Try to send message to channel
-        
-        Args:
-            message: Message to send
+        Try to send intermediate message to channel.
+        Skipped in SSE mode because thinking text is already streamed via on_event.
         """
+        if self.context and self.context.get("on_event"):
+            return
+
         if self.channel:
             try:
                 from bridge.reply import Reply, ReplyType
-                # Create a Reply object for the message
                 reply = Reply(ReplyType.TEXT, message)
                 self.channel._send(reply, self.context)
             except Exception as e:

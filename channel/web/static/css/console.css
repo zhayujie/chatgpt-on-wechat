@@ -82,6 +82,146 @@
 .msg-content hr { border: none; height: 1px; background: #e2e8f0; margin: 1.2em 0; }
 .dark .msg-content hr { background: rgba(255,255,255,0.1); }
 
+/* SSE Streaming cursor */
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+.sse-streaming::after {
+    content: '▋';
+    display: inline-block;
+    margin-left: 2px;
+    color: #4ABE6E;
+    animation: blink 0.9s step-end infinite;
+    font-size: 0.85em;
+    vertical-align: middle;
+}
+
+/* Agent steps (thinking summaries + tool indicators) */
+.agent-steps:empty { display: none; }
+.agent-steps:not(:empty) {
+    margin-bottom: 0.625rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px dashed rgba(0, 0, 0, 0.08);
+}
+.dark .agent-steps:not(:empty) { border-bottom-color: rgba(255, 255, 255, 0.08); }
+
+.agent-step {
+    font-size: 0.75rem;
+    line-height: 1.4;
+    color: #94a3b8;
+    margin-bottom: 0.25rem;
+}
+.agent-step:last-child { margin-bottom: 0; }
+
+/* Thinking step - collapsible */
+.agent-thinking-step .thinking-header {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    cursor: pointer;
+    user-select: none;
+}
+.agent-thinking-step .thinking-header.no-toggle { cursor: default; }
+.agent-thinking-step .thinking-header:not(.no-toggle):hover { color: #64748b; }
+.dark .agent-thinking-step .thinking-header:not(.no-toggle):hover { color: #cbd5e1; }
+.agent-thinking-step .thinking-header i:first-child { font-size: 0.625rem; margin-top: 1px; }
+.agent-thinking-step .thinking-chevron {
+    font-size: 0.5rem;
+    margin-left: auto;
+    transition: transform 0.2s ease;
+    opacity: 0.5;
+}
+.agent-thinking-step.expanded .thinking-chevron { transform: rotate(90deg); }
+.agent-thinking-step .thinking-full {
+    display: none;
+    margin-top: 0.375rem;
+    margin-left: 1rem;
+    padding: 0.5rem;
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 6px;
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    font-size: 0.75rem;
+    line-height: 1.5;
+    color: #94a3b8;
+    max-height: 200px;
+    overflow-y: auto;
+}
+.dark .agent-thinking-step .thinking-full {
+    background: rgba(255, 255, 255, 0.02);
+    border-color: rgba(255, 255, 255, 0.04);
+}
+.agent-thinking-step.expanded .thinking-full { display: block; }
+.agent-thinking-step .thinking-full p { margin: 0.25em 0; }
+.agent-thinking-step .thinking-full p:first-child { margin-top: 0; }
+.agent-thinking-step .thinking-full p:last-child { margin-bottom: 0; }
+
+/* Tool step - collapsible */
+.agent-tool-step .tool-header {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    cursor: pointer;
+    user-select: none;
+    padding: 1px 0;
+    border-radius: 4px;
+}
+.agent-tool-step .tool-header:hover { color: #64748b; }
+.dark .agent-tool-step .tool-header:hover { color: #cbd5e1; }
+.agent-tool-step .tool-icon { font-size: 0.625rem; }
+.agent-tool-step .tool-chevron {
+    font-size: 0.5rem;
+    margin-left: auto;
+    transition: transform 0.2s ease;
+    opacity: 0.5;
+}
+.agent-tool-step.expanded .tool-chevron { transform: rotate(90deg); }
+.agent-tool-step .tool-time {
+    font-size: 0.65rem;
+    opacity: 0.6;
+    margin-left: 0.25rem;
+}
+
+/* Tool detail panel */
+.agent-tool-step .tool-detail {
+    display: none;
+    margin-top: 0.375rem;
+    margin-left: 1rem;
+    padding: 0.5rem;
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 6px;
+    border: 1px solid rgba(0, 0, 0, 0.04);
+}
+.dark .agent-tool-step .tool-detail {
+    background: rgba(255, 255, 255, 0.02);
+    border-color: rgba(255, 255, 255, 0.04);
+}
+.agent-tool-step.expanded .tool-detail { display: block; }
+.tool-detail-section { margin-bottom: 0.375rem; }
+.tool-detail-section:last-child { margin-bottom: 0; }
+.tool-detail-label {
+    font-size: 0.625rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.6;
+    margin-bottom: 0.125rem;
+}
+.tool-detail-content {
+    font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+    font-size: 0.7rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 200px;
+    overflow-y: auto;
+    margin: 0;
+    padding: 0.25rem 0;
+    background: transparent;
+    color: inherit;
+}
+.tool-error-text { color: #f87171; }
+
+/* Tool failed state */
+.agent-tool-step.tool-failed .tool-name { color: #f87171; }
+
 /* Chat Input */
 #chat-input {
     resize: none; height: 42px; max-height: 180px;
