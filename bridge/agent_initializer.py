@@ -118,8 +118,41 @@ class AgentInitializer:
         # Attach memory manager
         if memory_manager:
             agent.memory_manager = memory_manager
-        
+
+        # Restore persisted conversation history for this session
+        if session_id:
+            self._restore_conversation_history(agent, session_id)
+
         return agent
+
+    def _restore_conversation_history(self, agent, session_id: str) -> None:
+        """
+        Load persisted conversation messages from SQLite and inject them
+        into the agent's in-memory message list.
+
+        Only runs when conversation persistence is enabled (default: True).
+        Respects agent_max_context_turns to limit how many turns are loaded.
+        """
+        from config import conf
+        if not conf().get("conversation_persistence", True):
+            return
+
+        try:
+            from agent.memory import get_conversation_store
+            store = get_conversation_store()
+            max_turns = conf().get("agent_max_context_turns", 30)
+            saved = store.load_messages(session_id, max_turns=max_turns)
+            if saved:
+                with agent.messages_lock:
+                    agent.messages = saved
+                logger.info(
+                    f"[AgentInitializer] Restored {len(saved)} messages for session={session_id}"
+                )
+        except Exception as e:
+            logger.warning(
+                f"[AgentInitializer] Failed to restore conversation history for "
+                f"session={session_id}: {e}"
+            )
     
     def _load_env_file(self):
         """Load environment variables from .env file"""

@@ -158,6 +158,7 @@ class ChatService:
         logger.info(f"[ChatService] Agent run completed: session={session_id}")
 
 
+
 class _StreamState:
     """Mutable state shared between the event callback and the run method."""
 

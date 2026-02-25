@@ -232,18 +232,36 @@ function renderMarkdown(text) {
 // =====================================================================
 // Chat Module
 // =====================================================================
-let sessionId = generateSessionId();
 let isPolling = false;
 let loadingContainers = {};
 let activeStreams = {};   // request_id -> EventSource
 let isComposing = false;
 let appConfig = { use_agent: false, title: 'CowAgent', subtitle: '' };
 
+const SESSION_ID_KEY = 'cow_session_id';
+
 function generateSessionId() {
     return 'session_' + ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
         (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
     );
 }
+
+// Restore session_id from localStorage so conversation history survives page refresh.
+// A new id is only generated when the user explicitly starts a new chat.
+function loadOrCreateSessionId() {
+    const stored = localStorage.getItem(SESSION_ID_KEY);
+    if (stored) return stored;
+    const fresh = generateSessionId();
+    localStorage.setItem(SESSION_ID_KEY, fresh);
+    return fresh;
+}
+
+let sessionId = loadOrCreateSessionId();
+
+// ---- Conversation history state ----
+let historyPage = 0;       // last page fetched (0 = nothing fetched yet)
+let historyHasMore = false;
+let historyLoading = false;
 
 fetch('/config').then(r => r.json()).then(data => {
     if (data.status === 'success') {
@@ -257,7 +275,9 @@ fetch('/config').then(r => r.json()).then(data => {
         document.getElementById('cfg-max-steps').textContent = data.agent_max_steps || '--';
         document.getElementById('cfg-channel').textContent = data.channel_type || '--';
     }
-}).catch(() => {});
+    // Load conversation history after config is ready
+    loadHistory(1);
+}).catch(() => { loadHistory(1); });
 
 const chatInput = document.getElementById('chat-input');
 const sendBtn = document.getElementById('send-btn');
@@ -530,7 +550,7 @@ function startPolling() {
     poll();
 }
 
-function addUserMessage(content, timestamp) {
+function createUserMessageEl(content, timestamp) {
     const el = document.createElement('div');
     el.className = 'flex justify-end px-4 sm:px-6 py-3';
     el.innerHTML = `
@@ -541,26 +561,137 @@ function addUserMessage(content, timestamp) {
             <div class="text-xs text-slate-400 dark:text-slate-500 mt-1.5 text-right">${formatTime(timestamp)}</div>
         </div>
     `;
+    return el;
+}
+
+function renderToolCallsHtml(toolCalls) {
+    if (!toolCalls || toolCalls.length === 0) return '';
+    return toolCalls.map(tc => {
+        const argsStr = formatToolArgs(tc.arguments || {});
+        const resultStr = tc.result ? escapeHtml(String(tc.result)) : '';
+        const hasResult = !!resultStr;
+        return `
+<div class="agent-step agent-tool-step">
+    <div class="tool-header" onclick="this.parentElement.classList.toggle('expanded')">
+        <i class="fas fa-check text-primary-400 flex-shrink-0 tool-icon"></i>
+        <span class="tool-name">${escapeHtml(tc.name || '')}</span>
+        <i class="fas fa-chevron-right tool-chevron"></i>
+    </div>
+    <div class="tool-detail">
+        <div class="tool-detail-section">
+            <div class="tool-detail-label">Input</div>
+            <pre class="tool-detail-content">${argsStr}</pre>
+        </div>
+        ${hasResult ? `
+        <div class="tool-detail-section tool-output-section">
+            <div class="tool-detail-label">Output</div>
+            <pre class="tool-detail-content">${resultStr}</pre>
+        </div>` : ''}
+    </div>
+</div>`;
+    }).join('');
+}
+
+function createBotMessageEl(content, timestamp, requestId, toolCalls) {
+    const el = document.createElement('div');
+    el.className = 'flex gap-3 px-4 sm:px-6 py-3';
+    if (requestId) el.dataset.requestId = requestId;
+    const toolsHtml = renderToolCallsHtml(toolCalls);
+    el.innerHTML = `
+        <img src="assets/logo.jpg" alt="CowAgent" class="w-8 h-8 rounded-lg flex-shrink-0">
+        <div class="min-w-0 flex-1 max-w-[85%]">
+            <div class="bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-3 text-sm leading-relaxed msg-content text-slate-700 dark:text-slate-200">
+                ${toolsHtml ? `<div class="agent-steps">${toolsHtml}</div>` : ''}
+                <div class="answer-content">${renderMarkdown(content)}</div>
+            </div>
+            <div class="text-xs text-slate-400 dark:text-slate-500 mt-1.5">${formatTime(timestamp)}</div>
+        </div>
+    `;
+    applyHighlighting(el);
+    return el;
+}
+
+function addUserMessage(content, timestamp) {
+    const el = createUserMessageEl(content, timestamp);
     messagesDiv.appendChild(el);
     scrollChatToBottom();
 }
 
 function addBotMessage(content, timestamp, requestId) {
-    const el = document.createElement('div');
-    el.className = 'flex gap-3 px-4 sm:px-6 py-3';
-    if (requestId) el.dataset.requestId = requestId;
-    el.innerHTML = `
-        <img src="assets/logo.jpg" alt="CowAgent" class="w-8 h-8 rounded-lg flex-shrink-0">
-        <div class="min-w-0 flex-1 max-w-[85%]">
-            <div class="bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-3 text-sm leading-relaxed msg-content text-slate-700 dark:text-slate-200">
-                ${renderMarkdown(content)}
-            </div>
-            <div class="text-xs text-slate-400 dark:text-slate-500 mt-1.5">${formatTime(timestamp)}</div>
-        </div>
-    `;
+    const el = createBotMessageEl(content, timestamp, requestId);
     messagesDiv.appendChild(el);
-    applyHighlighting(el);
     scrollChatToBottom();
+}
+
+// Load conversation history from the server (page 1 = most recent messages).
+// Subsequent pages prepend older messages when the user scrolls to the top.
+function loadHistory(page) {
+    if (historyLoading) return;
+    historyLoading = true;
+
+    fetch(`/api/history?session_id=${encodeURIComponent(sessionId)}&page=${page}&page_size=20`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.status !== 'success' || data.messages.length === 0) return;
+
+            const prevScrollHeight = messagesDiv.scrollHeight;
+            const isFirstLoad = page === 1;
+
+            // On first load, remove the welcome screen if history exists
+            if (isFirstLoad) {
+                const ws = document.getElementById('welcome-screen');
+                if (ws) ws.remove();
+            }
+
+            // Build a fragment of history message elements in chronological order
+            const fragment = document.createDocumentFragment();
+
+            if (data.has_more && page > 1) {
+                // Keep the "load more" sentinel in place (inserted below)
+            }
+
+            data.messages.forEach(msg => {
+                const hasContent = msg.content && msg.content.trim();
+                const hasToolCalls = msg.role === 'assistant' && msg.tool_calls && msg.tool_calls.length > 0;
+                if (!hasContent && !hasToolCalls) return;
+                const ts = new Date(msg.created_at * 1000);
+                const el = msg.role === 'user'
+                    ? createUserMessageEl(msg.content, ts)
+                    : createBotMessageEl(msg.content || '', ts, null, msg.tool_calls);
+                fragment.appendChild(el);
+            });
+
+            // Prepend history above any existing messages
+            const sentinel = document.getElementById('history-load-more');
+            const insertBefore = sentinel ? sentinel.nextSibling : messagesDiv.firstChild;
+            messagesDiv.insertBefore(fragment, insertBefore);
+
+            // Manage the "load more" sentinel at the very top
+            if (data.has_more) {
+                if (!document.getElementById('history-load-more')) {
+                    const btn = document.createElement('div');
+                    btn.id = 'history-load-more';
+                    btn.className = 'flex justify-center py-3';
+                    btn.innerHTML = `<button class="text-xs text-slate-400 dark:text-slate-500 hover:text-primary-400 transition-colors" onclick="loadHistory(historyPage + 1)">Load earlier messages</button>`;
+                    messagesDiv.insertBefore(btn, messagesDiv.firstChild);
+                }
+            } else {
+                const sentinel = document.getElementById('history-load-more');
+                if (sentinel) sentinel.remove();
+            }
+
+            historyHasMore = data.has_more;
+            historyPage = page;
+
+            if (isFirstLoad) {
+                scrollChatToBottom();
+            } else {
+                // Restore scroll position so loading older messages doesn't jump the view
+                messagesDiv.scrollTop = messagesDiv.scrollHeight - prevScrollHeight;
+            }
+        })
+        .catch(() => {})
+        .finally(() => { historyLoading = false; });
 }
 
 function addLoadingIndicator() {
@@ -586,7 +717,9 @@ function newChat() {
     Object.values(activeStreams).forEach(es => { try { es.close(); } catch (_) {} });
     activeStreams = {};
 
+    // Generate a fresh session and persist it so the next page load also starts clean
     sessionId = generateSessionId();
+    localStorage.setItem(SESSION_ID_KEY, sessionId);
     isPolling = false;
     loadingContainers = {};
     messagesDiv.innerHTML = '';

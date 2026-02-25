@@ -325,6 +325,10 @@ class AgentBridge:
                                 logger.warning(f"[AgentBridge] Failed to attach context to scheduler: {e}")
                             break
             
+            # Record message count before execution so we can diff new messages
+            with agent.messages_lock:
+                pre_run_len = len(agent.messages)
+
             try:
                 # Use agent's run_stream method with event handler
                 response = agent.run_stream(
@@ -336,9 +340,16 @@ class AgentBridge:
                 # Restore original tools
                 if context and context.get("is_scheduled_task"):
                     agent.tools = original_tools
-                
+
                 # Log execution summary
                 event_handler.log_summary()
+
+            # Persist new messages generated during this run
+            if session_id:
+                channel_type = (context.get("channel_type") or "") if context else ""
+                with agent.messages_lock:
+                    new_messages = agent.messages[pre_run_len:]
+                self._persist_messages(session_id, list(new_messages), channel_type)
             
             # Check if there are files to send (from read tool)
             if hasattr(agent, 'stream_executor') and hasattr(agent.stream_executor, 'files_to_send'):
@@ -475,6 +486,32 @@ class AgentBridge:
             except Exception as e:
                 logger.warning(f"[AgentBridge] Failed to migrate API keys: {e}")
     
+    def _persist_messages(
+        self, session_id: str, new_messages: list, channel_type: str = ""
+    ) -> None:
+        """
+        Persist new messages to the conversation store after each agent run.
+
+        Failures are logged but never propagate — they must not interrupt replies.
+        """
+        if not new_messages:
+            return
+        try:
+            from config import conf
+            if not conf().get("conversation_persistence", True):
+                return
+        except Exception:
+            pass
+        try:
+            from agent.memory import get_conversation_store
+            get_conversation_store().append_messages(
+                session_id, new_messages, channel_type=channel_type
+            )
+        except Exception as e:
+            logger.warning(
+                f"[AgentBridge] Failed to persist messages for session={session_id}: {e}"
+            )
+
     def clear_session(self, session_id: str):
         """
         Clear a specific session's agent and conversation history
