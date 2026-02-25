@@ -509,7 +509,7 @@ class MemoryStorage:
         """Destructor to ensure connection is closed"""
         try:
             self.close()
-        except:
+        except Exception:
             pass  # Ignore errors during cleanup
     
     # Helper methods

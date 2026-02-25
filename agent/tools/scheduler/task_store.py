@@ -72,7 +72,7 @@ class TaskStore:
                         with open(self.store_path, 'r') as src:
                             with open(backup_path, 'w') as dst:
                                 dst.write(src.read())
-                    except:
+                    except Exception:
                         pass
                 
                 # Save tasks

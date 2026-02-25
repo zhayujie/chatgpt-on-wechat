@@ -347,7 +347,7 @@ class GoogleGeminiBot(Bot):
                                     tool_result_data = json.loads(tool_content)
                                 else:
                                     tool_result_data = tool_content
-                            except:
+                            except Exception:
                                 tool_result_data = {"result": tool_content}
                             
                             # Find the tool name from previous messages

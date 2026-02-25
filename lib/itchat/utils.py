@@ -82,7 +82,7 @@ def check_file(fileDir):
         with open(fileDir):
             pass
         return True
-    except:
+    except Exception:
         return False
 
 def print_qr(fileDir):
@@ -133,7 +133,7 @@ def test_connect(retryTime=5):
         try:
             r = requests.get(config.BASE_URL)
             return True
-        except:
+        except Exception:
             if i == retryTime - 1:
                 logger.error(traceback.format_exc())
                 return False

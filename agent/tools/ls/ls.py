@@ -94,7 +94,7 @@ class Ls(BaseTool):
                         results.append(entry + '/')
                     else:
                         results.append(entry)
-                except:
+                except Exception:
                     # Skip entries we can't stat
                     continue
             
