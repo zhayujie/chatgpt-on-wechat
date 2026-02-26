@@ -302,6 +302,7 @@ class WebChannel(ChatChannel):
             '/api/memory', 'MemoryHandler',
             '/api/memory/content', 'MemoryContentHandler',
             '/api/scheduler', 'SchedulerHandler',
+            '/api/history', 'HistoryHandler',
             '/api/logs', 'LogsHandler',
             '/assets/(.*)', 'AssetsHandler',
         )
@@ -468,6 +469,37 @@ class SchedulerHandler:
             return json.dumps({"status": "success", "tasks": tasks}, ensure_ascii=False)
         except Exception as e:
             logger.error(f"[WebChannel] Scheduler API error: {e}")
+            return json.dumps({"status": "error", "message": str(e)})
+
+
+class HistoryHandler:
+    def GET(self):
+        """
+        Return paginated conversation history for a session.
+
+        Query params:
+            session_id  (required)
+            page        int, default 1  (1 = most recent messages)
+            page_size   int, default 20
+        """
+        web.header('Content-Type', 'application/json; charset=utf-8')
+        web.header('Access-Control-Allow-Origin', '*')
+        try:
+            params = web.input(session_id='', page='1', page_size='20')
+            session_id = params.session_id.strip()
+            if not session_id:
+                return json.dumps({"status": "error", "message": "session_id required"})
+
+            from agent.memory import get_conversation_store
+            store = get_conversation_store()
+            result = store.load_history_page(
+                session_id=session_id,
+                page=int(params.page),
+                page_size=int(params.page_size),
+            )
+            return json.dumps({"status": "success", **result}, ensure_ascii=False)
+        except Exception as e:
+            logger.error(f"[WebChannel] History API error: {e}")
             return json.dumps({"status": "error", "message": str(e)})
 
 

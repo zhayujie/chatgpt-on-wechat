@@ -43,8 +43,17 @@
     }
     </script>
     <link rel="stylesheet" href="assets/css/console.css">
+    <!-- Apply theme/lang before first paint to avoid flash of unstyled content.
+         This runs synchronously in <head> so the correct class is on <html>
+         before any CSS or body rendering occurs. -->
+    <script>
+    (function() {
+        var theme = localStorage.getItem('cow_theme') || 'dark';
+        if (theme === 'dark') document.documentElement.classList.add('dark');
+    })();
+    </script>
 </head>
-<body class="h-screen overflow-hidden bg-gray-50 dark:bg-[#111111] text-slate-800 dark:text-slate-200 font-sans transition-colors duration-200">
+<body class="h-screen overflow-hidden bg-gray-50 dark:bg-[#111111] text-slate-800 dark:text-slate-200 font-sans">
     <div id="app" class="flex h-screen">
 
         <!-- ================================================================ -->

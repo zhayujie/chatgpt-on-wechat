@@ -118,8 +118,47 @@ class AgentInitializer:
         # Attach memory manager
         if memory_manager:
             agent.memory_manager = memory_manager
-        
+
+        # Restore persisted conversation history for this session
+        if session_id:
+            self._restore_conversation_history(agent, session_id)
+
         return agent
+
+    def _restore_conversation_history(self, agent, session_id: str) -> None:
+        """
+        Load persisted conversation messages from SQLite and inject them
+        into the agent's in-memory message list.
+
+        Only runs when conversation persistence is enabled (default: True).
+        Respects agent_max_context_turns to limit how many turns are loaded.
+        """
+        from config import conf
+        if not conf().get("conversation_persistence", True):
+            return
+
+        try:
+            from agent.memory import get_conversation_store
+            store = get_conversation_store()
+            # On restore, load at most min(10, max_turns // 2) turns so that
+            # a long-running session does not immediately fill the context window
+            # after a restart.  The full max_turns budget is reserved for the
+            # live conversation that follows.
+            max_turns = conf().get("agent_max_context_turns", 30)
+            restore_turns = min(6, max(1, max_turns // 3))
+            saved = store.load_messages(session_id, max_turns=restore_turns)
+            if saved:
+                with agent.messages_lock:
+                    agent.messages = saved
+                logger.info(
+                    f"[AgentInitializer] Restored {len(saved)} messages "
+                    f"({restore_turns} turns cap) for session={session_id}"
+                )
+        except Exception as e:
+            logger.warning(
+                f"[AgentInitializer] Failed to restore conversation history for "
+                f"session={session_id}: {e}"
+            )
     
     def _load_env_file(self):
         """Load environment variables from .env file"""
