@@ -501,7 +501,7 @@ class AgentStreamExecutor:
 
         # Prepare messages
         messages = self._prepare_messages()
-        logger.debug(f"Sending {len(messages)} messages to LLM")
+        logger.info(f"Sending {len(messages)} messages to LLM")
 
         # Prepare tool definitions (OpenAI/Claude format)
         tools_schema = None

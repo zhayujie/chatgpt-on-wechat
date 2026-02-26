@@ -24,11 +24,16 @@ handler_pool = ThreadPoolExecutor(max_workers=8)  # 处理消息的线程池
 class ChatChannel(Channel):
     name = None  # 登录的用户名
     user_id = None  # 登录的用户id
-    futures = {}  # 记录每个session_id提交到线程池的future对象, 用于重置会话时把没执行的future取消掉，正在执行的不会被取消
-    sessions = {}  # 用于控制并发，每个session_id同时只能有一个context在处理
-    lock = threading.Lock()  # 用于控制对sessions的访问
 
     def __init__(self):
+        # Instance-level attributes so each channel subclass has its own
+        # independent session queue and lock. Previously these were class-level,
+        # which caused contexts from one channel (e.g. Feishu) to be consumed
+        # by another channel's consume() thread (e.g. Web), leading to errors
+        # like "No request_id found in context".
+        self.futures = {}
+        self.sessions = {}
+        self.lock = threading.Lock()
         _thread = threading.Thread(target=self.consume)
         _thread.setDaemon(True)
         _thread.start()

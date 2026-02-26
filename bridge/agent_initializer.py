@@ -150,7 +150,7 @@ class AgentInitializer:
             if saved:
                 with agent.messages_lock:
                     agent.messages = saved
-                logger.info(
+                logger.debug(
                     f"[AgentInitializer] Restored {len(saved)} messages "
                     f"({restore_turns} turns cap) for session={session_id}"
                 )
