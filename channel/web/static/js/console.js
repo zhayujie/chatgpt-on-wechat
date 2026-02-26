@@ -284,7 +284,11 @@ const sendBtn = document.getElementById('send-btn');
 const messagesDiv = document.getElementById('chat-messages');
 
 chatInput.addEventListener('compositionstart', () => { isComposing = true; });
-chatInput.addEventListener('compositionend', () => { isComposing = false; });
+// Safari fires compositionend *before* the confirming keydown event, so if we
+// reset isComposing synchronously the keydown handler sees !isComposing and
+// sends the message prematurely.  A setTimeout(0) defers the reset until after
+// keydown has been processed, fixing the Safari IME Enter-to-confirm bug.
+chatInput.addEventListener('compositionend', () => { setTimeout(() => { isComposing = false; }, 0); });
 
 chatInput.addEventListener('input', function() {
     this.style.height = '42px';
@@ -684,7 +688,9 @@ function loadHistory(page) {
             historyPage = page;
 
             if (isFirstLoad) {
-                scrollChatToBottom();
+                // Use requestAnimationFrame to ensure the DOM has fully rendered
+                // before scrolling, otherwise scrollHeight may not reflect new content.
+                requestAnimationFrame(() => scrollChatToBottom());
             } else {
                 // Restore scroll position so loading older messages doesn't jump the view
                 messagesDiv.scrollTop = messagesDiv.scrollHeight - prevScrollHeight;
@@ -1102,3 +1108,11 @@ applyTheme();
 applyI18n();
 document.getElementById('sidebar-version').textContent = `CowAgent ${APP_VERSION}`;
 chatInput.focus();
+
+// Re-enable color transition AFTER first paint so the theme applied in <head>
+// doesn't produce an animated flash on load.  The class is missing from the
+// body initially; adding it here means transitions only fire on user-triggered
+// theme toggles, not on page load.
+requestAnimationFrame(() => {
+    document.body.classList.add('transition-colors', 'duration-200');
+});

@@ -140,13 +140,19 @@ class AgentInitializer:
         try:
             from agent.memory import get_conversation_store
             store = get_conversation_store()
+            # On restore, load at most min(10, max_turns // 2) turns so that
+            # a long-running session does not immediately fill the context window
+            # after a restart.  The full max_turns budget is reserved for the
+            # live conversation that follows.
             max_turns = conf().get("agent_max_context_turns", 30)
-            saved = store.load_messages(session_id, max_turns=max_turns)
+            restore_turns = min(6, max(1, max_turns // 3))
+            saved = store.load_messages(session_id, max_turns=restore_turns)
             if saved:
                 with agent.messages_lock:
                     agent.messages = saved
                 logger.info(
-                    f"[AgentInitializer] Restored {len(saved)} messages for session={session_id}"
+                    f"[AgentInitializer] Restored {len(saved)} messages "
+                    f"({restore_turns} turns cap) for session={session_id}"
                 )
         except Exception as e:
             logger.warning(

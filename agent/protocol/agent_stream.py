@@ -574,7 +574,7 @@ class AgentStreamExecutor:
                         raise Exception(f"{error_msg} (Status: {status_code}, Code: {error_code}, Type: {error_type})")
 
                 # Parse chunk
-                if isinstance(chunk, dict) and "choices" in chunk:
+                if isinstance(chunk, dict) and chunk.get("choices"):
                     choice = chunk["choices"][0]
                     delta = choice.get("delta", {})
                     
