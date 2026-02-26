@@ -341,18 +341,20 @@ class ConversationStore:
             conn = self._connect()
             try:
                 with conn:
-                    # Upsert session row.
-                    # channel_type is set only on INSERT (first time); subsequent
-                    # appends just update last_active to avoid overwriting the value.
+                    # INSERT OR IGNORE creates the row on first visit;
+                    # the UPDATE always refreshes last_active.
+                    # Avoids ON CONFLICT...DO UPDATE (requires SQLite >= 3.24).
                     conn.execute(
                         """
-                        INSERT INTO sessions
+                        INSERT OR IGNORE INTO sessions
                             (session_id, channel_type, created_at, last_active, msg_count)
                         VALUES (?, ?, ?, ?, 0)
-                        ON CONFLICT(session_id) DO UPDATE SET
-                            last_active = excluded.last_active
                         """,
                         (session_id, channel_type, now, now),
+                    )
+                    conn.execute(
+                        "UPDATE sessions SET last_active = ? WHERE session_id = ?",
+                        (now, session_id),
                     )
 
                     # Determine starting seq for the new batch.
