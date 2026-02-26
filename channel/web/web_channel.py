@@ -14,6 +14,8 @@ from bridge.context import *
 from bridge.reply import Reply, ReplyType
 from channel.chat_channel import ChatChannel, check_prefix
 from channel.chat_message import ChatMessage
+from collections import OrderedDict
+from common import const
 from common.log import logger
 from common.singleton import singleton
 from config import conf
@@ -379,16 +381,137 @@ class ChatHandler:
 
 
 class ConfigHandler:
+
+    _RECOMMENDED_MODELS = [
+        const.MINIMAX_M2_5, const.MINIMAX_M2_1, const.MINIMAX_M2_1_LIGHTNING,
+        const.GLM_5, const.GLM_4_7,
+        const.QWEN3_MAX, const.QWEN35_PLUS,
+        const.KIMI_K2_5, const.KIMI_K2,
+        const.DOUBAO_SEED_2_PRO, const.DOUBAO_SEED_2_CODE,
+        const.CLAUDE_4_6_SONNET, const.CLAUDE_4_6_OPUS, const.CLAUDE_4_5_SONNET,
+        const.GEMINI_31_PRO_PRE, const.GEMINI_3_FLASH_PRE,
+        const.GPT_5, const.GPT_41, const.GPT_4o,
+        const.DEEPSEEK_CHAT, const.DEEPSEEK_REASONER,
+    ]
+
+    PROVIDER_MODELS = OrderedDict([
+        ("minimax", {
+            "label": "MiniMax",
+            "api_key_field": "minimax_api_key",
+            "api_base_key": None,
+            "api_base_default": None,
+            "models": [const.MINIMAX_M2_5, const.MINIMAX_M2_1, const.MINIMAX_M2_1_LIGHTNING],
+        }),
+        ("glm-4", {
+            "label": "智谱AI",
+            "api_key_field": "zhipu_ai_api_key",
+            "api_base_key": "zhipu_ai_api_base",
+            "api_base_default": "https://open.bigmodel.cn/api/paas/v4",
+            "models": [const.GLM_5, const.GLM_4_7],
+        }),
+        ("dashscope", {
+            "label": "通义千问",
+            "api_key_field": "dashscope_api_key",
+            "api_base_key": None,
+            "api_base_default": None,
+            "models": [const.QWEN3_MAX, const.QWEN35_PLUS],
+        }),
+        ("moonshot", {
+            "label": "Kimi",
+            "api_key_field": "moonshot_api_key",
+            "api_base_key": "moonshot_base_url",
+            "api_base_default": "https://api.moonshot.cn/v1",
+            "models": [const.KIMI_K2_5, const.KIMI_K2],
+        }),
+        ("doubao", {
+            "label": "豆包",
+            "api_key_field": "ark_api_key",
+            "api_base_key": "ark_base_url",
+            "api_base_default": "https://ark.cn-beijing.volces.com/api/v3",
+            "models": [const.DOUBAO_SEED_2_PRO, const.DOUBAO_SEED_2_CODE],
+        }),
+        ("claudeAPI", {
+            "label": "Claude",
+            "api_key_field": "claude_api_key",
+            "api_base_key": "claude_api_base",
+            "api_base_default": "https://api.anthropic.com/v1",
+            "models": [const.CLAUDE_4_6_SONNET, const.CLAUDE_4_6_OPUS, const.CLAUDE_4_5_SONNET],
+        }),
+        ("gemini", {
+            "label": "Gemini",
+            "api_key_field": "gemini_api_key",
+            "api_base_key": "gemini_api_base",
+            "api_base_default": "https://generativelanguage.googleapis.com",
+            "models": [const.GEMINI_31_PRO_PRE, const.GEMINI_3_FLASH_PRE],
+        }),
+        ("openAI", {
+            "label": "OpenAI",
+            "api_key_field": "open_ai_api_key",
+            "api_base_key": "open_ai_api_base",
+            "api_base_default": "https://api.openai.com/v1",
+            "models": [const.GPT_5, const.GPT_41, const.GPT_4o],
+        }),
+        ("deepseek", {
+            "label": "DeepSeek",
+            "api_key_field": "open_ai_api_key",
+            "api_base_key": None,
+            "api_base_default": None,
+            "models": [const.DEEPSEEK_CHAT, const.DEEPSEEK_REASONER],
+        }),
+        ("linkai", {
+            "label": "LinkAI",
+            "api_key_field": "linkai_api_key",
+            "api_base_key": None,
+            "api_base_default": None,
+            "models": _RECOMMENDED_MODELS,
+        }),
+    ])
+
+    EDITABLE_KEYS = {
+        "model", "use_linkai",
+        "open_ai_api_base", "claude_api_base", "gemini_api_base",
+        "zhipu_ai_api_base", "moonshot_base_url", "ark_base_url",
+        "open_ai_api_key", "claude_api_key", "gemini_api_key",
+        "zhipu_ai_api_key", "dashscope_api_key", "moonshot_api_key",
+        "ark_api_key", "minimax_api_key", "linkai_api_key",
+        "agent_max_context_tokens", "agent_max_context_turns", "agent_max_steps",
+    }
+
+    @staticmethod
+    def _mask_key(value: str) -> str:
+        """Mask the middle part of an API key for display."""
+        if not value or len(value) <= 8:
+            return value
+        return value[:4] + "*" * (len(value) - 8) + value[-4:]
+
     def GET(self):
-        """Return configuration info for the web console."""
+        """Return configuration info and provider/model metadata."""
+        web.header('Content-Type', 'application/json; charset=utf-8')
         try:
             local_config = conf()
             use_agent = local_config.get("agent", False)
+            title = "CowAgent" if use_agent else "AI Assistant"
 
-            if use_agent:
-                title = "CowAgent"
-            else:
-                title = "AI Assistant"
+            api_bases = {}
+            api_keys_masked = {}
+            for pid, pinfo in self.PROVIDER_MODELS.items():
+                base_key = pinfo.get("api_base_key")
+                if base_key:
+                    api_bases[base_key] = local_config.get(base_key, pinfo["api_base_default"])
+                key_field = pinfo.get("api_key_field")
+                if key_field and key_field not in api_keys_masked:
+                    raw = local_config.get(key_field, "")
+                    api_keys_masked[key_field] = self._mask_key(raw) if raw else ""
+
+            providers = {}
+            for pid, p in self.PROVIDER_MODELS.items():
+                providers[pid] = {
+                    "label": p["label"],
+                    "models": p["models"],
+                    "api_base_key": p["api_base_key"],
+                    "api_base_default": p["api_base_default"],
+                    "api_key_field": p.get("api_key_field"),
+                }
 
             return json.dumps({
                 "status": "success",
@@ -396,12 +519,56 @@ class ConfigHandler:
                 "title": title,
                 "model": local_config.get("model", ""),
                 "channel_type": local_config.get("channel_type", ""),
-                "agent_max_context_tokens": local_config.get("agent_max_context_tokens", ""),
-                "agent_max_context_turns": local_config.get("agent_max_context_turns", ""),
-                "agent_max_steps": local_config.get("agent_max_steps", ""),
-            })
+                "agent_max_context_tokens": local_config.get("agent_max_context_tokens", 50000),
+                "agent_max_context_turns": local_config.get("agent_max_context_turns", 30),
+                "agent_max_steps": local_config.get("agent_max_steps", 15),
+                "api_bases": api_bases,
+                "api_keys": api_keys_masked,
+                "providers": providers,
+            }, ensure_ascii=False)
         except Exception as e:
             logger.error(f"Error getting config: {e}")
+            return json.dumps({"status": "error", "message": str(e)})
+
+    def POST(self):
+        """Update configuration values in memory and persist to config.json."""
+        web.header('Content-Type', 'application/json; charset=utf-8')
+        try:
+            data = json.loads(web.data())
+            updates = data.get("updates", {})
+            if not updates:
+                return json.dumps({"status": "error", "message": "no updates provided"})
+
+            local_config = conf()
+            applied = {}
+            for key, value in updates.items():
+                if key not in self.EDITABLE_KEYS:
+                    continue
+                if key in ("agent_max_context_tokens", "agent_max_context_turns", "agent_max_steps"):
+                    value = int(value)
+                if key == "use_linkai":
+                    value = bool(value)
+                local_config[key] = value
+                applied[key] = value
+
+            if not applied:
+                return json.dumps({"status": "error", "message": "no valid keys to update"})
+
+            config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(
+                os.path.abspath(__file__)))), "config.json")
+            if os.path.exists(config_path):
+                with open(config_path, "r", encoding="utf-8") as f:
+                    file_cfg = json.load(f)
+            else:
+                file_cfg = {}
+            file_cfg.update(applied)
+            with open(config_path, "w", encoding="utf-8") as f:
+                json.dump(file_cfg, f, indent=4, ensure_ascii=False)
+
+            logger.info(f"[WebChannel] Config updated: {list(applied.keys())}")
+            return json.dumps({"status": "success", "applied": applied}, ensure_ascii=False)
+        except Exception as e:
+            logger.error(f"Error updating config: {e}")
             return json.dumps({"status": "error", "message": str(e)})
 
 
@@ -409,6 +576,19 @@ def _get_workspace_root():
     """Resolve the agent workspace directory."""
     from common.utils import expand_path
     return expand_path(conf().get("agent_workspace", "~/cow"))
+
+
+class ToolsHandler:
+    def GET(self):
+        web.header('Content-Type', 'application/json; charset=utf-8')
+        try:
+            from agent.tools.tool_manager import ToolManager
+            tm = ToolManager()
+            loaded = list(tm.tool_classes.keys())
+            return json.dumps({"status": "success", "tools": loaded}, ensure_ascii=False)
+        except Exception as e:
+            logger.error(f"[WebChannel] Tools API error: {e}")
+            return json.dumps({"status": "error", "message": str(e)})
 
 
 class SkillsHandler:
@@ -424,6 +604,30 @@ class SkillsHandler:
             return json.dumps({"status": "success", "skills": skills}, ensure_ascii=False)
         except Exception as e:
             logger.error(f"[WebChannel] Skills API error: {e}")
+            return json.dumps({"status": "error", "message": str(e)})
+
+    def POST(self):
+        web.header('Content-Type', 'application/json; charset=utf-8')
+        try:
+            from agent.skills.service import SkillService
+            from agent.skills.manager import SkillManager
+            body = json.loads(web.data())
+            action = body.get("action")
+            name = body.get("name")
+            if not action or not name:
+                return json.dumps({"status": "error", "message": "action and name are required"})
+            workspace_root = _get_workspace_root()
+            manager = SkillManager(custom_dir=os.path.join(workspace_root, "skills"))
+            service = SkillService(manager)
+            if action == "open":
+                service.open({"name": name})
+            elif action == "close":
+                service.close({"name": name})
+            else:
+                return json.dumps({"status": "error", "message": f"unknown action: {action}"})
+            return json.dumps({"status": "success"}, ensure_ascii=False)
+        except Exception as e:
+            logger.error(f"[WebChannel] Skills POST error: {e}")
             return json.dumps({"status": "error", "message": str(e)})
 
 

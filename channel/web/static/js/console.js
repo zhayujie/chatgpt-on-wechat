@@ -28,7 +28,11 @@ const I18N = {
         config_agent_enabled: 'Agent 模式', config_max_tokens: '最大 Token',
         config_max_turns: '最大轮次', config_max_steps: '最大步数',
         config_channel_type: '通道类型',
-        config_coming_soon: '完整编辑功能即将推出，当前为只读展示。',
+        config_provider: '模型厂商', config_model_name: '模型',
+        config_custom_model_hint: '输入自定义模型名称',
+        config_save: '保存', config_saved: '已保存',
+        config_save_error: '保存失败',
+        config_custom_option: '自定义...',
         skills_title: '技能管理', skills_desc: '查看、启用或禁用 Agent 技能',
         skills_loading: '加载技能中...', skills_loading_desc: '技能加载后将显示在此处',
         memory_title: '记忆管理', memory_desc: '查看 Agent 记忆文件和内容',
@@ -60,7 +64,11 @@ const I18N = {
         config_agent_enabled: 'Agent Mode', config_max_tokens: 'Max Tokens',
         config_max_turns: 'Max Turns', config_max_steps: 'Max Steps',
         config_channel_type: 'Channel Type',
-        config_coming_soon: 'Full editing capability coming soon. Currently displaying read-only configuration.',
+        config_provider: 'Provider', config_model_name: 'Model',
+        config_custom_model_hint: 'Enter custom model name',
+        config_save: 'Save', config_saved: 'Saved',
+        config_save_error: 'Save failed',
+        config_custom_option: 'Custom...',
         skills_title: 'Skills', skills_desc: 'View, enable, or disable agent skills',
         skills_loading: 'Loading skills...', skills_loading_desc: 'Skills will be displayed here after loading',
         memory_title: 'Memory', memory_desc: 'View agent memory files and contents',
@@ -236,7 +244,7 @@ let isPolling = false;
 let loadingContainers = {};
 let activeStreams = {};   // request_id -> EventSource
 let isComposing = false;
-let appConfig = { use_agent: false, title: 'CowAgent', subtitle: '' };
+let appConfig = { use_agent: false, title: 'CowAgent', subtitle: '', providers: {}, api_bases: {} };
 
 const SESSION_ID_KEY = 'cow_session_id';
 
@@ -268,14 +276,8 @@ fetch('/config').then(r => r.json()).then(data => {
         appConfig = data;
         const title = data.title || 'CowAgent';
         document.getElementById('welcome-title').textContent = title;
-        document.getElementById('cfg-model').textContent = data.model || '--';
-        document.getElementById('cfg-agent').textContent = data.use_agent ? 'Enabled' : 'Disabled';
-        document.getElementById('cfg-max-tokens').textContent = data.agent_max_context_tokens || '--';
-        document.getElementById('cfg-max-turns').textContent = data.agent_max_context_turns || '--';
-        document.getElementById('cfg-max-steps').textContent = data.agent_max_steps || '--';
-        document.getElementById('cfg-channel').textContent = data.channel_type || '--';
+        initConfigView(data);
     }
-    // Load conversation history after config is ready
     loadHistory(1);
 }).catch(() => { loadHistory(1); });
 
@@ -820,15 +822,312 @@ function applyHighlighting(container) {
 // =====================================================================
 // Config View
 // =====================================================================
+let configProviders = {};
+let configApiBases = {};
+let configApiKeys = {};
+let configCurrentModel = '';
+let cfgProviderValue = '';
+let cfgModelValue = '';
+
+// --- Custom dropdown helper ---
+function initDropdown(el, options, selectedValue, onChange) {
+    const textEl = el.querySelector('.cfg-dropdown-text');
+    const menuEl = el.querySelector('.cfg-dropdown-menu');
+    const selEl = el.querySelector('.cfg-dropdown-selected');
+
+    el._ddValue = selectedValue || '';
+    el._ddOnChange = onChange;
+
+    function render() {
+        menuEl.innerHTML = '';
+        options.forEach(opt => {
+            const item = document.createElement('div');
+            item.className = 'cfg-dropdown-item' + (opt.value === el._ddValue ? ' active' : '');
+            item.textContent = opt.label;
+            item.dataset.value = opt.value;
+            item.addEventListener('click', (e) => {
+                e.stopPropagation();
+                el._ddValue = opt.value;
+                textEl.textContent = opt.label;
+                menuEl.querySelectorAll('.cfg-dropdown-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                el.classList.remove('open');
+                if (el._ddOnChange) el._ddOnChange(opt.value);
+            });
+            menuEl.appendChild(item);
+        });
+        const sel = options.find(o => o.value === el._ddValue);
+        textEl.textContent = sel ? sel.label : (options[0] ? options[0].label : '--');
+        if (!sel && options[0]) el._ddValue = options[0].value;
+    }
+
+    render();
+
+    if (!el._ddBound) {
+        selEl.addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.querySelectorAll('.cfg-dropdown.open').forEach(d => { if (d !== el) d.classList.remove('open'); });
+            el.classList.toggle('open');
+        });
+        el._ddBound = true;
+    }
+}
+
+document.addEventListener('click', () => {
+    document.querySelectorAll('.cfg-dropdown.open').forEach(d => d.classList.remove('open'));
+});
+
+function getDropdownValue(el) { return el._ddValue || ''; }
+
+// --- Config init ---
+function initConfigView(data) {
+    configProviders = data.providers || {};
+    configApiBases = data.api_bases || {};
+    configApiKeys = data.api_keys || {};
+    configCurrentModel = data.model || '';
+
+    const providerEl = document.getElementById('cfg-provider');
+    const providerOpts = Object.entries(configProviders).map(([pid, p]) => ({ value: pid, label: p.label }));
+
+    const detected = detectProvider(configCurrentModel);
+    cfgProviderValue = detected || (providerOpts[0] ? providerOpts[0].value : '');
+
+    initDropdown(providerEl, providerOpts, cfgProviderValue, onProviderChange);
+
+    onProviderChange(cfgProviderValue);
+    syncModelSelection(configCurrentModel);
+
+    document.getElementById('cfg-max-tokens').value = data.agent_max_context_tokens || 50000;
+    document.getElementById('cfg-max-turns').value = data.agent_max_context_turns || 30;
+    document.getElementById('cfg-max-steps').value = data.agent_max_steps || 15;
+}
+
+function detectProvider(model) {
+    if (!model) return Object.keys(configProviders)[0] || '';
+    for (const [pid, p] of Object.entries(configProviders)) {
+        if (pid === 'linkai') continue;
+        if (p.models && p.models.includes(model)) return pid;
+    }
+    return Object.keys(configProviders)[0] || '';
+}
+
+function onProviderChange(pid) {
+    cfgProviderValue = pid || getDropdownValue(document.getElementById('cfg-provider'));
+    const p = configProviders[cfgProviderValue];
+    if (!p) return;
+
+    const modelEl = document.getElementById('cfg-model-select');
+    const modelOpts = (p.models || []).map(m => ({ value: m, label: m }));
+    modelOpts.push({ value: '__custom__', label: t('config_custom_option') });
+
+    initDropdown(modelEl, modelOpts, modelOpts[0] ? modelOpts[0].value : '', onModelSelectChange);
+
+    // API Key
+    const keyField = p.api_key_field;
+    const keyWrap = document.getElementById('cfg-api-key-wrap');
+    const keyInput = document.getElementById('cfg-api-key');
+    if (keyField) {
+        keyWrap.classList.remove('hidden');
+        keyInput.classList.add('cfg-key-masked');
+        const maskedVal = configApiKeys[keyField] || '';
+        keyInput.value = maskedVal;
+        keyInput.dataset.field = keyField;
+        keyInput.dataset.masked = maskedVal ? '1' : '';
+        keyInput.dataset.maskedVal = maskedVal;
+        const toggleIcon = document.querySelector('#cfg-api-key-toggle i');
+        if (toggleIcon) toggleIcon.className = 'fas fa-eye text-xs';
+
+        if (!keyInput._cfgBound) {
+            keyInput.addEventListener('focus', function() {
+                if (this.dataset.masked === '1') {
+                    this.value = '';
+                    this.dataset.masked = '';
+                    this.classList.remove('cfg-key-masked');
+                }
+            });
+            keyInput.addEventListener('blur', function() {
+                if (!this.value.trim() && this.dataset.maskedVal) {
+                    this.value = this.dataset.maskedVal;
+                    this.dataset.masked = '1';
+                    this.classList.add('cfg-key-masked');
+                }
+            });
+            keyInput.addEventListener('input', function() {
+                this.dataset.masked = '';
+            });
+            keyInput._cfgBound = true;
+        }
+    } else {
+        keyWrap.classList.add('hidden');
+        keyInput.value = '';
+        keyInput.dataset.field = '';
+    }
+
+    // API Base
+    if (p.api_base_key) {
+        document.getElementById('cfg-api-base-wrap').classList.remove('hidden');
+        document.getElementById('cfg-api-base').value = configApiBases[p.api_base_key] || p.api_base_default || '';
+    } else {
+        document.getElementById('cfg-api-base-wrap').classList.add('hidden');
+        document.getElementById('cfg-api-base').value = '';
+    }
+
+    onModelSelectChange(modelOpts[0] ? modelOpts[0].value : '');
+}
+
+function onModelSelectChange(val) {
+    cfgModelValue = val || getDropdownValue(document.getElementById('cfg-model-select'));
+    const customWrap = document.getElementById('cfg-model-custom-wrap');
+    if (cfgModelValue === '__custom__') {
+        customWrap.classList.remove('hidden');
+        document.getElementById('cfg-model-custom').focus();
+    } else {
+        customWrap.classList.add('hidden');
+        document.getElementById('cfg-model-custom').value = '';
+    }
+}
+
+function syncModelSelection(model) {
+    const p = configProviders[cfgProviderValue];
+    if (!p) return;
+
+    const modelEl = document.getElementById('cfg-model-select');
+    if (p.models && p.models.includes(model)) {
+        const modelOpts = (p.models || []).map(m => ({ value: m, label: m }));
+        modelOpts.push({ value: '__custom__', label: t('config_custom_option') });
+        initDropdown(modelEl, modelOpts, model, onModelSelectChange);
+        cfgModelValue = model;
+        document.getElementById('cfg-model-custom-wrap').classList.add('hidden');
+    } else {
+        cfgModelValue = '__custom__';
+        const modelOpts = (p.models || []).map(m => ({ value: m, label: m }));
+        modelOpts.push({ value: '__custom__', label: t('config_custom_option') });
+        initDropdown(modelEl, modelOpts, '__custom__', onModelSelectChange);
+        document.getElementById('cfg-model-custom-wrap').classList.remove('hidden');
+        document.getElementById('cfg-model-custom').value = model;
+    }
+}
+
+function getSelectedModel() {
+    if (cfgModelValue === '__custom__') {
+        return document.getElementById('cfg-model-custom').value.trim();
+    }
+    return cfgModelValue;
+}
+
+function toggleApiKeyVisibility() {
+    const input = document.getElementById('cfg-api-key');
+    const icon = document.querySelector('#cfg-api-key-toggle i');
+    if (input.classList.contains('cfg-key-masked')) {
+        input.classList.remove('cfg-key-masked');
+        icon.className = 'fas fa-eye-slash text-xs';
+    } else {
+        input.classList.add('cfg-key-masked');
+        icon.className = 'fas fa-eye text-xs';
+    }
+}
+
+function showStatus(elId, msgKey, isError) {
+    const el = document.getElementById(elId);
+    el.textContent = t(msgKey);
+    el.classList.toggle('text-red-500', !!isError);
+    el.classList.toggle('text-primary-500', !isError);
+    el.classList.remove('opacity-0');
+    setTimeout(() => el.classList.add('opacity-0'), 2500);
+}
+
+function saveModelConfig() {
+    const model = getSelectedModel();
+    if (!model) return;
+
+    const updates = { model: model };
+    const p = configProviders[cfgProviderValue];
+    updates.use_linkai = (cfgProviderValue === 'linkai');
+    if (p && p.api_base_key) {
+        const base = document.getElementById('cfg-api-base').value.trim();
+        if (base) updates[p.api_base_key] = base;
+    }
+    if (p && p.api_key_field) {
+        const keyInput = document.getElementById('cfg-api-key');
+        const rawVal = keyInput.value.trim();
+        if (rawVal && keyInput.dataset.masked !== '1') {
+            updates[p.api_key_field] = rawVal;
+        }
+    }
+
+    const btn = document.getElementById('cfg-model-save');
+    btn.disabled = true;
+    fetch('/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ updates })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'success') {
+            configCurrentModel = model;
+            if (data.applied) {
+                const keyInput = document.getElementById('cfg-api-key');
+                Object.entries(data.applied).forEach(([k, v]) => {
+                    if (k === 'model') return;
+                    if (k.includes('api_key')) {
+                        const masked = v.length > 8
+                            ? v.substring(0, 4) + '*'.repeat(v.length - 8) + v.substring(v.length - 4)
+                            : v;
+                        configApiKeys[k] = masked;
+                        if (keyInput.dataset.field === k) {
+                            keyInput.value = masked;
+                            keyInput.dataset.masked = '1';
+                            keyInput.dataset.maskedVal = masked;
+                            keyInput.classList.add('cfg-key-masked');
+                            const toggleIcon = document.querySelector('#cfg-api-key-toggle i');
+                            if (toggleIcon) toggleIcon.className = 'fas fa-eye text-xs';
+                        }
+                    } else {
+                        configApiBases[k] = v;
+                    }
+                });
+            }
+            showStatus('cfg-model-status', 'config_saved', false);
+        } else {
+            showStatus('cfg-model-status', 'config_save_error', true);
+        }
+    })
+    .catch(() => showStatus('cfg-model-status', 'config_save_error', true))
+    .finally(() => { btn.disabled = false; });
+}
+
+function saveAgentConfig() {
+    const updates = {
+        agent_max_context_tokens: parseInt(document.getElementById('cfg-max-tokens').value) || 50000,
+        agent_max_context_turns: parseInt(document.getElementById('cfg-max-turns').value) || 30,
+        agent_max_steps: parseInt(document.getElementById('cfg-max-steps').value) || 15,
+    };
+
+    const btn = document.getElementById('cfg-agent-save');
+    btn.disabled = true;
+    fetch('/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ updates })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showStatus('cfg-agent-status', 'config_saved', false);
+        } else {
+            showStatus('cfg-agent-status', 'config_save_error', true);
+        }
+    })
+    .catch(() => showStatus('cfg-agent-status', 'config_save_error', true))
+    .finally(() => { btn.disabled = false; });
+}
+
 function loadConfigView() {
     fetch('/config').then(r => r.json()).then(data => {
         if (data.status !== 'success') return;
-        document.getElementById('cfg-model').textContent = data.model || '--';
-        document.getElementById('cfg-agent').textContent = data.use_agent ? 'Enabled' : 'Disabled';
-        document.getElementById('cfg-max-tokens').textContent = data.agent_max_context_tokens || '--';
-        document.getElementById('cfg-max-turns').textContent = data.agent_max_context_turns || '--';
-        document.getElementById('cfg-max-steps').textContent = data.agent_max_steps || '--';
-        document.getElementById('cfg-channel').textContent = data.channel_type || '--';
+        appConfig = data;
+        initConfigView(data);
     }).catch(() => {});
 }
 
@@ -1089,7 +1388,8 @@ navigateTo = function(viewId) {
     _origNavigateTo(viewId);
 
     // Lazy-load view data
-    if (viewId === 'skills') loadSkillsView();
+    if (viewId === 'config') loadConfigView();
+    else if (viewId === 'skills') loadSkillsView();
     else if (viewId === 'memory') {
         // Always start from the list panel when navigating to memory
         document.getElementById('memory-panel-viewer').classList.add('hidden');

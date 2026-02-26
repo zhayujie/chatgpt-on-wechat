@@ -159,7 +159,7 @@ class FeiShuChanel(ChatChannel):
                         self.feishu_app_id,
                         self.feishu_app_secret,
                         event_handler=event_handler,
-                        log_level=lark.LogLevel.DEBUG if conf().get("debug") else lark.LogLevel.WARNING
+                        log_level=lark.LogLevel.WARNING
                     )
 
                     logger.debug("[FeiShu] Websocket client starting...")

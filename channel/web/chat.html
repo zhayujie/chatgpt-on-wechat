@@ -294,68 +294,122 @@
                                 </div>
                             </div>
                             <div class="grid gap-6">
+
                                 <!-- Model Config Card -->
-                                <div class="placeholder-card bg-white dark:bg-[#1A1A1A] rounded-xl border border-slate-200 dark:border-white/10 p-6">
-                                    <div class="flex items-center gap-3 mb-4">
+                                <div class="bg-white dark:bg-[#1A1A1A] rounded-xl border border-slate-200 dark:border-white/10 p-6">
+                                    <div class="flex items-center gap-3 mb-5">
                                         <div class="w-9 h-9 rounded-lg bg-primary-50 dark:bg-primary-900/30 flex items-center justify-center">
                                             <i class="fas fa-microchip text-primary-500 text-sm"></i>
                                         </div>
                                         <h3 class="font-semibold text-slate-800 dark:text-slate-100" data-i18n="config_model">Model Configuration</h3>
                                     </div>
-                                    <div class="space-y-4">
-                                        <div class="flex items-center gap-4 p-3 rounded-lg bg-slate-50 dark:bg-white/5">
-                                            <span class="text-sm font-medium text-slate-500 dark:text-slate-400 w-32 flex-shrink-0">Model</span>
-                                            <span class="text-sm text-slate-700 dark:text-slate-200 flex-1 font-mono" id="cfg-model">--</span>
+                                    <div class="space-y-5">
+                                        <!-- Provider -->
+                                        <div>
+                                            <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5" data-i18n="config_provider">Provider</label>
+                                            <div id="cfg-provider" class="cfg-dropdown" tabindex="0">
+                                                <div class="cfg-dropdown-selected">
+                                                    <span class="cfg-dropdown-text">--</span>
+                                                    <i class="fas fa-chevron-down cfg-dropdown-arrow"></i>
+                                                </div>
+                                                <div class="cfg-dropdown-menu"></div>
+                                            </div>
+                                        </div>
+                                        <!-- Model -->
+                                        <div>
+                                            <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5" data-i18n="config_model_name">Model</label>
+                                            <div id="cfg-model-select" class="cfg-dropdown" tabindex="0">
+                                                <div class="cfg-dropdown-selected">
+                                                    <span class="cfg-dropdown-text">--</span>
+                                                    <i class="fas fa-chevron-down cfg-dropdown-arrow"></i>
+                                                </div>
+                                                <div class="cfg-dropdown-menu"></div>
+                                            </div>
+                                            <div id="cfg-model-custom-wrap" class="mt-2 hidden">
+                                                <input id="cfg-model-custom" type="text"
+                                                       class="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600
+                                                              bg-slate-50 dark:bg-white/5 text-sm text-slate-800 dark:text-slate-100
+                                                              focus:outline-none focus:border-primary-500 font-mono transition-colors"
+                                                       data-i18n-placeholder="config_custom_model_hint" placeholder="Enter custom model name">
+                                            </div>
+                                        </div>
+                                        <!-- API Key -->
+                                        <div id="cfg-api-key-wrap">
+                                            <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">API Key</label>
+                                            <div class="relative">
+                                                <input id="cfg-api-key" type="text" autocomplete="off" data-1p-ignore data-lpignore="true"
+                                                       class="w-full px-3 py-2 pr-10 rounded-lg border border-slate-200 dark:border-slate-600
+                                                              bg-slate-50 dark:bg-white/5 text-sm text-slate-800 dark:text-slate-100
+                                                              focus:outline-none focus:border-primary-500 font-mono transition-colors cfg-key-masked"
+                                                       placeholder="sk-...">
+                                                <button type="button" id="cfg-api-key-toggle"
+                                                        class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600
+                                                               dark:hover:text-slate-300 cursor-pointer transition-colors p-1"
+                                                        onclick="toggleApiKeyVisibility()">
+                                                    <i class="fas fa-eye text-xs"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <!-- API Base -->
+                                        <div id="cfg-api-base-wrap" class="hidden">
+                                            <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">API Base</label>
+                                            <input id="cfg-api-base" type="text"
+                                                   class="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600
+                                                          bg-slate-50 dark:bg-white/5 text-sm text-slate-800 dark:text-slate-100
+                                                          focus:outline-none focus:border-primary-500 font-mono transition-colors"
+                                                   placeholder="https://...">
+                                        </div>
+                                        <!-- Save Model Button -->
+                                        <div class="flex items-center justify-end gap-3 pt-1">
+                                            <span id="cfg-model-status" class="text-xs text-primary-500 opacity-0 transition-opacity duration-300"></span>
+                                            <button id="cfg-model-save"
+                                                    class="px-4 py-2 rounded-lg bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium
+                                                           cursor-pointer transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    onclick="saveModelConfig()" data-i18n="config_save">Save</button>
                                         </div>
                                     </div>
                                 </div>
+
                                 <!-- Agent Config Card -->
-                                <div class="placeholder-card bg-white dark:bg-[#1A1A1A] rounded-xl border border-slate-200 dark:border-white/10 p-6">
-                                    <div class="flex items-center gap-3 mb-4">
+                                <div class="bg-white dark:bg-[#1A1A1A] rounded-xl border border-slate-200 dark:border-white/10 p-6">
+                                    <div class="flex items-center gap-3 mb-5">
                                         <div class="w-9 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center">
                                             <i class="fas fa-robot text-emerald-500 text-sm"></i>
                                         </div>
                                         <h3 class="font-semibold text-slate-800 dark:text-slate-100" data-i18n="config_agent">Agent Configuration</h3>
                                     </div>
                                     <div class="space-y-4">
-                                        <div class="flex items-center gap-4 p-3 rounded-lg bg-slate-50 dark:bg-white/5">
-                                            <span class="text-sm font-medium text-slate-500 dark:text-slate-400 w-32 flex-shrink-0" data-i18n="config_agent_enabled">Agent Mode</span>
-                                            <span class="text-sm text-slate-700 dark:text-slate-200 flex-1" id="cfg-agent">--</span>
+                                        <div>
+                                            <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5" data-i18n="config_max_tokens">Max Context Tokens</label>
+                                            <input id="cfg-max-tokens" type="number" min="1000" max="200000" step="1000"
+                                                   class="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600
+                                                          bg-slate-50 dark:bg-white/5 text-sm text-slate-800 dark:text-slate-100
+                                                          focus:outline-none focus:border-primary-500 font-mono transition-colors">
                                         </div>
-                                        <div class="flex items-center gap-4 p-3 rounded-lg bg-slate-50 dark:bg-white/5">
-                                            <span class="text-sm font-medium text-slate-500 dark:text-slate-400 w-32 flex-shrink-0" data-i18n="config_max_tokens">Max Tokens</span>
-                                            <span class="text-sm text-slate-700 dark:text-slate-200 flex-1 font-mono" id="cfg-max-tokens">--</span>
+                                        <div>
+                                            <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5" data-i18n="config_max_turns">Max Context Turns</label>
+                                            <input id="cfg-max-turns" type="number" min="1" max="100" step="1"
+                                                   class="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600
+                                                          bg-slate-50 dark:bg-white/5 text-sm text-slate-800 dark:text-slate-100
+                                                          focus:outline-none focus:border-primary-500 font-mono transition-colors">
                                         </div>
-                                        <div class="flex items-center gap-4 p-3 rounded-lg bg-slate-50 dark:bg-white/5">
-                                            <span class="text-sm font-medium text-slate-500 dark:text-slate-400 w-32 flex-shrink-0" data-i18n="config_max_turns">Max Turns</span>
-                                            <span class="text-sm text-slate-700 dark:text-slate-200 flex-1 font-mono" id="cfg-max-turns">--</span>
+                                        <div>
+                                            <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5" data-i18n="config_max_steps">Max Steps</label>
+                                            <input id="cfg-max-steps" type="number" min="1" max="50" step="1"
+                                                   class="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600
+                                                          bg-slate-50 dark:bg-white/5 text-sm text-slate-800 dark:text-slate-100
+                                                          focus:outline-none focus:border-primary-500 font-mono transition-colors">
                                         </div>
-                                        <div class="flex items-center gap-4 p-3 rounded-lg bg-slate-50 dark:bg-white/5">
-                                            <span class="text-sm font-medium text-slate-500 dark:text-slate-400 w-32 flex-shrink-0" data-i18n="config_max_steps">Max Steps</span>
-                                            <span class="text-sm text-slate-700 dark:text-slate-200 flex-1 font-mono" id="cfg-max-steps">--</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <!-- Channel Config Card -->
-                                <div class="placeholder-card bg-white dark:bg-[#1A1A1A] rounded-xl border border-slate-200 dark:border-white/10 p-6">
-                                    <div class="flex items-center gap-3 mb-4">
-                                        <div class="w-9 h-9 rounded-lg bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center">
-                                            <i class="fas fa-tower-broadcast text-amber-500 text-sm"></i>
-                                        </div>
-                                        <h3 class="font-semibold text-slate-800 dark:text-slate-100" data-i18n="config_channel">Channel Configuration</h3>
-                                    </div>
-                                    <div class="space-y-4">
-                                        <div class="flex items-center gap-4 p-3 rounded-lg bg-slate-50 dark:bg-white/5">
-                                            <span class="text-sm font-medium text-slate-500 dark:text-slate-400 w-32 flex-shrink-0" data-i18n="config_channel_type">Channel Type</span>
-                                            <span class="text-sm text-slate-700 dark:text-slate-200 flex-1 font-mono" id="cfg-channel">--</span>
+                                        <div class="flex items-center justify-end gap-3 pt-1">
+                                            <span id="cfg-agent-status" class="text-xs text-primary-500 opacity-0 transition-opacity duration-300"></span>
+                                            <button id="cfg-agent-save"
+                                                    class="px-4 py-2 rounded-lg bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium
+                                                           cursor-pointer transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    onclick="saveAgentConfig()" data-i18n="config_save">Save</button>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                            <!-- Coming Soon Banner -->
-                            <div class="mt-6 p-4 rounded-xl bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800/50 flex items-center gap-3">
-                                <i class="fas fa-info-circle text-primary-500"></i>
-                                <span class="text-sm text-primary-700 dark:text-primary-300" data-i18n="config_coming_soon">Full editing capability coming soon. Currently displaying read-only configuration.</span>
+
                             </div>
                         </div>
                     </div>
