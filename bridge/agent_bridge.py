@@ -135,7 +135,7 @@ class AgentLLMModel(LLMModel):
                 # Use tool-enabled streaming call if available
                 # Extract system prompt if present
                 system_prompt = getattr(request, 'system', None)
-                
+
                 # Build kwargs for call_with_tools
                 kwargs = {
                     'messages': request.messages,
@@ -143,15 +143,20 @@ class AgentLLMModel(LLMModel):
                     'stream': True,
                     'model': self.model  # Pass model parameter
                 }
-                
+
                 # Only pass max_tokens if explicitly set, let the bot use its default
                 if request.max_tokens is not None:
                     kwargs['max_tokens'] = request.max_tokens
-                
+
                 # Add system prompt if present
                 if system_prompt:
                     kwargs['system'] = system_prompt
-                
+
+                # Pass channel_type for linkai tracking
+                channel_type = getattr(self, 'channel_type', None)
+                if channel_type:
+                    kwargs['channel_type'] = channel_type
+
                 stream = self.bot.call_with_tools(**kwargs)
                 
                 # Convert stream format to our expected format
@@ -325,6 +330,10 @@ class AgentBridge:
                                 logger.warning(f"[AgentBridge] Failed to attach context to scheduler: {e}")
                             break
             
+            # Pass channel_type to model so linkai requests carry it
+            if context and hasattr(agent, 'model'):
+                agent.model.channel_type = context.get("channel_type", "")
+
             # Record message count before execution so we can diff new messages
             with agent.messages_lock:
                 pre_run_len = len(agent.messages)

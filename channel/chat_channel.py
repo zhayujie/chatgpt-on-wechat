@@ -24,11 +24,16 @@ handler_pool = ThreadPoolExecutor(max_workers=8)  # 处理消息的线程池
 class ChatChannel(Channel):
     name = None  # 登录的用户名
     user_id = None  # 登录的用户id
-    futures = {}  # 记录每个session_id提交到线程池的future对象, 用于重置会话时把没执行的future取消掉，正在执行的不会被取消
-    sessions = {}  # 用于控制并发，每个session_id同时只能有一个context在处理
-    lock = threading.Lock()  # 用于控制对sessions的访问
 
     def __init__(self):
+        # Instance-level attributes so each channel subclass has its own
+        # independent session queue and lock. Previously these were class-level,
+        # which caused contexts from one channel (e.g. Feishu) to be consumed
+        # by another channel's consume() thread (e.g. Web), leading to errors
+        # like "No request_id found in context".
+        self.futures = {}
+        self.sessions = {}
+        self.lock = threading.Lock()
         _thread = threading.Thread(target=self.consume)
         _thread.setDaemon(True)
         _thread.start()
@@ -37,9 +42,8 @@ class ChatChannel(Channel):
     def _compose_context(self, ctype: ContextType, content, **kwargs):
         context = Context(ctype, content)
         context.kwargs = kwargs
-        # context首次传入时，origin_ctype是None,
-        # 引入的起因是：当输入语音时，会嵌套生成两个context，第一步语音转文本，第二步通过文本生成文字回复。
-        # origin_ctype用于第二步文本回复时，判断是否需要匹配前缀，如果是私聊的语音，就不需要匹配前缀
+        if "channel_type" not in context:
+            context["channel_type"] = self.channel_type
         if "origin_ctype" not in context:
             context["origin_ctype"] = ctype
         # context首次传入时，receiver是None，根据类型设置receiver

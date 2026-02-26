@@ -608,10 +608,12 @@ API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn)
 
 以下对可接入通道的配置方式进行说明，应用通道代码在项目的 `channel/` 目录下。
 
+支持同时可接入多个通道，配置时可通过逗号进行分割，例如 `"channel_type": "feishu,dingtalk"`。
+
 <details>
 <summary>1. Web</summary>
 
-项目启动后默认运行Web通道，配置如下：
+项目启动后会默认运行Web控制台，配置如下：
 
 ```json
 {

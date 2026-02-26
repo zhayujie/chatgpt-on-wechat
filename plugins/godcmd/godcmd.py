@@ -140,7 +140,9 @@ def get_help_text(isadmin, isgroup):
     for cmd, info in COMMANDS.items():
         if cmd in ["auth", "set_openai_api_key", "reset_openai_api_key", "set_gpt_model", "reset_gpt_model", "gpt_model"]:  # 不显示帮助指令
             continue
-        if cmd == "id" and conf().get("channel_type", "wx") not in ["wxy", "wechatmp"]:
+        raw_ct = conf().get("channel_type", "web")
+        active_channels = raw_ct if isinstance(raw_ct, list) else [c.strip() for c in str(raw_ct).split(",")]
+        if cmd == "id" and not any(c in ["wxy", "wechatmp"] for c in active_channels):
             continue
         alias = ["#" + a for a in info["alias"][:1]]
         help_text += f"{','.join(alias)} "

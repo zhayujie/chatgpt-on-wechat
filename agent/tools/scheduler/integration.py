@@ -451,8 +451,7 @@ def attach_scheduler_to_tool(tool, context: Context = None):
     if context:
         tool.current_context = context
         
-        # Also set channel_type from config
-        channel_type = conf().get("channel_type", "unknown")
+        channel_type = context.get("channel_type") or conf().get("channel_type", "unknown")
         if not tool.config:
             tool.config = {}
         tool.config["channel_type"] = channel_type
