@@ -617,7 +617,7 @@ def _handle_linkai_stream_response(self, base_url, headers, body):
             try:
                 error_data = json.loads(error_text)
                 error_msg = error_data.get("error", {}).get("message", error_text)
-            except:
+            except Exception:
                 error_msg = error_text or "Unknown error"
             
             yield {

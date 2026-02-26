@@ -208,7 +208,7 @@ class ChatGPTBot(Bot, OpenAIImage, OpenAICompatibleBot):
             try:
                 os.remove(image_path)
                 logger.debug(f"[CHATGPT] Removed temp image file: {image_path}")
-            except:
+            except Exception:
                 pass
             
             return Reply(ReplyType.TEXT, content)

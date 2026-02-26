@@ -273,7 +273,7 @@ def get_contact(self, update=False):
             'User-Agent' : config.USER_AGENT, }
         try:
             r = self.s.get(url, headers=headers)
-        except:
+        except Exception:
             logger.info('Failed to fetch contact, that may because of the amount of your chatrooms')
             for chatroom in self.get_chatrooms():
                 self.update_chatroom(chatroom['UserName'], detailedMember=True)

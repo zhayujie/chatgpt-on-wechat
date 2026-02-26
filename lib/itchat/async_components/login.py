@@ -330,7 +330,7 @@ async def start_receiving(self, exitCallback=None, getReceivingFnOnly=False):
                 retryCount = 0
             except requests.exceptions.ReadTimeout:
                 pass
-            except:
+            except Exception:
                 retryCount += 1
                 logger.error(traceback.format_exc())
                 if self.receivingRetryCount < retryCount:
@@ -372,7 +372,7 @@ def sync_check(self):
             # 6f:00:8a:9c:09:74:e4:d8:e0:14:bf:96:3a:56:a0:64:1b:a4:25:5d:12:f4:31:a5:30:f1:c6:48:5f:c3:75:6a:99:93
             # seems like status of typing, but before I make further achievement code will remain like this
             return '2'
-        except:
+        except Exception:
             raise
     r.raise_for_status()
     regx = r'window.synccheck={retcode:"(\d+)",selector:"(\d+)"}'

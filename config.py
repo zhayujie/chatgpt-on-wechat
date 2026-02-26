@@ -324,7 +324,7 @@ def load_config():
             logger.info("[INIT] override config by environ args: {}={}".format(name, value))
             try:
                 config[name] = eval(value)
-            except:
+            except Exception:
                 if value == "false":
                     config[name] = False
                 elif value == "true":
