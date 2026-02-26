@@ -21,7 +21,7 @@ def dump_login_status(self, fileDir=None):
         with open(fileDir, 'w') as f:
             f.write('itchat - DELETE THIS')
         os.remove(fileDir)
-    except:
+    except Exception:
         raise Exception('Incorrect fileDir')
     status = {
         'version'   : VERSION,
@@ -57,7 +57,7 @@ def load_login_status(self, fileDir,
     self.storageClass.loads(j['storage'])
     try:
         msgList, contactList = self.get_msg()
-    except:
+    except Exception:
         msgList = contactList = None
     if (msgList or contactList) is None:
         self.logout()
@@ -97,6 +97,6 @@ def load_last_login_status(session, cookiesDict):
             'mm_lang': 'zh_CN',
             'MM_WX_NOTIFY_STATE': '1',
             'MM_WX_SOUND_STATE': '1', })
-    except:
+    except Exception:
         logger.info('Load status for push login failed, we may have experienced a cookies change.')
         logger.info('If you are using the newest version of itchat, you may report a bug.')

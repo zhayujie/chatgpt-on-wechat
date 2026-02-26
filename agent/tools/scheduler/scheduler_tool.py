@@ -424,7 +424,7 @@ class SchedulerTool(BaseTool):
             try:
                 dt = datetime.fromisoformat(run_at)
                 return f"一次性 ({dt.strftime('%Y-%m-%d %H:%M')})"
-            except:
+            except Exception:
                 return "一次性"
         
         return "未知"
@@ -438,6 +438,6 @@ class SchedulerTool(BaseTool):
                     return msg.other_user_nickname or "群聊"
                 else:
                     return msg.from_user_nickname or "用户"
-        except:
+        except Exception:
             pass
         return "未知"

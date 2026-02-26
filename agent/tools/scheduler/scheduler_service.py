@@ -147,7 +147,7 @@ class SchedulerService:
                     return False
             
             return now >= next_run
-        except:
+        except Exception:
             return False
     
     def _calculate_next_run(self, task: dict, from_time: datetime) -> Optional[datetime]:
@@ -195,7 +195,7 @@ class SchedulerService:
                 # Only return if in the future
                 if run_at > from_time:
                     return run_at
-            except:
+            except Exception:
                 pass
             return None
         
