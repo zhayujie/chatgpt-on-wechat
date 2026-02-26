@@ -698,6 +698,8 @@ class FeiShuChanel(ChatChannel):
     def _compose_context(self, ctype: ContextType, content, **kwargs):
         context = Context(ctype, content)
         context.kwargs = kwargs
+        if "channel_type" not in context:
+            context["channel_type"] = self.channel_type
         if "origin_ctype" not in context:
             context["origin_ctype"] = ctype
 

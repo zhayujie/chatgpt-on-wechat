@@ -211,14 +211,14 @@ def run():
         sigterm_handler_wrap(signal.SIGTERM)
 
         # Parse channel_type into a list
-        raw_channel = conf().get("channel_type", "wx")
+        raw_channel = conf().get("channel_type", "web")
 
         if "--cmd" in sys.argv:
             channel_names = ["terminal"]
         else:
             channel_names = _parse_channel_type(raw_channel)
             if not channel_names:
-                channel_names = ["wx"]
+                channel_names = ["web"]
 
         if "wxy" in channel_names:
             os.environ["WECHATY_LOG"] = "warn"

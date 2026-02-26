@@ -322,7 +322,14 @@ class AgentInitializer:
                         tool.scheduler_service = scheduler_service
                         if not tool.config:
                             tool.config = {}
-                        tool.config["channel_type"] = conf().get("channel_type", "unknown")
+                        raw_ct = conf().get("channel_type", "unknown")
+                        if isinstance(raw_ct, list):
+                            ct = raw_ct[0] if raw_ct else "unknown"
+                        elif isinstance(raw_ct, str) and "," in raw_ct:
+                            ct = raw_ct.split(",")[0].strip()
+                        else:
+                            ct = raw_ct
+                        tool.config["channel_type"] = ct
             except Exception as e:
                 logger.warning(f"[AgentInitializer] Failed to inject scheduler dependencies: {e}")
     
@@ -369,7 +376,7 @@ class AgentInitializer:
         return {
             "model": conf().get("model", "unknown"),
             "workspace": workspace_root,
-            "channel": conf().get("channel_type", "unknown"),
+            "channel": ", ".join(conf().get("channel_type")) if isinstance(conf().get("channel_type"), list) else conf().get("channel_type", "unknown"),
             "_get_current_time": get_current_time  # Dynamic time function
         }
     

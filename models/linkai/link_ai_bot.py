@@ -107,7 +107,7 @@ class LinkAIBot(Bot, OpenAICompatibleBot):
                 "presence_penalty": conf().get("presence_penalty", 0.0),  # [-2,2]之间，该值越大则更倾向于产生不同的内容
                 "session_id": session_id,
                 "sender_id": session_id,
-                "channel_type": conf().get("channel_type", "wx")
+                "channel_type": context.get("channel_type") or conf().get("channel_type", "web")
             }
             try:
                 from linkai import LinkAIClient
@@ -526,6 +526,14 @@ def _linkai_call_with_tools(self, messages, tools=None, stream=False, **kwargs):
         logger.debug(f"[LinkAI] messages: {len(messages)}, tools: {len(tools) if tools else 0}, stream: {stream}")
         
         # Build request parameters (LinkAI uses OpenAI-compatible format)
+        raw_ct = conf().get("channel_type", "web")
+        if isinstance(raw_ct, list):
+            channel_type = raw_ct[0] if raw_ct else "web"
+        elif isinstance(raw_ct, str) and "," in raw_ct:
+            channel_type = raw_ct.split(",")[0].strip()
+        else:
+            channel_type = raw_ct
+
         body = {
             "messages": messages,
             "model": kwargs.get("model", conf().get("model") or "gpt-3.5-turbo"),
@@ -533,7 +541,8 @@ def _linkai_call_with_tools(self, messages, tools=None, stream=False, **kwargs):
             "top_p": kwargs.get("top_p", conf().get("top_p", 1)),
             "frequency_penalty": kwargs.get("frequency_penalty", conf().get("frequency_penalty", 0.0)),
             "presence_penalty": kwargs.get("presence_penalty", conf().get("presence_penalty", 0.0)),
-            "stream": stream
+            "stream": stream,
+            "channel_type": kwargs.get("channel_type", channel_type),
         }
 
         if tools:
