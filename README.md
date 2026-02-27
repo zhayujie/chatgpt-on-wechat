@@ -8,7 +8,15 @@
 
 **CowAgent** 是基于大模型的超级AI助理，能够主动思考和任务规划、操作计算机和外部资源、创造和执行Skills、拥有长期记忆并不断成长。CowAgent 支持灵活切换多种模型，能处理文本、语音、图片、文件等多模态消息，可接入网页、飞书、钉钉、企业微信应用、微信公众号中使用，7*24小时运行于你的个人电脑或服务器中。
 
-📖能力介绍：[CowAgent 2.0](/docs/agent.md)
+<p align="center">
+  <a href="https://cowagent.ai/">🌐 官网</a> &nbsp;·&nbsp;
+  <a href="https://docs.cowagent.ai/">📖 文档中心</a> &nbsp;·&nbsp;
+  <a href="https://docs.cowagent.ai/guide/quick-start">🚀 快速开始</a>
+</p>
+
+<p align="center">
+  <b>中文</b> | <a href="docs/en/README.md">English</a>
+</p>
 
 # 简介
 
@@ -30,7 +38,7 @@
 
 ## 演示
 
-使用说明(Agent模式)：[CowAgent介绍](/docs/agent.md)
+使用说明(Agent模式)：[CowAgent介绍](https://docs.cowagent.ai/intro/features)
 
 DEMO视频(对话模式)：https://cdn.link-ai.tech/doc/cow_demo.mp4
 
@@ -68,7 +76,7 @@ DEMO视频(对话模式)：https://cdn.link-ai.tech/doc/cow_demo.mp4
 
 >**2024.10.31：** [1.7.3版本](https://github.com/zhayujie/chatgpt-on-wechat/releases/tag/1.7.3) 程序稳定性提升、数据库功能、Claude模型优化、linkai插件优化、离线通知
 
-更多更新历史请查看: [更新日志](/docs/release/history.md)
+更多更新历史请查看: [更新日志](https://docs.cowagent.ai/releases/overview)
 
 <br/>
 
@@ -82,7 +90,7 @@ DEMO视频(对话模式)：https://cdn.link-ai.tech/doc/cow_demo.mp4
 bash <(curl -sS https://cdn.link-ai.tech/code/cow/run.sh)
 ```
 
-脚本使用说明：[一键运行脚本](https://github.com/zhayujie/chatgpt-on-wechat/wiki/CowAgentQuickStart)
+脚本使用说明：[一键运行脚本](https://docs.cowagent.ai/guide/quick-start)
 
 
 ## 一、准备
@@ -659,7 +667,7 @@ API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn)
 - `feishu_event_mode`: 事件接收模式，`websocket`（推荐）或 `webhook`
 - WebSocket 模式需安装依赖：`pip3 install lark-oapi`
 
-详细步骤和参数说明参考 [飞书接入](https://docs.link-ai.tech/cow/multi-platform/feishu)
+详细步骤和参数说明参考 [飞书接入](https://docs.cowagent.ai/channels/feishu)
 
 </details>
 
@@ -675,7 +683,7 @@ API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn)
     "dingtalk_client_secret": "CLIENT_SECRET"
 }
 ```
-详细步骤和参数说明参考 [钉钉接入](https://docs.link-ai.tech/cow/multi-platform/dingtalk)
+详细步骤和参数说明参考 [钉钉接入](https://docs.cowagent.ai/channels/dingtalk)
 </details>
 
 <details>
@@ -694,7 +702,7 @@ API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn)
     "wechatcomapp_aes_key": "AESKEY"
 }
 ```
-详细步骤和参数说明参考 [企微自建应用接入](https://docs.link-ai.tech/cow/multi-platform/wechat-com)
+详细步骤和参数说明参考 [企微自建应用接入](https://docs.cowagent.ai/channels/wecom)
 
 </details>
 
@@ -729,7 +737,7 @@ API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn)
 }
 ```
 
-详细步骤和参数说明参考 [微信公众号接入](https://docs.link-ai.tech/cow/multi-platform/wechat-mp)
+详细步骤和参数说明参考 [微信公众号接入](https://docs.cowagent.ai/channels/wechatmp)
 
 </details>
 
