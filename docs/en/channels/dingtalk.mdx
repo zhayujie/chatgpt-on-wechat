@@ -1,23 +1,21 @@
 ---
 title: DingTalk
-description: Integrate CowAgent with DingTalk
+description: Integrate CowAgent into DingTalk application
 ---
 
-# DingTalk
+Integrate CowAgent into DingTalk by creating an intelligent robot app on the DingTalk Open Platform.
 
-Create a smart bot application on the DingTalk Open Platform to integrate CowAgent.
+## 1. Create App
 
-## 1. Create an App
-
-1. Go to [DingTalk Developer Console](https://open-dev.dingtalk.com/fe/app#/corp/app), click **Create App**, and fill in the information
-2. Add the **Bot** capability
-3. Configure bot info and click **Publish**
+1. Go to [DingTalk Developer Console](https://open-dev.dingtalk.com/fe/app#/corp/app), click **Create App**, fill in app information
+2. Click **Add App Capability**, select **Robot** capability and add
+3. Configure robot information and click **Publish**
 
 ## 2. Project Configuration
 
 1. Get `Client ID` and `Client Secret` from **Credentials & Basic Info**
 
-2. Add to `config.json`:
+2. Fill in `config.json`:
 
 ```json
 {
@@ -33,8 +31,8 @@ Create a smart bot application on the DingTalk Open Platform to integrate CowAge
 pip3 install dingtalk_stream
 ```
 
-4. After starting the project, go to **Event Subscription** in the DingTalk console, click **Verify Connection** — it should show "Connection successful"
+4. After starting the project, go to DingTalk Developer Console **Event Subscription**, click **Connection verified, verify channel**. When "Connection successful" is displayed, configuration is complete
 
 ## 3. Usage
 
-Chat with the bot privately or add it to a group chat to start a conversation.
+Chat privately with the robot or add it to an enterprise group to start a conversation.

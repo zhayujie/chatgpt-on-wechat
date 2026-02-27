@@ -3,14 +3,25 @@
   "name": "CowAgent",
   "description": "CowAgent - AI Super Assistant powered by LLMs, with autonomous task planning, long-term memory, skills system, and multi-channel deployment.",
   "theme": "mint",
-  "colors": {
-    "primary": "#2563EB",
-    "light": "#60A5FA",
-    "dark": "#1D4ED8"
+  "appearance": {
+    "default": "light"
   },
-  "favicon": "/images/favicon.png",
+  "colors": {
+    "primary": "#35A85B",
+    "light": "#4ABE6E",
+    "dark": "#228547"
+  },
+  "logo": {
+    "light": "/images/logo.jpg",
+    "dark": "/images/logo.jpg"
+  },
+  "favicon": "/images/favicon.ico",
   "navbar": {
     "links": [
+      {
+        "label": "官网",
+        "href": "https://cowagent.ai/"
+      },
       {
         "label": "GitHub",
         "href": "https://github.com/zhayujie/chatgpt-on-wechat"
@@ -27,88 +38,282 @@
       {
         "language": "zh",
         "default": true,
-        "groups": [
+        "tabs": [
           {
-            "group": "开始",
-            "pages": [
-              "zh/index",
-              "zh/architecture"
+            "tab": "项目介绍",
+            "groups": [
+              {
+                "group": "概览",
+                "pages": [
+                  "intro/index",
+                  "intro/architecture",
+                  "intro/features"
+                ]
+              }
             ]
           },
           {
-            "group": "快速开始",
-            "pages": [
-              "zh/quick-start",
-              "zh/configuration"
+            "tab": "快速开始",
+            "groups": [
+              {
+                "group": "安装部署",
+                "pages": [
+                  "guide/quick-start",
+                  "guide/manual-install"
+                ]
+              }
             ]
           },
           {
-            "group": "核心功能",
-            "pages": [
-              "zh/models",
-              "zh/skills",
-              "zh/memory"
+            "tab": "模型",
+            "groups": [
+              {
+                "group": "模型配置",
+                "pages": [
+                  "models/index",
+                  "models/minimax",
+                  "models/glm",
+                  "models/qwen",
+                  "models/kimi",
+                  "models/doubao",
+                  "models/claude",
+                  "models/gemini",
+                  "models/openai",
+                  "models/deepseek",
+                  "models/linkai"
+                ]
+              }
             ]
           },
           {
-            "group": "通道",
-            "pages": [
-              "zh/channels/web",
-              "zh/channels/feishu",
-              "zh/channels/dingtalk",
-              "zh/channels/wecom",
-              "zh/channels/wechatmp"
+            "tab": "工具",
+            "groups": [
+              {
+                "group": "工具系统",
+                "pages": [
+                  "tools/index"
+                ]
+              },
+              {
+                "group": "内置工具",
+                "pages": [
+                  "tools/read",
+                  "tools/write",
+                  "tools/edit",
+                  "tools/ls",
+                  "tools/bash",
+                  "tools/send",
+                  "tools/memory",
+                  "tools/env-config"
+                ]
+              },
+              {
+                "group": "可选工具",
+                "pages": [
+                  "tools/web-search",
+                  "tools/scheduler"
+                ]
+              }
             ]
           },
           {
-            "group": "版本",
-            "pages": [
-              "zh/releases/overview",
-              "zh/releases/v2.0.0"
+            "tab": "技能",
+            "groups": [
+              {
+                "group": "技能系统",
+                "pages": [
+                  "skills/index",
+                  "skills/skill-creator"
+                ]
+              },
+              {
+                "group": "内置技能",
+                "pages": [
+                  "skills/image-vision",
+                  "skills/linkai-agent",
+                  "skills/web-fetch"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "记忆",
+            "groups": [
+              {
+                "group": "记忆系统",
+                "pages": [
+                  "memory"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "通道",
+            "groups": [
+              {
+                "group": "接入渠道",
+                "pages": [
+                  "channels/web",
+                  "channels/feishu",
+                  "channels/dingtalk",
+                  "channels/wecom",
+                  "channels/wechatmp"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "版本",
+            "groups": [
+              {
+                "group": "发布记录",
+                "pages": [
+                  "releases/overview",
+                  "releases/v2.0.1",
+                  "releases/v2.0.0"
+                ]
+              }
             ]
           }
         ]
       },
       {
         "language": "en",
-        "groups": [
+        "tabs": [
           {
-            "group": "Getting Started",
-            "pages": [
-              "en/index",
-              "en/architecture"
+            "tab": "Introduction",
+            "groups": [
+              {
+                "group": "Overview",
+                "pages": [
+                  "en/intro/index",
+                  "en/intro/architecture",
+                  "en/intro/features"
+                ]
+              }
             ]
           },
           {
-            "group": "Quick Start",
-            "pages": [
-              "en/quick-start",
-              "en/configuration"
+            "tab": "Get Started",
+            "groups": [
+              {
+                "group": "Installation",
+                "pages": [
+                  "en/guide/quick-start",
+                  "en/guide/manual-install"
+                ]
+              }
             ]
           },
           {
-            "group": "Core Features",
-            "pages": [
-              "en/models",
-              "en/skills",
-              "en/memory"
+            "tab": "Models",
+            "groups": [
+              {
+                "group": "Model Configuration",
+                "pages": [
+                  "en/models/index",
+                  "en/models/minimax",
+                  "en/models/glm",
+                  "en/models/qwen",
+                  "en/models/kimi",
+                  "en/models/doubao",
+                  "en/models/claude",
+                  "en/models/gemini",
+                  "en/models/openai",
+                  "en/models/deepseek",
+                  "en/models/linkai"
+                ]
+              }
             ]
           },
           {
-            "group": "Channels",
-            "pages": [
-              "en/channels/web",
-              "en/channels/feishu",
-              "en/channels/dingtalk",
-              "en/channels/wecom",
-              "en/channels/wechatmp"
+            "tab": "Tools",
+            "groups": [
+              {
+                "group": "Tools System",
+                "pages": [
+                  "en/tools/index"
+                ]
+              },
+              {
+                "group": "Built-in Tools",
+                "pages": [
+                  "en/tools/read",
+                  "en/tools/write",
+                  "en/tools/edit",
+                  "en/tools/ls",
+                  "en/tools/bash",
+                  "en/tools/send",
+                  "en/tools/memory",
+                  "en/tools/env-config"
+                ]
+              },
+              {
+                "group": "Optional Tools",
+                "pages": [
+                  "en/tools/web-search",
+                  "en/tools/scheduler"
+                ]
+              }
             ]
           },
           {
-            "group": "Versions",
-            "pages": [
-              "en/releases/overview",
-              "en/releases/v2.0.0"
+            "tab": "Skills",
+            "groups": [
+              {
+                "group": "Skills System",
+                "pages": [
+                  "en/skills/index",
+                  "en/skills/skill-creator"
+                ]
+              },
+              {
+                "group": "Built-in Skills",
+                "pages": [
+                  "en/skills/image-vision",
+                  "en/skills/linkai-agent",
+                  "en/skills/web-fetch"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Memory",
+            "groups": [
+              {
+                "group": "Memory System",
+                "pages": [
+                  "en/memory"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Channels",
+            "groups": [
+              {
+                "group": "Platforms",
+                "pages": [
+                  "en/channels/web",
+                  "en/channels/feishu",
+                  "en/channels/dingtalk",
+                  "en/channels/wecom",
+                  "en/channels/wechatmp"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Releases",
+            "groups": [
+              {
+                "group": "Release Notes",
+                "pages": [
+                  "en/releases/overview",
+                  "en/releases/v2.0.1",
+                  "en/releases/v2.0.0"
+                ]
+              }
             ]
           }
         ]

@@ -1,0 +1,113 @@
+---
+title: Manual Install
+description: Deploy CowAgent manually (source code / Docker)
+---
+
+## Source Code Deployment
+
+### 1. Clone the project
+
+```bash
+git clone https://github.com/zhayujie/chatgpt-on-wechat
+cd chatgpt-on-wechat/
+```
+
+<Tip>
+  For network issues, use the mirror: https://gitee.com/zhayujie/chatgpt-on-wechat
+</Tip>
+
+### 2. Install dependencies
+
+Core dependencies (required):
+
+```bash
+pip3 install -r requirements.txt
+```
+
+Optional dependencies (recommended):
+
+```bash
+pip3 install -r requirements-optional.txt
+```
+
+### 3. Configure
+
+Copy the config template and edit:
+
+```bash
+cp config-template.json config.json
+```
+
+Fill in model API keys, channel type, and other settings in `config.json`. See the [model docs](/en/models/index) for details.
+
+### 4. Run
+
+**Local run:**
+
+```bash
+python3 app.py
+```
+
+By default, the Web service starts. Access `http://localhost:9899/chat` to chat.
+
+**Background run on server:**
+
+```bash
+nohup python3 app.py & tail -f nohup.out
+```
+
+## Docker Deployment
+
+Docker deployment does not require cloning source code or installing dependencies. For Agent mode, source deployment is recommended for broader system access.
+
+<Note>
+  Requires [Docker](https://docs.docker.com/engine/install/) and docker-compose.
+</Note>
+
+**1. Download config**
+
+```bash
+wget https://cdn.link-ai.tech/code/cow/docker-compose.yml
+```
+
+Edit `docker-compose.yml` with your configuration.
+
+**2. Start container**
+
+```bash
+sudo docker compose up -d
+```
+
+**3. View logs**
+
+```bash
+sudo docker logs -f chatgpt-on-wechat
+```
+
+## Core Configuration
+
+```json
+{
+  "channel_type": "web",
+  "model": "MiniMax-M2.5",
+  "agent": true,
+  "agent_workspace": "~/cow",
+  "agent_max_context_tokens": 40000,
+  "agent_max_context_turns": 30,
+  "agent_max_steps": 15
+}
+```
+
+| Parameter | Description | Default |
+| --- | --- | --- |
+| `channel_type` | Channel type | `web` |
+| `model` | Model name | `MiniMax-M2.5` |
+| `agent` | Enable Agent mode | `true` |
+| `agent_workspace` | Agent workspace path | `~/cow` |
+| `agent_max_context_tokens` | Max context tokens | `40000` |
+| `agent_max_context_turns` | Max context turns | `30` |
+| `agent_max_steps` | Max decision steps per task | `15` |
+
+<Tip>
+  Full configuration options are in the project [`config.py`](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/config.py).
+</Tip>

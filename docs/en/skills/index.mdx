@@ -1,0 +1,67 @@
+---
+title: Skills Overview
+description: CowAgent skills system introduction
+---
+
+Skills provide infinite extensibility for the Agent. Each Skill consists of a description file (`SKILL.md`), execution scripts (optional), and resources (optional), describing how to accomplish specific types of tasks.
+
+The difference between Skills and Tools: Tools are atomic operations implemented in code (e.g., file read/write, command execution), while Skills are high-level workflows based on description files that can combine multiple Tools to complete complex tasks.
+
+## Built-in Skills
+
+Located in the project `skills/` directory, automatically enabled based on dependency conditions:
+
+| Skill | Description | Dependencies |
+| --- | --- | --- |
+| [`skill-creator`](/en/skills/skill-creator) | Create custom skills through conversation | None |
+| [`openai-image-vision`](/en/skills/image-vision) | Recognize images using OpenAI vision models | `OPENAI_API_KEY` |
+| [`linkai-agent`](/en/skills/linkai-agent) | Integrate LinkAI platform agents | `LINKAI_API_KEY` |
+| [`web-fetch`](/en/skills/web-fetch) | Fetch web page text content | `curl` (enabled by default) |
+
+## Custom Skills
+
+Created by users through conversation, stored in workspace (`~/cow/skills/`), can implement any complex business process and third-party system integration.
+
+## Skill Loading Priority
+
+1. **Workspace skills** (highest): `~/cow/skills/`
+2. **Project built-in skills** (lowest): `skills/`
+
+Skills with the same name are overridden by priority.
+
+## Skill File Structure
+
+```
+skills/
+├── my-skill/
+│   ├── SKILL.md          # Skill description (frontmatter + instructions)
+│   ├── scripts/          # Execution scripts (optional)
+│   └── resources/        # Additional resources (optional)
+```
+
+### SKILL.md Format
+
+```markdown
+---
+name: my-skill
+description: Brief description of the skill
+metadata:
+  emoji: 🔧
+  requires:
+    bins: ["curl"]
+    env: ["MY_API_KEY"]
+  primaryEnv: "MY_API_KEY"
+---
+
+# My Skill
+
+Detailed instructions...
+```
+
+| Field | Description |
+| --- | --- |
+| `name` | Skill name, must match directory name |
+| `description` | Skill description, Agent decides whether to invoke based on this |
+| `metadata.requires.bins` | Required system commands |
+| `metadata.requires.env` | Required environment variables |
+| `metadata.always` | Always load (default false) |

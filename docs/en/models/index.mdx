@@ -1,0 +1,55 @@
+---
+title: Models Overview
+description: Supported models and recommended choices for CowAgent
+---
+
+CowAgent supports mainstream LLMs from domestic and international providers. Model interfaces are implemented in the project's `models/` directory.
+
+<Note>
+  For Agent mode, the following models are recommended based on quality and cost: MiniMax-M2.5, glm-5, kimi-k2.5, qwen3.5-plus, claude-sonnet-4-6, gemini-3.1-pro-preview
+</Note>
+
+## Configuration
+
+Configure the model name and API key in `config.json` according to your chosen model. Each model also supports OpenAI-compatible access by setting `bot_type` to `chatGPT` and configuring `open_ai_api_base` and `open_ai_api_key`.
+
+You can also use the [LinkAI](https://link-ai.tech) platform interface to flexibly switch between multiple models with support for knowledge base, workflows, and other Agent capabilities.
+
+## Supported Models
+
+<CardGroup cols={2}>
+  <Card title="MiniMax" href="/en/models/minimax">
+    MiniMax-M2.5 and other series models
+  </Card>
+  <Card title="GLM (Zhipu AI)" href="/en/models/glm">
+    glm-5, glm-4.7 and other series models
+  </Card>
+  <Card title="Qwen (Tongyi Qianwen)" href="/en/models/qwen">
+    qwen3.5-plus, qwen3-max and more
+  </Card>
+  <Card title="Kimi" href="/en/models/kimi">
+    kimi-k2.5, kimi-k2 and more
+  </Card>
+  <Card title="Doubao (ByteDance)" href="/en/models/doubao">
+    doubao-seed series models
+  </Card>
+  <Card title="Claude" href="/en/models/claude">
+    claude-sonnet-4-6 and more
+  </Card>
+  <Card title="Gemini" href="/en/models/gemini">
+    gemini-3.1-pro-preview and more
+  </Card>
+  <Card title="OpenAI" href="/en/models/openai">
+    gpt-4.1, o-series and more
+  </Card>
+  <Card title="DeepSeek" href="/en/models/deepseek">
+    deepseek-chat, deepseek-reasoner
+  </Card>
+  <Card title="LinkAI" href="/en/models/linkai">
+    Unified multi-model interface + knowledge base
+  </Card>
+</CardGroup>
+
+<Tip>
+  For a full list of model names, refer to the project's [`common/const.py`](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/common/const.py) file.
+</Tip>

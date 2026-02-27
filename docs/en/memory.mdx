@@ -3,17 +3,15 @@ title: Memory
 description: CowAgent long-term memory system
 ---
 
-# Long-term Memory
-
-The memory system enables the Agent to remember important information over time, continuously accumulating experience, understanding user preferences, and achieving autonomous thinking and growth.
+The memory system enables the Agent to remember important information over time, continuously accumulating experience, understanding user preferences, and truly achieving autonomous thinking and continuous growth.
 
 ## How It Works
 
-The Agent proactively stores memory in these scenarios:
+The Agent proactively stores memory in the following scenarios:
 
-- **When users share important information** — Automatically identifies and stores preferences, decisions, facts, and other key information
-- **When conversations reach a certain length** — Automatically extracts summaries to prevent information loss
-- **When retrieval is needed** — Intelligently searches historical memory and combines it with context
+- **When user shares important information** — Automatically identifies and stores preferences, decisions, facts, and other key information
+- **When conversation reaches a certain length** — Automatically extracts summaries to prevent information loss
+- **When retrieval is needed** — Intelligently searches historical memory, combining context for responses
 
 ## Memory Types
 
@@ -23,16 +21,16 @@ Stored in `~/cow/memory/core.md`, containing long-term user preferences, importa
 
 ### Daily Memory
 
-Stored in the `~/cow/memory/daily/` directory, organized by date, recording daily conversation summaries and key events.
+Stored in `~/cow/memory/daily/` directory, organized by date, recording daily conversation summaries and key events.
 
-## First Startup
+## First Launch
 
-On first startup, the Agent proactively asks the user for key information and records it in the workspace (default `~/cow`):
+On first launch, the Agent will proactively ask the user for key information and save it to the workspace (default `~/cow`):
 
 | File | Description |
 | --- | --- |
 | `system.md` | Agent system prompt and behavior settings |
-| `user.md` | User identity and preferences |
+| `user.md` | User identity information and preferences |
 | `memory/core.md` | Core memory |
 | `memory/daily/` | Daily memory directory |
 
@@ -42,16 +40,14 @@ On first startup, the Agent proactively asks the user for key information and re
 
 ## Memory Retrieval
 
-The memory system supports hybrid retrieval:
+The memory system supports hybrid retrieval modes:
 
-- **Keyword Search** — Matches historical memory based on keywords
-- **Vector Search** — Semantic similarity search that finds related memories even with different wording
+- **Keyword retrieval** — Match historical memory based on keywords
+- **Vector retrieval** — Semantic similarity search, finds relevant memory even with different wording
 
-The Agent automatically triggers memory retrieval during conversations, incorporating relevant historical information into the context.
+The Agent automatically triggers memory retrieval during conversation as needed, incorporating relevant historical information into context.
 
 ## Configuration
-
-Adjust memory-related parameters in `config.json`:
 
 ```json
 {
@@ -63,6 +59,6 @@ Adjust memory-related parameters in `config.json`:
 
 | Parameter | Description | Default |
 | --- | --- | --- |
-| `agent_workspace` | Workspace path where memory files are stored | `~/cow` |
-| `agent_max_context_tokens` | Maximum context tokens, affects short-term memory capacity | `40000` |
-| `agent_max_context_turns` | Maximum context turns, older conversations are discarded when exceeded | `30` |
+| `agent_workspace` | Workspace path, memory files stored under this directory | `~/cow` |
+| `agent_max_context_tokens` | Max context tokens, affects short-term memory capacity | `40000` |
+| `agent_max_context_turns` | Max context turns, oldest conversations discarded when exceeded | `30` |

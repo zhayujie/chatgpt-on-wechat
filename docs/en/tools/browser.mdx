@@ -1,0 +1,27 @@
+---
+title: browser - Browser
+description: Access and interact with web pages
+---
+
+# browser
+
+Use a browser to access and interact with web pages, supports JavaScript-rendered dynamic pages.
+
+## Dependencies
+
+| Dependency | Install Command |
+| --- | --- |
+| `browser-use` ≥ 0.1.40 | `pip install browser-use` |
+| `markdownify` | `pip install markdownify` |
+| `playwright` + chromium | `pip install playwright && playwright install chromium` |
+
+## Use Cases
+
+- Access specific URLs to get page content
+- Interact with web page elements (click, type, etc.)
+- Verify deployed web pages
+- Scrape dynamic content requiring JS rendering
+
+<Note>
+  The browser tool has heavy dependencies. If not needed, skip installation. For lightweight web content retrieval, use the `web-fetch` skill instead.
+</Note>

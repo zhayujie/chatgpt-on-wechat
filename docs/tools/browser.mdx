@@ -1,0 +1,27 @@
+---
+title: browser - 浏览器
+description: 访问和操作网页
+---
+
+# browser
+
+使用浏览器访问和操作网页，支持 JavaScript 渲染的动态页面。
+
+## 依赖
+
+| 依赖 | 安装命令 |
+| --- | --- |
+| `browser-use` ≥ 0.1.40 | `pip install browser-use` |
+| `markdownify` | `pip install markdownify` |
+| `playwright` + chromium | `pip install playwright && playwright install chromium` |
+
+## 使用场景
+
+- 访问指定 URL 获取页面内容
+- 操作网页元素（点击、输入等）
+- 验证部署后的网页效果
+- 抓取需要 JS 渲染的动态内容
+
+<Note>
+  浏览器工具依赖较重，如不需要可不安装。轻量的网页内容获取可使用 `web-fetch` 技能。
+</Note>

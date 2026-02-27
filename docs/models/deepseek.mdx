@@ -1,0 +1,22 @@
+---
+title: DeepSeek
+description: DeepSeek 模型配置
+---
+
+通过 OpenAI 兼容方式接入：
+
+```json
+{
+  "model": "deepseek-chat",
+  "open_ai_api_key": "YOUR_API_KEY",
+  "open_ai_api_base": "https://api.deepseek.com/v1",
+  "bot_type": "chatGPT"
+}
+```
+
+| 参数 | 说明 |
+| --- | --- |
+| `model` | `deepseek-chat`（DeepSeek-V3）、`deepseek-reasoner`（DeepSeek-R1） |
+| `bot_type` | 固定为 `chatGPT`（OpenAI 兼容方式） |
+| `open_ai_api_key` | 在 [DeepSeek 平台](https://platform.deepseek.com/api_keys) 创建 |
+| `open_ai_api_base` | DeepSeek 平台 BASE URL |

@@ -1,0 +1,19 @@
+---
+title: OpenAI
+description: OpenAI model configuration
+---
+
+```json
+{
+  "model": "gpt-4.1-mini",
+  "open_ai_api_key": "YOUR_API_KEY",
+  "open_ai_api_base": "https://api.openai.com/v1"
+}
+```
+
+| Parameter | Description |
+| --- | --- |
+| `model` | Matches the [model parameter](https://platform.openai.com/docs/models) of the OpenAI API. Supports o-series, gpt-5.2, gpt-5.1, gpt-4.1, etc. |
+| `open_ai_api_key` | Create at [OpenAI Platform](https://platform.openai.com/api-keys) |
+| `open_ai_api_base` | Optional. Change to use third-party proxy |
+| `bot_type` | Not required for official OpenAI models. Set to `chatGPT` when using Claude or other non-OpenAI models via proxy |

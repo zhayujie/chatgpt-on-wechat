@@ -1,0 +1,67 @@
+---
+title: 技能概览
+description: CowAgent 技能系统介绍
+---
+
+技能（Skill）为 Agent 提供无限的扩展性。每个 Skill 由说明文件（`SKILL.md`）、运行脚本（可选）、资源（可选）组成，描述如何完成特定类型的任务。
+
+Skill 与 Tool 的区别：Tool 是由代码实现的原子操作（如读写文件、执行命令），Skill 则是基于说明文件的高级工作流，可以组合调用多个 Tool 来完成复杂任务。
+
+## 内置技能
+
+位于项目 `skills/` 目录下，根据依赖条件自动判断是否启用：
+
+| 技能 | 说明 | 依赖 |
+| --- | --- | --- |
+| [`skill-creator`](/skills/skill-creator) | 通过对话创建自定义技能 | 无 |
+| [`openai-image-vision`](/skills/image-vision) | 使用 OpenAI 视觉模型识别图片 | `OPENAI_API_KEY` |
+| [`linkai-agent`](/skills/linkai-agent) | 对接 LinkAI 平台智能体 | `LINKAI_API_KEY` |
+| [`web-fetch`](/skills/web-fetch) | 抓取网页文本内容 | `curl`（默认启用） |
+
+## 自定义技能
+
+由用户通过对话创建，存放在工作空间中（`~/cow/skills/`），可实现任何复杂的业务流程和第三方系统对接。
+
+## 技能加载优先级
+
+1. **工作空间技能**（最高）：`~/cow/skills/`
+2. **项目内置技能**（最低）：`skills/`
+
+同名技能按优先级覆盖。
+
+## 技能文件结构
+
+```
+skills/
+├── my-skill/
+│   ├── SKILL.md          # Skill description (frontmatter + instructions)
+│   ├── scripts/          # Execution scripts (optional)
+│   └── resources/        # Additional resources (optional)
+```
+
+### SKILL.md 格式
+
+```markdown
+---
+name: my-skill
+description: Brief description of the skill
+metadata:
+  emoji: 🔧
+  requires:
+    bins: ["curl"]
+    env: ["MY_API_KEY"]
+  primaryEnv: "MY_API_KEY"
+---
+
+# My Skill
+
+Detailed instructions...
+```
+
+| 字段 | 说明 |
+| --- | --- |
+| `name` | 技能名称，需与目录名一致 |
+| `description` | 技能描述，Agent 据此决定是否调用 |
+| `metadata.requires.bins` | 依赖的系统命令 |
+| `metadata.requires.env` | 依赖的环境变量 |
+| `metadata.always` | 是否始终加载（默认 false） |

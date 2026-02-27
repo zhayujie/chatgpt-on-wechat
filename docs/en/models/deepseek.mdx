@@ -1,0 +1,22 @@
+---
+title: DeepSeek
+description: DeepSeek model configuration
+---
+
+Use OpenAI-compatible configuration:
+
+```json
+{
+  "model": "deepseek-chat",
+  "bot_type": "chatGPT",
+  "open_ai_api_key": "YOUR_API_KEY",
+  "open_ai_api_base": "https://api.deepseek.com/v1"
+}
+```
+
+| Parameter | Description |
+| --- | --- |
+| `model` | `deepseek-chat` (DeepSeek-V3), `deepseek-reasoner` (DeepSeek-R1) |
+| `bot_type` | Must be `chatGPT` (OpenAI-compatible mode) |
+| `open_ai_api_key` | Create at [DeepSeek Platform](https://platform.deepseek.com/api_keys) |
+| `open_ai_api_base` | DeepSeek platform BASE URL |

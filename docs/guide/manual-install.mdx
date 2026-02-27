@@ -1,0 +1,113 @@
+---
+title: 手动安装
+description: 手动部署 CowAgent（源码 / Docker）
+---
+
+## 源码部署
+
+### 1. 克隆项目代码
+
+```bash
+git clone https://github.com/zhayujie/chatgpt-on-wechat
+cd chatgpt-on-wechat/
+```
+
+<Tip>
+  若遇到网络问题可使用国内仓库地址：https://gitee.com/zhayujie/chatgpt-on-wechat
+</Tip>
+
+### 2. 安装依赖
+
+核心依赖（必选）：
+
+```bash
+pip3 install -r requirements.txt
+```
+
+扩展依赖（可选，建议安装）：
+
+```bash
+pip3 install -r requirements-optional.txt
+```
+
+### 3. 配置
+
+复制配置文件模板并编辑：
+
+```bash
+cp config-template.json config.json
+```
+
+在 `config.json` 中填写模型 API Key 和通道类型等配置，详细说明参考各 [模型文档](/models/minimax)。
+
+### 4. 运行
+
+**本地运行：**
+
+```bash
+python3 app.py
+```
+
+运行后默认启动 Web 服务，访问 `http://localhost:9899/chat` 开始对话。
+
+**服务器后台运行：**
+
+```bash
+nohup python3 app.py & tail -f nohup.out
+```
+
+## Docker 部署
+
+使用 Docker 部署无需下载源码和安装依赖。Agent 模式下更推荐使用源码部署以获得更多系统访问能力。
+
+<Note>
+  需要安装 [Docker](https://docs.docker.com/engine/install/) 和 docker-compose。
+</Note>
+
+**1. 下载配置文件**
+
+```bash
+wget https://cdn.link-ai.tech/code/cow/docker-compose.yml
+```
+
+打开 `docker-compose.yml` 填写所需配置。
+
+**2. 启动容器**
+
+```bash
+sudo docker compose up -d
+```
+
+**3. 查看日志**
+
+```bash
+sudo docker logs -f chatgpt-on-wechat
+```
+
+## 核心配置项
+
+```json
+{
+  "channel_type": "web",
+  "model": "MiniMax-M2.5",
+  "agent": true,
+  "agent_workspace": "~/cow",
+  "agent_max_context_tokens": 40000,
+  "agent_max_context_turns": 30,
+  "agent_max_steps": 15
+}
+```
+
+| 参数 | 说明 | 默认值 |
+| --- | --- | --- |
+| `channel_type` | 接入渠道类型 | `web` |
+| `model` | 模型名称 | `MiniMax-M2.5` |
+| `agent` | 是否启用 Agent 模式 | `true` |
+| `agent_workspace` | Agent 工作空间路径 | `~/cow` |
+| `agent_max_context_tokens` | 最大上下文 tokens | `40000` |
+| `agent_max_context_turns` | 最大上下文记忆轮次 | `30` |
+| `agent_max_steps` | 单次任务最大决策步数 | `15` |
+
+<Tip>
+  全部配置项可在项目 [`config.py`](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/config.py) 文件中查看。
+</Tip>

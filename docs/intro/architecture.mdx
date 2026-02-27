@@ -1,0 +1,71 @@
+---
+title: 项目架构
+description: CowAgent 2.0 的系统架构和核心设计
+---
+
+CowAgent 2.0 从简单的聊天机器人全面升级为超级智能助理，采用 Agent 架构设计，具备自主思考、规划任务、长期记忆和技能扩展等能力。
+
+## 系统架构
+
+CowAgent 的整体架构由以下核心模块组成：
+
+<img src="https://cdn.link-ai.tech/doc/68ef7b212c6f791e0e74314b912149f9-sz_5847990.png" alt="CowAgent Architecture" />
+
+### 核心模块说明
+
+| 模块 | 说明 |
+| --- | --- |
+| **Channels** | 消息通道层，负责接收和发送消息，支持 Web、飞书、钉钉、企微、公众号等 |
+| **Agent Core** | 智能体核心引擎，包括任务规划、记忆系统和技能引擎 |
+| **Tools** | 工具层，Agent 通过工具访问操作系统资源，内置 10+ 种工具 |
+| **Models** | 模型层，支持国内外主流大语言模型的统一接入 |
+
+## Agent 模式
+
+启用 Agent 模式后，CowAgent 会以自主智能体的方式运行，核心工作流如下：
+
+1. **接收消息** - 通过通道接收用户输入
+2. **理解意图** - 分析任务需求和上下文
+3. **规划任务** - 将复杂任务分解为多个步骤
+4. **调用工具** - 选择合适的工具执行每个步骤
+5. **记忆更新** - 将重要信息存入长期记忆
+6. **返回结果** - 将执行结果发送回用户
+
+## 工作空间
+
+Agent 的工作空间默认位于 `~/cow` 目录，用于存储系统提示词、记忆文件、技能文件等：
+
+```
+~/cow/
+├── system.md          # Agent system prompt
+├── user.md            # User profile
+├── memory/            # Long-term memory storage
+│   ├── core.md        # Core memory
+│   └── daily/         # Daily memory
+├── skills/            # Custom skills
+│   ├── skill-1/
+│   └── skill-2/
+└── .env               # Secret keys for skills
+```
+
+## 核心配置
+
+在 `config.json` 中配置 Agent 模式的核心参数：
+
+```json
+{
+  "agent": true,
+  "agent_workspace": "~/cow",
+  "agent_max_context_tokens": 40000,
+  "agent_max_context_turns": 30,
+  "agent_max_steps": 15
+}
+```
+
+| 参数 | 说明 | 默认值 |
+| --- | --- | --- |
+| `agent` | 是否启用 Agent 模式 | `true` |
+| `agent_workspace` | 工作空间路径 | `~/cow` |
+| `agent_max_context_tokens` | 最大上下文 token 数 | `40000` |
+| `agent_max_context_turns` | 最大上下文记忆轮次 | `30` |
+| `agent_max_steps` | 单次任务最大决策步数 | `15` |

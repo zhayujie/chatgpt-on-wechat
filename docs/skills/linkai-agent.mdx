@@ -1,0 +1,49 @@
+---
+title: LinkAI 智能体
+description: 对接 LinkAI 平台的多智能体技能
+---
+
+# linkai-agent
+
+将 [LinkAI](https://link-ai.tech/) 平台上的智能体作为 Skill 使用，实现多智能体决策。Agent 根据智能体的名称和描述智能选择，通过 `app_code` 调用对应的应用或工作流。
+
+## 依赖
+
+| 依赖 | 说明 |
+| --- | --- |
+| `LINKAI_API_KEY` | LinkAI 平台 API 密钥，在 [控制台](https://link-ai.tech/console/interface) 创建 |
+| `curl` | 系统命令（通常已预装） |
+
+配置方式：
+
+- 通过 `env_config` 工具配置 `LINKAI_API_KEY`
+- 或在 `config.json` 中填写 `linkai_api_key`
+
+## 配置智能体
+
+在 `skills/linkai-agent/config.json` 中添加可用的智能体：
+
+```json
+{
+  "apps": [
+    {
+      "app_code": "G7z6vKwp",
+      "app_name": "LinkAI客服助手",
+      "app_description": "当用户需要了解LinkAI平台相关问题时才选择该助手"
+    },
+    {
+      "app_code": "SFY5x7JR",
+      "app_name": "内容创作助手",
+      "app_description": "当用户需要创作图片或视频时才使用该助手"
+    }
+  ]
+}
+```
+
+## 使用方式
+
+配置完成后，Agent 会根据用户的问题自动选择合适的 LinkAI 智能体进行回答。
+
+<Frame>
+  <img src="https://cdn.link-ai.tech/doc/20260202234350.png" width="750" />
+</Frame>

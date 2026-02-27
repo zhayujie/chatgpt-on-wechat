@@ -1,0 +1,38 @@
+---
+title: 钉钉
+description: 将 CowAgent 接入钉钉应用
+---
+
+通过钉钉开放平台创建智能机器人应用，将 CowAgent 接入钉钉。
+
+## 一、创建应用
+
+1. 进入 [钉钉开发者后台](https://open-dev.dingtalk.com/fe/app#/corp/app)，点击 **创建应用**，填写应用信息
+2. 点击添加应用能力，选择 **机器人** 能力并添加
+3. 配置机器人信息后点击 **发布**
+
+## 二、项目配置
+
+1. 在 **凭证与基础信息** 中获取 `Client ID` 和 `Client Secret`
+
+2. 填入 `config.json`：
+
+```json
+{
+  "channel_type": "dingtalk",
+  "dingtalk_client_id": "YOUR_CLIENT_ID",
+  "dingtalk_client_secret": "YOUR_CLIENT_SECRET"
+}
+```
+
+3. 安装依赖：
+
+```bash
+pip3 install dingtalk_stream
+```
+
+4. 启动项目后，在钉钉开发者后台点击 **事件订阅**，点击 **已完成接入，验证连接通道**，显示"连接接入成功"即表示配置完成
+
+## 三、使用
+
+与机器人私聊或将机器人拉入企业群中均可开启对话。

@@ -1,0 +1,31 @@
+---
+title: Web 网页
+description: 通过 Web 网页端使用 CowAgent
+---
+
+Web 是 CowAgent 的默认通道，启动后会自动运行 Web 控制台，通过浏览器即可与 Agent 对话。
+
+## 配置
+
+```json
+{
+  "channel_type": "web",
+  "web_port": 9899
+}
+```
+
+| 参数 | 说明 | 默认值 |
+| --- | --- | --- |
+| `channel_type` | 设为 `web` | `web` |
+| `web_port` | Web 服务监听端口 | `9899` |
+
+## 使用
+
+启动项目后访问：
+
+- 本地运行：`http://localhost:9899/chat`
+- 服务器运行：`http://<server-ip>:9899/chat`
+
+<Note>
+  请确保服务器防火墙和安全组已放行对应端口。
+</Note>

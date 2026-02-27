@@ -1,0 +1,105 @@
+---
+title: 功能介绍
+description: CowAgent 长期记忆、任务规划、技能系统详细说明
+---
+
+## 1. 长期记忆
+
+> 记忆系统让 Agent 能够长期记住重要信息。Agent 会在用户分享偏好、决策、事实等重要信息时主动存储，也会在对话达到一定长度时自动提取摘要。记忆分为核心记忆、天级记忆，支持语义搜索和向量检索的混合检索模式。
+
+第一次启动 Agent 时，Agent 会主动询问关键信息，并记录至工作空间（默认 `~/cow`）中的智能体设定、用户身份、记忆文件中。
+
+在后续的长期对话中，Agent 会在需要时智能记录或检索记忆，并对自身设定、用户偏好、记忆文件等进行不断更新，总结和记录经验和教训，真正实现自主思考和不断成长。
+
+<Frame>
+  <img src="https://cdn.link-ai.tech/doc/20260203000455.png" width="800" />
+</Frame>
+
+## 2. 任务规划和工具调用
+
+工具是 Agent 访问操作系统资源的核心，Agent 会根据任务需求智能选择和调用工具，完成文件读写、命令执行、定时任务等各类操作。内置工具的实现在项目的 `agent/tools/` 目录下。
+
+**主要工具：** 文件读写编辑、Bash 终端、文件发送、定时调度、记忆搜索、联网搜索、环境配置等。
+
+### 2.1 终端和文件访问
+
+针对操作系统的终端和文件的访问能力，是最基础和核心的工具，其他很多工具或技能都是基于此进行扩展。用户可通过手机端与 Agent 交互，操作个人电脑或服务器上的资源：
+
+<Frame>
+  <img src="https://cdn.link-ai.tech/doc/20260202181130.png" width="800" />
+</Frame>
+
+### 2.2 编程能力
+
+基于编程能力和系统访问能力，Agent 可以实现从信息搜索、图片等素材生成、编码、测试、部署、Nginx 配置修改、发布的 **Vibecoding 全流程**，通过手机端简单的一句命令完成应用的快速 demo：
+
+<Frame>
+  <img src="https://cdn.link-ai.tech/doc/20260203121008.png" width="800" />
+</Frame>
+
+### 2.3 定时任务
+
+基于 `scheduler` 工具实现动态定时任务，支持**一次性任务、固定时间间隔、Cron 表达式**三种形式，任务触发可选择**固定消息发送**或 **Agent 动态任务**执行两种模式：
+
+<Frame>
+  <img src="https://cdn.link-ai.tech/doc/20260202195402.png" width="800" />
+</Frame>
+
+### 2.4 环境变量管理
+
+技能所需的秘钥存储在环境变量文件中，由 `env_config` 工具进行管理，你可以通过对话的方式更新秘钥，工具内置安全保护和脱敏策略：
+
+<Frame>
+  <img src="https://cdn.link-ai.tech/doc/20260202234939.png" width="800" />
+</Frame>
+
+## 3. 技能系统
+
+技能系统为 Agent 提供无限的扩展性，每个 Skill 由说明文件、运行脚本（可选）、资源（可选）组成，描述如何完成特定类型的任务。通过 Skill 可以让 Agent 遵循说明完成复杂流程、调用各类工具或对接第三方系统。
+
+- **内置技能：** 在项目的 `skills/` 目录下，包含技能创造器、图像识别、LinkAI 智能体、网页抓取等。内置 Skill 根据依赖条件（API Key、系统命令等）自动判断是否启用。
+- **自定义技能：** 由用户通过对话创建，存放在工作空间中（`~/cow/skills/`），可实现任何复杂的业务流程和第三方系统对接。
+
+### 3.1 创建技能
+
+通过 `skill-creator` 技能可以通过对话的方式快速创建技能。你可以让 Agent 将某个工作流程固化为技能，或者把任意接口文档和示例发送给 Agent，让他直接完成对接：
+
+<Frame>
+  <img src="https://cdn.link-ai.tech/doc/20260202202247.png" width="800" />
+</Frame>
+
+### 3.2 搜索和图像识别
+
+- **联网搜索：** 内置 `web_search` 工具，支持多种搜索引擎，配置 `BOCHA_API_KEY` 或 `LINKAI_API_KEY` 后启用。
+- **图像识别：** 内置 `openai-image-vision` 技能，可使用 `gpt-4.1-mini`、`gpt-4.1` 等模型，依赖 `OPENAI_API_KEY`。
+
+<Frame>
+  <img src="https://cdn.link-ai.tech/doc/20260202213219.png" width="800" />
+</Frame>
+
+### 3.3 三方知识库和插件
+
+`linkai-agent` 技能可以将 [LinkAI](https://link-ai.tech/) 上的所有智能体作为 Skill 交给 Agent 使用，实现多智能体决策效果。
+
+配置方式：通过 `env_config` 配置 `LINKAI_API_KEY`，并在 `skills/linkai-agent/config.json` 中添加智能体说明：
+
+```json
+{
+  "apps": [
+    {
+      "app_code": "G7z6vKwp",
+      "app_name": "LinkAI客服助手",
+      "app_description": "当用户需要了解LinkAI平台相关问题时才选择该助手"
+    },
+    {
+      "app_code": "SFY5x7JR",
+      "app_name": "内容创作助手",
+      "app_description": "当用户需要创作图片或视频时才使用该助手"
+    }
+  ]
+}
+```
+
+<Frame>
+  <img src="https://cdn.link-ai.tech/doc/20260202234350.png" width="750" />
+</Frame>

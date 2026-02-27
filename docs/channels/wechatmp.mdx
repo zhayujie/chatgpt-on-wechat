@@ -1,0 +1,56 @@
+---
+title: 微信公众号
+description: 将 CowAgent 接入微信公众号
+---
+
+CowAgent 支持接入个人订阅号和企业服务号两种公众号类型。
+
+| 类型 | 要求 | 特点 |
+| --- | --- | --- |
+| **个人订阅号** | 个人可申请 | 回复生成后需用户主动发消息获取 |
+| **企业服务号** | 企业申请，需通过微信认证开通客服接口 | 回复生成后可主动推送给用户 |
+
+<Note>
+  公众号仅支持服务器和 Docker 部署，需额外安装扩展依赖：`pip3 install -r requirements-optional.txt`
+</Note>
+
+## 一、个人订阅号
+
+在 `config.json` 中配置：
+
+```json
+{
+  "channel_type": "wechatmp",
+  "wechatmp_app_id": "YOUR_APP_ID",
+  "wechatmp_app_secret": "YOUR_APP_SECRET",
+  "wechatmp_aes_key": "",
+  "wechatmp_token": "YOUR_TOKEN",
+  "wechatmp_port": 80
+}
+```
+
+### 配置步骤
+
+1. 在 [微信公众平台](https://mp.weixin.qq.com/) 的 **设置与开发 → 基本配置 → 服务器配置** 中获取参数
+2. 启用开发者密码，将服务器 IP 加入白名单
+3. 启动程序（监听 80 端口）
+4. 在公众号后台 **启用服务器配置**，URL 格式为 `http://{HOST}/wx`
+
+## 二、企业服务号
+
+与个人订阅号流程基本相同，差异如下：
+
+1. 在公众平台申请企业服务号并完成微信认证，确认已获得 **客服接口** 权限
+2. 在 `config.json` 中设置 `"channel_type": "wechatmp_service"`
+3. 即使是较长耗时的回复，也可以主动推送给用户
+
+```json
+{
+  "channel_type": "wechatmp_service",
+  "wechatmp_app_id": "YOUR_APP_ID",
+  "wechatmp_app_secret": "YOUR_APP_SECRET",
+  "wechatmp_aes_key": "",
+  "wechatmp_token": "YOUR_TOKEN",
+  "wechatmp_port": 80
+}
+```
