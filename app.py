@@ -118,21 +118,50 @@ class ChannelManager:
         Stop channel(s). If channel_name is given, stop only that channel;
         otherwise stop all channels.
         """
+        # Pop under lock, then stop outside lock to avoid deadlock
         with self._lock:
             names = [channel_name] if channel_name else list(self._channels.keys())
+            to_stop = []
             for name in names:
                 ch = self._channels.pop(name, None)
-                self._threads.pop(name, None)
-                if ch is None:
-                    continue
-                logger.info(f"[ChannelManager] Stopping channel '{name}'...")
-                try:
-                    if hasattr(ch, 'stop'):
-                        ch.stop()
-                except Exception as e:
-                    logger.warning(f"[ChannelManager] Error during channel '{name}' stop: {e}")
+                th = self._threads.pop(name, None)
+                to_stop.append((name, ch, th))
             if channel_name and self._primary_channel is self._channels.get(channel_name):
                 self._primary_channel = None
+
+        for name, ch, th in to_stop:
+            if ch is None:
+                logger.warning(f"[ChannelManager] Channel '{name}' not found in managed channels")
+                if th and th.is_alive():
+                    self._interrupt_thread(th, name)
+                continue
+            logger.info(f"[ChannelManager] Stopping channel '{name}'...")
+            try:
+                if hasattr(ch, 'stop'):
+                    ch.stop()
+            except Exception as e:
+                logger.warning(f"[ChannelManager] Error during channel '{name}' stop: {e}")
+            if th and th.is_alive():
+                self._interrupt_thread(th, name)
+
+    @staticmethod
+    def _interrupt_thread(th: threading.Thread, name: str):
+        """Raise SystemExit in target thread to break blocking loops like start_forever."""
+        import ctypes
+        try:
+            tid = th.ident
+            if tid is None:
+                return
+            res = ctypes.pythonapi.PyThreadState_SetAsyncExc(
+                ctypes.c_ulong(tid), ctypes.py_object(SystemExit)
+            )
+            if res == 1:
+                logger.info(f"[ChannelManager] Interrupted thread for channel '{name}'")
+            elif res > 1:
+                ctypes.pythonapi.PyThreadState_SetAsyncExc(ctypes.c_ulong(tid), None)
+                logger.warning(f"[ChannelManager] Failed to interrupt thread for channel '{name}'")
+        except Exception as e:
+            logger.warning(f"[ChannelManager] Thread interrupt error for '{name}': {e}")
 
     def restart(self, new_channel_name: str):
         """

@@ -101,6 +101,8 @@ class DingTalkChanel(ChatChannel, dingtalk_stream.ChatbotHandler):
         # 历史消息id暂存，用于幂等控制
         self.receivedMsgs = ExpiredDict(conf().get("expires_in_seconds", 3600))
         self._stream_client = None
+        self._running = False
+        self._event_loop = None
         logger.debug("[DingTalk] client_id={}, client_secret={} ".format(
             self.dingtalk_client_id, self.dingtalk_client_secret))
         # 无需群校验和前缀
@@ -114,21 +116,54 @@ class DingTalkChanel(ChatChannel, dingtalk_stream.ChatbotHandler):
         self._robot_code = None
 
     def startup(self):
+        import asyncio
+        self.dingtalk_client_id = conf().get('dingtalk_client_id')
+        self.dingtalk_client_secret = conf().get('dingtalk_client_secret')
+        self._running = True
         credential = dingtalk_stream.Credential(self.dingtalk_client_id, self.dingtalk_client_secret)
         client = dingtalk_stream.DingTalkStreamClient(credential)
         self._stream_client = client
         client.register_callback_handler(dingtalk_stream.chatbot.ChatbotMessage.TOPIC, self)
-        logger.info("[DingTalk] ✅ Stream connected, ready to receive messages")
-        client.start_forever()
+        logger.info("[DingTalk] ✅ Stream client initialized, ready to receive messages")
+        _first_connect = True
+        while self._running:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            self._event_loop = loop
+            try:
+                if not _first_connect:
+                    logger.info("[DingTalk] Reconnecting...")
+                _first_connect = False
+                loop.run_until_complete(client.start())
+            except (KeyboardInterrupt, SystemExit):
+                logger.info("[DingTalk] Startup loop received stop signal, exiting")
+                break
+            except Exception as e:
+                if not self._running:
+                    break
+                logger.warning(f"[DingTalk] Stream connection error: {e}, reconnecting in 3s...")
+                time.sleep(3)
+            finally:
+                self._event_loop = None
+                try:
+                    loop.close()
+                except Exception:
+                    pass
+        logger.info("[DingTalk] Startup loop exited")
 
     def stop(self):
-        if self._stream_client:
+        import asyncio
+        logger.info("[DingTalk] stop() called, setting _running=False")
+        self._running = False
+        loop = self._event_loop
+        if loop and not loop.is_closed():
             try:
-                self._stream_client.stop()
-                logger.info("[DingTalk] Stream client stopped")
+                loop.call_soon_threadsafe(loop.stop)
+                logger.info("[DingTalk] Sent stop signal to event loop")
             except Exception as e:
-                logger.warning(f"[DingTalk] Error stopping stream client: {e}")
-            self._stream_client = None
+                logger.warning(f"[DingTalk] Error stopping event loop: {e}")
+        self._stream_client = None
+        logger.info("[DingTalk] stop() completed")
     
     def get_access_token(self):
         """
@@ -465,23 +500,21 @@ class DingTalkChanel(ChatChannel, dingtalk_stream.ChatbotHandler):
     async def process(self, callback: dingtalk_stream.CallbackMessage):
         try:
             incoming_message = dingtalk_stream.ChatbotMessage.from_dict(callback.data)
-            
+
             # 缓存 robot_code，用于后续图片下载
             if hasattr(incoming_message, 'robot_code'):
                 self._robot_code_cache = incoming_message.robot_code
-            
-            # Debug: 打印完整的 event 数据
-            logger.debug(f"[DingTalk] ===== Incoming Message Debug =====")
-            logger.debug(f"[DingTalk] callback.data keys: {callback.data.keys() if hasattr(callback.data, 'keys') else 'N/A'}")
-            logger.debug(f"[DingTalk] incoming_message attributes: {dir(incoming_message)}")
-            logger.debug(f"[DingTalk] robot_code: {getattr(incoming_message, 'robot_code', 'N/A')}")
-            logger.debug(f"[DingTalk] chatbot_corp_id: {getattr(incoming_message, 'chatbot_corp_id', 'N/A')}")
-            logger.debug(f"[DingTalk] chatbot_user_id: {getattr(incoming_message, 'chatbot_user_id', 'N/A')}")
-            logger.debug(f"[DingTalk] conversation_id: {getattr(incoming_message, 'conversation_id', 'N/A')}")
-            logger.debug(f"[DingTalk] Raw callback.data: {callback.data}")
-            logger.debug(f"[DingTalk] =====================================")
-            
-            image_download_handler = self  # 传入方法所在的类实例
+
+            # Filter out stale messages from before channel startup (offline backlog)
+            create_at = getattr(incoming_message, 'create_at', None)
+            if create_at:
+                msg_age_s = time.time() - int(create_at) / 1000
+                if msg_age_s > 60:
+                    logger.warning(f"[DingTalk] stale msg filtered (age={msg_age_s:.0f}s), "
+                                   f"msg_id={getattr(incoming_message, 'message_id', 'N/A')}")
+                    return AckMessage.STATUS_OK, 'OK'
+
+            image_download_handler = self
             dingtalk_msg = DingTalkMessage(incoming_message, image_download_handler)
 
             if dingtalk_msg.is_group:
@@ -490,8 +523,7 @@ class DingTalkChanel(ChatChannel, dingtalk_stream.ChatbotHandler):
                 self.handle_single(dingtalk_msg)
             return AckMessage.STATUS_OK, 'OK'
         except Exception as e:
-            logger.error(f"[DingTalk] process error: {e}")
-            logger.exception(e)  # 打印完整堆栈跟踪
+            logger.error(f"[DingTalk] process error: {e}", exc_info=True)
             return AckMessage.STATUS_SYSTEM_EXCEPTION, 'ERROR'
 
     @time_checker

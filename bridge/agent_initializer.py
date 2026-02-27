@@ -145,7 +145,7 @@ class AgentInitializer:
             # after a restart.  The full max_turns budget is reserved for the
             # live conversation that follows.
             max_turns = conf().get("agent_max_context_turns", 30)
-            restore_turns = min(6, max(1, max_turns // 3))
+            restore_turns = max(4, max_turns // 5)
             saved = store.load_messages(session_id, max_turns=restore_turns)
             if saved:
                 with agent.messages_lock:

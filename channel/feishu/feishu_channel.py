@@ -61,6 +61,8 @@ class FeiShuChanel(ChatChannel):
         # 历史消息id暂存，用于幂等控制
         self.receivedMsgs = ExpiredDict(60 * 60 * 7.1)
         self._http_server = None
+        self._ws_client = None
+        self._ws_thread = None
         logger.debug("[FeiShu] app_id={}, app_secret={}, verification_token={}, event_mode={}".format(
             self.feishu_app_id, self.feishu_app_secret, self.feishu_token, self.feishu_event_mode))
         # 无需群校验和前缀
@@ -73,12 +75,37 @@ class FeiShuChanel(ChatChannel):
             raise Exception("lark_oapi not installed")
 
     def startup(self):
+        self.feishu_app_id = conf().get('feishu_app_id')
+        self.feishu_app_secret = conf().get('feishu_app_secret')
+        self.feishu_token = conf().get('feishu_token')
+        self.feishu_event_mode = conf().get('feishu_event_mode', 'websocket')
         if self.feishu_event_mode == 'websocket':
             self._startup_websocket()
         else:
             self._startup_webhook()
 
     def stop(self):
+        import ctypes
+        logger.info("[FeiShu] stop() called")
+        ws_client = self._ws_client
+        self._ws_client = None
+        ws_thread = self._ws_thread
+        self._ws_thread = None
+        # Interrupt the ws thread first so its blocking start() unblocks
+        if ws_thread and ws_thread.is_alive():
+            try:
+                tid = ws_thread.ident
+                if tid:
+                    res = ctypes.pythonapi.PyThreadState_SetAsyncExc(
+                        ctypes.c_ulong(tid), ctypes.py_object(SystemExit)
+                    )
+                    if res == 1:
+                        logger.info("[FeiShu] Interrupted ws thread via ctypes")
+                    elif res > 1:
+                        ctypes.pythonapi.PyThreadState_SetAsyncExc(ctypes.c_ulong(tid), None)
+            except Exception as e:
+                logger.warning(f"[FeiShu] Error interrupting ws thread: {e}")
+        # lark.ws.Client has no stop() method; thread interruption above is sufficient
         if self._http_server:
             try:
                 self._http_server.stop()
@@ -86,6 +113,7 @@ class FeiShuChanel(ChatChannel):
             except Exception as e:
                 logger.warning(f"[FeiShu] Error stopping HTTP server: {e}")
             self._http_server = None
+        logger.info("[FeiShu] stop() completed")
 
     def _startup_webhook(self):
         """启动HTTP服务器接收事件(webhook模式)"""
@@ -129,29 +157,26 @@ class FeiShuChanel(ChatChannel):
             .register_p2_im_message_receive_v1(handle_message_event) \
             .build()
 
-        # 尝试连接，如果遇到SSL错误则自动禁用证书验证
         def start_client_with_retry():
-            """启动websocket客户端，自动处理SSL证书错误"""
-            # 全局禁用SSL证书验证（在导入lark_oapi之前设置）
+            """Run ws client in this thread with its own event loop to avoid conflicts."""
+            import asyncio
             import ssl as ssl_module
-
-            # 保存原始的SSL上下文创建方法
             original_create_default_context = ssl_module.create_default_context
 
             def create_unverified_context(*args, **kwargs):
-                """创建一个不验证证书的SSL上下文"""
                 context = original_create_default_context(*args, **kwargs)
                 context.check_hostname = False
                 context.verify_mode = ssl.CERT_NONE
                 return context
 
-            # 尝试正常连接，如果失败则禁用SSL验证
+            # Give this thread its own event loop so lark SDK can call run_until_complete
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
             for attempt in range(2):
                 try:
                     if attempt == 1:
-                        # 第二次尝试：禁用SSL验证
-                        logger.warning("[FeiShu] SSL certificate verification disabled due to certificate error. "
-                                       "This may happen when using corporate proxy or self-signed certificates.")
+                        logger.warning("[FeiShu] Retrying with SSL verification disabled...")
                         ssl_module.create_default_context = create_unverified_context
                         ssl_module._create_unverified_context = create_unverified_context
 
@@ -161,37 +186,34 @@ class FeiShuChanel(ChatChannel):
                         event_handler=event_handler,
                         log_level=lark.LogLevel.WARNING
                     )
-
+                    self._ws_client = ws_client
                     logger.debug("[FeiShu] Websocket client starting...")
                     ws_client.start()
-                    # 如果成功启动，跳出循环
                     break
 
+                except (SystemExit, KeyboardInterrupt):
+                    logger.info("[FeiShu] Websocket thread received stop signal")
+                    break
                 except Exception as e:
                     error_msg = str(e)
-                    # 检查是否是SSL证书验证错误
-                    is_ssl_error = "CERTIFICATE_VERIFY_FAILED" in error_msg or "certificate verify failed" in error_msg.lower()
-
+                    is_ssl_error = ("CERTIFICATE_VERIFY_FAILED" in error_msg
+                                    or "certificate verify failed" in error_msg.lower())
                     if is_ssl_error and attempt == 0:
-                        # 第一次遇到SSL错误，记录日志并继续循环（下次会禁用验证）
-                        logger.warning(f"[FeiShu] SSL certificate verification failed: {error_msg}")
-                        logger.info("[FeiShu] Retrying connection with SSL verification disabled...")
+                        logger.warning(f"[FeiShu] SSL error: {error_msg}, retrying...")
                         continue
-                    else:
-                        # 其他错误或禁用验证后仍失败，抛出异常
-                        logger.error(f"[FeiShu] Websocket client error: {e}", exc_info=True)
-                        # 恢复原始方法
-                        ssl_module.create_default_context = original_create_default_context
-                        raise
+                    logger.error(f"[FeiShu] Websocket client error: {e}", exc_info=True)
+                    ssl_module.create_default_context = original_create_default_context
+                    break
+            try:
+                loop.close()
+            except Exception:
+                pass
+            logger.info("[FeiShu] Websocket thread exited")
 
-            # 注意：不恢复原始方法，因为ws_client.start()会持续运行
-
-        # 在新线程中启动客户端，避免阻塞主线程
         ws_thread = threading.Thread(target=start_client_with_retry, daemon=True)
+        self._ws_thread = ws_thread
         ws_thread.start()
-
-        # 保持主线程运行
-        logger.info("[FeiShu] ✅ Websocket connected, ready to receive messages")
+        logger.info("[FeiShu] ✅ Websocket thread started, ready to receive messages")
         ws_thread.join()
 
     def _handle_message_event(self, event: dict):
@@ -211,6 +233,15 @@ class FeiShuChanel(ChatChannel):
             logger.warning(f"[FeiShu] repeat msg filtered, msg_id={msg_id}")
             return
         self.receivedMsgs[msg_id] = True
+
+        # Filter out stale messages from before channel startup (offline backlog)
+        import time as _time
+        create_time_ms = msg.get("create_time")
+        if create_time_ms:
+            msg_age_s = _time.time() - int(create_time_ms) / 1000
+            if msg_age_s > 60:
+                logger.warning(f"[FeiShu] stale msg filtered (age={msg_age_s:.0f}s), msg_id={msg_id}")
+                return
 
         is_group = False
         chat_type = msg.get("chat_type")

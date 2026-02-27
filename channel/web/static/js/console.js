@@ -35,12 +35,22 @@ const I18N = {
         config_custom_option: '自定义...',
         skills_title: '技能管理', skills_desc: '查看、启用或禁用 Agent 技能',
         skills_loading: '加载技能中...', skills_loading_desc: '技能加载后将显示在此处',
+        tools_section_title: '内置工具', tools_loading: '加载工具中...',
+        skills_section_title: '技能', skill_enable: '启用', skill_disable: '禁用',
+        skill_toggle_error: '操作失败，请稍后再试',
         memory_title: '记忆管理', memory_desc: '查看 Agent 记忆文件和内容',
         memory_loading: '加载记忆文件中...', memory_loading_desc: '记忆文件将显示在此处',
         memory_back: '返回列表',
         memory_col_name: '文件名', memory_col_type: '类型', memory_col_size: '大小', memory_col_updated: '更新时间',
-        channels_title: '通道管理', channels_desc: '查看和管理消息通道',
-        channels_coming: '即将推出', channels_coming_desc: '通道管理功能即将在此提供',
+        channels_title: '通道管理', channels_desc: '管理已接入的消息通道',
+        channels_add: '接入通道', channels_disconnect: '断开',
+        channels_save: '保存配置', channels_saved: '已保存', channels_save_error: '保存失败',
+        channels_restarted: '已保存并重启',
+        channels_connect_btn: '接入', channels_cancel: '取消',
+        channels_select_placeholder: '选择要接入的通道...',
+        channels_empty: '暂未接入任何通道', channels_empty_desc: '点击右上角「接入通道」按钮开始配置',
+        channels_disconnect_confirm: '确认断开该通道？配置将保留但通道会停止运行。',
+        channels_connected: '已接入', channels_connecting: '接入中...',
         tasks_title: '定时任务', tasks_desc: '查看和管理定时任务',
         tasks_coming: '即将推出', tasks_coming_desc: '定时任务管理功能即将在此提供',
         logs_title: '日志', logs_desc: '实时日志输出 (run.log)',
@@ -71,12 +81,22 @@ const I18N = {
         config_custom_option: 'Custom...',
         skills_title: 'Skills', skills_desc: 'View, enable, or disable agent skills',
         skills_loading: 'Loading skills...', skills_loading_desc: 'Skills will be displayed here after loading',
+        tools_section_title: 'Built-in Tools', tools_loading: 'Loading tools...',
+        skills_section_title: 'Skills', skill_enable: 'Enable', skill_disable: 'Disable',
+        skill_toggle_error: 'Operation failed, please try again',
         memory_title: 'Memory', memory_desc: 'View agent memory files and contents',
         memory_loading: 'Loading memory files...', memory_loading_desc: 'Memory files will be displayed here',
         memory_back: 'Back to list',
         memory_col_name: 'Filename', memory_col_type: 'Type', memory_col_size: 'Size', memory_col_updated: 'Updated',
-        channels_title: 'Channels', channels_desc: 'View and manage messaging channels',
-        channels_coming: 'Coming Soon', channels_coming_desc: 'Channel management will be available here',
+        channels_title: 'Channels', channels_desc: 'Manage connected messaging channels',
+        channels_add: 'Connect', channels_disconnect: 'Disconnect',
+        channels_save: 'Save', channels_saved: 'Saved', channels_save_error: 'Save failed',
+        channels_restarted: 'Saved & Restarted',
+        channels_connect_btn: 'Connect', channels_cancel: 'Cancel',
+        channels_select_placeholder: 'Select a channel to connect...',
+        channels_empty: 'No channels connected', channels_empty_desc: 'Click the "Connect" button above to get started',
+        channels_disconnect_confirm: 'Disconnect this channel? Config will be preserved but the channel will stop.',
+        channels_connected: 'Connected', channels_connecting: 'Connecting...',
         tasks_title: 'Scheduled Tasks', tasks_desc: 'View and manage scheduled tasks',
         tasks_coming: 'Coming Soon', tasks_coming_desc: 'Scheduled task management will be available here',
         logs_title: 'Logs', logs_desc: 'Real-time log output (run.log)',
@@ -1134,55 +1154,159 @@ function loadConfigView() {
 // =====================================================================
 // Skills View
 // =====================================================================
-let skillsLoaded = false;
+let toolsLoaded = false;
+
+const TOOL_ICONS = {
+    bash: 'fa-terminal',
+    edit: 'fa-pen-to-square',
+    read: 'fa-file-lines',
+    write: 'fa-file-pen',
+    ls: 'fa-folder-open',
+    send: 'fa-paper-plane',
+    web_search: 'fa-magnifying-glass',
+    browser: 'fa-globe',
+    env_config: 'fa-key',
+    scheduler: 'fa-clock',
+    memory_get: 'fa-brain',
+    memory_search: 'fa-brain',
+};
+
+function getToolIcon(name) {
+    return TOOL_ICONS[name] || 'fa-wrench';
+}
+
 function loadSkillsView() {
-    if (skillsLoaded) return;
-    fetch('/api/skills').then(r => r.json()).then(data => {
+    loadToolsSection();
+    loadSkillsSection();
+}
+
+function loadToolsSection() {
+    if (toolsLoaded) return;
+    const emptyEl = document.getElementById('tools-empty');
+    const listEl = document.getElementById('tools-list');
+    const badge = document.getElementById('tools-count-badge');
+
+    fetch('/api/tools').then(r => r.json()).then(data => {
         if (data.status !== 'success') return;
-        const emptyEl = document.getElementById('skills-empty');
-        const listEl = document.getElementById('skills-list');
-        const skills = data.skills || [];
-        if (skills.length === 0) {
-            emptyEl.querySelector('p').textContent = currentLang === 'zh' ? '暂无技能' : 'No skills found';
+        const tools = data.tools || [];
+        emptyEl.classList.add('hidden');
+        if (tools.length === 0) {
+            emptyEl.classList.remove('hidden');
+            emptyEl.innerHTML = `<span class="text-sm text-slate-400 dark:text-slate-500">${currentLang === 'zh' ? '暂无内置工具' : 'No built-in tools'}</span>`;
             return;
         }
+        badge.textContent = tools.length;
+        badge.classList.remove('hidden');
+        listEl.innerHTML = '';
+        tools.forEach(tool => {
+            const card = document.createElement('div');
+            card.className = 'bg-white dark:bg-[#1A1A1A] rounded-xl border border-slate-200 dark:border-white/10 p-4 flex items-start gap-3';
+            card.innerHTML = `
+                <div class="w-9 h-9 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center flex-shrink-0">
+                    <i class="fas ${getToolIcon(tool.name)} text-blue-500 dark:text-blue-400 text-sm"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2">
+                        <span class="font-medium text-sm text-slate-700 dark:text-slate-200 font-mono">${escapeHtml(tool.name)}</span>
+                    </div>
+                    <p class="text-xs text-slate-400 dark:text-slate-500 mt-1 line-clamp-2">${escapeHtml(tool.description || '--')}</p>
+                </div>`;
+            listEl.appendChild(card);
+        });
+        listEl.classList.remove('hidden');
+        toolsLoaded = true;
+    }).catch(() => {
+        emptyEl.classList.remove('hidden');
+        emptyEl.innerHTML = `<span class="text-sm text-slate-400 dark:text-slate-500">${currentLang === 'zh' ? '加载失败' : 'Failed to load'}</span>`;
+    });
+}
+
+function loadSkillsSection() {
+    const emptyEl = document.getElementById('skills-empty');
+    const listEl = document.getElementById('skills-list');
+    const badge = document.getElementById('skills-count-badge');
+
+    fetch('/api/skills').then(r => r.json()).then(data => {
+        if (data.status !== 'success') return;
+        const skills = data.skills || [];
+        if (skills.length === 0) {
+            const p = emptyEl.querySelector('p');
+            if (p) p.textContent = currentLang === 'zh' ? '暂无技能' : 'No skills found';
+            return;
+        }
+        badge.textContent = skills.length;
+        badge.classList.remove('hidden');
         emptyEl.classList.add('hidden');
         listEl.innerHTML = '';
 
-        const builtins = skills.filter(s => s.source === 'builtin');
-        const customs = skills.filter(s => s.source !== 'builtin');
-
-        function renderGroup(title, items) {
-            if (items.length === 0) return;
-            const header = document.createElement('div');
-            header.className = 'sm:col-span-2 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mt-2';
-            header.textContent = title;
-            listEl.appendChild(header);
-            items.forEach(sk => {
-                const card = document.createElement('div');
-                card.className = 'bg-white dark:bg-[#1A1A1A] rounded-xl border border-slate-200 dark:border-white/10 p-4 flex items-start gap-3';
-                const iconColor = sk.enabled ? 'text-primary-400' : 'text-slate-300 dark:text-slate-600';
-                const statusDot = sk.enabled
-                    ? '<span class="w-2 h-2 rounded-full bg-primary-400 flex-shrink-0 mt-1"></span>'
-                    : '<span class="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600 flex-shrink-0 mt-1"></span>';
-                card.innerHTML = `
-                    <div class="w-9 h-9 rounded-lg bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center flex-shrink-0">
-                        <i class="fas fa-bolt ${iconColor} text-sm"></i>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-2">
-                            <span class="font-medium text-sm text-slate-700 dark:text-slate-200 truncate">${escapeHtml(sk.name)}</span>
-                            ${statusDot}
-                        </div>
-                        <p class="text-xs text-slate-400 dark:text-slate-500 mt-1 line-clamp-2">${escapeHtml(sk.description || '--')}</p>
-                    </div>`;
-                listEl.appendChild(card);
-            });
-        }
-        renderGroup(currentLang === 'zh' ? '内置技能' : 'Built-in Skills', builtins);
-        renderGroup(currentLang === 'zh' ? '自定义技能' : 'Custom Skills', customs);
-        skillsLoaded = true;
+        skills.forEach(sk => {
+            const card = document.createElement('div');
+            card.className = 'bg-white dark:bg-[#1A1A1A] rounded-xl border border-slate-200 dark:border-white/10 p-4 flex items-start gap-3 transition-opacity';
+            card.dataset.skillName = sk.name;
+            card.dataset.skillDesc = sk.description || '';
+            card.dataset.enabled = sk.enabled ? '1' : '0';
+            renderSkillCard(card, sk);
+            listEl.appendChild(card);
+        });
     }).catch(() => {});
+}
+
+function renderSkillCard(card, sk) {
+    const enabled = sk.enabled;
+    const iconColor = enabled ? 'text-primary-400' : 'text-slate-300 dark:text-slate-600';
+    const trackClass = enabled
+        ? 'bg-primary-400'
+        : 'bg-slate-200 dark:bg-slate-700';
+    const thumbTranslate = enabled ? 'translate-x-3' : 'translate-x-0.5';
+    card.innerHTML = `
+        <div class="w-9 h-9 rounded-lg bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center flex-shrink-0">
+            <i class="fas fa-bolt ${iconColor} text-sm"></i>
+        </div>
+        <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-1">
+                <span class="font-medium text-sm text-slate-700 dark:text-slate-200 truncate flex-1">${escapeHtml(sk.name)}</span>
+                <button
+                    role="switch"
+                    aria-checked="${enabled}"
+                    onclick="toggleSkill('${escapeHtml(sk.name)}', ${enabled})"
+                    class="relative inline-flex h-4 w-7 flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${trackClass}"
+                    title="${enabled ? (currentLang === 'zh' ? '点击禁用' : 'Click to disable') : (currentLang === 'zh' ? '点击启用' : 'Click to enable')}"
+                >
+                    <span class="inline-block h-3 w-3 mt-0.5 rounded-full bg-white shadow transform transition-transform duration-200 ease-in-out ${thumbTranslate}"></span>
+                </button>
+            </div>
+            <p class="text-xs text-slate-400 dark:text-slate-500 line-clamp-2">${escapeHtml(sk.description || '--')}</p>
+        </div>`;
+}
+
+function toggleSkill(name, currentlyEnabled) {
+    const action = currentlyEnabled ? 'close' : 'open';
+    const card = document.querySelector(`[data-skill-name="${CSS.escape(name)}"]`);
+    if (card) card.style.opacity = '0.5';
+
+    fetch('/api/skills', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, name })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'success') {
+            if (card) {
+                const desc = card.dataset.skillDesc || '';
+                card.dataset.enabled = currentlyEnabled ? '0' : '1';
+                card.style.opacity = '1';
+                renderSkillCard(card, { name, description: desc, enabled: !currentlyEnabled });
+            }
+        } else {
+            if (card) card.style.opacity = '1';
+            alert(currentLang === 'zh' ? '操作失败，请稍后再试' : 'Operation failed, please try again');
+        }
+    })
+    .catch(() => {
+        if (card) card.style.opacity = '1';
+        alert(currentLang === 'zh' ? '操作失败，请稍后再试' : 'Operation failed, please try again');
+    });
 }
 
 // =====================================================================
@@ -1258,35 +1382,361 @@ function closeMemoryViewer() {
 }
 
 // =====================================================================
+// Custom Confirm Dialog
+// =====================================================================
+function showConfirmDialog({ title, message, okText, cancelText, onConfirm }) {
+    const overlay = document.getElementById('confirm-dialog-overlay');
+    document.getElementById('confirm-dialog-title').textContent = title || '';
+    document.getElementById('confirm-dialog-message').textContent = message || '';
+    document.getElementById('confirm-dialog-ok').textContent = okText || 'OK';
+    document.getElementById('confirm-dialog-cancel').textContent = cancelText || t('channels_cancel');
+
+    function cleanup() {
+        overlay.classList.add('hidden');
+        okBtn.removeEventListener('click', onOk);
+        cancelBtn.removeEventListener('click', onCancel);
+        overlay.removeEventListener('click', onOverlayClick);
+    }
+    function onOk() { cleanup(); if (onConfirm) onConfirm(); }
+    function onCancel() { cleanup(); }
+    function onOverlayClick(e) { if (e.target === overlay) cleanup(); }
+
+    const okBtn = document.getElementById('confirm-dialog-ok');
+    const cancelBtn = document.getElementById('confirm-dialog-cancel');
+    okBtn.addEventListener('click', onOk);
+    cancelBtn.addEventListener('click', onCancel);
+    overlay.addEventListener('click', onOverlayClick);
+    overlay.classList.remove('hidden');
+}
+
+// =====================================================================
 // Channels View
 // =====================================================================
+let channelsData = [];
+
 function loadChannelsView() {
     const container = document.getElementById('channels-content');
-    const channelType = appConfig.channel_type || 'web';
-    const channelMap = {
-        web: { name: 'Web', icon: 'fa-globe', color: 'primary' },
-        terminal: { name: 'Terminal', icon: 'fa-terminal', color: 'slate' },
-        feishu: { name: 'Feishu', icon: 'fa-paper-plane', color: 'blue' },
-        dingtalk: { name: 'DingTalk', icon: 'fa-comments', color: 'blue' },
-        wechatcom_app: { name: 'WeCom', icon: 'fa-building', color: 'emerald' },
-        wechatmp: { name: 'WeChat MP', icon: 'fa-comment-dots', color: 'emerald' },
-        wechatmp_service: { name: 'WeChat Service', icon: 'fa-comment-dots', color: 'emerald' },
-    };
-    const info = channelMap[channelType] || { name: channelType, icon: 'fa-tower-broadcast', color: 'sky' };
-    container.innerHTML = `
-        <div class="bg-white dark:bg-[#1A1A1A] rounded-xl border border-slate-200 dark:border-white/10 p-6 flex items-center gap-4">
-            <div class="w-12 h-12 rounded-xl bg-${info.color}-50 dark:bg-${info.color}-900/20 flex items-center justify-center">
-                <i class="fas ${info.icon} text-${info.color}-500 text-lg"></i>
-            </div>
-            <div>
-                <div class="flex items-center gap-2">
-                    <span class="font-semibold text-slate-800 dark:text-slate-100">${info.name}</span>
-                    <span class="w-2 h-2 rounded-full bg-primary-400"></span>
-                    <span class="text-xs text-primary-500">Active</span>
+    container.innerHTML = `<div class="flex items-center gap-2 py-8 justify-center text-slate-400 dark:text-slate-500 text-sm">
+        <i class="fas fa-spinner fa-spin text-xs"></i><span>Loading...</span></div>`;
+
+    fetch('/api/channels').then(r => r.json()).then(data => {
+        if (data.status !== 'success') return;
+        channelsData = data.channels || [];
+        renderActiveChannels();
+    }).catch(() => {
+        container.innerHTML = '<p class="text-sm text-red-400 py-8 text-center">Failed to load channels</p>';
+    });
+}
+
+function renderActiveChannels() {
+    const container = document.getElementById('channels-content');
+    container.innerHTML = '';
+    closeAddChannelPanel();
+
+    const activeChannels = channelsData.filter(ch => ch.active);
+
+    if (activeChannels.length === 0) {
+        container.innerHTML = `
+            <div class="flex flex-col items-center justify-center py-20">
+                <div class="w-16 h-16 rounded-2xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center mb-4">
+                    <i class="fas fa-tower-broadcast text-blue-400 text-xl"></i>
                 </div>
-                <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5 font-mono">${escapeHtml(channelType)}</p>
+                <p class="text-slate-500 dark:text-slate-400 font-medium">${t('channels_empty')}</p>
+                <p class="text-sm text-slate-400 dark:text-slate-500 mt-1">${t('channels_empty_desc')}</p>
+            </div>`;
+        return;
+    }
+
+    activeChannels.forEach(ch => {
+        const label = (typeof ch.label === 'object') ? (ch.label[currentLang] || ch.label.en) : ch.label;
+        const card = document.createElement('div');
+        card.className = 'bg-white dark:bg-[#1A1A1A] rounded-xl border border-slate-200 dark:border-white/10 p-6';
+        card.id = `channel-card-${ch.name}`;
+
+        const fieldsHtml = buildChannelFieldsHtml(ch.name, ch.fields || []);
+
+        card.innerHTML = `
+            <div class="flex items-center gap-4 mb-5">
+                <div class="w-10 h-10 rounded-xl bg-${ch.color}-50 dark:bg-${ch.color}-900/20 flex items-center justify-center flex-shrink-0">
+                    <i class="fas ${ch.icon} text-${ch.color}-500 text-base"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2">
+                        <span class="font-semibold text-slate-800 dark:text-slate-100">${escapeHtml(label)}</span>
+                        <span class="w-2 h-2 rounded-full bg-primary-400"></span>
+                        <span class="text-xs text-primary-500">${t('channels_connected')}</span>
+                    </div>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-mono">${escapeHtml(ch.name)}</p>
+                </div>
+                <button onclick="disconnectChannel('${ch.name}')"
+                    class="px-3 py-1.5 rounded-lg text-xs font-medium
+                           bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400
+                           hover:bg-red-100 dark:hover:bg-red-900/40
+                           cursor-pointer transition-colors flex-shrink-0">
+                    ${t('channels_disconnect')}
+                </button>
+            </div>
+            <div class="space-y-4">
+                ${fieldsHtml}
+                <div class="flex items-center justify-end gap-3 pt-1">
+                    <span id="ch-status-${ch.name}" class="text-xs text-primary-500 opacity-0 transition-opacity duration-300"></span>
+                    <button onclick="saveChannelConfig('${ch.name}')"
+                        class="px-4 py-2 rounded-lg bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium
+                               cursor-pointer transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                        id="ch-save-${ch.name}">${t('channels_save')}</button>
+                </div>
+            </div>`;
+
+        container.appendChild(card);
+        bindSecretFieldEvents(card);
+    });
+}
+
+function buildChannelFieldsHtml(chName, fields) {
+    let html = '';
+    fields.forEach(f => {
+        const inputId = `ch-${chName}-${f.key}`;
+        let inputHtml = '';
+        if (f.type === 'bool') {
+            const checked = f.value ? 'checked' : '';
+            inputHtml = `<label class="relative inline-flex items-center cursor-pointer">
+                <input id="${inputId}" type="checkbox" ${checked} class="sr-only peer" data-field="${f.key}" data-ch="${chName}">
+                <div class="w-9 h-5 bg-slate-200 dark:bg-slate-700 peer-checked:bg-primary-400 rounded-full
+                            after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white
+                            after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"></div>
+            </label>`;
+        } else if (f.type === 'secret') {
+            inputHtml = `<input id="${inputId}" type="text" value="${escapeHtml(String(f.value || ''))}"
+                data-field="${f.key}" data-ch="${chName}" data-masked="${f.value ? '1' : ''}"
+                class="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600
+                       bg-slate-50 dark:bg-white/5 text-sm text-slate-800 dark:text-slate-100
+                       focus:outline-none focus:border-primary-500 font-mono transition-colors
+                       ${f.value ? 'cfg-key-masked' : ''}"
+                placeholder="${escapeHtml(f.label)}">`;
+        } else {
+            const inputType = f.type === 'number' ? 'number' : 'text';
+            inputHtml = `<input id="${inputId}" type="${inputType}" value="${escapeHtml(String(f.value ?? f.default ?? ''))}"
+                data-field="${f.key}" data-ch="${chName}"
+                class="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600
+                       bg-slate-50 dark:bg-white/5 text-sm text-slate-800 dark:text-slate-100
+                       focus:outline-none focus:border-primary-500 font-mono transition-colors"
+                placeholder="${escapeHtml(f.label)}">`;
+        }
+        html += `<div>
+            <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">${escapeHtml(f.label)}</label>
+            ${inputHtml}
+        </div>`;
+    });
+    return html;
+}
+
+function bindSecretFieldEvents(container) {
+    container.querySelectorAll('input[data-masked="1"]').forEach(inp => {
+        inp.addEventListener('focus', function() {
+            if (this.dataset.masked === '1') {
+                this.value = '';
+                this.dataset.masked = '';
+                this.classList.remove('cfg-key-masked');
+            }
+        });
+    });
+}
+
+function showChannelStatus(chName, msgKey, isError) {
+    const el = document.getElementById(`ch-status-${chName}`);
+    if (!el) return;
+    el.textContent = t(msgKey);
+    el.classList.toggle('text-red-500', !!isError);
+    el.classList.toggle('text-primary-500', !isError);
+    el.classList.remove('opacity-0');
+    setTimeout(() => el.classList.add('opacity-0'), 2500);
+}
+
+function saveChannelConfig(chName) {
+    const card = document.getElementById(`channel-card-${chName}`);
+    if (!card) return;
+
+    const updates = {};
+    card.querySelectorAll('input[data-ch="' + chName + '"]').forEach(inp => {
+        const key = inp.dataset.field;
+        if (inp.type === 'checkbox') {
+            updates[key] = inp.checked;
+        } else {
+            if (inp.dataset.masked === '1') return;
+            updates[key] = inp.value;
+        }
+    });
+
+    const btn = document.getElementById(`ch-save-${chName}`);
+    if (btn) btn.disabled = true;
+
+    fetch('/api/channels', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'save', channel: chName, config: updates })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showChannelStatus(chName, data.restarted ? 'channels_restarted' : 'channels_saved', false);
+        } else {
+            showChannelStatus(chName, 'channels_save_error', true);
+        }
+    })
+    .catch(() => showChannelStatus(chName, 'channels_save_error', true))
+    .finally(() => { if (btn) btn.disabled = false; });
+}
+
+function disconnectChannel(chName) {
+    const ch = channelsData.find(c => c.name === chName);
+    const label = ch ? ((typeof ch.label === 'object') ? (ch.label[currentLang] || ch.label.en) : ch.label) : chName;
+
+    showConfirmDialog({
+        title: t('channels_disconnect'),
+        message: t('channels_disconnect_confirm'),
+        okText: t('channels_disconnect'),
+        cancelText: t('channels_cancel'),
+        onConfirm: () => {
+            fetch('/api/channels', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'disconnect', channel: chName })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    if (ch) ch.active = false;
+                    renderActiveChannels();
+                }
+            })
+            .catch(() => {});
+        }
+    });
+}
+
+// --- Add channel panel ---
+function openAddChannelPanel() {
+    const panel = document.getElementById('channels-add-panel');
+    const activeNames = new Set(channelsData.filter(c => c.active).map(c => c.name));
+    const available = channelsData.filter(c => !activeNames.has(c.name));
+
+    if (available.length === 0) {
+        panel.innerHTML = `<div class="bg-white dark:bg-[#1A1A1A] rounded-xl border border-slate-200 dark:border-white/10 p-6 text-center">
+            <p class="text-sm text-slate-500 dark:text-slate-400">${currentLang === 'zh' ? '所有通道均已接入' : 'All channels are already connected'}</p>
+            <button onclick="closeAddChannelPanel()" class="mt-3 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer">${t('channels_cancel')}</button>
+        </div>`;
+        panel.classList.remove('hidden');
+        return;
+    }
+
+    const ddOptions = [
+        { value: '', label: t('channels_select_placeholder') },
+        ...available.map(ch => {
+            const label = (typeof ch.label === 'object') ? (ch.label[currentLang] || ch.label.en) : ch.label;
+            return { value: ch.name, label: `${label} (${ch.name})` };
+        })
+    ];
+
+    panel.innerHTML = `
+        <div class="bg-white dark:bg-[#1A1A1A] rounded-xl border border-primary-200 dark:border-primary-800 p-6">
+            <div class="flex items-center gap-3 mb-5">
+                <div class="w-9 h-9 rounded-lg bg-primary-50 dark:bg-primary-900/30 flex items-center justify-center">
+                    <i class="fas fa-plus text-primary-500 text-sm"></i>
+                </div>
+                <h3 class="font-semibold text-slate-800 dark:text-slate-100">${t('channels_add')}</h3>
+            </div>
+            <div class="mb-4">
+                <div id="add-channel-select" class="cfg-dropdown" tabindex="0">
+                    <div class="cfg-dropdown-selected">
+                        <span class="cfg-dropdown-text">--</span>
+                        <i class="fas fa-chevron-down cfg-dropdown-arrow"></i>
+                    </div>
+                    <div class="cfg-dropdown-menu"></div>
+                </div>
+            </div>
+            <div id="add-channel-fields" class="space-y-4"></div>
+            <div id="add-channel-actions" class="hidden flex items-center justify-end gap-3 pt-4">
+                <button onclick="closeAddChannelPanel()"
+                    class="px-4 py-2 rounded-lg border border-slate-200 dark:border-white/10
+                           text-slate-600 dark:text-slate-300 text-sm font-medium
+                           hover:bg-slate-50 dark:hover:bg-white/5
+                           cursor-pointer transition-colors duration-150">${t('channels_cancel')}</button>
+                <button id="add-channel-submit" onclick="submitAddChannel()"
+                    class="px-4 py-2 rounded-lg bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium
+                           cursor-pointer transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed">${t('channels_connect_btn')}</button>
             </div>
         </div>`;
+    panel.classList.remove('hidden');
+    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    const ddEl = document.getElementById('add-channel-select');
+    initDropdown(ddEl, ddOptions, '', onAddChannelSelect);
+}
+
+function closeAddChannelPanel() {
+    const panel = document.getElementById('channels-add-panel');
+    if (panel) {
+        panel.classList.add('hidden');
+        panel.innerHTML = '';
+    }
+}
+
+function onAddChannelSelect(chName) {
+    const fieldsContainer = document.getElementById('add-channel-fields');
+    const actions = document.getElementById('add-channel-actions');
+
+    if (!chName) {
+        fieldsContainer.innerHTML = '';
+        actions.classList.add('hidden');
+        return;
+    }
+
+    const ch = channelsData.find(c => c.name === chName);
+    if (!ch) return;
+
+    fieldsContainer.innerHTML = buildChannelFieldsHtml(chName, ch.fields || []);
+    bindSecretFieldEvents(fieldsContainer);
+    actions.classList.remove('hidden');
+}
+
+function submitAddChannel() {
+    const ddEl = document.getElementById('add-channel-select');
+    const chName = getDropdownValue(ddEl);
+    if (!chName) return;
+
+    const fieldsContainer = document.getElementById('add-channel-fields');
+    const updates = {};
+    fieldsContainer.querySelectorAll('input[data-ch="' + chName + '"]').forEach(inp => {
+        const key = inp.dataset.field;
+        if (inp.type === 'checkbox') {
+            updates[key] = inp.checked;
+        } else {
+            if (inp.dataset.masked === '1') return;
+            updates[key] = inp.value;
+        }
+    });
+
+    const btn = document.getElementById('add-channel-submit');
+    if (btn) { btn.disabled = true; btn.textContent = t('channels_connecting'); }
+
+    fetch('/api/channels', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'connect', channel: chName, config: updates })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'success') {
+            const ch = channelsData.find(c => c.name === chName);
+            if (ch) ch.active = true;
+            renderActiveChannels();
+        } else {
+            if (btn) { btn.disabled = false; btn.textContent = t('channels_connect_btn'); }
+        }
+    })
+    .catch(() => {
+        if (btn) { btn.disabled = false; btn.textContent = t('channels_connect_btn'); }
+    });
 }
 
 // =====================================================================
