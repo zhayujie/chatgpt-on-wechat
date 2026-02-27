@@ -294,68 +294,122 @@
                                 </div>
                             </div>
                             <div class="grid gap-6">
+
                                 <!-- Model Config Card -->
-                                <div class="placeholder-card bg-white dark:bg-[#1A1A1A] rounded-xl border border-slate-200 dark:border-white/10 p-6">
-                                    <div class="flex items-center gap-3 mb-4">
+                                <div class="bg-white dark:bg-[#1A1A1A] rounded-xl border border-slate-200 dark:border-white/10 p-6">
+                                    <div class="flex items-center gap-3 mb-5">
                                         <div class="w-9 h-9 rounded-lg bg-primary-50 dark:bg-primary-900/30 flex items-center justify-center">
                                             <i class="fas fa-microchip text-primary-500 text-sm"></i>
                                         </div>
                                         <h3 class="font-semibold text-slate-800 dark:text-slate-100" data-i18n="config_model">Model Configuration</h3>
                                     </div>
-                                    <div class="space-y-4">
-                                        <div class="flex items-center gap-4 p-3 rounded-lg bg-slate-50 dark:bg-white/5">
-                                            <span class="text-sm font-medium text-slate-500 dark:text-slate-400 w-32 flex-shrink-0">Model</span>
-                                            <span class="text-sm text-slate-700 dark:text-slate-200 flex-1 font-mono" id="cfg-model">--</span>
+                                    <div class="space-y-5">
+                                        <!-- Provider -->
+                                        <div>
+                                            <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5" data-i18n="config_provider">Provider</label>
+                                            <div id="cfg-provider" class="cfg-dropdown" tabindex="0">
+                                                <div class="cfg-dropdown-selected">
+                                                    <span class="cfg-dropdown-text">--</span>
+                                                    <i class="fas fa-chevron-down cfg-dropdown-arrow"></i>
+                                                </div>
+                                                <div class="cfg-dropdown-menu"></div>
+                                            </div>
+                                        </div>
+                                        <!-- Model -->
+                                        <div>
+                                            <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5" data-i18n="config_model_name">Model</label>
+                                            <div id="cfg-model-select" class="cfg-dropdown" tabindex="0">
+                                                <div class="cfg-dropdown-selected">
+                                                    <span class="cfg-dropdown-text">--</span>
+                                                    <i class="fas fa-chevron-down cfg-dropdown-arrow"></i>
+                                                </div>
+                                                <div class="cfg-dropdown-menu"></div>
+                                            </div>
+                                            <div id="cfg-model-custom-wrap" class="mt-2 hidden">
+                                                <input id="cfg-model-custom" type="text"
+                                                       class="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600
+                                                              bg-slate-50 dark:bg-white/5 text-sm text-slate-800 dark:text-slate-100
+                                                              focus:outline-none focus:border-primary-500 font-mono transition-colors"
+                                                       data-i18n-placeholder="config_custom_model_hint" placeholder="Enter custom model name">
+                                            </div>
+                                        </div>
+                                        <!-- API Key -->
+                                        <div id="cfg-api-key-wrap">
+                                            <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">API Key</label>
+                                            <div class="relative">
+                                                <input id="cfg-api-key" type="text" autocomplete="off" data-1p-ignore data-lpignore="true"
+                                                       class="w-full px-3 py-2 pr-10 rounded-lg border border-slate-200 dark:border-slate-600
+                                                              bg-slate-50 dark:bg-white/5 text-sm text-slate-800 dark:text-slate-100
+                                                              focus:outline-none focus:border-primary-500 font-mono transition-colors cfg-key-masked"
+                                                       placeholder="sk-...">
+                                                <button type="button" id="cfg-api-key-toggle"
+                                                        class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600
+                                                               dark:hover:text-slate-300 cursor-pointer transition-colors p-1"
+                                                        onclick="toggleApiKeyVisibility()">
+                                                    <i class="fas fa-eye text-xs"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <!-- API Base -->
+                                        <div id="cfg-api-base-wrap" class="hidden">
+                                            <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">API Base</label>
+                                            <input id="cfg-api-base" type="text"
+                                                   class="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600
+                                                          bg-slate-50 dark:bg-white/5 text-sm text-slate-800 dark:text-slate-100
+                                                          focus:outline-none focus:border-primary-500 font-mono transition-colors"
+                                                   placeholder="https://...">
+                                        </div>
+                                        <!-- Save Model Button -->
+                                        <div class="flex items-center justify-end gap-3 pt-1">
+                                            <span id="cfg-model-status" class="text-xs text-primary-500 opacity-0 transition-opacity duration-300"></span>
+                                            <button id="cfg-model-save"
+                                                    class="px-4 py-2 rounded-lg bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium
+                                                           cursor-pointer transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    onclick="saveModelConfig()" data-i18n="config_save">Save</button>
                                         </div>
                                     </div>
                                 </div>
+
                                 <!-- Agent Config Card -->
-                                <div class="placeholder-card bg-white dark:bg-[#1A1A1A] rounded-xl border border-slate-200 dark:border-white/10 p-6">
-                                    <div class="flex items-center gap-3 mb-4">
+                                <div class="bg-white dark:bg-[#1A1A1A] rounded-xl border border-slate-200 dark:border-white/10 p-6">
+                                    <div class="flex items-center gap-3 mb-5">
                                         <div class="w-9 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center">
                                             <i class="fas fa-robot text-emerald-500 text-sm"></i>
                                         </div>
                                         <h3 class="font-semibold text-slate-800 dark:text-slate-100" data-i18n="config_agent">Agent Configuration</h3>
                                     </div>
                                     <div class="space-y-4">
-                                        <div class="flex items-center gap-4 p-3 rounded-lg bg-slate-50 dark:bg-white/5">
-                                            <span class="text-sm font-medium text-slate-500 dark:text-slate-400 w-32 flex-shrink-0" data-i18n="config_agent_enabled">Agent Mode</span>
-                                            <span class="text-sm text-slate-700 dark:text-slate-200 flex-1" id="cfg-agent">--</span>
+                                        <div>
+                                            <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5" data-i18n="config_max_tokens">Max Context Tokens</label>
+                                            <input id="cfg-max-tokens" type="number" min="1000" max="200000" step="1000"
+                                                   class="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600
+                                                          bg-slate-50 dark:bg-white/5 text-sm text-slate-800 dark:text-slate-100
+                                                          focus:outline-none focus:border-primary-500 font-mono transition-colors">
                                         </div>
-                                        <div class="flex items-center gap-4 p-3 rounded-lg bg-slate-50 dark:bg-white/5">
-                                            <span class="text-sm font-medium text-slate-500 dark:text-slate-400 w-32 flex-shrink-0" data-i18n="config_max_tokens">Max Tokens</span>
-                                            <span class="text-sm text-slate-700 dark:text-slate-200 flex-1 font-mono" id="cfg-max-tokens">--</span>
+                                        <div>
+                                            <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5" data-i18n="config_max_turns">Max Context Turns</label>
+                                            <input id="cfg-max-turns" type="number" min="1" max="100" step="1"
+                                                   class="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600
+                                                          bg-slate-50 dark:bg-white/5 text-sm text-slate-800 dark:text-slate-100
+                                                          focus:outline-none focus:border-primary-500 font-mono transition-colors">
                                         </div>
-                                        <div class="flex items-center gap-4 p-3 rounded-lg bg-slate-50 dark:bg-white/5">
-                                            <span class="text-sm font-medium text-slate-500 dark:text-slate-400 w-32 flex-shrink-0" data-i18n="config_max_turns">Max Turns</span>
-                                            <span class="text-sm text-slate-700 dark:text-slate-200 flex-1 font-mono" id="cfg-max-turns">--</span>
+                                        <div>
+                                            <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5" data-i18n="config_max_steps">Max Steps</label>
+                                            <input id="cfg-max-steps" type="number" min="1" max="50" step="1"
+                                                   class="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600
+                                                          bg-slate-50 dark:bg-white/5 text-sm text-slate-800 dark:text-slate-100
+                                                          focus:outline-none focus:border-primary-500 font-mono transition-colors">
                                         </div>
-                                        <div class="flex items-center gap-4 p-3 rounded-lg bg-slate-50 dark:bg-white/5">
-                                            <span class="text-sm font-medium text-slate-500 dark:text-slate-400 w-32 flex-shrink-0" data-i18n="config_max_steps">Max Steps</span>
-                                            <span class="text-sm text-slate-700 dark:text-slate-200 flex-1 font-mono" id="cfg-max-steps">--</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <!-- Channel Config Card -->
-                                <div class="placeholder-card bg-white dark:bg-[#1A1A1A] rounded-xl border border-slate-200 dark:border-white/10 p-6">
-                                    <div class="flex items-center gap-3 mb-4">
-                                        <div class="w-9 h-9 rounded-lg bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center">
-                                            <i class="fas fa-tower-broadcast text-amber-500 text-sm"></i>
-                                        </div>
-                                        <h3 class="font-semibold text-slate-800 dark:text-slate-100" data-i18n="config_channel">Channel Configuration</h3>
-                                    </div>
-                                    <div class="space-y-4">
-                                        <div class="flex items-center gap-4 p-3 rounded-lg bg-slate-50 dark:bg-white/5">
-                                            <span class="text-sm font-medium text-slate-500 dark:text-slate-400 w-32 flex-shrink-0" data-i18n="config_channel_type">Channel Type</span>
-                                            <span class="text-sm text-slate-700 dark:text-slate-200 flex-1 font-mono" id="cfg-channel">--</span>
+                                        <div class="flex items-center justify-end gap-3 pt-1">
+                                            <span id="cfg-agent-status" class="text-xs text-primary-500 opacity-0 transition-opacity duration-300"></span>
+                                            <button id="cfg-agent-save"
+                                                    class="px-4 py-2 rounded-lg bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium
+                                                           cursor-pointer transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    onclick="saveAgentConfig()" data-i18n="config_save">Save</button>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                            <!-- Coming Soon Banner -->
-                            <div class="mt-6 p-4 rounded-xl bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800/50 flex items-center gap-3">
-                                <i class="fas fa-info-circle text-primary-500"></i>
-                                <span class="text-sm text-primary-700 dark:text-primary-300" data-i18n="config_coming_soon">Full editing capability coming soon. Currently displaying read-only configuration.</span>
+
                             </div>
                         </div>
                     </div>
@@ -373,14 +427,35 @@
                                     <p class="text-sm text-slate-500 dark:text-slate-400 mt-1" data-i18n="skills_desc">View, enable, or disable agent skills</p>
                                 </div>
                             </div>
-                            <div id="skills-empty" class="flex flex-col items-center justify-center py-20">
-                                <div class="w-16 h-16 rounded-2xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center mb-4">
-                                    <i class="fas fa-bolt text-amber-400 text-xl"></i>
+
+                            <!-- Built-in Tools Section -->
+                            <div class="mb-8">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500" data-i18n="tools_section_title">Built-in Tools</span>
+                                    <span id="tools-count-badge" class="hidden px-2 py-0.5 rounded-full text-xs bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400"></span>
                                 </div>
-                                <p class="text-slate-500 dark:text-slate-400 font-medium" data-i18n="skills_loading">Loading skills...</p>
-                                <p class="text-sm text-slate-400 dark:text-slate-500 mt-1" data-i18n="skills_loading_desc">Skills will be displayed here after loading</p>
+                                <div id="tools-empty" class="flex items-center gap-2 py-4 text-slate-400 dark:text-slate-500 text-sm">
+                                    <i class="fas fa-spinner fa-spin text-xs"></i>
+                                    <span data-i18n="tools_loading">Loading tools...</span>
+                                </div>
+                                <div id="tools-list" class="grid gap-3 sm:grid-cols-2 hidden"></div>
                             </div>
-                            <div id="skills-list" class="grid gap-4 sm:grid-cols-2"></div>
+
+                            <!-- Skills Section -->
+                            <div>
+                                <div class="flex items-center gap-2 mb-3">
+                                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500" data-i18n="skills_section_title">Skills</span>
+                                    <span id="skills-count-badge" class="hidden px-2 py-0.5 rounded-full text-xs bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400"></span>
+                                </div>
+                                <div id="skills-empty" class="flex flex-col items-center justify-center py-12">
+                                    <div class="w-14 h-14 rounded-2xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center mb-3">
+                                        <i class="fas fa-bolt text-amber-400 text-lg"></i>
+                                    </div>
+                                    <p class="text-slate-500 dark:text-slate-400 font-medium" data-i18n="skills_loading">Loading skills...</p>
+                                    <p class="text-sm text-slate-400 dark:text-slate-500 mt-1" data-i18n="skills_loading_desc">Skills will be displayed here after loading</p>
+                                </div>
+                                <div id="skills-list" class="grid gap-4 sm:grid-cols-2"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -460,8 +535,15 @@
                                     <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100" data-i18n="channels_title">Channels</h2>
                                     <p class="text-sm text-slate-500 dark:text-slate-400 mt-1" data-i18n="channels_desc">View and manage messaging channels</p>
                                 </div>
+                                <button id="add-channel-btn" onclick="openAddChannelPanel()"
+                                        class="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-500 hover:bg-primary-600
+                                               text-white text-sm font-medium cursor-pointer transition-colors duration-150">
+                                    <i class="fas fa-plus text-xs"></i>
+                                    <span data-i18n="channels_add">Connect</span>
+                                </button>
                             </div>
                             <div id="channels-content" class="grid gap-4"></div>
+                            <div id="channels-add-panel" class="hidden mt-4"></div>
                         </div>
                     </div>
                 </div>
@@ -527,6 +609,32 @@
             </div><!-- /content-area -->
         </div><!-- /main-content -->
     </div><!-- /app -->
+
+    <!-- Confirm Dialog -->
+    <div id="confirm-dialog-overlay" class="fixed inset-0 bg-black/50 z-[100] hidden flex items-center justify-center">
+        <div class="bg-white dark:bg-[#1A1A1A] rounded-2xl border border-slate-200 dark:border-white/10 shadow-xl
+                    w-full max-w-sm mx-4 overflow-hidden">
+            <div class="p-6">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-triangle-exclamation text-red-500"></i>
+                    </div>
+                    <h3 id="confirm-dialog-title" class="font-semibold text-slate-800 dark:text-slate-100 text-base"></h3>
+                </div>
+                <p id="confirm-dialog-message" class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed ml-[52px]"></p>
+            </div>
+            <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100 dark:border-white/5">
+                <button id="confirm-dialog-cancel"
+                        class="px-4 py-2 rounded-lg border border-slate-200 dark:border-white/10
+                               text-slate-600 dark:text-slate-300 text-sm font-medium
+                               hover:bg-slate-50 dark:hover:bg-white/5
+                               cursor-pointer transition-colors duration-150"></button>
+                <button id="confirm-dialog-ok"
+                        class="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-medium
+                               cursor-pointer transition-colors duration-150"></button>
+            </div>
+        </div>
+    </div>
 
     <script src="assets/js/console.js"></script>
 </body>

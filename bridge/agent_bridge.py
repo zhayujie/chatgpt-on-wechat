@@ -65,30 +65,67 @@ class AgentLLMModel(LLMModel):
     LLM Model adapter that uses COW's existing bot infrastructure
     """
 
+    _MODEL_BOT_TYPE_MAP = {
+        "wenxin": const.BAIDU, "wenxin-4": const.BAIDU,
+        "xunfei": const.XUNFEI, const.QWEN: const.QWEN,
+        const.MODELSCOPE: const.MODELSCOPE,
+    }
+    _MODEL_PREFIX_MAP = [
+        ("qwen", const.QWEN_DASHSCOPE), ("qwq", const.QWEN_DASHSCOPE), ("qvq", const.QWEN_DASHSCOPE),
+        ("gemini", const.GEMINI), ("glm", const.ZHIPU_AI), ("claude", const.CLAUDEAPI),
+        ("moonshot", const.MOONSHOT), ("kimi", const.MOONSHOT),
+        ("doubao", const.DOUBAO),
+    ]
+
     def __init__(self, bridge: Bridge, bot_type: str = "chat"):
-        # Get model name directly from config
         from config import conf
-        model_name = conf().get("model", const.GPT_41)
-        super().__init__(model=model_name)
+        super().__init__(model=conf().get("model", const.GPT_41))
         self.bridge = bridge
         self.bot_type = bot_type
         self._bot = None
-        self._use_linkai = conf().get("use_linkai", False) and conf().get("linkai_api_key")
-    
+        self._bot_model = None
+
+    @property
+    def model(self):
+        from config import conf
+        return conf().get("model", const.GPT_41)
+
+    @model.setter
+    def model(self, value):
+        pass
+
+    def _resolve_bot_type(self, model_name: str) -> str:
+        """Resolve bot type from model name, matching Bridge.__init__ logic."""
+        from config import conf
+        if conf().get("use_linkai", False) and conf().get("linkai_api_key"):
+            return const.LINKAI
+        if not model_name or not isinstance(model_name, str):
+            return const.CHATGPT
+        if model_name in self._MODEL_BOT_TYPE_MAP:
+            return self._MODEL_BOT_TYPE_MAP[model_name]
+        if model_name.lower().startswith("minimax") or model_name in ["abab6.5-chat"]:
+            return const.MiniMax
+        if model_name in [const.QWEN_TURBO, const.QWEN_PLUS, const.QWEN_MAX]:
+            return const.QWEN_DASHSCOPE
+        if model_name in [const.MOONSHOT, "moonshot-v1-8k", "moonshot-v1-32k", "moonshot-v1-128k"]:
+            return const.MOONSHOT
+        if model_name in [const.DEEPSEEK_CHAT, const.DEEPSEEK_REASONER]:
+            return const.CHATGPT
+        for prefix, btype in self._MODEL_PREFIX_MAP:
+            if model_name.startswith(prefix):
+                return btype
+        return const.CHATGPT
+
     @property
     def bot(self):
-        """Lazy load the bot and enhance it with tool calling if needed"""
-        if self._bot is None:
-            # If use_linkai is enabled, use LinkAI bot directly
-            if self._use_linkai:
-                self._bot = self.bridge.find_chat_bot(const.LINKAI)
-            else:
-                self._bot = self.bridge.get_bot(self.bot_type)
-                # Automatically add tool calling support if not present
-                self._bot = add_openai_compatible_support(self._bot)
-            
-            # Log bot info
-            bot_name = type(self._bot).__name__
+        """Lazy load the bot, re-create when model changes"""
+        from models.bot_factory import create_bot
+        cur_model = self.model
+        if self._bot is None or self._bot_model != cur_model:
+            bot_type = self._resolve_bot_type(cur_model)
+            self._bot = create_bot(bot_type)
+            self._bot = add_openai_compatible_support(self._bot)
+            self._bot_model = cur_model
         return self._bot
 
     def call(self, request: LLMRequest):
