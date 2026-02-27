@@ -1,0 +1,59 @@
+---
+title: WeCom
+description: Integrate CowAgent with WeCom (WeChat Work) custom app
+---
+
+# WeCom (WeChat Work)
+
+Integrate CowAgent through a WeCom custom application for internal team messaging.
+
+<Note>
+  WeCom only supports Docker deployment or server-based Python deployment, not local running mode.
+</Note>
+
+## 1. Prerequisites
+
+- A server with a public IP
+- A WeCom account (individuals can register but cannot be verified)
+- For verified WeCom accounts, a domain registered to the same entity
+
+## 2. Create a WeCom App
+
+1. In the [WeCom Admin Console](https://work.weixin.qq.com/wework_admin/frame#profile), go to **My Enterprise** to get the **Corp ID**
+2. Go to **App Management**, create a new app, and note the `AgentId` and `Secret`
+3. Click **Set API Receive**, configure the app interface:
+   - URL format: `http://ip:port/wxcomapp` (verified enterprises need a registered domain)
+   - Generate and save the `Token` and `EncodingAESKey`
+
+## 3. Configuration and Startup
+
+```json
+{
+  "channel_type": "wechatcom_app",
+  "wechatcom_corp_id": "YOUR_CORP_ID",
+  "wechatcomapp_token": "YOUR_TOKEN",
+  "wechatcomapp_secret": "YOUR_SECRET",
+  "wechatcomapp_agent_id": "YOUR_AGENT_ID",
+  "wechatcomapp_aes_key": "YOUR_AES_KEY",
+  "wechatcomapp_port": 9898
+}
+```
+
+| Parameter | Description |
+| --- | --- |
+| `wechatcom_corp_id` | Enterprise Corp ID |
+| `wechatcomapp_token` | Token from API receive config |
+| `wechatcomapp_secret` | App Secret |
+| `wechatcomapp_agent_id` | App AgentId |
+| `wechatcomapp_aes_key` | EncodingAESKey from API receive config |
+| `wechatcomapp_port` | Listening port, default 9898 |
+
+After starting the program, save the **message server configuration** in the WeCom console, then add the server IP to **Trusted IPs**.
+
+<Warning>
+  If configuration fails: 1. Ensure the firewall and security group allow the port; 2. Verify all parameters match; 3. Verified enterprises need a registered domain.
+</Warning>
+
+## 4. Usage
+
+Search for the app name in WeCom to start chatting. To allow external WeChat users, share the invitation QR code from **My Enterprise → WeChat Plugin**.
