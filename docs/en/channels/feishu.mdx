@@ -1,0 +1,69 @@
+---
+title: Feishu (Lark)
+description: Integrate CowAgent with Feishu
+---
+
+# Feishu (Lark)
+
+Integrate CowAgent into Feishu by creating a custom app. Supports WebSocket (recommended) and Webhook event modes.
+
+## 1. Create a Custom App
+
+### Create the App
+
+Go to [Feishu Open Platform](https://open.feishu.cn/app/), click **Create Custom App**, and fill in the required information.
+
+### Add Bot Capability
+
+In the **Add App Capabilities** menu, add the **Bot** capability.
+
+### Configure Permissions
+
+Go to **Permission Management**, paste the following permissions, select all, and enable them:
+
+```
+im:message,im:message.group_at_msg,im:message.group_at_msg:readonly,im:message.p2p_msg,im:message.p2p_msg:readonly,im:message:send_as_bot,im:resource
+```
+
+## 2. Project Configuration
+
+Get `App ID` and `App Secret` from **Credentials & Basic Info**, then add to `config.json`:
+
+<Tabs>
+  <Tab title="WebSocket (Recommended)">
+    No public IP required:
+
+    ```json
+    {
+      "channel_type": "feishu",
+      "feishu_app_id": "YOUR_APP_ID",
+      "feishu_app_secret": "YOUR_APP_SECRET",
+      "feishu_event_mode": "websocket"
+    }
+    ```
+
+    Install dependency: `pip3 install lark-oapi`
+  </Tab>
+  <Tab title="Webhook">
+    Requires public IP:
+
+    ```json
+    {
+      "channel_type": "feishu",
+      "feishu_app_id": "YOUR_APP_ID",
+      "feishu_app_secret": "YOUR_APP_SECRET",
+      "feishu_token": "VERIFICATION_TOKEN",
+      "feishu_event_mode": "webhook",
+      "feishu_port": 9891
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## 3. Configure Event Subscription
+
+1. After starting the project, go to **Events & Callbacks** on the Feishu Open Platform, select **Long Connection** mode, and save
+2. Click **Add Event**, search for "Receive Message", select "Receive Message v2.0", and confirm
+3. Go to **Version Management & Release**, create a new version, and submit for release approval
+
+Once approved, search for the bot name in Feishu to start chatting.

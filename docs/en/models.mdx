@@ -1,0 +1,173 @@
+---
+title: Models
+description: Supported models and configuration guide
+---
+
+# Models
+
+CowAgent supports major LLM providers from China and worldwide. Model implementations are in the `models/` directory.
+
+<Note>
+  Recommended models for Agent mode: MiniMax-M2.5, glm-5, kimi-k2.5, qwen3.5-plus, claude-sonnet-4-6, gemini-3.1-pro-preview. Choose based on effectiveness and cost.
+</Note>
+
+## Model Configuration
+
+Set the model name and corresponding API key in `config.json`.
+
+### MiniMax
+
+```json
+{
+  "model": "MiniMax-M2.5",
+  "minimax_api_key": "YOUR_API_KEY"
+}
+```
+
+| Parameter | Description |
+| --- | --- |
+| `model` | `MiniMax-M2.5`, `MiniMax-M2.1`, `MiniMax-M2.1-lightning`, `MiniMax-M2`, etc. |
+| `minimax_api_key` | Create at [MiniMax Console](https://platform.minimaxi.com/user-center/basic-information/interface-key) |
+
+### GLM (Zhipu AI)
+
+```json
+{
+  "model": "glm-5",
+  "zhipu_ai_api_key": "YOUR_API_KEY"
+}
+```
+
+| Parameter | Description |
+| --- | --- |
+| `model` | `glm-5`, `glm-4.7`, `glm-4-plus`, `glm-4-flash`, etc. See [model list](https://bigmodel.cn/dev/api/normal-model/glm-4) |
+| `zhipu_ai_api_key` | Create at [Zhipu AI Console](https://www.bigmodel.cn/usercenter/proj-mgmt/apikeys) |
+
+### Qwen (Tongyi Qianwen)
+
+```json
+{
+  "model": "qwen3.5-plus",
+  "dashscope_api_key": "YOUR_API_KEY"
+}
+```
+
+| Parameter | Description |
+| --- | --- |
+| `model` | `qwen3.5-plus`, `qwen3-max`, `qwen-max`, `qwen-plus`, etc. |
+| `dashscope_api_key` | Create at [Bailian Console](https://bailian.console.aliyun.com/?tab=model#/api-key) |
+
+### Kimi (Moonshot)
+
+```json
+{
+  "model": "kimi-k2.5",
+  "moonshot_api_key": "YOUR_API_KEY"
+}
+```
+
+| Parameter | Description |
+| --- | --- |
+| `model` | `kimi-k2.5`, `kimi-k2`, `moonshot-v1-8k`, `moonshot-v1-32k`, etc. |
+| `moonshot_api_key` | Create at [Moonshot Console](https://platform.moonshot.cn/console/api-keys) |
+
+### Doubao (ByteDance)
+
+```json
+{
+  "model": "doubao-seed-2-0-code-preview-260215",
+  "ark_api_key": "YOUR_API_KEY"
+}
+```
+
+| Parameter | Description |
+| --- | --- |
+| `model` | `doubao-seed-2-0-code-preview-260215`, `doubao-seed-2-0-pro-260215`, etc. |
+| `ark_api_key` | Create at [Volcano Ark Console](https://console.volcengine.com/ark/region:ark+cn-beijing/apikey) |
+
+### Claude
+
+```json
+{
+  "model": "claude-sonnet-4-6",
+  "claude_api_key": "YOUR_API_KEY"
+}
+```
+
+| Parameter | Description |
+| --- | --- |
+| `model` | `claude-sonnet-4-6`, `claude-opus-4-6`, `claude-sonnet-4-5`, etc. See [official models](https://docs.anthropic.com/en/docs/about-claude/models/overview) |
+| `claude_api_key` | Create at [Claude Console](https://console.anthropic.com/settings/keys) |
+| `claude_api_base` | Optional, defaults to `https://api.anthropic.com/v1` |
+
+### Gemini
+
+```json
+{
+  "model": "gemini-3.1-pro-preview",
+  "gemini_api_key": "YOUR_API_KEY"
+}
+```
+
+| Parameter | Description |
+| --- | --- |
+| `model` | `gemini-3.1-pro-preview`, `gemini-3-flash-preview`, `gemini-2.5-pro`, etc. See [official docs](https://ai.google.dev/gemini-api/docs/models) |
+| `gemini_api_key` | Create at [Google AI Studio](https://aistudio.google.com/app/apikey) |
+
+### OpenAI
+
+```json
+{
+  "model": "gpt-4.1-mini",
+  "open_ai_api_key": "YOUR_API_KEY",
+  "open_ai_api_base": "https://api.openai.com/v1"
+}
+```
+
+| Parameter | Description |
+| --- | --- |
+| `model` | o-series, gpt-5.2, gpt-4.1, etc. See [model list](https://platform.openai.com/docs/models) |
+| `open_ai_api_key` | Create at [OpenAI Platform](https://platform.openai.com/api-keys) |
+| `open_ai_api_base` | Optional, modify to use third-party proxy |
+
+### DeepSeek
+
+```json
+{
+  "model": "deepseek-chat",
+  "open_ai_api_key": "YOUR_API_KEY",
+  "open_ai_api_base": "https://api.deepseek.com/v1",
+  "bot_type": "chatGPT"
+}
+```
+
+| Parameter | Description |
+| --- | --- |
+| `model` | `deepseek-chat` (V3), `deepseek-reasoner` (R1) |
+| `bot_type` | OpenAI-compatible mode, set to `chatGPT` |
+
+## OpenAI-Compatible Access
+
+Most models also support OpenAI-compatible access. Set `bot_type` to `chatGPT` and configure the corresponding `open_ai_api_base` and `open_ai_api_key`.
+
+## LinkAI Platform
+
+[LinkAI](https://link-ai.tech) allows flexible model switching with knowledge base, workflow, and plugin support.
+
+```json
+{
+  "use_linkai": true,
+  "linkai_api_key": "YOUR_API_KEY",
+  "linkai_app_code": "YOUR_APP_CODE"
+}
+```
+
+| Parameter | Description |
+| --- | --- |
+| `use_linkai` | Set to `true` to enable LinkAI |
+| `linkai_api_key` | Create at [console](https://link-ai.tech/console/interface) |
+| `linkai_app_code` | LinkAI agent code, optional |
+
+<Tip>
+  For all model names, see [`common/const.py`](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/common/const.py) in the project.
+</Tip>

@@ -1,0 +1,68 @@
+---
+title: Memory
+description: CowAgent long-term memory system
+---
+
+# Long-term Memory
+
+The memory system enables the Agent to remember important information over time, continuously accumulating experience, understanding user preferences, and achieving autonomous thinking and growth.
+
+## How It Works
+
+The Agent proactively stores memory in these scenarios:
+
+- **When users share important information** — Automatically identifies and stores preferences, decisions, facts, and other key information
+- **When conversations reach a certain length** — Automatically extracts summaries to prevent information loss
+- **When retrieval is needed** — Intelligently searches historical memory and combines it with context
+
+## Memory Types
+
+### Core Memory
+
+Stored in `~/cow/memory/core.md`, containing long-term user preferences, important decisions, key facts, and other information that doesn't fade over time.
+
+### Daily Memory
+
+Stored in the `~/cow/memory/daily/` directory, organized by date, recording daily conversation summaries and key events.
+
+## First Startup
+
+On first startup, the Agent proactively asks the user for key information and records it in the workspace (default `~/cow`):
+
+| File | Description |
+| --- | --- |
+| `system.md` | Agent system prompt and behavior settings |
+| `user.md` | User identity and preferences |
+| `memory/core.md` | Core memory |
+| `memory/daily/` | Daily memory directory |
+
+<Frame>
+  <img src="https://cdn.link-ai.tech/doc/20260203000455.png" width="800" />
+</Frame>
+
+## Memory Retrieval
+
+The memory system supports hybrid retrieval:
+
+- **Keyword Search** — Matches historical memory based on keywords
+- **Vector Search** — Semantic similarity search that finds related memories even with different wording
+
+The Agent automatically triggers memory retrieval during conversations, incorporating relevant historical information into the context.
+
+## Configuration
+
+Adjust memory-related parameters in `config.json`:
+
+```json
+{
+  "agent_workspace": "~/cow",
+  "agent_max_context_tokens": 40000,
+  "agent_max_context_turns": 30
+}
+```
+
+| Parameter | Description | Default |
+| --- | --- | --- |
+| `agent_workspace` | Workspace path where memory files are stored | `~/cow` |
+| `agent_max_context_tokens` | Maximum context tokens, affects short-term memory capacity | `40000` |
+| `agent_max_context_turns` | Maximum context turns, older conversations are discarded when exceeded | `30` |

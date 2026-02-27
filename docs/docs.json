@@ -1,0 +1,118 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "name": "CowAgent",
+  "description": "CowAgent - AI Super Assistant powered by LLMs, with autonomous task planning, long-term memory, skills system, and multi-channel deployment.",
+  "theme": "mint",
+  "colors": {
+    "primary": "#2563EB",
+    "light": "#60A5FA",
+    "dark": "#1D4ED8"
+  },
+  "favicon": "/images/favicon.png",
+  "navbar": {
+    "links": [
+      {
+        "label": "GitHub",
+        "href": "https://github.com/zhayujie/chatgpt-on-wechat"
+      }
+    ]
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/zhayujie/chatgpt-on-wechat"
+    }
+  },
+  "navigation": {
+    "languages": [
+      {
+        "language": "zh",
+        "default": true,
+        "groups": [
+          {
+            "group": "开始",
+            "pages": [
+              "zh/index",
+              "zh/architecture"
+            ]
+          },
+          {
+            "group": "快速开始",
+            "pages": [
+              "zh/quick-start",
+              "zh/configuration"
+            ]
+          },
+          {
+            "group": "核心功能",
+            "pages": [
+              "zh/models",
+              "zh/skills",
+              "zh/memory"
+            ]
+          },
+          {
+            "group": "通道",
+            "pages": [
+              "zh/channels/web",
+              "zh/channels/feishu",
+              "zh/channels/dingtalk",
+              "zh/channels/wecom",
+              "zh/channels/wechatmp"
+            ]
+          },
+          {
+            "group": "版本",
+            "pages": [
+              "zh/releases/overview",
+              "zh/releases/v2.0.0"
+            ]
+          }
+        ]
+      },
+      {
+        "language": "en",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "en/index",
+              "en/architecture"
+            ]
+          },
+          {
+            "group": "Quick Start",
+            "pages": [
+              "en/quick-start",
+              "en/configuration"
+            ]
+          },
+          {
+            "group": "Core Features",
+            "pages": [
+              "en/models",
+              "en/skills",
+              "en/memory"
+            ]
+          },
+          {
+            "group": "Channels",
+            "pages": [
+              "en/channels/web",
+              "en/channels/feishu",
+              "en/channels/dingtalk",
+              "en/channels/wecom",
+              "en/channels/wechatmp"
+            ]
+          },
+          {
+            "group": "Versions",
+            "pages": [
+              "en/releases/overview",
+              "en/releases/v2.0.0"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

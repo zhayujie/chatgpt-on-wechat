@@ -1,0 +1,120 @@
+---
+title: Quick Start
+description: One-click install or manually deploy CowAgent
+---
+
+# Quick Start
+
+CowAgent supports Linux, macOS, and Windows. It can run on personal computers or servers and requires Python 3.7 ~ 3.12 (3.9 recommended).
+
+## One-click Install
+
+The project provides a script for one-click installation, configuration, startup, and management:
+
+```bash
+bash <(curl -sS https://cdn.link-ai.tech/code/cow/run.sh)
+```
+
+The script automatically:
+
+1. Checks the Python environment (requires Python 3.7+)
+2. Installs necessary tools (git, curl, etc.)
+3. Clones the project to `~/chatgpt-on-wechat`
+4. Installs Python dependencies
+5. Guides configuration of AI models and channels
+6. Starts the service
+
+### Management Commands
+
+After installation, use the following commands to manage the service:
+
+| Command | Description |
+| --- | --- |
+| `./run.sh start` | Start service |
+| `./run.sh stop` | Stop service |
+| `./run.sh restart` | Restart service |
+| `./run.sh status` | Check status |
+| `./run.sh logs` | View live logs |
+| `./run.sh config` | Reconfigure |
+| `./run.sh update` | Update project |
+
+## Manual Installation
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/zhayujie/chatgpt-on-wechat
+cd chatgpt-on-wechat/
+```
+
+<Tip>
+  For users in China, use the mirror: https://gitee.com/zhayujie/chatgpt-on-wechat
+</Tip>
+
+### 2. Install Dependencies
+
+Core dependencies (required):
+
+```bash
+pip3 install -r requirements.txt
+```
+
+Extended dependencies (optional, recommended):
+
+```bash
+pip3 install -r requirements-optional.txt
+```
+
+### 3. Configuration
+
+Copy the config template and edit:
+
+```bash
+cp config-template.json config.json
+```
+
+See [Configuration](/en/configuration) for detailed settings.
+
+### 4. Run
+
+**Local:**
+
+```bash
+python3 app.py
+```
+
+After starting, visit `http://localhost:9899/chat` to begin chatting.
+
+**Server (background):**
+
+```bash
+nohup python3 app.py & tail -f nohup.out
+```
+
+## Docker Deployment
+
+Docker deployment requires no source code download or dependency installation. Source code deployment is recommended in Agent mode for better system access.
+
+<Note>
+  Requires [Docker](https://docs.docker.com/engine/install/) and docker-compose.
+</Note>
+
+**1. Download config file**
+
+```bash
+wget https://cdn.link-ai.tech/code/cow/docker-compose.yml
+```
+
+Edit `docker-compose.yml` to fill in required configuration.
+
+**2. Start container**
+
+```bash
+sudo docker compose up -d
+```
+
+**3. View logs**
+
+```bash
+sudo docker logs -f chatgpt-on-wechat
+```

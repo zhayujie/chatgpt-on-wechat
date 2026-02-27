@@ -1,0 +1,33 @@
+---
+title: Web
+description: Use CowAgent through the Web interface
+---
+
+# Web
+
+Web is the default channel for CowAgent. A Web console starts automatically on launch, allowing you to chat with the Agent through your browser.
+
+## Configuration
+
+```json
+{
+  "channel_type": "web",
+  "web_port": 9899
+}
+```
+
+| Parameter | Description | Default |
+| --- | --- | --- |
+| `channel_type` | Set to `web` | `web` |
+| `web_port` | Web service listening port | `9899` |
+
+## Usage
+
+After starting the project, visit:
+
+- Local: `http://localhost:9899/chat`
+- Server: `http://<server-ip>:9899/chat`
+
+<Note>
+  Ensure your server firewall and security group allow access to the configured port.
+</Note>

@@ -1,0 +1,107 @@
+---
+title: v2.0.0
+description: CowAgent 2.0 - Full upgrade from chatbot to AI super assistant
+---
+
+# CowAgent 2.0
+
+CowAgent 2.0 is a comprehensive upgrade from a chatbot to an **AI super assistant**! It can now autonomously think and plan tasks, has long-term memory, operates computers and external resources, and creates and executes skills — truly understanding you and growing alongside you.
+
+**Release Date**: 2026.02.03 | [GitHub Release](https://github.com/zhayujie/chatgpt-on-wechat/releases/tag/2.0.0)
+
+## Key Updates
+
+### Agent Core Capabilities
+
+- **Complex Task Planning**: Understands complex tasks and autonomously plans execution, continuously thinking and calling tools until goals are achieved, with multi-turn reasoning and context understanding
+- **Long-term Memory**: Automatically persists conversation memory to local files and databases, including core memory and daily memory, with keyword and vector search support
+- **Built-in System Tools**: 10+ built-in tools including file operations, Bash terminal, browser, file sending, scheduled tasks, memory management, etc.
+- **Skills**: New Skill execution engine with built-in skills and support for custom skill development through natural language conversation
+- **Security and Cost**: Controls Agent access security through secret key management, prompt controls, and system permissions; limits token costs through max memory turns, max context tokens, and tool execution steps
+
+### Other Updates
+
+- **Channel Improvements**: Feishu and DingTalk channels support WebSocket connections (no public IP needed), with image/file message support
+- **Model Updates**: Added claude-sonnet-4-5, gemini-3-pro-preview, glm-4.7, MiniMax-M2.1, qwen3-max, and other latest models
+- **Deployment**: Added one-click install, configure, run, and management script to simplify deployment
+
+## Long-term Memory System
+
+The Agent proactively stores information when users share important details, and automatically extracts summaries when conversations reach a certain length. Supports hybrid retrieval with semantic search and vector search.
+
+On **first startup**, the Agent proactively asks for key information and records it in the workspace (default `~/cow`) including agent settings, user identity, and memory files.
+
+During **long-term conversations**, the Agent intelligently records and retrieves memories, continuously updating its settings, user preferences, and summarizing experiences — achieving true autonomous thinking and continuous growth.
+
+<Frame>
+  <img src="https://cdn.link-ai.tech/doc/20260203000455.png" width="800" />
+</Frame>
+
+## Task Planning and Tool Calling
+
+The Agent intelligently selects and calls tools based on task requirements to complete various complex operations.
+
+### Terminal and File Access
+
+The most fundamental tool capabilities. Users can interact with the Agent from mobile devices to operate resources on personal computers or servers:
+
+<Frame>
+  <img src="https://cdn.link-ai.tech/doc/20260202181130.png" width="800" />
+</Frame>
+
+### Application Programming
+
+With programming and system access capabilities, the Agent can handle the complete **Vibecoding workflow** — from information search, asset generation, coding, testing, deployment, Nginx configuration, to publishing — all from a single mobile command.
+
+<Frame>
+  <img src="https://cdn.link-ai.tech/doc/20260203121008.png" width="800" />
+</Frame>
+
+### Scheduled Tasks
+
+Supports **one-time tasks, fixed intervals, and Cron expressions**, with two trigger modes: **fixed message sending** or **Agent dynamic task execution**:
+
+<Frame>
+  <img src="https://cdn.link-ai.tech/doc/20260202195402.png" width="800" />
+</Frame>
+
+### Environment Variable Management
+
+Manages skill-required secrets via the `env_config` tool, with conversational updates and built-in security protection and data masking:
+
+<Frame>
+  <img src="https://cdn.link-ai.tech/doc/20260202234939.png" width="800" />
+</Frame>
+
+## Skills System
+
+Each Skill consists of a description file, execution script (optional), and resources (optional), providing infinite extensibility.
+
+### Skill Creator
+
+Quickly create skills through conversation, codifying workflows or integrating with any third-party API:
+
+<Frame>
+  <img src="https://cdn.link-ai.tech/doc/20260202202247.png" width="800" />
+</Frame>
+
+### Search and Image Recognition
+
+- **Search Skill**: Built-in `bocha-search`, configure `BOCHA_SEARCH_API_KEY` to enable
+- **Image Recognition**: Supports `gpt-4.1-mini`, `gpt-4.1`, etc., configure `OPENAI_API_KEY` to enable
+
+<Frame>
+  <img src="https://cdn.link-ai.tech/doc/20260202213219.png" width="800" />
+</Frame>
+
+### Third-party Knowledge Bases and Plugins
+
+The `linkai-agent` skill integrates all agents from [LinkAI](https://link-ai.tech/) as Skills, enabling multi-agent decision-making:
+
+<Frame>
+  <img src="https://cdn.link-ai.tech/doc/20260202234350.png" width="750" />
+</Frame>
+
+## Contributing
+
+After version 2.0, the project will continue upgrading Agent capabilities, expanding channels, built-in tools, and the skills system, while reducing model costs and improving security. Welcome to [submit feedback](https://github.com/zhayujie/chatgpt-on-wechat/issues) and [contribute code](https://github.com/zhayujie/chatgpt-on-wechat/pulls).
