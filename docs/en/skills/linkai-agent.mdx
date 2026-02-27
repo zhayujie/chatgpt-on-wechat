@@ -1,0 +1,49 @@
+---
+title: LinkAI Agent
+description: Integrate LinkAI platform multi-agent skill
+---
+
+# linkai-agent
+
+Use agents from the [LinkAI](https://link-ai.tech/) platform as Skills for multi-agent decision-making. The Agent intelligently selects based on agent names and descriptions, calling the corresponding application or workflow via `app_code`.
+
+## Dependencies
+
+| Dependency | Description |
+| --- | --- |
+| `LINKAI_API_KEY` | LinkAI platform API key, created in [Console](https://link-ai.tech/console/interface) |
+| `curl` | System command (usually pre-installed) |
+
+Configuration:
+
+- Configure `LINKAI_API_KEY` via the `env_config` tool
+- Or set `linkai_api_key` in `config.json`
+
+## Configure Agents
+
+Add available agents in `skills/linkai-agent/config.json`:
+
+```json
+{
+  "apps": [
+    {
+      "app_code": "G7z6vKwp",
+      "app_name": "LinkAI Customer Support",
+      "app_description": "Select this assistant only when the user needs help with LinkAI platform questions"
+    },
+    {
+      "app_code": "SFY5x7JR",
+      "app_name": "Content Creator",
+      "app_description": "Use this assistant only when the user needs to create images or videos"
+    }
+  ]
+}
+```
+
+## Usage
+
+Once configured, the Agent will automatically select the appropriate LinkAI agent based on the user's question.
+
+<Frame>
+  <img src="https://cdn.link-ai.tech/doc/20260202234350.png" width="750" />
+</Frame>

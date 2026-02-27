@@ -1,0 +1,33 @@
+---
+title: Web Fetch
+description: Fetch web page text content
+---
+
+# web-fetch
+
+Use curl to fetch web pages and extract readable text content. A lightweight web access method without browser automation.
+
+## Dependencies
+
+| Dependency | Description |
+| --- | --- |
+| `curl` | System command (usually pre-installed) |
+
+This skill has `always: true` set, enabled by default as long as the system has the `curl` command.
+
+## Usage
+
+Automatically invoked when the Agent needs to fetch content from a URL, no extra configuration needed.
+
+## Comparison with browser Tool
+
+| Feature | web-fetch (skill) | browser (tool) |
+| --- | --- | --- |
+| Dependencies | curl only | browser-use + playwright |
+| JS rendering | Not supported | Supported |
+| Page interaction | Not supported | Supports click, type, etc. |
+| Best for | Static page text | Dynamic web pages |
+
+<Tip>
+  For most web content retrieval scenarios, web-fetch is sufficient. Only use the browser tool when you need JS rendering or page interaction.
+</Tip>

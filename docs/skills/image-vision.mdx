@@ -1,0 +1,33 @@
+---
+title: 图像识别
+description: 使用 OpenAI 视觉模型识别图片
+---
+
+# openai-image-vision
+
+使用 OpenAI 的 GPT-4 Vision API 分析图片内容，理解图像中的物体、文字、颜色等元素。
+
+## 依赖
+
+| 依赖 | 说明 |
+| --- | --- |
+| `OPENAI_API_KEY` | OpenAI API 密钥 |
+| `curl`、`base64` | 系统命令（通常已预装） |
+
+配置方式：
+
+- 通过 `env_config` 工具配置 `OPENAI_API_KEY`
+- 或在 `config.json` 中填写 `open_ai_api_key`
+
+## 支持的模型
+
+- `gpt-4.1-mini`（推荐，性价比高）
+- `gpt-4.1`
+
+## 使用方式
+
+配置完成后，向 Agent 发送图片即可自动触发图像识别。
+
+<Frame>
+  <img src="https://cdn.link-ai.tech/doc/20260202213219.png" width="800" />
+</Frame>

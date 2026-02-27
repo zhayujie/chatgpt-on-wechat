@@ -1,0 +1,33 @@
+---
+title: Image Vision
+description: Recognize images using OpenAI vision models
+---
+
+# openai-image-vision
+
+Analyze image content using OpenAI's GPT-4 Vision API, understanding objects, text, colors, and other elements in images.
+
+## Dependencies
+
+| Dependency | Description |
+| --- | --- |
+| `OPENAI_API_KEY` | OpenAI API key |
+| `curl`, `base64` | System commands (usually pre-installed) |
+
+Configuration:
+
+- Configure `OPENAI_API_KEY` via the `env_config` tool
+- Or set `open_ai_api_key` in `config.json`
+
+## Supported Models
+
+- `gpt-4.1-mini` (recommended, cost-effective)
+- `gpt-4.1`
+
+## Usage
+
+Once configured, send an image to the Agent to automatically trigger image recognition.
+
+<Frame>
+  <img src="https://cdn.link-ai.tech/doc/20260202213219.png" width="800" />
+</Frame>

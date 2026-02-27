@@ -1,0 +1,67 @@
+---
+title: 飞书
+description: 将 CowAgent 接入飞书应用
+---
+
+通过自建应用将 CowAgent 接入飞书，支持 WebSocket 长连接（推荐）和 Webhook 两种事件接收模式。
+
+## 一、创建企业自建应用
+
+### 1. 创建应用
+
+进入 [飞书开发平台](https://open.feishu.cn/app/)，点击 **创建企业自建应用**，填写必要信息后创建。
+
+### 2. 添加机器人能力
+
+在 **添加应用能力** 菜单中，为应用添加 **机器人** 能力。
+
+### 3. 配置应用权限
+
+点击 **权限管理**，粘贴以下权限配置，全选并批量开通：
+
+```
+im:message,im:message.group_at_msg,im:message.group_at_msg:readonly,im:message.p2p_msg,im:message.p2p_msg:readonly,im:message:send_as_bot,im:resource
+```
+
+## 二、项目配置
+
+在 **凭证与基础信息** 中获取 `App ID` 和 `App Secret`，填入 `config.json`：
+
+<Tabs>
+  <Tab title="WebSocket 模式（推荐）">
+    无需公网 IP，配置如下：
+
+    ```json
+    {
+      "channel_type": "feishu",
+      "feishu_app_id": "YOUR_APP_ID",
+      "feishu_app_secret": "YOUR_APP_SECRET",
+      "feishu_event_mode": "websocket"
+    }
+    ```
+
+    需安装依赖：`pip3 install lark-oapi`
+  </Tab>
+  <Tab title="Webhook 模式">
+    需要公网 IP，配置如下：
+
+    ```json
+    {
+      "channel_type": "feishu",
+      "feishu_app_id": "YOUR_APP_ID",
+      "feishu_app_secret": "YOUR_APP_SECRET",
+      "feishu_token": "VERIFICATION_TOKEN",
+      "feishu_event_mode": "webhook",
+      "feishu_port": 9891
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## 三、配置事件订阅
+
+1. 启动项目后，在飞书开放平台点击 **事件与回调**，选择 **长连接** 方式并保存
+2. 点击 **添加事件**，搜索 "接收消息"，选择 "接收消息v2.0"，确认添加
+3. 点击 **版本管理与发布**，创建版本并申请线上发布，审核通过后即可使用
+
+完成后在飞书中搜索机器人名称，即可开始对话。

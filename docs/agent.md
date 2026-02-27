@@ -23,7 +23,7 @@ Cow项目从简单的聊天机器人全面升级为超级智能助理 **CowAgent
 
 在后续的长期对话中，Agent会在需要的时候智能记录或检索记忆，并对自身设定、用户偏好、记忆文件等进行不断更新，总结和记录经验和教训，真正实现自主思考和不断成长。
 
-<img width="800" src="https://cdn.link-ai.tech/doc/20260203000455.png">
+<img width="800" src="https://cdn.link-ai.tech/doc/20260203000455.png" />
 
 
 
@@ -37,14 +37,14 @@ Cow项目从简单的聊天机器人全面升级为超级智能助理 **CowAgent
 
 针对操作系统的终端和文件的访问能力，是最基础和核心的工具，其他很多工具或技能都是基于基础工具进行扩展。用户可通过手机端与Agent交互，操作个人电脑或服务器上的资源：
 
-<img width="800" src="https://cdn.link-ai.tech/doc/20260202181130.png">
+<img width="800" src="https://cdn.link-ai.tech/doc/20260202181130.png" />
 
 #### 1.2 编程能力
 
 基于编程能力和系统访问能力，Agent可以实现从信息搜索、图片等素材生成、编码、测试、部署、Nginx配置修改、发布的 Vibecoding 全流程，通过手机端简单的一句命令完成应用的快速demo：
 
 
-<img width="800" src="https://cdn.link-ai.tech/doc/20260203121008.png">
+<img width="800" src="https://cdn.link-ai.tech/doc/20260203121008.png" />
 
 
 
@@ -53,7 +53,7 @@ Cow项目从简单的聊天机器人全面升级为超级智能助理 **CowAgent
 基于 scheduler 工具实现动态定时任务，支持 **一次性任务、固定时间间隔、Cron表达式** 三种形式，任务触发可选择**固定消息发送** 或 **Agent动态任务** 执行两种模式，有很高灵活性：
 
 
-<img width="800" src="https://cdn.link-ai.tech/doc/20260202195402.png">
+<img width="800" src="https://cdn.link-ai.tech/doc/20260202195402.png" />
 
 同时你也可以通过自然语言快速查看和管理已有的定时任务。
 
@@ -62,7 +62,7 @@ Cow项目从简单的聊天机器人全面升级为超级智能助理 **CowAgent
 
 技能所需要的秘钥存储在环境变量文件中，由 `env_config` 工具进行管理，你可以通过对话的方式更新秘钥，工具内置了安全保护和脱敏策略，会严格保护秘钥安全：
 
-<img width="800" src="https://cdn.link-ai.tech/doc/20260202234939.png">
+<img width="800" src="https://cdn.link-ai.tech/doc/20260202234939.png" />
 
 ### 3. 技能系统
 
@@ -77,7 +77,7 @@ Cow项目从简单的聊天机器人全面升级为超级智能助理 **CowAgent
 
 通过 `skill-creator` 技能可以通过对话的方式快速创建技能。你可以在与Agent的写作中让他对将某个工作流程固化为技能，或者把任意接口文档和示例发送给Agent，让他直接完成对接：
 
-<img width="800" src="https://cdn.link-ai.tech/doc/20260202202247.png">
+<img width="800" src="https://cdn.link-ai.tech/doc/20260202202247.png" />
 
 
 #### 3.2 搜索和图像识别
@@ -85,7 +85,7 @@ Cow项目从简单的聊天机器人全面升级为超级智能助理 **CowAgent
 - **搜索技能：** 系统内置实现了 `bocha-search`(博查搜索)的Skill，依赖环境变量 `BOCHA_SEARCH_API_KEY`，可在[控制台](https://open.bochaai.com/)进行创建，并发送给Agent完成配置
 - **图像识别技能：** 实现了 `openai-image-vision` 插件，可使用 gpt-4.1-mini、gpt-4.1 等图像识别模型。依赖秘钥 `OPENAI_API_KEY`，可通过config.json或env_config工具进行维护。
 
-<img width="800" src="https://cdn.link-ai.tech/doc/20260202213219.png">
+<img width="800" src="https://cdn.link-ai.tech/doc/20260202213219.png" />
 
 
 #### 3.3 三方知识库和插件
@@ -113,7 +113,7 @@ Cow项目从简单的聊天机器人全面升级为超级智能助理 **CowAgent
 
 Agent可根据智能体的名称和描述进行决策，并通过 app_code 调用接口访问对应的应用/工作流，通过该技能，可以灵活访问LinkAI平台上的智能体、知识库、插件等能力，实现效果如下：
 
-<img width="750" src="https://cdn.link-ai.tech/doc/20260202234350.png">
+<img width="750" src="https://cdn.link-ai.tech/doc/20260202234350.png" />
 
 注：需通过 `env_config` 配置 `LINKAI_API_KEY`，或在config.json中添加 `linkai_api_key` 配置。
 

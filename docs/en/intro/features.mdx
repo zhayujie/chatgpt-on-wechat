@@ -1,0 +1,105 @@
+---
+title: Features
+description: CowAgent long-term memory, task planning, and skills system in detail
+---
+
+## 1. Long-term Memory
+
+The memory system enables the Agent to remember important information over time. The Agent proactively stores information when users share preferences, decisions, or key facts, and automatically extracts summaries when conversations reach a certain length. Memory is divided into core memory and daily memory, with hybrid retrieval supporting both keyword search and vector search.
+
+On first launch, the Agent proactively asks the user for key information and records it in the workspace (default `~/cow`) — including agent settings, user identity, and memory files.
+
+In subsequent long-term conversations, the Agent intelligently stores or retrieves memory as needed, continuously updating its own settings, user preferences, and memory files, summarizing experiences and lessons learned — truly achieving autonomous thinking and continuous growth.
+
+<Frame>
+  <img src="https://cdn.link-ai.tech/doc/20260203000455.png" width="800" />
+</Frame>
+
+## 2. Task Planning and Tool Use
+
+Tools are the core of how the Agent accesses operating system resources. The Agent intelligently selects and invokes tools based on task requirements, performing file read/write, command execution, scheduled tasks, and more. Built-in tools are implemented in the project's `agent/tools/` directory.
+
+**Key tools:** file read/write/edit, Bash terminal, file send, scheduler, memory search, web search, environment config, and more.
+
+### 2.1 Terminal and File Access
+
+Access to the OS terminal and file system is the most fundamental and core capability. Many other tools and skills build on top of this. Users can interact with the Agent from a mobile device to operate resources on their personal computer or server:
+
+<Frame>
+  <img src="https://cdn.link-ai.tech/doc/20260202181130.png" width="800" />
+</Frame>
+
+### 2.2 Programming Capability
+
+Combining programming and system access, the Agent can execute the complete **Vibecoding workflow** — from information search, asset generation, coding, testing, deployment, Nginx configuration, to publishing — all triggered by a single command from your phone:
+
+<Frame>
+  <img src="https://cdn.link-ai.tech/doc/20260203121008.png" width="800" />
+</Frame>
+
+### 2.3 Scheduled Tasks
+
+The `scheduler` tool enables dynamic scheduled tasks, supporting **one-time tasks, fixed intervals, and Cron expressions**. Tasks can be triggered as either a **fixed message send** or an **Agent dynamic task** execution:
+
+<Frame>
+  <img src="https://cdn.link-ai.tech/doc/20260202195402.png" width="800" />
+</Frame>
+
+### 2.4 Environment Variable Management
+
+Secrets required by skills are stored in an environment variable file, managed by the `env_config` tool. You can update secrets through conversation, with built-in security protection and desensitization:
+
+<Frame>
+  <img src="https://cdn.link-ai.tech/doc/20260202234939.png" width="800" />
+</Frame>
+
+## 3. Skills System
+
+The Skills system provides infinite extensibility for the Agent. Each Skill consists of a description file, execution scripts (optional), and resources (optional), describing how to complete specific types of tasks. Skills allow the Agent to follow instructions for complex workflows, invoke tools, or integrate third-party systems.
+
+- **Built-in skills:** Located in the project's `skills/` directory, including skill creator, image recognition, LinkAI agent, web fetch, and more. Built-in skills are automatically enabled based on dependency conditions (API keys, system commands, etc.).
+- **Custom skills:** Created by users through conversation, stored in the workspace (`~/cow/skills/`), capable of implementing any complex business process or third-party integration.
+
+### 3.1 Creating Skills
+
+The `skill-creator` skill enables rapid skill creation through conversation. You can ask the Agent to codify a workflow as a skill, or send any API documentation and examples for the Agent to complete the integration directly:
+
+<Frame>
+  <img src="https://cdn.link-ai.tech/doc/20260202202247.png" width="800" />
+</Frame>
+
+### 3.2 Web Search and Image Recognition
+
+- **Web search:** Built-in `web_search` tool, supports multiple search engines. Configure `BOCHA_API_KEY` or `LINKAI_API_KEY` to enable.
+- **Image recognition:** Built-in `openai-image-vision` skill, supports `gpt-4.1-mini`, `gpt-4.1`, and other models. Requires `OPENAI_API_KEY`.
+
+<Frame>
+  <img src="https://cdn.link-ai.tech/doc/20260202213219.png" width="800" />
+</Frame>
+
+### 3.3 Third-party Knowledge Bases and Plugins
+
+The `linkai-agent` skill makes all agents on [LinkAI](https://link-ai.tech/) available as Skills for the Agent, enabling multi-agent decision making.
+
+Configuration: set `LINKAI_API_KEY` via `env_config`, then add agent descriptions in `skills/linkai-agent/config.json`:
+
+```json
+{
+  "apps": [
+    {
+      "app_code": "G7z6vKwp",
+      "app_name": "LinkAI Customer Support",
+      "app_description": "Select only when the user needs help with LinkAI platform questions"
+    },
+    {
+      "app_code": "SFY5x7JR",
+      "app_name": "Content Creator",
+      "app_description": "Use only when the user needs to create images or videos"
+    }
+  ]
+}
+```
+
+<Frame>
+  <img src="https://cdn.link-ai.tech/doc/20260202234350.png" width="750" />
+</Frame>

@@ -1,0 +1,39 @@
+---
+title: One-click Install
+description: One-click install and manage CowAgent with scripts
+---
+
+The project provides scripts for one-click install, configuration, startup, and management. Script-based deployment is recommended for quick setup.
+
+Supports Linux, macOS, and Windows. Requires Python 3.7-3.12 (3.9 recommended).
+
+## Install Command
+
+```bash
+bash <(curl -sS https://cdn.link-ai.tech/code/cow/run.sh)
+```
+
+The script automatically performs these steps:
+
+1. Check Python environment (requires Python 3.7+)
+2. Install required tools (git, curl, etc.)
+3. Clone project to `~/chatgpt-on-wechat`
+4. Install Python dependencies
+5. Guided configuration for AI model and channel
+6. Start service
+
+By default, the Web service starts after installation. Access `http://localhost:9899/chat` to begin chatting.
+
+## Management Commands
+
+After installation, use these commands to manage the service:
+
+| Command | Description |
+| --- | --- |
+| `./run.sh start` | Start service |
+| `./run.sh stop` | Stop service |
+| `./run.sh restart` | Restart service |
+| `./run.sh status` | Check run status |
+| `./run.sh logs` | View real-time logs |
+| `./run.sh config` | Reconfigure |
+| `./run.sh update` | Update project code |

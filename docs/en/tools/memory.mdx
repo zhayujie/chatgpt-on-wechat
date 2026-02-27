@@ -1,0 +1,38 @@
+---
+title: memory - Memory
+description: Search and read long-term memory
+---
+
+# memory
+
+The memory tool contains two sub-tools: `memory_search` (search memory) and `memory_get` (read memory files).
+
+## Dependencies
+
+No extra dependencies, available by default. Managed by the Agent Core memory system.
+
+## memory_search
+
+Search historical memory with hybrid keyword and vector retrieval.
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `query` | string | Yes | Search query |
+
+## memory_get
+
+Read the content of a specific memory file.
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `path` | string | Yes | Relative path to memory file (e.g. `MEMORY.md`, `memory/2026-01-01.md`) |
+| `start_line` | integer | No | Start line number |
+| `end_line` | integer | No | End line number |
+
+## How It Works
+
+The Agent automatically invokes memory tools in these scenarios:
+
+- When the user shares important information → stores to memory
+- When historical context is needed → searches relevant memory
+- When conversation reaches a certain length → extracts summary for storage

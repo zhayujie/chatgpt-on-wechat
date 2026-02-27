@@ -1,31 +1,31 @@
 ---
 title: WeCom
-description: Integrate CowAgent with WeCom (WeChat Work) custom app
+description: Integrate CowAgent into WeCom enterprise app
 ---
 
-# WeCom (WeChat Work)
-
-Integrate CowAgent through a WeCom custom application for internal team messaging.
+Integrate CowAgent into WeCom through a custom enterprise app, supporting one-on-one chat for internal employees.
 
 <Note>
-  WeCom only supports Docker deployment or server-based Python deployment, not local running mode.
+  WeCom only supports Docker deployment or server Python deployment. Local run mode is not supported.
 </Note>
 
 ## 1. Prerequisites
 
-- A server with a public IP
-- A WeCom account (individuals can register but cannot be verified)
-- For verified WeCom accounts, a domain registered to the same entity
+Required resources:
 
-## 2. Create a WeCom App
+1. A server with public IP
+2. A registered WeCom account (individual registration is possible, but cannot be certified)
+3. Certified WeCom requires a domain with corresponding entity filing
 
-1. In the [WeCom Admin Console](https://work.weixin.qq.com/wework_admin/frame#profile), go to **My Enterprise** to get the **Corp ID**
-2. Go to **App Management**, create a new app, and note the `AgentId` and `Secret`
-3. Click **Set API Receive**, configure the app interface:
-   - URL format: `http://ip:port/wxcomapp` (verified enterprises need a registered domain)
-   - Generate and save the `Token` and `EncodingAESKey`
+## 2. Create WeCom App
 
-## 3. Configuration and Startup
+1. Get **Corp ID** from **My Enterprise** in [WeCom Admin Console](https://work.weixin.qq.com/wework_admin/frame#profile)
+2. Switch to **Application Management**, click Create Application, record `AgentId` and `Secret`
+3. Click **Set API Reception**, configure application interface:
+   - URL format: `http://ip:port/wxcomapp` (certified enterprises must use filed domain)
+   - Generate random `Token` and `EncodingAESKey` and save
+
+## 3. Configuration and Run
 
 ```json
 {
@@ -41,19 +41,19 @@ Integrate CowAgent through a WeCom custom application for internal team messagin
 
 | Parameter | Description |
 | --- | --- |
-| `wechatcom_corp_id` | Enterprise Corp ID |
-| `wechatcomapp_token` | Token from API receive config |
+| `wechatcom_corp_id` | Corp ID |
+| `wechatcomapp_token` | Token from API reception config |
 | `wechatcomapp_secret` | App Secret |
 | `wechatcomapp_agent_id` | App AgentId |
-| `wechatcomapp_aes_key` | EncodingAESKey from API receive config |
-| `wechatcomapp_port` | Listening port, default 9898 |
+| `wechatcomapp_aes_key` | EncodingAESKey from API reception config |
+| `wechatcomapp_port` | Listen port, default 9898 |
 
-After starting the program, save the **message server configuration** in the WeCom console, then add the server IP to **Trusted IPs**.
+After starting the program, return to WeCom Admin Console to save **Message Server Configuration**, and add the server IP to **Enterprise Trusted IPs**.
 
 <Warning>
-  If configuration fails: 1. Ensure the firewall and security group allow the port; 2. Verify all parameters match; 3. Verified enterprises need a registered domain.
+  If configuration fails: 1. Ensure firewall and security group allow the port; 2. Verify all parameters are consistent; 3. Certified enterprises must configure a filed domain.
 </Warning>
 
 ## 4. Usage
 
-Search for the app name in WeCom to start chatting. To allow external WeChat users, share the invitation QR code from **My Enterprise → WeChat Plugin**.
+Search for the app name in WeCom to start chatting. To allow external WeChat users, share the invite QR code from **My Enterprise → WeChat Plugin**.
