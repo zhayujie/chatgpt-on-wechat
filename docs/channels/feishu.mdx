@@ -3,65 +3,67 @@ title: 飞书
 description: 将 CowAgent 接入飞书应用
 ---
 
-通过自建应用将 CowAgent 接入飞书，支持 WebSocket 长连接（推荐）和 Webhook 两种事件接收模式。
+通过自建应用将 CowAgent 接入飞书，需要是飞书企业用户且具有企业管理权限。
 
 ## 一、创建企业自建应用
 
 ### 1. 创建应用
 
-进入 [飞书开发平台](https://open.feishu.cn/app/)，点击 **创建企业自建应用**，填写必要信息后创建。
+进入 [飞书开发平台](https://open.feishu.cn/app/)，点击 **创建企业自建应用**，填写必要信息后点击 **创建**：
+
+<img src="https://img-1317903499.cos.ap-guangzhou.myqcloud.com/docs/feishu-hosting-create-app.jpg" width="500"/>
 
 ### 2. 添加机器人能力
 
-在 **添加应用能力** 菜单中，为应用添加 **机器人** 能力。
+在 **添加应用能力** 菜单中，为应用添加 **机器人** 能力：
+
+<img src="https://img-1317903499.cos.ap-guangzhou.myqcloud.com/docs/feishu-hosting-add-bot.jpg" width="800"/>
 
 ### 3. 配置应用权限
 
-点击 **权限管理**，粘贴以下权限配置，全选并批量开通：
+点击 **权限管理**，复制以下权限配置，粘贴到 **权限配置** 下方的输入框内，全选筛选出来的权限，点击 **批量开通** 并确认：
 
 ```
 im:message,im:message.group_at_msg,im:message.group_at_msg:readonly,im:message.p2p_msg,im:message.p2p_msg:readonly,im:message:send_as_bot,im:resource
 ```
 
+<img src="https://cdn.link-ai.tech/doc/feishu-hosting-add-auth2.png" width="800"/>
+
 ## 二、项目配置
 
-在 **凭证与基础信息** 中获取 `App ID` 和 `App Secret`，填入 `config.json`：
+1. 在 **凭证与基础信息** 中获取 `App ID` 和 `App Secret`：
 
-<Tabs>
-  <Tab title="WebSocket 模式（推荐）">
-    无需公网 IP，配置如下：
+<img src="https://img-1317903499.cos.ap-guangzhou.myqcloud.com/docs/feishu-hosting-appid-secret.jpg" width="800"/>
 
-    ```json
-    {
-      "channel_type": "feishu",
-      "feishu_app_id": "YOUR_APP_ID",
-      "feishu_app_secret": "YOUR_APP_SECRET",
-      "feishu_event_mode": "websocket"
-    }
-    ```
+2. 将以下配置加入项目根目录的 `config.json` 文件：
 
-    需安装依赖：`pip3 install lark-oapi`
-  </Tab>
-  <Tab title="Webhook 模式">
-    需要公网 IP，配置如下：
+```json
+{
+  "channel_type": "feishu",
+  "feishu_app_id": "YOUR_APP_ID",
+  "feishu_app_secret": "YOUR_APP_SECRET",
+  "feishu_bot_name": "YOUR_BOT_NAME"
+}
+```
 
-    ```json
-    {
-      "channel_type": "feishu",
-      "feishu_app_id": "YOUR_APP_ID",
-      "feishu_app_secret": "YOUR_APP_SECRET",
-      "feishu_token": "VERIFICATION_TOKEN",
-      "feishu_event_mode": "webhook",
-      "feishu_port": 9891
-    }
-    ```
-  </Tab>
-</Tabs>
+| 参数 | 说明 |
+| --- | --- |
+| `feishu_app_id` | 飞书机器人应用 App ID |
+| `feishu_app_secret` | 飞书机器人 App Secret |
+| `feishu_bot_name` | 飞书机器人名称（创建应用时设置），群聊中使用依赖此配置 |
+
+配置完成后启动项目。
 
 ## 三、配置事件订阅
 
-1. 启动项目后，在飞书开放平台点击 **事件与回调**，选择 **长连接** 方式并保存
-2. 点击 **添加事件**，搜索 "接收消息"，选择 "接收消息v2.0"，确认添加
-3. 点击 **版本管理与发布**，创建版本并申请线上发布，审核通过后即可使用
+1. 成功运行项目后，在飞书开放平台点击 **事件与回调**，选择 **长连接** 方式，点击保存：
+
+<img src="https://cdn.link-ai.tech/doc/202601311731183.png" width="600"/>
+
+2. 点击下方的 **添加事件**，搜索 "接收消息"，选择 "**接收消息v2.0**"，确认添加。
+
+3. 点击 **版本管理与发布**，创建版本并申请 **线上发布**，在飞书客户端查看审批消息并审核通过：
+
+<img src="https://cdn.link-ai.tech/doc/202601311807356.png" width="600"/>
 
 完成后在飞书中搜索机器人名称，即可开始对话。

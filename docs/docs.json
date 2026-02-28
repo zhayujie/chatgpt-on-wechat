@@ -311,6 +311,7 @@
                 "group": "Release Notes",
                 "pages": [
                   "en/releases/overview",
+                  "en/releases/v2.0.2",
                   "en/releases/v2.0.1",
                   "en/releases/v2.0.0"
                 ]

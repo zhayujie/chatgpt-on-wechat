@@ -1,9 +1,9 @@
 ---
-title: Web 网页
-description: 通过 Web 网页端使用 CowAgent
+title: Web 控制台
+description: 通过 Web 控制台使用 CowAgent
 ---
 
-Web 是 CowAgent 的默认通道，启动后会自动运行 Web 控制台，通过浏览器即可与 Agent 对话。
+Web 控制台是 CowAgent 的默认通道，启动后会自动运行，通过浏览器即可与 Agent 对话，并支持在线管理模型、技能、记忆、通道等配置。
 
 ## 配置
 
@@ -19,13 +19,57 @@ Web 是 CowAgent 的默认通道，启动后会自动运行 Web 控制台，通�
 | `channel_type` | 设为 `web` | `web` |
 | `web_port` | Web 服务监听端口 | `9899` |
 
-## 使用
+## 访问地址
 
 启动项目后访问：
 
-- 本地运行：`http://localhost:9899/chat`
-- 服务器运行：`http://<server-ip>:9899/chat`
+- 本地运行：`http://localhost:9899`
+- 服务器运行：`http://<server-ip>:9899`
 
 <Note>
   请确保服务器防火墙和安全组已放行对应端口。
 </Note>
+
+## 功能介绍
+
+### 对话界面
+
+支持流式输出，可实时展示 Agent 的思考过程（Reasoning）和工具调用过程（Tool Calls），更直观地观察 Agent 的决策过程：
+
+<img width="850" src="https://cdn.link-ai.tech/doc/20260227180120.png" />
+
+### 模型管理
+
+支持在线管理模型配置，无需手动编辑配置文件：
+
+<img width="850" src="https://cdn.link-ai.tech/doc/20260227173811.png" />
+
+### 技能管理
+
+支持在线查看和管理 Agent 技能（Skills）：
+
+<img width="850" src="https://cdn.link-ai.tech/doc/20260227173403.png" />
+
+### 记忆管理
+
+支持在线查看和管理 Agent 记忆：
+
+<img width="850" src="https://cdn.link-ai.tech/doc/20260227173349.png" />
+
+### 通道管理
+
+支持在线管理接入通道，支持实时连接/断开操作：
+
+<img width="850" src="https://cdn.link-ai.tech/doc/20260227173331.png" />
+
+### 定时任务
+
+支持在线查看和管理定时任务，包括一次性任务、固定间隔、Cron 表达式等多种调度方式的可视化管理：
+
+<img width="850" src="https://cdn.link-ai.tech/doc/20260227173704.png" />
+
+### 日志
+
+支持在线实时查看 Agent 运行日志，便于监控运行状态和排查问题：
+
+<img width="850" src="https://cdn.link-ai.tech/doc/20260227173514.png" />
