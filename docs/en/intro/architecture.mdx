@@ -33,18 +33,24 @@ When Agent mode is enabled, CowAgent runs as an autonomous agent with the follow
 
 ## Workspace Directory Structure
 
-The Agent workspace is located at `~/.cow` by default and stores system prompts, memory files, and skill files:
+The Agent workspace is located at `~/cow` by default and stores system prompts, memory files, and skill files:
 
 ```
-~/.cow/
+~/cow/
 ├── system.md          # Agent system prompt
 ├── user.md            # User profile
 ├── memory/            # Long-term memory storage
 │   ├── core.md        # Core memory
 │   └── daily/         # Daily memory
-├── skills/            # Custom skills
-│   ├── skill-1/
-│   └── skill-2/
+└── skills/            # Custom skills
+    ├── skill-1/
+    └── skill-2/
+```
+
+Secret keys are stored separately in `~/.cow` directory for security:
+
+```
+~/.cow/
 └── .env               # Secret keys for skills
 ```
 
@@ -55,7 +61,7 @@ Configure Agent mode parameters in `config.json`:
 ```json
 {
   "agent": true,
-  "agent_workspace": "~/.cow",
+  "agent_workspace": "~/cow",
   "agent_max_context_tokens": 40000,
   "agent_max_context_turns": 30,
   "agent_max_steps": 15
@@ -65,7 +71,7 @@ Configure Agent mode parameters in `config.json`:
 | Parameter | Description | Default |
 | --- | --- | --- |
 | `agent` | Enable Agent mode | `true` |
-| `agent_workspace` | Workspace path | `~/.cow` |
+| `agent_workspace` | Workspace path | `~/cow` |
 | `agent_max_context_tokens` | Max context tokens | `40000` |
 | `agent_max_context_turns` | Max context turns | `30` |
 | `agent_max_steps` | Max decision steps per task | `15` |

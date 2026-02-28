@@ -332,9 +332,10 @@ class AgentBridge:
         Returns:
             Reply object
         """
+        session_id = None
+        agent = None
         try:
             # Extract session_id from context for user isolation
-            session_id = None
             if context:
                 session_id = context.kwargs.get("session_id") or context.get("session_id")
             
@@ -371,6 +372,9 @@ class AgentBridge:
             if context and hasattr(agent, 'model'):
                 agent.model.channel_type = context.get("channel_type", "")
 
+            # Store session_id on agent so executor can clear DB on fatal errors
+            agent._current_session_id = session_id
+
             # Record message count before execution so we can diff new messages
             with agent.messages_lock:
                 pre_run_len = len(agent.messages)
@@ -395,7 +399,17 @@ class AgentBridge:
                 channel_type = (context.get("channel_type") or "") if context else ""
                 with agent.messages_lock:
                     new_messages = agent.messages[pre_run_len:]
-                self._persist_messages(session_id, list(new_messages), channel_type)
+                if new_messages:
+                    self._persist_messages(session_id, list(new_messages), channel_type)
+                elif pre_run_len > 0 and len(agent.messages) == 0:
+                    # Agent cleared its messages (recovery from format error / overflow)
+                    # Also clear the DB to prevent reloading dirty data
+                    try:
+                        from agent.memory import get_conversation_store
+                        get_conversation_store().clear_session(session_id)
+                        logger.info(f"[AgentBridge] Cleared DB for recovered session: {session_id}")
+                    except Exception as e:
+                        logger.warning(f"[AgentBridge] Failed to clear DB after recovery: {e}")
             
             # Check if there are files to send (from read tool)
             if hasattr(agent, 'stream_executor') and hasattr(agent.stream_executor, 'files_to_send'):
@@ -415,6 +429,18 @@ class AgentBridge:
             
         except Exception as e:
             logger.error(f"Agent reply error: {e}")
+            # If the agent cleared its messages due to format error / overflow,
+            # also purge the DB so the next request starts clean.
+            if session_id and agent:
+                try:
+                    with agent.messages_lock:
+                        msg_count = len(agent.messages)
+                    if msg_count == 0:
+                        from agent.memory import get_conversation_store
+                        get_conversation_store().clear_session(session_id)
+                        logger.info(f"[AgentBridge] Cleared DB for session after error: {session_id}")
+                except Exception as db_err:
+                    logger.warning(f"[AgentBridge] Failed to clear DB after error: {db_err}")
             return Reply(ReplyType.ERROR, f"Agent error: {str(e)}")
     
     def _create_file_reply(self, file_info: dict, text_response: str, context: Context = None) -> Reply:
