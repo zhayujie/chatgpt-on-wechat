@@ -912,22 +912,21 @@ class AgentStreamExecutor:
 
     def _validate_and_fix_messages(self):
         """
-        Validate message history and fix incomplete tool_use/tool_result pairs.
+        Validate message history and fix broken tool_use/tool_result pairs.
 
-        All LLM APIs (OpenAI, Claude, Moonshot, DashScope) require:
-        1. Each tool_use in an assistant message must have a matching tool_result
-           in the immediately following user message.
-        2. Each tool_result in a user message must reference a tool_use_id that
-           exists in the preceding assistant message.
-
-        This method performs a full scan and removes any messages that would
-        cause a 400 error due to broken tool_use/tool_result pairing.
+        Historical messages restored from DB are text-only (no tool calls),
+        so this method only needs to handle edge cases in the current session:
+        - Trailing assistant message with tool_use but no following tool_result
+          (e.g. process was interrupted mid-execution)
+        - Orphaned tool_result at the start of messages (e.g. after context
+          trimming removed the preceding assistant tool_use)
         """
         if not self.messages:
             return
 
-        # Pass 1: remove trailing incomplete tool_use (assistant with tool_use
-        # but no following tool_result)
+        removed = 0
+
+        # Remove trailing incomplete tool_use assistant messages
         while self.messages:
             last_msg = self.messages[-1]
             if last_msg.get("role") == "assistant":
@@ -938,99 +937,27 @@ class AgentStreamExecutor:
                 ):
                     logger.warning("⚠️ Removing trailing incomplete tool_use assistant message")
                     self.messages.pop()
+                    removed += 1
                     continue
             break
 
-        # Pass 2: full scan for orphaned tool_result and missing tool_result
-        removed = 0
-        i = 0
-        while i < len(self.messages):
-            msg = self.messages[i]
-            role = msg.get("role")
-            content = msg.get("content", [])
-
-            if role == "assistant" and isinstance(content, list):
-                tool_use_ids = {
-                    b.get("id")
-                    for b in content
-                    if isinstance(b, dict) and b.get("type") == "tool_use" and b.get("id")
-                }
-                if tool_use_ids:
-                    # There must be a following user message with matching tool_results
-                    next_idx = i + 1
-                    if next_idx >= len(self.messages):
-                        # No following message at all — remove
-                        logger.warning(f"⚠️ Removing assistant tool_use at index {i} (no following tool_result)")
-                        self.messages.pop(i)
-                        removed += 1
-                        continue
-
-                    next_msg = self.messages[next_idx]
-                    next_content = next_msg.get("content", [])
-                    if next_msg.get("role") != "user" or not isinstance(next_content, list):
-                        # Next message is not a user message with tool_results
-                        logger.warning(f"⚠️ Removing assistant tool_use at index {i} (next message is not tool_result)")
-                        self.messages.pop(i)
-                        removed += 1
-                        continue
-
-                    result_ids = {
-                        b.get("tool_use_id")
-                        for b in next_content
-                        if isinstance(b, dict) and b.get("type") == "tool_result"
-                    }
-                    if not tool_use_ids.issubset(result_ids):
-                        # Some tool_use ids have no matching result — remove both
-                        logger.warning(
-                            f"⚠️ Removing mismatched tool_use/result pair at index {i},{next_idx} "
-                            f"(use_ids={tool_use_ids}, result_ids={result_ids})"
-                        )
-                        self.messages.pop(next_idx)
-                        self.messages.pop(i)
-                        removed += 2
-                        continue
-
-            elif role == "user" and isinstance(content, list):
-                has_tool_results = any(
+        # Remove leading orphaned tool_result user messages
+        while self.messages:
+            first_msg = self.messages[0]
+            if first_msg.get("role") == "user":
+                content = first_msg.get("content", [])
+                if isinstance(content, list) and any(
                     isinstance(b, dict) and b.get("type") == "tool_result"
                     for b in content
-                )
-                if has_tool_results:
-                    # Check that the preceding message is an assistant with matching tool_use
-                    if i == 0:
-                        logger.warning(f"⚠️ Removing orphaned tool_result at index {i} (no preceding assistant)")
-                        self.messages.pop(i)
-                        removed += 1
-                        continue
-
-                    prev_msg = self.messages[i - 1]
-                    prev_content = prev_msg.get("content", [])
-                    if prev_msg.get("role") != "assistant" or not isinstance(prev_content, list):
-                        logger.warning(f"⚠️ Removing orphaned tool_result at index {i} (prev is not assistant)")
-                        self.messages.pop(i)
-                        removed += 1
-                        continue
-
-                    prev_use_ids = {
-                        b.get("id")
-                        for b in prev_content
-                        if isinstance(b, dict) and b.get("type") == "tool_use" and b.get("id")
-                    }
-                    result_ids = {
-                        b.get("tool_use_id")
-                        for b in content
-                        if isinstance(b, dict) and b.get("type") == "tool_result"
-                    }
-                    if not result_ids.issubset(prev_use_ids):
-                        logger.warning(
-                            f"⚠️ Removing orphaned tool_result at index {i} "
-                            f"(result_ids={result_ids} not in prev use_ids={prev_use_ids})"
-                        )
-                        self.messages.pop(i)
-                        removed += 1
-                        continue
-
-            i += 1
+                ) and not any(
+                    isinstance(b, dict) and b.get("type") == "text"
+                    for b in content
+                ):
+                    logger.warning("⚠️ Removing leading orphaned tool_result user message")
+                    self.messages.pop(0)
+                    removed += 1
+                    continue
+            break
 
         if removed > 0:
             logger.info(f"🔧 Message validation: removed {removed} broken message(s)")

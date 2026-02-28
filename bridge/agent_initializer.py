@@ -130,8 +130,14 @@ class AgentInitializer:
         Load persisted conversation messages from SQLite and inject them
         into the agent's in-memory message list.
 
-        Only runs when conversation persistence is enabled (default: True).
-        Respects agent_max_context_turns to limit how many turns are loaded.
+        Only user text and assistant text are restored. Tool call chains
+        (tool_use / tool_result) are stripped out because:
+        1. They are intermediate process, the value is already in the final
+           assistant text reply.
+        2. They consume massive context tokens (often 80%+ of history).
+        3. Different models have incompatible tool message formats, so
+           restoring tool chains across model switches causes 400 errors.
+        4. Eliminates the entire class of tool_use/tool_result pairing bugs.
         """
         from config import conf
         if not conf().get("conversation_persistence", True):
@@ -140,25 +146,86 @@ class AgentInitializer:
         try:
             from agent.memory import get_conversation_store
             store = get_conversation_store()
-            # On restore, load at most min(10, max_turns // 2) turns so that
-            # a long-running session does not immediately fill the context window
-            # after a restart.  The full max_turns budget is reserved for the
-            # live conversation that follows.
             max_turns = conf().get("agent_max_context_turns", 30)
-            restore_turns = max(4, max_turns // 5)
+            restore_turns = max(6, max_turns // 3)
             saved = store.load_messages(session_id, max_turns=restore_turns)
             if saved:
-                with agent.messages_lock:
-                    agent.messages = saved
-                logger.debug(
-                    f"[AgentInitializer] Restored {len(saved)} messages "
-                    f"({restore_turns} turns cap) for session={session_id}"
-                )
+                filtered = self._filter_text_only_messages(saved)
+                if filtered:
+                    with agent.messages_lock:
+                        agent.messages = filtered
+                    logger.debug(
+                        f"[AgentInitializer] Restored {len(filtered)} text messages "
+                        f"(from {len(saved)} total, {restore_turns} turns cap) "
+                        f"for session={session_id}"
+                    )
         except Exception as e:
             logger.warning(
                 f"[AgentInitializer] Failed to restore conversation history for "
                 f"session={session_id}: {e}"
             )
+
+    @staticmethod
+    def _filter_text_only_messages(messages: list) -> list:
+        """
+        Filter messages to keep only user text and assistant text.
+
+        Strips out:
+        - assistant messages that only contain tool_use (no text)
+        - user messages that only contain tool_result (no text)
+        - internal hint messages injected by the agent loop
+
+        Keeps:
+        - user messages with actual text content
+        - assistant messages with text content (tool_use blocks removed,
+          only the text portion is kept)
+        """
+        filtered = []
+        for msg in messages:
+            role = msg.get("role")
+            content = msg.get("content")
+
+            if isinstance(content, str):
+                if content.strip():
+                    filtered.append(msg)
+                continue
+
+            if not isinstance(content, list):
+                continue
+
+            if role == "user":
+                text_parts = [
+                    b.get("text", "")
+                    for b in content
+                    if isinstance(b, dict) and b.get("type") == "text"
+                ]
+                has_tool_result = any(
+                    isinstance(b, dict) and b.get("type") == "tool_result"
+                    for b in content
+                )
+                if has_tool_result:
+                    continue
+                text = "\n".join(p for p in text_parts if p).strip()
+                if text:
+                    filtered.append({
+                        "role": "user",
+                        "content": [{"type": "text", "text": text}]
+                    })
+
+            elif role == "assistant":
+                text_parts = [
+                    b.get("text", "")
+                    for b in content
+                    if isinstance(b, dict) and b.get("type") == "text"
+                ]
+                text = "\n".join(p for p in text_parts if p).strip()
+                if text:
+                    filtered.append({
+                        "role": "assistant",
+                        "content": [{"type": "text", "text": text}]
+                    })
+
+        return filtered
     
     def _load_env_file(self):
         """Load environment variables from .env file"""
