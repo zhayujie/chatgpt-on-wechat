@@ -42,9 +42,15 @@ Agent 的工作空间默认位于 `~/cow` 目录，用于存储系统提示词�
 ├── memory/            # Long-term memory storage
 │   ├── core.md        # Core memory
 │   └── daily/         # Daily memory
-├── skills/            # Custom skills
-│   ├── skill-1/
-│   └── skill-2/
+└── skills/            # Custom skills
+    ├── skill-1/
+    └── skill-2/
+```
+
+秘钥文件单独存储在 `~/.cow` 目录（出于安全考虑）：
+
+```
+~/.cow/
 └── .env               # Secret keys for skills
 ```
 

@@ -111,7 +111,7 @@ class ChatService:
         logger.info(f"[ChatService] Starting agent run: session={session_id}, query={query[:80]}")
 
         from config import conf
-        max_context_turns = conf().get("agent_max_context_turns", 30)
+        max_context_turns = conf().get("agent_max_context_turns", 20)
 
         # Get full system prompt with skills
         full_system_prompt = agent.get_full_system_prompt()

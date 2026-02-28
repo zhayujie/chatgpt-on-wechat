@@ -636,11 +636,16 @@ class AgentStreamExecutor:
                 ])
             
             # Check if error is message format error (incomplete tool_use/tool_result pairs)
-            # This happens when previous conversation had tool failures
+            # This happens when previous conversation had tool failures or context trimming
+            # broke tool_use/tool_result pairs.
             is_message_format_error = any(keyword in error_str_lower for keyword in [
                 'tool_use', 'tool_result', 'without', 'immediately after',
-                'corresponding', 'must have', 'each'
-            ]) and 'status: 400' in error_str_lower
+                'corresponding', 'must have', 'each',
+                'tool_call_id', 'is not found', 'tool_calls',
+                'must be a response to a preceeding message'
+            ]) and ('400' in error_str_lower or 'status: 400' in error_str_lower
+                     or 'invalid_request' in error_str_lower
+                     or 'invalidparameter' in error_str_lower)
             
             if is_context_overflow or is_message_format_error:
                 error_type = "context overflow" if is_context_overflow else "message format error"
@@ -659,9 +664,10 @@ class AgentStreamExecutor:
                         )
 
                 # Aggressive trim didn't help or this is a message format error
-                # -> clear everything
+                # -> clear everything and also purge DB to prevent reload of dirty data
                 logger.warning("🔄 Clearing conversation history to recover")
                 self.messages.clear()
+                self._clear_session_db()
                 if is_context_overflow:
                     raise Exception(
                         "抱歉，对话历史过长导致上下文溢出。我已清空历史记录，请重新描述你的需求。"
@@ -906,24 +912,55 @@ class AgentStreamExecutor:
 
     def _validate_and_fix_messages(self):
         """
-        Validate message history and fix incomplete tool_use/tool_result pairs.
-        Claude API requires each tool_use to have a corresponding tool_result immediately after.
+        Validate message history and fix broken tool_use/tool_result pairs.
+
+        Historical messages restored from DB are text-only (no tool calls),
+        so this method only needs to handle edge cases in the current session:
+        - Trailing assistant message with tool_use but no following tool_result
+          (e.g. process was interrupted mid-execution)
+        - Orphaned tool_result at the start of messages (e.g. after context
+          trimming removed the preceding assistant tool_use)
         """
         if not self.messages:
             return
-        
-        # Check last message for incomplete tool_use
-        if len(self.messages) > 0:
+
+        removed = 0
+
+        # Remove trailing incomplete tool_use assistant messages
+        while self.messages:
             last_msg = self.messages[-1]
             if last_msg.get("role") == "assistant":
-                # Check if assistant message has tool_use blocks
                 content = last_msg.get("content", [])
-                if isinstance(content, list):
-                    has_tool_use = any(block.get("type") == "tool_use" for block in content)
-                    if has_tool_use:
-                        # This is incomplete - remove it
-                        logger.warning(f"⚠️ Removing incomplete tool_use message from history")
-                        self.messages.pop()
+                if isinstance(content, list) and any(
+                    isinstance(b, dict) and b.get("type") == "tool_use"
+                    for b in content
+                ):
+                    logger.warning("⚠️ Removing trailing incomplete tool_use assistant message")
+                    self.messages.pop()
+                    removed += 1
+                    continue
+            break
+
+        # Remove leading orphaned tool_result user messages
+        while self.messages:
+            first_msg = self.messages[0]
+            if first_msg.get("role") == "user":
+                content = first_msg.get("content", [])
+                if isinstance(content, list) and any(
+                    isinstance(b, dict) and b.get("type") == "tool_result"
+                    for b in content
+                ) and not any(
+                    isinstance(b, dict) and b.get("type") == "text"
+                    for b in content
+                ):
+                    logger.warning("⚠️ Removing leading orphaned tool_result user message")
+                    self.messages.pop(0)
+                    removed += 1
+                    continue
+            break
+
+        if removed > 0:
+            logger.info(f"🔧 Message validation: removed {removed} broken message(s)")
 
     def _identify_complete_turns(self) -> List[Dict]:
         """
@@ -946,24 +983,30 @@ class AgentStreamExecutor:
             content = msg.get('content', [])
             
             if role == 'user':
-                # 检查是否是用户查询（不是工具结果）
+                # Determine if this is a real user query (not a tool_result injection
+                # or an internal hint message injected by the agent loop).
                 is_user_query = False
+                has_tool_result = False
                 if isinstance(content, list):
-                    is_user_query = any(
-                        block.get('type') == 'text' 
-                        for block in content 
-                        if isinstance(block, dict)
+                    has_text = any(
+                        isinstance(block, dict) and block.get('type') == 'text'
+                        for block in content
                     )
+                    has_tool_result = any(
+                        isinstance(block, dict) and block.get('type') == 'tool_result'
+                        for block in content
+                    )
+                    # A message with tool_result is always internal, even if it
+                    # also contains text blocks (shouldn't happen, but be safe).
+                    is_user_query = has_text and not has_tool_result
                 elif isinstance(content, str):
                     is_user_query = True
                 
                 if is_user_query:
-                    # 开始新轮次
                     if current_turn['messages']:
                         turns.append(current_turn)
                     current_turn = {'messages': [msg]}
                 else:
-                    # 工具结果，属于当前轮次
                     current_turn['messages'].append(msg)
             else:
                 # AI 回复，属于当前轮次
@@ -1251,6 +1294,24 @@ class AgentStreamExecutor:
                 f"({old_count} -> {new_count} 条消息，"
                 f"~{current_tokens + system_tokens} -> ~{accumulated_tokens + system_tokens} tokens)"
             )
+
+    def _clear_session_db(self):
+        """
+        Clear the current session's persisted messages from SQLite DB.
+
+        This prevents dirty data (broken tool_use/tool_result pairs) from being
+        reloaded on the next request or after a restart.
+        """
+        try:
+            session_id = getattr(self.agent, '_current_session_id', None)
+            if not session_id:
+                return
+            from agent.memory import get_conversation_store
+            store = get_conversation_store()
+            store.clear_session(session_id)
+            logger.info(f"🗑️ Cleared dirty session data from DB: {session_id}")
+        except Exception as e:
+            logger.warning(f"Failed to clear session DB: {e}")
 
     def _prepare_messages(self) -> List[Dict[str, Any]]:
         """

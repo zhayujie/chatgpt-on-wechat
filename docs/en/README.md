@@ -35,6 +35,10 @@
 
 ## Changelog
 
+> **2026.02.27:** [v2.0.2](https://github.com/zhayujie/chatgpt-on-wechat/releases/tag/2.0.2) — Web console overhaul (streaming chat, model/skill/memory/channel/scheduler/log management), multi-channel concurrent running, session persistence, new models including Gemini 3.1 Pro / Claude 4.6 Sonnet / Qwen3.5 Plus.
+
+> **2026.02.13:** [v2.0.1](https://github.com/zhayujie/chatgpt-on-wechat/releases/tag/2.0.1) — Built-in Web Search tool, smart context trimming, runtime info dynamic update, Windows compatibility, fixes for scheduler memory loss, Feishu connection issues, and more.
+
 > **2026.02.03:** [v2.0.0](https://github.com/zhayujie/chatgpt-on-wechat/releases/tag/2.0.0) — Full upgrade to AI super assistant with multi-step task planning, long-term memory, built-in tools, Skills framework, new models, and optimized channels.
 
 > **2025.05.23:** [v1.7.6](https://github.com/zhayujie/chatgpt-on-wechat/releases/tag/1.7.6) — Web channel optimization, AgentMesh multi-agent plugin, Baidu TTS, claude-4-sonnet/opus support.

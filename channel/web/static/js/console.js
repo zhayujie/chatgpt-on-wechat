@@ -909,7 +909,8 @@ function initConfigView(data) {
     const providerEl = document.getElementById('cfg-provider');
     const providerOpts = Object.entries(configProviders).map(([pid, p]) => ({ value: pid, label: p.label }));
 
-    const detected = detectProvider(configCurrentModel);
+    // if use_linkai is enabled, always select linkai as the provider
+    const detected = data.use_linkai ? 'linkai' : detectProvider(configCurrentModel);
     cfgProviderValue = detected || (providerOpts[0] ? providerOpts[0].value : '');
 
     initDropdown(providerEl, providerOpts, cfgProviderValue, onProviderChange);

@@ -42,9 +42,15 @@ The Agent workspace is located at `~/cow` by default and stores system prompts, 
 ├── memory/            # Long-term memory storage
 │   ├── core.md        # Core memory
 │   └── daily/         # Daily memory
-├── skills/            # Custom skills
-│   ├── skill-1/
-│   └── skill-2/
+└── skills/            # Custom skills
+    ├── skill-1/
+    └── skill-2/
+```
+
+Secret keys are stored separately in `~/.cow` directory for security:
+
+```
+~/.cow/
 └── .env               # Secret keys for skills
 ```
 

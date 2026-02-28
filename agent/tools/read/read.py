@@ -240,8 +240,8 @@ class Read(BaseTool):
                     "message": f"文件过大 ({format_size(file_size)} > 50MB)，无法读取内容。文件路径: {absolute_path}"
                 })
             
-            # Read file
-            with open(absolute_path, 'r', encoding='utf-8') as f:
+            # Read file (utf-8-sig strips BOM automatically on Windows)
+            with open(absolute_path, 'r', encoding='utf-8-sig') as f:
                 content = f.read()
             
             # Truncate content if too long (20K characters max for model context)
