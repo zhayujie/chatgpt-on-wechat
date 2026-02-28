@@ -59,7 +59,7 @@ cp config.json.template config.json
 ### 3. 调用应用
 
 ```bash
-bash scripts/call.sh "G7z6vKwp" "What is artificial intelligence?"
+bash(command='curl -sS --max-time 120 -X POST "https://api.link-ai.tech/v1/chat/completions" -H "Content-Type: application/json" -H "Authorization: Bearer $LINKAI_API_KEY" -d "{\"app_code\":\"G7z6vKwp\",\"messages\":[{\"role\":\"user\",\"content\":\"What is artificial intelligence?\"}],\"stream\":false}"', timeout=130)
 ```
 
 ## 使用示例
@@ -67,46 +67,32 @@ bash scripts/call.sh "G7z6vKwp" "What is artificial intelligence?"
 ### 基础调用
 
 ```bash
-# 调用默认模型
-bash scripts/call.sh "G7z6vKwp" "解释一下量子计算"
+# 调用默认模型 (通过 bash + curl)
+bash(command='curl -sS --max-time 120 -X POST "https://api.link-ai.tech/v1/chat/completions" -H "Content-Type: application/json" -H "Authorization: Bearer $LINKAI_API_KEY" -d "{\"app_code\":\"G7z6vKwp\",\"messages\":[{\"role\":\"user\",\"content\":\"解释一下量子计算\"}],\"stream\":false}"', timeout=130)
 ```
 
 ### 指定模型
 
-```bash
-# 使用 GPT-4.1 模型
-bash scripts/call.sh "G7z6vKwp" "写一篇关于AI的文章" "LinkAI-4.1"
+在 JSON body 中添加 `model` 字段：
 
-# 使用 DeepSeek 模型
-bash scripts/call.sh "G7z6vKwp" "帮我写代码" "deepseek-chat"
-
-# 使用 Claude 模型
-bash scripts/call.sh "G7z6vKwp" "分析这段文本" "claude-4-sonnet"
+```json
+{
+  "app_code": "G7z6vKwp",
+  "model": "LinkAI-4.1",
+  "messages": [{"role": "user", "content": "写一篇关于AI的文章"}],
+  "stream": false
+}
 ```
 
 ### 调用工作流
 
-```bash
-# 工作流会按照配置的节点顺序执行
-bash scripts/call.sh "workflow_code" "输入数据或问题"
-```
+工作流的 app_code 从 LinkAI 控制台获取，调用方式与普通应用相同。
 
 ## ⚠️ 重要提示
 
 ### 超时配置
 
-LinkAI 应用（特别是视频/图片生成、复杂工作流）可能需要较长时间处理。
-
-**脚本内置超时**：
-- 默认：120 秒（适合大多数场景）
-- 可通过第 5 个参数自定义：`bash scripts/call.sh <app_code> <question> "" "false" "180"`
-
-**推荐超时时间**：
-- **文本问答**：120 秒（默认）
-- **图片生成**：120-180 秒
-- **视频生成**：180-300 秒
-
-Agent 调用时会自动设置合适的超时时间。
+LinkAI 应用（特别是视频/图片生成、复杂工作流）可能需要较长时间处理。在 curl 命令中加入 `--max-time 180`，并相应增加 bash 工具的 `timeout` 参数。
 
 ## 配置说明
 
@@ -124,38 +110,6 @@ Agent 调用时会自动设置合适的超时时间。
 2. 进入「应用管理」或「工作流管理」
 3. 选择要集成的应用/工作流
 4. 在应用详情页找到 `app_code`
-
-## 支持的模型
-
-LinkAI 支持多种主流 AI 模型：
-
-**OpenAI 系列：**
-- `LinkAI-4.1` - GPT-4.1 (1000K 上下文)
-- `LinkAI-4.1-mini` - GPT-4.1 mini (1000K)
-- `LinkAI-4.1-nano` - GPT-4.1 nano (1000K)
-- `LinkAI-4o` - GPT-4o (128K)
-- `LinkAI-4o-mini` - GPT-4o mini (128K)
-
-**DeepSeek 系列：**
-- `deepseek-chat` - DeepSeek-V3 对话模型 (64K)
-- `deepseek-reasoner` - DeepSeek-R1 推理模型 (64K)
-
-**Claude 系列：**
-- `claude-4-sonnet` - Claude 4 Sonnet (200K)
-- `claude-3-7-sonnet` - Claude 3.7 (200K)
-- `claude-3-5-sonnet` - Claude 3.5 (200K)
-
-**Google 系列：**
-- `gemini-2.5-pro` - Gemini 2.5 Pro (1000K)
-- `gemini-2.0-flash` - Gemini 2.0 Flash (1000K)
-
-**国产模型：**
-- `qwen3` - 通义千问3 (128K)
-- `wenxin-4.5` - 文心一言4.5 (8K)
-- `doubao-1.5-pro-256k` - 豆包1.5 (256K)
-- `glm-4-plus` - 智谱GLM-4-Plus (4K)
-
-完整模型列表：https://link-ai.tech/console/models
 
 ## 应用类型
 
@@ -185,10 +139,16 @@ LinkAI 支持多种主流 AI 模型：
 
 ### 成功响应
 
+API 返回 OpenAI 兼容格式，从 `choices[0].message.content` 获取回复内容：
+
 ```json
 {
-  "app_code": "G7z6vKwp",
-  "content": "人工智能（AI）是计算机科学的一个分支...",
+  "choices": [{
+    "message": {
+      "role": "assistant",
+      "content": "人工智能（AI）是计算机科学的一个分支..."
+    }
+  }],
   "usage": {
     "prompt_tokens": 10,
     "completion_tokens": 150,
@@ -201,9 +161,10 @@ LinkAI 支持多种主流 AI 模型：
 
 ```json
 {
-  "error": "LinkAI API error",
-  "message": "应用不存在",
-  "response": { ... }
+  "error": {
+    "message": "应用不存在",
+    "code": "xxx"
+  }
 }
 ```
 
@@ -259,7 +220,7 @@ Agent 看到所有可用应用的完整信息
   ↓
 Agent 根据描述选择合适的应用
   ↓
-调用 call.sh <app_code> <question>
+通过 bash + curl 调用 LinkAI API
   ↓
 LinkAI API 处理并返回结果
 ```

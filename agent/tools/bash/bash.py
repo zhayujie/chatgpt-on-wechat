@@ -100,6 +100,12 @@ SAFETY:
             else:
                 logger.debug(f"[Bash] Process User: {os.environ.get('USERNAME', os.environ.get('USER', 'unknown'))}")
             
+            # On Windows, set console codepage to UTF-8 and prepend chcp for shell commands
+            if sys.platform == "win32":
+                env["PYTHONIOENCODING"] = "utf-8"
+                if command and not command.strip().lower().startswith("chcp"):
+                    command = f"chcp 65001 >nul 2>&1 && {command}"
+
             # Execute command with inherited environment variables
             result = subprocess.run(
                 command,
@@ -108,6 +114,8 @@ SAFETY:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 timeout=timeout,
                 env=env
             )
@@ -131,6 +139,8 @@ SAFETY:
                             stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE,
                             text=True,
+                            encoding="utf-8",
+                            errors="replace",
                             timeout=timeout,
                             env=env
                         )
