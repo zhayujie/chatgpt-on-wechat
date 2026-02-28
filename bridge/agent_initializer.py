@@ -146,8 +146,8 @@ class AgentInitializer:
         try:
             from agent.memory import get_conversation_store
             store = get_conversation_store()
-            max_turns = conf().get("agent_max_context_turns", 30)
-            restore_turns = max(6, max_turns // 3)
+            max_turns = conf().get("agent_max_context_turns", 20)
+            restore_turns = max(6, max_turns // 5)
             saved = store.load_messages(session_id, max_turns=restore_turns)
             if saved:
                 filtered = self._filter_text_only_messages(saved)

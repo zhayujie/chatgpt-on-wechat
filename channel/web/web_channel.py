@@ -524,7 +524,7 @@ class ConfigHandler:
                 "model": local_config.get("model", ""),
                 "channel_type": local_config.get("channel_type", ""),
                 "agent_max_context_tokens": local_config.get("agent_max_context_tokens", 50000),
-                "agent_max_context_turns": local_config.get("agent_max_context_turns", 30),
+                "agent_max_context_turns": local_config.get("agent_max_context_turns", 20),
                 "agent_max_steps": local_config.get("agent_max_steps", 15),
                 "api_bases": api_bases,
                 "api_keys": api_keys_masked,
