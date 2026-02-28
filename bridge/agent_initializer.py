@@ -168,62 +168,75 @@ class AgentInitializer:
     @staticmethod
     def _filter_text_only_messages(messages: list) -> list:
         """
-        Filter messages to keep only user text and assistant text.
+        Extract clean user/assistant turn pairs from raw message history.
 
-        Strips out:
-        - assistant messages that only contain tool_use (no text)
-        - user messages that only contain tool_result (no text)
-        - internal hint messages injected by the agent loop
+        Groups messages into turns (each starting with a real user query),
+        then keeps only:
+        - The first user text in each turn (the actual user input)
+        - The last assistant text in each turn (the final answer)
 
-        Keeps:
-        - user messages with actual text content
-        - assistant messages with text content (tool_use blocks removed,
-          only the text portion is kept)
+        All tool_use, tool_result, intermediate assistant thoughts, and
+        internal hint messages injected by the agent loop are discarded.
         """
-        filtered = []
-        for msg in messages:
-            role = msg.get("role")
-            content = msg.get("content")
 
+        def _extract_text(content) -> str:
             if isinstance(content, str):
-                if content.strip():
-                    filtered.append(msg)
-                continue
-
-            if not isinstance(content, list):
-                continue
-
-            if role == "user":
-                text_parts = [
+                return content.strip()
+            if isinstance(content, list):
+                parts = [
                     b.get("text", "")
                     for b in content
                     if isinstance(b, dict) and b.get("type") == "text"
                 ]
+                return "\n".join(p for p in parts if p).strip()
+            return ""
+
+        def _is_real_user_msg(msg: dict) -> bool:
+            """True for actual user input, False for tool_result or internal hints."""
+            if msg.get("role") != "user":
+                return False
+            content = msg.get("content")
+            if isinstance(content, list):
                 has_tool_result = any(
                     isinstance(b, dict) and b.get("type") == "tool_result"
                     for b in content
                 )
                 if has_tool_result:
-                    continue
-                text = "\n".join(p for p in text_parts if p).strip()
-                if text:
-                    filtered.append({
-                        "role": "user",
-                        "content": [{"type": "text", "text": text}]
-                    })
+                    return False
+            text = _extract_text(content)
+            return bool(text)
 
-            elif role == "assistant":
-                text_parts = [
-                    b.get("text", "")
-                    for b in content
-                    if isinstance(b, dict) and b.get("type") == "text"
-                ]
-                text = "\n".join(p for p in text_parts if p).strip()
+        # Group into turns: each turn starts with a real user message
+        turns = []
+        current_turn = None
+        for msg in messages:
+            if _is_real_user_msg(msg):
+                if current_turn is not None:
+                    turns.append(current_turn)
+                current_turn = {"user": msg, "assistants": []}
+            elif current_turn is not None and msg.get("role") == "assistant":
+                text = _extract_text(msg.get("content"))
                 if text:
-                    filtered.append({
-                        "role": "assistant",
-                        "content": [{"type": "text", "text": text}]
-                    })
+                    current_turn["assistants"].append(text)
+        if current_turn is not None:
+            turns.append(current_turn)
+
+        # Build result: one user msg + one assistant msg per turn
+        filtered = []
+        for turn in turns:
+            user_text = _extract_text(turn["user"].get("content"))
+            if not user_text:
+                continue
+            filtered.append({
+                "role": "user",
+                "content": [{"type": "text", "text": user_text}]
+            })
+            if turn["assistants"]:
+                final_reply = turn["assistants"][-1]
+                filtered.append({
+                    "role": "assistant",
+                    "content": [{"type": "text", "text": final_reply}]
+                })
 
         return filtered
     
