@@ -3,6 +3,7 @@ Bash tool - Execute bash commands
 """
 
 import os
+import re
 import sys
 import subprocess
 import tempfile
@@ -83,12 +84,13 @@ SAFETY:
             
             # Load environment variables from ~/.cow/.env if it exists
             env_file = expand_path("~/.cow/.env")
+            dotenv_vars = {}
             if os.path.exists(env_file):
                 try:
                     from dotenv import dotenv_values
-                    env_vars = dotenv_values(env_file)
-                    env.update(env_vars)
-                    logger.debug(f"[Bash] Loaded {len(env_vars)} variables from {env_file}")
+                    dotenv_vars = dotenv_values(env_file)
+                    env.update(dotenv_vars)
+                    logger.debug(f"[Bash] Loaded {len(dotenv_vars)} variables from {env_file}")
                 except ImportError:
                     logger.debug("[Bash] python-dotenv not installed, skipping .env loading")
                 except Exception as e:
@@ -100,9 +102,10 @@ SAFETY:
             else:
                 logger.debug(f"[Bash] Process User: {os.environ.get('USERNAME', os.environ.get('USER', 'unknown'))}")
             
-            # On Windows, set console codepage to UTF-8 and prepend chcp for shell commands
+            # On Windows, convert $VAR references to %VAR% for cmd.exe
             if sys.platform == "win32":
                 env["PYTHONIOENCODING"] = "utf-8"
+                command = self._convert_env_vars_for_windows(command, dotenv_vars)
                 if command and not command.strip().lower().startswith("chcp"):
                     command = f"chcp 65001 >nul 2>&1 && {command}"
 
@@ -268,3 +271,21 @@ SAFETY:
                     return "This command will recursively delete system directories"
 
         return ""  # No warning needed
+
+    @staticmethod
+    def _convert_env_vars_for_windows(command: str, dotenv_vars: dict) -> str:
+        """
+        Convert bash-style $VAR / ${VAR} references to cmd.exe %VAR% syntax.
+        Only converts variables loaded from .env (user-configured API keys etc.)
+        to avoid breaking $PATH, jq expressions, regex, etc.
+        """
+        if not dotenv_vars:
+            return command
+
+        def replace_match(m):
+            var_name = m.group(1) or m.group(2)
+            if var_name in dotenv_vars:
+                return f"%{var_name}%"
+            return m.group(0)
+
+        return re.sub(r'\$\{(\w+)\}|\$(\w+)', replace_match, command)
