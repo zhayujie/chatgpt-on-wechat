@@ -7,7 +7,6 @@ metadata:
   requires:
     bins: ["curl"]
     env: ["LINKAI_API_KEY"]
-  primaryEnv: "LINKAI_API_KEY"
 ---
 
 # LinkAI Agent
