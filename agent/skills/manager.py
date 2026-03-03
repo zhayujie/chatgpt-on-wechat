@@ -100,6 +100,7 @@ class SkillManager:
                 "description": skill.description,
                 "source": skill.source,
                 "enabled": prev.get("enabled", True),
+                **( {"category": prev["category"]} if "category" in prev else {} ),
             }
 
         self.skills_config = merged

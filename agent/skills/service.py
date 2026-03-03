@@ -94,6 +94,13 @@ class SkillService:
 
         # Reload to pick up the new skill and sync config
         self.manager.refresh_skills()
+
+        # Persist category from payload into skills_config only when provided
+        category = payload.get("category")
+        if category and name in self.manager.skills_config:
+            self.manager.skills_config[name]["category"] = category
+            self.manager._save_skills_config()
+
         logger.info(f"[SkillService] add: skill '{name}' installed ({len(files)} files)")
 
     # ------------------------------------------------------------------
