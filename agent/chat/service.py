@@ -68,9 +68,24 @@ class ChatService:
                     # a new segment; collect tool results until turn_end.
                     state.pending_tool_results = []
 
-            elif event_type == "tool_execution_end":
+            elif event_type == "tool_execution_start":
+                # Notify the client that a tool is about to run (with its input args)
                 tool_name = data.get("tool_name", "")
                 arguments = data.get("arguments", {})
+                # Cache arguments keyed by tool_call_id so tool_execution_end can include them
+                tool_call_id = data.get("tool_call_id", tool_name)
+                state.pending_tool_arguments[tool_call_id] = arguments
+                send_chunk_fn({
+                    "chunk_type": "tool_start",
+                    "tool": tool_name,
+                    "arguments": arguments,
+                })
+
+            elif event_type == "tool_execution_end":
+                tool_name = data.get("tool_name", "")
+                tool_call_id = data.get("tool_call_id", tool_name)
+                # Retrieve cached arguments from the matching tool_execution_start event
+                arguments = state.pending_tool_arguments.pop(tool_call_id, data.get("arguments", {}))
                 result = data.get("result", "")
                 status = data.get("status", "unknown")
                 execution_time = data.get("execution_time", 0)
@@ -167,3 +182,6 @@ class _StreamState:
         # None means we are not accumulating tool results right now.
         # A list means we are in the middle of a tool-execution phase.
         self.pending_tool_results: Optional[list] = None
+        # Maps tool_call_id -> arguments captured from tool_execution_start,
+        # so that tool_execution_end can attach the correct input args.
+        self.pending_tool_arguments: dict = {}
