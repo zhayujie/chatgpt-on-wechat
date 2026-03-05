@@ -118,6 +118,10 @@ class Agent:
         if self.runtime_info and callable(self.runtime_info.get('_get_current_time')):
             prompt = self._rebuild_runtime_section(prompt)
 
+        # Rebuild skills section to pick up newly installed/removed skills
+        if self.skill_manager:
+            prompt = self._rebuild_skills_section(prompt)
+
         return prompt
     
     def _rebuild_runtime_section(self, prompt: str) -> str:
@@ -168,6 +172,39 @@ class Agent:
         except Exception as e:
             logger.warning(f"Failed to rebuild runtime section: {e}")
             return prompt
+
+    def _rebuild_skills_section(self, prompt: str) -> str:
+        """
+        Rebuild the <available_skills> block so that newly installed or
+        removed skills are reflected without re-creating the agent.
+        """
+        try:
+            import re
+            self.skill_manager.refresh_skills()
+            new_skills_xml = self.skill_manager.build_skills_prompt()
+
+            old_block_pattern = r'<available_skills>.*?</available_skills>'
+            has_old_block = re.search(old_block_pattern, prompt, flags=re.DOTALL)
+
+            # Extract the new <available_skills>...</available_skills> tag from the prompt
+            new_block = ""
+            if new_skills_xml and new_skills_xml.strip():
+                m = re.search(old_block_pattern, new_skills_xml, flags=re.DOTALL)
+                if m:
+                    new_block = m.group(0)
+
+            if has_old_block:
+                replacement = new_block or "<available_skills>\n</available_skills>"
+                prompt = re.sub(old_block_pattern, replacement, prompt, flags=re.DOTALL)
+            elif new_block:
+                skills_header = "以下是可用技能："
+                idx = prompt.find(skills_header)
+                if idx != -1:
+                    insert_pos = idx + len(skills_header)
+                    prompt = prompt[:insert_pos] + "\n" + new_block + prompt[insert_pos:]
+        except Exception as e:
+            logger.warning(f"Failed to rebuild skills section: {e}")
+        return prompt
 
     def _rebuild_tool_list_section(self, prompt: str) -> str:
         """
