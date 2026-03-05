@@ -47,6 +47,7 @@ class ChannelManager:
         self._threads = {}         # channel_name -> thread
         self._primary_channel = None
         self._lock = threading.Lock()
+        self.cloud_mode = False    # set to True when cloud client is active
 
     @property
     def channel(self):
@@ -65,6 +66,7 @@ class ChannelManager:
             channels = []
             for name in channel_names:
                 ch = channel_factory.create_channel(name)
+                ch.cloud_mode = self.cloud_mode
                 self._channels[name] = ch
                 channels.append((name, ch))
                 if self._primary_channel is None and name != "web":
@@ -136,13 +138,22 @@ class ChannelManager:
                     self._interrupt_thread(th, name)
                 continue
             logger.info(f"[ChannelManager] Stopping channel '{name}'...")
-            try:
-                if hasattr(ch, 'stop'):
+            graceful = False
+            if hasattr(ch, 'stop'):
+                try:
                     ch.stop()
-            except Exception as e:
-                logger.warning(f"[ChannelManager] Error during channel '{name}' stop: {e}")
+                    graceful = True
+                except Exception as e:
+                    logger.warning(f"[ChannelManager] Error during channel '{name}' stop: {e}")
             if th and th.is_alive():
-                self._interrupt_thread(th, name)
+                th.join(timeout=5)
+                if th.is_alive():
+                    if graceful:
+                        logger.info(f"[ChannelManager] Channel '{name}' thread still alive after stop(), "
+                                    "leaving daemon thread to finish on its own")
+                    else:
+                        logger.warning(f"[ChannelManager] Channel '{name}' thread did not exit in 5s, forcing interrupt")
+                        self._interrupt_thread(th, name)
 
     @staticmethod
     def _interrupt_thread(th: threading.Thread, name: str):
@@ -174,6 +185,34 @@ class ChannelManager:
         time.sleep(1)
         self.start([new_channel_name], first_start=False)
         logger.info(f"[ChannelManager] Channel restarted to '{new_channel_name}' successfully")
+
+    def add_channel(self, channel_name: str):
+        """
+        Dynamically add and start a new channel.
+        If the channel is already running, restart it instead.
+        """
+        with self._lock:
+            if channel_name in self._channels:
+                logger.info(f"[ChannelManager] Channel '{channel_name}' already exists, restarting")
+        if self._channels.get(channel_name):
+            self.restart(channel_name)
+            return
+        logger.info(f"[ChannelManager] Adding channel '{channel_name}'...")
+        _clear_singleton_cache(channel_name)
+        self.start([channel_name], first_start=False)
+        logger.info(f"[ChannelManager] Channel '{channel_name}' added successfully")
+
+    def remove_channel(self, channel_name: str):
+        """
+        Dynamically stop and remove a running channel.
+        """
+        with self._lock:
+            if channel_name not in self._channels:
+                logger.warning(f"[ChannelManager] Channel '{channel_name}' not found, nothing to remove")
+                return
+        logger.info(f"[ChannelManager] Removing channel '{channel_name}'...")
+        self.stop(channel_name)
+        logger.info(f"[ChannelManager] Channel '{channel_name}' removed successfully")
 
 
 def _clear_singleton_cache(channel_name: str):

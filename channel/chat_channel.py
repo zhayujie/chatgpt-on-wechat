@@ -26,6 +26,7 @@ class ChatChannel(Channel):
     user_id = None  # 登录的用户id
 
     def __init__(self):
+        super().__init__()
         # Instance-level attributes so each channel subclass has its own
         # independent session queue and lock. Previously these were class-level,
         # which caused contexts from one channel (e.g. Feishu) to be consumed

@@ -169,10 +169,20 @@ class FeiShuChanel(ChatChannel):
                 context.verify_mode = ssl.CERT_NONE
                 return context
 
-            # Give this thread its own event loop so lark SDK can call run_until_complete
+            # lark_oapi.ws.client captures the event loop at module-import time as a module-
+            # level global variable.  When a previous ws thread is force-killed via ctypes its
+            # loop may still be marked as "running", which causes the next ws_client.start()
+            # call (in this new thread) to raise "This event loop is already running".
+            # Fix: replace the module-level loop with a brand-new, idle loop before starting.
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
+            try:
+                import lark_oapi.ws.client as _lark_ws_client_mod
+                _lark_ws_client_mod.loop = loop
+            except Exception:
+                pass
 
+            startup_error = None
             for attempt in range(2):
                 try:
                     if attempt == 1:
@@ -202,8 +212,11 @@ class FeiShuChanel(ChatChannel):
                         logger.warning(f"[FeiShu] SSL error: {error_msg}, retrying...")
                         continue
                     logger.error(f"[FeiShu] Websocket client error: {e}", exc_info=True)
+                    startup_error = error_msg
                     ssl_module.create_default_context = original_create_default_context
                     break
+            if startup_error:
+                self.report_startup_error(startup_error)
             try:
                 loop.close()
             except Exception:
