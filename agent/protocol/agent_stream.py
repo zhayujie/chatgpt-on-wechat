@@ -638,11 +638,15 @@ class AgentStreamExecutor:
             # Check if error is message format error (incomplete tool_use/tool_result pairs)
             # This happens when previous conversation had tool failures or context trimming
             # broke tool_use/tool_result pairs.
+            # Note: MiniMax returns error 2013 "tool result's tool id(...) not found" for
+            # tool_call_id mismatches — the keywords below are intentionally broad to catch
+            # both standard (Claude/OpenAI) and provider-specific (MiniMax) variants.
             is_message_format_error = any(keyword in error_str_lower for keyword in [
-                'tool_use', 'tool_result', 'without', 'immediately after',
+                'tool_use', 'tool_result', 'tool result', 'without', 'immediately after',
                 'corresponding', 'must have', 'each',
-                'tool_call_id', 'is not found', 'tool_calls',
-                'must be a response to a preceeding message'
+                'tool_call_id', 'tool id', 'is not found', 'not found', 'tool_calls',
+                'must be a response to a preceeding message',
+                '2013',  # MiniMax error code for tool_call_id mismatch
             ]) and ('400' in error_str_lower or 'status: 400' in error_str_lower
                      or 'invalid_request' in error_str_lower
                      or 'invalidparameter' in error_str_lower)
