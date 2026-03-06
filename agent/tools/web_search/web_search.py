@@ -13,6 +13,7 @@ import requests
 
 from agent.tools.base_tool import BaseTool, ToolResult
 from common.log import logger
+from config import conf
 
 
 # Default timeout for API requests (seconds)
@@ -225,7 +226,8 @@ class WebSearch(BaseTool):
         :return: Formatted search results
         """
         api_key = os.environ.get("LINKAI_API_KEY", "")
-        url = "https://api.link-ai.tech/v1/plugin/execute"
+        api_base = conf().get("linkai_api_base", "https://api.link-ai.tech")
+        url = f"{api_base.rstrip('/')}/v1/plugin/execute"
 
         headers = {
             "Content-Type": "application/json",
