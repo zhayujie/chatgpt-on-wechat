@@ -277,7 +277,7 @@ select_model() {
     echo -e "${YELLOW}5) Qwen (qwen3.5-plus, qwen3-max, qwq-plus, etc.)${NC}"
     echo -e "${YELLOW}6) Claude (claude-sonnet-4-6, claude-opus-4-6, etc.)${NC}"
     echo -e "${YELLOW}7) Gemini (gemini-3.1-pro-preview, gemini-3-flash-preview, etc.)${NC}"
-    echo -e "${YELLOW}8) OpenAI GPT (gpt-5.2, gpt-4.1, etc.)${NC}"
+    echo -e "${YELLOW}8) OpenAI GPT (gpt-5.4, gpt-5.2, gpt-4.1, etc.)${NC}"
     echo -e "${YELLOW}9) LinkAI (access multiple models via one API)${NC}"
     echo ""
     
@@ -378,8 +378,8 @@ configure_model() {
             # OpenAI
             echo -e "${GREEN}Configuring OpenAI GPT...${NC}"
             read -p "Enter OpenAI API Key: " openai_key
-            read -p "Enter model name [press Enter for default: gpt-4.1]: " model_name
-            model_name=${model_name:-gpt-4.1}
+            read -p "Enter model name [press Enter for default: gpt-5.4]: " model_name
+            model_name=${model_name:-gpt-5.4}
             read -p "Enter API Base URL [press Enter for default: https://api.openai.com/v1]: " api_base
             api_base=${api_base:-https://api.openai.com/v1}
             

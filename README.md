@@ -98,7 +98,7 @@ bash <(curl -sS https://cdn.link-ai.tech/code/cow/run.sh)
 
 项目支持国内外主流厂商的模型接口，可选模型及配置说明参考：[模型说明](#模型说明)。
 
-> 注：Agent模式下推荐使用以下模型，可根据效果及成本综合选择：MiniMax-M2.5、glm-5、kimi-k2.5、qwen3.5-plus、claude-sonnet-4-6、gemini-3.1-pro-preview
+> 注：Agent模式下推荐使用以下模型，可根据效果及成本综合选择：MiniMax-M2.5、glm-5、kimi-k2.5、qwen3.5-plus、claude-sonnet-4-6、gemini-3.1-pro-preview、gpt-5.4
 
 同时支持使用 **LinkAI平台** 接口，可灵活切换 OpenAI、Claude、Gemini、DeepSeek、Qwen、Kimi 等多种常用模型，并支持知识库、工作流、插件等Agent能力，参考 [接口文档](https://docs.link-ai.tech/platform/api)。
 
@@ -279,14 +279,14 @@ volumes:
 
 ```json
 {
-    "model": "gpt-4.1-mini",
+    "model": "gpt-5.4",
     "open_ai_api_key": "YOUR_API_KEY",
     "open_ai_api_base": "https://api.openai.com/v1",
     "bot_type": "chatGPT"
 }
 ```
 
- - `model`: 与OpenAI接口的 [model参数](https://platform.openai.com/docs/models) 一致，支持包括 o系列、gpt-5.2、gpt-5.1、gpt-4.1等系列模型
+ - `model`: 与OpenAI接口的 [model参数](https://platform.openai.com/docs/models) 一致，支持包括 gpt-5.4、o系列、gpt-4.1等模型，Agent模式推荐使用 `gpt-5.4`
  - `open_ai_api_base`: 如果需要接入第三方代理接口，可通过修改该参数进行接入
  - `bot_type`: 使用OpenAI相关模型时无需填写。当使用第三方代理接口接入Claude等非OpenAI官方模型时，该参数设为 `chatGPT`
 </details>

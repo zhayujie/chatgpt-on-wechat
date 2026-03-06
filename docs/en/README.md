@@ -123,7 +123,7 @@ Supports mainstream model providers. Recommended models for Agent mode:
 | Qwen | `qwen3.5-plus` |
 | Claude | `claude-sonnet-4-6` |
 | Gemini | `gemini-3.1-pro-preview` |
-| OpenAI | `gpt-4.1` |
+| OpenAI | `gpt-5.4` |
 | DeepSeek | `deepseek-chat` |
 
 For detailed configuration of each model, see the [Models documentation](https://docs.cowagent.ai/en/models/index).
