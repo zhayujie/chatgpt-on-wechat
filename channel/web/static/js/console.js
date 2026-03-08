@@ -306,11 +306,7 @@ const sendBtn = document.getElementById('send-btn');
 const messagesDiv = document.getElementById('chat-messages');
 
 chatInput.addEventListener('compositionstart', () => { isComposing = true; });
-// Safari fires compositionend *before* the confirming keydown event, so if we
-// reset isComposing synchronously the keydown handler sees !isComposing and
-// sends the message prematurely.  A setTimeout(0) defers the reset until after
-// keydown has been processed, fixing the Safari IME Enter-to-confirm bug.
-chatInput.addEventListener('compositionend', () => { setTimeout(() => { isComposing = false; }, 0); });
+chatInput.addEventListener('compositionend', () => { setTimeout(() => { isComposing = false; }, 100); });
 
 chatInput.addEventListener('input', function() {
     this.style.height = '42px';
@@ -322,6 +318,8 @@ chatInput.addEventListener('input', function() {
 });
 
 chatInput.addEventListener('keydown', function(e) {
+    // keyCode 229 indicates an IME is processing the keystroke (reliable across browsers)
+    if (e.keyCode === 229 || e.isComposing || isComposing) return;
     if ((e.ctrlKey || e.shiftKey) && e.key === 'Enter') {
         const start = this.selectionStart;
         const end = this.selectionEnd;
@@ -329,7 +327,7 @@ chatInput.addEventListener('keydown', function(e) {
         this.selectionStart = this.selectionEnd = start + 1;
         this.dispatchEvent(new Event('input'));
         e.preventDefault();
-    } else if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !isComposing) {
+    } else if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey) {
         sendMessage();
         e.preventDefault();
     }
