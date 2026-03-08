@@ -363,76 +363,33 @@ class MemoryManager:
             size=stat.st_size
         )
     
-    def should_flush_memory(
+    def flush_memory(
         self,
-        current_tokens: int = 0
-    ) -> bool:
-        """
-        Check if memory flush should be triggered
-        
-        独立的 flush 触发机制，不依赖模型 context window。
-        使用配置中的阈值: flush_token_threshold 和 flush_turn_threshold
-        
-        Args:
-            current_tokens: Current session token count
-            
-        Returns:
-            True if memory flush should run
-        """
-        return self.flush_manager.should_flush(
-            current_tokens=current_tokens,
-            token_threshold=self.config.flush_token_threshold,
-            turn_threshold=self.config.flush_turn_threshold
-        )
-    
-    def increment_turn(self):
-        """增加对话轮数计数（每次用户消息+AI回复算一轮）"""
-        self.flush_manager.increment_turn()
-    
-    async def execute_memory_flush(
-        self,
-        agent_executor,
-        current_tokens: int,
+        messages: list,
         user_id: Optional[str] = None,
-        **executor_kwargs
+        reason: str = "threshold",
+        max_messages: int = 10,
     ) -> bool:
         """
-        Execute memory flush before compaction
-        
-        This runs a silent agent turn to write durable memories to disk.
-        Similar to clawdbot's pre-compaction memory flush.
+        Flush conversation summary to daily memory file.
         
         Args:
-            agent_executor: Async function to execute agent with prompt
-            current_tokens: Current session token count
+            messages: Conversation message list
             user_id: Optional user ID
-            **executor_kwargs: Additional kwargs for agent executor
-            
+            reason: "threshold" | "overflow" | "daily_summary"
+            max_messages: Max recent messages to include (0 = all)
+        
         Returns:
-            True if flush completed successfully
-            
-        Example:
-            >>> async def run_agent(prompt, system_prompt, silent=False):
-            ...     # Your agent execution logic
-            ...     pass
-            >>> 
-            >>> if manager.should_flush_memory(current_tokens=100000):
-            ...     await manager.execute_memory_flush(
-            ...         agent_executor=run_agent,
-            ...         current_tokens=100000
-            ...     )
+            True if content was written
         """
-        success = await self.flush_manager.execute_flush(
-            agent_executor=agent_executor,
-            current_tokens=current_tokens,
+        success = self.flush_manager.flush_from_messages(
+            messages=messages,
             user_id=user_id,
-            **executor_kwargs
+            reason=reason,
+            max_messages=max_messages,
         )
-        
         if success:
-            # Mark dirty so next search will sync the new memories
             self._dirty = True
-        
         return success
     
     def build_memory_guidance(self, lang: str = "zh", include_context: bool = True) -> str:
@@ -460,10 +417,12 @@ class MemoryManager:
 
 **背景知识**: 下方包含核心长期记忆，可直接使用。需要查找历史时，用 memory_search 搜索（搜索一次即可，不要重复）。
 
-**存储记忆**: 当用户分享重要信息时（偏好、决策、事实等），主动用 write 工具存储：
-- 长期信息 → MEMORY.md
+**主动存储**: 遇到以下情况时，主动用 edit/write 工具存储（无需告知用户）：
+- 用户要求记住的信息、个人偏好、重要决策
+- 对话中产生的重要结论、方案、约定
+- 完成复杂任务后的关键步骤和结果
+- 长期信息 → MEMORY.md（保持精简）
 - 当天笔记 → memory/{today_file}
-- 静默存储，仅在明确要求时确认
 
 **使用原则**: 自然使用记忆，就像你本来就知道。不需要生硬地提起或列举记忆，除非用户提到。"""
         else:
@@ -471,10 +430,12 @@ class MemoryManager:
 
 **Background Knowledge**: Core long-term memories below - use directly. For history, use memory_search once (don't repeat).
 
-**Store Memories**: When user shares important info (preferences, decisions, facts), proactively write:
-- Durable info → MEMORY.md  
+**Proactive Storage**: Store memories silently when:
+- User asks to remember something, shares preferences or decisions
+- Important conclusions, plans, or agreements emerge in conversation
+- Complex tasks are completed (record key steps and results)
+- Durable info → MEMORY.md (keep concise)
 - Daily notes → memory/{today_file}
-- Store silently; confirm only when explicitly requested
 
 **Usage**: Use memories naturally as if you always knew. Don't mention or list unless user explicitly asks."""
         
@@ -490,10 +451,10 @@ class MemoryManager:
         """
         Load bootstrap memory files for session start
         
-        Following clawdbot's design:
-        - Only loads MEMORY.md from workspace root (long-term curated memory)
-        - Daily files (memory/YYYY-MM-DD.md) are accessed via memory_search tool, not bootstrap
-        - User-specific MEMORY.md is also loaded if user_id provided
+        Loads:
+        1. MEMORY.md from workspace root (long-term curated memory)
+        2. User-specific MEMORY.md if user_id provided
+        3. Recent daily memory files (today + yesterday) for continuity
         
         Returns memory content WITHOUT obvious headers so it blends naturally
         into the context as background knowledge.
@@ -502,7 +463,7 @@ class MemoryManager:
             user_id: Optional user ID for user-specific memories
             
         Returns:
-            Memory content to inject into system prompt (blends naturally as background context)
+            Memory content to inject into system prompt
         """
         workspace_dir = self.config.get_workspace()
         memory_dir = self.config.get_memory_dir()
@@ -510,7 +471,6 @@ class MemoryManager:
         sections = []
         
         # 1. Load MEMORY.md from workspace root (long-term curated memory)
-        # Following clawdbot: only MEMORY.md is bootstrap, daily files use memory_search
         memory_file = Path(workspace_dir) / "MEMORY.md"
         if memory_file.exists():
             try:
@@ -518,7 +478,8 @@ class MemoryManager:
                 if content:
                     sections.append(content)
             except Exception as e:
-                print(f"Warning: Failed to read MEMORY.md: {e}")
+                from common.log import logger
+                logger.warning(f"[MemoryManager] Failed to read MEMORY.md: {e}")
         
         # 2. Load user-specific MEMORY.md if user_id provided
         if user_id:
@@ -530,14 +491,79 @@ class MemoryManager:
                     if content:
                         sections.append(content)
                 except Exception as e:
-                    print(f"Warning: Failed to read user memory: {e}")
+                    from common.log import logger
+                    logger.warning(f"[MemoryManager] Failed to read user memory: {e}")
+        
+        # 3. Load recent daily memory files (today + yesterday) for context continuity
+        recent_daily = self._load_recent_daily_memories(
+            memory_dir, user_id, days=2, max_tokens=2000
+        )
+        if recent_daily:
+            sections.append(recent_daily)
         
         if not sections:
             return ""
         
-        # Join sections without obvious headers - let memories blend naturally
-        # This makes the agent feel like it "just knows" rather than "checking memory files"
         return "\n\n".join(sections)
+    
+    def _load_recent_daily_memories(
+        self,
+        memory_dir: Path,
+        user_id: Optional[str],
+        days: int = 2,
+        max_tokens: int = 2000
+    ) -> str:
+        """
+        Load recent daily memory files for bootstrap context.
+        Loads the most recent N days that have non-empty content.
+        
+        Args:
+            memory_dir: Memory directory path
+            user_id: Optional user ID
+            days: Number of recent days to load
+            max_tokens: Approximate max tokens to include (rough char estimate)
+        """
+        from common.log import logger
+        
+        daily_sections = []
+        total_chars = 0
+        max_chars = max_tokens * 4  # rough token-to-char ratio
+        
+        for i in range(days):
+            date = (datetime.now() - timedelta(days=i)).strftime("%Y-%m-%d")
+            
+            # Check user-specific daily file first, then shared
+            candidates = []
+            if user_id:
+                candidates.append(memory_dir / "users" / user_id / f"{date}.md")
+            candidates.append(memory_dir / f"{date}.md")
+            
+            for daily_file in candidates:
+                if not daily_file.exists():
+                    continue
+                try:
+                    content = daily_file.read_text(encoding='utf-8').strip()
+                    if not content or len(content) < 30:
+                        continue
+                    
+                    # Truncate if adding this would exceed limit
+                    remaining = max_chars - total_chars
+                    if remaining <= 0:
+                        break
+                    if len(content) > remaining:
+                        content = content[:remaining] + "\n...(truncated)"
+                    
+                    label = "Today" if i == 0 else "Yesterday" if i == 1 else date
+                    daily_sections.append(f"### {label} ({date})\n{content}")
+                    total_chars += len(content)
+                    break  # only load one file per date (user-specific takes priority)
+                except Exception as e:
+                    logger.warning(f"[MemoryManager] Failed to read daily memory {daily_file}: {e}")
+        
+        if not daily_sections:
+            return ""
+        
+        return "### Recent Activity\n\n" + "\n\n".join(daily_sections)
     
     def get_status(self) -> Dict[str, Any]:
         """Get memory status"""
@@ -568,6 +594,37 @@ class MemoryManager:
         content = f"{path}:{start_line}:{end_line}"
         return hashlib.md5(content.encode('utf-8')).hexdigest()
     
+    @staticmethod
+    def _compute_temporal_decay(path: str, half_life_days: float = 30.0) -> float:
+        """
+        Compute temporal decay multiplier for dated memory files.
+        
+        Inspired by OpenClaw's temporal-decay: exponential decay based on file date.
+        MEMORY.md and non-dated files are "evergreen" (no decay, multiplier=1.0).
+        Daily files like memory/2025-03-01.md decay based on age.
+        
+        Formula: multiplier = exp(-ln2/half_life * age_in_days)
+        """
+        import re
+        import math
+        
+        match = re.search(r'(\d{4})-(\d{2})-(\d{2})\.md$', path)
+        if not match:
+            return 1.0  # evergreen: MEMORY.md, non-dated files
+        
+        try:
+            file_date = datetime(
+                int(match.group(1)), int(match.group(2)), int(match.group(3))
+            )
+            age_days = (datetime.now() - file_date).days
+            if age_days <= 0:
+                return 1.0
+            
+            decay_lambda = math.log(2) / half_life_days
+            return math.exp(-decay_lambda * age_days)
+        except (ValueError, OverflowError):
+            return 1.0
+    
     def _merge_results(
         self,
         vector_results: List[SearchResult],
@@ -575,8 +632,7 @@ class MemoryManager:
         vector_weight: float,
         keyword_weight: float
     ) -> List[SearchResult]:
-        """Merge vector and keyword search results"""
-        # Create a map by (path, start_line, end_line)
+        """Merge vector and keyword search results with temporal decay for dated files"""
         merged_map = {}
         
         for result in vector_results:
@@ -598,7 +654,6 @@ class MemoryManager:
                     'keyword_score': result.score
                 }
         
-        # Calculate combined scores
         merged_results = []
         for entry in merged_map.values():
             combined_score = (
@@ -606,7 +661,11 @@ class MemoryManager:
                 keyword_weight * entry['keyword_score']
             )
             
+            # Apply temporal decay for dated memory files
             result = entry['result']
+            decay = self._compute_temporal_decay(result.path)
+            combined_score *= decay
+            
             merged_results.append(SearchResult(
                 path=result.path,
                 start_line=result.start_line,
@@ -617,6 +676,5 @@ class MemoryManager:
                 user_id=result.user_id
             ))
         
-        # Sort by score
         merged_results.sort(key=lambda r: r.score, reverse=True)
         return merged_results

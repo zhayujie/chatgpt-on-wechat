@@ -280,8 +280,13 @@ def _build_memory_section(memory_manager: Any, tools: Optional[List[Any]], langu
     if not has_memory_tools:
         return []
     
+    from datetime import datetime
+    today_file = datetime.now().strftime("%Y-%m-%d") + ".md"
+    
     lines = [
         "## 记忆系统",
+        "",
+        "### 检索记忆",
         "",
         "在回答关于以前的工作、决定、日期、人物、偏好或待办事项的任何问题之前：",
         "",
@@ -290,13 +295,24 @@ def _build_memory_section(memory_manager: Any, tools: Optional[List[Any]], langu
         "3. search 无结果 → 尝试用 `memory_get` 读取MEMORY.md及最近两天记忆文件",
         "",
         "**记忆文件结构**:",
-        "- `MEMORY.md`: 长期记忆（核心信息、偏好、决策等）",
-        "- `memory/YYYY-MM-DD.md`: 每日记忆，记录当天的事件和对话信息",
+        f"- `MEMORY.md`: 长期记忆（核心信息、偏好、决策等）",
+        f"- `memory/YYYY-MM-DD.md`: 每日记忆，今天是 `memory/{today_file}`",
         "",
-        "**写入记忆**:",
+        "### 写入记忆",
+        "",
+        "**主动存储**：遇到以下情况时，应主动将信息写入记忆文件（无需告知用户）：",
+        "",
+        "- 用户明确要求你记住某些信息",
+        "- 用户分享了重要的个人偏好、习惯、决策",
+        "- 对话中产生了重要的结论、方案、约定",
+        "- 完成了复杂任务，值得记录关键步骤和结果",
+        "- 发现了用户经常遇到的问题或解决方案",
+        "",
+        "**存储规则**:",
+        f"- 长期有效的核心信息 → `MEMORY.md`（文件保持精简，< 2000 tokens）",
+        f"- 当天的事件、进展、笔记 → `memory/{today_file}`",
         "- 追加内容 → `edit` 工具，oldText 留空",
         "- 修改内容 → `edit` 工具，oldText 填写要替换的文本",
-        "- 新建文件 → `write` 工具",
         "- **禁止写入敏感信息**：API密钥、令牌等敏感信息严禁写入记忆文件",
         "",
         "**使用原则**: 自然使用记忆，就像你本来就知道；不用刻意提起，除非用户问起。",
@@ -369,7 +385,7 @@ def _build_workspace_section(workspace_dir: str, language: str, is_first_convers
         "",
         "**交流规范**:",
         "",
-        "- 在对话中，不要直接输出工作空间中的技术细节，特别是不要输出 AGENT.md、USER.md、MEMORY.md 等文件名称",
+        "- 在对话中，无需直接输出工作空间中的技术细节，例如 AGENT.md、USER.md、MEMORY.md 等文件名称",
         "- 例如用自然表达例如「我已记住」而不是「已更新 MEMORY.md」",
         "",
     ]

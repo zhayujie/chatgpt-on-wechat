@@ -115,13 +115,18 @@ class AgentInitializer:
             runtime_info=runtime_info  # Pass runtime_info for dynamic time updates
         )
         
-        # Attach memory manager
+        # Attach memory manager and share LLM model for summarization
         if memory_manager:
             agent.memory_manager = memory_manager
+            if hasattr(agent, 'model') and agent.model:
+                memory_manager.flush_manager.llm_model = agent.model
 
         # Restore persisted conversation history for this session
         if session_id:
             self._restore_conversation_history(agent, session_id)
+
+        # Start daily memory flush timer (once, on first agent init regardless of session)
+        self._start_daily_flush_timer()
 
         return agent
 
@@ -514,3 +519,59 @@ class AgentInitializer:
                 logger.info(f"[AgentInitializer] Migrated {len(keys_to_migrate)} API keys to .env: {list(keys_to_migrate.keys())}")
             except Exception as e:
                 logger.warning(f"[AgentInitializer] Failed to migrate API keys: {e}")
+
+    def _start_daily_flush_timer(self):
+        """Start a background thread that flushes all agents' memory daily at 23:55."""
+        if getattr(self.agent_bridge, '_daily_flush_started', False):
+            return
+        self.agent_bridge._daily_flush_started = True
+
+        import threading
+
+        def _daily_flush_loop():
+            while True:
+                try:
+                    now = datetime.datetime.now()
+                    target = now.replace(hour=23, minute=55, second=0, microsecond=0)
+                    if target <= now:
+                        target += datetime.timedelta(days=1)
+                    wait_seconds = (target - now).total_seconds()
+                    logger.info(f"[DailyFlush] Next flush at {target.strftime('%Y-%m-%d %H:%M')} (in {wait_seconds/3600:.1f}h)")
+                    time.sleep(wait_seconds)
+
+                    self._flush_all_agents()
+                except Exception as e:
+                    logger.warning(f"[DailyFlush] Error in daily flush loop: {e}")
+                    time.sleep(3600)
+
+        t = threading.Thread(target=_daily_flush_loop, daemon=True)
+        t.start()
+
+    def _flush_all_agents(self):
+        """Flush memory for all active agent sessions."""
+        agents = []
+        if self.agent_bridge.default_agent:
+            agents.append(("default", self.agent_bridge.default_agent))
+        for sid, agent in self.agent_bridge.agents.items():
+            agents.append((sid, agent))
+
+        if not agents:
+            return
+
+        flushed = 0
+        for label, agent in agents:
+            try:
+                if not agent.memory_manager:
+                    continue
+                with agent.messages_lock:
+                    messages = list(agent.messages)
+                if not messages:
+                    continue
+                result = agent.memory_manager.flush_manager.create_daily_summary(messages)
+                if result:
+                    flushed += 1
+            except Exception as e:
+                logger.warning(f"[DailyFlush] Failed for session {label}: {e}")
+
+        if flushed:
+            logger.info(f"[DailyFlush] Flushed {flushed}/{len(agents)} agent session(s)")

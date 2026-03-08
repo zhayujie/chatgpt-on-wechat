@@ -375,10 +375,6 @@ class AgentBridge:
             # Store session_id on agent so executor can clear DB on fatal errors
             agent._current_session_id = session_id
 
-            # Record message count before execution so we can diff new messages
-            with agent.messages_lock:
-                pre_run_len = len(agent.messages)
-
             try:
                 # Use agent's run_stream method with event handler
                 response = agent.run_stream(
@@ -397,19 +393,19 @@ class AgentBridge:
             # Persist new messages generated during this run
             if session_id:
                 channel_type = (context.get("channel_type") or "") if context else ""
-                with agent.messages_lock:
-                    new_messages = agent.messages[pre_run_len:]
+                new_messages = getattr(agent, '_last_run_new_messages', [])
                 if new_messages:
                     self._persist_messages(session_id, list(new_messages), channel_type)
-                elif pre_run_len > 0 and len(agent.messages) == 0:
-                    # Agent cleared its messages (recovery from format error / overflow)
-                    # Also clear the DB to prevent reloading dirty data
-                    try:
-                        from agent.memory import get_conversation_store
-                        get_conversation_store().clear_session(session_id)
-                        logger.info(f"[AgentBridge] Cleared DB for recovered session: {session_id}")
-                    except Exception as e:
-                        logger.warning(f"[AgentBridge] Failed to clear DB after recovery: {e}")
+                else:
+                    with agent.messages_lock:
+                        msg_count = len(agent.messages)
+                    if msg_count == 0:
+                        try:
+                            from agent.memory import get_conversation_store
+                            get_conversation_store().clear_session(session_id)
+                            logger.info(f"[AgentBridge] Cleared DB for recovered session: {session_id}")
+                        except Exception as e:
+                            logger.warning(f"[AgentBridge] Failed to clear DB after recovery: {e}")
             
             # Check if there are files to send (from read tool)
             if hasattr(agent, 'stream_executor') and hasattr(agent.stream_executor, 'files_to_send'):

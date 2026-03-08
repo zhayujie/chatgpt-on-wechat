@@ -544,11 +544,15 @@ class Agent:
                     logger.info("[Agent] Cleared Agent message history after executor recovery")
             raise
 
-        # Append only the NEW messages from this execution (thread-safe)
-        # This allows concurrent requests to both contribute to history
+        # Sync executor's messages back to agent (thread-safe).
+        # If the executor trimmed context, its message list is shorter than
+        # original_length, so we must replace rather than append.
         with self.messages_lock:
-            new_messages = executor.messages[original_length:]
-            self.messages.extend(new_messages)
+            self.messages = list(executor.messages)
+            # Track messages added in this run (user query + all assistant/tool messages)
+            # original_length may exceed executor.messages length after trimming
+            trim_adjusted_start = min(original_length, len(executor.messages))
+            self._last_run_new_messages = list(executor.messages[trim_adjusted_start:])
         
         # Store executor reference for agent_bridge to access files_to_send
         self.stream_executor = executor
