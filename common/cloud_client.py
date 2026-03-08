@@ -394,13 +394,72 @@ class CloudClient(LinkAIClient):
         payload = data.get("payload", {})
         query = payload.get("query", "")
         session_id = payload.get("session_id", "cloud_console")
-        logger.info(f"[CloudClient] on_chat: session={session_id}, query={query[:80]}")
+        channel_type = payload.get("channel_type", "")
+        if not session_id.startswith("session_"):
+            session_id = f"session_{session_id}"
+        logger.info(f"[CloudClient] on_chat: session={session_id}, channel={channel_type}, query={query[:80]}")
 
         svc = self.chat_service
         if svc is None:
             raise RuntimeError("ChatService not available")
 
-        svc.run(query=query, session_id=session_id, send_chunk_fn=send_chunk_fn)
+        svc.run(query=query, session_id=session_id, channel_type=channel_type, send_chunk_fn=send_chunk_fn)
+
+    # ------------------------------------------------------------------
+    # history callback
+    # ------------------------------------------------------------------
+    def on_history(self, data: dict) -> dict:
+        """
+        Handle HISTORY messages from the cloud console.
+        Returns paginated conversation history for a session.
+
+        :param data: message data with 'action' and 'payload' (session_id, page, page_size)
+        :return: response dict
+        """
+        action = data.get("action", "query")
+        payload = data.get("payload", {})
+        logger.info(f"[CloudClient] on_history: action={action}")
+
+        if action == "query":
+            return self._query_history(payload)
+
+        return {"action": action, "code": 404, "message": f"unknown action: {action}", "payload": None}
+
+    def _query_history(self, payload: dict) -> dict:
+        """Query paginated conversation history using ConversationStore."""
+        session_id = payload.get("session_id", "")
+        page = int(payload.get("page", 1))
+        page_size = int(payload.get("page_size", 20))
+
+        if not session_id:
+            return {
+                "action": "query",
+                "payload": {"status": "error", "message": "session_id required"},
+            }
+
+        # Web channel stores sessions with a "session_" prefix
+        if not session_id.startswith("session_"):
+            session_id = f"session_{session_id}"
+        logger.info(f"[CloudClient] history query: session={session_id}, page={page}, page_size={page_size}")
+
+        try:
+            from agent.memory.conversation_store import get_conversation_store
+            store = get_conversation_store()
+            result = store.load_history_page(
+                session_id=session_id,
+                page=page,
+                page_size=page_size,
+            )
+            return {
+                "action": "query",
+                "payload": {"status": "success", **result},
+            }
+        except Exception as e:
+            logger.error(f"[CloudClient] History query error: {e}")
+            return {
+                "action": "query",
+                "payload": {"status": "error", "message": str(e)},
+            }
 
     # ------------------------------------------------------------------
     # channel restart helpers
