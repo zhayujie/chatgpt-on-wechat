@@ -210,14 +210,23 @@ After initialization, customize the SKILL.md and add resources as needed. If you
 
 When editing the (newly-generated or existing) skill, remember that the skill is being created for another instance of the agent to use. Include information that would be beneficial and non-obvious to the agent. Consider what procedural knowledge, domain-specific details, or reusable assets would help another agent instance execute these tasks more effectively.
 
-#### Learn Proven Design Patterns
+#### Design Patterns
 
-Consult these helpful guides based on your skill's needs:
+**Workflow patterns** — For complex tasks, break operations into sequential steps or conditional branches:
 
-- **Multi-step processes**: See references/workflows.md for sequential workflows and conditional logic
-- **Specific output formats or quality standards**: See references/output-patterns.md for template and example patterns
+```markdown
+# Sequential: list numbered steps with scripts
+1. Analyze the form (run analyze_form.py)
+2. Create field mapping (edit fields.json)
+3. Fill the form (run fill_form.py)
 
-These files contain established best practices for effective skill design.
+# Conditional: guide through decision points
+1. Determine the modification type:
+   **Creating new content?** → Follow "Creation workflow"
+   **Editing existing content?** → Follow "Editing workflow"
+```
+
+**Output patterns** — When consistent output format matters, provide a template or input/output examples in SKILL.md so the agent can follow the desired style.
 
 #### Start with Reusable Skill Contents
 
