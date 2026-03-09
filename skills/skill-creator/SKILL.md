@@ -275,6 +275,7 @@ Write the YAML frontmatter with `name`, `description`, and optional `metadata`:
   - `requires.anyBins`: Alternative binaries — at least one must be present
   - `always`: Set to `true` to always load regardless of requirements
   - `emoji`: Skill icon (optional)
+  - Do NOT set `category` — it defaults to `skill` and is managed by the system
 
 **API Key Requirements**:
 

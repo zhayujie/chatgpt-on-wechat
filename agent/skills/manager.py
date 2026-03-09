@@ -95,12 +95,14 @@ class SkillManager:
         for name, entry in self.skills.items():
             skill = entry.skill
             prev = saved.get(name, {})
+            # category priority: persisted config (set by cloud) > default "skill"
+            category = prev.get("category", "skill")
             merged[name] = {
                 "name": name,
                 "description": skill.description,
                 "source": skill.source,
                 "enabled": prev.get("enabled", True),
-                **( {"category": prev["category"]} if "category" in prev else {} ),
+                "category": category,
             }
 
         self.skills_config = merged

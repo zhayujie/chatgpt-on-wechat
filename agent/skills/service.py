@@ -82,21 +82,29 @@ class SkillService:
 
         skill_dir = os.path.join(self.manager.custom_dir, name)
 
-        # Remove existing skill directory to ensure a clean overwrite
+        # Download to a temp directory first, then swap to avoid data loss on failure
+        tmp_dir = skill_dir + ".tmp"
+        if os.path.exists(tmp_dir):
+            shutil.rmtree(tmp_dir)
+        os.makedirs(tmp_dir, exist_ok=True)
+
+        try:
+            for file_info in files:
+                url = file_info.get("url")
+                rel_path = file_info.get("path")
+                if not url or not rel_path:
+                    logger.warning(f"[SkillService] add: skip invalid file entry {file_info}")
+                    continue
+                dest = os.path.join(tmp_dir, rel_path)
+                self._download_file(url, dest)
+        except Exception:
+            shutil.rmtree(tmp_dir, ignore_errors=True)
+            raise
+
+        # All files downloaded successfully, replace the old directory
         if os.path.exists(skill_dir):
             shutil.rmtree(skill_dir)
-            logger.info(f"[SkillService] add: removed existing skill directory for overwrite: {skill_dir}")
-
-        os.makedirs(skill_dir, exist_ok=True)
-
-        for file_info in files:
-            url = file_info.get("url")
-            rel_path = file_info.get("path")
-            if not url or not rel_path:
-                logger.warning(f"[SkillService] add: skip invalid file entry {file_info}")
-                continue
-            dest = os.path.join(skill_dir, rel_path)
-            self._download_file(url, dest)
+        os.rename(tmp_dir, skill_dir)
 
         # Reload to pick up the new skill and sync config
         self.manager.refresh_skills()
