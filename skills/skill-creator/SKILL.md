@@ -95,7 +95,7 @@ Do NOT create auxiliary documentation files:
 
 ## Installing a Skill from URL
 
-1. Fetch the URL content (curl or web-fetch skill)
+1. Fetch the URL content (curl or web_fetch tool)
 2. Extract `name` from YAML frontmatter
 3. Create directory `<workspace>/skills/<name>/` and save content as `SKILL.md`
 4. Check the saved SKILL.md for an installation/setup section — if it defines additional steps (e.g., downloading scripts, installing dependencies), execute them; otherwise installation is complete

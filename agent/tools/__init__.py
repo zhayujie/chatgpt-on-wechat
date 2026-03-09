@@ -55,6 +55,15 @@ def _import_optional_tools():
     except Exception as e:
         logger.error(f"[Tools] WebSearch failed to load: {e}")
 
+    # WebFetch Tool
+    try:
+        from agent.tools.web_fetch.web_fetch import WebFetch
+        tools['WebFetch'] = WebFetch
+    except ImportError as e:
+        logger.error(f"[Tools] WebFetch not loaded - missing dependency: {e}")
+    except Exception as e:
+        logger.error(f"[Tools] WebFetch failed to load: {e}")
+
     return tools
 
 # Load optional tools
@@ -62,6 +71,7 @@ _optional_tools = _import_optional_tools()
 EnvConfig = _optional_tools.get('EnvConfig')
 SchedulerTool = _optional_tools.get('SchedulerTool')
 WebSearch = _optional_tools.get('WebSearch')
+WebFetch = _optional_tools.get('WebFetch')
 GoogleSearch = _optional_tools.get('GoogleSearch')
 FileSave = _optional_tools.get('FileSave')
 Terminal = _optional_tools.get('Terminal')
@@ -102,6 +112,7 @@ __all__ = [
     'EnvConfig',
     'SchedulerTool',
     'WebSearch',
+    'WebFetch',
     # Optional tools (may be None if dependencies not available)
     # 'BrowserTool'
 ]
