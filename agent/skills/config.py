@@ -123,13 +123,18 @@ def should_include_skill(
                 return False
         
         # Check environment variables (API keys)
-        # Simple rule: All required env vars must be set
+        # All required env vars must be set
         required_env = metadata.requires.get('env', [])
         if required_env:
             for env_name in required_env:
                 if not has_env_var(env_name):
-                    # Missing required API key → disable skill
                     return False
+
+        # Check anyEnv (at least one must be present)
+        any_env = metadata.requires.get('anyEnv', [])
+        if any_env:
+            if not any(has_env_var(e) for e in any_env):
+                return False
     
     return True
 

@@ -18,13 +18,21 @@ if [ -z "$question" ]; then
     exit 1
 fi
 
-if [ -z "${OPENAI_API_KEY:-}" ]; then
-    echo '{"error": "OPENAI_API_KEY environment variable is not set", "help": "Visit https://platform.openai.com/api-keys to get an API key"}'
+# Determine API key and base URL (prefer OpenAI, fallback to LinkAI)
+api_key="${OPENAI_API_KEY:-}"
+api_base="${OPENAI_API_BASE:-https://api.openai.com/v1}"
+
+if [ -z "$api_key" ] && [ -n "${LINKAI_API_KEY:-}" ]; then
+    api_key="$LINKAI_API_KEY"
+    api_base="${LINKAI_API_BASE:-https://api.link-ai.tech}/v1"
+    >&2 echo "[vision.sh] Using LinkAI API (OPENAI_API_KEY not set)"
+fi
+
+if [ -z "$api_key" ]; then
+    echo '{"error": "No API key configured. Set OPENAI_API_KEY or LINKAI_API_KEY", "help": "Visit https://platform.openai.com/api-keys or https://link-ai.tech to get an API key"}'
     exit 1
 fi
 
-# Set API base URL (default to OpenAI's official endpoint)
-api_base="${OPENAI_API_BASE:-https://api.openai.com/v1}"
 # Remove trailing slash if present
 api_base="${api_base%/}"
 
@@ -175,7 +183,7 @@ fi
 curl_cmd=$(command -v curl)
 response=$($curl_cmd -sS --max-time 60 \
     -X POST \
-    -H "Authorization: Bearer $OPENAI_API_KEY" \
+    -H "Authorization: Bearer $api_key" \
     -H "Content-Type: application/json" \
     -d "$request_body" \
     "$api_base/chat/completions" 2>&1)

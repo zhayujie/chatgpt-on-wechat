@@ -6,8 +6,7 @@ metadata:
   emoji: 👁️
   requires:
     bins: ["curl", "base64"]
-    env: ["OPENAI_API_KEY"]
-  primaryEnv: "OPENAI_API_KEY"
+    anyEnv: ["OPENAI_API_KEY", "LINKAI_API_KEY"]
 ---
 
 # OpenAI Image Vision
@@ -16,12 +15,13 @@ Analyze images using OpenAI's GPT-4 Vision API. The model can understand visual 
 
 ## Setup
 
-This skill requires an OpenAI API key. If not configured:
+This skill requires at least one of the following API keys (OpenAI is preferred when both are set):
 
-1. Get your API key from https://platform.openai.com/api-keys
-2. Set the key using: `env_config(action="set", key="OPENAI_API_KEY", value="your-key")`
+1. **OpenAI** (preferred): `env_config(action="set", key="OPENAI_API_KEY", value="your-key")`
+2. **LinkAI** (fallback): `env_config(action="set", key="LINKAI_API_KEY", value="your-key")`
 
-Optional: Set custom API base URL (default: https://api.openai.com/v1):
+Optional: Set custom API base URL:
+
 ```bash
 env_config(action="set", key="OPENAI_API_BASE", value="your-base-url")
 ```

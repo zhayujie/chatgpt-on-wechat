@@ -261,14 +261,15 @@ Write the YAML frontmatter with `name`, `description`, and optional `metadata`:
   - Example description for a `docx` skill: "Comprehensive document creation, editing, and analysis with support for tracked changes, comments, formatting preservation, and text extraction. Use when the agent needs to work with professional documents (.docx files) for: (1) Creating new documents, (2) Modifying or editing content, (3) Working with tracked changes, (4) Adding comments, or any other document tasks"
 - `metadata`: (Optional) Specify requirements and configuration
   - `requires.bins`: Required binaries (e.g., `["curl", "jq"]`)
-  - `requires.env`: Required environment variables (e.g., `["OPENAI_API_KEY"]`)
-  - `primaryEnv`: Primary environment variable name (for API keys)
+  - `requires.env`: Required environment variables — all must be set (e.g., `["MYAPI_KEY"]`)
+  - `requires.anyEnv`: Alternative environment variables — at least one must be set (e.g., `["OPENAI_API_KEY", "LINKAI_API_KEY"]`)
+  - `requires.anyBins`: Alternative binaries — at least one must be present
   - `always`: Set to `true` to always load regardless of requirements
   - `emoji`: Skill icon (optional)
 
 **API Key Requirements**:
 
-If your skill needs an API key, declare it in metadata:
+If your skill needs a single API key, declare it in `requires.env`:
 
 ```yaml
 ---
@@ -278,7 +279,19 @@ metadata:
   requires:
     bins: ["curl"]
     env: ["MYAPI_KEY"]
-  primaryEnv: "MYAPI_KEY"
+---
+```
+
+If your skill supports multiple API key providers (e.g., OpenAI or LinkAI), use `requires.anyEnv`:
+
+```yaml
+---
+name: my-vision
+description: Analyze images using Vision API
+metadata:
+  requires:
+    bins: ["curl"]
+    anyEnv: ["OPENAI_API_KEY", "LINKAI_API_KEY"]
 ---
 ```
 

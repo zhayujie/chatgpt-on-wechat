@@ -72,8 +72,12 @@ bash scripts/vision.sh "image.jpg" "Analyze this" "gpt-4o-mini"
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `OPENAI_API_KEY` | Yes | - | Your OpenAI API key |
-| `OPENAI_API_BASE` | No | `https://api.openai.com/v1` | Custom API base URL |
+| `OPENAI_API_KEY` | No* | - | OpenAI API key (preferred) |
+| `OPENAI_API_BASE` | No | `https://api.openai.com/v1` | Custom OpenAI API base URL |
+| `LINKAI_API_KEY` | No* | - | LinkAI API key (fallback when OPENAI_API_KEY is not set) |
+| `LINKAI_API_BASE` | No | `https://api.link-ai.tech` | LinkAI API base URL |
+
+\* At least one of `OPENAI_API_KEY` or `LINKAI_API_KEY` must be set. OpenAI takes priority when both are configured.
 
 ## Response Format
 

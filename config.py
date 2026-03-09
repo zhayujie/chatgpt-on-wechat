@@ -355,6 +355,37 @@ def load_config():
     logger.info("[INIT] Debug: {}".format(config.get("debug", False)))
     logger.info("[INIT] ========================================")
 
+    # Sync selected config values to environment variables so that
+    # subprocesses (e.g. shell skill scripts) can access them directly.
+    # Existing env vars are NOT overwritten (env takes precedence).
+    _CONFIG_TO_ENV = {
+        "open_ai_api_key": "OPENAI_API_KEY",
+        "open_ai_api_base": "OPENAI_API_BASE",
+        "linkai_api_key": "LINKAI_API_KEY",
+        "linkai_api_base": "LINKAI_API_BASE",
+        "claude_api_key": "CLAUDE_API_KEY",
+        "claude_api_base": "CLAUDE_API_BASE",
+        "gemini_api_key": "GEMINI_API_KEY",
+        "gemini_api_base": "GEMINI_API_BASE",
+        "minimax_api_key": "MINIMAX_API_KEY",
+        "minimax_api_base": "MINIMAX_API_BASE",
+        "zhipu_ai_api_key": "ZHIPU_AI_API_KEY",
+        "zhipu_ai_api_base": "ZHIPU_AI_API_BASE",
+        "moonshot_api_key": "MOONSHOT_API_KEY",
+        "moonshot_api_base": "MOONSHOT_API_BASE",
+        "ark_api_key": "ARK_API_KEY",
+        "ark_api_base": "ARK_API_BASE",
+    }
+    injected = 0
+    for conf_key, env_key in _CONFIG_TO_ENV.items():
+        if env_key not in os.environ:
+            val = config.get(conf_key, "")
+            if val:
+                os.environ[env_key] = str(val)
+                injected += 1
+    if injected:
+        logger.info("[INIT] Synced {} config values to environment variables".format(injected))
+
     config.load_user_datas()
 
 
