@@ -138,24 +138,24 @@ def create_embedding_provider(
 ) -> EmbeddingProvider:
     """
     Factory function to create embedding provider
-    
-    Only supports OpenAI embedding via REST API.
+
+    Supports "openai" and "linkai" providers (both use OpenAI-compatible REST API).
     If initialization fails, caller should fall back to keyword-only search.
-    
+
     Args:
-        provider: Provider name (only "openai" is supported)
+        provider: Provider name ("openai" or "linkai")
         model: Model name (default: text-embedding-3-small)
-        api_key: OpenAI API key (required)
-        api_base: API base URL (default: https://api.openai.com/v1)
+        api_key: API key (required)
+        api_base: API base URL
         
     Returns:
         EmbeddingProvider instance
         
     Raises:
-        ValueError: If provider is not "openai" or api_key is missing
+        ValueError: If provider is unsupported or api_key is missing
     """
-    if provider != "openai":
-        raise ValueError(f"Only 'openai' provider is supported, got: {provider}")
+    if provider not in ("openai", "linkai"):
+        raise ValueError(f"Unsupported embedding provider: {provider}. Use 'openai' or 'linkai'.")
 
     model = model or "text-embedding-3-small"
     return OpenAIEmbeddingProvider(model=model, api_key=api_key, api_base=api_base)

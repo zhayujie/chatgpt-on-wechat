@@ -50,28 +50,44 @@ class MemoryManager:
             overlap_tokens=self.config.chunk_overlap_tokens
         )
         
-        # Initialize embedding provider (optional)
+        # Initialize embedding provider (optional, prefer OpenAI, fallback to LinkAI)
         self.embedding_provider = None
         if embedding_provider:
             self.embedding_provider = embedding_provider
         else:
-            # Try to create embedding provider, but allow failure
+            # Try OpenAI first
             try:
-                # Get API key from environment or config
                 api_key = os.environ.get('OPENAI_API_KEY')
                 api_base = os.environ.get('OPENAI_API_BASE')
-                
-                self.embedding_provider = create_embedding_provider(
-                    provider=self.config.embedding_provider,
-                    model=self.config.embedding_model,
-                    api_key=api_key,
-                    api_base=api_base
-                )
+                if api_key:
+                    self.embedding_provider = create_embedding_provider(
+                        provider="openai",
+                        model=self.config.embedding_model,
+                        api_key=api_key,
+                        api_base=api_base
+                    )
             except Exception as e:
-                # Embedding provider failed, but that's OK
-                # We can still use keyword search and file operations
                 from common.log import logger
-                logger.warning(f"[MemoryManager] Embedding provider initialization failed: {e}")
+                logger.warning(f"[MemoryManager] OpenAI embedding failed: {e}")
+
+            # Fallback to LinkAI
+            if self.embedding_provider is None:
+                try:
+                    linkai_key = os.environ.get('LINKAI_API_KEY')
+                    linkai_base = os.environ.get('LINKAI_API_BASE', 'https://api.link-ai.tech')
+                    if linkai_key:
+                        self.embedding_provider = create_embedding_provider(
+                            provider="linkai",
+                            model=self.config.embedding_model,
+                            api_key=linkai_key,
+                            api_base=f"{linkai_base}/v1"
+                        )
+                except Exception as e:
+                    from common.log import logger
+                    logger.warning(f"[MemoryManager] LinkAI embedding failed: {e}")
+
+            if self.embedding_provider is None:
+                from common.log import logger
                 logger.info(f"[MemoryManager] Memory will work with keyword search only (no vector search)")
         
         # Initialize memory flush manager

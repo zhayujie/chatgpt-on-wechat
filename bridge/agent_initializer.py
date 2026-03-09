@@ -272,12 +272,11 @@ class AgentInitializer:
             from agent.tools import MemorySearchTool, MemoryGetTool
             from config import conf
             
-            # Get OpenAI config
+            # Initialize embedding provider (prefer OpenAI, fallback to LinkAI)
+            embedding_provider = None
+
             openai_api_key = conf().get("open_ai_api_key", "")
             openai_api_base = conf().get("open_ai_api_base", "")
-            
-            # Initialize embedding provider
-            embedding_provider = None
             if openai_api_key and openai_api_key not in ["", "YOUR API KEY", "YOUR_API_KEY"]:
                 try:
                     embedding_provider = create_embedding_provider(
@@ -290,6 +289,22 @@ class AgentInitializer:
                         logger.info("[AgentInitializer] OpenAI embedding initialized")
                 except Exception as e:
                     logger.warning(f"[AgentInitializer] OpenAI embedding failed: {e}")
+
+            if embedding_provider is None:
+                linkai_api_key = conf().get("linkai_api_key", "") or os.environ.get("LINKAI_API_KEY", "")
+                linkai_api_base = conf().get("linkai_api_base", "https://api.link-ai.tech")
+                if linkai_api_key and linkai_api_key not in ["", "YOUR API KEY", "YOUR_API_KEY"]:
+                    try:
+                        embedding_provider = create_embedding_provider(
+                            provider="linkai",
+                            model="text-embedding-3-small",
+                            api_key=linkai_api_key,
+                            api_base=f"{linkai_api_base}/v1"
+                        )
+                        if session_id is None:
+                            logger.info("[AgentInitializer] LinkAI embedding initialized (fallback)")
+                    except Exception as e:
+                        logger.warning(f"[AgentInitializer] LinkAI embedding failed: {e}")
             
             # Create memory manager
             memory_config = MemoryConfig(workspace_root=workspace_root)
