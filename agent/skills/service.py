@@ -81,6 +81,12 @@ class SkillService:
             raise ValueError("skill files list is empty")
 
         skill_dir = os.path.join(self.manager.custom_dir, name)
+
+        # Remove existing skill directory to ensure a clean overwrite
+        if os.path.exists(skill_dir):
+            shutil.rmtree(skill_dir)
+            logger.info(f"[SkillService] add: removed existing skill directory for overwrite: {skill_dir}")
+
         os.makedirs(skill_dir, exist_ok=True)
 
         for file_info in files:
