@@ -64,6 +64,15 @@ def _import_optional_tools():
     except Exception as e:
         logger.error(f"[Tools] WebFetch failed to load: {e}")
 
+    # Vision Tool (conditionally loaded based on API key availability)
+    try:
+        from agent.tools.vision.vision import Vision
+        tools['Vision'] = Vision
+    except ImportError as e:
+        logger.error(f"[Tools] Vision not loaded - missing dependency: {e}")
+    except Exception as e:
+        logger.error(f"[Tools] Vision failed to load: {e}")
+
     return tools
 
 # Load optional tools
@@ -72,6 +81,7 @@ EnvConfig = _optional_tools.get('EnvConfig')
 SchedulerTool = _optional_tools.get('SchedulerTool')
 WebSearch = _optional_tools.get('WebSearch')
 WebFetch = _optional_tools.get('WebFetch')
+Vision = _optional_tools.get('Vision')
 GoogleSearch = _optional_tools.get('GoogleSearch')
 FileSave = _optional_tools.get('FileSave')
 Terminal = _optional_tools.get('Terminal')
@@ -113,6 +123,7 @@ __all__ = [
     'SchedulerTool',
     'WebSearch',
     'WebFetch',
+    'Vision',
     # Optional tools (may be None if dependencies not available)
     # 'BrowserTool'
 ]
