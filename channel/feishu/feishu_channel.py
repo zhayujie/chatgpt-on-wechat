@@ -11,6 +11,7 @@
 @Date 2023/11/19
 """
 
+import importlib.util
 import json
 import logging
 import os
@@ -38,15 +39,20 @@ logging.getLogger("Lark").setLevel(logging.WARNING)
 
 URL_VERIFICATION = "url_verification"
 
-# 尝试导入飞书SDK,如果未安装则websocket模式不可用
-try:
-    import lark_oapi as lark
+# Lazy-check for lark_oapi SDK availability without importing it at module level.
+# The full `import lark_oapi` pulls in 10k+ files and takes 4-10s, so we defer
+# the actual import to _startup_websocket() where it is needed.
+LARK_SDK_AVAILABLE = importlib.util.find_spec("lark_oapi") is not None
+lark = None  # will be populated on first use via _ensure_lark_imported()
 
-    LARK_SDK_AVAILABLE = True
-except ImportError:
-    LARK_SDK_AVAILABLE = False
-    logger.warning(
-        "[FeiShu] lark_oapi not installed, websocket mode is not available. Install with: pip install lark-oapi")
+
+def _ensure_lark_imported():
+    """Import lark_oapi on first use (takes 4-10s due to 10k+ source files)."""
+    global lark
+    if lark is None:
+        import lark_oapi as _lark
+        lark = _lark
+    return lark
 
 
 @singleton
@@ -134,6 +140,7 @@ class FeiShuChanel(ChatChannel):
 
     def _startup_websocket(self):
         """启动长连接接收事件(websocket模式)"""
+        _ensure_lark_imported()
         logger.debug("[FeiShu] Starting in websocket mode...")
 
         # 创建事件处理器
