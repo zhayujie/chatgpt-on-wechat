@@ -4,7 +4,7 @@ import time
 import json
 
 import openai
-import openai.error
+from models.openai.openai_compat import error as openai_error, RateLimitError, Timeout, APIError, APIConnectionError
 import requests
 from common import const
 from models.bot import Bot
@@ -229,7 +229,7 @@ class ChatGPTBot(Bot, OpenAIImage, OpenAICompatibleBot):
         """
         try:
             if conf().get("rate_limit_chatgpt") and not self.tb4chatgpt.get_token():
-                raise openai.error.RateLimitError("RateLimitError: rate limit exceeded")
+                raise RateLimitError("RateLimitError: rate limit exceeded")
             # if api_key == None, the default openai.api_key will be used
             if args is None:
                 args = self.args
