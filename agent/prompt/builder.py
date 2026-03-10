@@ -175,7 +175,7 @@ def _build_tooling_section(tools: List[Any], language: str) -> List[str]:
         "memory_get": "读取记忆内容",
         "env_config": "管理API密钥和技能配置",
         "scheduler": "管理定时任务和提醒",
-        "send": "发送文件给用户",
+        "send": "发送本地文件给用户（仅限本地文件，URL直接放在回复文本中）",
     }
 
     # Preferred display order
@@ -214,7 +214,7 @@ def _build_tooling_section(tools: List[Any], language: str) -> List[str]:
         "- 在多步骤任务、敏感操作或用户要求时简要解释决策过程",
         "- 持续推进直到任务完成，完成后向用户报告结果。",
         "- 回复中涉及密钥、令牌等敏感信息必须脱敏。",
-        "- URL链接可直接以文本形式发送",
+        "- URL链接直接放在回复文本中即可，系统会自动处理和渲染。无需下载后使用send工具发送",
         "",
     ]
 

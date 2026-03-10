@@ -14,14 +14,14 @@ class Send(BaseTool):
     """Tool for sending files to the user"""
     
     name: str = "send"
-    description: str = "Send a file (image, video, audio, document) to the user. Use this when the user explicitly asks to send/share a file."
+    description: str = "Send a LOCAL file (image, video, audio, document) to the user. Only for local file paths. Do NOT use this for URLs — URLs should be included directly in your text reply, the system will handle them automatically."
     
     params: dict = {
         "type": "object",
         "properties": {
             "path": {
                 "type": "string",
-                "description": "Path to the file to send. Can be absolute path or relative to workspace."
+                "description": "Local file path to send. Must be an absolute path or relative to workspace. Do NOT pass URLs here."
             },
             "message": {
                 "type": "string",
