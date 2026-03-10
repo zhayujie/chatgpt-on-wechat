@@ -166,7 +166,8 @@ class Agent:
             # Find and replace the runtime section
             import re
             pattern = r'\n## 运行时信息\s*\n.*?(?=\n##|\Z)'
-            updated_prompt = re.sub(pattern, new_runtime_section.rstrip('\n'), prompt, flags=re.DOTALL)
+            _repl = new_runtime_section.rstrip('\n')
+            updated_prompt = re.sub(pattern, lambda m: _repl, prompt, flags=re.DOTALL)
             
             return updated_prompt
         except Exception as e:
@@ -195,7 +196,9 @@ class Agent:
 
             if has_old_block:
                 replacement = new_block or "<available_skills>\n</available_skills>"
-                prompt = re.sub(old_block_pattern, replacement, prompt, flags=re.DOTALL)
+                # Use lambda to prevent re.sub from interpreting backslashes in replacement
+                # (e.g. Windows paths like \LinkAI would be treated as bad escape sequences)
+                prompt = re.sub(old_block_pattern, lambda m: replacement, prompt, flags=re.DOTALL)
             elif new_block:
                 skills_header = "以下是可用技能："
                 idx = prompt.find(skills_header)
@@ -224,7 +227,7 @@ class Agent:
 
             # Replace existing tooling section
             pattern = r'## 工具系统\s*\n.*?(?=\n## |\Z)'
-            updated = re.sub(pattern, new_section, prompt, count=1, flags=re.DOTALL)
+            updated = re.sub(pattern, lambda m: new_section, prompt, count=1, flags=re.DOTALL)
             return updated
         except Exception as e:
             logger.warning(f"Failed to rebuild tool list section: {e}")

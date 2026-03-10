@@ -17,8 +17,7 @@ def create_bot(bot_type):
         from models.baidu.baidu_wenxin import BaiduWenxinBot
         return BaiduWenxinBot()
 
-    elif bot_type == const.CHATGPT:
-        # ChatGPT 网页端web接口
+    elif bot_type in (const.CHATGPT, const.DEEPSEEK):  # DeepSeek uses OpenAI-compatible API
         from models.chatgpt.chat_gpt_bot import ChatGPTBot
         return ChatGPTBot()
 
@@ -53,7 +52,7 @@ def create_bot(bot_type):
         from models.gemini.google_gemini_bot import GoogleGeminiBot
         return GoogleGeminiBot()
 
-    elif bot_type == const.ZHIPU_AI:
+    elif bot_type == const.ZHIPU_AI or bot_type == "glm-4":  # "glm-4" kept for backward compatibility
         from models.zhipuai.zhipuai_bot import ZHIPUAIBot
         return ZHIPUAIBot()
 
