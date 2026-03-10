@@ -97,11 +97,14 @@ class AgentLLMModel(LLMModel):
     def _resolve_bot_type(self, model_name: str) -> str:
         """Resolve bot type from model name, matching Bridge.__init__ logic."""
         from config import conf
+
+        if conf().get("use_linkai", False) and conf().get("linkai_api_key"):
+            return const.LINKAI
+        # Support custom bot type configuration
         configured_bot_type = conf().get("bot_type")
         if configured_bot_type:
             return configured_bot_type
-        if conf().get("use_linkai", False) and conf().get("linkai_api_key"):
-            return const.LINKAI
+       
         if not model_name or not isinstance(model_name, str):
             return const.CHATGPT
         if model_name in self._MODEL_BOT_TYPE_MAP:
