@@ -3,7 +3,7 @@
 import time
 
 import openai
-import openai.error
+from models.openai.openai_compat import RateLimitError, Timeout, APIConnectionError
 
 from models.bot import Bot
 from models.openai_compatible_bot import OpenAICompatibleBot
@@ -109,17 +109,17 @@ class OpenAIBot(Bot, OpenAIImage, OpenAICompatibleBot):
         except Exception as e:
             need_retry = retry_count < 2
             result = {"completion_tokens": 0, "content": "我现在有点累了，等会再来吧"}
-            if isinstance(e, openai.error.RateLimitError):
+            if isinstance(e, RateLimitError):
                 logger.warn("[OPEN_AI] RateLimitError: {}".format(e))
                 result["content"] = "提问太快啦，请休息一下再问我吧"
                 if need_retry:
                     time.sleep(20)
-            elif isinstance(e, openai.error.Timeout):
+            elif isinstance(e, Timeout):
                 logger.warn("[OPEN_AI] Timeout: {}".format(e))
                 result["content"] = "我没有收到你的消息"
                 if need_retry:
                     time.sleep(5)
-            elif isinstance(e, openai.error.APIConnectionError):
+            elif isinstance(e, APIConnectionError):
                 logger.warn("[OPEN_AI] APIConnectionError: {}".format(e))
                 need_retry = False
                 result["content"] = "我连接不到你的网络"

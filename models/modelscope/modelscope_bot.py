@@ -3,7 +3,6 @@
 import time
 import json
 import openai
-import openai.error
 from models.bot import Bot
 from models.session_manager import SessionManager
 from bridge.context import ContextType
