@@ -417,7 +417,10 @@ class AgentStreamExecutor:
                 # Force model to summarize without tool calls
                 logger.info(f"[Agent] Requesting summary from LLM after reaching max steps...")
                 
-                # Add a system message to force summary
+                # Remember position before injecting the prompt so we can remove it later
+                prompt_insert_idx = len(self.messages)
+                
+                # Add a temporary prompt to force summary
                 self.messages.append({
                     "role": "user",
                     "content": [{
@@ -444,6 +447,14 @@ class AgentStreamExecutor:
                         f"我已经执行了{turn}个决策步骤，达到了单次运行的步数上限。"
                         "任务可能还未完全完成，建议你将任务拆分成更小的步骤，或者换一种方式描述需求。"
                     )
+                finally:
+                    # Remove the injected user prompt from history to avoid polluting
+                    # persisted conversation records. The assistant summary (if any)
+                    # was already appended by _call_llm_stream and is kept.
+                    if (prompt_insert_idx < len(self.messages)
+                            and self.messages[prompt_insert_idx].get("role") == "user"):
+                        self.messages.pop(prompt_insert_idx)
+                        logger.debug("[Agent] Removed injected max-steps prompt from message history")
 
         except Exception as e:
             logger.error(f"❌ Agent执行错误: {e}")
