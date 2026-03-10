@@ -521,6 +521,7 @@ class AgentStreamExecutor:
         # Streaming response
         full_content = ""
         tool_calls_buffer = {}  # {index: {id, name, arguments}}
+        gemini_raw_parts = None  # Preserve Gemini thoughtSignature for round-trip
         stop_reason = None  # Track why the stream stopped
 
         try:
@@ -611,6 +612,10 @@ class AgentStreamExecutor:
                                     tool_calls_buffer[index]["name"] = func["name"]
                                 if "arguments" in func:
                                     tool_calls_buffer[index]["arguments"] += func["arguments"]
+
+                    # Preserve _gemini_raw_parts for Gemini thoughtSignature round-trip
+                    if "_gemini_raw_parts" in delta:
+                        gemini_raw_parts = delta["_gemini_raw_parts"]
 
         except Exception as e:
             error_str = str(e)
@@ -793,6 +798,9 @@ class AgentStreamExecutor:
                     "input": tc.get("arguments", {})
                 })
         
+        if gemini_raw_parts:
+            assistant_msg["_gemini_raw_parts"] = gemini_raw_parts
+
         # Only append if content is not empty
         if assistant_msg["content"]:
             self.messages.append(assistant_msg)

@@ -294,6 +294,9 @@ class OpenAICompatibleBot:
                     if tool_calls:
                         openai_msg["tool_calls"] = tool_calls
 
+                    if msg.get("_gemini_raw_parts"):
+                        openai_msg["_gemini_raw_parts"] = msg["_gemini_raw_parts"]
+
                     openai_messages.append(openai_msg)
                 else:
                     # Other list content, keep as is
