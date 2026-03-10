@@ -8,6 +8,7 @@ import time
 from typing import List, Dict, Any, Optional, Callable, Tuple
 
 from agent.protocol.models import LLMRequest, LLMModel
+from agent.protocol.message_utils import sanitize_claude_messages
 from agent.tools.base_tool import BaseTool, ToolResult
 from common.log import logger
 
@@ -475,6 +476,10 @@ class AgentStreamExecutor:
         # Trim messages if needed (using agent's context management)
         self._trim_messages()
 
+        # Re-validate after trimming: trimming may produce new orphaned
+        # tool_result messages when it removes turns at the boundary.
+        self._validate_and_fix_messages()
+
         # Prepare messages
         messages = self._prepare_messages()
         turns = self._identify_complete_turns()
@@ -900,56 +905,8 @@ class AgentStreamExecutor:
             return error_result
 
     def _validate_and_fix_messages(self):
-        """
-        Validate message history and fix broken tool_use/tool_result pairs.
-
-        Historical messages restored from DB are text-only (no tool calls),
-        so this method only needs to handle edge cases in the current session:
-        - Trailing assistant message with tool_use but no following tool_result
-          (e.g. process was interrupted mid-execution)
-        - Orphaned tool_result at the start of messages (e.g. after context
-          trimming removed the preceding assistant tool_use)
-        """
-        if not self.messages:
-            return
-
-        removed = 0
-
-        # Remove trailing incomplete tool_use assistant messages
-        while self.messages:
-            last_msg = self.messages[-1]
-            if last_msg.get("role") == "assistant":
-                content = last_msg.get("content", [])
-                if isinstance(content, list) and any(
-                    isinstance(b, dict) and b.get("type") == "tool_use"
-                    for b in content
-                ):
-                    logger.warning("⚠️ Removing trailing incomplete tool_use assistant message")
-                    self.messages.pop()
-                    removed += 1
-                    continue
-            break
-
-        # Remove leading orphaned tool_result user messages
-        while self.messages:
-            first_msg = self.messages[0]
-            if first_msg.get("role") == "user":
-                content = first_msg.get("content", [])
-                if isinstance(content, list) and any(
-                    isinstance(b, dict) and b.get("type") == "tool_result"
-                    for b in content
-                ) and not any(
-                    isinstance(b, dict) and b.get("type") == "text"
-                    for b in content
-                ):
-                    logger.warning("⚠️ Removing leading orphaned tool_result user message")
-                    self.messages.pop(0)
-                    removed += 1
-                    continue
-            break
-
-        if removed > 0:
-            logger.info(f"🔧 Message validation: removed {removed} broken message(s)")
+        """Delegate to the shared sanitizer (see message_sanitizer.py)."""
+        sanitize_claude_messages(self.messages)
 
     def _identify_complete_turns(self) -> List[Dict]:
         """

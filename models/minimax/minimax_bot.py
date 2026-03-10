@@ -13,6 +13,7 @@ from bridge.reply import Reply, ReplyType
 from common.log import logger
 from config import conf, load_config
 from common import const
+from agent.protocol.message_utils import drop_orphaned_tool_results_openai
 
 
 # MiniMax对话模型API
@@ -356,7 +357,7 @@ class MinimaxBot(Bot):
 
                 converted.append(openai_msg)
 
-        return converted
+        return drop_orphaned_tool_results_openai(converted)
 
     def _convert_tools_to_openai_format(self, tools):
         """
