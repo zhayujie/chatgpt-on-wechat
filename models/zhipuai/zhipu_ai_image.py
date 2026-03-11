@@ -13,10 +13,8 @@ class ZhipuAIImage(object):
         
         if api_base:
             self.client = ZhipuAiClient(api_key=api_key, base_url=api_base)
-            logger.info(f"[ZHIPU_AI_IMAGE] 使用自定义 API Base URL: {api_base}")
         else:
             self.client = ZhipuAiClient(api_key=api_key)
-            logger.info("[ZHIPU_AI_IMAGE] 使用默认 API Base URL")
 
     def create_img(self, query, retry_count=0, api_key=None, api_base=None):
         try:

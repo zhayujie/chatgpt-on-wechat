@@ -30,10 +30,8 @@ class ZHIPUAIBot(Bot, ZhipuAIImage):
         
         if api_base:
             self.client = ZhipuAiClient(api_key=api_key, base_url=api_base)
-            logger.info(f"[ZHIPU_AI] 使用自定义 API Base URL: {api_base}")
         else:
             self.client = ZhipuAiClient(api_key=api_key)
-            logger.info("[ZHIPU_AI] 使用默认 API Base URL")
 
     def reply(self, query, context=None):
         # acquire reply content

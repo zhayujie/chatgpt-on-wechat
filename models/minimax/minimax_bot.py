@@ -213,7 +213,7 @@ class MinimaxBot(Bot):
 
             # Prepare API parameters
             model = kwargs.pop("model", None) or self.args["model"]
-            max_tokens = kwargs.pop("max_tokens", 4096)
+            max_tokens = kwargs.pop("max_tokens", 100000)
             temperature = kwargs.pop("temperature", self.args["temperature"])
 
             # Build request body
