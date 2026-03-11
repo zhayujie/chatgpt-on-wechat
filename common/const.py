@@ -9,9 +9,10 @@ CLAUDEAPI= "claudeAPI"
 QWEN = "qwen"  # 旧版千问接入
 QWEN_DASHSCOPE = "dashscope"  # 新版千问接入(百炼)
 GEMINI = "gemini" 
-ZHIPU_AI = "glm-4"
+ZHIPU_AI = "zhipu"  
 MOONSHOT = "moonshot"
 MiniMax = "minimax"
+DEEPSEEK = "deepseek"
 MODELSCOPE = "modelscope"
 
 # 模型列表

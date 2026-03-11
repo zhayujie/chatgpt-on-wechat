@@ -908,7 +908,9 @@ function initConfigView(data) {
     const providerOpts = Object.entries(configProviders).map(([pid, p]) => ({ value: pid, label: p.label }));
 
     // if use_linkai is enabled, always select linkai as the provider
-    const detected = data.use_linkai ? 'linkai' : detectProvider(configCurrentModel);
+    // Otherwise prefer bot_type from config, fall back to model-based detection
+    const detected = data.use_linkai ? 'linkai'
+        : (data.bot_type && configProviders[data.bot_type] ? data.bot_type : detectProvider(configCurrentModel));
     cfgProviderValue = detected || (providerOpts[0] ? providerOpts[0].value : '');
 
     initDropdown(providerEl, providerOpts, cfgProviderValue, onProviderChange);
@@ -1062,6 +1064,14 @@ function saveModelConfig() {
     const updates = { model: model };
     const p = configProviders[cfgProviderValue];
     updates.use_linkai = (cfgProviderValue === 'linkai');
+    // Save bot_type for bot_factory routing.
+    // Most providers use their key directly as bot_type.
+    // linkai uses use_linkai flag instead of bot_type.
+    if (cfgProviderValue === 'linkai') {
+        updates.bot_type = '';
+    } else {
+        updates.bot_type = cfgProviderValue;
+    }
     if (p && p.api_base_key) {
         const base = document.getElementById('cfg-api-base').value.trim();
         if (base) updates[p.api_base_key] = base;

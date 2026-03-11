@@ -2,7 +2,6 @@
 
 import time
 import json
-from pydantic.types import T
 import requests
 
 from models.bot import Bot
