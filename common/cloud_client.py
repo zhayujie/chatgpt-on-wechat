@@ -516,6 +516,44 @@ class CloudClient(LinkAIClient):
             logger.error(f"[CloudClient] Failed to save configuration to config.json: {e}")
 
 
+def get_root_domain(host: str = "") -> str:
+    """Extract root domain from a hostname.
+
+    If *host* is empty, reads CLOUD_HOST env var / cloud_host config.
+    """
+    if not host:
+        host = os.environ.get("CLOUD_HOST") or conf().get("cloud_host", "")
+    if not host:
+        return ""
+    host = host.strip().rstrip("/")
+    if "://" in host:
+        host = host.split("://", 1)[1]
+    host = host.split("/", 1)[0].split(":")[0]
+    parts = host.split(".")
+    if len(parts) >= 2:
+        return ".".join(parts[-2:])
+    return host
+
+
+def get_deployment_id() -> str:
+    """Return cloud deployment id from env var or config."""
+    return os.environ.get("CLOUD_DEPLOYMENT_ID") or conf().get("cloud_deployment_id", "")
+
+
+def get_website_base_url() -> str:
+    """Return the public URL prefix that maps to the workspace websites/ dir.
+
+    Returns empty string when cloud deployment is not configured.
+    """
+    deployment_id = get_deployment_id()
+    if not deployment_id:
+        return ""
+    domain = get_root_domain()
+    if not domain:
+        return ""
+    return f"https://app.{domain}/{deployment_id}"
+
+
 def start(channel, channel_mgr=None):
     global chat_client
     chat_client = CloudClient(api_key=conf().get("linkai_api_key"), host=conf().get("cloud_host", ""), channel=channel)

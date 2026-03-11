@@ -114,6 +114,14 @@ class WebFetch(BaseTool):
         if self._is_binary_content_type(content_type) and not _is_document_url(url):
             return self._handle_download_by_content_type(url, response, content_type)
 
+        # Fix encoding: use apparent_encoding to auto-detect, but keep Windows encodings as-is
+        if response.apparent_encoding and response.apparent_encoding.lower().startswith("windows"):
+            response.encoding = response.encoding
+        else:
+            response.encoding = response.apparent_encoding
+        if not response.encoding:
+            response.encoding = "utf-8"
+
         html = response.text
         title = self._extract_title(html)
         text = self._extract_text(html)
