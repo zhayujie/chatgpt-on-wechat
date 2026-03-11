@@ -42,14 +42,16 @@ def ensure_workspace(workspace_dir: str, create_templates: bool = True) -> Works
     Returns:
         WorkspaceFiles对象，包含所有文件路径
     """
-    # Check if this is a brand new workspace (before creating the directory)
-    is_new_workspace = not os.path.exists(workspace_dir)
+    # Check if this is a brand new workspace (AGENT.md not yet created).
+    # Cannot rely on directory existence because other modules (e.g. ConversationStore)
+    # may create the workspace directory before ensure_workspace is called.
+    agent_path = os.path.join(workspace_dir, DEFAULT_AGENT_FILENAME)
+    is_new_workspace = not os.path.exists(agent_path)
     
     # 确保目录存在
     os.makedirs(workspace_dir, exist_ok=True)
     
     # 定义文件路径
-    agent_path = os.path.join(workspace_dir, DEFAULT_AGENT_FILENAME)
     user_path = os.path.join(workspace_dir, DEFAULT_USER_FILENAME)
     rule_path = os.path.join(workspace_dir, DEFAULT_RULE_FILENAME)
     memory_path = os.path.join(workspace_dir, DEFAULT_MEMORY_FILENAME)  # MEMORY.md 在根目录
