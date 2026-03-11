@@ -42,7 +42,6 @@ class PromptBuilder:
         skill_manager: Any = None,
         memory_manager: Any = None,
         runtime_info: Optional[Dict[str, Any]] = None,
-        is_first_conversation: bool = False,
         **kwargs
     ) -> str:
         """
@@ -52,11 +51,10 @@ class PromptBuilder:
             base_persona: 基础人格描述（会被context_files中的AGENT.md覆盖）
             user_identity: 用户身份信息
             tools: 工具列表
-            context_files: 上下文文件列表（AGENT.md, USER.md, RULE.md等）
+            context_files: 上下文文件列表（AGENT.md, USER.md, RULE.md, BOOTSTRAP.md等）
             skill_manager: 技能管理器
             memory_manager: 记忆管理器
             runtime_info: 运行时信息
-            is_first_conversation: 是否为首次对话
             **kwargs: 其他参数
             
         Returns:
@@ -72,7 +70,6 @@ class PromptBuilder:
             skill_manager=skill_manager,
             memory_manager=memory_manager,
             runtime_info=runtime_info,
-            is_first_conversation=is_first_conversation,
             **kwargs
         )
 
@@ -87,7 +84,6 @@ def build_agent_system_prompt(
     skill_manager: Any = None,
     memory_manager: Any = None,
     runtime_info: Optional[Dict[str, Any]] = None,
-    is_first_conversation: bool = False,
     **kwargs
 ) -> str:
     """
@@ -99,7 +95,7 @@ def build_agent_system_prompt(
     3. 记忆系统 - 独立的记忆能力
     4. 工作空间 - 工作环境说明
     5. 用户身份 - 用户信息（可选）
-    6. 项目上下文 - AGENT.md, USER.md, RULE.md（定义人格、身份、规则）
+    6. 项目上下文 - AGENT.md, USER.md, RULE.md, BOOTSTRAP.md（定义人格、身份、规则、初始化引导）
     7. 运行时信息 - 元信息（时间、模型等）
     
     Args:
@@ -112,7 +108,6 @@ def build_agent_system_prompt(
         skill_manager: 技能管理器
         memory_manager: 记忆管理器
         runtime_info: 运行时信息
-        is_first_conversation: 是否为首次对话
         **kwargs: 其他参数
         
     Returns:
@@ -133,7 +128,7 @@ def build_agent_system_prompt(
         sections.extend(_build_memory_section(memory_manager, tools, language))
     
     # 4. 工作空间（工作环境说明）
-    sections.extend(_build_workspace_section(workspace_dir, language, is_first_conversation))
+    sections.extend(_build_workspace_section(workspace_dir, language))
     
     # 5. 用户身份（如果有）
     if user_identity:
@@ -352,7 +347,7 @@ def _build_docs_section(workspace_dir: str, language: str) -> List[str]:
     return []
 
 
-def _build_workspace_section(workspace_dir: str, language: str, is_first_conversation: bool = False) -> List[str]:
+def _build_workspace_section(workspace_dir: str, language: str) -> List[str]:
     """构建工作空间section"""
     lines = [
         "## 工作空间",
@@ -379,8 +374,8 @@ def _build_workspace_section(workspace_dir: str, language: str, is_first_convers
         "",
         "以下文件在会话启动时**已经自动加载**到系统提示词的「项目上下文」section 中，你**无需再用 read 工具读取它们**：",
         "",
-        "- ✅ `AGENT.md`: 已加载 - 你的人格和灵魂设定",
-        "- ✅ `USER.md`: 已加载 - 用户的身份信息",
+        "- ✅ `AGENT.md`: 已加载 - 你的人格和灵魂设定。当用户修改你的名字、性格或交流风格时，用 `edit` 更新此文件",
+        "- ✅ `USER.md`: 已加载 - 用户的身份信息。当用户修改称呼、姓名等身份信息时，用 `edit` 更新此文件",
         "- ✅ `RULE.md`: 已加载 - 工作空间使用指南和规则",
         "",
         "**交流规范**:",
@@ -389,29 +384,6 @@ def _build_workspace_section(workspace_dir: str, language: str, is_first_convers
         "- 例如用自然表达例如「我已记住」而不是「已更新 MEMORY.md」",
         "",
     ]
-    
-    # 只在首次对话时添加引导内容
-    if is_first_conversation:
-        lines.extend([
-            "**🎉 首次对话引导**:",
-            "",
-            "这是你的第一次对话！进行以下流程：",
-            "",
-            "1. **表达初次启动的感觉** - 像是第一次睁开眼看到世界，带着好奇和期待",
-            "2. **简短介绍能力**：一行说明你能帮助解答问题、管理计算机、创造技能，且拥有长期记忆能不断成长",
-            "3. **询问核心问题**：",
-            "   - 你希望给我起个什么名字？",
-            "   - 我该怎么称呼你？",
-            "   - 你希望我们是什么样的交流风格？（一行列举选项：如专业严谨、轻松幽默、温暖友好、简洁高效等）",
-            "4. **风格要求**：温暖自然、简洁清晰，整体控制在 100 字以内",
-            "5. 收到回复后，用 `write` 工具保存到 USER.md 和 AGENT.md",
-            "",
-            "**重要提醒**:",
-            "- AGENT.md、USER.md、RULE.md 已经在系统提示词中加载，无需再次读取。不要将这些文件名直接发送给用户",
-            "- 能力介绍和交流风格选项都只要一行，保持精简",
-            "- 不要问太多其他信息（职业、时区等可以后续自然了解）",
-            "",
-        ])
     
     return lines
 

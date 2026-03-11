@@ -77,10 +77,6 @@ class AgentInitializer:
         # Initialize skill manager
         skill_manager = self._initialize_skill_manager(workspace_root, session_id)
         
-        # Check if first conversation
-        from agent.prompt.workspace import is_first_conversation, mark_conversation_started
-        is_first = is_first_conversation(workspace_root)
-        
         # Build system prompt
         prompt_builder = PromptBuilder(workspace_dir=workspace_root, language="zh")
         runtime_info = self._get_runtime_info(workspace_root)
@@ -91,11 +87,7 @@ class AgentInitializer:
             skill_manager=skill_manager,
             memory_manager=memory_manager,
             runtime_info=runtime_info,
-            is_first_conversation=is_first
         )
-        
-        if is_first:
-            mark_conversation_started(workspace_root)
         
         # Get cost control parameters
         from config import conf

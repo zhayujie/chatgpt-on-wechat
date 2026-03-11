@@ -6,7 +6,6 @@ Workspace Management - 工作空间管理模块
 
 from __future__ import annotations
 import os
-import json
 from typing import List, Optional, Dict
 from dataclasses import dataclass
 
@@ -19,7 +18,7 @@ DEFAULT_AGENT_FILENAME = "AGENT.md"
 DEFAULT_USER_FILENAME = "USER.md"
 DEFAULT_RULE_FILENAME = "RULE.md"
 DEFAULT_MEMORY_FILENAME = "MEMORY.md"
-DEFAULT_STATE_FILENAME = ".agent_state.json"
+DEFAULT_BOOTSTRAP_FILENAME = "BOOTSTRAP.md"
 
 
 @dataclass
@@ -30,7 +29,6 @@ class WorkspaceFiles:
     rule_path: str
     memory_path: str
     memory_dir: str
-    state_path: str
 
 
 def ensure_workspace(workspace_dir: str, create_templates: bool = True) -> WorkspaceFiles:
@@ -44,6 +42,9 @@ def ensure_workspace(workspace_dir: str, create_templates: bool = True) -> Works
     Returns:
         WorkspaceFiles对象，包含所有文件路径
     """
+    # Check if this is a brand new workspace (before creating the directory)
+    is_new_workspace = not os.path.exists(workspace_dir)
+    
     # 确保目录存在
     os.makedirs(workspace_dir, exist_ok=True)
     
@@ -53,7 +54,6 @@ def ensure_workspace(workspace_dir: str, create_templates: bool = True) -> Works
     rule_path = os.path.join(workspace_dir, DEFAULT_RULE_FILENAME)
     memory_path = os.path.join(workspace_dir, DEFAULT_MEMORY_FILENAME)  # MEMORY.md 在根目录
     memory_dir = os.path.join(workspace_dir, "memory")  # 每日记忆子目录
-    state_path = os.path.join(workspace_dir, DEFAULT_STATE_FILENAME)  # 状态文件
     
     # 创建memory子目录
     os.makedirs(memory_dir, exist_ok=True)
@@ -69,6 +69,12 @@ def ensure_workspace(workspace_dir: str, create_templates: bool = True) -> Works
         _create_template_if_missing(rule_path, _get_rule_template())
         _create_template_if_missing(memory_path, _get_memory_template())
         
+        # Only create BOOTSTRAP.md for brand new workspaces;
+        # agent deletes it after completing onboarding
+        if is_new_workspace:
+            bootstrap_path = os.path.join(workspace_dir, DEFAULT_BOOTSTRAP_FILENAME)
+            _create_template_if_missing(bootstrap_path, _get_bootstrap_template())
+        
         logger.debug(f"[Workspace] Initialized workspace at: {workspace_dir}")
     
     return WorkspaceFiles(
@@ -77,7 +83,6 @@ def ensure_workspace(workspace_dir: str, create_templates: bool = True) -> Works
         rule_path=rule_path,
         memory_path=memory_path,
         memory_dir=memory_dir,
-        state_path=state_path
     )
 
 
@@ -98,6 +103,7 @@ def load_context_files(workspace_dir: str, files_to_load: Optional[List[str]] = 
             DEFAULT_AGENT_FILENAME,
             DEFAULT_USER_FILENAME,
             DEFAULT_RULE_FILENAME,
+            DEFAULT_BOOTSTRAP_FILENAME,  # Only exists when onboarding is incomplete
         ]
     
     context_files = []
@@ -107,6 +113,17 @@ def load_context_files(workspace_dir: str, files_to_load: Optional[List[str]] = 
         
         if not os.path.exists(filepath):
             continue
+        
+        # Auto-cleanup: if BOOTSTRAP.md still exists but AGENT.md is already
+        # filled in, the agent forgot to delete it — clean up and skip loading
+        if filename == DEFAULT_BOOTSTRAP_FILENAME:
+            if _is_onboarding_done(workspace_dir):
+                try:
+                    os.remove(filepath)
+                    logger.info("[Workspace] Auto-removed BOOTSTRAP.md (onboarding already complete)")
+                except Exception:
+                    pass
+                continue
         
         try:
             with open(filepath, 'r', encoding='utf-8') as f:
@@ -160,6 +177,19 @@ def _is_template_placeholder(content: str) -> bool:
                 return True
     
     return False
+
+
+def _is_onboarding_done(workspace_dir: str) -> bool:
+    """Check if AGENT.md has been filled in (name field is no longer a placeholder)"""
+    agent_path = os.path.join(workspace_dir, DEFAULT_AGENT_FILENAME)
+    if not os.path.exists(agent_path):
+        return False
+    try:
+        with open(agent_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        return "*(在首次对话时填写" not in content
+    except Exception:
+        return False
 
 
 # ============= 模板内容 =============
@@ -270,9 +300,10 @@ def _get_rule_template() -> str:
 
 当用户分享信息时，根据类型选择存储位置：
 
-1. **静态身份 → USER.md**（仅限：姓名、职业、时区、联系方式、生日）
-2. **动态记忆 → MEMORY.md**（爱好、偏好、决策、目标、项目、教训、待办事项）
-3. **当天对话 → memory/YYYY-MM-DD.md**（今天聊的内容）
+1. **你的身份设定 → AGENT.md**（你的名字、角色、性格、交流风格——用户修改时必须用 `edit` 更新）
+2. **用户静态身份 → USER.md**（姓名、称呼、职业、时区、联系方式、生日——用户修改时必须用 `edit` 更新）
+3. **动态记忆 → MEMORY.md**（爱好、偏好、决策、目标、项目、教训、待办事项）
+4. **当天对话 → memory/YYYY-MM-DD.md**（今天聊的内容）
 
 ## 安全
 
@@ -297,65 +328,38 @@ def _get_memory_template() -> str:
 """
 
 
-# ============= 状态管理 =============
+def _get_bootstrap_template() -> str:
+    """First-run onboarding guide, deleted by agent after completion"""
+    return """# BOOTSTRAP.md - 首次初始化引导
 
-def is_first_conversation(workspace_dir: str) -> bool:
-    """
-    判断是否为首次对话
-    
-    Args:
-        workspace_dir: 工作空间目录
-        
-    Returns:
-        True 如果是首次对话，False 否则
-    """
-    state_path = os.path.join(workspace_dir, DEFAULT_STATE_FILENAME)
-    
-    if not os.path.exists(state_path):
-        return True
-    
-    try:
-        with open(state_path, 'r', encoding='utf-8') as f:
-            state = json.load(f)
-        return not state.get('has_conversation', False)
-    except Exception as e:
-        logger.warning(f"[Workspace] Failed to read state file: {e}")
-        return True
+_你刚刚启动，这是你的第一次对话。_
+
+## 对话流程
+
+不要审问式地提问，自然地交流：
+
+1. **表达初次启动的感觉** - 像是第一次睁开眼看到世界，带着好奇和期待
+2. **简短介绍能力**：一行说明你能帮助解决各种问题、管理计算机、使用各种技能等等，且拥有长期记忆能不断成长
+3. **询问核心问题**：
+   - 你希望给我起个什么名字？
+   - 我该怎么称呼你？
+   - 你希望我们是什么样的交流风格？（一行列举选项：如专业严谨、轻松幽默、温暖友好、简洁高效等）
+4. **风格要求**：温暖自然、简洁清晰，整体控制在 100 字以内
+5. 能力介绍和交流风格选项都只要一行，保持精简
+6. 不要问太多其他信息（职业、时区等可以后续自然了解）
+
+**重要**: 如果用户第一句话是具体的任务或提问，先回答他们的问题，然后在回复末尾自然地引导初始化（如："顺便问一下，你想怎么称呼我？我该怎么叫你？"）。
+
+## 确定后
+
+用 `edit` 工具将收集到的信息更新到：
+- `AGENT.md` — 你的名字、角色、性格、交流风格
+- `USER.md` — 用户的姓名、称呼
+
+## 完成后
+
+用 bash 执行 `rm BOOTSTRAP.md` 删除此文件。你不再需要引导脚本了——你已经是你了。
+"""
 
 
-def mark_conversation_started(workspace_dir: str):
-    """
-    标记已经发生过对话
-    
-    Args:
-        workspace_dir: 工作空间目录
-    """
-    state_path = os.path.join(workspace_dir, DEFAULT_STATE_FILENAME)
-    
-    state = {
-        'has_conversation': True,
-        'first_conversation_time': None
-    }
-    
-    # 如果文件已存在，保留原有的首次对话时间
-    if os.path.exists(state_path):
-        try:
-            with open(state_path, 'r', encoding='utf-8') as f:
-                old_state = json.load(f)
-            if 'first_conversation_time' in old_state:
-                state['first_conversation_time'] = old_state['first_conversation_time']
-        except Exception as e:
-            logger.warning(f"[Workspace] Failed to read old state: {e}")
-    
-    # 如果是首次标记，记录时间
-    if state['first_conversation_time'] is None:
-        from datetime import datetime
-        state['first_conversation_time'] = datetime.now().isoformat()
-    
-    try:
-        with open(state_path, 'w', encoding='utf-8') as f:
-            json.dump(state, f, indent=2, ensure_ascii=False)
-        logger.info(f"[Workspace] Marked conversation as started")
-    except Exception as e:
-        logger.error(f"[Workspace] Failed to write state file: {e}")
 
