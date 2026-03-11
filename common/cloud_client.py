@@ -548,11 +548,46 @@ def get_website_base_url() -> str:
     deployment_id = get_deployment_id()
     if not deployment_id:
         return ""
+
+    websites_domain = os.environ.get("CLOUD_WEBSITES_DOMAIN") or conf().get("cloud_websites_domain", "")
+    if websites_domain:
+        websites_domain = websites_domain.strip().rstrip("/")
+        return f"https://{websites_domain}/{deployment_id}"
+
     domain = get_root_domain()
     if not domain:
         return ""
     return f"https://app.{domain}/{deployment_id}"
 
+
+def build_website_prompt(workspace_dir: str) -> list:
+    """Build system prompt lines for cloud website/file sharing rules.
+
+    Returns an empty list when cloud deployment is not configured,
+    so callers can safely do ``lines.extend(build_website_prompt(...))``.
+    """
+    base_url = get_website_base_url()
+    if not base_url:
+        return []
+
+    return [
+        "**文件分享与网页生成规则** (非常重要 — 当前为云部署模式):",
+        "",
+        f"云端已为工作空间的 `websites/` 目录配置好公网路由映射，访问地址前缀为: `{base_url}`",
+        "",
+        "1. **网页/网站**: 编写网页、H5页面等前端代码时，**必须**将文件放到 `websites/` 目录中",
+        f"   - 例如: `websites/index.html` → `{base_url}/index.html`",
+        f"   - 例如: `websites/my-app/index.html` → `{base_url}/my-app/index.html`",
+        "",
+        "2. **生成文件分享** (PPT、PDF、图片、音视频等): 当你为用户生成了需要下载或查看的文件时，**可以**将文件保存到 `websites/` 目录中",
+        f"   - 例如: 生成的PPT保存到 `websites/files/report.pptx` → 下载链接为 `{base_url}/files/report.pptx`",
+        "   - 你仍然可以同时使用 `send` 工具发送文件（在飞书、钉钉等IM渠道中有效），但**必须同时在回复文本中提供下载链接**作为兜底，因为部分渠道（如网页端）无法通过 send 接收本地文件",
+        "",
+        "3. **必须发送链接**: 无论是网页还是文件，生成后**必须将完整的访问/下载链接直接写在回复文本中发送给用户**",
+        "",
+        "4. 建议为每个独立项目在 `websites/` 下创建子目录，保持结构清晰",
+        "",
+    ]
 
 def start(channel, channel_mgr=None):
     global chat_client

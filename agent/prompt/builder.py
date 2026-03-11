@@ -398,25 +398,10 @@ def _build_workspace_section(workspace_dir: str, language: str) -> List[str]:
 def _build_cloud_website_section(workspace_dir: str) -> List[str]:
     """Build cloud website access prompt when cloud deployment is configured."""
     try:
-        from common.cloud_client import get_website_base_url
+        from common.cloud_client import build_website_prompt
+        return build_website_prompt(workspace_dir)
     except Exception:
         return []
-
-    base_url = get_website_base_url()
-    if not base_url:
-        return []
-
-    return [
-        "**网页/网站生成规则** (非常重要):",
-        "",
-        f"- 当需要编写网页、网站、H5页面等前端代码时，**必须**将所有文件统一放到工作空间的 `websites/` 目录中（路径: `{workspace_dir}/websites/`）",
-        f"- 云端已为该目录配置好路由映射，访问地址为: `{base_url}`",
-        f"  - 例如: 你在 `websites/index.html` 创建了页面，访问地址就是 `{base_url}/index.html`",
-        f"  - 例如: 你在 `websites/my-app/index.html` 创建了页面，访问地址就是 `{base_url}/my-app/index.html`",
-        "- **生成网页后，必须将完整的访问链接直接发送给用户**，让用户可以直接点击访问",
-        "- 建议为每个独立项目在 `websites/` 下创建子目录，保持结构清晰",
-        "",
-    ]
 
 
 def _build_context_files_section(context_files: List[ContextFile], language: str) -> List[str]:
