@@ -29,7 +29,7 @@ DEFAULT_HEADERS = {
 
 # Supported document file extensions
 PDF_SUFFIXES: Set[str] = {".pdf"}
-WORD_SUFFIXES: Set[str] = {".doc", ".docx"}
+WORD_SUFFIXES: Set[str] = {".docx"}
 TEXT_SUFFIXES: Set[str] = {".txt", ".md", ".markdown", ".rst", ".csv", ".tsv", ".log"}
 SPREADSHEET_SUFFIXES: Set[str] = {".xls", ".xlsx"}
 PPT_SUFFIXES: Set[str] = {".ppt", ".pptx"}
@@ -56,7 +56,7 @@ class WebFetch(BaseTool):
     description: str = (
         "Fetch content from a URL. For web pages, extracts readable text. "
         "For document files (PDF, Word, TXT, Markdown, Excel, PPT), downloads and parses the file content. "
-        "Supported file types: .pdf, .doc, .docx, .txt, .md, .csv, .xls, .xlsx, .ppt, .pptx"
+        "Supported file types: .pdf, .docx, .txt, .md, .csv, .xls, .xlsx, .ppt, .pptx"
     )
 
     params: dict = {
@@ -226,29 +226,16 @@ class WebFetch(BaseTool):
         return "\n\n".join(text_parts)
 
     def _parse_word(self, file_path: str) -> str:
-        """Extract text from Word documents (.doc/.docx)."""
-        suffix = os.path.splitext(file_path)[-1].lower()
-
-        if suffix == ".docx":
-            try:
-                from docx import Document
-            except ImportError:
-                raise ImportError(
-                    "python-docx library is required for .docx parsing. Install with: pip install python-docx"
-                )
-            doc = Document(file_path)
-            paragraphs = [p.text for p in doc.paragraphs if p.text.strip()]
-            return "\n\n".join(paragraphs)
-
-        # .doc format - try textract or fallback
+        """Extract text from Word documents (.docx)."""
         try:
-            import textract
-            text = textract.process(file_path).decode("utf-8")
-            return text
+            from docx import Document
         except ImportError:
             raise ImportError(
-                "textract library is required for .doc parsing. Install with: pip install textract"
+                "python-docx library is required for .docx parsing. Install with: pip install python-docx"
             )
+        doc = Document(file_path)
+        paragraphs = [p.text for p in doc.paragraphs if p.text.strip()]
+        return "\n\n".join(paragraphs)
 
     def _parse_text(self, file_path: str) -> str:
         """Read plain text files (txt, md, csv, etc.)."""
@@ -344,7 +331,6 @@ class WebFetch(BaseTool):
         """Check if Content-Type indicates a binary/document response."""
         binary_types = [
             "application/pdf",
-            "application/msword",
             "application/vnd.openxmlformats",
             "application/vnd.ms-excel",
             "application/vnd.ms-powerpoint",
@@ -358,7 +344,6 @@ class WebFetch(BaseTool):
         ct_lower = content_type.lower()
         suffix_map = {
             "application/pdf": ".pdf",
-            "application/msword": ".doc",
             "application/vnd.openxmlformats-officedocument.wordprocessingml": ".docx",
             "application/vnd.ms-excel": ".xls",
             "application/vnd.openxmlformats-officedocument.spreadsheetml": ".xlsx",

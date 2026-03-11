@@ -29,3 +29,9 @@ google-generativeai
 
 # tencentcloud sdk
 tencentcloud-sdk-python>=3.0.0
+
+# file parsing (web_fetch document support)
+pypdf
+python-docx
+openpyxl
+python-pptx
