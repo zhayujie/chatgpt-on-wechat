@@ -8,6 +8,8 @@ other management entry point.
 
 import os
 import shutil
+import zipfile
+import tempfile
 from typing import Dict, List, Optional
 from common.log import logger
 from agent.skills.types import Skill, SkillEntry
@@ -55,7 +57,9 @@ class SkillService:
         """
         Add (install) a skill from a remote payload.
 
-        The payload follows the socket protocol::
+        Supported payload types:
+
+        1. ``type: "url"`` – download individual files::
 
             {
                 "name": "web_search",
@@ -67,8 +71,15 @@ class SkillService:
                 ]
             }
 
-        Files are downloaded and saved under the custom skills directory
-        using *name* as the sub-directory.
+        2. ``type: "package"`` – download a zip archive and extract::
+
+            {
+                "name": "plugin-custom-tool",
+                "type": "package",
+                "category": "skills",
+                "enabled": true,
+                "files": [{"url": "https://cdn.example.com/skills/custom-tool.zip"}]
+            }
 
         :param payload: skill add payload from server
         """
@@ -76,13 +87,28 @@ class SkillService:
         if not name:
             raise ValueError("skill name is required")
 
+        payload_type = payload.get("type", "url")
+
+        if payload_type == "package":
+            self._add_package(name, payload)
+        else:
+            self._add_url(name, payload)
+
+        self.manager.refresh_skills()
+
+        category = payload.get("category")
+        if category and name in self.manager.skills_config:
+            self.manager.skills_config[name]["category"] = category
+            self.manager._save_skills_config()
+
+    def _add_url(self, name: str, payload: dict) -> None:
+        """Install a skill by downloading individual files."""
         files = payload.get("files", [])
         if not files:
             raise ValueError("skill files list is empty")
 
         skill_dir = os.path.join(self.manager.custom_dir, name)
 
-        # Download to a temp directory first, then swap to avoid data loss on failure
         tmp_dir = skill_dir + ".tmp"
         if os.path.exists(tmp_dir):
             shutil.rmtree(tmp_dir)
@@ -101,21 +127,55 @@ class SkillService:
             shutil.rmtree(tmp_dir, ignore_errors=True)
             raise
 
-        # All files downloaded successfully, replace the old directory
         if os.path.exists(skill_dir):
             shutil.rmtree(skill_dir)
         os.rename(tmp_dir, skill_dir)
 
-        # Reload to pick up the new skill and sync config
-        self.manager.refresh_skills()
+        logger.info(f"[SkillService] add: skill '{name}' installed via url ({len(files)} files)")
 
-        # Persist category from payload into skills_config only when provided
-        category = payload.get("category")
-        if category and name in self.manager.skills_config:
-            self.manager.skills_config[name]["category"] = category
-            self.manager._save_skills_config()
+    def _add_package(self, name: str, payload: dict) -> None:
+        """
+        Install a skill by downloading a zip archive and extracting it.
 
-        logger.info(f"[SkillService] add: skill '{name}' installed ({len(files)} files)")
+        If the archive contains a single top-level directory, that directory
+        is used as the skill folder directly; otherwise a new directory named
+        after the skill is created to hold the extracted contents.
+        """
+        files = payload.get("files", [])
+        if not files or not files[0].get("url"):
+            raise ValueError("package url is required")
+
+        url = files[0]["url"]
+        skill_dir = os.path.join(self.manager.custom_dir, name)
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            zip_path = os.path.join(tmp_dir, "package.zip")
+            self._download_file(url, zip_path)
+
+            if not zipfile.is_zipfile(zip_path):
+                raise ValueError(f"downloaded file is not a valid zip archive: {url}")
+
+            extract_dir = os.path.join(tmp_dir, "extracted")
+            with zipfile.ZipFile(zip_path, "r") as zf:
+                zf.extractall(extract_dir)
+
+            # Determine the actual content root.
+            # If the zip has a single top-level directory, use its contents
+            # so the skill folder is clean (no extra nesting).
+            top_items = [
+                item for item in os.listdir(extract_dir)
+                if not item.startswith(".")
+            ]
+            if len(top_items) == 1:
+                single = os.path.join(extract_dir, top_items[0])
+                if os.path.isdir(single):
+                    extract_dir = single
+
+            if os.path.exists(skill_dir):
+                shutil.rmtree(skill_dir)
+            shutil.copytree(extract_dir, skill_dir)
+
+        logger.info(f"[SkillService] add: skill '{name}' installed via package ({url})")
 
     # ------------------------------------------------------------------
     # open / close (enable / disable)
