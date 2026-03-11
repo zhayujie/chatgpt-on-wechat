@@ -24,11 +24,7 @@ class WebSearch(BaseTool):
     """Tool for searching the web using Bocha or LinkAI search API"""
 
     name: str = "web_search"
-    description: str = (
-        "Search the web for current information, news, research topics, or any real-time data. "
-        "Returns web page titles, URLs, snippets, and optional summaries. "
-        "Use this when the user asks about recent events, needs fact-checking, or wants up-to-date information."
-    )
+    description: str = "Search the web for real-time information. Returns titles, URLs, and snippets."
 
     params: dict = {
         "type": "object",
