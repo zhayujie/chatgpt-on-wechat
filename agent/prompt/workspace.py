@@ -186,16 +186,24 @@ def _is_template_placeholder(content: str) -> bool:
 
 
 def _is_onboarding_done(workspace_dir: str) -> bool:
-    """Check if AGENT.md has been filled in (name field is no longer a placeholder)"""
+    """Check if AGENT.md or USER.md has been modified from the original template"""
     agent_path = os.path.join(workspace_dir, DEFAULT_AGENT_FILENAME)
-    if not os.path.exists(agent_path):
-        return False
-    try:
-        with open(agent_path, 'r', encoding='utf-8') as f:
-            content = f.read()
-        return "*(在首次对话时填写" not in content
-    except Exception:
-        return False
+    user_path = os.path.join(workspace_dir, DEFAULT_USER_FILENAME)
+    
+    agent_template = _get_agent_template().strip()
+    user_template = _get_user_template().strip()
+    
+    for path, template in [(agent_path, agent_template), (user_path, user_template)]:
+        if not os.path.exists(path):
+            continue
+        try:
+            with open(path, 'r', encoding='utf-8') as f:
+                content = f.read().strip()
+            if content != template:
+                return True
+        except Exception:
+            continue
+    return False
 
 
 # ============= 模板内容 =============
@@ -356,15 +364,18 @@ _你刚刚启动，这是你的第一次对话。_
 
 **重要**: 如果用户第一句话是具体的任务或提问，先回答他们的问题，然后在回复末尾自然地引导初始化（如："顺便问一下，你想怎么称呼我？我该怎么叫你？"）。
 
-## 确定后
+## 信息写入（必须严格执行）
 
-用 `edit` 工具将收集到的信息更新到：
-- `AGENT.md` — 你的名字、角色、性格、交流风格
-- `USER.md` — 用户的姓名、称呼
+每当用户提供了名字、称呼、风格等任何初始化信息时，**必须在当轮回复中立即调用 `edit` 工具写入文件**，不能只口头确认。
 
-## 完成后
+- `AGENT.md` — 你的名字、角色、性格、交流风格（每收到一条相关信息就立即更新对应字段）
+- `USER.md` — 用户的姓名、称呼、基本信息等
 
-用 bash 执行 `rm BOOTSTRAP.md` 删除此文件。你不再需要引导脚本了——你已经是你了。
+⚠️ 只说"记住了"而不调用 edit 写入 = 没有完成。信息只有写入文件才会被持久保存。
+
+## 全部完成后
+
+当 AGENT.md 和 USER.md 的核心字段都已填写后，用 bash 执行 `rm BOOTSTRAP.md` 删除此文件。你不再需要引导脚本了——你已经是你了。
 """
 
 
