@@ -196,6 +196,11 @@ class AgentStreamExecutor:
         # are never stripped mid-execution (which would cause LLM loops).
         self._trim_messages()
 
+        # Validate after trimming: trimming may leave orphaned tool_use at the
+        # boundary (e.g. the last kept turn ends with an assistant tool_use whose
+        # tool_result was in a discarded turn).
+        self._validate_and_fix_messages()
+
         self._emit_event("agent_start")
 
         final_response = ""
