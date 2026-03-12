@@ -177,3 +177,60 @@ def _has_block_type(content: list, block_type: str) -> bool:
         isinstance(b, dict) and b.get("type") == block_type
         for b in content
     )
+
+
+def _extract_text_from_content(content) -> str:
+    """Extract plain text from a message content field (str or list of blocks)."""
+    if isinstance(content, str):
+        return content.strip()
+    if isinstance(content, list):
+        parts = [
+            b.get("text", "")
+            for b in content
+            if isinstance(b, dict) and b.get("type") == "text"
+        ]
+        return "\n".join(p for p in parts if p).strip()
+    return ""
+
+
+def compress_turn_to_text_only(turn: Dict) -> Dict:
+    """
+    Compress a full turn (with tool_use/tool_result chains) into a lightweight
+    text-only turn that keeps only the first user text and the last assistant text.
+
+    This preserves the conversational context (what the user asked and what the
+    agent concluded) while stripping out the bulky intermediate tool interactions.
+
+    Returns a new turn dict with a ``messages`` list; the original is not mutated.
+    """
+    user_text = ""
+    last_assistant_text = ""
+
+    for msg in turn["messages"]:
+        role = msg.get("role")
+        content = msg.get("content", [])
+
+        if role == "user":
+            if isinstance(content, list) and _has_block_type(content, "tool_result"):
+                continue
+            if not user_text:
+                user_text = _extract_text_from_content(content)
+
+        elif role == "assistant":
+            text = _extract_text_from_content(content)
+            if text:
+                last_assistant_text = text
+
+    compressed_messages = []
+    if user_text:
+        compressed_messages.append({
+            "role": "user",
+            "content": [{"type": "text", "text": user_text}]
+        })
+    if last_assistant_text:
+        compressed_messages.append({
+            "role": "assistant",
+            "content": [{"type": "text", "text": last_assistant_text}]
+        })
+
+    return {"messages": compressed_messages}
