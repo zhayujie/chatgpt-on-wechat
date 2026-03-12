@@ -69,6 +69,7 @@ class FeiShuChanel(ChatChannel):
         self._http_server = None
         self._ws_client = None
         self._ws_thread = None
+        self._bot_open_id = None  # cached bot open_id for @-mention matching
         logger.debug("[FeiShu] app_id={}, app_secret={}, verification_token={}, event_mode={}".format(
             self.feishu_app_id, self.feishu_app_secret, self.feishu_token, self.feishu_event_mode))
         # 无需群校验和前缀
@@ -85,10 +86,30 @@ class FeiShuChanel(ChatChannel):
         self.feishu_app_secret = conf().get('feishu_app_secret')
         self.feishu_token = conf().get('feishu_token')
         self.feishu_event_mode = conf().get('feishu_event_mode', 'websocket')
+        self._fetch_bot_open_id()
         if self.feishu_event_mode == 'websocket':
             self._startup_websocket()
         else:
             self._startup_webhook()
+
+    def _fetch_bot_open_id(self):
+        """Fetch the bot's own open_id via API so we can match @-mentions without feishu_bot_name."""
+        try:
+            access_token = self.fetch_access_token()
+            if not access_token:
+                logger.warning("[FeiShu] Cannot fetch bot info: no access_token")
+                return
+            headers = {"Authorization": "Bearer " + access_token}
+            resp = requests.get("https://open.feishu.cn/open-apis/bot/v3/info/", headers=headers, timeout=5)
+            if resp.status_code == 200:
+                data = resp.json()
+                if data.get("code") == 0:
+                    self._bot_open_id = data.get("bot", {}).get("open_id")
+                    logger.info(f"[FeiShu] Bot open_id fetched: {self._bot_open_id}")
+                else:
+                    logger.warning(f"[FeiShu] Fetch bot info failed: code={data.get('code')}, msg={data.get('msg')}")
+        except Exception as e:
+            logger.warning(f"[FeiShu] Fetch bot open_id error: {e}")
 
     def stop(self):
         import ctypes
@@ -147,11 +168,15 @@ class FeiShuChanel(ChatChannel):
         def handle_message_event(data: lark.im.v1.P2ImMessageReceiveV1) -> None:
             """处理接收消息事件 v2.0"""
             try:
-                logger.debug(f"[FeiShu] websocket receive event: {lark.JSON.marshal(data, indent=2)}")
-
-                # 转换为标准的event格式
                 event_dict = json.loads(lark.JSON.marshal(data))
                 event = event_dict.get("event", {})
+                msg = event.get("message", {})
+
+                # Skip group messages that don't @-mention the bot (reduce log noise)
+                if msg.get("chat_type") == "group" and not msg.get("mentions") and msg.get("message_type") == "text":
+                    return
+
+                logger.debug(f"[FeiShu] websocket receive event: {lark.JSON.marshal(data, indent=2)}")
 
                 # 处理消息
                 self._handle_message_event(event)
@@ -236,6 +261,27 @@ class FeiShuChanel(ChatChannel):
         logger.info("[FeiShu] ✅ Websocket thread started, ready to receive messages")
         ws_thread.join()
 
+    def _is_mention_bot(self, mentions: list) -> bool:
+        """Check whether any mention in the list refers to this bot.
+
+        Priority:
+        1. Match by open_id (obtained from /bot/v3/info at startup, no config needed)
+        2. Fallback to feishu_bot_name config for backward compatibility
+        3. If neither is available, assume the first mention is the bot (Feishu only
+           delivers group messages that @-mention the bot, so this is usually correct)
+        """
+        if self._bot_open_id:
+            return any(
+                m.get("id", {}).get("open_id") == self._bot_open_id
+                for m in mentions
+            )
+        bot_name = conf().get("feishu_bot_name")
+        if bot_name:
+            return any(m.get("name") == bot_name for m in mentions)
+        # Feishu event subscription only delivers messages that @-mention the bot,
+        # so reaching here means the bot was indeed mentioned.
+        return True
+
     def _handle_message_event(self, event: dict):
         """
         处理消息事件的核心逻辑
@@ -270,10 +316,9 @@ class FeiShuChanel(ChatChannel):
             if not msg.get("mentions") and msg.get("message_type") == "text":
                 # 群聊中未@不响应
                 return
-            if msg.get("mentions") and msg.get("mentions")[0].get("name") != conf().get("feishu_bot_name") and msg.get(
-                    "message_type") == "text":
-                # 不是@机器人，不响应
-                return
+            if msg.get("mentions") and msg.get("message_type") == "text":
+                if not self._is_mention_bot(msg.get("mentions")):
+                    return
             # 群聊
             is_group = True
             receive_id_type = "chat_id"
