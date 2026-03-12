@@ -431,7 +431,7 @@ class ChatChannel(Channel):
             if session_id not in self.sessions:
                 self.sessions[session_id] = [
                     Dequeue(),
-                    threading.BoundedSemaphore(conf().get("concurrency_in_session", 4)),
+                    threading.BoundedSemaphore(conf().get("concurrency_in_session", 1)),
                 ]
             if context.type == ContextType.TEXT and context.content.startswith("#"):
                 self.sessions[session_id][0].putleft(context)  # 优先处理管理命令
