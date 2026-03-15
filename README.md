@@ -468,11 +468,11 @@ volumes:
 API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn) 创建API Key ，配置如下
 ```json
 {
-    "model": "gemini-3.1-pro-preview",
+    "model": "gemini-3.1-flash-lite-preview",
     "gemini_api_key": ""
 }
 ```
- - `model`: 参考[官方文档-模型列表](https://ai.google.dev/gemini-api/docs/models?hl=zh-cn)，支持 `gemini-3.1-pro-preview、gemini-3-flash-preview、gemini-3-pro-preview、gemini-2.5-pro、gemini-2.0-flash` 等
+ - `model`: 参考[官方文档-模型列表](https://ai.google.dev/gemini-api/docs/models?hl=zh-cn)，支持 `gemini-3.1-flash-lite-preview、gemini-3.1-pro-preview、gemini-3-flash-preview、gemini-3-pro-preview` 等
 </details>
 
 <details>

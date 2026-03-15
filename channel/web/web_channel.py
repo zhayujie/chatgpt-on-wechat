@@ -393,8 +393,8 @@ class ConfigHandler:
         const.KIMI_K2_5, const.KIMI_K2,
         const.DOUBAO_SEED_2_PRO, const.DOUBAO_SEED_2_CODE,
         const.CLAUDE_4_6_SONNET, const.CLAUDE_4_6_OPUS, const.CLAUDE_4_5_SONNET,
-        const.GEMINI_31_PRO_PRE, const.GEMINI_3_FLASH_PRE,
-        const.GPT_5, const.GPT_41, const.GPT_4o,
+        const.GEMINI_31_FLASH_LITE_PRE, const.GEMINI_31_PRO_PRE, const.GEMINI_3_FLASH_PRE,
+        const.GPT_54, const.GPT_5, const.GPT_41, const.GPT_4o,
         const.DEEPSEEK_CHAT, const.DEEPSEEK_REASONER,
     ]
 
@@ -446,14 +446,14 @@ class ConfigHandler:
             "api_key_field": "gemini_api_key",
             "api_base_key": "gemini_api_base",
             "api_base_default": "https://generativelanguage.googleapis.com",
-            "models": [const.GEMINI_31_PRO_PRE, const.GEMINI_3_FLASH_PRE],
+            "models": [const.GEMINI_31_FLASH_LITE_PRE, const.GEMINI_31_PRO_PRE, const.GEMINI_3_FLASH_PRE],
         }),
         ("chatGPT", {
             "label": "OpenAI",
             "api_key_field": "open_ai_api_key",
             "api_base_key": "open_ai_api_base",
             "api_base_default": "https://api.openai.com/v1",
-            "models": [const.GPT_5, const.GPT_41, const.GPT_4o],
+            "models": [const.GPT_54, const.GPT_5, const.GPT_41, const.GPT_4o],
         }),
         ("deepseek", {
             "label": "DeepSeek",

@@ -143,7 +143,7 @@ Agent模式推荐使用以下模型，可根据效果及成本综合选择：
 - **Doubao**: `doubao-seed-2-0-code-preview-260215`
 - **Qwen**: `qwen3.5-plus`
 - **Claude**: `claude-sonnet-4-6`
-- **Gemini**: `gemini-3.1-pro-preview`
+- **Gemini**: `gemini-3.1-flash-lite-preview`
 - **OpenAI**: `gpt-5.4`
 
 详细模型配置方式参考 [README.md 模型说明](../README.md#模型说明)
