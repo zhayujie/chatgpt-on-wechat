@@ -205,7 +205,7 @@ class WecomBotChannel(ChatChannel):
         if errcode is not None and cmd == "":
             if not self._connected:
                 if errcode == 0:
-                    logger.info("[WecomBot] Subscribe success")
+                    logger.info("[WecomBot] ✅ Subscribe success")
                     self._connected = True
                     self._start_heartbeat()
                     self.report_startup_success()
@@ -451,7 +451,7 @@ class WecomBotChannel(ChatChannel):
         if req_id:
             state = self._stream_states.pop(req_id, None)
             if state:
-                final_content = state["committed"] + content
+                final_content = state["committed"]
                 stream_id = state["stream_id"]
             else:
                 final_content = content
@@ -472,7 +472,7 @@ class WecomBotChannel(ChatChannel):
             self._active_send_markdown(content, receiver, is_group)
 
     def _send_image(self, img_path_or_url: str, receiver: str, is_group: bool, req_id: str = None):
-        """Send image reply. Converts to JPG/PNG and compresses if >10MB."""
+        """Send image reply. Converts to JPG/PNG and compresses if >2MB."""
         local_path = img_path_or_url
         if local_path.startswith("file://"):
             local_path = local_path[7:]
@@ -505,7 +505,7 @@ class WecomBotChannel(ChatChannel):
             logger.error(f"[WecomBot] Image file not found: {local_path}")
             return
 
-        max_image_size = 10 * 1024 * 1024  # 10MB limit for image type
+        max_image_size = 2 * 1024 * 1024  # 2MB limit for image upload
         local_path = self._ensure_image_format(local_path)
         if not local_path:
             self._send_text("[Image format conversion failed]", receiver, is_group, req_id)
