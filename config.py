@@ -153,7 +153,6 @@ available_setting = {
     # 企微智能机器人配置(长连接模式)
     "wecom_bot_id": "",  # 企微智能机器人BotID
     "wecom_bot_secret": "",  # 企微智能机器人长连接Secret
-    
     # chatgpt指令自定义触发词
     "clear_memory_commands": ["#清除记忆"],  # 重置会话指令，必须以#开头
     # channel配置

@@ -24,6 +24,8 @@
   "feishu_app_secret": "",
   "dingtalk_client_id": "",
   "dingtalk_client_secret":"",
+  "wecom_bot_id": "",
+  "wecom_bot_secret": "",
   "agent": true,
   "agent_max_context_tokens": 40000,
   "agent_max_context_turns": 20,

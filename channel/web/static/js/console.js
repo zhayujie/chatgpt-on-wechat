@@ -813,6 +813,11 @@ function escapeHtml(str) {
     return div.innerHTML;
 }
 
+function ChannelsHandler_maskSecret(val) {
+    if (!val || val.length <= 8) return val;
+    return val.slice(0, 4) + '*'.repeat(val.length - 8) + val.slice(-4);
+}
+
 function formatToolArgs(args) {
     if (!args || Object.keys(args).length === 0) return '(none)';
     try {
@@ -1737,7 +1742,14 @@ function submitAddChannel() {
     .then(data => {
         if (data.status === 'success') {
             const ch = channelsData.find(c => c.name === chName);
-            if (ch) ch.active = true;
+            if (ch) {
+                ch.active = true;
+                (ch.fields || []).forEach(f => {
+                    if (updates[f.key] !== undefined) {
+                        f.value = f.type === 'secret' ? ChannelsHandler_maskSecret(updates[f.key]) : updates[f.key];
+                    }
+                });
+            }
             renderActiveChannels();
         } else {
             if (btn) { btn.disabled = false; btn.textContent = t('channels_connect_btn'); }
