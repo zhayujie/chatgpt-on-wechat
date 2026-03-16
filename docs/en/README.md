@@ -7,7 +7,7 @@
   [<a href="https://github.com/zhayujie/chatgpt-on-wechat/blob/master/README.md">中文</a>] | [English]
 </p>
 
-**CowAgent** is an AI super assistant powered by LLMs, capable of autonomous task planning, operating computers and external resources, creating and executing Skills, and continuously growing with long-term memory. It supports flexible model switching, handles text, voice, images, and files, and can be integrated into Web, Feishu, DingTalk, WeCom, and WeChat Official Account — running 7×24 hours on your personal computer or server.
+**CowAgent** is an AI super assistant powered by LLMs, capable of autonomous task planning, operating computers and external resources, creating and executing Skills, and continuously growing with long-term memory. It supports flexible model switching, handles text, voice, images, and files, and can be integrated into Web, Feishu, DingTalk, WeCom Bot, WeCom App, and WeChat Official Account — running 7×24 hours on your personal computer or server.
 
 <p align="center">
   <a href="https://cowagent.ai/">🌐 Website</a> &nbsp;·&nbsp;
@@ -139,6 +139,7 @@ Supports multiple platforms. Set `channel_type` in `config.json` to switch:
 | Web (default) | `web` | [Web Channel](https://docs.cowagent.ai/en/channels/web) |
 | Feishu | `feishu` | [Feishu Setup](https://docs.cowagent.ai/en/channels/feishu) |
 | DingTalk | `dingtalk` | [DingTalk Setup](https://docs.cowagent.ai/en/channels/dingtalk) |
+| WeCom Bot | `wecom_bot` | [WeCom Bot Setup](https://docs.cowagent.ai/en/channels/wecom-bot) |
 | WeCom App | `wechatcom_app` | [WeCom Setup](https://docs.cowagent.ai/en/channels/wecom) |
 | WeChat MP | `wechatmp` / `wechatmp_service` | [WeChat MP Setup](https://docs.cowagent.ai/en/channels/wechatmp) |
 | Terminal | `terminal` | — |
