@@ -36,6 +36,30 @@ PPT_SUFFIXES: Set[str] = {".ppt", ".pptx"}
 
 ALL_DOC_SUFFIXES = PDF_SUFFIXES | WORD_SUFFIXES | TEXT_SUFFIXES | SPREADSHEET_SUFFIXES | PPT_SUFFIXES
 
+_CHARSET_RE = re.compile(r'charset\s*=\s*["\']?\s*([\w\-]+)', re.IGNORECASE)
+_META_CHARSET_RE = re.compile(rb'<meta[^>]+charset\s*=\s*["\']?\s*([\w\-]+)', re.IGNORECASE)
+_META_HTTP_EQUIV_RE = re.compile(
+    rb'<meta[^>]+http-equiv\s*=\s*["\']?Content-Type["\']?[^>]+content\s*=\s*["\'][^"\']*charset=([\w\-]+)',
+    re.IGNORECASE,
+)
+
+
+def _extract_charset_from_content_type(content_type: str) -> Optional[str]:
+    """Extract charset from Content-Type header value."""
+    m = _CHARSET_RE.search(content_type)
+    return m.group(1) if m else None
+
+
+def _extract_charset_from_html_meta(raw_bytes: bytes) -> Optional[str]:
+    """Extract charset from HTML <meta> tags in the first few KB of raw bytes."""
+    m = _META_CHARSET_RE.search(raw_bytes)
+    if m:
+        return m.group(1).decode("ascii", errors="ignore")
+    m = _META_HTTP_EQUIV_RE.search(raw_bytes)
+    if m:
+        return m.group(1).decode("ascii", errors="ignore")
+    return None
+
 
 def _get_url_suffix(url: str) -> str:
     """Extract file extension from URL path, ignoring query params."""
@@ -114,14 +138,7 @@ class WebFetch(BaseTool):
         if self._is_binary_content_type(content_type) and not _is_document_url(url):
             return self._handle_download_by_content_type(url, response, content_type)
 
-        # Fix encoding: use apparent_encoding to auto-detect, but keep Windows encodings as-is
-        if response.apparent_encoding and response.apparent_encoding.lower().startswith("windows"):
-            response.encoding = response.encoding
-        else:
-            response.encoding = response.apparent_encoding
-        if not response.encoding:
-            response.encoding = "utf-8"
-
+        response.encoding = self._detect_encoding(response)
         html = response.text
         title = self._extract_title(html)
         text = self._extract_text(html)
@@ -305,6 +322,35 @@ class WebFetch(BaseTool):
                 text_parts.append(f"--- Slide {slide_num}/{len(prs.slides)} ---\n" + "\n".join(slide_texts))
 
         return "\n\n".join(text_parts)
+
+    # ---- Encoding detection ----
+
+    @staticmethod
+    def _detect_encoding(response: requests.Response) -> str:
+        """Detect response encoding with priority: Content-Type header > HTML meta > chardet > utf-8."""
+        # 1. Check Content-Type header for explicit charset
+        content_type = response.headers.get("Content-Type", "")
+        charset = _extract_charset_from_content_type(content_type)
+        if charset:
+            return charset
+
+        # 2. Scan raw bytes for HTML meta charset declaration
+        raw = response.content[:4096]
+        charset = _extract_charset_from_html_meta(raw)
+        if charset:
+            return charset
+
+        # 3. Use apparent_encoding (chardet-based detection) if confident enough
+        apparent = response.apparent_encoding
+        if apparent:
+            apparent_lower = apparent.lower()
+            # Trust CJK / Windows encodings detected by chardet
+            trusted_prefixes = ("utf", "gb", "big5", "euc", "shift_jis", "iso-2022", "windows", "ascii")
+            if any(apparent_lower.startswith(p) for p in trusted_prefixes):
+                return apparent
+
+        # 4. Fallback
+        return "utf-8"
 
     # ---- Helper methods ----
 

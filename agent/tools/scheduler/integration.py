@@ -134,12 +134,13 @@ def _execute_agent_task(task: dict, agent_bridge):
         elif channel_type == "dingtalk":
             # DingTalk requires msg object, set to None for scheduled tasks
             context["msg"] = None
-            # 如果是单聊，需要传递 sender_staff_id
             if not is_group:
                 sender_staff_id = action.get("dingtalk_sender_staff_id")
                 if sender_staff_id:
                     context["dingtalk_sender_staff_id"] = sender_staff_id
-        
+        elif channel_type == "wecom_bot":
+            context["msg"] = None
+
         # Use Agent to execute the task
         # Mark this as a scheduled task execution to prevent recursive task creation
         context["is_scheduled_task"] = True
@@ -234,7 +235,9 @@ def _execute_send_message(task: dict, agent_bridge):
                     logger.debug(f"[Scheduler] DingTalk single chat: sender_staff_id={sender_staff_id}")
                 else:
                     logger.warning(f"[Scheduler] Task {task['id']}: DingTalk single chat message missing sender_staff_id")
-        
+        elif channel_type == "wecom_bot":
+            context["msg"] = None
+
         # Create reply
         reply = Reply(ReplyType.TEXT, content)
         
@@ -327,31 +330,31 @@ def _execute_tool_call(task: dict, agent_bridge):
             context["request_id"] = request_id
             logger.debug(f"[Scheduler] Generated request_id for web channel: {request_id}")
         elif channel_type == "feishu":
-            # Feishu channel: for scheduled tasks, send as new message (no msg_id to reply to)
             context["receive_id_type"] = "chat_id" if is_group else "open_id"
             context["msg"] = None
             logger.debug(f"[Scheduler] Feishu: receive_id_type={context['receive_id_type']}, is_group={is_group}, receiver={receiver}")
-        
+        elif channel_type == "wecom_bot":
+            context["msg"] = None
+
         reply = Reply(ReplyType.TEXT, content)
-        
+
         # Get channel and send
         from channel.channel_factory import create_channel
-        
+
         try:
             channel = create_channel(channel_type)
             if channel:
-                # For web channel, register the request_id to session mapping
                 if channel_type == "web" and hasattr(channel, 'request_to_session'):
                     channel.request_to_session[request_id] = receiver
                     logger.debug(f"[Scheduler] Registered request_id {request_id} -> session {receiver}")
-                
+
                 channel.send(reply, context)
                 logger.info(f"[Scheduler] Task {task['id']} executed: sent tool result to {receiver}")
             else:
                 logger.error(f"[Scheduler] Failed to create channel: {channel_type}")
         except Exception as e:
             logger.error(f"[Scheduler] Failed to send tool result: {e}")
-            
+
     except Exception as e:
         logger.error(f"[Scheduler] Error in _execute_tool_call: {e}")
 
@@ -409,7 +412,9 @@ def _execute_skill_call(task: dict, agent_bridge):
         elif channel_type == "feishu":
             context["receive_id_type"] = "chat_id" if is_group else "open_id"
             context["msg"] = None
-        
+        elif channel_type == "wecom_bot":
+            context["msg"] = None
+
         # Use Agent to execute the skill
         try:
             # Don't clear history - scheduler tasks use isolated session_id so they won't pollute user conversations

@@ -227,6 +227,7 @@ def _clear_singleton_cache(channel_name: str):
         "wechatcom_app": "channel.wechatcom.wechatcomapp_channel.WechatComAppChannel",
         const.FEISHU: "channel.feishu.feishu_channel.FeiShuChanel",
         const.DINGTALK: "channel.dingtalk.dingtalk_channel.DingTalkChanel",
+        const.WECOM_BOT: "channel.wecom_bot.wecom_bot_channel.WecomBotChannel",
     }
     module_path = cls_map.get(channel_name)
     if not module_path:

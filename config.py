@@ -150,11 +150,14 @@ available_setting = {
     "dingtalk_client_id": "",  # 钉钉机器人Client ID 
     "dingtalk_client_secret": "",  # 钉钉机器人Client Secret
     "dingtalk_card_enabled": False,
+    # 企微智能机器人配置(长连接模式)
+    "wecom_bot_id": "",  # 企微智能机器人BotID
+    "wecom_bot_secret": "",  # 企微智能机器人长连接Secret
     
     # chatgpt指令自定义触发词
     "clear_memory_commands": ["#清除记忆"],  # 重置会话指令，必须以#开头
     # channel配置
-    "channel_type": "",  # 通道类型，支持多渠道同时运行。单个: "feishu"，多个: "feishu, dingtalk" 或 ["feishu", "dingtalk"]。可选值: web,feishu,dingtalk,wechatmp,wechatmp_service,wechatcom_app
+    "channel_type": "",  # 通道类型，支持多渠道同时运行。单个: "feishu"，多个: "feishu, dingtalk" 或 ["feishu", "dingtalk"]。可选值: web,feishu,dingtalk,wecom_bot,wechatmp,wechatmp_service,wechatcom_app
     "web_console": True,  # 是否自动启动Web控制台（默认启动）。设为False可禁用
     "subscribe_msg": "",  # 订阅消息, 支持: wechatmp, wechatmp_service, wechatcom_app
     "debug": False,  # 是否开启debug模式，开启后会打印更多日志
