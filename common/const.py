@@ -186,3 +186,4 @@ MODEL_LIST = MODEL_LIST + GITEE_AI_MODEL_LIST + MODELSCOPE_MODEL_LIST
 # channel
 FEISHU = "feishu"
 DINGTALK = "dingtalk"
+WECOM_BOT = "wecom_bot"

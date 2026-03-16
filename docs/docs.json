@@ -156,6 +156,7 @@
                   "channels/web",
                   "channels/feishu",
                   "channels/dingtalk",
+                  "channels/wecom-bot",
                   "channels/wecom",
                   "channels/wechatmp"
                 ]
@@ -298,6 +299,7 @@
                   "en/channels/web",
                   "en/channels/feishu",
                   "en/channels/dingtalk",
+                  "en/channels/wecom-bot",
                   "en/channels/wecom",
                   "en/channels/wechatmp"
                 ]

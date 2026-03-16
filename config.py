@@ -95,8 +95,6 @@ available_setting = {
     "dashscope_api_key": "",
     # Google Gemini Api Key
     "gemini_api_key": "",
-    # wework的通用配置
-    "wework_smart": True,  # 配置wework是否使用已登录的企业微信，False为多开
     # 语音设置
     "speech_recognition": True,  # 是否开启语音识别
     "group_speech_recognition": False,  # 是否开启群组语音识别
@@ -118,7 +116,7 @@ available_setting = {
     # elevenlabs 语音api配置
     "xi_api_key": "",  # 获取ap的方法可以参考https://docs.elevenlabs.io/api-reference/quick-start/authentication
     "xi_voice_id": "",  # ElevenLabs提供了9种英式、美式等英语发音id，分别是“Adam/Antoni/Arnold/Bella/Domi/Elli/Josh/Rachel/Sam”
-    # 服务时间限制，目前支持itchat
+    # 服务时间限制
     "chat_time_module": False,  # 是否开启服务时间限制
     "chat_start_time": "00:00",  # 服务开始时间
     "chat_stop_time": "24:00",  # 服务结束时间
@@ -127,10 +125,6 @@ available_setting = {
     # baidu翻译api的配置
     "baidu_translate_app_id": "",  # 百度翻译api的appid
     "baidu_translate_app_key": "",  # 百度翻译api的秘钥
-    # itchat的配置
-    "hot_reload": False,  # 是否开启热重载
-    # wechaty的配置
-    "wechaty_puppet_service_token": "",  # wechaty的token
     # wechatmp的配置
     "wechatmp_token": "",  # 微信公众平台的Token
     "wechatmp_port": 8080,  # 微信公众平台的端口,需要端口转发到80或443
@@ -156,11 +150,13 @@ available_setting = {
     "dingtalk_client_id": "",  # 钉钉机器人Client ID 
     "dingtalk_client_secret": "",  # 钉钉机器人Client Secret
     "dingtalk_card_enabled": False,
-    
+    # 企微智能机器人配置(长连接模式)
+    "wecom_bot_id": "",  # 企微智能机器人BotID
+    "wecom_bot_secret": "",  # 企微智能机器人长连接Secret
     # chatgpt指令自定义触发词
     "clear_memory_commands": ["#清除记忆"],  # 重置会话指令，必须以#开头
     # channel配置
-    "channel_type": "",  # 通道类型，支持多渠道同时运行。单个: "feishu"，多个: "feishu, dingtalk" 或 ["feishu", "dingtalk"]。可选值: web,feishu,dingtalk,wechatmp,wechatmp_service,wechatcom_app
+    "channel_type": "",  # 通道类型，支持多渠道同时运行。单个: "feishu"，多个: "feishu, dingtalk" 或 ["feishu", "dingtalk"]。可选值: web,feishu,dingtalk,wecom_bot,wechatmp,wechatmp_service,wechatcom_app
     "web_console": True,  # 是否自动启动Web控制台（默认启动）。设为False可禁用
     "subscribe_msg": "",  # 订阅消息, 支持: wechatmp, wechatmp_service, wechatcom_app
     "debug": False,  # 是否开启debug模式，开启后会打印更多日志

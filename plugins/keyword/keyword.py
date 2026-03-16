@@ -71,7 +71,6 @@ class Keyword(Plugin):
                 response = requests.get(reply_text)
                 with open(file_path, "wb") as f:
                     f.write(response.content)
-                #channel/wechat/wechat_channel.py和channel/wechat_channel.py中缺少ReplyType.FILE类型。
                 reply = Reply()
                 reply.type = ReplyType.FILE
                 reply.content = file_path

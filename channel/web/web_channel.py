@@ -602,6 +602,15 @@ class ChannelsHandler:
                 {"key": "dingtalk_client_secret", "label": "Client Secret", "type": "secret"},
             ],
         }),
+        ("wecom_bot", {
+            "label": {"zh": "企微智能机器人", "en": "WeCom Bot"},
+            "icon": "fa-robot",
+            "color": "emerald",
+            "fields": [
+                {"key": "wecom_bot_id", "label": "Bot ID", "type": "text"},
+                {"key": "wecom_bot_secret", "label": "Secret", "type": "secret"},
+            ],
+        }),
         ("wechatcom_app", {
             "label": {"zh": "企微自建应用", "en": "WeCom App"},
             "icon": "fa-building",

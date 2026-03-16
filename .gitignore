@@ -3,7 +3,6 @@
 .vscode
 .venv
 .vs
-.wechaty/
 __pycache__/
 venv*
 *.pyc
@@ -13,7 +12,6 @@ QR.png
 nohup.out
 tmp
 plugins.json
-itchat.pkl
 *.log
 logs/
 workspace

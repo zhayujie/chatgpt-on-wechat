@@ -12,16 +12,7 @@ def create_channel(channel_type) -> Channel:
     :return: channel instance
     """
     ch = Channel()
-    if channel_type == "wx":
-        from channel.wechat.wechat_channel import WechatChannel
-        ch = WechatChannel()
-    elif channel_type == "wxy":
-        from channel.wechat.wechaty_channel import WechatyChannel
-        ch = WechatyChannel()
-    elif channel_type == "wcf":
-        from channel.wechat.wcf_channel import WechatfChannel
-        ch = WechatfChannel()
-    elif channel_type == "terminal":
+    if channel_type == "terminal":
         from channel.terminal.terminal_channel import TerminalChannel
         ch = TerminalChannel()
     elif channel_type == 'web':
@@ -36,15 +27,15 @@ def create_channel(channel_type) -> Channel:
     elif channel_type == "wechatcom_app":
         from channel.wechatcom.wechatcomapp_channel import WechatComAppChannel
         ch = WechatComAppChannel()
-    elif channel_type == "wework":
-        from channel.wework.wework_channel import WeworkChannel
-        ch = WeworkChannel()
     elif channel_type == const.FEISHU:
         from channel.feishu.feishu_channel import FeiShuChanel
         ch = FeiShuChanel()
     elif channel_type == const.DINGTALK:
         from channel.dingtalk.dingtalk_channel import DingTalkChanel
         ch = DingTalkChanel()
+    elif channel_type == const.WECOM_BOT:
+        from channel.wecom_bot.wecom_bot_channel import WecomBotChannel
+        ch = WecomBotChannel()
     else:
         raise RuntimeError
     ch.channel_type = channel_type

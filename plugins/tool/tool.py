@@ -216,11 +216,6 @@ class Tool(Plugin):
             "browser_use_summary": kwargs.get("browser_use_summary", True),  # 是否对返回结果使用tool功能
             # for url-get tool
             "url_get_use_summary": kwargs.get("url_get_use_summary", True),  # 是否对返回结果使用tool功能
-            # for wechat tool
-            "wechat_hot_reload": kwargs.get("wechat_hot_reload", True),  # 是否使用热重载的方式发送wechat
-            "wechat_cpt_path": kwargs.get("wechat_cpt_path", os.path.join(get_appdata_dir(), "itchat.pkl")),  # wechat 配置文件（`itchat.pkl`）
-            "wechat_send_group": kwargs.get("wechat_send_group", False),  # 是否向群组发送消息
-            "wechat_nickname_mapping": kwargs.get("wechat_nickname_mapping", "{}"),  # 关于人的代号映射关系。键为代号值为微信名（昵称、备注名均可）
             # for wikipedia tool
             "wikipedia_top_k_results": kwargs.get("wikipedia_top_k_results", 2),  # 只返回前k个搜索结果
             # for wolfram-alpha tool

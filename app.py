@@ -221,16 +221,13 @@ def _clear_singleton_cache(channel_name: str):
     a new instance can be created with updated config.
     """
     cls_map = {
-        "wx": "channel.wechat.wechat_channel.WechatChannel",
-        "wxy": "channel.wechat.wechaty_channel.WechatyChannel",
-        "wcf": "channel.wechat.wcf_channel.WechatfChannel",
         "web": "channel.web.web_channel.WebChannel",
         "wechatmp": "channel.wechatmp.wechatmp_channel.WechatMPChannel",
         "wechatmp_service": "channel.wechatmp.wechatmp_channel.WechatMPChannel",
         "wechatcom_app": "channel.wechatcom.wechatcomapp_channel.WechatComAppChannel",
-        "wework": "channel.wework.wework_channel.WeworkChannel",
         const.FEISHU: "channel.feishu.feishu_channel.FeiShuChanel",
         const.DINGTALK: "channel.dingtalk.dingtalk_channel.DingTalkChanel",
+        const.WECOM_BOT: "channel.wecom_bot.wecom_bot_channel.WecomBotChannel",
     }
     module_path = cls_map.get(channel_name)
     if not module_path:
@@ -287,9 +284,6 @@ def run():
             channel_names = _parse_channel_type(raw_channel)
             if not channel_names:
                 channel_names = ["web"]
-
-        if "wxy" in channel_names:
-            os.environ["WECHATY_LOG"] = "warn"
 
         # Auto-start web console unless explicitly disabled
         web_console_enabled = conf().get("web_console", True)
