@@ -59,7 +59,7 @@ COMMANDS = {
     },
     "id": {
         "alias": ["id", "用户"],
-        "desc": "获取用户id",  # wechaty和wechatmp的用户id不会变化，可用于绑定管理员
+        "desc": "获取用户id",
     },
     "reset": {
         "alias": ["reset", "重置会话"],
@@ -204,7 +204,7 @@ class Godcmd(Plugin):
                     COMMANDS["reset"]["alias"].append(custom_command)
 
         self.password = gconf["password"]
-        self.admin_users = gconf["admin_users"]  # 预存的管理员账号，这些账号不需要认证。itchat的用户名每次都会变，不可用
+        self.admin_users = gconf["admin_users"]
         global_config["admin_users"] = self.admin_users
         self.isrunning = True  # 机器人是否运行中
 

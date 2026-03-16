@@ -6,7 +6,7 @@ from common.log import logger
 try:
     import pysilk
 except ImportError:
-    logger.debug("import pysilk failed, wechaty voice message will not be supported.")
+    logger.debug("import pysilk failed, silk voice format will not be supported.")
 
 try:
     from pydub import AudioSegment
