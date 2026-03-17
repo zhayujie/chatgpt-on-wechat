@@ -78,7 +78,7 @@ class WebFetch(BaseTool):
 
     name: str = "web_fetch"
     description: str = (
-        "Fetch content from a URL. For web pages, extracts readable text. "
+        "Fetch content from a http/https URL. For web pages, extracts readable text. "
         "For document files (PDF, Word, TXT, Markdown, Excel, PPT), downloads and parses the file content. "
         "Supported file types: .pdf, .docx, .txt, .md, .csv, .xls, .xlsx, .ppt, .pptx"
     )

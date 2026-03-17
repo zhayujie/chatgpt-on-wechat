@@ -20,6 +20,17 @@ from common.log import logger
 from common.singleton import singleton
 from config import conf
 
+IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".svg"}
+VIDEO_EXTENSIONS = {".mp4", ".webm", ".avi", ".mov", ".mkv"}
+
+
+def _get_upload_dir() -> str:
+    from common.utils import expand_path
+    ws_root = expand_path(conf().get("agent_workspace", "~/cow"))
+    tmp_dir = os.path.join(ws_root, "tmp")
+    os.makedirs(tmp_dir, exist_ok=True)
+    return tmp_dir
+
 
 class WebMessage(ChatMessage):
     def __init__(
@@ -152,10 +163,53 @@ class WebChannel(ChatChannel):
 
         return on_event
 
+    def upload_file(self):
+        """Handle file upload via multipart/form-data. Save to workspace/tmp/ and return metadata."""
+        try:
+            params = web.input(file={}, session_id="")
+            file_obj = params.get("file")
+            session_id = params.get("session_id", "")
+            if file_obj is None or not hasattr(file_obj, "filename") or not file_obj.filename:
+                return json.dumps({"status": "error", "message": "No file uploaded"})
+
+            upload_dir = _get_upload_dir()
+
+            original_name = file_obj.filename
+            ext = os.path.splitext(original_name)[1].lower()
+            safe_name = f"web_{uuid.uuid4().hex[:8]}{ext}"
+            save_path = os.path.join(upload_dir, safe_name)
+
+            with open(save_path, "wb") as f:
+                f.write(file_obj.read() if hasattr(file_obj, "read") else file_obj.value)
+
+            if ext in IMAGE_EXTENSIONS:
+                file_type = "image"
+            elif ext in VIDEO_EXTENSIONS:
+                file_type = "video"
+            else:
+                file_type = "file"
+
+            preview_url = f"/uploads/{safe_name}"
+
+            logger.info(f"[WebChannel] File uploaded: {original_name} -> {save_path} ({file_type})")
+
+            return json.dumps({
+                "status": "success",
+                "file_path": save_path,
+                "file_name": original_name,
+                "file_type": file_type,
+                "preview_url": preview_url,
+            }, ensure_ascii=False)
+
+        except Exception as e:
+            logger.error(f"[WebChannel] File upload error: {e}", exc_info=True)
+            return json.dumps({"status": "error", "message": str(e)})
+
     def post_message(self):
         """
         Handle incoming messages from users via POST request.
         Returns a request_id for tracking this specific request.
+        Supports optional attachments (file paths from /upload).
         """
         try:
             data = web.data()
@@ -163,6 +217,25 @@ class WebChannel(ChatChannel):
             session_id = json_data.get('session_id', f'session_{int(time.time())}')
             prompt = json_data.get('message', '')
             use_sse = json_data.get('stream', True)
+            attachments = json_data.get('attachments', [])
+
+            # Append file references to the prompt (same format as QQ channel)
+            if attachments:
+                file_refs = []
+                for att in attachments:
+                    ftype = att.get("file_type", "file")
+                    fpath = att.get("file_path", "")
+                    if not fpath:
+                        continue
+                    if ftype == "image":
+                        file_refs.append(f"[图片: {fpath}]")
+                    elif ftype == "video":
+                        file_refs.append(f"[视频: {fpath}]")
+                    else:
+                        file_refs.append(f"[文件: {fpath}]")
+                if file_refs:
+                    prompt = prompt + "\n" + "\n".join(file_refs)
+                    logger.info(f"[WebChannel] Attached {len(file_refs)} file(s) to message")
 
             request_id = self._generate_request_id()
             self.request_to_session[request_id] = session_id
@@ -300,6 +373,8 @@ class WebChannel(ChatChannel):
         urls = (
             '/', 'RootHandler',
             '/message', 'MessageHandler',
+            '/upload', 'UploadHandler',
+            '/uploads/(.*)', 'UploadsHandler',
             '/poll', 'PollHandler',
             '/stream', 'StreamHandler',
             '/chat', 'ChatHandler',
@@ -354,6 +429,34 @@ class RootHandler:
 class MessageHandler:
     def POST(self):
         return WebChannel().post_message()
+
+
+class UploadHandler:
+    def POST(self):
+        web.header('Content-Type', 'application/json; charset=utf-8')
+        return WebChannel().upload_file()
+
+
+class UploadsHandler:
+    def GET(self, file_name):
+        """Serve uploaded files from workspace/tmp/ for preview."""
+        try:
+            upload_dir = _get_upload_dir()
+            full_path = os.path.normpath(os.path.join(upload_dir, file_name))
+            if not os.path.abspath(full_path).startswith(os.path.abspath(upload_dir)):
+                raise web.notfound()
+            if not os.path.isfile(full_path):
+                raise web.notfound()
+            content_type = mimetypes.guess_type(full_path)[0] or "application/octet-stream"
+            web.header('Content-Type', content_type)
+            web.header('Cache-Control', 'public, max-age=86400')
+            with open(full_path, 'rb') as f:
+                return f.read()
+        except web.HTTPError:
+            raise
+        except Exception as e:
+            logger.error(f"[WebChannel] Error serving upload: {e}")
+            raise web.notfound()
 
 
 class PollHandler:

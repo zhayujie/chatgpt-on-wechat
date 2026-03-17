@@ -299,7 +299,7 @@ class QQChannel(ChatChannel):
                 self._send_identify()
 
         elif op == OP_HEARTBEAT_ACK:
-            logger.debug("[QQ] Heartbeat ACK received")
+            pass
 
         elif op == OP_HEARTBEAT:
             self._ws_send({"op": OP_HEARTBEAT, "d": self._last_seq})
