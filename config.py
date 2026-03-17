@@ -381,6 +381,8 @@ def load_config():
         "wechatmp_app_secret": "WECHATMP_APP_SECRET",
         "wechatcomapp_agent_id": "WECHATCOMAPP_AGENT_ID",
         "wechatcomapp_secret": "WECHATCOMAPP_SECRET",
+        "qq_app_id": "QQ_APP_ID",
+        "qq_app_secret": "QQ_APP_SECRET"
     }
     injected = 0
     for conf_key, env_key in _CONFIG_TO_ENV.items():

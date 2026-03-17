@@ -179,5 +179,7 @@ Agent支持在多种渠道中使用，只需修改 `config.json` 中的 `channel
 - **飞书接入**：[飞书接入文档](https://docs.link-ai.tech/cow/multi-platform/feishu)
 - **钉钉接入**：[钉钉接入文档](https://docs.link-ai.tech/cow/multi-platform/dingtalk)
 - **企业微信应用接入**：[企微应用文档](https://docs.link-ai.tech/cow/multi-platform/wechat-com)
+- **企微智能机器人**：[企微智能机器人文档](https://docs.link-ai.tech/cow/multi-platform/wecom-bot)
+- **QQ机器人**：[QQ机器人文档](https://docs.link-ai.tech/cow/multi-platform/qq)
 
 更多渠道配置参考：[通道说明](../README.md#通道说明)

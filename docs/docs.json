@@ -157,6 +157,7 @@
                   "channels/feishu",
                   "channels/dingtalk",
                   "channels/wecom-bot",
+                  "channels/qq",
                   "channels/wecom",
                   "channels/wechatmp"
                 ]
@@ -300,6 +301,7 @@
                   "en/channels/feishu",
                   "en/channels/dingtalk",
                   "en/channels/wecom-bot",
+                  "en/channels/qq",
                   "en/channels/wecom",
                   "en/channels/wechatmp"
                 ]

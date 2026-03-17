@@ -409,19 +409,21 @@ select_channel() {
     echo -e "${CYAN}${BOLD}=========================================${NC}"
     echo -e "${YELLOW}1) Feishu (飞书)${NC}"
     echo -e "${YELLOW}2) DingTalk (钉钉)${NC}"
-    echo -e "${YELLOW}3) WeCom (企微应用)${NC}"
-    echo -e "${YELLOW}4) Web (网页)${NC}"
+    echo -e "${YELLOW}3) WeCom Bot (企微智能机器人)${NC}"
+    echo -e "${YELLOW}4) QQ (QQ 机器人)${NC}"
+    echo -e "${YELLOW}5) WeCom App (企微自建应用)${NC}"
+    echo -e "${YELLOW}6) Web (网页)${NC}"
     echo ""
     
     while true; do
         read -p "Enter your choice [press Enter for default: 1 - Feishu]: " channel_choice
         channel_choice=${channel_choice:-1}
         case "$channel_choice" in
-            1|2|3|4)
+            1|2|3|4|5|6)
                 break
                 ;;
             *)
-                echo -e "${RED}Invalid choice. Please enter 1-4.${NC}"
+                echo -e "${RED}Invalid choice. Please enter 1-6.${NC}"
                 ;;
         esac
     done
@@ -456,9 +458,31 @@ configure_channel() {
             ACCESS_INFO="DingTalk channel configured"
             ;;
         3)
-            # WeCom
+            # WeCom Bot
+            CHANNEL_TYPE="wecom_bot"
+            echo -e "${GREEN}Configure WeCom Bot...${NC}"
+            read -p "Enter WeCom Bot ID: " wecom_bot_id
+            read -p "Enter WeCom Bot Secret: " wecom_bot_secret
+            
+            WECOM_BOT_ID="$wecom_bot_id"
+            WECOM_BOT_SECRET="$wecom_bot_secret"
+            ACCESS_INFO="WeCom Bot channel configured"
+            ;;
+        4)
+            # QQ
+            CHANNEL_TYPE="qq"
+            echo -e "${GREEN}Configure QQ Bot...${NC}"
+            read -p "Enter QQ App ID: " qq_app_id
+            read -p "Enter QQ App Secret: " qq_app_secret
+            
+            QQ_APP_ID="$qq_app_id"
+            QQ_APP_SECRET="$qq_app_secret"
+            ACCESS_INFO="QQ Bot channel configured"
+            ;;
+        5)
+            # WeCom App
             CHANNEL_TYPE="wechatcom_app"
-            echo -e "${GREEN}Configure WeCom...${NC}"
+            echo -e "${GREEN}Configure WeCom App...${NC}"
             read -p "Enter WeChat Corp ID: " corp_id
             read -p "Enter WeChat Com App Token: " com_token
             read -p "Enter WeChat Com App Secret: " com_secret
@@ -473,9 +497,9 @@ configure_channel() {
             WECHATCOM_AGENT_ID="$com_agent_id"
             WECHATCOM_AES_KEY="$com_aes_key"
             WECHATCOM_PORT="$com_port"
-            ACCESS_INFO="WeCom channel configured on port ${com_port}"
+            ACCESS_INFO="WeCom App channel configured on port ${com_port}"
             ;;
-        4)
+        6)
             # Web
             CHANNEL_TYPE="web"
             read -p "Enter web port [press Enter for default: 9899]: " web_port
@@ -595,6 +619,72 @@ EOF
   "feishu_app_secret": "",
   "dingtalk_client_id": "${DT_CLIENT_ID}",
   "dingtalk_client_secret": "${DT_CLIENT_SECRET}",
+  "agent": true,
+  "agent_max_context_tokens": 40000,
+  "agent_max_context_turns": 30,
+  "agent_max_steps": 15
+}
+EOF
+            ;;
+        wecom_bot)
+            cat > config.json <<EOF
+{
+  "channel_type": "wecom_bot",
+  "wecom_bot_id": "${WECOM_BOT_ID}",
+  "wecom_bot_secret": "${WECOM_BOT_SECRET}",
+  "model": "${MODEL_NAME}",
+  "open_ai_api_key": "${OPENAI_KEY:-}",
+  "open_ai_api_base": "${OPENAI_BASE:-https://api.openai.com/v1}",
+  "claude_api_key": "${CLAUDE_KEY:-}",
+  "claude_api_base": "${CLAUDE_BASE:-https://api.anthropic.com/v1}",
+  "gemini_api_key": "${GEMINI_KEY:-}",
+  "gemini_api_base": "${GEMINI_BASE:-https://generativelanguage.googleapis.com}",
+  "zhipu_ai_api_key": "${ZHIPU_KEY:-}",
+  "moonshot_api_key": "${MOONSHOT_KEY:-}",
+  "ark_api_key": "${ARK_KEY:-}",
+  "dashscope_api_key": "${DASHSCOPE_KEY:-}",
+  "minimax_api_key": "${MINIMAX_KEY:-}",
+  "voice_to_text": "openai",
+  "text_to_voice": "openai",
+  "voice_reply_voice": false,
+  "speech_recognition": true,
+  "group_speech_recognition": false,
+  "use_linkai": ${USE_LINKAI:-false},
+  "linkai_api_key": "${LINKAI_KEY:-}",
+  "linkai_app_code": "",
+  "agent": true,
+  "agent_max_context_tokens": 40000,
+  "agent_max_context_turns": 30,
+  "agent_max_steps": 15
+}
+EOF
+            ;;
+        qq)
+            cat > config.json <<EOF
+{
+  "channel_type": "qq",
+  "qq_app_id": "${QQ_APP_ID}",
+  "qq_app_secret": "${QQ_APP_SECRET}",
+  "model": "${MODEL_NAME}",
+  "open_ai_api_key": "${OPENAI_KEY:-}",
+  "open_ai_api_base": "${OPENAI_BASE:-https://api.openai.com/v1}",
+  "claude_api_key": "${CLAUDE_KEY:-}",
+  "claude_api_base": "${CLAUDE_BASE:-https://api.anthropic.com/v1}",
+  "gemini_api_key": "${GEMINI_KEY:-}",
+  "gemini_api_base": "${GEMINI_BASE:-https://generativelanguage.googleapis.com}",
+  "zhipu_ai_api_key": "${ZHIPU_KEY:-}",
+  "moonshot_api_key": "${MOONSHOT_KEY:-}",
+  "ark_api_key": "${ARK_KEY:-}",
+  "dashscope_api_key": "${DASHSCOPE_KEY:-}",
+  "minimax_api_key": "${MINIMAX_KEY:-}",
+  "voice_to_text": "openai",
+  "text_to_voice": "openai",
+  "voice_reply_voice": false,
+  "speech_recognition": true,
+  "group_speech_recognition": false,
+  "use_linkai": ${USE_LINKAI:-false},
+  "linkai_api_key": "${LINKAI_KEY:-}",
+  "linkai_app_code": "",
   "agent": true,
   "agent_max_context_tokens": 40000,
   "agent_max_context_turns": 30,

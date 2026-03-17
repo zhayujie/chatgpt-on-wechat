@@ -615,6 +615,15 @@ class ChannelsHandler:
                 {"key": "wecom_bot_secret", "label": "Secret", "type": "secret"},
             ],
         }),
+        ("qq", {
+            "label": {"zh": "QQ 机器人", "en": "QQ Bot"},
+            "icon": "fa-comment",
+            "color": "blue",
+            "fields": [
+                {"key": "qq_app_id", "label": "App ID", "type": "text"},
+                {"key": "qq_app_secret", "label": "App Secret", "type": "secret"},
+            ],
+        }),
         ("wechatcom_app", {
             "label": {"zh": "企微自建应用", "en": "WeCom App"},
             "icon": "fa-building",
