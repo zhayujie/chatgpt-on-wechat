@@ -278,12 +278,13 @@ class AgentBridge:
             tools=tools,
             max_steps=kwargs.get("max_steps", 15),
             output_mode=kwargs.get("output_mode", "logger"),
-            workspace_dir=kwargs.get("workspace_dir"),  # Pass workspace for skills loading
-            enable_skills=kwargs.get("enable_skills", True),  # Enable skills by default
-            memory_manager=kwargs.get("memory_manager"),  # Pass memory manager
+            workspace_dir=kwargs.get("workspace_dir"),
+            skill_manager=kwargs.get("skill_manager"),
+            enable_skills=kwargs.get("enable_skills", True),
+            memory_manager=kwargs.get("memory_manager"),
             max_context_tokens=kwargs.get("max_context_tokens"),
             context_reserve_tokens=kwargs.get("context_reserve_tokens"),
-            runtime_info=kwargs.get("runtime_info")  # Pass runtime_info for dynamic time updates
+            runtime_info=kwargs.get("runtime_info"),
         )
 
         # Log skill loading details

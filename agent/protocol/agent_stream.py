@@ -875,7 +875,7 @@ class AgentStreamExecutor:
         try:
             tool = self.tools.get(tool_name)
             if not tool:
-                raise ValueError(f"Tool '{tool_name}' not found")
+                raise ValueError(self._build_tool_not_found_message(tool_name))
 
             # Set tool context
             tool.model = self.model
@@ -928,6 +928,47 @@ class AgentStreamExecutor:
                 **error_result
             })
             return error_result
+
+    def _build_tool_not_found_message(self, tool_name: str) -> str:
+        """Build a helpful error message when a tool is not found.
+
+        If a skill with the same name exists in skill_manager, read its
+        SKILL.md and include the content so the LLM knows how to use it.
+        """
+        available_tools = list(self.tools.keys())
+        base_msg = f"Tool '{tool_name}' not found. Available tools: {available_tools}"
+
+        skill_manager = getattr(self.agent, 'skill_manager', None)
+        if not skill_manager:
+            return base_msg
+
+        skill_entry = skill_manager.get_skill(tool_name)
+        if not skill_entry:
+            return base_msg
+
+        skill = skill_entry.skill
+        skill_md_path = skill.file_path
+        skill_content = ""
+        try:
+            with open(skill_md_path, 'r', encoding='utf-8') as f:
+                skill_content = f.read()
+        except Exception:
+            skill_content = skill.description
+
+        logger.info(
+            f"[Agent] Tool '{tool_name}' not found, but matched skill '{skill.name}'. "
+            f"Guiding LLM to use the skill instead."
+        )
+
+        return (
+            f"Tool '{tool_name}' is not a built-in tool, but a matching skill "
+            f"'{skill.name}' is available. You should use existing tools (e.g. bash with curl) "
+            f"to accomplish this task following the skill instructions below:\n\n"
+            f"--- SKILL: {skill.name} (path: {skill_md_path}) ---\n"
+            f"{skill_content}\n"
+            f"--- END SKILL ---\n\n"
+            f"Available tools: {available_tools}"
+        )
 
     def _validate_and_fix_messages(self):
         """Delegate to the shared sanitizer (see message_sanitizer.py)."""
