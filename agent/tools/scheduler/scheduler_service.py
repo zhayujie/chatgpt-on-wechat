@@ -61,8 +61,7 @@ class SchedulerService:
                 self._check_and_execute_tasks()
             except Exception as e:
                 logger.error(f"[Scheduler] Error in scheduler loop: {e}")
-            
-            # Sleep for 30 seconds between checks
+
             time.sleep(30)
     
     def _check_and_execute_tasks(self):
@@ -85,12 +84,9 @@ class SchedulerService:
                             "last_run_at": now.isoformat()
                         })
                     else:
-                        # One-time task, disable it
-                        self.task_store.update_task(task['id'], {
-                            "enabled": False,
-                            "last_run_at": now.isoformat()
-                        })
-                        logger.info(f"[Scheduler] One-time task completed and disabled: {task['id']}")
+                        # One-time task completed, remove it
+                        self.task_store.delete_task(task['id'])
+                        logger.info(f"[Scheduler] One-time task completed and removed: {task['id']}")
             except Exception as e:
                 logger.error(f"[Scheduler] Error processing task {task.get('id')}: {e}")
     
@@ -127,14 +123,11 @@ class SchedulerService:
                 if time_diff > 300:  # 5 minutes
                     logger.warning(f"[Scheduler] Task {task['id']} is overdue by {int(time_diff)}s, skipping and scheduling next run")
                     
-                    # For one-time tasks, disable them
+                    # For one-time tasks, remove them directly
                     schedule = task.get("schedule", {})
                     if schedule.get("type") == "once":
-                        self.task_store.update_task(task['id'], {
-                            "enabled": False,
-                            "last_run_at": now.isoformat()
-                        })
-                        logger.info(f"[Scheduler] One-time task {task['id']} expired, disabled")
+                        self.task_store.delete_task(task['id'])
+                        logger.info(f"[Scheduler] One-time task {task['id']} expired, removed")
                         return False
                     
                     # For recurring tasks, calculate next run from now
