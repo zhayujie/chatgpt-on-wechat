@@ -304,6 +304,123 @@ fetch('/config').then(r => r.json()).then(data => {
 const chatInput = document.getElementById('chat-input');
 const sendBtn = document.getElementById('send-btn');
 const messagesDiv = document.getElementById('chat-messages');
+const fileInput = document.getElementById('file-input');
+const attachmentPreview = document.getElementById('attachment-preview');
+
+// Pending attachments: [{file_path, file_name, file_type, preview_url}]
+// Items with _uploading=true are still in flight.
+let pendingAttachments = [];
+let uploadingCount = 0;
+
+function updateSendBtnState() {
+    sendBtn.disabled = uploadingCount > 0 || (!chatInput.value.trim() && pendingAttachments.length === 0);
+}
+
+function renderAttachmentPreview() {
+    if (pendingAttachments.length === 0) {
+        attachmentPreview.classList.add('hidden');
+        attachmentPreview.innerHTML = '';
+        updateSendBtnState();
+        return;
+    }
+    attachmentPreview.classList.remove('hidden');
+    attachmentPreview.innerHTML = pendingAttachments.map((att, idx) => {
+        if (att._uploading) {
+            return `<div class="att-chip att-uploading" data-idx="${idx}">
+                <i class="fas fa-spinner fa-spin"></i>
+                <span class="att-name">${escapeHtml(att.file_name)}</span>
+            </div>`;
+        }
+        if (att.file_type === 'image') {
+            return `<div class="att-thumb" data-idx="${idx}">
+                <img src="${att.preview_url}" alt="${escapeHtml(att.file_name)}">
+                <button class="att-remove" onclick="removeAttachment(${idx})">&times;</button>
+            </div>`;
+        }
+        const icon = att.file_type === 'video' ? 'fa-film' : 'fa-file-alt';
+        return `<div class="att-chip" data-idx="${idx}">
+            <i class="fas ${icon}"></i>
+            <span class="att-name">${escapeHtml(att.file_name)}</span>
+            <button class="att-remove" onclick="removeAttachment(${idx})">&times;</button>
+        </div>`;
+    }).join('');
+    updateSendBtnState();
+}
+
+function removeAttachment(idx) {
+    if (pendingAttachments[idx]?._uploading) return;
+    pendingAttachments.splice(idx, 1);
+    renderAttachmentPreview();
+}
+
+async function handleFileSelect(files) {
+    if (!files || files.length === 0) return;
+    const tasks = [];
+    for (const file of files) {
+        const placeholder = { file_name: file.name, file_type: 'file', _uploading: true };
+        pendingAttachments.push(placeholder);
+        uploadingCount++;
+        renderAttachmentPreview();
+
+        tasks.push((async () => {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('session_id', sessionId);
+            try {
+                const resp = await fetch('/upload', { method: 'POST', body: formData });
+                const data = await resp.json();
+                if (data.status === 'success') {
+                    placeholder.file_path = data.file_path;
+                    placeholder.file_name = data.file_name;
+                    placeholder.file_type = data.file_type;
+                    placeholder.preview_url = data.preview_url;
+                    delete placeholder._uploading;
+                } else {
+                    const i = pendingAttachments.indexOf(placeholder);
+                    if (i !== -1) pendingAttachments.splice(i, 1);
+                }
+            } catch (e) {
+                console.error('Upload failed:', e);
+                const i = pendingAttachments.indexOf(placeholder);
+                if (i !== -1) pendingAttachments.splice(i, 1);
+            }
+            uploadingCount--;
+            renderAttachmentPreview();
+        })());
+    }
+    await Promise.all(tasks);
+}
+
+fileInput.addEventListener('change', function() {
+    handleFileSelect(this.files);
+    this.value = '';
+});
+
+// Drag-and-drop support on chat input area
+const chatInputArea = chatInput.closest('.flex-shrink-0');
+chatInputArea.addEventListener('dragover', (e) => { e.preventDefault(); e.stopPropagation(); chatInputArea.classList.add('drag-over'); });
+chatInputArea.addEventListener('dragleave', (e) => { e.preventDefault(); e.stopPropagation(); chatInputArea.classList.remove('drag-over'); });
+chatInputArea.addEventListener('drop', (e) => {
+    e.preventDefault(); e.stopPropagation();
+    chatInputArea.classList.remove('drag-over');
+    if (e.dataTransfer.files.length) handleFileSelect(e.dataTransfer.files);
+});
+
+// Paste image support
+chatInput.addEventListener('paste', (e) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    const files = [];
+    for (const item of items) {
+        if (item.kind === 'file') {
+            files.push(item.getAsFile());
+        }
+    }
+    if (files.length) {
+        e.preventDefault();
+        handleFileSelect(files);
+    }
+});
 
 chatInput.addEventListener('compositionstart', () => { isComposing = true; });
 chatInput.addEventListener('compositionend', () => { setTimeout(() => { isComposing = false; }, 100); });
@@ -314,7 +431,7 @@ chatInput.addEventListener('input', function() {
     const newH = Math.min(scrollH, 180);
     this.style.height = newH + 'px';
     this.style.overflowY = scrollH > 180 ? 'auto' : 'hidden';
-    sendBtn.disabled = !this.value.trim();
+    updateSendBtnState();
 });
 
 chatInput.addEventListener('keydown', function(e) {
@@ -346,25 +463,37 @@ document.querySelectorAll('.example-card').forEach(card => {
 
 function sendMessage() {
     const text = chatInput.value.trim();
-    if (!text) return;
+    if (!text && pendingAttachments.length === 0) return;
 
     const ws = document.getElementById('welcome-screen');
     if (ws) ws.remove();
 
     const timestamp = new Date();
-    addUserMessage(text, timestamp);
+    const attachments = [...pendingAttachments];
+    addUserMessage(text, timestamp, attachments);
 
     const loadingEl = addLoadingIndicator();
 
     chatInput.value = '';
     chatInput.style.height = '42px';
     chatInput.style.overflowY = 'hidden';
+    pendingAttachments = [];
+    renderAttachmentPreview();
     sendBtn.disabled = true;
+
+    const body = { session_id: sessionId, message: text, stream: true, timestamp: timestamp.toISOString() };
+    if (attachments.length > 0) {
+        body.attachments = attachments.map(a => ({
+            file_path: a.file_path,
+            file_name: a.file_name,
+            file_type: a.file_type,
+        }));
+    }
 
     fetch('/message', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ session_id: sessionId, message: text, stream: true, timestamp: timestamp.toISOString() })
+        body: JSON.stringify(body)
     })
     .then(r => r.json())
     .then(data => {
@@ -574,13 +703,27 @@ function startPolling() {
     poll();
 }
 
-function createUserMessageEl(content, timestamp) {
+function createUserMessageEl(content, timestamp, attachments) {
     const el = document.createElement('div');
     el.className = 'flex justify-end px-4 sm:px-6 py-3';
+
+    let attachHtml = '';
+    if (attachments && attachments.length > 0) {
+        const items = attachments.map(a => {
+            if (a.file_type === 'image') {
+                return `<img src="${a.preview_url}" alt="${escapeHtml(a.file_name)}" class="user-msg-image">`;
+            }
+            const icon = a.file_type === 'video' ? 'fa-film' : 'fa-file-alt';
+            return `<div class="user-msg-file"><i class="fas ${icon}"></i> ${escapeHtml(a.file_name)}</div>`;
+        }).join('');
+        attachHtml = `<div class="user-msg-attachments">${items}</div>`;
+    }
+
+    const textHtml = content ? renderMarkdown(content) : '';
     el.innerHTML = `
         <div class="max-w-[75%] sm:max-w-[60%]">
             <div class="bg-primary-400 text-white rounded-2xl px-4 py-2.5 text-sm leading-relaxed msg-content">
-                ${renderMarkdown(content)}
+                ${attachHtml}${textHtml}
             </div>
             <div class="text-xs text-slate-400 dark:text-slate-500 mt-1.5 text-right">${formatTime(timestamp)}</div>
         </div>
@@ -635,8 +778,8 @@ function createBotMessageEl(content, timestamp, requestId, toolCalls) {
     return el;
 }
 
-function addUserMessage(content, timestamp) {
-    const el = createUserMessageEl(content, timestamp);
+function addUserMessage(content, timestamp, attachments) {
+    const el = createUserMessageEl(content, timestamp, attachments);
     messagesDiv.appendChild(el);
     scrollChatToBottom();
 }

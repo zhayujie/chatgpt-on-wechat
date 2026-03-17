@@ -91,7 +91,7 @@ class SkillLoader:
                 continue
             
             # Check if this is a skill file
-            is_root_md = include_root_files and entry.endswith('.md')
+            is_root_md = include_root_files and entry.endswith('.md') and entry.upper() != 'README.MD'
             is_skill_md = not include_root_files and entry == 'SKILL.md'
             
             if not (is_root_md or is_skill_md):

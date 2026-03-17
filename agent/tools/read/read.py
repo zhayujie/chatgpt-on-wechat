@@ -48,7 +48,8 @@ class Read(BaseTool):
         self.binary_extensions = {'.exe', '.dll', '.so', '.dylib', '.bin', '.dat', '.db', '.sqlite'}
         self.archive_extensions = {'.zip', '.tar', '.gz', '.rar', '.7z', '.bz2', '.xz'}
         self.pdf_extensions = {'.pdf'}
-        
+        self.office_extensions = {'.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx'}
+
         # Readable text formats (will be read with truncation)
         self.text_extensions = {
             '.txt', '.md', '.markdown', '.rst', '.log', '.csv', '.tsv', '.json', '.xml', '.yaml', '.yml',
@@ -57,7 +58,6 @@ class Read(BaseTool):
             '.sh', '.bash', '.zsh', '.fish', '.ps1', '.bat', '.cmd',
             '.sql', '.r', '.m', '.swift', '.kt', '.scala', '.clj', '.erl', '.ex',
             '.dockerfile', '.makefile', '.cmake', '.gradle', '.properties', '.ini', '.conf', '.cfg',
-            '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx'  # Office documents
         }
     
     def execute(self, args: Dict[str, Any]) -> ToolResult:
@@ -120,7 +120,11 @@ class Read(BaseTool):
         # Check if PDF
         if file_ext in self.pdf_extensions:
             return self._read_pdf(absolute_path, path, offset, limit)
-        
+
+        # Check if Office document (.docx, .xlsx, .pptx, etc.)
+        if file_ext in self.office_extensions:
+            return self._read_office(absolute_path, path, file_ext, offset, limit)
+
         # Read text file (with truncation for large files)
         return self._read_text(absolute_path, path, offset, limit)
     
@@ -337,6 +341,116 @@ class Read(BaseTool):
         except Exception as e:
             return ToolResult.fail(f"Error reading file: {str(e)}")
     
+    def _read_office(self, absolute_path: str, display_path: str, file_ext: str,
+                     offset: int = None, limit: int = None) -> ToolResult:
+        """Read Office documents (.docx, .xlsx, .pptx) using python-docx / openpyxl / python-pptx."""
+        try:
+            text = self._extract_office_text(absolute_path, file_ext)
+        except ImportError as e:
+            return ToolResult.fail(str(e))
+        except Exception as e:
+            return ToolResult.fail(f"Error reading Office document: {e}")
+
+        if not text or not text.strip():
+            return ToolResult.success({
+                "content": f"[Office file {Path(absolute_path).name}: no text content could be extracted]",
+            })
+
+        all_lines = text.split('\n')
+        total_lines = len(all_lines)
+
+        start_line = 0
+        if offset is not None:
+            if offset < 0:
+                start_line = max(0, total_lines + offset)
+            else:
+                start_line = max(0, offset - 1)
+                if start_line >= total_lines:
+                    return ToolResult.fail(
+                        f"Error: Offset {offset} is beyond end of content ({total_lines} lines total)"
+                    )
+
+        selected_content = text
+        user_limited_lines = None
+        if limit is not None:
+            end_line = min(start_line + limit, total_lines)
+            selected_content = '\n'.join(all_lines[start_line:end_line])
+            user_limited_lines = end_line - start_line
+        elif offset is not None:
+            selected_content = '\n'.join(all_lines[start_line:])
+
+        truncation = truncate_head(selected_content)
+        start_line_display = start_line + 1
+        output_text = ""
+
+        if truncation.truncated:
+            end_line_display = start_line_display + truncation.output_lines - 1
+            next_offset = end_line_display + 1
+            output_text = truncation.content
+            output_text += f"\n\n[Showing lines {start_line_display}-{end_line_display} of {total_lines}. Use offset={next_offset} to continue.]"
+        elif user_limited_lines is not None and start_line + user_limited_lines < total_lines:
+            remaining = total_lines - (start_line + user_limited_lines)
+            next_offset = start_line + user_limited_lines + 1
+            output_text = truncation.content
+            output_text += f"\n\n[{remaining} more lines in file. Use offset={next_offset} to continue.]"
+        else:
+            output_text = truncation.content
+
+        return ToolResult.success({
+            "content": output_text,
+            "total_lines": total_lines,
+            "start_line": start_line_display,
+            "output_lines": truncation.output_lines,
+        })
+
+    @staticmethod
+    def _extract_office_text(absolute_path: str, file_ext: str) -> str:
+        """Extract plain text from an Office document."""
+        if file_ext in ('.docx', '.doc'):
+            try:
+                from docx import Document
+            except ImportError:
+                raise ImportError("Error: python-docx library not installed. Install with: pip install python-docx")
+            doc = Document(absolute_path)
+            paragraphs = [p.text for p in doc.paragraphs]
+            for table in doc.tables:
+                for row in table.rows:
+                    paragraphs.append('\t'.join(cell.text for cell in row.cells))
+            return '\n'.join(paragraphs)
+
+        if file_ext in ('.xlsx', '.xls'):
+            try:
+                from openpyxl import load_workbook
+            except ImportError:
+                raise ImportError("Error: openpyxl library not installed. Install with: pip install openpyxl")
+            wb = load_workbook(absolute_path, read_only=True, data_only=True)
+            parts = []
+            for ws in wb.worksheets:
+                parts.append(f"--- Sheet: {ws.title} ---")
+                for row in ws.iter_rows(values_only=True):
+                    parts.append('\t'.join(str(c) if c is not None else '' for c in row))
+            wb.close()
+            return '\n'.join(parts)
+
+        if file_ext in ('.pptx', '.ppt'):
+            try:
+                from pptx import Presentation
+            except ImportError:
+                raise ImportError("Error: python-pptx library not installed. Install with: pip install python-pptx")
+            prs = Presentation(absolute_path)
+            parts = []
+            for i, slide in enumerate(prs.slides, 1):
+                parts.append(f"--- Slide {i} ---")
+                for shape in slide.shapes:
+                    if shape.has_text_frame:
+                        for para in shape.text_frame.paragraphs:
+                            text = para.text.strip()
+                            if text:
+                                parts.append(text)
+            return '\n'.join(parts)
+
+        return ""
+
     def _read_pdf(self, absolute_path: str, display_path: str, offset: int = None, limit: int = None) -> ToolResult:
         """
         Read PDF file content
