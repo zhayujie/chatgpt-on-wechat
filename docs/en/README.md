@@ -12,7 +12,8 @@
 <p align="center">
   <a href="https://cowagent.ai/">🌐 Website</a> &nbsp;·&nbsp;
   <a href="https://docs.cowagent.ai/en/intro/index">📖 Docs</a> &nbsp;·&nbsp;
-  <a href="https://docs.cowagent.ai/en/guide/quick-start">🚀 Quick Start</a>
+  <a href="https://docs.cowagent.ai/en/guide/quick-start">🚀 Quick Start</a> &nbsp;·&nbsp;
+  <a href="https://link-ai.tech/cowagent/create">☁️ Try Online</a>
 </p>
 
 ## Introduction
@@ -32,6 +33,10 @@
 1. This project follows the [MIT License](/LICENSE) and is intended for technical research and learning. Users must comply with local laws, regulations, policies, and corporate bylaws. Any illegal or rights-infringing use is prohibited.
 2. Agent mode consumes more tokens than normal chat mode. Choose models based on effectiveness and cost. Agent has access to the host OS — please deploy in trusted environments.
 3. CowAgent focuses on open-source development and does not participate in, authorize, or issue any cryptocurrency.
+
+## Demo
+
+Try online (no deployment needed): [CowAgent](https://link-ai.tech/cowagent/create)
 
 ## Changelog
 
@@ -56,7 +61,7 @@ Full changelog: [Release Notes](https://docs.cowagent.ai/en/releases/overview)
 The project provides a one-click script for installation, configuration, startup, and management:
 
 ```bash
-bash <(curl -sS https://cdn.link-ai.tech/code/cow/run.sh)
+bash <(curl -fsSL https://cdn.link-ai.tech/code/cow/run.sh)
 ```
 
 After running, the Web service starts by default. Access `http://localhost:9899/chat` to chat.

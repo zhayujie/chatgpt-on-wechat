@@ -12,7 +12,8 @@
 <p align="center">
   <a href="https://cowagent.ai/">🌐 官网</a> &nbsp;·&nbsp;
   <a href="https://docs.cowagent.ai/">📖 文档中心</a> &nbsp;·&nbsp;
-  <a href="https://docs.cowagent.ai/guide/quick-start">🚀 快速开始</a>
+  <a href="https://docs.cowagent.ai/guide/quick-start">🚀 快速开始</a> &nbsp;·&nbsp;
+  <a href="https://link-ai.tech/cowagent/create">☁️ 在线体验</a>
 </p>
 
 
@@ -38,6 +39,8 @@
 ## 演示
 
 使用说明(Agent模式)：[CowAgent介绍](https://docs.cowagent.ai/intro/features)
+
+免部署在线体验：[CowAgent](https://link-ai.tech/cowagent/create)
 
 DEMO视频(对话模式)：https://cdn.link-ai.tech/doc/cow_demo.mp4
 
@@ -86,7 +89,7 @@ DEMO视频(对话模式)：https://cdn.link-ai.tech/doc/cow_demo.mp4
 在终端执行以下命令：
 
 ```bash
-bash <(curl -sS https://cdn.link-ai.tech/code/cow/run.sh)
+bash <(curl -fsSL https://cdn.link-ai.tech/code/cow/run.sh)
 ```
 
 脚本使用说明：[一键运行脚本](https://docs.cowagent.ai/guide/quick-start)
