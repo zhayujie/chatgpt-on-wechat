@@ -7,7 +7,7 @@
   [中文] | [<a href="docs/en/README.md">English</a>]
 </p>
 
-**CowAgent** 是基于大模型的超级AI助理，能够主动思考和任务规划、操作计算机和外部资源、创造和执行Skills、拥有长期记忆并不断成长。CowAgent 支持灵活切换多种模型，能处理文本、语音、图片、文件等多模态消息，可接入网页、飞书、钉钉、企微智能机器人、企业微信应用、微信公众号中使用，7*24小时运行于你的个人电脑或服务器中。
+**CowAgent** 是基于大模型的超级AI助理，能够主动思考和任务规划、操作计算机和外部资源、创造和执行Skills、拥有长期记忆并不断成长。CowAgent 支持灵活切换多种模型，能处理文本、语音、图片、文件等多模态消息，可接入网页、飞书、钉钉、企微智能机器人、QQ、企微自建应用、微信公众号中使用，7*24小时运行于你的个人电脑或服务器中。
 
 <p align="center">
   <a href="https://cowagent.ai/">🌐 官网</a> &nbsp;·&nbsp;
@@ -143,7 +143,7 @@ pip3 install -r requirements-optional.txt
 ```bash
 # config.json 文件内容示例
 {
-  "channel_type": "web",                                      # 接入渠道类型，默认为web，支持修改为:feishu,dingtalk,wecom_bot,wechatcom_app,wechatmp_service,wechatmp,terminal
+  "channel_type": "web",                                      # 接入渠道类型，默认为web，支持修改为:feishu,dingtalk,wecom_bot,qq,wechatcom_app,wechatmp_service,wechatmp,terminal
   "model": "MiniMax-M2.5",                                    # 模型名称
   "minimax_api_key": "",                                      # MiniMax API Key
   "zhipu_ai_api_key": "",                                     # 智谱GLM API Key
@@ -702,7 +702,23 @@ API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn)
 </details>
 
 <details>
-<summary>5. WeCom App - 企业微信应用</summary>
+<summary>5. QQ - QQ 机器人</summary>
+
+QQ 机器人使用 WebSocket 长连接模式，无需公网 IP 和域名，支持 QQ 单聊、群聊和频道消息：
+
+```json
+{
+    "channel_type": "qq",
+    "qq_app_id": "YOUR_APP_ID",
+    "qq_app_secret": "YOUR_APP_SECRET"
+}
+```
+详细步骤和参数说明参考 [QQ 机器人接入](https://docs.cowagent.ai/channels/qq)
+
+</details>
+
+<details>
+<summary>6. WeCom App - 企业微信应用</summary>
 
 企业微信自建应用接入需在后台创建应用并启用消息回调，配置示例：
 
@@ -722,7 +738,7 @@ API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn)
 </details>
 
 <details>
-<summary>6. WeChat MP - 微信公众号</summary>
+<summary>7. WeChat MP - 微信公众号</summary>
 
 本项目支持订阅号和服务号两种公众号，通过服务号（`wechatmp_service`）体验更佳。
 
@@ -757,7 +773,7 @@ API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn)
 </details>
 
 <details>
-<summary>7. Terminal - 终端</summary>
+<summary>8. Terminal - 终端</summary>
 
 修改 `config.json` 中的 `channel_type` 字段：
 

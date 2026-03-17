@@ -237,6 +237,8 @@ def _execute_send_message(task: dict, agent_bridge):
                     logger.warning(f"[Scheduler] Task {task['id']}: DingTalk single chat message missing sender_staff_id")
         elif channel_type == "wecom_bot":
             context["msg"] = None
+        elif channel_type == "qq":
+            context["msg"] = None
 
         # Create reply
         reply = Reply(ReplyType.TEXT, content)

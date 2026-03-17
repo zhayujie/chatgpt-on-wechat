@@ -26,6 +26,8 @@ CHANNEL_ACTIONS = {"channel_create", "channel_update", "channel_delete"}
 CREDENTIAL_MAP = {
     "feishu":            ("feishu_app_id",          "feishu_app_secret"),
     "dingtalk":          ("dingtalk_client_id",      "dingtalk_client_secret"),
+    "wecom_bot":         ("wecom_bot_id",            "wecom_bot_secret"),
+    "qq":                ("qq_app_id",               "qq_app_secret"),
     "wechatmp":          ("wechatmp_app_id",         "wechatmp_app_secret"),
     "wechatmp_service":  ("wechatmp_app_id",         "wechatmp_app_secret"),
     "wechatcom_app":     ("wechatcomapp_agent_id",   "wechatcomapp_secret"),
@@ -669,6 +671,12 @@ def _build_config():
     elif current_channel_type in ("wechatmp", "wechatmp_service"):
         config["app_id"] = local_conf.get("wechatmp_app_id")
         config["app_secret"] = local_conf.get("wechatmp_app_secret")
+    elif current_channel_type == "wecom_bot":
+        config["app_id"] = local_conf.get("wecom_bot_id")
+        config["app_secret"] = local_conf.get("wecom_bot_secret")
+    elif current_channel_type == "qq":
+        config["app_id"] = local_conf.get("qq_app_id")
+        config["app_secret"] = local_conf.get("qq_app_secret")
     elif current_channel_type == "wechatcom_app":
         config["app_id"] = local_conf.get("wechatcomapp_agent_id")
         config["app_secret"] = local_conf.get("wechatcomapp_secret")

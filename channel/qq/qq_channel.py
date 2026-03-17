@@ -130,7 +130,7 @@ class QQChannel(ChatChannel):
             self._access_token = data.get("access_token", "")
             expires_in = int(data.get("expires_in", 7200))
             self._token_expires_at = time.time() + expires_in - 60
-            logger.info(f"[QQ] Access token refreshed, expires_in={expires_in}s")
+            logger.debug(f"[QQ] Access token refreshed, expires_in={expires_in}s")
         except Exception as e:
             logger.error(f"[QQ] Failed to refresh access_token: {e}")
 
@@ -159,7 +159,7 @@ class QQChannel(ChatChannel):
             )
             resp.raise_for_status()
             url = resp.json().get("url", "")
-            logger.info(f"[QQ] Gateway URL: {url}")
+            logger.debug(f"[QQ] Gateway URL: {url}")
             return url
         except Exception as e:
             logger.error(f"[QQ] Failed to get gateway URL: {e}")
@@ -173,7 +173,7 @@ class QQChannel(ChatChannel):
             return
 
         def _on_open(ws):
-            logger.info("[QQ] WebSocket connected, waiting for Hello...")
+            logger.debug("[QQ] WebSocket connected, waiting for Hello...")
 
         def _on_message(ws, raw):
             try:
@@ -242,7 +242,7 @@ class QQChannel(ChatChannel):
                 },
             },
         })
-        logger.info(f"[QQ] Identify sent with intents={DEFAULT_INTENTS}")
+        logger.debug(f"[QQ] Identify sent with intents={DEFAULT_INTENTS}")
 
     def _send_resume(self):
         self._ws_send({
@@ -253,7 +253,7 @@ class QQChannel(ChatChannel):
                 "seq": self._last_seq,
             },
         })
-        logger.info(f"[QQ] Resume sent: session_id={self._session_id}, seq={self._last_seq}")
+        logger.debug(f"[QQ] Resume sent: session_id={self._session_id}, seq={self._last_seq}")
 
     def _start_heartbeat(self, interval_ms: int):
         if self._heartbeat_thread and self._heartbeat_thread.is_alive():
@@ -291,7 +291,7 @@ class QQChannel(ChatChannel):
 
         if op == OP_HELLO:
             heartbeat_interval = d.get("heartbeat_interval", 45000) if d else 45000
-            logger.info(f"[QQ] Received Hello, heartbeat_interval={heartbeat_interval}ms")
+            logger.debug(f"[QQ] Received Hello, heartbeat_interval={heartbeat_interval}ms")
             self._heartbeat_interval = heartbeat_interval
             if self._can_resume and self._session_id:
                 self._send_resume()
@@ -321,8 +321,8 @@ class QQChannel(ChatChannel):
             if t == "READY":
                 self._session_id = d.get("session_id", "")
                 user = d.get("user", {})
-                logger.info(f"[QQ] Ready: session_id={self._session_id}, "
-                            f"bot={user.get('username', '')}")
+                bot_name = user.get('username', '')
+                logger.info(f"[QQ] ✅ Connected successfully (bot={bot_name})")
                 self._connected = True
                 self._can_resume = False
                 self._start_heartbeat(self._heartbeat_interval)
@@ -445,8 +445,13 @@ class QQChannel(ChatChannel):
 
     def send(self, reply: Reply, context: Context):
         msg = context.get("msg")
+        is_group = context.get("isgroup", False)
+        receiver = context.get("receiver", "")
+
         if not msg:
-            logger.warning("[QQ] No msg in context, cannot send reply")
+            # Active send (e.g. scheduled tasks), no original message to reply to
+            self._active_send_text(reply.content if reply.type == ReplyType.TEXT else str(reply.content),
+                                   receiver, is_group)
             return
 
         event_type = getattr(msg, "event_type", "")
@@ -520,6 +525,26 @@ class QQChannel(ChatChannel):
                              f"body={resp.text}")
         except Exception as e:
             logger.error(f"[QQ] Send message error: {e}")
+
+    # ------------------------------------------------------------------
+    # Active send (no original message, e.g. scheduled tasks)
+    # ------------------------------------------------------------------
+
+    def _active_send_text(self, content: str, receiver: str, is_group: bool):
+        """Send text without an original message (active push). QQ limits active messages to 4/month per user."""
+        if not receiver:
+            logger.warning("[QQ] No receiver for active send")
+            return
+        if is_group:
+            url = f"{QQ_API_BASE}/v2/groups/{receiver}/messages"
+        else:
+            url = f"{QQ_API_BASE}/v2/users/{receiver}/messages"
+        body = {
+            "content": content,
+            "msg_type": 0,
+        }
+        event_label = "GROUP_ACTIVE" if is_group else "C2C_ACTIVE"
+        self._post_message(url, body, event_label)
 
     # ------------------------------------------------------------------
     # Send text
