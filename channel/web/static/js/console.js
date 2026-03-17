@@ -849,6 +849,7 @@ let configProviders = {};
 let configApiBases = {};
 let configApiKeys = {};
 let configCurrentModel = '';
+let configHasBotType = false;
 let cfgProviderValue = '';
 let cfgModelValue = '';
 
@@ -908,6 +909,7 @@ function initConfigView(data) {
     configApiBases = data.api_bases || {};
     configApiKeys = data.api_keys || {};
     configCurrentModel = data.model || '';
+    configHasBotType = !!data.has_bot_type;
 
     const providerEl = document.getElementById('cfg-provider');
     const providerOpts = Object.entries(configProviders).map(([pid, p]) => ({ value: pid, label: p.label }));
@@ -1069,13 +1071,8 @@ function saveModelConfig() {
     const updates = { model: model };
     const p = configProviders[cfgProviderValue];
     updates.use_linkai = (cfgProviderValue === 'linkai');
-    // Save bot_type for bot_factory routing.
-    // Most providers use their key directly as bot_type.
-    // linkai uses use_linkai flag instead of bot_type.
-    if (cfgProviderValue === 'linkai') {
-        updates.bot_type = '';
-    } else {
-        updates.bot_type = cfgProviderValue;
+    if (configHasBotType) {
+        updates.bot_type = (cfgProviderValue === 'linkai') ? '' : cfgProviderValue;
     }
     if (p && p.api_base_key) {
         const base = document.getElementById('cfg-api-base').value.trim();
