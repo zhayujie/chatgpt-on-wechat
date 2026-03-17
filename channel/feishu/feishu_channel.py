@@ -491,7 +491,7 @@ class FeiShuChanel(ChatChannel):
             "app_secret": self.feishu_app_secret
         }
         data = bytes(json.dumps(req_body), encoding='utf8')
-        response = requests.post(url=url, data=data, headers=headers)
+        response = requests.post(url=url, data=data, headers=headers, timeout=10.0)
         if response.status_code == 200:
             res = response.json()
             if res.get("code") != 0:
@@ -520,7 +520,7 @@ class FeiShuChanel(ChatChannel):
             headers = {'Authorization': f'Bearer {access_token}'}
 
             with open(local_path, "rb") as file:
-                upload_response = requests.post(upload_url, files={"image": file}, data=data, headers=headers)
+                upload_response = requests.post(upload_url, files={"image": file}, data=data, headers=headers, timeout=10.0)
                 logger.info(f"[FeiShu] upload file, res={upload_response.content}")
 
                 response_data = upload_response.json()
