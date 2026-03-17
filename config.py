@@ -372,6 +372,15 @@ def load_config():
         "moonshot_api_base": "MOONSHOT_API_BASE",
         "ark_api_key": "ARK_API_KEY",
         "ark_api_base": "ARK_API_BASE",
+        # Channel credentials (used by skills that check env vars)
+        "feishu_app_id": "FEISHU_APP_ID",
+        "feishu_app_secret": "FEISHU_APP_SECRET",
+        "dingtalk_client_id": "DINGTALK_CLIENT_ID",
+        "dingtalk_client_secret": "DINGTALK_CLIENT_SECRET",
+        "wechatmp_app_id": "WECHATMP_APP_ID",
+        "wechatmp_app_secret": "WECHATMP_APP_SECRET",
+        "wechatcomapp_agent_id": "WECHATCOMAPP_AGENT_ID",
+        "wechatcomapp_secret": "WECHATCOMAPP_SECRET",
     }
     injected = 0
     for conf_key, env_key in _CONFIG_TO_ENV.items():

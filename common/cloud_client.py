@@ -254,6 +254,8 @@ class CloudClient(LinkAIClient):
                                  app_id, app_secret) -> bool:
         """
         Write app_id / app_secret into the correct config keys for *channel_type*.
+        Also syncs the values to environment variables (upper-cased key) so that
+        skills that rely on env-based checks (e.g. has_env_var) work immediately.
         Returns True if any value actually changed.
         """
         cred = CREDENTIAL_MAP.get(channel_type)
@@ -263,10 +265,14 @@ class CloudClient(LinkAIClient):
         changed = False
         if app_id is not None and local_config.get(id_key) != app_id:
             local_config[id_key] = app_id
+            os.environ[id_key.upper()] = str(app_id)
             changed = True
         if app_secret is not None and local_config.get(secret_key) != app_secret:
             local_config[secret_key] = app_secret
+            os.environ[secret_key.upper()] = str(app_secret)
             changed = True
+        if changed:
+            logger.info(f"[CloudClient] Synced {channel_type} credentials to conf and env")
         return changed
 
     @staticmethod
@@ -277,6 +283,8 @@ class CloudClient(LinkAIClient):
         id_key, secret_key = cred
         local_config.pop(id_key, None)
         local_config.pop(secret_key, None)
+        os.environ.pop(id_key.upper(), None)
+        os.environ.pop(secret_key.upper(), None)
 
     # ------------------------------------------------------------------
     # channel_type list helpers
