@@ -102,9 +102,9 @@ bash <(curl -fsSL https://cdn.link-ai.tech/code/cow/run.sh)
 
 项目支持国内外主流厂商的模型接口，可选模型及配置说明参考：[模型说明](#模型说明)。
 
-> 注：Agent模式下推荐使用以下模型，可根据效果及成本综合选择：MiniMax-M2.5、glm-5、kimi-k2.5、qwen3.5-plus、claude-sonnet-4-6、gemini-3.1-pro-preview、gpt-5.4
+> 注：Agent模式下推荐使用以下模型，可根据效果及成本综合选择：MiniMax-M2.5、glm-5、kimi-k2.5、qwen3.5-plus、claude-sonnet-4-6、gemini-3.1-pro-preview、gpt-5.4、gpt-5.4-mini
 
-同时支持使用 **LinkAI平台** 接口，可灵活切换 OpenAI、Claude、Gemini、DeepSeek、Qwen、Kimi 等多种常用模型，并支持知识库、工作流、插件等Agent能力，参考 [接口文档](https://docs.link-ai.tech/platform/api)。
+同时支持使用 **LinkAI平台** 接口，支持上述全部模型，并支持知识库、工作流、插件等Agent技能，参考 [接口文档](https://docs.link-ai.tech/platform/api)。
 
 ### 2.环境安装
 
@@ -226,8 +226,9 @@ nohup python3 app.py & tail -f nohup.out
 
 执行后程序运行于服务器后台，可通过 `ctrl+c` 关闭日志，不会影响后台程序的运行。使用 `ps -ef | grep app.py | grep -v grep` 命令可查看运行于后台的进程，如果想要重新启动程序可以先 `kill` 掉对应的进程。 日志关闭后如果想要再次打开只需输入 `tail -f nohup.out`。 
 
-此外，项目的 `scripts` 目录下有一键运行、关闭程序的脚本供使用。 运行后默认channel为web，通过可以通过修改配置文件进行切换。
+此外，项目根目录下的 `run.sh` 脚本支持一键启动和管理服务，包括 `./run.sh start`、`./run.sh stop`、`./run.sh restart`、`./run.sh logs` 等命令，执行 `./run.sh help` 可查看全部用法。
 
+> 如果需要通过浏览器访问Web控制台，请确保服务器的 `9899` 端口已在防火墙或安全组中放行，建议仅对指定IP开放以保证安全。
 
 ### 3.Docker部署
 
@@ -257,17 +258,7 @@ sudo docker compose up -d         # 若docker-compose为 1.X 版本，则执行 
 sudo docker logs -f chatgpt-on-wechat
 ```
 
-**(3) 插件使用**
-
-如果需要在docker容器中修改插件配置，可通过挂载的方式完成，将 [插件配置文件](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/plugins/config.json.template)
-重命名为 `config.json`，放置于 `docker-compose.yml` 相同目录下，并在 `docker-compose.yml` 中的 `chatgpt-on-wechat` 部分下添加 `volumes` 映射:
-
-```
-volumes:
-  - ./config.json:/app/plugins/config.json
-```
-**注**：使用docker方式部署的详细教程可以参考：[docker部署CoW项目](https://www.wangpc.cc/ai/docker-deploy-cow/)
-
+> 如果需要通过浏览器访问Web控制台，请确保服务器的 `9899` 端口已在防火墙或安全组中放行，建议仅对指定IP开放以保证安全。
 
 ## 模型说明
 
@@ -613,7 +604,7 @@ API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn)
 </details>
 
 <details>
-<summary>Coding Plan (编程包月套餐)</summary>
+<summary>Coding Plan</summary>
 
 Coding Plan 是各厂商推出的编程包月套餐，所有厂商均可通过 OpenAI 兼容方式接入：
 

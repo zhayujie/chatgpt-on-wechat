@@ -30,10 +30,19 @@ user_session = dict()
 class ClaudeAPIBot(Bot, OpenAIImage):
     def __init__(self):
         super().__init__()
-        self.api_key = conf().get("claude_api_key")
-        self.api_base = conf().get("claude_api_base") or "https://api.anthropic.com/v1"
-        self.proxy = conf().get("proxy", None)
         self.sessions = SessionManager(BaiduWenxinSession, model=conf().get("model") or "text-davinci-003")
+
+    @property
+    def api_key(self):
+        return conf().get("claude_api_key")
+
+    @property
+    def api_base(self):
+        return conf().get("claude_api_base") or "https://api.anthropic.com/v1"
+
+    @property
+    def proxy(self):
+        return conf().get("proxy", None)
 
     def reply(self, query, context=None):
         # acquire reply content

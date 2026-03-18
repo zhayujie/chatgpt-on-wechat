@@ -56,9 +56,13 @@ python3 app.py
 nohup python3 app.py & tail -f nohup.out
 ```
 
+<Tip>
+  如果在服务器上部署，需要在防火墙或安全组中放行 `9899` 端口才能通过浏览器访问 Web 控制台，建议仅对指定IP开放以保证安全。
+</Tip>
+
 ## Docker 部署
 
-使用 Docker 部署无需下载源码和安装依赖。Agent 模式下更推荐使用源码部署以获得更多系统访问能力。
+使用 Docker 部署无需下载源码和安装依赖。Agent模式下更推荐使用源码部署以获得更多系统访问能力。
 
 <Note>
   需要安装 [Docker](https://docs.docker.com/engine/install/) 和 docker-compose。
@@ -83,6 +87,10 @@ sudo docker compose up -d
 ```bash
 sudo docker logs -f chatgpt-on-wechat
 ```
+
+<Tip>
+  如果在服务器上部署，需要在防火墙或安全组中放行 `9899` 端口才能通过浏览器访问 Web 控制台，建议仅对指定IP开放以保证安全。
+</Tip>
 
 ## 核心配置项
 

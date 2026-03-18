@@ -28,21 +28,18 @@ class GoogleGeminiBot(Bot):
 
     def __init__(self):
         super().__init__()
-        self.api_key = conf().get("gemini_api_key")
-        # 复用chatGPT的token计算方式
         self.sessions = SessionManager(ChatGPTSession, model=conf().get("model") or "gpt-3.5-turbo")
-        self.model = conf().get("model") or "gemini-pro"
-        if self.model == "gemini":
-            self.model = "gemini-pro"
-        
-        # 支持自定义API base地址
-        self.api_base = conf().get("gemini_api_base", "").strip()
-        if self.api_base:
-            # 移除末尾的斜杠
-            self.api_base = self.api_base.rstrip('/')
-            logger.info(f"[Gemini] Using custom API base: {self.api_base}")
-        else:
-            self.api_base = "https://generativelanguage.googleapis.com"
+
+    @property
+    def api_key(self):
+        return conf().get("gemini_api_key")
+
+    @property
+    def api_base(self):
+        base = conf().get("gemini_api_base", "").strip()
+        if base:
+            return base.rstrip('/')
+        return "https://generativelanguage.googleapis.com"
 
     def reply(self, query, context: Context = None) -> Reply:
         session_id = None

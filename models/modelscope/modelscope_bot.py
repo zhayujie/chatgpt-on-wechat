@@ -26,8 +26,14 @@ class ModelScopeBot(Bot):
             "temperature": conf().get("temperature", 0.3),  # 如果设置，值域须为 [0, 1] 我们推荐 0.3，以达到较合适的效果。
             "top_p": conf().get("top_p", 1.0),  # 使用默认值
         }
-        self.api_key = conf().get("modelscope_api_key")
-        self.base_url = conf().get("modelscope_base_url", "https://api-inference.modelscope.cn/v1/chat/completions")
+
+    @property
+    def api_key(self):
+        return conf().get("modelscope_api_key")
+
+    @property
+    def base_url(self):
+        return conf().get("modelscope_base_url", "https://api-inference.modelscope.cn/v1/chat/completions")
         """
         需要获取ModelScope支持API-inference的模型名称列表，请到魔搭社区官网模型中心查看 https://modelscope.cn/models?filter=inference_type&page=1。
         或者使用命令 curl https://api-inference.modelscope.cn/v1/models 对模型列表和ID进行获取。查看commend/const.py文件也可以获取模型列表。

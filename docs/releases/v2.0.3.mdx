@@ -55,6 +55,12 @@ Web 控制台对话界面支持文件和图片上传，可直接发送文件给 
 - **图片识别**：将图片识别（Image Vision）从 Skill 重构为内置 Tool，新增独立的图片视觉提供方（Vision Provider）配置，提升稳定性和可维护性 ([a50fafa](https://github.com/zhayujie/chatgpt-on-wechat/commit/a50fafa), [3b8b562](https://github.com/zhayujie/chatgpt-on-wechat/commit/3b8b562))
 - **网页抓取**：将网页抓取（Web Fetch）从 Skill 重构为内置 Tool，支持远程文档文件（PDF、Word、Excel、PPT）的下载和解析 ([ccb9030](https://github.com/zhayujie/chatgpt-on-wechat/commit/ccb9030), [fa61744](https://github.com/zhayujie/chatgpt-on-wechat/commit/fa61744))
 
+## 🐳 Docker 部署优化
+
+- **配置模板对齐**：`docker-compose.yml` 环境变量与 `config-template.json` 对齐，补充完整的模型 API Key 和 Agent 等配置项
+- **Web 控制台端口映射**：新增 `9899` 端口映射，Docker 部署后可通过浏览器访问 Web 控制台
+- **配置热更新**：各模型 Bot 的 API Key 和 API Base 改为实时读取，通过 Web 控制台修改配置后无需重启即可生效
+
 ## ⚡ 性能优化
 
 - **启动加速**：飞书通道采用懒加载方式导入依赖，避免 4-10 秒的启动延迟 ([924dc79](https://github.com/zhayujie/chatgpt-on-wechat/commit/924dc79))

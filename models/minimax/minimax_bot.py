@@ -24,20 +24,18 @@ class MinimaxBot(Bot):
             "temperature": conf().get("temperature", 0.3),
             "top_p": conf().get("top_p", 0.95),
         }
-        # Use unified key name: minimax_api_key
-        self.api_key = conf().get("minimax_api_key")
-        if not self.api_key:
-            # Fallback to old key name for backward compatibility
-            self.api_key = conf().get("Minimax_api_key")
-            if self.api_key:
-                logger.warning("[MINIMAX] 'Minimax_api_key' is deprecated, please use 'minimax_api_key' instead")
-
-        # REST API endpoint
-        # Use Chinese endpoint by default, users can override in config
-        # International users should set: "minimax_api_base": "https://api.minimax.io/v1"
-        self.api_base = conf().get("minimax_api_base", "https://api.minimaxi.com/v1")
-
         self.sessions = SessionManager(MinimaxSession, model=const.MiniMax)
+
+    @property
+    def api_key(self):
+        key = conf().get("minimax_api_key")
+        if not key:
+            key = conf().get("Minimax_api_key")
+        return key
+
+    @property
+    def api_base(self):
+        return conf().get("minimax_api_base", "https://api.minimaxi.com/v1")
 
     def reply(self, query, context: Context = None) -> Reply:
         # acquire reply content

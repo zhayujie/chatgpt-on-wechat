@@ -26,13 +26,17 @@ class MoonshotBot(Bot):
             "temperature": conf().get("temperature", 0.3),
             "top_p": conf().get("top_p", 1.0),
         }
-        self.api_key = conf().get("moonshot_api_key")
-        self.base_url = conf().get("moonshot_base_url", "https://api.moonshot.cn/v1")
-        # Ensure base_url does not end with /chat/completions (backward compat)
-        if self.base_url.endswith("/chat/completions"):
-            self.base_url = self.base_url.rsplit("/chat/completions", 1)[0]
-        if self.base_url.endswith("/"):
-            self.base_url = self.base_url.rstrip("/")
+
+    @property
+    def api_key(self):
+        return conf().get("moonshot_api_key")
+
+    @property
+    def base_url(self):
+        url = conf().get("moonshot_base_url", "https://api.moonshot.cn/v1")
+        if url.endswith("/chat/completions"):
+            url = url.rsplit("/chat/completions", 1)[0]
+        return url.rstrip("/")
 
     def reply(self, query, context=None):
         # acquire reply content
