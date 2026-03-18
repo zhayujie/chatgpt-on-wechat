@@ -339,7 +339,7 @@ class CloudClient(LinkAIClient):
             self.channel_mgr.add_channel(channel_type)
             logger.info(f"[CloudClient] Channel '{channel_type}' added successfully")
         except Exception as e:
-            logger.error(f"[CloudClient] Failed to add channel '{channel_type}': {e}")
+            logger.error(f"[CloudClient] Failed to add channel '{channel_type}': {e}", exc_info=True)
             self.send_channel_status(channel_type, "error", str(e))
             return
         self._report_channel_startup(channel_type)
