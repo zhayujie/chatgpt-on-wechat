@@ -35,7 +35,7 @@ class Vision(BaseTool):
 
     name: str = "vision"
     description: str = (
-        "Analyze an image (local file or URL) using Vision API. "
+        "Analyze a local image or image URL (jpg/jpeg/png) using Vision API. "
         "Can describe content, extract text, identify objects, colors, etc. "
         "Requires OPENAI_API_KEY or LINKAI_API_KEY."
     )
