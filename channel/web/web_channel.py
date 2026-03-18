@@ -551,7 +551,7 @@ class ConfigHandler:
             "api_base_default": "https://generativelanguage.googleapis.com",
             "models": [const.GEMINI_31_FLASH_LITE_PRE, const.GEMINI_31_PRO_PRE, const.GEMINI_3_FLASH_PRE],
         }),
-        ("chatGPT", {
+        ("openai", {
             "label": "OpenAI",
             "api_key_field": "open_ai_api_key",
             "api_base_key": "open_ai_api_base",
@@ -625,8 +625,7 @@ class ConfigHandler:
                 "use_agent": use_agent,
                 "title": title,
                 "model": local_config.get("model", ""),
-                "bot_type": local_config.get("bot_type", ""),
-                "has_bot_type": "bot_type" in local_config,
+                "bot_type": "openai" if local_config.get("bot_type") == "chatGPT" else local_config.get("bot_type", ""),
                 "use_linkai": bool(local_config.get("use_linkai", False)),
                 "channel_type": local_config.get("channel_type", ""),
                 "agent_max_context_tokens": local_config.get("agent_max_context_tokens", 50000),
@@ -671,9 +670,6 @@ class ConfigHandler:
                     file_cfg = json.load(f)
             else:
                 file_cfg = {}
-            if "bot_type" in applied and "bot_type" not in file_cfg:
-                del applied["bot_type"]
-                local_config.pop("bot_type", None)
             file_cfg.update(applied)
             with open(config_path, "w", encoding="utf-8") as f:
                 json.dump(file_cfg, f, indent=4, ensure_ascii=False)

@@ -52,6 +52,7 @@ class Tool(Plugin):
 
         # 暂时不支持未来扩展的bot
         if Bridge().get_bot_type("chat") not in (
+            const.OPENAI,
             const.CHATGPT,
             const.OPEN_AI,
             const.CHATGPTONAZURE,

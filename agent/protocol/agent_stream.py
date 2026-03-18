@@ -609,14 +609,14 @@ class AgentStreamExecutor:
                                     "arguments": ""
                                 }
 
-                            if "id" in tc_delta:
+                            if tc_delta.get("id"):
                                 tool_calls_buffer[index]["id"] = tc_delta["id"]
 
                             if "function" in tc_delta:
                                 func = tc_delta["function"]
-                                if "name" in func:
+                                if func.get("name"):
                                     tool_calls_buffer[index]["name"] = func["name"]
-                                if "arguments" in func:
+                                if func.get("arguments"):
                                     tool_calls_buffer[index]["arguments"] += func["arguments"]
 
                     # Preserve _gemini_raw_parts for Gemini thoughtSignature round-trip
@@ -720,9 +720,9 @@ class AgentStreamExecutor:
                 )
             else:
                 if retry_count >= max_retries:
-                    logger.error(f"❌ LLM API error after {max_retries} retries: {e}")
+                    logger.error(f"❌ LLM API error after {max_retries} retries: {e}", exc_info=True)
                 else:
-                    logger.error(f"❌ LLM call error (non-retryable): {e}")
+                    logger.error(f"❌ LLM call error (non-retryable): {e}", exc_info=True)
                 raise
 
         # Parse tool calls

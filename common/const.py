@@ -1,6 +1,7 @@
 # 厂商类型
 OPEN_AI = "openAI"
-CHATGPT = "chatGPT"
+OPENAI = "openai"
+CHATGPT = "chatGPT"  # legacy alias for OPENAI, kept for backward compatibility
 BAIDU = "baidu"
 XUNFEI = "xunfei"
 CHATGPTONAZURE = "chatGPTOnAzure"

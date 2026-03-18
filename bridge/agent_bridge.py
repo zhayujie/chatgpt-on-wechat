@@ -106,7 +106,7 @@ class AgentLLMModel(LLMModel):
             return configured_bot_type
        
         if not model_name or not isinstance(model_name, str):
-            return const.CHATGPT
+            return const.OPENAI
         if model_name in self._MODEL_BOT_TYPE_MAP:
             return self._MODEL_BOT_TYPE_MAP[model_name]
         if model_name.lower().startswith("minimax") or model_name in ["abab6.5-chat"]:
@@ -116,11 +116,11 @@ class AgentLLMModel(LLMModel):
         if model_name in [const.MOONSHOT, "moonshot-v1-8k", "moonshot-v1-32k", "moonshot-v1-128k"]:
             return const.MOONSHOT
         if model_name in [const.DEEPSEEK_CHAT, const.DEEPSEEK_REASONER]:
-            return const.CHATGPT
+            return const.OPENAI
         for prefix, btype in self._MODEL_PREFIX_MAP:
             if model_name.startswith(prefix):
                 return btype
-        return const.CHATGPT
+        return const.OPENAI
 
     @property
     def bot(self):

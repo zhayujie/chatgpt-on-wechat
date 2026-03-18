@@ -17,7 +17,7 @@ def create_bot(bot_type):
         from models.baidu.baidu_wenxin import BaiduWenxinBot
         return BaiduWenxinBot()
 
-    elif bot_type in (const.CHATGPT, const.DEEPSEEK):  # DeepSeek uses OpenAI-compatible API
+    elif bot_type in (const.OPENAI, const.CHATGPT, const.DEEPSEEK):  # OpenAI-compatible API
         from models.chatgpt.chat_gpt_bot import ChatGPTBot
         return ChatGPTBot()
 

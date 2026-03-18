@@ -285,13 +285,13 @@ volumes:
     "model": "gpt-5.4",
     "open_ai_api_key": "YOUR_API_KEY",
     "open_ai_api_base": "https://api.openai.com/v1",
-    "bot_type": "chatGPT"
+    "bot_type": "openai"
 }
 ```
 
  - `model`: 与OpenAI接口的 [model参数](https://platform.openai.com/docs/models) 一致，支持包括 gpt-5.4、o系列、gpt-4.1等模型，Agent模式推荐使用 `gpt-5.4`
  - `open_ai_api_base`: 如果需要接入第三方代理接口，可通过修改该参数进行接入
- - `bot_type`: 使用OpenAI相关模型时无需填写。当使用第三方代理接口接入Claude等非OpenAI官方模型时，该参数设为 `chatGPT`
+ - `bot_type`: 使用OpenAI相关模型时无需填写。当使用第三方代理接口接入Claude等非OpenAI官方模型时，该参数设为 `openai`
 </details>
 
 <details>
@@ -332,7 +332,7 @@ volumes:
 方式二：OpenAI兼容方式接入，配置如下：
 ```json
 {
-  "bot_type": "chatGPT",
+  "bot_type": "openai",
   "model": "MiniMax-M2.5",
   "open_ai_api_base": "https://api.minimaxi.com/v1",
   "open_ai_api_key": ""
@@ -361,7 +361,7 @@ volumes:
 方式二：OpenAI兼容方式接入，配置如下：
 ```json
 {
-  "bot_type": "chatGPT",
+  "bot_type": "openai",
   "model": "glm-5",
   "open_ai_api_base": "https://open.bigmodel.cn/api/paas/v4",
   "open_ai_api_key": ""
@@ -390,7 +390,7 @@ volumes:
 方式二：OpenAI兼容方式接入，配置如下：
 ```json
 {
-  "bot_type": "chatGPT",
+  "bot_type": "openai",
   "model": "qwen3.5-plus",
   "open_ai_api_base": "https://dashscope.aliyuncs.com/compatible-mode/v1",
   "open_ai_api_key": "sk-qVxxxxG"
@@ -419,7 +419,7 @@ volumes:
 方式二：OpenAI兼容方式接入，配置如下：
 ```json
 {
-  "bot_type": "chatGPT",
+  "bot_type": "openai",
   "model": "kimi-k2.5",
   "open_ai_api_base": "https://api.moonshot.cn/v1",
   "open_ai_api_key": ""
@@ -489,8 +489,8 @@ API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn)
 {
     "model": "deepseek-chat",
     "open_ai_api_key": "sk-xxxxxxxxxxx",
-    "open_ai_api_base": "https://api.deepseek.com/v1", 
-    "bot_type": "chatGPT"
+    "open_ai_api_base": "https://api.deepseek.com/v1",
+    "bot_type": "openai"
 
 }
 ```
@@ -545,7 +545,7 @@ API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn)
 方式二：OpenAI兼容方式接入，配置如下：
 ```json
 {
-  "bot_type": "chatGPT",
+  "bot_type": "openai",
   "model": "ERNIE-4.0-Turbo-8K",
   "open_ai_api_base": "https://qianfan.baidubce.com/v2",
   "open_ai_api_key": "bce-v3/ALTxxxxxxd2b"
@@ -581,7 +581,7 @@ API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn)
 方式二：OpenAI兼容方式接入，配置如下：
 ```json
 {
-  "bot_type": "chatGPT",
+  "bot_type": "openai",
   "model": "4.0Ultra",
   "open_ai_api_base": "https://spark-api-open.xf-yun.com/v1",
   "open_ai_api_key": ""
@@ -611,6 +611,23 @@ API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn)
 - `modelscope_api_key`: 参考 [官方文档-访问令牌](https://modelscope.cn/docs/accounts/token) ，在 [控制台](https://modelscope.cn/my/myaccesstoken) 
 - `modelscope_base_url`: modelscope平台的 BASE URL
 - `text_to_image`: 图像生成模型，参考[模型列表](https://www.modelscope.cn/models?filter=inference_type&page=1)
+</details>
+
+<details>
+<summary>Coding Plan (编程包月套餐)</summary>
+
+Coding Plan 是各厂商推出的编程包月套餐，所有厂商均可通过 OpenAI 兼容方式接入：
+
+```json
+{
+  "bot_type": "openai",
+  "model": "模型名称",
+  "open_ai_api_base": "厂商 Coding Plan API Base",
+  "open_ai_api_key": "YOUR_API_KEY"
+}
+```
+
+目前支持阿里云、MiniMax、智谱GLM、Kimi、火山引擎等厂商，各厂商详细配置请参考 [Coding Plan 文档](https://docs.cowagent.ai/models/coding-plan)。
 </details>
 
 

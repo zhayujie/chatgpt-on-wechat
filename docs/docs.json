@@ -80,7 +80,8 @@
                   "models/gemini",
                   "models/openai",
                   "models/deepseek",
-                  "models/linkai"
+                  "models/linkai",
+                  "models/coding-plan"
                 ]
               }
             ]
@@ -171,6 +172,7 @@
                 "group": "发布记录",
                 "pages": [
                   "releases/overview",
+                  "releases/v2.0.3",
                   "releases/v2.0.2",
                   "releases/v2.0.1",
                   "releases/v2.0.0"
@@ -224,7 +226,8 @@
                   "en/models/gemini",
                   "en/models/openai",
                   "en/models/deepseek",
-                  "en/models/linkai"
+                  "en/models/linkai",
+                  "en/models/coding-plan"
                 ]
               }
             ]

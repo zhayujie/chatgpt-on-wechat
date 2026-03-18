@@ -133,6 +133,28 @@ Supports mainstream model providers. Recommended models for Agent mode:
 
 For detailed configuration of each model, see the [Models documentation](https://docs.cowagent.ai/en/models/index).
 
+### Coding Plan
+
+Coding Plan is a monthly subscription package offered by various providers, ideal for high-frequency Agent usage. All providers can be accessed via OpenAI-compatible mode:
+
+```json
+{
+  "bot_type": "openai",
+  "model": "MODEL_NAME",
+  "open_ai_api_base": "PROVIDER_CODING_PLAN_API_BASE",
+  "open_ai_api_key": "YOUR_API_KEY"
+}
+```
+
+- `bot_type`: Must be `openai`
+- `model`: Model name supported by the provider
+- `open_ai_api_base`: Provider's Coding Plan API Base (different from standard pay-as-you-go)
+- `open_ai_api_key`: Provider's Coding Plan API Key
+
+> Note: Coding Plan API Base and API Key are usually separate from standard pay-as-you-go ones. Please obtain them from each provider's platform.
+
+Supported providers include Alibaba Cloud, MiniMax, Zhipu GLM, Kimi, Volcengine, and more. For detailed configuration of each provider, see the [Coding Plan documentation](https://docs.cowagent.ai/en/models/coding-plan).
+
 <br/>
 
 ## Channels
