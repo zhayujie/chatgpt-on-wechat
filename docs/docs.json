@@ -184,6 +184,154 @@
         ]
       },
       {
+        "language": "ja",
+        "tabs": [
+          {
+            "tab": "紹介",
+            "groups": [
+              {
+                "group": "概要",
+                "pages": [
+                  "ja/intro/index",
+                  "ja/intro/architecture",
+                  "ja/intro/features"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "クイックスタート",
+            "groups": [
+              {
+                "group": "インストール",
+                "pages": [
+                  "ja/guide/quick-start",
+                  "ja/guide/manual-install",
+                  "ja/guide/upgrade"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "モデル",
+            "groups": [
+              {
+                "group": "モデル設定",
+                "pages": [
+                  "ja/models/index",
+                  "ja/models/minimax",
+                  "ja/models/glm",
+                  "ja/models/qwen",
+                  "ja/models/kimi",
+                  "ja/models/doubao",
+                  "ja/models/claude",
+                  "ja/models/gemini",
+                  "ja/models/openai",
+                  "ja/models/deepseek",
+                  "ja/models/linkai",
+                  "ja/models/coding-plan"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "ツール",
+            "groups": [
+              {
+                "group": "ツールシステム",
+                "pages": [
+                  "ja/tools/index"
+                ]
+              },
+              {
+                "group": "内蔵ツール",
+                "pages": [
+                  "ja/tools/read",
+                  "ja/tools/write",
+                  "ja/tools/edit",
+                  "ja/tools/ls",
+                  "ja/tools/bash",
+                  "ja/tools/send",
+                  "ja/tools/memory",
+                  "ja/tools/env-config",
+                  "ja/tools/browser"
+                ]
+              },
+              {
+                "group": "オプションツール",
+                "pages": [
+                  "ja/tools/web-search",
+                  "ja/tools/scheduler"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "スキル",
+            "groups": [
+              {
+                "group": "スキルシステム",
+                "pages": [
+                  "ja/skills/index",
+                  "ja/skills/skill-creator"
+                ]
+              },
+              {
+                "group": "内蔵スキル",
+                "pages": [
+                  "ja/skills/image-vision",
+                  "ja/skills/linkai-agent",
+                  "ja/skills/web-fetch"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "メモリ",
+            "groups": [
+              {
+                "group": "メモリシステム",
+                "pages": [
+                  "ja/memory"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "チャネル",
+            "groups": [
+              {
+                "group": "プラットフォーム",
+                "pages": [
+                  "ja/channels/web",
+                  "ja/channels/feishu",
+                  "ja/channels/dingtalk",
+                  "ja/channels/wecom-bot",
+                  "ja/channels/qq",
+                  "ja/channels/wecom",
+                  "ja/channels/wechatmp"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "リリース",
+            "groups": [
+              {
+                "group": "リリースノート",
+                "pages": [
+                  "ja/releases/overview",
+                  "ja/releases/v2.0.3",
+                  "ja/releases/v2.0.2",
+                  "ja/releases/v2.0.1",
+                  "ja/releases/v2.0.0"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
         "language": "en",
         "tabs": [
           {

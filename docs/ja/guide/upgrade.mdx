@@ -1,0 +1,52 @@
+---
+title: アップデート
+description: CowAgent のアップグレード方法
+---
+
+## スクリプトによるアップグレード（推奨）
+
+`run.sh` でサービスを管理している場合、以下のコマンドでワンクリックアップグレードできます：
+
+```bash
+./run.sh update
+```
+
+このコマンドは以下のフローを自動的に実行します：
+
+1. 現在実行中のサービスを停止
+2. 最新コードをプル
+3. 依存関係を再チェック
+4. サービスを起動
+
+## 手動アップグレード
+
+プロジェクトのルートディレクトリで以下を実行します：
+
+```bash
+git pull
+pip3 install -r requirements.txt
+```
+
+更新完了後、サービスを再起動します：
+
+```bash
+# run.sh で管理している場合
+./run.sh restart
+
+# nohup で直接実行している場合
+kill $(ps -ef | grep app.py | grep -v grep | awk '{print $2}')
+nohup python3 app.py & tail -f nohup.out
+```
+
+## Docker アップグレード
+
+`docker-compose.yml` があるディレクトリで以下を実行します：
+
+```bash
+sudo docker compose pull
+sudo docker compose up -d
+```
+
+<Tip>
+  アップグレード前に `config.json` 設定ファイルのバックアップを推奨します。Docker 環境でデータを保持する場合は、volume マウントでワークスペースディレクトリを永続化できます。
+</Tip>
