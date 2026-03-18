@@ -1,0 +1,113 @@
+---
+title: 手動インストール
+description: CowAgentの手動デプロイ（ソースコード / Docker）
+---
+
+## ソースコードによるデプロイ
+
+### 1. プロジェクトをクローン
+
+```bash
+git clone https://github.com/zhayujie/chatgpt-on-wechat
+cd chatgpt-on-wechat/
+```
+
+<Tip>
+  ネットワークに問題がある場合は、ミラーを使用してください: https://gitee.com/zhayujie/chatgpt-on-wechat
+</Tip>
+
+### 2. 依存パッケージをインストール
+
+コア依存パッケージ（必須）：
+
+```bash
+pip3 install -r requirements.txt
+```
+
+オプション依存パッケージ（推奨）：
+
+```bash
+pip3 install -r requirements-optional.txt
+```
+
+### 3. 設定
+
+設定テンプレートをコピーして編集します：
+
+```bash
+cp config-template.json config.json
+```
+
+`config.json` にモデルの API キー、チャネルタイプ、その他の設定を入力します。詳細は[モデルのドキュメント](/ja/models/index)を参照してください。
+
+### 4. 実行
+
+**ローカルで実行：**
+
+```bash
+python3 app.py
+```
+
+デフォルトではWebサービスが起動します。`http://localhost:9899/chat` にアクセスしてチャットできます。
+
+**サーバーでバックグラウンド実行：**
+
+```bash
+nohup python3 app.py & tail -f nohup.out
+```
+
+## Docker によるデプロイ
+
+Docker デプロイでは、ソースコードのクローンや依存パッケージのインストールは不要です。Agent モードを使用する場合は、より広範なシステムアクセスが可能なソースコードによるデプロイを推奨します。
+
+<Note>
+  [Docker](https://docs.docker.com/engine/install/) と docker-compose が必要です。
+</Note>
+
+**1. 設定ファイルをダウンロード**
+
+```bash
+curl -O https://cdn.link-ai.tech/code/cow/docker-compose.yml
+```
+
+`docker-compose.yml` を編集して設定を行います。
+
+**2. コンテナを起動**
+
+```bash
+sudo docker compose up -d
+```
+
+**3. ログを確認**
+
+```bash
+sudo docker logs -f chatgpt-on-wechat
+```
+
+## 主要な設定項目
+
+```json
+{
+  "channel_type": "web",
+  "model": "MiniMax-M2.5",
+  "agent": true,
+  "agent_workspace": "~/cow",
+  "agent_max_context_tokens": 40000,
+  "agent_max_context_turns": 30,
+  "agent_max_steps": 15
+}
+```
+
+| パラメータ | 説明 | デフォルト値 |
+| --- | --- | --- |
+| `channel_type` | チャネルタイプ | `web` |
+| `model` | モデル名 | `MiniMax-M2.5` |
+| `agent` | Agent モードを有効化 | `true` |
+| `agent_workspace` | Agent のワークスペースパス | `~/cow` |
+| `agent_max_context_tokens` | 最大コンテキストトークン数 | `40000` |
+| `agent_max_context_turns` | 最大コンテキストターン数 | `30` |
+| `agent_max_steps` | タスクごとの最大判断ステップ数 | `15` |
+
+<Tip>
+  すべての設定オプションはプロジェクトの [`config.py`](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/config.py) に記載されています。
+</Tip>

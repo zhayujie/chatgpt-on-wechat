@@ -1,0 +1,105 @@
+---
+title: 機能詳細
+description: CowAgent の長期記憶、タスク計画、Skill システムの詳細
+---
+
+## 1. 長期記憶
+
+記憶システムにより、Agent は重要な情報を長期にわたって記憶できます。ユーザーが好みや決定、重要な事実を共有すると、Agent は自発的に情報を保存し、会話が一定の長さに達すると自動的に要約を抽出します。記憶はコアメモリとデイリーメモリに分かれており、キーワード検索とベクトル検索の両方をサポートするハイブリッド検索が可能です。
+
+初回起動時、Agent はユーザーに重要な情報を自発的に尋ね、ワークスペース（デフォルト `~/cow`）に記録します。これには Agent の設定、ユーザーの身元情報、記憶ファイルが含まれます。
+
+その後の長期的な会話において、Agent は必要に応じてインテリジェントに記憶を保存・取得し、自身の設定やユーザーの好み、記憶ファイルを継続的に更新し、経験と教訓を要約します。これにより、真に自律的な思考と継続的な成長を実現しています。
+
+<Frame>
+  <img src="https://cdn.link-ai.tech/doc/20260203000455.png" width="800" />
+</Frame>
+
+## 2. タスク計画とツール活用
+
+ツールは Agent がオペレーティングシステムのリソースにアクセスするための中核です。Agent はタスク要件に基づいてインテリジェントにツールを選択・呼び出し、ファイルの読み書き、コマンド実行、スケジュールタスクなどを実行します。組み込みツールはプロジェクトの `agent/tools/` ディレクトリに実装されています。
+
+**主なツール：** ファイルの読み書き・編集、Bash ターミナル、ファイル送信、スケジューラ、記憶検索、Web 検索、環境設定など。
+
+### 2.1 ターミナルとファイルアクセス
+
+OS のターミナルとファイルシステムへのアクセスは、最も基本的かつ中核的な機能です。多くの他のツールや Skill はこの機能の上に構築されています。ユーザーはモバイルデバイスから Agent とやり取りし、パソコンやサーバーのリソースを操作できます：
+
+<Frame>
+  <img src="https://cdn.link-ai.tech/doc/20260202181130.png" width="800" />
+</Frame>
+
+### 2.2 プログラミング能力
+
+プログラミングとシステムアクセスを組み合わせることで、Agent は完全な **Vibecoding ワークフロー** を実行できます。情報検索、アセット生成、コーディング、テスト、デプロイ、Nginx 設定、公開まで、すべてスマートフォンからの一つのコマンドで実行可能です：
+
+<Frame>
+  <img src="https://cdn.link-ai.tech/doc/20260203121008.png" width="800" />
+</Frame>
+
+### 2.3 スケジュールタスク
+
+`scheduler` ツールにより動的なスケジュールタスクが可能で、**ワンタイムタスク、固定間隔、Cron 式**をサポートしています。タスクは**固定メッセージ送信**または **Agent 動的タスク**実行としてトリガーできます：
+
+<Frame>
+  <img src="https://cdn.link-ai.tech/doc/20260202195402.png" width="800" />
+</Frame>
+
+### 2.4 環境変数管理
+
+Skill が必要とするシークレットキーは環境変数ファイルに保存され、`env_config` ツールによって管理されます。会話を通じてシークレットを更新でき、セキュリティ保護とマスキング機能が組み込まれています：
+
+<Frame>
+  <img src="https://cdn.link-ai.tech/doc/20260202234939.png" width="800" />
+</Frame>
+
+## 3. Skill システム
+
+Skill システムは Agent に無限の拡張性を提供します。各 Skill は説明ファイル、実行スクリプト（任意）、リソース（任意）で構成され、特定のタイプのタスクを完了する方法を記述します。Skill により Agent は複雑なワークフローの指示に従い、ツールを呼び出し、サードパーティシステムと連携できます。
+
+- **組み込み Skill：** プロジェクトの `skills/` ディレクトリにあり、Skill クリエイター、画像認識、LinkAI Agent、Web フェッチなどが含まれます。組み込み Skill は依存条件（API キー、システムコマンドなど）に基づいて自動的に有効化されます。
+- **カスタム Skill：** ユーザーが会話を通じて作成し、ワークスペース（`~/cow/skills/`）に保存されます。あらゆる複雑なビジネスプロセスやサードパーティ連携を実装できます。
+
+### 3.1 Skill の作成
+
+`skill-creator` Skill により、会話を通じて Skill を素早く作成できます。ワークフローを Skill としてコード化するよう Agent に依頼したり、API ドキュメントやサンプルを送信して Agent に直接連携を完成させることができます：
+
+<Frame>
+  <img src="https://cdn.link-ai.tech/doc/20260202202247.png" width="800" />
+</Frame>
+
+### 3.2 Web 検索と画像認識
+
+- **Web 検索：** 組み込みの `web_search` ツールで、複数の検索エンジンをサポートします。`BOCHA_API_KEY` または `LINKAI_API_KEY` を設定して有効化してください。
+- **画像認識：** 組み込みの `openai-image-vision` Skill で、`gpt-4.1-mini`、`gpt-4.1` などのモデルをサポートします。`OPENAI_API_KEY` が必要です。
+
+<Frame>
+  <img src="https://cdn.link-ai.tech/doc/20260202213219.png" width="800" />
+</Frame>
+
+### 3.3 サードパーティナレッジベースとプラグイン
+
+`linkai-agent` Skill により、[LinkAI](https://link-ai.tech/) 上のすべての Agent を Skill として利用でき、マルチ Agent による意思決定が可能になります。
+
+設定方法：`env_config` で `LINKAI_API_KEY` を設定し、`skills/linkai-agent/config.json` に Agent の説明を追加します：
+
+```json
+{
+  "apps": [
+    {
+      "app_code": "G7z6vKwp",
+      "app_name": "LinkAI Customer Support",
+      "app_description": "Select only when the user needs help with LinkAI platform questions"
+    },
+    {
+      "app_code": "SFY5x7JR",
+      "app_name": "Content Creator",
+      "app_description": "Use only when the user needs to create images or videos"
+    }
+  ]
+}
+```
+
+<Frame>
+  <img src="https://cdn.link-ai.tech/doc/20260202234350.png" width="750" />
+</Frame>

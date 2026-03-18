@@ -1,0 +1,67 @@
+---
+title: Skill 概要
+description: CowAgent の Skill システム紹介
+---
+
+Skill は Agent に無限の拡張性を提供します。各 Skill は説明ファイル（`SKILL.md`）、実行スクリプト（任意）、リソース（任意）で構成され、特定のタスクをどのように遂行するかを記述します。
+
+Skill と Tool の違い：Tool はコードで実装された原子的な操作（例：ファイルの読み書き、コマンドの実行）であるのに対し、Skill は説明ファイルに基づく高レベルなワークフローであり、複数の Tool を組み合わせて複雑なタスクを完遂できます。
+
+## 組み込み Skill
+
+プロジェクトの `skills/` ディレクトリに配置されており、依存条件に基づいて自動的に有効化されます：
+
+| Skill | 説明 | 依存関係 |
+| --- | --- | --- |
+| [`skill-creator`](/ja/skills/skill-creator) | 会話を通じてカスタム Skill を作成 | なし |
+| [`openai-image-vision`](/ja/skills/image-vision) | OpenAI の Vision モデルを使用して画像を認識 | `OPENAI_API_KEY` |
+| [`linkai-agent`](/ja/skills/linkai-agent) | LinkAI プラットフォームの Agent を統合 | `LINKAI_API_KEY` |
+| [`web-fetch`](/ja/skills/web-fetch) | Web ページのテキストコンテンツを取得 | `curl`（デフォルトで有効） |
+
+## カスタム Skill
+
+ユーザーが会話を通じて作成し、ワークスペース（`~/cow/skills/`）に保存されます。任意の複雑なビジネスプロセスやサードパーティシステムとの連携を実装できます。
+
+## Skill の読み込み優先順位
+
+1. **ワークスペースの Skill**（最高優先）：`~/cow/skills/`
+2. **プロジェクト組み込み Skill**（最低優先）：`skills/`
+
+同名の Skill は優先順位に従って上書きされます。
+
+## Skill のファイル構成
+
+```
+skills/
+├── my-skill/
+│   ├── SKILL.md          # Skill の説明（frontmatter + 手順）
+│   ├── scripts/          # 実行スクリプト（任意）
+│   └── resources/        # 追加リソース（任意）
+```
+
+### SKILL.md のフォーマット
+
+```markdown
+---
+name: my-skill
+description: Brief description of the skill
+metadata:
+  emoji: 🔧
+  requires:
+    bins: ["curl"]
+    env: ["MY_API_KEY"]
+  primaryEnv: "MY_API_KEY"
+---
+
+# My Skill
+
+Detailed instructions...
+```
+
+| フィールド | 説明 |
+| --- | --- |
+| `name` | Skill 名。ディレクトリ名と一致する必要があります |
+| `description` | Skill の説明。Agent はこれに基づいて呼び出すかどうかを判断します |
+| `metadata.requires.bins` | 必要なシステムコマンド |
+| `metadata.requires.env` | 必要な環境変数 |
+| `metadata.always` | 常に読み込む（デフォルトは false） |
