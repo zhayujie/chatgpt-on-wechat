@@ -69,6 +69,8 @@ GPT_5 = "gpt-5"
 GPT_5_MINI = "gpt-5-mini"
 GPT_5_NANO = "gpt-5-nano"
 GPT_54 = "gpt-5.4"  # GPT-5.4 - Agent recommended model
+GPT_54_MINI = "gpt-5.4-mini"
+GPT_54_NANO = "gpt-5.4-nano"
 O1 = "o1-preview"
 O1_MINI = "o1-mini"
 WHISPER_1 = "whisper-1"
@@ -154,7 +156,7 @@ MODEL_LIST = [
               GPT_4o, GPT_4O_0806, GPT_4o_MINI,
               GPT_41, GPT_41_MINI, GPT_41_NANO,
               GPT_5, GPT_5_MINI, GPT_5_NANO,
-              GPT_54,
+              GPT_54, GPT_54_MINI, GPT_54_NANO,
               O1, O1_MINI,
               
               # DeepSeek

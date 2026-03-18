@@ -602,6 +602,9 @@ def build_website_prompt(workspace_dir: str) -> list:
     ]
 
 def start(channel, channel_mgr=None):
+    if not get_deployment_id():
+        return
+
     global chat_client
     chat_client = CloudClient(api_key=conf().get("linkai_api_key"), host=conf().get("cloud_host", ""), channel=channel)
     chat_client.channel_mgr = channel_mgr

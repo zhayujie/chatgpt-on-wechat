@@ -289,7 +289,7 @@ volumes:
 }
 ```
 
- - `model`: 与OpenAI接口的 [model参数](https://platform.openai.com/docs/models) 一致，支持包括 gpt-5.4、o系列、gpt-4.1等模型，Agent模式推荐使用 `gpt-5.4`
+ - `model`: 与OpenAI接口的 [model参数](https://platform.openai.com/docs/models) 一致，支持包括 gpt-5.4、gpt-5.4-mini、gpt-5.4-nano、o系列、gpt-4.1等模型，Agent模式推荐使用 `gpt-5.4`、`gpt-5.4-mini`
  - `open_ai_api_base`: 如果需要接入第三方代理接口，可通过修改该参数进行接入
  - `bot_type`: 使用OpenAI相关模型时无需填写。当使用第三方代理接口接入Claude等非OpenAI官方模型时，该参数设为 `openai`
 </details>
