@@ -376,7 +376,7 @@ def _build_workspace_section(workspace_dir: str, language: str) -> List[str]:
         "",
         "以下文件在会话启动时**已经自动加载**到系统提示词的「项目上下文」section 中，你**无需再用 read 工具读取它们**：",
         "",
-        "- ✅ `AGENT.md`: 已加载 - 你的人格和灵魂设定。当用户修改你的名字、性格或交流风格时，用 `edit` 更新此文件",
+        "- ✅ `AGENT.md`: 已加载 - 你的人格和灵魂设定。当你的名字、性格或交流风格发生变化时，主动用 `edit` 更新此文件",
         "- ✅ `USER.md`: 已加载 - 用户的身份信息。当用户修改称呼、姓名等身份信息时，用 `edit` 更新此文件",
         "- ✅ `RULE.md`: 已加载 - 工作空间使用指南和规则",
         "",
@@ -423,7 +423,8 @@ def _build_context_files_section(context_files: List[ContextFile], language: str
     ]
     
     if has_agent:
-        lines.append("如果存在 `AGENT.md`，请体现其中定义的人格和语气。避免僵硬、模板化的回复；遵循其指导，除非有更高优先级的指令覆盖它。")
+        lines.append("**`AGENT.md` 是你的灵魂文件**：严格体现其中定义的人格和语气，避免僵硬、模板化的回复。")
+        lines.append("当用户通过对话透露了对你性格、风格、职责、能力边界的新期望，你应该主动用 `edit` 更新 AGENT.md 以反映这些演变。")
         lines.append("")
     
     # 添加每个文件的内容
