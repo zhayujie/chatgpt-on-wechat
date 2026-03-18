@@ -184,6 +184,151 @@
         ]
       },
       {
+        "language": "en",
+        "tabs": [
+          {
+            "tab": "Introduction",
+            "groups": [
+              {
+                "group": "Overview",
+                "pages": [
+                  "en/intro/index",
+                  "en/intro/architecture",
+                  "en/intro/features"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Get Started",
+            "groups": [
+              {
+                "group": "Installation",
+                "pages": [
+                  "en/guide/quick-start",
+                  "en/guide/manual-install"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Models",
+            "groups": [
+              {
+                "group": "Model Configuration",
+                "pages": [
+                  "en/models/index",
+                  "en/models/minimax",
+                  "en/models/glm",
+                  "en/models/qwen",
+                  "en/models/kimi",
+                  "en/models/doubao",
+                  "en/models/claude",
+                  "en/models/gemini",
+                  "en/models/openai",
+                  "en/models/deepseek",
+                  "en/models/linkai",
+                  "en/models/coding-plan"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Tools",
+            "groups": [
+              {
+                "group": "Tools System",
+                "pages": [
+                  "en/tools/index"
+                ]
+              },
+              {
+                "group": "Built-in Tools",
+                "pages": [
+                  "en/tools/read",
+                  "en/tools/write",
+                  "en/tools/edit",
+                  "en/tools/ls",
+                  "en/tools/bash",
+                  "en/tools/send",
+                  "en/tools/memory",
+                  "en/tools/env-config"
+                ]
+              },
+              {
+                "group": "Optional Tools",
+                "pages": [
+                  "en/tools/web-search",
+                  "en/tools/scheduler"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Skills",
+            "groups": [
+              {
+                "group": "Skills System",
+                "pages": [
+                  "en/skills/index",
+                  "en/skills/skill-creator"
+                ]
+              },
+              {
+                "group": "Built-in Skills",
+                "pages": [
+                  "en/skills/image-vision",
+                  "en/skills/linkai-agent",
+                  "en/skills/web-fetch"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Memory",
+            "groups": [
+              {
+                "group": "Memory System",
+                "pages": [
+                  "en/memory"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Channels",
+            "groups": [
+              {
+                "group": "Platforms",
+                "pages": [
+                  "en/channels/web",
+                  "en/channels/feishu",
+                  "en/channels/dingtalk",
+                  "en/channels/wecom-bot",
+                  "en/channels/qq",
+                  "en/channels/wecom",
+                  "en/channels/wechatmp"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Releases",
+            "groups": [
+              {
+                "group": "Release Notes",
+                "pages": [
+                  "en/releases/overview",
+                  "en/releases/v2.0.2",
+                  "en/releases/v2.0.1",
+                  "en/releases/v2.0.0"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
         "language": "ja",
         "tabs": [
           {
@@ -325,151 +470,6 @@
                   "ja/releases/v2.0.2",
                   "ja/releases/v2.0.1",
                   "ja/releases/v2.0.0"
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "language": "en",
-        "tabs": [
-          {
-            "tab": "Introduction",
-            "groups": [
-              {
-                "group": "Overview",
-                "pages": [
-                  "en/intro/index",
-                  "en/intro/architecture",
-                  "en/intro/features"
-                ]
-              }
-            ]
-          },
-          {
-            "tab": "Get Started",
-            "groups": [
-              {
-                "group": "Installation",
-                "pages": [
-                  "en/guide/quick-start",
-                  "en/guide/manual-install"
-                ]
-              }
-            ]
-          },
-          {
-            "tab": "Models",
-            "groups": [
-              {
-                "group": "Model Configuration",
-                "pages": [
-                  "en/models/index",
-                  "en/models/minimax",
-                  "en/models/glm",
-                  "en/models/qwen",
-                  "en/models/kimi",
-                  "en/models/doubao",
-                  "en/models/claude",
-                  "en/models/gemini",
-                  "en/models/openai",
-                  "en/models/deepseek",
-                  "en/models/linkai",
-                  "en/models/coding-plan"
-                ]
-              }
-            ]
-          },
-          {
-            "tab": "Tools",
-            "groups": [
-              {
-                "group": "Tools System",
-                "pages": [
-                  "en/tools/index"
-                ]
-              },
-              {
-                "group": "Built-in Tools",
-                "pages": [
-                  "en/tools/read",
-                  "en/tools/write",
-                  "en/tools/edit",
-                  "en/tools/ls",
-                  "en/tools/bash",
-                  "en/tools/send",
-                  "en/tools/memory",
-                  "en/tools/env-config"
-                ]
-              },
-              {
-                "group": "Optional Tools",
-                "pages": [
-                  "en/tools/web-search",
-                  "en/tools/scheduler"
-                ]
-              }
-            ]
-          },
-          {
-            "tab": "Skills",
-            "groups": [
-              {
-                "group": "Skills System",
-                "pages": [
-                  "en/skills/index",
-                  "en/skills/skill-creator"
-                ]
-              },
-              {
-                "group": "Built-in Skills",
-                "pages": [
-                  "en/skills/image-vision",
-                  "en/skills/linkai-agent",
-                  "en/skills/web-fetch"
-                ]
-              }
-            ]
-          },
-          {
-            "tab": "Memory",
-            "groups": [
-              {
-                "group": "Memory System",
-                "pages": [
-                  "en/memory"
-                ]
-              }
-            ]
-          },
-          {
-            "tab": "Channels",
-            "groups": [
-              {
-                "group": "Platforms",
-                "pages": [
-                  "en/channels/web",
-                  "en/channels/feishu",
-                  "en/channels/dingtalk",
-                  "en/channels/wecom-bot",
-                  "en/channels/qq",
-                  "en/channels/wecom",
-                  "en/channels/wechatmp"
-                ]
-              }
-            ]
-          },
-          {
-            "tab": "Releases",
-            "groups": [
-              {
-                "group": "Release Notes",
-                "pages": [
-                  "en/releases/overview",
-                  "en/releases/v2.0.2",
-                  "en/releases/v2.0.1",
-                  "en/releases/v2.0.0"
                 ]
               }
             ]

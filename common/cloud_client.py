@@ -201,27 +201,36 @@ class CloudClient(LinkAIClient):
 
     def _handle_channel_create(self, channel_type: str, data: dict):
         local_config = conf()
-        self._set_channel_credentials(local_config, channel_type,
-                                      data.get("appId"), data.get("appSecret"))
+        cred_changed = self._set_channel_credentials(
+            local_config, channel_type, data.get("appId"), data.get("appSecret"))
         self._add_channel_type(local_config, channel_type)
         self._save_config_to_file(local_config)
 
-        if self.channel_mgr:
+        if not self.channel_mgr:
+            return
+
+        existing_ch = self.channel_mgr.get_channel(channel_type)
+        if existing_ch and not cred_changed:
+            logger.info(f"[CloudClient] Channel '{channel_type}' already running with same config, "
+                        "skip restart, reporting status only")
             threading.Thread(
-                target=self._do_add_channel, args=(channel_type,), daemon=True
+                target=self._report_channel_startup, args=(channel_type,), daemon=True
             ).start()
+            return
+
+        threading.Thread(
+            target=self._do_add_channel, args=(channel_type,), daemon=True
+        ).start()
 
     def _handle_channel_update(self, channel_type: str, data: dict):
         local_config = conf()
         enabled = data.get("enabled", "Y")
 
-        self._set_channel_credentials(local_config, channel_type,
-                                      data.get("appId"), data.get("appSecret"))
+        cred_changed = self._set_channel_credentials(
+            local_config, channel_type, data.get("appId"), data.get("appSecret"))
         if enabled == "N":
             self._remove_channel_type(local_config, channel_type)
         else:
-            # Ensure channel_type is persisted even if this channel was not
-            # previously listed (e.g. update used as implicit create).
             self._add_channel_type(local_config, channel_type)
         self._save_config_to_file(local_config)
 
@@ -233,9 +242,17 @@ class CloudClient(LinkAIClient):
                 target=self._do_remove_channel, args=(channel_type,), daemon=True
             ).start()
         else:
-            threading.Thread(
-                target=self._do_restart_channel, args=(self.channel_mgr, channel_type), daemon=True
-            ).start()
+            existing_ch = self.channel_mgr.get_channel(channel_type)
+            if existing_ch and not cred_changed:
+                logger.info(f"[CloudClient] Channel '{channel_type}' already running with same config, "
+                            "skip restart, reporting status only")
+                threading.Thread(
+                    target=self._report_channel_startup, args=(channel_type,), daemon=True
+                ).start()
+            else:
+                threading.Thread(
+                    target=self._do_restart_channel, args=(self.channel_mgr, channel_type), daemon=True
+                ).start()
 
     def _handle_channel_delete(self, channel_type: str, data: dict):
         local_config = conf()
