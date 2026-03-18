@@ -107,7 +107,7 @@ nohup python3 app.py & tail -f nohup.out
 ### Docker Deployment
 
 ```bash
-wget https://cdn.link-ai.tech/code/cow/docker-compose.yml
+curl -O https://cdn.link-ai.tech/code/cow/docker-compose.yml
 # Edit docker-compose.yml with your config
 sudo docker compose up -d
 sudo docker logs -f chatgpt-on-wechat

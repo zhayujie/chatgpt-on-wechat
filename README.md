@@ -239,7 +239,7 @@ nohup python3 app.py & tail -f nohup.out
 **(1) 下载 docker-compose.yml 文件**
 
 ```bash
-wget https://cdn.link-ai.tech/code/cow/docker-compose.yml
+curl -O https://cdn.link-ai.tech/code/cow/docker-compose.yml
 ```
 
 下载完成后打开 `docker-compose.yml` 填写所需配置，例如 `CHANNEL_TYPE`、`OPEN_AI_API_KEY` 和等配置。
