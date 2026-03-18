@@ -27,8 +27,7 @@
 -  ✅  **技能系统：** 实现了Skills创建和运行的引擎，内置多种技能，并支持通过自然语言对话完成自定义Skills开发
 -  ✅  **多模态消息：** 支持对文本、图片、语音、文件等多类型消息进行解析、处理、生成、发送等操作
 -  ✅  **多模型接入：** 支持OpenAI, Claude, Gemini, DeepSeek, MiniMax、GLM、Qwen、Kimi、Doubao等国内外主流模型厂商
--  ✅  **多端部署：** 支持运行在本地计算机或服务器，可集成到网页、飞书、钉钉、微信公众号、企业微信应用中使用
--  ✅  **知识库：** 集成企业知识库能力，让Agent成为专属数字员工，基于[LinkAI](https://link-ai.tech)平台实现
+-  ✅  **多端部署：** 支持运行在本地计算机或服务器，可集成到飞书、钉钉、企业微信、QQ、微信公众号、网页中使用
 
 ## 声明
 
@@ -38,11 +37,11 @@
 
 ## 演示
 
-使用说明(Agent模式)：[CowAgent介绍](https://docs.cowagent.ai/intro/features)
+- 使用说明(Agent模式)：[CowAgent介绍](https://docs.cowagent.ai/intro/features)
 
-免部署在线体验：[CowAgent](https://link-ai.tech/cowagent/create)
+- 免部署在线体验：[CowAgent](https://link-ai.tech/cowagent/create)
 
-DEMO视频(对话模式)：https://cdn.link-ai.tech/doc/cow_demo.mp4
+- DEMO视频(对话模式)：https://cdn.link-ai.tech/doc/cow_demo.mp4
 
 ## 社区
 
@@ -54,9 +53,9 @@ DEMO视频(对话模式)：https://cdn.link-ai.tech/doc/cow_demo.mp4
 
 # 企业服务
 
-<a href="https://link-ai.tech" target="_blank"><img width="720" src="https://cdn.link-ai.tech/image/link-ai-intro.jpg"></a>
+<a href="https://link-ai.tech" target="_blank"><img width="650" src="https://cdn.link-ai.tech/image/link-ai-intro.jpg"></a>
 
-> [LinkAI](https://link-ai.tech/) 是面向企业和开发者的一站式AI智能体平台，聚合多模态大模型、知识库、Agent 插件、工作流等能力，支持一键接入主流平台并进行管理，支持SaaS、私有化部署等多种模式。
+> [LinkAI](https://link-ai.tech/) 是面向企业和个人的一站式AI智能体平台，聚合多模态大模型、知识库、技能、工作流等能力，支持一键接入主流平台并管理，支持SaaS、私有化部署等多种模式，可免部署在线运行[CowAgent助理](https://link-ai.tech/cowagent/create)。
 >
 > LinkAI 目前已在智能客服、私域运营、企业效率助手等场景积累了丰富的AI解决方案，在消费、健康、文教、科技制造等各行业沉淀了大模型落地应用的最佳实践，致力于帮助更多企业和开发者拥抱 AI 生产力。
 
@@ -67,6 +66,8 @@ DEMO视频(对话模式)：https://cdn.link-ai.tech/doc/cow_demo.mp4
 <br/>
 
 # 🏷 更新日志
+
+>**2026.03.18：** [2.0.3版本](https://github.com/zhayujie/chatgpt-on-wechat/releases/tag/2.0.3)，新增企微智能机器人和 QQ 通道、支持Coding Plan、新增多个模型、Web端文件处理、记忆系统升级。
 
 >**2026.02.27：** [2.0.2版本](https://github.com/zhayujie/chatgpt-on-wechat/releases/tag/2.0.2)，Web 控制台全面升级（流式对话、模型/技能/记忆/通道/定时任务/日志管理）、支持多通道同时运行、会话持久化存储、新增多个模型。
 
@@ -164,7 +165,7 @@ pip3 install -r requirements-optional.txt
   "speech_recognition": false,                                # 是否开启语音识别
   "group_speech_recognition": false,                          # 是否开启群组语音识别
   "voice_reply_voice": false,                                 # 是否使用语音回复语音
-  "use_linkai": false,                                        # 是否使用LinkAI接口，默认关闭，设置为true后可对接LinkAI平台接口
+  "use_linkai": false,                                        # 是否使用LinkAI接口，默认关闭，设置为true后可对接LinkAI平台模型
   "agent": true,                                              # 是否启用Agent模式，启用后拥有多轮工具决策、长期记忆、Skills能力等
   "agent_workspace": "~/cow",                                 # Agent的工作空间路径，用于存储memory、skills、系统设定等
   "agent_max_context_tokens": 40000,                          # Agent模式下最大上下文tokens，超出将自动丢弃最早的上下文
@@ -194,9 +195,8 @@ pip3 install -r requirements-optional.txt
 <details>
 <summary>3. LinkAI配置</summary>
 
-+ `use_linkai`: 是否使用LinkAI接口，默认关闭，设置为true后可对接LinkAI平台，使用知识库、工作流、插件等能力, 参考[接口文档](https://docs.link-ai.tech/platform/api/chat)
++ `use_linkai`: 是否使用LinkAI接口，默认关闭，设置为true后可对接LinkAI平台，使用模型、知识库、工作流、插件等技能, 参考[接口文档](https://docs.link-ai.tech/platform/api/chat)
 + `linkai_api_key`: LinkAI Api Key，可在 [控制台](https://link-ai.tech/console/interface) 创建
-+ `linkai_app_code`: LinkAI 应用或工作流的code，选填，普通对话模式中使用。
 </details>
 
 注：全部配置项说明可在 [`config.py`](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/config.py) 文件中查看。
@@ -303,16 +303,15 @@ volumes:
 
 ```json
 {
+    "model": "gpt-5.4-mini",
     "use_linkai": true,
-    "linkai_api_key": "YOUR API KEY",
-    "linkai_app_code": "YOUR APP CODE"
+    "linkai_api_key": "YOUR API KEY"
 }
 ```
 
-+ `use_linkai`: 是否使用LinkAI接口，默认关闭，设置为true后可对接LinkAI平台的智能体，使用知识库、工作流、数据库、MCP插件等丰富的Agent能力
++ `use_linkai`: 是否使用LinkAI接口，默认关闭，设置为true后可对接LinkAI平台的模型，并使用知识库、工作流、数据库、插件等丰富的Agent技能
 + `linkai_api_key`: LinkAI平台的API Key，可在 [控制台](https://link-ai.tech/console/interface) 中创建
-+ `linkai_app_code`: LinkAI智能体 (应用或工作流) 的code，选填，普通对话模式可用。智能体创建可参考 [说明文档](https://docs.link-ai.tech/platform/quick-start)
-+ `model`: model字段填写空则直接使用智能体的模型，可在平台中灵活切换，[模型列表](https://link-ai.tech/console/models)中的全部模型均可使用
++ `model`: [模型列表](https://link-ai.tech/console/models)中的全部模型均可使用
 </details>
 
 <details>
