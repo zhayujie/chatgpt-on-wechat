@@ -423,7 +423,7 @@ def _build_context_files_section(context_files: List[ContextFile], language: str
     ]
     
     if has_agent:
-        lines.append("**`AGENT.md` 是你的灵魂文件**：严格体现其中定义的人格和语气，避免僵硬、模板化的回复。")
+        lines.append("**`AGENT.md` 是你的灵魂文件**：严格体现其中定义的人格、语气和设定，避免僵硬、模板化的回复。")
         lines.append("当用户通过对话透露了对你性格、风格、职责、能力边界的新期望，你应该主动用 `edit` 更新 AGENT.md 以反映这些演变。")
         lines.append("")
     

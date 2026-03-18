@@ -59,7 +59,8 @@
                 "group": "安装部署",
                 "pages": [
                   "guide/quick-start",
-                  "guide/manual-install"
+                  "guide/manual-install",
+                  "guide/upgrade"
                 ]
               }
             ]

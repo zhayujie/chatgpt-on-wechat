@@ -39,3 +39,5 @@ services:
       AGENT_MAX_CONTEXT_TOKENS: 40000
       AGENT_MAX_CONTEXT_TURNS: 20
       AGENT_MAX_STEPS: 15
+    volumes:
+      - ./cow:/home/agent/cow
