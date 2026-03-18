@@ -1,0 +1,22 @@
+---
+title: DeepSeek
+description: DeepSeekモデルの設定
+---
+
+OpenAI互換の設定を使用します:
+
+```json
+{
+  "model": "deepseek-chat",
+  "bot_type": "openai",
+  "open_ai_api_key": "YOUR_API_KEY",
+  "open_ai_api_base": "https://api.deepseek.com/v1"
+}
+```
+
+| パラメータ | 説明 |
+| --- | --- |
+| `model` | `deepseek-chat` (DeepSeek-V3)、`deepseek-reasoner` (DeepSeek-R1) |
+| `bot_type` | `openai`を指定（OpenAI互換モード） |
+| `open_ai_api_key` | [DeepSeek Platform](https://platform.deepseek.com/api_keys)で作成 |
+| `open_ai_api_base` | DeepSeekプラットフォームのBASE URL |

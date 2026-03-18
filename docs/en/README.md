@@ -4,7 +4,7 @@
   <a href="https://github.com/zhayujie/chatgpt-on-wechat/releases/latest"><img src="https://img.shields.io/github/v/release/zhayujie/chatgpt-on-wechat" alt="Latest release"></a>
   <a href="https://github.com/zhayujie/chatgpt-on-wechat/blob/master/LICENSE"><img src="https://img.shields.io/github/license/zhayujie/chatgpt-on-wechat" alt="License: MIT"></a>
   <a href="https://github.com/zhayujie/chatgpt-on-wechat"><img src="https://img.shields.io/github/stars/zhayujie/chatgpt-on-wechat?style=flat-square" alt="Stars"></a> <br/>
-  [<a href="https://github.com/zhayujie/chatgpt-on-wechat/blob/master/README.md">中文</a>] | [English]
+  [<a href="https://github.com/zhayujie/chatgpt-on-wechat/blob/master/README.md">中文</a>] | [English] | [<a href="https://github.com/zhayujie/chatgpt-on-wechat/blob/master/docs/ja/README.md">日本語</a>]
 </p>
 
 **CowAgent** is an AI super assistant powered by LLMs, capable of autonomous task planning, operating computers and external resources, creating and executing Skills, and continuously growing with long-term memory. It supports flexible model switching, handles text, voice, images, and files, and can be integrated into Web, Feishu, DingTalk, WeCom Bot, WeCom App, and WeChat Official Account — running 7×24 hours on your personal computer or server.

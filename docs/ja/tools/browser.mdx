@@ -1,0 +1,25 @@
+---
+title: browser - ブラウザ
+description: Webページへのアクセスと操作
+---
+
+ブラウザを使用してWebページにアクセス・操作します。JavaScriptでレンダリングされる動的ページにも対応しています。
+
+## 依存関係
+
+| 依存関係 | インストールコマンド |
+| --- | --- |
+| `browser-use` ≥ 0.1.40 | `pip install browser-use` |
+| `markdownify` | `pip install markdownify` |
+| `playwright` + chromium | `pip install playwright && playwright install chromium` |
+
+## ユースケース
+
+- 特定のURLにアクセスしてページ内容を取得
+- Webページの要素を操作（クリック、入力など）
+- デプロイされたWebページの検証
+- JSレンダリングが必要な動的コンテンツのスクレイピング
+
+<Note>
+  ブラウザToolは依存関係が大きいため、不要な場合はインストールを省略できます。軽量なWebコンテンツ取得には、代わりに `web-fetch` Skillをご利用ください。
+</Note>
