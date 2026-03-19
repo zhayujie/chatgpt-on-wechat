@@ -454,7 +454,7 @@ class FeiShuChanel(ChatChannel):
         can_reply = is_group and msg and hasattr(msg, 'msg_id') and msg.msg_id
 
         # Build content JSON
-        content_json = json.dumps(reply_content) if content_key is None else json.dumps({content_key: reply_content})
+        content_json = json.dumps(reply_content, ensure_ascii=False) if content_key is None else json.dumps({content_key: reply_content}, ensure_ascii=False)
         logger.debug(f"[FeiShu] Sending message: msg_type={msg_type}, content={content_json[:200]}")
 
         if can_reply:
