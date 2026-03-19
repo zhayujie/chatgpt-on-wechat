@@ -76,11 +76,15 @@ class MemoryManager:
                     linkai_key = os.environ.get('LINKAI_API_KEY')
                     linkai_base = os.environ.get('LINKAI_API_BASE', 'https://api.link-ai.tech')
                     if linkai_key:
+                        from common.utils import get_cloud_headers
+                        cloud_headers = get_cloud_headers(linkai_key)
+                        cloud_headers.pop("Authorization", None)
                         self.embedding_provider = create_embedding_provider(
                             provider="linkai",
                             model=self.config.embedding_model,
                             api_key=linkai_key,
-                            api_base=f"{linkai_base}/v1"
+                            api_base=f"{linkai_base}/v1",
+                            extra_headers=cloud_headers,
                         )
                 except Exception as e:
                     from common.log import logger

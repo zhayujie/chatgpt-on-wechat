@@ -534,6 +534,7 @@ def _linkai_call_with_tools(self, messages, tools=None, stream=False, **kwargs):
         else:
             channel_type = raw_ct
 
+        session_id = kwargs.get("session_id", "")
         body = {
             "messages": messages,
             "model": kwargs.get("model", conf().get("model") or "gpt-3.5-turbo"),
@@ -543,12 +544,22 @@ def _linkai_call_with_tools(self, messages, tools=None, stream=False, **kwargs):
             "presence_penalty": kwargs.get("presence_penalty", conf().get("presence_penalty", 0.0)),
             "stream": stream,
             "channel_type": kwargs.get("channel_type", channel_type),
+            "session_id": session_id,
+            "sender_id": session_id,
         }
+
+        try:
+            from linkai import LinkAIClient
+            client_id = LinkAIClient.fetch_client_id()
+            if client_id:
+                body["client_id"] = client_id
+        except Exception:
+            pass
 
         if tools:
             body["tools"] = tools
             body["tool_choice"] = kwargs.get("tool_choice", "auto")
-        
+
         # Prepare headers
         headers = {"Authorization": "Bearer " + conf().get("linkai_api_key")}
         base_url = conf().get("linkai_api_base", "https://api.link-ai.tech")

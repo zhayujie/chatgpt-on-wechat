@@ -44,6 +44,11 @@ class ChatService:
         if agent is None:
             raise RuntimeError("Failed to initialise agent for the session")
 
+        # Pass context metadata to model for downstream API requests
+        if hasattr(agent, 'model'):
+            agent.model.channel_type = channel_type or ""
+            agent.model.session_id = session_id or ""
+
         # State shared between the event callback and this method
         state = _StreamState()
 

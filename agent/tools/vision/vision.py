@@ -82,7 +82,7 @@ class Vision(BaseTool):
         if not question:
             return ToolResult.fail("Error: 'question' parameter is required")
 
-        api_key, api_base = self._resolve_provider()
+        api_key, api_base, extra_headers = self._resolve_provider()
         if not api_key:
             return ToolResult.fail(
                 "Error: No API key configured for Vision.\n"
@@ -98,7 +98,7 @@ class Vision(BaseTool):
             return ToolResult.fail(f"Error: {e}")
 
         try:
-            return self._call_api(api_key, api_base, model, question, image_content)
+            return self._call_api(api_key, api_base, model, question, image_content, extra_headers)
         except requests.Timeout:
             return ToolResult.fail(f"Error: Vision API request timed out after {DEFAULT_TIMEOUT}s")
         except requests.ConnectionError:
@@ -107,22 +107,26 @@ class Vision(BaseTool):
             logger.error(f"[Vision] Unexpected error: {e}", exc_info=True)
             return ToolResult.fail(f"Error: Vision API call failed - {e}")
 
-    def _resolve_provider(self) -> Tuple[Optional[str], str]:
-        """Resolve API key and base URL. Priority: conf() > env vars."""
+    def _resolve_provider(self) -> Tuple[Optional[str], str, dict]:
+        """Resolve API key, base URL and extra headers. Priority: conf() > env vars."""
         api_key = conf().get("open_ai_api_key") or os.environ.get("OPENAI_API_KEY")
         if api_key:
             api_base = (conf().get("open_ai_api_base") or os.environ.get("OPENAI_API_BASE", "")).rstrip("/") \
                 or "https://api.openai.com/v1"
-            return api_key, self._ensure_v1(api_base)
+            return api_key, self._ensure_v1(api_base), {}
 
         api_key = conf().get("linkai_api_key") or os.environ.get("LINKAI_API_KEY")
         if api_key:
             api_base = (conf().get("linkai_api_base") or os.environ.get("LINKAI_API_BASE", "")).rstrip("/") \
                 or "https://api.link-ai.tech"
             logger.debug("[Vision] Using LinkAI API (OPENAI_API_KEY not set)")
-            return api_key, self._ensure_v1(api_base)
+            from common.utils import get_cloud_headers
+            extra = get_cloud_headers(api_key)
+            extra.pop("Authorization", None)
+            extra.pop("Content-Type", None)
+            return api_key, self._ensure_v1(api_base), extra
 
-        return None, ""
+        return None, "", {}
 
     @staticmethod
     def _ensure_v1(api_base: str) -> str:
@@ -197,7 +201,7 @@ class Vision(BaseTool):
         return path
 
     def _call_api(self, api_key: str, api_base: str, model: str,
-                  question: str, image_content: dict) -> ToolResult:
+                  question: str, image_content: dict, extra_headers: dict = None) -> ToolResult:
         payload = {
             "model": model,
             "messages": [
@@ -215,6 +219,7 @@ class Vision(BaseTool):
         headers = {
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
+            **(extra_headers or {}),
         }
 
         resp = requests.post(

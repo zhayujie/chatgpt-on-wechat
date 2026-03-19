@@ -115,3 +115,22 @@ def expand_path(path: str) -> str:
                 expanded = os.path.join(home, path[2:])
     
     return expanded
+
+
+def get_cloud_headers(api_key: str) -> dict:
+    """
+    Build standard headers for LinkAI API requests,
+    including client_id when available.
+    """
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {api_key}",
+    }
+    try:
+        from linkai import LinkAIClient
+        client_id = LinkAIClient.fetch_client_id()
+        if client_id:
+            headers["X-Client-Id"] = client_id
+    except Exception:
+        pass
+    return headers

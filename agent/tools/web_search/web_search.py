@@ -225,10 +225,8 @@ class WebSearch(BaseTool):
         api_base = conf().get("linkai_api_base", "https://api.link-ai.tech")
         url = f"{api_base.rstrip('/')}/v1/plugin/execute"
 
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {api_key}"
-        }
+        from common.utils import get_cloud_headers
+        headers = get_cloud_headers(api_key)
 
         payload = {
             "code": "web-search",

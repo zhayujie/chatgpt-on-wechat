@@ -152,12 +152,20 @@ class AgentLLMModel(LLMModel):
                 # Only pass max_tokens if it's explicitly set
                 if request.max_tokens is not None:
                     kwargs['max_tokens'] = request.max_tokens
-                
+
                 # Extract system prompt if present
                 system_prompt = getattr(request, 'system', None)
                 if system_prompt:
                     kwargs['system'] = system_prompt
-                
+
+                # Pass context metadata to bot
+                channel_type = getattr(self, 'channel_type', None)
+                if channel_type:
+                    kwargs['channel_type'] = channel_type
+                session_id = getattr(self, 'session_id', None)
+                if session_id:
+                    kwargs['session_id'] = session_id
+
                 response = self.bot.call_with_tools(**kwargs)
                 return self._format_response(response)
             else:
@@ -195,10 +203,13 @@ class AgentLLMModel(LLMModel):
                 if system_prompt:
                     kwargs['system'] = system_prompt
 
-                # Pass channel_type for linkai tracking
+                # Pass context metadata to bot
                 channel_type = getattr(self, 'channel_type', None)
                 if channel_type:
                     kwargs['channel_type'] = channel_type
+                session_id = getattr(self, 'session_id', None)
+                if session_id:
+                    kwargs['session_id'] = session_id
 
                 stream = self.bot.call_with_tools(**kwargs)
                 
@@ -375,9 +386,10 @@ class AgentBridge:
                                 logger.warning(f"[AgentBridge] Failed to attach context to scheduler: {e}")
                             break
             
-            # Pass channel_type to model so linkai requests carry it
+            # Pass context metadata to model for downstream API requests
             if context and hasattr(agent, 'model'):
                 agent.model.channel_type = context.get("channel_type", "")
+                agent.model.session_id = session_id or ""
 
             # Store session_id on agent so executor can clear DB on fatal errors
             agent._current_session_id = session_id

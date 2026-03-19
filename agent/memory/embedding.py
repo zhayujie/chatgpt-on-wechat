@@ -32,18 +32,21 @@ class EmbeddingProvider(ABC):
 class OpenAIEmbeddingProvider(EmbeddingProvider):
     """OpenAI embedding provider using REST API"""
     
-    def __init__(self, model: str = "text-embedding-3-small", api_key: Optional[str] = None, api_base: Optional[str] = None):
+    def __init__(self, model: str = "text-embedding-3-small", api_key: Optional[str] = None,
+                 api_base: Optional[str] = None, extra_headers: Optional[dict] = None):
         """
         Initialize OpenAI embedding provider
-        
+
         Args:
             model: Model name (text-embedding-3-small or text-embedding-3-large)
             api_key: OpenAI API key
             api_base: Optional API base URL
+            extra_headers: Optional extra headers to include in API requests
         """
         self.model = model
         self.api_key = api_key
         self.api_base = api_base or "https://api.openai.com/v1"
+        self.extra_headers = extra_headers or {}
 
         # Validate API key
         if not self.api_key or self.api_key in ["", "YOUR API KEY", "YOUR_API_KEY"]:
@@ -59,7 +62,8 @@ class OpenAIEmbeddingProvider(EmbeddingProvider):
         url = f"{self.api_base}/embeddings"
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {self.api_key}"
+            "Authorization": f"Bearer {self.api_key}",
+            **self.extra_headers,
         }
         data = {
             "input": input_data,
@@ -134,7 +138,8 @@ def create_embedding_provider(
     provider: str = "openai",
     model: Optional[str] = None,
     api_key: Optional[str] = None,
-    api_base: Optional[str] = None
+    api_base: Optional[str] = None,
+    extra_headers: Optional[dict] = None
 ) -> EmbeddingProvider:
     """
     Factory function to create embedding provider
@@ -147,10 +152,11 @@ def create_embedding_provider(
         model: Model name (default: text-embedding-3-small)
         api_key: API key (required)
         api_base: API base URL
-        
+        extra_headers: Optional extra headers to include in API requests
+
     Returns:
         EmbeddingProvider instance
-        
+
     Raises:
         ValueError: If provider is unsupported or api_key is missing
     """
@@ -158,4 +164,4 @@ def create_embedding_provider(
         raise ValueError(f"Unsupported embedding provider: {provider}. Use 'openai' or 'linkai'.")
 
     model = model or "text-embedding-3-small"
-    return OpenAIEmbeddingProvider(model=model, api_key=api_key, api_base=api_base)
+    return OpenAIEmbeddingProvider(model=model, api_key=api_key, api_base=api_base, extra_headers=extra_headers)
