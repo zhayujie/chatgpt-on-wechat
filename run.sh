@@ -358,11 +358,9 @@ configure_channel() {
             echo -e "${GREEN}Configure Feishu (WebSocket mode)...${NC}"
             read -p "Enter Feishu App ID: " fs_app_id
             read -p "Enter Feishu App Secret: " fs_app_secret
-            read -p "Enter Feishu Bot Name: " fs_bot_name
             
             FEISHU_APP_ID="$fs_app_id"
             FEISHU_APP_SECRET="$fs_app_secret"
-            FEISHU_BOT_NAME="$fs_bot_name"
             FEISHU_EVENT_MODE="websocket"
             ACCESS_INFO="Feishu channel configured (WebSocket mode)"
             ;;
@@ -450,7 +448,6 @@ create_config_file() {
     MINIMAX_KEY="${MINIMAX_KEY:-}" \
     USE_LINKAI="${USE_LINKAI:-false}" \
     LINKAI_KEY="${LINKAI_KEY:-}" \
-    FEISHU_BOT_NAME="${FEISHU_BOT_NAME:-}" \
     FEISHU_APP_ID="${FEISHU_APP_ID:-}" \
     FEISHU_APP_SECRET="${FEISHU_APP_SECRET:-}" \
     WEB_PORT="${WEB_PORT:-}" \
@@ -497,7 +494,7 @@ base = {
     'agent_max_steps': 15,
 }
 channel_map = {
-    'feishu': {'feishu_bot_name': 'FEISHU_BOT_NAME', 'feishu_app_id': 'FEISHU_APP_ID', 'feishu_app_secret': 'FEISHU_APP_SECRET'},
+    'feishu': {'feishu_app_id': 'FEISHU_APP_ID', 'feishu_app_secret': 'FEISHU_APP_SECRET'},
     'web': {'web_port': ('WEB_PORT', int)},
     'dingtalk': {'dingtalk_client_id': 'DT_CLIENT_ID', 'dingtalk_client_secret': 'DT_CLIENT_SECRET'},
     'wecom_bot': {'wecom_bot_id': 'WECOM_BOT_ID', 'wecom_bot_secret': 'WECOM_BOT_SECRET'},
