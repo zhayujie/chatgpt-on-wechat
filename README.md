@@ -102,7 +102,7 @@ bash <(curl -fsSL https://cdn.link-ai.tech/code/cow/run.sh)
 
 项目支持国内外主流厂商的模型接口，可选模型及配置说明参考：[模型说明](#模型说明)。
 
-> 注：Agent模式下推荐使用以下模型，可根据效果及成本综合选择：MiniMax-M2.5、glm-5、kimi-k2.5、qwen3.5-plus、claude-sonnet-4-6、gemini-3.1-pro-preview、gpt-5.4、gpt-5.4-mini
+> 注：Agent模式下推荐使用以下模型，可根据效果及成本综合选择：MiniMax-M2.7、glm-5-turbo、kimi-k2.5、qwen3.5-plus、claude-sonnet-4-6、gemini-3.1-pro-preview、gpt-5.4、gpt-5.4-mini
 
 同时支持使用 **LinkAI平台** 接口，支持上述全部模型，并支持知识库、工作流、插件等Agent技能，参考 [接口文档](https://docs.link-ai.tech/platform/api)。
 
@@ -148,7 +148,7 @@ pip3 install -r requirements-optional.txt
 # config.json 文件内容示例
 {
   "channel_type": "web",                                      # 接入渠道类型，默认为web，支持修改为:feishu,dingtalk,wecom_bot,qq,wechatcom_app,wechatmp_service,wechatmp,terminal
-  "model": "MiniMax-M2.5",                                    # 模型名称
+  "model": "MiniMax-M2.7",                                    # 模型名称
   "minimax_api_key": "",                                      # MiniMax API Key
   "zhipu_ai_api_key": "",                                     # 智谱GLM API Key
   "moonshot_api_key": "",                                     # Kimi/Moonshot API Key
@@ -187,7 +187,7 @@ pip3 install -r requirements-optional.txt
 <details>
 <summary>2. 其他配置</summary>
 
-+ `model`: 模型名称，Agent模式下推荐使用 `MiniMax-M2.5`、`glm-5`、`kimi-k2.5`、`qwen3.5-plus`、`claude-sonnet-4-6`、`gemini-3.1-pro-preview`，全部模型名称参考[common/const.py](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/common/const.py)文件
++ `model`: 模型名称，Agent模式下推荐使用 `MiniMax-M2.7`、`glm-5-turbo`、`kimi-k2.5`、`qwen3.5-plus`、`claude-sonnet-4-6`、`gemini-3.1-pro-preview`，全部模型名称参考[common/const.py](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/common/const.py)文件
 + `character_desc`：普通对话模式下的机器人系统提示词。在Agent模式下该配置不生效，由工作空间中的文件内容构成。
 + `subscribe_msg`：订阅消息，公众号和企业微信channel中请填写，当被订阅时会自动回复， 可使用特殊占位符。目前支持的占位符有{trigger_prefix}，在程序中它会自动替换成bot的触发词。
 </details>
@@ -312,24 +312,24 @@ sudo docker logs -f chatgpt-on-wechat
 
 ```json
 {
-    "model": "MiniMax-M2.5",
+    "model": "MiniMax-M2.7",
     "minimax_api_key": ""
 }
 ```
- - `model`: 可填写 `MiniMax-M2.5、MiniMax-M2.1、MiniMax-M2.1-lightning、MiniMax-M2、abab6.5-chat` 等
+ - `model`: 可填写 `MiniMax-M2.7、MiniMax-M2.5、MiniMax-M2.1、MiniMax-M2.1-lightning、MiniMax-M2、abab6.5-chat` 等
  - `minimax_api_key`：MiniMax平台的API-KEY，在 [控制台](https://platform.minimaxi.com/user-center/basic-information/interface-key) 创建
 
 方式二：OpenAI兼容方式接入，配置如下：
 ```json
 {
   "bot_type": "openai",
-  "model": "MiniMax-M2.5",
+  "model": "MiniMax-M2.7",
   "open_ai_api_base": "https://api.minimaxi.com/v1",
   "open_ai_api_key": ""
 }
 ```
 - `bot_type`: OpenAI兼容方式
-- `model`: 可填 `MiniMax-M2.5、MiniMax-M2.1、MiniMax-M2.1-lightning、MiniMax-M2`，参考[API文档](https://platform.minimaxi.com/document/%E5%AF%B9%E8%AF%9D?key=66701d281d57f38758d581d0#QklxsNSbaf6kM4j6wjO5eEek)
+- `model`: 可填 `MiniMax-M2.7、MiniMax-M2.5、MiniMax-M2.1、MiniMax-M2.1-lightning、MiniMax-M2`，参考[API文档](https://platform.minimaxi.com/document/%E5%AF%B9%E8%AF%9D?key=66701d281d57f38758d581d0#QklxsNSbaf6kM4j6wjO5eEek)
 - `open_ai_api_base`: MiniMax平台API的 BASE URL
 - `open_ai_api_key`: MiniMax平台的API-KEY
 </details>
@@ -341,24 +341,24 @@ sudo docker logs -f chatgpt-on-wechat
 
 ```json
 {
-  "model": "glm-5",
+  "model": "glm-5-turbo",
   "zhipu_ai_api_key": ""
 }
 ```
- - `model`: 可填 `glm-5、glm-4.7、glm-4-plus、glm-4-flash、glm-4-air、glm-4-airx、glm-4-long` 等, 参考 [glm系列模型编码](https://bigmodel.cn/dev/api/normal-model/glm-4)
+ - `model`: 可填 `glm-5-turbo、glm-5、glm-4.7、glm-4-plus、glm-4-flash、glm-4-air、glm-4-airx、glm-4-long` 等, 参考 [glm系列模型编码](https://bigmodel.cn/dev/api/normal-model/glm-4)
  - `zhipu_ai_api_key`: 智谱AI平台的 API KEY，在 [控制台](https://www.bigmodel.cn/usercenter/proj-mgmt/apikeys) 创建
 
 方式二：OpenAI兼容方式接入，配置如下：
 ```json
 {
   "bot_type": "openai",
-  "model": "glm-5",
+  "model": "glm-5-turbo",
   "open_ai_api_base": "https://open.bigmodel.cn/api/paas/v4",
   "open_ai_api_key": ""
 }
 ```
 - `bot_type`: OpenAI兼容方式
-- `model`: 可填 `glm-5、glm-4.7、glm-4-plus、glm-4-flash、glm-4-air、glm-4-airx、glm-4-long` 等
+- `model`: 可填 `glm-5-turbo、glm-5、glm-4.7、glm-4-plus、glm-4-flash、glm-4-air、glm-4-airx、glm-4-long` 等
 - `open_ai_api_base`: 智谱AI平台的 BASE URL
 - `open_ai_api_key`: 智谱AI平台的 API KEY
 </details>

@@ -92,14 +92,16 @@ QWEN35_PLUS = "qwen3.5-plus"  # Qwen3.5 Plus - Omni model (MultiModalConversatio
 QWQ_PLUS = "qwq-plus"
 
 # MiniMax
-MINIMAX_M2_5 = "MiniMax-M2.5"  # MiniMax M2.5 - Latest
-MINIMAX_M2_1 = "MiniMax-M2.1"  # MiniMax M2.1 - Agent推荐模型
+MINIMAX_M2_7 = "MiniMax-M2.7"  # MiniMax M2.7 - Latest
+MINIMAX_M2_5 = "MiniMax-M2.5"  # MiniMax M2.5
+MINIMAX_M2_1 = "MiniMax-M2.1"  # MiniMax M2.1
 MINIMAX_M2_1_LIGHTNING = "MiniMax-M2.1-lightning"  # MiniMax M2.1 极速版
 MINIMAX_M2 = "MiniMax-M2"  # MiniMax M2
 MINIMAX_ABAB6_5 = "abab6.5-chat"  # MiniMax abab6.5
 
 # GLM (智谱AI)
-GLM_5 = "glm-5"  # 智谱 GLM-5 - Latest
+GLM_5_TURBO = "glm-5-turbo"  # 智谱 GLM-5-Turbo - Latest
+GLM_5 = "glm-5"  # 智谱 GLM-5
 GLM_4 = "glm-4"
 GLM_4_PLUS = "glm-4-plus"
 GLM_4_flash = "glm-4-flash"
@@ -166,10 +168,10 @@ MODEL_LIST = [
               QWEN, QWEN_TURBO, QWEN_PLUS, QWEN_MAX, QWEN_LONG, QWEN3_MAX, QWEN35_PLUS,
               
               # MiniMax
-              MiniMax, MINIMAX_M2_5, MINIMAX_M2_1, MINIMAX_M2_1_LIGHTNING, MINIMAX_M2, MINIMAX_ABAB6_5,
+              MiniMax, MINIMAX_M2_7, MINIMAX_M2_5, MINIMAX_M2_1, MINIMAX_M2_1_LIGHTNING, MINIMAX_M2, MINIMAX_ABAB6_5,
 
               # GLM
-              ZHIPU_AI, GLM_5, GLM_4, GLM_4_PLUS, GLM_4_flash, GLM_4_LONG, GLM_4_ALLTOOLS,
+              ZHIPU_AI, GLM_5_TURBO, GLM_5, GLM_4, GLM_4_PLUS, GLM_4_flash, GLM_4_LONG, GLM_4_ALLTOOLS,
               GLM_4_0520, GLM_4_AIR, GLM_4_AIRX, GLM_4_7,
 
               # Kimi

@@ -137,8 +137,8 @@ bash <(curl -fsSL https://cdn.link-ai.tech/code/cow/run.sh)
 
 Agent模式推荐使用以下模型，可根据效果及成本综合选择：
 
-- **MiniMax**: `MiniMax-M2.5`
-- **GLM**: `glm-5`
+- **MiniMax**: `MiniMax-M2.7`
+- **GLM**: `glm-5-turbo`
 - **Kimi**: `kimi-k2.5`
 - **Doubao**: `doubao-seed-2-0-code-preview-260215`
 - **Qwen**: `qwen3.5-plus`

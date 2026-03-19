@@ -121,8 +121,8 @@ sudo docker logs -f chatgpt-on-wechat
 
 | プロバイダー | 推奨モデル |
 | --- | --- |
-| MiniMax | `MiniMax-M2.5` |
-| GLM | `glm-5` |
+| MiniMax | `MiniMax-M2.7` |
+| GLM | `glm-5-turbo` |
 | Kimi | `kimi-k2.5` |
 | Doubao | `doubao-seed-2-0-code-preview-260215` |
 | Qwen | `qwen3.5-plus` |

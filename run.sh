@@ -270,8 +270,8 @@ select_model() {
     echo -e "${CYAN}${BOLD}=========================================${NC}"
     echo -e "${CYAN}${BOLD}   Select AI Model${NC}"
     echo -e "${CYAN}${BOLD}=========================================${NC}"
-    echo -e "${YELLOW}1) MiniMax (MiniMax-M2.5, MiniMax-M2.1, etc.)${NC}"
-    echo -e "${YELLOW}2) Zhipu AI (glm-5, glm-4.7, etc.)${NC}"
+    echo -e "${YELLOW}1) MiniMax (MiniMax-M2.7, MiniMax-M2.5, etc.)${NC}"
+    echo -e "${YELLOW}2) Zhipu AI (glm-5-turbo, glm-5, etc.)${NC}"
     echo -e "${YELLOW}3) Kimi (kimi-k2.5, kimi-k2, etc.)${NC}"
     echo -e "${YELLOW}4) Doubao (doubao-seed-2-0-code-preview-260215, etc.)${NC}"
     echo -e "${YELLOW}5) Qwen (qwen3.5-plus, qwen3-max, qwq-plus, etc.)${NC}"
@@ -302,8 +302,8 @@ configure_model() {
             # MiniMax
             echo -e "${GREEN}Configuring MiniMax...${NC}"
             read -p "Enter MiniMax API Key: " minimax_key
-            read -p "Enter model name [press Enter for default: MiniMax-M2.5]: " model_name
-            model_name=${model_name:-MiniMax-M2.5}
+            read -p "Enter model name [press Enter for default: MiniMax-M2.7]: " model_name
+            model_name=${model_name:-MiniMax-M2.7}
             
             MODEL_NAME="$model_name"
             MINIMAX_KEY="$minimax_key"
@@ -312,8 +312,8 @@ configure_model() {
             # Zhipu AI
             echo -e "${GREEN}Configuring Zhipu AI...${NC}"
             read -p "Enter Zhipu AI API Key: " zhipu_key
-            read -p "Enter model name [press Enter for default: glm-5]: " model_name
-            model_name=${model_name:-glm-5}
+            read -p "Enter model name [press Enter for default: glm-5-turbo]: " model_name
+            model_name=${model_name:-glm-5-turbo}
             
             MODEL_NAME="$model_name"
             ZHIPU_KEY="$zhipu_key"
@@ -391,8 +391,8 @@ configure_model() {
             # LinkAI
             echo -e "${GREEN}Configuring LinkAI...${NC}"
             read -p "Enter LinkAI API Key: " linkai_key
-            read -p "Enter model name [press Enter for default: MiniMax-M2.5]: " model_name
-            model_name=${model_name:-MiniMax-M2.5}
+            read -p "Enter model name [press Enter for default: MiniMax-M2.7]: " model_name
+            model_name=${model_name:-MiniMax-M2.7}
             
             MODEL_NAME="$model_name"
             USE_LINKAI="true"
