@@ -9,7 +9,6 @@ set -e
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
-BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 BOLD='\033[1m'
 NC='\033[0m'
@@ -159,20 +158,18 @@ clone_project() {
 
     if ! command -v git &> /dev/null; then
         echo -e "${YELLOW}⚠️  Git not available. Trying wget/curl...${NC}"
+        local zip_url="https://gitee.com/zhayujie/chatgpt-on-wechat/repository/archive/master.zip"
         if command -v wget &> /dev/null; then
-            wget https://gitee.com/zhayujie/chatgpt-on-wechat/repository/archive/master.zip -O chatgpt-on-wechat.zip
-            unzip chatgpt-on-wechat.zip
-            mv chatgpt-on-wechat-master chatgpt-on-wechat
-            rm chatgpt-on-wechat.zip
+            wget "$zip_url" -O chatgpt-on-wechat.zip
         elif command -v curl &> /dev/null; then
-            curl -L https://gitee.com/zhayujie/chatgpt-on-wechat/repository/archive/master.zip -o chatgpt-on-wechat.zip
-            unzip chatgpt-on-wechat.zip
-            mv chatgpt-on-wechat-master chatgpt-on-wechat
-            rm chatgpt-on-wechat.zip
+            curl -L "$zip_url" -o chatgpt-on-wechat.zip
         else
             echo -e "${RED}❌ Cannot download project. Please install Git, wget, or curl.${NC}"
             exit 1
         fi
+        unzip chatgpt-on-wechat.zip
+        mv chatgpt-on-wechat-master chatgpt-on-wechat
+        rm chatgpt-on-wechat.zip
     else
         git clone https://github.com/zhayujie/chatgpt-on-wechat.git || \
         git clone https://gitee.com/zhayujie/chatgpt-on-wechat.git
@@ -198,69 +195,52 @@ clone_project() {
 # Install dependencies
 install_dependencies() {
     echo -e "${GREEN}📦 Installing dependencies...${NC}"
-    
-    # For Python 3.11+, use --break-system-packages to avoid externally-managed-environment errors
+    local PIP_MIRROR="-i https://pypi.tuna.tsinghua.edu.cn/simple"
+
     PIP_EXTRA_ARGS=""
     if $PYTHON_CMD -c "import sys; exit(0 if sys.version_info >= (3, 11) else 1)" 2>/dev/null; then
         PIP_EXTRA_ARGS="--break-system-packages"
         echo -e "${YELLOW}Python 3.11+ detected, using --break-system-packages for pip installations${NC}"
     fi
-    
-    # Upgrade pip and basic tools (ignore existing system packages to avoid conflicts)
+
     echo -e "${YELLOW}Upgrading pip and basic tools...${NC}"
     set +e
-    $PYTHON_CMD -m pip install --upgrade pip setuptools wheel importlib_metadata --ignore-installed $PIP_EXTRA_ARGS -i https://pypi.tuna.tsinghua.edu.cn/simple > /tmp/pip_upgrade.log 2>&1
-    if [ $? -ne 0 ]; then
-        echo -e "${YELLOW}⚠️  Some tools failed to upgrade, but continuing...${NC}"
-        cat /tmp/pip_upgrade.log | head -20
-    fi
+    $PYTHON_CMD -m pip install --upgrade pip setuptools wheel importlib_metadata --ignore-installed $PIP_EXTRA_ARGS $PIP_MIRROR > /tmp/pip_upgrade.log 2>&1
+    [ $? -ne 0 ] && echo -e "${YELLOW}⚠️  Some tools failed to upgrade, but continuing...${NC}"
     set -e
     rm -f /tmp/pip_upgrade.log
-    
-    # Common packages that may have distutils/system conflicts
-    COMMON_CONFLICT_PACKAGES="PyYAML setuptools wheel certifi charset-normalizer"
-    
-    # Try normal installation first
+
     echo -e "${YELLOW}Installing project dependencies...${NC}"
-    
-    # Save output and capture exit code correctly
-    set +e  # Temporarily disable exit on error
-    $PYTHON_CMD -m pip install -r requirements.txt $PIP_EXTRA_ARGS -i https://pypi.tuna.tsinghua.edu.cn/simple > /tmp/pip_install.log 2>&1
-    INSTALL_EXIT_CODE=$?
-    set -e  # Re-enable exit on error
-    
-    # Show output
+    set +e
+    $PYTHON_CMD -m pip install -r requirements.txt $PIP_EXTRA_ARGS $PIP_MIRROR > /tmp/pip_install.log 2>&1
+    local exit_code=$?
+    set -e
     cat /tmp/pip_install.log
-    
-    if [ $INSTALL_EXIT_CODE -eq 0 ]; then
+
+    if [ $exit_code -eq 0 ]; then
         echo -e "${GREEN}✅ Dependencies installed successfully.${NC}"
+    elif grep -qE "distutils installed project|uninstall-no-record-file|installed by debian" /tmp/pip_install.log; then
+        echo -e "${YELLOW}⚠️  Detected system package conflict, retrying with workaround...${NC}"
+        local IGNORE_PACKAGES=""
+        for pkg in PyYAML setuptools wheel certifi charset-normalizer; do
+            IGNORE_PACKAGES="$IGNORE_PACKAGES --ignore-installed $pkg"
+        done
+        set +e
+        $PYTHON_CMD -m pip install -r requirements.txt $IGNORE_PACKAGES $PIP_EXTRA_ARGS $PIP_MIRROR \
+            && echo -e "${GREEN}✅ Dependencies installed successfully (workaround applied).${NC}" \
+            || echo -e "${YELLOW}⚠️  Some dependencies may have issues, but continuing...${NC}"
+        set -e
+    elif grep -q "externally-managed-environment" /tmp/pip_install.log; then
+        echo -e "${YELLOW}⚠️  Detected externally-managed environment, retrying with --break-system-packages...${NC}"
+        set +e
+        $PYTHON_CMD -m pip install -r requirements.txt --break-system-packages $PIP_MIRROR \
+            && echo -e "${GREEN}✅ Dependencies installed successfully (system packages override applied).${NC}" \
+            || echo -e "${YELLOW}⚠️  Some dependencies may have issues, but continuing...${NC}"
+        set -e
     else
-        # Check if it's a distutils/system package conflict error
-        if grep -qE "distutils installed project|uninstall-no-record-file|installed by debian" /tmp/pip_install.log; then
-            echo -e "${YELLOW}⚠️  Detected system package conflict, retrying with workaround...${NC}"
-            # Only ignore common conflict packages
-            IGNORE_PACKAGES=""
-            for pkg in $COMMON_CONFLICT_PACKAGES; do
-                IGNORE_PACKAGES="$IGNORE_PACKAGES --ignore-installed $pkg"
-            done
-            
-            if $PYTHON_CMD -m pip install -r requirements.txt $IGNORE_PACKAGES $PIP_EXTRA_ARGS -i https://pypi.tuna.tsinghua.edu.cn/simple; then
-                echo -e "${GREEN}✅ Dependencies installed successfully (workaround applied).${NC}"
-            else
-                echo -e "${YELLOW}⚠️  Some dependencies may have issues, but continuing...${NC}"
-            fi
-        elif grep -q "externally-managed-environment" /tmp/pip_install.log; then
-            echo -e "${YELLOW}⚠️  Detected externally-managed environment, retrying with --break-system-packages...${NC}"
-            if $PYTHON_CMD -m pip install -r requirements.txt --break-system-packages -i https://pypi.tuna.tsinghua.edu.cn/simple; then
-                echo -e "${GREEN}✅ Dependencies installed successfully (system packages override applied).${NC}"
-            else
-                echo -e "${YELLOW}⚠️  Some dependencies may have issues, but continuing...${NC}"
-            fi
-        else
-            echo -e "${YELLOW}⚠️  Installation had errors, but continuing...${NC}"
-        fi
+        echo -e "${YELLOW}⚠️  Installation had errors, but continuing...${NC}"
     fi
-    
+
     rm -f /tmp/pip_install.log
 }
 
@@ -295,108 +275,48 @@ select_model() {
     done
 }
 
+# Read model config: provider, default_model, key_variable_name
+read_model_config() {
+    local provider=$1 default_model=$2 key_var=$3
+    echo -e "${GREEN}Configuring ${provider}...${NC}"
+    read -p "Enter ${provider} API Key: " _api_key
+    read -p "Enter model name [press Enter for default: ${default_model}]: " model_name
+    model_name=${model_name:-$default_model}
+    MODEL_NAME="$model_name"
+    eval "${key_var}=\"\$_api_key\""
+}
+
+# Read optional API base URL
+read_api_base() {
+    local base_var=$1 default_url=$2
+    read -p "Enter API Base URL [press Enter for default: ${default_url}]: " api_base
+    api_base=${api_base:-$default_url}
+    eval "${base_var}=\"\$api_base\""
+}
+
 # Configure model
 configure_model() {
     case "$model_choice" in
-        1)
-            # MiniMax
-            echo -e "${GREEN}Configuring MiniMax...${NC}"
-            read -p "Enter MiniMax API Key: " minimax_key
-            read -p "Enter model name [press Enter for default: MiniMax-M2.7]: " model_name
-            model_name=${model_name:-MiniMax-M2.7}
-            
-            MODEL_NAME="$model_name"
-            MINIMAX_KEY="$minimax_key"
-            ;;
-        2)
-            # Zhipu AI
-            echo -e "${GREEN}Configuring Zhipu AI...${NC}"
-            read -p "Enter Zhipu AI API Key: " zhipu_key
-            read -p "Enter model name [press Enter for default: glm-5-turbo]: " model_name
-            model_name=${model_name:-glm-5-turbo}
-            
-            MODEL_NAME="$model_name"
-            ZHIPU_KEY="$zhipu_key"
-            ;;
-        3)
-            # Kimi (Moonshot)
-            echo -e "${GREEN}Configuring Kimi (Moonshot)...${NC}"
-            read -p "Enter Moonshot API Key: " moonshot_key
-            read -p "Enter model name [press Enter for default: kimi-k2.5]: " model_name
-            model_name=${model_name:-kimi-k2.5}
-            
-            MODEL_NAME="$model_name"
-            MOONSHOT_KEY="$moonshot_key"
-            ;;
-        4)
-            # Doubao (Volcengine Ark)
-            echo -e "${GREEN}Configuring Doubao (Volcengine Ark)...${NC}"
-            read -p "Enter Ark API Key: " ark_key
-            read -p "Enter model name [press Enter for default: doubao-seed-2-0-code-preview-260215]: " model_name
-            model_name=${model_name:-doubao-seed-2-0-code-preview-260215}
-            
-            MODEL_NAME="$model_name"
-            ARK_KEY="$ark_key"
-            ;;
-        5)
-            # Qwen (DashScope)
-            echo -e "${GREEN}Configuring Qwen (DashScope)...${NC}"
-            read -p "Enter DashScope API Key: " dashscope_key
-            read -p "Enter model name [press Enter for default: qwen3.5-plus]: " model_name
-            model_name=${model_name:-qwen3.5-plus}
-            
-            MODEL_NAME="$model_name"
-            DASHSCOPE_KEY="$dashscope_key"
-            ;;
+        1) read_model_config "MiniMax" "MiniMax-M2.7" "MINIMAX_KEY" ;;
+        2) read_model_config "Zhipu AI" "glm-5-turbo" "ZHIPU_KEY" ;;
+        3) read_model_config "Kimi (Moonshot)" "kimi-k2.5" "MOONSHOT_KEY" ;;
+        4) read_model_config "Doubao (Volcengine Ark)" "doubao-seed-2-0-code-preview-260215" "ARK_KEY" ;;
+        5) read_model_config "Qwen (DashScope)" "qwen3.5-plus" "DASHSCOPE_KEY" ;;
         6)
-            # Claude
-            echo -e "${GREEN}Configuring Claude...${NC}"
-            read -p "Enter Claude API Key: " claude_key
-            read -p "Enter model name [press Enter for default: claude-sonnet-4-6]: " model_name
-            model_name=${model_name:-claude-sonnet-4-6}
-            read -p "Enter API Base URL [press Enter for default: https://api.anthropic.com/v1]: " api_base
-            api_base=${api_base:-https://api.anthropic.com/v1}
-            
-            MODEL_NAME="$model_name"
-            CLAUDE_KEY="$claude_key"
-            CLAUDE_BASE="$api_base"
+            read_model_config "Claude" "claude-sonnet-4-6" "CLAUDE_KEY"
+            read_api_base "CLAUDE_BASE" "https://api.anthropic.com/v1"
             ;;
         7)
-            # Gemini
-            echo -e "${GREEN}Configuring Gemini...${NC}"
-            read -p "Enter Gemini API Key: " gemini_key
-            read -p "Enter model name [press Enter for default: gemini-3.1-pro-preview]: " model_name
-            model_name=${model_name:-gemini-3.1-pro-preview}
-            read -p "Enter API Base URL [press Enter for default: https://generativelanguage.googleapis.com]: " api_base
-            api_base=${api_base:-https://generativelanguage.googleapis.com}
-            
-            MODEL_NAME="$model_name"
-            GEMINI_KEY="$gemini_key"
-            GEMINI_BASE="$api_base"
+            read_model_config "Gemini" "gemini-3.1-pro-preview" "GEMINI_KEY"
+            read_api_base "GEMINI_BASE" "https://generativelanguage.googleapis.com"
             ;;
         8)
-            # OpenAI
-            echo -e "${GREEN}Configuring OpenAI GPT...${NC}"
-            read -p "Enter OpenAI API Key: " openai_key
-            read -p "Enter model name [press Enter for default: gpt-5.4]: " model_name
-            model_name=${model_name:-gpt-5.4}
-            read -p "Enter API Base URL [press Enter for default: https://api.openai.com/v1]: " api_base
-            api_base=${api_base:-https://api.openai.com/v1}
-            
-            MODEL_NAME="$model_name"
-            OPENAI_KEY="$openai_key"
-            OPENAI_BASE="$api_base"
+            read_model_config "OpenAI GPT" "gpt-5.4" "OPENAI_KEY"
+            read_api_base "OPENAI_BASE" "https://api.openai.com/v1"
             ;;
         9)
-            # LinkAI
-            echo -e "${GREEN}Configuring LinkAI...${NC}"
-            read -p "Enter LinkAI API Key: " linkai_key
-            read -p "Enter model name [press Enter for default: MiniMax-M2.7]: " model_name
-            model_name=${model_name:-MiniMax-M2.7}
-            
-            MODEL_NAME="$model_name"
+            read_model_config "LinkAI" "MiniMax-M2.7" "LINKAI_KEY"
             USE_LINKAI="true"
-            LINKAI_KEY="$linkai_key"
             ;;
     esac
 }
@@ -514,227 +434,86 @@ configure_channel() {
 # Generate config file
 create_config_file() {
     echo -e "${GREEN}📝 Generating config.json...${NC}"
-    
-    # Build JSON based on channel type
-    case "$CHANNEL_TYPE" in
-        feishu)
-            cat > config.json <<EOF
-{
-  "channel_type": "feishu",
-  "model": "${MODEL_NAME}",
-  "open_ai_api_key": "${OPENAI_KEY:-}",
-  "open_ai_api_base": "${OPENAI_BASE:-https://api.openai.com/v1}",
-  "claude_api_key": "${CLAUDE_KEY:-}",
-  "claude_api_base": "${CLAUDE_BASE:-https://api.anthropic.com/v1}",
-  "gemini_api_key": "${GEMINI_KEY:-}",
-  "gemini_api_base": "${GEMINI_BASE:-https://generativelanguage.googleapis.com}",
-  "zhipu_ai_api_key": "${ZHIPU_KEY:-}",
-  "moonshot_api_key": "${MOONSHOT_KEY:-}",
-  "ark_api_key": "${ARK_KEY:-}",
-  "dashscope_api_key": "${DASHSCOPE_KEY:-}",
-  "minimax_api_key": "${MINIMAX_KEY:-}",
-  "voice_to_text": "openai",
-  "text_to_voice": "openai",
-  "voice_reply_voice": false,
-  "speech_recognition": true,
-  "group_speech_recognition": false,
-  "use_linkai": ${USE_LINKAI:-false},
-  "linkai_api_key": "${LINKAI_KEY:-}",
-  "linkai_app_code": "",
-  "feishu_bot_name": "${FEISHU_BOT_NAME}",
-  "feishu_app_id": "${FEISHU_APP_ID}",
-  "feishu_app_secret": "${FEISHU_APP_SECRET}",
-  "dingtalk_client_id": "",
-  "dingtalk_client_secret": "",
-  "agent": true,
-  "agent_max_context_tokens": 40000,
-  "agent_max_context_turns": 30,
-  "agent_max_steps": 15
+
+    CHANNEL_TYPE="$CHANNEL_TYPE" \
+    MODEL_NAME="$MODEL_NAME" \
+    OPENAI_KEY="${OPENAI_KEY:-}" \
+    OPENAI_BASE="${OPENAI_BASE:-https://api.openai.com/v1}" \
+    CLAUDE_KEY="${CLAUDE_KEY:-}" \
+    CLAUDE_BASE="${CLAUDE_BASE:-https://api.anthropic.com/v1}" \
+    GEMINI_KEY="${GEMINI_KEY:-}" \
+    GEMINI_BASE="${GEMINI_BASE:-https://generativelanguage.googleapis.com}" \
+    ZHIPU_KEY="${ZHIPU_KEY:-}" \
+    MOONSHOT_KEY="${MOONSHOT_KEY:-}" \
+    ARK_KEY="${ARK_KEY:-}" \
+    DASHSCOPE_KEY="${DASHSCOPE_KEY:-}" \
+    MINIMAX_KEY="${MINIMAX_KEY:-}" \
+    USE_LINKAI="${USE_LINKAI:-false}" \
+    LINKAI_KEY="${LINKAI_KEY:-}" \
+    FEISHU_BOT_NAME="${FEISHU_BOT_NAME:-}" \
+    FEISHU_APP_ID="${FEISHU_APP_ID:-}" \
+    FEISHU_APP_SECRET="${FEISHU_APP_SECRET:-}" \
+    WEB_PORT="${WEB_PORT:-}" \
+    DT_CLIENT_ID="${DT_CLIENT_ID:-}" \
+    DT_CLIENT_SECRET="${DT_CLIENT_SECRET:-}" \
+    WECOM_BOT_ID="${WECOM_BOT_ID:-}" \
+    WECOM_BOT_SECRET="${WECOM_BOT_SECRET:-}" \
+    QQ_APP_ID="${QQ_APP_ID:-}" \
+    QQ_APP_SECRET="${QQ_APP_SECRET:-}" \
+    WECHATCOM_CORP_ID="${WECHATCOM_CORP_ID:-}" \
+    WECHATCOM_TOKEN="${WECHATCOM_TOKEN:-}" \
+    WECHATCOM_SECRET="${WECHATCOM_SECRET:-}" \
+    WECHATCOM_AGENT_ID="${WECHATCOM_AGENT_ID:-}" \
+    WECHATCOM_AES_KEY="${WECHATCOM_AES_KEY:-}" \
+    WECHATCOM_PORT="${WECHATCOM_PORT:-}" \
+    $PYTHON_CMD -c "
+import json, os
+e = os.environ.get
+base = {
+    'channel_type': e('CHANNEL_TYPE'),
+    'model': e('MODEL_NAME'),
+    'open_ai_api_key': e('OPENAI_KEY', ''),
+    'open_ai_api_base': e('OPENAI_BASE'),
+    'claude_api_key': e('CLAUDE_KEY', ''),
+    'claude_api_base': e('CLAUDE_BASE'),
+    'gemini_api_key': e('GEMINI_KEY', ''),
+    'gemini_api_base': e('GEMINI_BASE'),
+    'zhipu_ai_api_key': e('ZHIPU_KEY', ''),
+    'moonshot_api_key': e('MOONSHOT_KEY', ''),
+    'ark_api_key': e('ARK_KEY', ''),
+    'dashscope_api_key': e('DASHSCOPE_KEY', ''),
+    'minimax_api_key': e('MINIMAX_KEY', ''),
+    'voice_to_text': 'openai',
+    'text_to_voice': 'openai',
+    'voice_reply_voice': False,
+    'speech_recognition': True,
+    'group_speech_recognition': False,
+    'use_linkai': e('USE_LINKAI') == 'true',
+    'linkai_api_key': e('LINKAI_KEY', ''),
+    'linkai_app_code': '',
+    'agent': True,
+    'agent_max_context_tokens': 40000,
+    'agent_max_context_turns': 30,
+    'agent_max_steps': 15,
 }
-EOF
-            ;;
-        web)
-            cat > config.json <<EOF
-{
-  "channel_type": "web",
-  "web_port": ${WEB_PORT},
-  "model": "${MODEL_NAME}",
-  "open_ai_api_key": "${OPENAI_KEY:-}",
-  "open_ai_api_base": "${OPENAI_BASE:-https://api.openai.com/v1}",
-  "claude_api_key": "${CLAUDE_KEY:-}",
-  "claude_api_base": "${CLAUDE_BASE:-https://api.anthropic.com/v1}",
-  "gemini_api_key": "${GEMINI_KEY:-}",
-  "gemini_api_base": "${GEMINI_BASE:-https://generativelanguage.googleapis.com}",
-  "zhipu_ai_api_key": "${ZHIPU_KEY:-}",
-  "moonshot_api_key": "${MOONSHOT_KEY:-}",
-  "ark_api_key": "${ARK_KEY:-}",
-  "dashscope_api_key": "${DASHSCOPE_KEY:-}",
-  "minimax_api_key": "${MINIMAX_KEY:-}",
-  "voice_to_text": "openai",
-  "text_to_voice": "openai",
-  "voice_reply_voice": false,
-  "speech_recognition": true,
-  "group_speech_recognition": false,
-  "use_linkai": ${USE_LINKAI:-false},
-  "linkai_api_key": "${LINKAI_KEY:-}",
-  "linkai_app_code": "",
-  "feishu_bot_name": "$feishu_bot_name",
-  "feishu_app_id": "",
-  "feishu_app_secret": "",
-  "dingtalk_client_id": "",
-  "dingtalk_client_secret": "",
-  "agent": true,
-  "agent_max_context_tokens": 40000,
-  "agent_max_context_turns": 30,
-  "agent_max_steps": 15
+channel_map = {
+    'feishu': {'feishu_bot_name': 'FEISHU_BOT_NAME', 'feishu_app_id': 'FEISHU_APP_ID', 'feishu_app_secret': 'FEISHU_APP_SECRET'},
+    'web': {'web_port': ('WEB_PORT', int)},
+    'dingtalk': {'dingtalk_client_id': 'DT_CLIENT_ID', 'dingtalk_client_secret': 'DT_CLIENT_SECRET'},
+    'wecom_bot': {'wecom_bot_id': 'WECOM_BOT_ID', 'wecom_bot_secret': 'WECOM_BOT_SECRET'},
+    'qq': {'qq_app_id': 'QQ_APP_ID', 'qq_app_secret': 'QQ_APP_SECRET'},
+    'wechatcom_app': {'wechatcom_corp_id': 'WECHATCOM_CORP_ID', 'wechatcomapp_token': 'WECHATCOM_TOKEN', 'wechatcomapp_secret': 'WECHATCOM_SECRET', 'wechatcomapp_agent_id': 'WECHATCOM_AGENT_ID', 'wechatcomapp_aes_key': 'WECHATCOM_AES_KEY', 'wechatcomapp_port': ('WECHATCOM_PORT', int)},
 }
-EOF
-            ;;
-        dingtalk)
-            cat > config.json <<EOF
-{
-  "channel_type": "dingtalk",
-  "model": "${MODEL_NAME}",
-  "open_ai_api_key": "${OPENAI_KEY:-}",
-  "open_ai_api_base": "${OPENAI_BASE:-https://api.openai.com/v1}",
-  "claude_api_key": "${CLAUDE_KEY:-}",
-  "claude_api_base": "${CLAUDE_BASE:-https://api.anthropic.com/v1}",
-  "gemini_api_key": "${GEMINI_KEY:-}",
-  "gemini_api_base": "${GEMINI_BASE:-https://generativelanguage.googleapis.com}",
-  "zhipu_ai_api_key": "${ZHIPU_KEY:-}",
-  "moonshot_api_key": "${MOONSHOT_KEY:-}",
-  "ark_api_key": "${ARK_KEY:-}",
-  "dashscope_api_key": "${DASHSCOPE_KEY:-}",
-  "minimax_api_key": "${MINIMAX_KEY:-}",
-  "voice_to_text": "openai",
-  "text_to_voice": "openai",
-  "voice_reply_voice": false,
-  "speech_recognition": true,
-  "group_speech_recognition": false,
-  "use_linkai": ${USE_LINKAI:-false},
-  "linkai_api_key": "${LINKAI_KEY:-}",
-  "linkai_app_code": "",
-  "feishu_bot_name": "$feishu_bot_name",
-  "feishu_app_id": "",
-  "feishu_app_secret": "",
-  "dingtalk_client_id": "${DT_CLIENT_ID}",
-  "dingtalk_client_secret": "${DT_CLIENT_SECRET}",
-  "agent": true,
-  "agent_max_context_tokens": 40000,
-  "agent_max_context_turns": 30,
-  "agent_max_steps": 15
-}
-EOF
-            ;;
-        wecom_bot)
-            cat > config.json <<EOF
-{
-  "channel_type": "wecom_bot",
-  "wecom_bot_id": "${WECOM_BOT_ID}",
-  "wecom_bot_secret": "${WECOM_BOT_SECRET}",
-  "model": "${MODEL_NAME}",
-  "open_ai_api_key": "${OPENAI_KEY:-}",
-  "open_ai_api_base": "${OPENAI_BASE:-https://api.openai.com/v1}",
-  "claude_api_key": "${CLAUDE_KEY:-}",
-  "claude_api_base": "${CLAUDE_BASE:-https://api.anthropic.com/v1}",
-  "gemini_api_key": "${GEMINI_KEY:-}",
-  "gemini_api_base": "${GEMINI_BASE:-https://generativelanguage.googleapis.com}",
-  "zhipu_ai_api_key": "${ZHIPU_KEY:-}",
-  "moonshot_api_key": "${MOONSHOT_KEY:-}",
-  "ark_api_key": "${ARK_KEY:-}",
-  "dashscope_api_key": "${DASHSCOPE_KEY:-}",
-  "minimax_api_key": "${MINIMAX_KEY:-}",
-  "voice_to_text": "openai",
-  "text_to_voice": "openai",
-  "voice_reply_voice": false,
-  "speech_recognition": true,
-  "group_speech_recognition": false,
-  "use_linkai": ${USE_LINKAI:-false},
-  "linkai_api_key": "${LINKAI_KEY:-}",
-  "linkai_app_code": "",
-  "agent": true,
-  "agent_max_context_tokens": 40000,
-  "agent_max_context_turns": 30,
-  "agent_max_steps": 15
-}
-EOF
-            ;;
-        qq)
-            cat > config.json <<EOF
-{
-  "channel_type": "qq",
-  "qq_app_id": "${QQ_APP_ID}",
-  "qq_app_secret": "${QQ_APP_SECRET}",
-  "model": "${MODEL_NAME}",
-  "open_ai_api_key": "${OPENAI_KEY:-}",
-  "open_ai_api_base": "${OPENAI_BASE:-https://api.openai.com/v1}",
-  "claude_api_key": "${CLAUDE_KEY:-}",
-  "claude_api_base": "${CLAUDE_BASE:-https://api.anthropic.com/v1}",
-  "gemini_api_key": "${GEMINI_KEY:-}",
-  "gemini_api_base": "${GEMINI_BASE:-https://generativelanguage.googleapis.com}",
-  "zhipu_ai_api_key": "${ZHIPU_KEY:-}",
-  "moonshot_api_key": "${MOONSHOT_KEY:-}",
-  "ark_api_key": "${ARK_KEY:-}",
-  "dashscope_api_key": "${DASHSCOPE_KEY:-}",
-  "minimax_api_key": "${MINIMAX_KEY:-}",
-  "voice_to_text": "openai",
-  "text_to_voice": "openai",
-  "voice_reply_voice": false,
-  "speech_recognition": true,
-  "group_speech_recognition": false,
-  "use_linkai": ${USE_LINKAI:-false},
-  "linkai_api_key": "${LINKAI_KEY:-}",
-  "linkai_app_code": "",
-  "agent": true,
-  "agent_max_context_tokens": 40000,
-  "agent_max_context_turns": 30,
-  "agent_max_steps": 15
-}
-EOF
-            ;;
-        wechatcom_app)
-            cat > config.json <<EOF
-{
-  "channel_type": "wechatcom_app",
-  "wechatcom_corp_id": "${WECHATCOM_CORP_ID}",
-  "wechatcomapp_token": "${WECHATCOM_TOKEN}",
-  "wechatcomapp_secret": "${WECHATCOM_SECRET}",
-  "wechatcomapp_agent_id": "${WECHATCOM_AGENT_ID}",
-  "wechatcomapp_aes_key": "${WECHATCOM_AES_KEY}",
-  "wechatcomapp_port": ${WECHATCOM_PORT},
-  "model": "${MODEL_NAME}",
-  "open_ai_api_key": "${OPENAI_KEY:-}",
-  "open_ai_api_base": "${OPENAI_BASE:-https://api.openai.com/v1}",
-  "claude_api_key": "${CLAUDE_KEY:-}",
-  "claude_api_base": "${CLAUDE_BASE:-https://api.anthropic.com/v1}",
-  "gemini_api_key": "${GEMINI_KEY:-}",
-  "gemini_api_base": "${GEMINI_BASE:-https://generativelanguage.googleapis.com}",
-  "zhipu_ai_api_key": "${ZHIPU_KEY:-}",
-  "moonshot_api_key": "${MOONSHOT_KEY:-}",
-  "ark_api_key": "${ARK_KEY:-}",
-  "dashscope_api_key": "${DASHSCOPE_KEY:-}",
-  "minimax_api_key": "${MINIMAX_KEY:-}",
-  "voice_to_text": "openai",
-  "text_to_voice": "openai",
-  "voice_reply_voice": false,
-  "speech_recognition": true,
-  "group_speech_recognition": false,
-  "use_linkai": ${USE_LINKAI:-false},
-  "linkai_api_key": "${LINKAI_KEY:-}",
-  "linkai_app_code": "",
-  "feishu_bot_name": "$feishu_bot_name",
-  "feishu_app_id": "",
-  "feishu_app_secret": "",
-  "dingtalk_client_id": "",
-  "dingtalk_client_secret": "",
-  "agent": true,
-  "agent_max_context_tokens": 40000,
-  "agent_max_context_turns": 30,
-  "agent_max_steps": 15
-}
-EOF
-            ;;
-    esac
+ch = e('CHANNEL_TYPE')
+for key, spec in channel_map.get(ch, {}).items():
+    if isinstance(spec, tuple):
+        env_name, conv = spec
+        base[key] = conv(e(env_name))
+    else:
+        base[key] = e(spec, '')
+with open('config.json', 'w') as f:
+    json.dump(base, f, indent=2, ensure_ascii=False)
+"
 
     echo -e "${GREEN}✅ Configuration file created successfully.${NC}"
 }
@@ -811,21 +590,22 @@ show_usage() {
     echo -e "${CYAN}${BOLD}=========================================${NC}"
 }
 
-# Check if service is running
-is_running() {
+# Ensure PYTHON_CMD is set
+ensure_python_cmd() {
     if [ -z "$PYTHON_CMD" ]; then
         detect_python_command 2>/dev/null || PYTHON_CMD="python3"
     fi
-    pid=$(ps ax | grep -i app.py | grep "${BASE_DIR}" | grep "$PYTHON_CMD" | grep -v grep | awk '{print $1}')
-    [ -n "$pid" ]
 }
 
-# Get service PID
+# Get service PID (empty string if not running)
 get_pid() {
-    if [ -z "$PYTHON_CMD" ]; then
-        detect_python_command 2>/dev/null || PYTHON_CMD="python3"
-    fi
+    ensure_python_cmd
     ps ax | grep -i app.py | grep "${BASE_DIR}" | grep "$PYTHON_CMD" | grep -v grep | awk '{print $1}'
+}
+
+# Check if service is running
+is_running() {
+    [ -n "$(get_pid)" ]
 }
 
 # Start service
@@ -1023,67 +803,38 @@ install_mode() {
     fi
 }
 
+# Require running inside the project directory
+require_project_dir() {
+    if [ "$IS_PROJECT_DIR" = false ]; then
+        echo -e "${RED}${EMOJI_CROSS} Must run in project directory${NC}"
+        exit 1
+    fi
+}
+
 # Main function
 main() {
     case "$1" in
-        start)
-            if [ "$IS_PROJECT_DIR" = false ]; then
-                echo -e "${RED}❌ Must run in project directory${NC}"
-                exit 1
-            fi
-            cmd_start
+        start|stop|restart|status|logs|config|update)
+            require_project_dir
             ;;
-        stop)
-            if [ "$IS_PROJECT_DIR" = false ]; then
-                echo -e "${RED}❌ Must run in project directory${NC}"
-                exit 1
-            fi
-            cmd_stop
-            ;;
-        restart)
-            if [ "$IS_PROJECT_DIR" = false ]; then
-                echo -e "${RED}❌ Must run in project directory${NC}"
-                exit 1
-            fi
-            cmd_restart
-            ;;
-        status)
-            if [ "$IS_PROJECT_DIR" = false ]; then
-                echo -e "${RED}❌ Must run in project directory${NC}"
-                exit 1
-            fi
-            cmd_status
-            ;;
-        logs)
-            if [ "$IS_PROJECT_DIR" = false ]; then
-                echo -e "${RED}❌ Must run in project directory${NC}"
-                exit 1
-            fi
-            cmd_logs
-            ;;
-        config)
-            if [ "$IS_PROJECT_DIR" = false ]; then
-                echo -e "${RED}❌ Must run in project directory${NC}"
-                exit 1
-            fi
-            cmd_config
-            ;;
-        update)
-            if [ "$IS_PROJECT_DIR" = false ]; then
-                echo -e "${RED}❌ Must run in project directory${NC}"
-                exit 1
-            fi
-            cmd_update
-            ;;
+    esac
+
+    case "$1" in
+        start)   cmd_start ;;
+        stop)    cmd_stop ;;
+        restart) cmd_restart ;;
+        status)  cmd_status ;;
+        logs)    cmd_logs ;;
+        config)  cmd_config ;;
+        update)  cmd_update ;;
         help|--help|-h)
             show_usage
             ;;
         "")
-            # No command - install/configure mode
             install_mode
             ;;
         *)
-            echo -e "${RED}❌ Unknown command: $1${NC}"
+            echo -e "${RED}${EMOJI_CROSS} Unknown command: $1${NC}"
             echo ""
             show_usage
             exit 1
