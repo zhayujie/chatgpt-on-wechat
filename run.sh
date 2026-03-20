@@ -590,14 +590,14 @@ show_usage() {
 # Ensure PYTHON_CMD is set
 ensure_python_cmd() {
     if [ -z "$PYTHON_CMD" ]; then
-        detect_python_command 2>/dev/null || PYTHON_CMD="python3"
+        detect_python_command > /dev/null 2>&1 || PYTHON_CMD="python3"
     fi
 }
 
 # Get service PID (empty string if not running)
 get_pid() {
-    ensure_python_cmd
-    ps ax | grep -i app.py | grep "${BASE_DIR}" | grep "$PYTHON_CMD" | grep -v grep | awk '{print $1}'
+    ensure_python_cmd > /dev/null 2>&1
+    ps ax | grep -i app.py | grep "${BASE_DIR}" | grep "$PYTHON_CMD" | grep -v grep | awk '{print $1}' | grep -E '^[0-9]+$'
 }
 
 # Check if service is running
@@ -627,23 +627,28 @@ cmd_start() {
 # Stop service
 cmd_stop() {
     echo -e "${GREEN}${EMOJI_STOP} Stopping CowAgent...${NC}"
-    
+
     if ! is_running; then
         echo -e "${YELLOW}${EMOJI_WARN} CowAgent is not running${NC}"
         return
     fi
-    
+
     pid=$(get_pid)
+    if [ -z "$pid" ] || ! echo "$pid" | grep -qE '^[0-9]+$'; then
+        echo -e "${RED}❌ Failed to get valid PID (got: ${pid})${NC}"
+        return 1
+    fi
+
     echo -e "${GREEN}Found running process (PID: ${pid})${NC}"
-    
+
     kill ${pid}
     sleep 3
-    
+
     if ps -p ${pid} > /dev/null 2>&1; then
         echo -e "${YELLOW}⚠️  Process not stopped, forcing termination...${NC}"
         kill -9 ${pid}
     fi
-    
+
     echo -e "${GREEN}${EMOJI_CHECK} CowAgent stopped${NC}"
 }
 
