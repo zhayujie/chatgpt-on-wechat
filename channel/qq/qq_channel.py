@@ -23,6 +23,7 @@ from channel.qq.qq_message import QQMessage
 from common.expired_dict import ExpiredDict
 from common.log import logger
 from common.singleton import singleton
+from common.ws_client_compat import websocket_app_run_forever
 from config import conf
 
 # Rich media file_type constants
@@ -210,7 +211,7 @@ class QQChannel(ChatChannel):
 
         def run_forever():
             try:
-                self._ws.run_forever(ping_interval=0, reconnect=0)
+                websocket_app_run_forever(self._ws, ping_interval=0, reconnect=0)
             except (SystemExit, KeyboardInterrupt):
                 logger.info("[QQ] WebSocket thread interrupted")
             except Exception as e:

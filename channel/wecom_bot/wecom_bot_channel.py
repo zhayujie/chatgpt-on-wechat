@@ -26,6 +26,7 @@ from channel.wecom_bot.wecom_bot_message import WecomBotMessage
 from common.expired_dict import ExpiredDict
 from common.log import logger
 from common.singleton import singleton
+from common.ws_client_compat import websocket_app_run_forever
 from config import conf
 
 WECOM_WS_URL = "wss://openws.work.weixin.qq.com"
@@ -119,7 +120,7 @@ class WecomBotChannel(ChatChannel):
 
         def run_forever():
             try:
-                self._ws.run_forever(ping_interval=0, reconnect=0)
+                websocket_app_run_forever(self._ws, ping_interval=0, reconnect=0)
             except (SystemExit, KeyboardInterrupt):
                 logger.info("[WecomBot] WebSocket thread interrupted")
             except Exception as e:
