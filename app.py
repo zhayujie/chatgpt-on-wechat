@@ -78,7 +78,13 @@ class ChannelManager:
             if first_start:
                 PluginManager().load_plugins()
 
-                if conf().get("use_linkai"):
+                # Cloud client is optional. It is only started when
+                # use_linkai=True AND cloud_deployment_id is set.
+                # By default neither is configured, so the app runs
+                # entirely locally without any remote connection.
+                if conf().get("use_linkai") and (
+                    os.environ.get("CLOUD_DEPLOYMENT_ID") or conf().get("cloud_deployment_id")
+                ):
                     try:
                         from common import cloud_client
                         threading.Thread(

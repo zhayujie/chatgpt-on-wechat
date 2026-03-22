@@ -9,7 +9,7 @@ services:
       - "9899:9899"
     environment:
       CHANNEL_TYPE: 'weixin'
-      MODEL: 'MiniMax-M2.5'
+      MODEL: 'MiniMax-M2.7'
       MINIMAX_API_KEY: ''
       ZHIPU_AI_API_KEY: ''
       ARK_API_KEY: ''

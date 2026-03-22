@@ -3,6 +3,18 @@ Cloud management client for connecting to the LinkAI control console.
 
 Handles remote configuration sync, message push, and skill management
 via the LinkAI socket protocol.
+
+NOTE: By default, no cloud-related config is enabled. The application runs
+entirely locally without connecting to any remote service. The cloud client
+is only activated when BOTH of the following conditions are met:
+
+  1. ``use_linkai`` is set to True in config (checked in app.py before
+     importing this module).
+  2. ``cloud_deployment_id`` (or env CLOUD_DEPLOYMENT_ID) is non-empty
+     (checked in app.py and again in the ``start()`` function below).
+
+If either condition is missing, this module is never loaded and the
+program continues as a purely local application.
 """
 
 from bridge.context import Context, ContextType
