@@ -184,12 +184,16 @@ class WeixinMessage(ChatMessage):
             logger.warning(f"[Weixin] Missing CDN params for media download (type={media_type})")
             return ""
 
-        ext_map = {ITEM_IMAGE: ".jpg", ITEM_VIDEO: ".mp4", ITEM_FILE: "", ITEM_VOICE: ".silk"}
-        ext = ext_map.get(media_type, "")
         if media_type == ITEM_FILE:
-            ext = os.path.splitext(info.get("file_name", ""))[1] or ".bin"
-
-        save_path = os.path.join(_get_tmp_dir(), f"wx_{self.msg_id}{ext}")
+            original_name = info.get("file_name", "")
+            if original_name:
+                save_path = os.path.join(_get_tmp_dir(), original_name)
+            else:
+                save_path = os.path.join(_get_tmp_dir(), f"wx_{self.msg_id}.bin")
+        else:
+            ext_map = {ITEM_IMAGE: ".jpg", ITEM_VIDEO: ".mp4", ITEM_VOICE: ".silk"}
+            ext = ext_map.get(media_type, "")
+            save_path = os.path.join(_get_tmp_dir(), f"wx_{self.msg_id}{ext}")
 
         try:
             download_media_from_cdn(cdn_base_url, encrypt_param, aes_key, save_path)
