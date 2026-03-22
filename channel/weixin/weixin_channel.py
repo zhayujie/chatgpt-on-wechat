@@ -30,6 +30,7 @@ MAX_CONSECUTIVE_FAILURES = 3
 BACKOFF_DELAY = 30
 RETRY_DELAY = 2
 SESSION_EXPIRED_ERRCODE = -14
+TEXT_CHUNK_LIMIT = 4000
 
 
 def _load_credentials(cred_path: str) -> dict:
@@ -462,11 +463,43 @@ class WeixinChannel(ChatChannel):
         return self._context_tokens.get(receiver, "")
 
     def _send_text(self, text: str, receiver: str, context_token: str):
-        try:
-            self.api.send_text(receiver, text, context_token)
-            logger.debug(f"[Weixin] Text sent to {receiver}, len={len(text)}")
-        except Exception as e:
-            logger.error(f"[Weixin] Failed to send text: {e}")
+        if len(text) <= TEXT_CHUNK_LIMIT:
+            try:
+                self.api.send_text(receiver, text, context_token)
+                logger.debug(f"[Weixin] Text sent to {receiver}, len={len(text)}")
+            except Exception as e:
+                logger.error(f"[Weixin] Failed to send text: {e}")
+            return
+
+        chunks = self._split_text(text, TEXT_CHUNK_LIMIT)
+        for i, chunk in enumerate(chunks):
+            try:
+                self.api.send_text(receiver, chunk, context_token)
+                logger.debug(f"[Weixin] Text chunk {i+1}/{len(chunks)} sent to {receiver}, len={len(chunk)}")
+            except Exception as e:
+                logger.error(f"[Weixin] Failed to send text chunk {i+1}/{len(chunks)}: {e}")
+                break
+            if i < len(chunks) - 1:
+                time.sleep(0.5)
+
+    @staticmethod
+    def _split_text(text: str, limit: int) -> list:
+        """Split text into chunks, preferring to break at paragraph or line boundaries."""
+        if len(text) <= limit:
+            return [text]
+        chunks = []
+        while text:
+            if len(text) <= limit:
+                chunks.append(text)
+                break
+            cut = text.rfind("\n\n", 0, limit)
+            if cut <= 0:
+                cut = text.rfind("\n", 0, limit)
+            if cut <= 0:
+                cut = limit
+            chunks.append(text[:cut])
+            text = text[cut:].lstrip("\n")
+        return chunks
 
     def _send_image(self, img_path_or_url: str, receiver: str, context_token: str):
         local_path = self._resolve_media_path(img_path_or_url)

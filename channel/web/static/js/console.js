@@ -5,7 +5,7 @@
 // =====================================================================
 // Version — update this before each release
 // =====================================================================
-const APP_VERSION = 'v2.0.3';
+const APP_VERSION = 'v2.0.4';
 
 // =====================================================================
 // i18n
@@ -1810,6 +1810,9 @@ function openAddChannelPanel() {
     const activeNames = new Set(channelsData.filter(c => c.active).map(c => c.name));
     const available = channelsData.filter(c => !activeNames.has(c.name));
 
+    const content = document.getElementById('channels-content');
+    if (activeNames.size === 0 && content) content.classList.add('hidden');
+
     if (available.length === 0) {
         panel.innerHTML = `<div class="bg-white dark:bg-[#1A1A1A] rounded-xl border border-slate-200 dark:border-white/10 p-6 text-center">
             <p class="text-sm text-slate-500 dark:text-slate-400">${currentLang === 'zh' ? '所有通道均已接入' : 'All channels are already connected'}</p>
@@ -1870,6 +1873,8 @@ function closeAddChannelPanel() {
         panel.classList.add('hidden');
         panel.innerHTML = '';
     }
+    const content = document.getElementById('channels-content');
+    if (content) content.classList.remove('hidden');
 }
 
 function onAddChannelSelect(chName) {
