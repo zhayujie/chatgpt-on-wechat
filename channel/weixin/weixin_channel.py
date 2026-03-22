@@ -160,6 +160,30 @@ class WeixinChannel(ChatChannel):
             print(f"\n  二维码链接: {qrcode_url}")
             print("  (安装 'qrcode' 包可在终端显示二维码)\n")
 
+    def _notify_cloud_qrcode(self, qrcode_url: str):
+        """Send QR code URL to cloud console when running in cloud mode."""
+        if not self.cloud_mode:
+            return
+        try:
+            from common import cloud_client
+            client = getattr(cloud_client, "chat_client", None)
+            if client and getattr(client, "client_id", None):
+                client.send_channel_qrcode("weixin", qrcode_url)
+        except Exception as e:
+            logger.warning(f"[Weixin] Failed to notify cloud QR code: {e}")
+
+    def _notify_cloud_connected(self):
+        """Send connected status to cloud console when login succeeds."""
+        if not self.cloud_mode:
+            return
+        try:
+            from common import cloud_client
+            client = getattr(cloud_client, "chat_client", None)
+            if client and getattr(client, "client_id", None):
+                client.send_channel_status("weixin", "connected")
+        except Exception as e:
+            logger.warning(f"[Weixin] Failed to notify cloud connected: {e}")
+
     def _qr_login(self, base_url: str) -> dict:
         """Perform interactive QR code login. Returns dict with token/base_url or empty dict."""
         api = WeixinApi(base_url=base_url)
@@ -179,11 +203,12 @@ class WeixinChannel(ChatChannel):
         self._current_qr_url = qrcode_url
         logger.info(f"[Weixin] QR code URL: {qrcode_url}")
         self._print_qr(qrcode_url)
+        self._notify_cloud_qrcode(qrcode_url)
         print("  等待扫码...\n")
 
         scanned_printed = False
 
-        while True:
+        while not self._stop_event.is_set():
             try:
                 status_resp = api.poll_qr_status(qrcode)
             except Exception as e:
@@ -209,6 +234,7 @@ class WeixinChannel(ChatChannel):
                     self._current_qr_url = qrcode_url
                     logger.info(f"[Weixin] New QR code: {qrcode_url}")
                     self._print_qr(qrcode_url)
+                    self._notify_cloud_qrcode(qrcode_url)
                 except Exception as e:
                     logger.error(f"[Weixin] QR refresh failed: {e}")
                     return {}
@@ -225,6 +251,7 @@ class WeixinChannel(ChatChannel):
                 self._current_qr_url = ""
                 print(f"\n  ✅ 微信登录成功！bot_id={bot_id}")
                 logger.info(f"[Weixin] Login confirmed: bot_id={bot_id}")
+                self._notify_cloud_connected()
 
                 creds = {
                     "token": bot_token,
@@ -237,9 +264,10 @@ class WeixinChannel(ChatChannel):
 
                 return {"token": bot_token, "base_url": result_base_url}
 
-            time.sleep(1)
+            self._stop_event.wait(1)
 
-        logger.warning("[Weixin] QR login timed out")
+        logger.info("[Weixin] QR login cancelled by stop event")
+        self._current_qr_url = ""
         return {}
 
     # ── Long-poll loop ─────────────────────────────────────────────────

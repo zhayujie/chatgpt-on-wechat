@@ -260,10 +260,26 @@ class CloudClient(LinkAIClient):
         self._remove_channel_type(local_config, channel_type)
         self._save_config_to_file(local_config)
 
+        if channel_type in ("weixin", "wx"):
+            self._remove_weixin_credentials()
+
         if self.channel_mgr:
             threading.Thread(
                 target=self._do_remove_channel, args=(channel_type,), daemon=True
             ).start()
+
+    @staticmethod
+    def _remove_weixin_credentials():
+        """Remove the weixin token credentials file so next connect triggers QR login."""
+        cred_path = os.path.expanduser(
+            conf().get("weixin_credentials_path", "~/.weixin_cow_credentials.json")
+        )
+        try:
+            if os.path.exists(cred_path):
+                os.remove(cred_path)
+                logger.info(f"[CloudClient] Removed weixin credentials: {cred_path}")
+        except Exception as e:
+            logger.warning(f"[CloudClient] Failed to remove weixin credentials: {e}")
 
     # ------------------------------------------------------------------
     # channel credentials helpers
@@ -351,12 +367,31 @@ class CloudClient(LinkAIClient):
         except Exception as e:
             logger.error(f"[CloudClient] Failed to remove channel '{channel_type}': {e}")
 
+    def send_channel_qrcode(self, channel_type: str, qrcode_url: str):
+        """Report QR code URL for a channel that requires scan-to-login."""
+        if self.client_id:
+            from linkai.api.client.client import ClientMsgType
+            msg = self._build_package(ClientMsgType.CHANNEL_STATUS)
+            msg["data"]["channelType"] = channel_type
+            msg["data"]["status"] = "qrcode"
+            msg["data"]["qrcodeUrl"] = qrcode_url
+            self._send_package(msg)
+            logger.info(f"[CloudClient] Sent QR code status for '{channel_type}'")
+
     def _report_channel_startup(self, channel_type: str):
         """Wait for channel startup result and report to cloud."""
         ch = self.channel_mgr.get_channel(channel_type)
         if not ch:
             self.send_channel_status(channel_type, "error", "channel instance not found")
             return
+
+        if channel_type in ("weixin", "wx") and hasattr(ch, "login_status"):
+            login_status = getattr(ch, "login_status", "")
+            if login_status in ("waiting_scan", "scanned", "idle"):
+                logger.info(f"[CloudClient] Channel '{channel_type}' is waiting for QR login, "
+                            "skip reporting connected")
+                return
+
         success, error = ch.wait_startup(timeout=3)
         if success:
             logger.info(f"[CloudClient] Channel '{channel_type}' connected, reporting status")
