@@ -36,9 +36,9 @@ class GoogleGeminiBot(Bot):
 
     @property
     def model(self):
-        model_name = conf().get("model") or "gemini-pro"
+        model_name = conf().get("model") or "gemini-3.1-pro-preview"
         if model_name == "gemini":
-            model_name = "gemini-pro"
+            model_name = "gemini-3.1-pro-preview"
         return model_name
 
     @property
