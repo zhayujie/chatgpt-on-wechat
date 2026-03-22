@@ -172,10 +172,8 @@ class WeixinApi:
 
     def get_upload_url(self, filekey: str, media_type: int, to_user_id: str,
                        rawsize: int, rawfilemd5: str, filesize: int,
-                       aeskey: str,
-                       thumb_rawsize: int = 0, thumb_rawfilemd5: str = "",
-                       thumb_filesize: int = 0) -> dict:
-        body = {
+                       aeskey: str) -> dict:
+        return self._post("ilink/bot/getuploadurl", {
             "filekey": filekey,
             "media_type": media_type,
             "to_user_id": to_user_id,
@@ -183,14 +181,8 @@ class WeixinApi:
             "rawfilemd5": rawfilemd5,
             "filesize": filesize,
             "aeskey": aeskey,
-        }
-        if thumb_rawsize > 0:
-            body["thumb_rawsize"] = thumb_rawsize
-            body["thumb_rawfilemd5"] = thumb_rawfilemd5
-            body["thumb_filesize"] = thumb_filesize
-        else:
-            body["no_need_thumb"] = True
-        return self._post("ilink/bot/getuploadurl", body)
+            "no_need_thumb": True,
+        })
 
     # ── getConfig / sendTyping ─────────────────────────────────────────
 
@@ -259,10 +251,18 @@ def _md5_bytes(data: bytes) -> str:
     return hashlib.md5(data).hexdigest()
 
 
+def _aes_ecb_padded_size(plaintext_size: int) -> int:
+    """PKCS7 padded size for AES-128-ECB."""
+    return ((plaintext_size + 1 + 15) // 16) * 16
+
+
+UPLOAD_MAX_RETRIES = 3
+
+
 def upload_media_to_cdn(api: WeixinApi, file_path: str, to_user_id: str,
                         media_type: int) -> dict:
     """
-    Upload a local file to the Weixin CDN.
+    Upload a local file to the Weixin CDN (matching official plugin protocol).
 
     Args:
         api: WeixinApi instance
@@ -275,35 +275,14 @@ def upload_media_to_cdn(api: WeixinApi, file_path: str, to_user_id: str,
     """
     aes_key = os.urandom(16)
     aes_key_hex = aes_key.hex()
+    filekey = uuid.uuid4().hex
 
     with open(file_path, "rb") as f:
         raw_data = f.read()
 
     raw_size = len(raw_data)
     raw_md5 = _md5_bytes(raw_data)
-    encrypted = _aes_ecb_encrypt(raw_data, aes_key)
-    cipher_size = len(encrypted)
-    filekey = uuid.uuid4().hex
-
-    thumb_rawsize = 0
-    thumb_rawfilemd5 = ""
-    thumb_filesize = 0
-
-    if media_type == 1:  # IMAGE - generate a tiny thumbnail
-        try:
-            from PIL import Image
-            import io
-            img = Image.open(file_path)
-            img.thumbnail((100, 100))
-            buf = io.BytesIO()
-            img.save(buf, format="JPEG", quality=60)
-            thumb_raw = buf.getvalue()
-            thumb_rawsize = len(thumb_raw)
-            thumb_rawfilemd5 = _md5_bytes(thumb_raw)
-            thumb_encrypted = _aes_ecb_encrypt(thumb_raw, aes_key)
-            thumb_filesize = len(thumb_encrypted)
-        except Exception as e:
-            logger.warning(f"[Weixin] Thumbnail generation failed, skipping: {e}")
+    cipher_size = _aes_ecb_padded_size(raw_size)
 
     resp = api.get_upload_url(
         filekey=filekey,
@@ -313,37 +292,52 @@ def upload_media_to_cdn(api: WeixinApi, file_path: str, to_user_id: str,
         rawfilemd5=raw_md5,
         filesize=cipher_size,
         aeskey=aes_key_hex,
-        thumb_rawsize=thumb_rawsize,
-        thumb_rawfilemd5=thumb_rawfilemd5,
-        thumb_filesize=thumb_filesize,
     )
 
     upload_param = resp.get("upload_param", "")
     if not upload_param:
         raise RuntimeError(f"[Weixin] getUploadUrl returned no upload_param: {resp}")
 
-    cdn_url = api.cdn_base_url + "?" + upload_param
-    put_resp = requests.put(cdn_url, data=encrypted, headers={
-        "Content-Type": "application/octet-stream",
-        "Content-Length": str(cipher_size),
-    }, timeout=60)
-    put_resp.raise_for_status()
+    encrypted = _aes_ecb_encrypt(raw_data, aes_key)
 
-    # Upload thumbnail if we have one
-    thumb_upload_param = resp.get("thumb_upload_param", "")
-    if thumb_upload_param and thumb_filesize > 0:
-        thumb_cdn_url = api.cdn_base_url + "?" + thumb_upload_param
+    from urllib.parse import quote
+    cdn_url = (f"{api.cdn_base_url}/upload"
+               f"?encrypted_query_param={quote(upload_param)}"
+               f"&filekey={quote(filekey)}")
+
+    download_param = None
+    last_error = None
+    for attempt in range(1, UPLOAD_MAX_RETRIES + 1):
         try:
-            requests.put(thumb_cdn_url, data=thumb_encrypted, headers={
+            cdn_resp = requests.post(cdn_url, data=encrypted, headers={
                 "Content-Type": "application/octet-stream",
-                "Content-Length": str(thumb_filesize),
-            }, timeout=30)
+            }, timeout=120)
+            if 400 <= cdn_resp.status_code < 500:
+                err_msg = cdn_resp.headers.get("x-error-message", cdn_resp.text[:200])
+                raise RuntimeError(f"CDN client error {cdn_resp.status_code}: {err_msg}")
+            cdn_resp.raise_for_status()
+            download_param = cdn_resp.headers.get("x-encrypted-param", "")
+            if not download_param:
+                raise RuntimeError("CDN response missing x-encrypted-param header")
+            logger.debug(f"[Weixin] CDN upload success attempt={attempt} filekey={filekey}")
+            break
         except Exception as e:
-            logger.warning(f"[Weixin] Thumbnail upload failed (non-fatal): {e}")
+            last_error = e
+            if "client error" in str(e):
+                raise
+            if attempt < UPLOAD_MAX_RETRIES:
+                logger.warning(f"[Weixin] CDN upload attempt {attempt} failed, retrying: {e}")
+            else:
+                logger.error(f"[Weixin] CDN upload failed after {UPLOAD_MAX_RETRIES} attempts: {e}")
+
+    if not download_param:
+        raise last_error or RuntimeError("CDN upload failed")
+
+    aes_key_b64 = base64.b64encode(aes_key_hex.encode("utf-8")).decode("utf-8")
 
     return {
-        "encrypt_query_param": upload_param,
-        "aes_key_b64": base64.b64encode(aes_key).decode("utf-8"),
+        "encrypt_query_param": download_param,
+        "aes_key_b64": aes_key_b64,
         "ciphertext_size": cipher_size,
         "raw_size": raw_size,
     }
@@ -363,19 +357,30 @@ def download_media_from_cdn(cdn_base_url: str, encrypt_query_param: str,
     Returns:
         save_path on success
     """
-    url = cdn_base_url + "?" + encrypt_query_param
+    from urllib.parse import quote
+    url = f"{cdn_base_url}/download?encrypted_query_param={quote(encrypt_query_param)}"
     resp = requests.get(url, timeout=60)
     resp.raise_for_status()
 
-    # Determine key format (hex string or base64)
+    # Determine key format:
+    # 1) 32-char hex string → 16 raw bytes
+    # 2) base64 string → decode → if 32 bytes, treat as hex-encoded → 16 raw bytes
+    # 3) base64 string → decode → 16 raw bytes directly
     try:
         key_bytes = bytes.fromhex(aes_key)
         if len(key_bytes) != 16:
             raise ValueError()
     except (ValueError, TypeError):
-        key_bytes = base64.b64decode(aes_key)
-        if len(key_bytes) != 16:
-            raise ValueError(f"Invalid AES key length: {len(key_bytes)}")
+        decoded = base64.b64decode(aes_key)
+        if len(decoded) == 32:
+            try:
+                key_bytes = bytes.fromhex(decoded.decode("ascii"))
+            except (ValueError, UnicodeDecodeError):
+                raise ValueError(f"Invalid AES key: 32 bytes but not valid hex")
+        elif len(decoded) == 16:
+            key_bytes = decoded
+        else:
+            raise ValueError(f"Invalid AES key length after base64 decode: {len(decoded)}")
 
     decrypted = _aes_ecb_decrypt(resp.content, key_bytes)
 
