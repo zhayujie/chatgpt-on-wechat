@@ -35,6 +35,13 @@ class GoogleGeminiBot(Bot):
         return conf().get("gemini_api_key")
 
     @property
+    def model(self):
+        model_name = conf().get("model") or "gemini-pro"
+        if model_name == "gemini":
+            model_name = "gemini-pro"
+        return model_name
+
+    @property
     def api_base(self):
         base = conf().get("gemini_api_base", "").strip()
         if base:
