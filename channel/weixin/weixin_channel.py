@@ -31,6 +31,8 @@ BACKOFF_DELAY = 30
 RETRY_DELAY = 2
 SESSION_EXPIRED_ERRCODE = -14
 TEXT_CHUNK_LIMIT = 4000
+QR_LOGIN_TIMEOUT_S = 480
+QR_MAX_REFRESHES = 10
 
 
 def _load_credentials(cred_path: str) -> dict:
@@ -80,6 +82,8 @@ class WeixinChannel(ChatChannel):
     # ── Lifecycle ──────────────────────────────────────────────────────
 
     def startup(self):
+        self._stop_event.clear()
+
         base_url = conf().get("weixin_base_url", DEFAULT_BASE_URL)
         cdn_base_url = conf().get("weixin_cdn_base_url", CDN_BASE_URL)
         token = conf().get("weixin_token", "")
@@ -95,17 +99,9 @@ class WeixinChannel(ChatChannel):
                 base_url = creds["base_url"]
 
         if not token:
-            logger.info("[Weixin] No token found, starting QR login...")
-            self.login_status = self.LOGIN_STATUS_WAITING
-            login_result = self._qr_login(base_url)
-            if not login_result:
-                self.login_status = self.LOGIN_STATUS_IDLE
-                err = "[Weixin] QR login failed. Set weixin_token in config or run login again."
-                logger.error(err)
-                self.report_startup_error(err)
+            token, base_url = self._login_with_retry(base_url)
+            if not token:
                 return
-            token = login_result["token"]
-            base_url = login_result.get("base_url", base_url)
 
         self.api = WeixinApi(base_url=base_url, token=token, cdn_base_url=cdn_base_url)
         self.login_status = self.LOGIN_STATUS_OK
@@ -114,8 +110,25 @@ class WeixinChannel(ChatChannel):
                      f"如需重新扫码登录请删除该文件后重启")
         self.report_startup_success()
 
-        self._stop_event.clear()
         self._poll_loop()
+
+    def _login_with_retry(self, base_url: str) -> tuple:
+        """Attempt QR login, then wait for stop if failed.
+        Returns (token, base_url) on success, or ("", "") if stopped."""
+        logger.info("[Weixin] No token found, starting QR login...")
+        self.login_status = self.LOGIN_STATUS_WAITING
+        login_result = self._qr_login(base_url)
+        if login_result:
+            return login_result["token"], login_result.get("base_url", base_url)
+
+        self.login_status = self.LOGIN_STATUS_IDLE
+        if not self._stop_event.is_set():
+            logger.info("[Weixin] QR login timed out, waiting for stop or reconnect...")
+            print("  二维码登录超时，请通过控制台重新接入\n")
+            self._stop_event.wait()
+
+        logger.info("[Weixin] Login cancelled by stop event")
+        return "", ""
 
     def stop(self):
         logger.info("[Weixin] stop() called")
@@ -208,8 +221,15 @@ class WeixinChannel(ChatChannel):
         print("  等待扫码...\n")
 
         scanned_printed = False
+        refresh_count = 0
+        deadline = time.time() + QR_LOGIN_TIMEOUT_S
 
         while not self._stop_event.is_set():
+            if time.time() >= deadline:
+                logger.warning(f"[Weixin] QR login timed out after {QR_LOGIN_TIMEOUT_S}s")
+                print(f"\n  二维码登录超时（{QR_LOGIN_TIMEOUT_S}s），请重启后重试")
+                break
+
             try:
                 status_resp = api.poll_qr_status(qrcode)
             except Exception as e:
@@ -226,14 +246,19 @@ class WeixinChannel(ChatChannel):
                     print("  已扫码，请在手机上确认...")
                     scanned_printed = True
             elif status == "expired":
-                print("  二维码已过期，正在刷新...")
+                refresh_count += 1
+                if refresh_count >= QR_MAX_REFRESHES:
+                    logger.warning(f"[Weixin] QR code refreshed {QR_MAX_REFRESHES} times, giving up")
+                    print(f"\n  二维码已刷新 {QR_MAX_REFRESHES} 次仍未扫码，请重启后重试")
+                    break
+                print(f"  二维码已过期，正在刷新（{refresh_count}/{QR_MAX_REFRESHES}）...")
                 try:
                     qr_resp = api.fetch_qr_code()
                     qrcode = qr_resp.get("qrcode", "")
                     qrcode_url = qr_resp.get("qrcode_img_content", "")
                     scanned_printed = False
                     self._current_qr_url = qrcode_url
-                    logger.info(f"[Weixin] New QR code: {qrcode_url}")
+                    logger.info(f"[Weixin] New QR code ({refresh_count}/{QR_MAX_REFRESHES}): {qrcode_url}")
                     self._print_qr(qrcode_url)
                     self._notify_cloud_qrcode(qrcode_url)
                 except Exception as e:
@@ -267,8 +292,9 @@ class WeixinChannel(ChatChannel):
 
             self._stop_event.wait(1)
 
-        logger.info("[Weixin] QR login cancelled by stop event")
         self._current_qr_url = ""
+        if self._stop_event.is_set():
+            logger.info("[Weixin] QR login cancelled by stop event")
         return {}
 
     # ── Long-poll loop ─────────────────────────────────────────────────
