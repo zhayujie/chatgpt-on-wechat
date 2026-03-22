@@ -327,23 +327,24 @@ select_channel() {
     echo -e "${CYAN}${BOLD}=========================================${NC}"
     echo -e "${CYAN}${BOLD}   Select Communication Channel${NC}"
     echo -e "${CYAN}${BOLD}=========================================${NC}"
-    echo -e "${YELLOW}1) Feishu (飞书)${NC}"
-    echo -e "${YELLOW}2) DingTalk (钉钉)${NC}"
-    echo -e "${YELLOW}3) WeCom Bot (企微智能机器人)${NC}"
-    echo -e "${YELLOW}4) QQ (QQ 机器人)${NC}"
-    echo -e "${YELLOW}5) WeCom App (企微自建应用)${NC}"
-    echo -e "${YELLOW}6) Web (网页)${NC}"
+    echo -e "${YELLOW}1) Weixin (微信)${NC}"
+    echo -e "${YELLOW}2) Feishu (飞书)${NC}"
+    echo -e "${YELLOW}3) DingTalk (钉钉)${NC}"
+    echo -e "${YELLOW}4) WeCom Bot (企微智能机器人)${NC}"
+    echo -e "${YELLOW}5) QQ (QQ 机器人)${NC}"
+    echo -e "${YELLOW}6) WeCom App (企微自建应用)${NC}"
+    echo -e "${YELLOW}7) Web (网页)${NC}"
     echo ""
     
     while true; do
-        read -p "Enter your choice [press Enter for default: 1 - Feishu]: " channel_choice
+        read -p "Enter your choice [press Enter for default: 1 - Weixin]: " channel_choice
         channel_choice=${channel_choice:-1}
         case "$channel_choice" in
-            1|2|3|4|5|6)
+            1|2|3|4|5|6|7)
                 break
                 ;;
             *)
-                echo -e "${RED}Invalid choice. Please enter 1-6.${NC}"
+                echo -e "${RED}Invalid choice. Please enter 1-7.${NC}"
                 ;;
         esac
     done
@@ -353,6 +354,11 @@ select_channel() {
 configure_channel() {
     case "$channel_choice" in
         1)
+            # Weixin
+            CHANNEL_TYPE="weixin"
+            ACCESS_INFO="Weixin channel configured. Scan QR code in terminal or web console to login."
+            ;;
+        2)
             # Feishu (WebSocket mode)
             CHANNEL_TYPE="feishu"
             echo -e "${GREEN}Configure Feishu (WebSocket mode)...${NC}"
@@ -364,7 +370,7 @@ configure_channel() {
             FEISHU_EVENT_MODE="websocket"
             ACCESS_INFO="Feishu channel configured (WebSocket mode)"
             ;;
-        2)
+        3)
             # DingTalk
             CHANNEL_TYPE="dingtalk"
             echo -e "${GREEN}Configure DingTalk...${NC}"
@@ -375,7 +381,7 @@ configure_channel() {
             DT_CLIENT_SECRET="$dt_client_secret"
             ACCESS_INFO="DingTalk channel configured"
             ;;
-        3)
+        4)
             # WeCom Bot
             CHANNEL_TYPE="wecom_bot"
             echo -e "${GREEN}Configure WeCom Bot...${NC}"
@@ -386,7 +392,7 @@ configure_channel() {
             WECOM_BOT_SECRET="$wecom_bot_secret"
             ACCESS_INFO="WeCom Bot channel configured"
             ;;
-        4)
+        5)
             # QQ
             CHANNEL_TYPE="qq"
             echo -e "${GREEN}Configure QQ Bot...${NC}"
@@ -397,7 +403,7 @@ configure_channel() {
             QQ_APP_SECRET="$qq_app_secret"
             ACCESS_INFO="QQ Bot channel configured"
             ;;
-        5)
+        6)
             # WeCom App
             CHANNEL_TYPE="wechatcom_app"
             echo -e "${GREEN}Configure WeCom App...${NC}"
@@ -417,7 +423,7 @@ configure_channel() {
             WECHATCOM_PORT="$com_port"
             ACCESS_INFO="WeCom App channel configured on port ${com_port}"
             ;;
-        6)
+        7)
             # Web
             CHANNEL_TYPE="web"
             read -p "Enter web port [press Enter for default: 9899]: " web_port

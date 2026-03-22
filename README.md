@@ -7,7 +7,7 @@
   [中文] | [<a href="docs/en/README.md">English</a>] | [<a href="docs/ja/README.md">日本語</a>]
 </p>
 
-**CowAgent** 是基于大模型的超级AI助理，能够主动思考和任务规划、操作计算机和外部资源、创造和执行Skills、拥有长期记忆并不断成长。CowAgent 支持灵活切换多种模型，能处理文本、语音、图片、文件等多模态消息，可接入微信、飞书、钉钉、企微智能机器人、QQ、企微自建应用、微信公众号、网页中使用，7*24小时运行于你的个人电脑或服务器中。
+**CowAgent** 是基于大模型的超级AI助理，能够主动思考和任务规划、操作计算机和外部资源、创造和执行Skills、拥有长期记忆并不断成长，比OpenClaw更轻量和便捷。CowAgent 支持灵活切换多种模型，能处理文本、语音、图片、文件等多模态消息，可接入微信、飞书、钉钉、企微智能机器人、QQ、企微自建应用、微信公众号、网页中使用，7*24小时运行于你的个人电脑或服务器中。
 
 <p align="center">
   <a href="https://cowagent.ai/">🌐 官网</a> &nbsp;·&nbsp;
@@ -15,7 +15,6 @@
   <a href="https://docs.cowagent.ai/guide/quick-start">🚀 快速开始</a> &nbsp;·&nbsp;
   <a href="https://link-ai.tech/cowagent/create">☁️ 在线体验</a>
 </p>
-
 
 
 # 简介
@@ -630,7 +629,7 @@ Coding Plan 是各厂商推出的编程包月套餐，所有厂商均可通过 O
 <details>
 <summary>1. Weixin - 微信</summary>
 
-接入个人微信，扫码登录即可使用，无需公网 IP，支持文本、图片、语音、文件等消息收发。
+接入个人微信，扫码登录即可使用，支持文本、图片、语音、文件等消息收发。
 
 ```json
 {

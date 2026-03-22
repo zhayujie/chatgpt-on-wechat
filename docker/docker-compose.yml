@@ -8,7 +8,7 @@ services:
     ports:
       - "9899:9899"
     environment:
-      CHANNEL_TYPE: 'web'
+      CHANNEL_TYPE: 'weixin'
       MODEL: 'MiniMax-M2.5'
       MINIMAX_API_KEY: ''
       ZHIPU_AI_API_KEY: ''
