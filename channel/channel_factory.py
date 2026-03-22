@@ -39,6 +39,10 @@ def create_channel(channel_type) -> Channel:
     elif channel_type == const.QQ:
         from channel.qq.qq_channel import QQChannel
         ch = QQChannel()
+    elif channel_type in (const.WEIXIN, "wx"):
+        from channel.weixin.weixin_channel import WeixinChannel
+        ch = WeixinChannel()
+        channel_type = const.WEIXIN
     else:
         raise RuntimeError
     ch.channel_type = channel_type

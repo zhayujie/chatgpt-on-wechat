@@ -1,5 +1,5 @@
 {
-  "channel_type": "web",
+  "channel_type": "weixin",
   "model": "MiniMax-M2.7",
   "minimax_api_key": "",
   "zhipu_ai_api_key": "",

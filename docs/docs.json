@@ -155,6 +155,7 @@
               {
                 "group": "接入渠道",
                 "pages": [
+                  "channels/weixin",
                   "channels/web",
                   "channels/feishu",
                   "channels/dingtalk",
@@ -301,6 +302,7 @@
               {
                 "group": "Platforms",
                 "pages": [
+                  "en/channels/weixin",
                   "en/channels/web",
                   "en/channels/feishu",
                   "en/channels/dingtalk",
@@ -448,6 +450,7 @@
               {
                 "group": "プラットフォーム",
                 "pages": [
+                  "ja/channels/weixin",
                   "ja/channels/web",
                   "ja/channels/feishu",
                   "ja/channels/dingtalk",

@@ -7,7 +7,7 @@
   [<a href="https://github.com/zhayujie/chatgpt-on-wechat/blob/master/README.md">中文</a>] | [English] | [<a href="https://github.com/zhayujie/chatgpt-on-wechat/blob/master/docs/ja/README.md">日本語</a>]
 </p>
 
-**CowAgent** is an AI super assistant powered by LLMs, capable of autonomous task planning, operating computers and external resources, creating and executing Skills, and continuously growing with long-term memory. It supports flexible model switching, handles text, voice, images, and files, and can be integrated into Web, Feishu, DingTalk, WeCom Bot, WeCom App, and WeChat Official Account — running 7×24 hours on your personal computer or server.
+**CowAgent** is an AI super assistant powered by LLMs, capable of autonomous task planning, operating computers and external resources, creating and executing Skills, and continuously growing with long-term memory. It supports flexible model switching, handles text, voice, images, and files, and can be integrated into WeChat, Web, Feishu, DingTalk, WeCom Bot, WeCom App, and WeChat Official Account — running 7×24 hours on your personal computer or server.
 
 <p align="center">
   <a href="https://cowagent.ai/">🌐 Website</a> &nbsp;·&nbsp;
@@ -25,7 +25,7 @@
 - ✅ **Skills System**: Implements a Skills creation and execution engine with multiple built-in skills, and supports custom Skills development through natural language conversation.
 - ✅ **Multimodal Messages**: Supports parsing, processing, generating, and sending text, images, voice, files, and other message types.
 - ✅ **Multiple Model Support**: Supports OpenAI, Claude, Gemini, DeepSeek, MiniMax, GLM, Qwen, Kimi, Doubao, and other mainstream model providers.
-- ✅ **Multi-platform Deployment**: Runs on local computers or servers, integrable into Web, Feishu, DingTalk, WeChat Official Account, and WeCom applications.
+- ✅ **Multi-platform Deployment**: Runs on local computers or servers, integrable into WeChat, Web, Feishu, DingTalk, WeChat Official Account, and WeCom applications.
 - ✅ **Knowledge Base**: Integrates enterprise knowledge base capabilities via the [LinkAI](https://link-ai.tech) platform.
 
 ## Disclaimer
@@ -163,6 +163,7 @@ Supports multiple platforms. Set `channel_type` in `config.json` to switch:
 
 | Channel | `channel_type` | Docs |
 | --- | --- | --- |
+| WeChat | `weixin` | [WeChat Setup](https://docs.cowagent.ai/en/channels/weixin) |
 | Web (default) | `web` | [Web Channel](https://docs.cowagent.ai/en/channels/web) |
 | Feishu | `feishu` | [Feishu Setup](https://docs.cowagent.ai/en/channels/feishu) |
 | DingTalk | `dingtalk` | [DingTalk Setup](https://docs.cowagent.ai/en/channels/dingtalk) |

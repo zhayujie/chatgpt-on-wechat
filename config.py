@@ -153,10 +153,15 @@ available_setting = {
     # 企微智能机器人配置(长连接模式)
     "wecom_bot_id": "",  # 企微智能机器人BotID
     "wecom_bot_secret": "",  # 企微智能机器人长连接Secret
+    # 微信配置
+    "weixin_token": "",  # 微信登录后获取的bot_token，留空则启动时自动扫码登录
+    "weixin_base_url": "https://ilinkai.weixin.qq.com",  # Weixin ilink API base URL
+    "weixin_cdn_base_url": "https://novac2c.cdn.weixin.qq.com/c2c",  # CDN base URL
+    "weixin_credentials_path": "~/.weixin_cow_credentials.json",  # credentials file path
     # chatgpt指令自定义触发词
     "clear_memory_commands": ["#清除记忆"],  # 重置会话指令，必须以#开头
     # channel配置
-    "channel_type": "",  # 通道类型，支持多渠道同时运行。单个: "feishu"，多个: "feishu, dingtalk" 或 ["feishu", "dingtalk"]。可选值: web,feishu,dingtalk,wecom_bot,wechatmp,wechatmp_service,wechatcom_app
+    "channel_type": "",  # 通道类型，支持多渠道同时运行。单个: "feishu"，多个: "feishu, dingtalk" 或 ["feishu", "dingtalk"]。可选值: web,feishu,dingtalk,wecom_bot,weixin,wechatmp,wechatmp_service,wechatcom_app
     "web_console": True,  # 是否自动启动Web控制台（默认启动）。设为False可禁用
     "subscribe_msg": "",  # 订阅消息, 支持: wechatmp, wechatmp_service, wechatcom_app
     "debug": False,  # 是否开启debug模式，开启后会打印更多日志
@@ -382,7 +387,8 @@ def load_config():
         "wechatcomapp_agent_id": "WECHATCOMAPP_AGENT_ID",
         "wechatcomapp_secret": "WECHATCOMAPP_SECRET",
         "qq_app_id": "QQ_APP_ID",
-        "qq_app_secret": "QQ_APP_SECRET"
+        "qq_app_secret": "QQ_APP_SECRET",
+        "weixin_token": "WEIXIN_TOKEN",
     }
     injected = 0
     for conf_key, env_key in _CONFIG_TO_ENV.items():

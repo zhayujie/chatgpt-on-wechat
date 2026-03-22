@@ -7,7 +7,7 @@
   [<a href="https://github.com/zhayujie/chatgpt-on-wechat/blob/master/README.md">中文</a>] | [<a href="https://github.com/zhayujie/chatgpt-on-wechat/blob/master/docs/en/README.md">English</a>] | [日本語]
 </p>
 
-**CowAgent** はLLMを搭載したAIスーパーアシスタントです。自律的なタスク計画、コンピュータや外部リソースの操作、Skillの作成・実行、長期記憶による継続的な成長が可能です。柔軟なモデル切り替えに対応し、テキスト・音声・画像・ファイルを処理でき、Web、Feishu（飛書）、DingTalk（釘釘）、WeCom Bot（企業微信ボット）、WeComアプリ、WeChat公式アカウントに統合可能で、個人のPCやサーバー上で24時間365日稼働できます。
+**CowAgent** はLLMを搭載したAIスーパーアシスタントです。自律的なタスク計画、コンピュータや外部リソースの操作、Skillの作成・実行、長期記憶による継続的な成長が可能です。柔軟なモデル切り替えに対応し、テキスト・音声・画像・ファイルを処理でき、WeChat、Web、Feishu（飛書）、DingTalk（釘釘）、WeCom Bot（企業微信ボット）、WeComアプリ、WeChat公式アカウントに統合可能で、個人のPCやサーバー上で24時間365日稼働できます。
 
 <p align="center">
   <a href="https://cowagent.ai/">🌐 ウェブサイト</a> &nbsp;·&nbsp;
@@ -25,7 +25,7 @@
 - ✅ **Skillシステム**: Skillの作成・実行エンジンを実装しており、複数の組み込みSkillを備え、自然言語での会話を通じたカスタムSkillの開発もサポートしています。
 - ✅ **マルチモーダルメッセージ**: テキスト、画像、音声、ファイルなど、さまざまなメッセージタイプの解析・処理・生成・送信に対応しています。
 - ✅ **複数モデル対応**: OpenAI、Claude、Gemini、DeepSeek、MiniMax、GLM、Qwen、Kimi、Doubaoなど、主要なモデルプロバイダーに対応しています。
-- ✅ **マルチプラットフォームデプロイ**: ローカルPCやサーバー上で実行でき、Web、Feishu、DingTalk、WeChat公式アカウント、WeComアプリケーションに統合可能です。
+- ✅ **マルチプラットフォームデプロイ**: ローカルPCやサーバー上で実行でき、WeChat、Web、Feishu、DingTalk、WeChat公式アカウント、WeComアプリケーションに統合可能です。
 - ✅ **ナレッジベース**: [LinkAI](https://link-ai.tech) プラットフォームを通じて、企業向けナレッジベース機能を統合できます。
 
 ## 免責事項
@@ -163,6 +163,7 @@ Coding Planは各プロバイダーが提供する月額サブスクリプショ
 
 | チャネル | `channel_type` | ドキュメント |
 | --- | --- | --- |
+| WeChat | `weixin` | [WeChat設定](https://docs.cowagent.ai/ja/channels/weixin) |
 | Web（デフォルト） | `web` | [Webチャネル](https://docs.cowagent.ai/en/channels/web) |
 | Feishu（飛書） | `feishu` | [Feishu設定](https://docs.cowagent.ai/en/channels/feishu) |
 | DingTalk（釘釘） | `dingtalk` | [DingTalk設定](https://docs.cowagent.ai/en/channels/dingtalk) |

@@ -51,6 +51,11 @@ const I18N = {
         channels_empty: '暂未接入任何通道', channels_empty_desc: '点击右上角「接入通道」按钮开始配置',
         channels_disconnect_confirm: '确认断开该通道？配置将保留但通道会停止运行。',
         channels_connected: '已接入', channels_connecting: '接入中...',
+        weixin_scan_title: '微信扫码登录', weixin_scan_desc: '请使用微信扫描下方二维码',
+        weixin_scan_loading: '正在获取二维码...', weixin_scan_waiting: '等待扫码...',
+        weixin_scan_scanned: '已扫码，请在手机上确认', weixin_scan_expired: '二维码已过期，正在刷新...',
+        weixin_scan_success: '登录成功，正在启动通道...', weixin_scan_fail: '获取二维码失败',
+        weixin_qr_tip: '二维码约2分钟后过期',
         tasks_title: '定时任务', tasks_desc: '查看和管理定时任务',
         tasks_coming: '即将推出', tasks_coming_desc: '定时任务管理功能即将在此提供',
         logs_title: '日志', logs_desc: '实时日志输出 (run.log)',
@@ -97,6 +102,11 @@ const I18N = {
         channels_empty: 'No channels connected', channels_empty_desc: 'Click the "Connect" button above to get started',
         channels_disconnect_confirm: 'Disconnect this channel? Config will be preserved but the channel will stop.',
         channels_connected: 'Connected', channels_connecting: 'Connecting...',
+        weixin_scan_title: 'WeChat QR Login', weixin_scan_desc: 'Scan the QR code below with WeChat',
+        weixin_scan_loading: 'Loading QR code...', weixin_scan_waiting: 'Waiting for scan...',
+        weixin_scan_scanned: 'Scanned, please confirm on your phone', weixin_scan_expired: 'QR code expired, refreshing...',
+        weixin_scan_success: 'Login successful, starting channel...', weixin_scan_fail: 'Failed to load QR code',
+        weixin_qr_tip: 'QR code expires in ~2 minutes',
         tasks_title: 'Scheduled Tasks', tasks_desc: 'View and manage scheduled tasks',
         tasks_coming: 'Coming Soon', tasks_coming_desc: 'Scheduled task management will be available here',
         logs_title: 'Logs', logs_desc: 'Real-time log output (run.log)',
@@ -1583,6 +1593,8 @@ function loadChannelsView() {
 }
 
 function renderActiveChannels() {
+    stopWeixinQrPoll();
+    stopWeixinStatusPoll();
     const container = document.getElementById('channels-content');
     container.innerHTML = '';
     closeAddChannelPanel();
@@ -1608,17 +1620,30 @@ function renderActiveChannels() {
         card.id = `channel-card-${ch.name}`;
 
         const fieldsHtml = buildChannelFieldsHtml(ch.name, ch.fields || []);
+        const hasFields = (ch.fields || []).length > 0;
+
+        const weixinWaiting = ch.name === 'weixin' && ch.login_status && ch.login_status !== 'logged_in';
+        let statusDot, statusText;
+        if (weixinWaiting) {
+            statusDot = 'bg-amber-400 animate-pulse';
+            statusText = ch.login_status === 'scanned'
+                ? `<span class="text-xs text-primary-500">${t('weixin_scan_scanned')}</span>`
+                : `<span class="text-xs text-amber-500">${t('weixin_scan_waiting')}</span>`;
+        } else {
+            statusDot = 'bg-primary-400';
+            statusText = `<span class="text-xs text-primary-500">${t('channels_connected')}</span>`;
+        }
 
         card.innerHTML = `
-            <div class="flex items-center gap-4 mb-5">
+            <div class="flex items-center gap-4${hasFields || weixinWaiting ? ' mb-5' : ''}">
                 <div class="w-10 h-10 rounded-xl bg-${ch.color}-50 dark:bg-${ch.color}-900/20 flex items-center justify-center flex-shrink-0">
                     <i class="fas ${ch.icon} text-${ch.color}-500 text-base"></i>
                 </div>
                 <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2">
                         <span class="font-semibold text-slate-800 dark:text-slate-100">${escapeHtml(label)}</span>
-                        <span class="w-2 h-2 rounded-full bg-primary-400"></span>
-                        <span class="text-xs text-primary-500">${t('channels_connected')}</span>
+                        <span class="w-2 h-2 rounded-full ${statusDot}"></span>
+                        ${statusText}
                     </div>
                     <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-mono">${escapeHtml(ch.name)}</p>
                 </div>
@@ -1630,7 +1655,14 @@ function renderActiveChannels() {
                     ${t('channels_disconnect')}
                 </button>
             </div>
-            <div class="space-y-4">
+            ${weixinWaiting ? `<div id="weixin-active-qr" class="flex flex-col items-center py-2">
+                <button onclick="showWeixinActiveQr()"
+                    class="px-4 py-2 rounded-lg bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium
+                           cursor-pointer transition-colors duration-150">
+                    ${t('weixin_scan_title')}
+                </button>
+            </div>` : ''}
+            ${hasFields ? `<div class="space-y-4">
                 ${fieldsHtml}
                 <div class="flex items-center justify-end gap-3 pt-1">
                     <span id="ch-status-${ch.name}" class="text-xs text-primary-500 opacity-0 transition-opacity duration-300"></span>
@@ -1639,10 +1671,14 @@ function renderActiveChannels() {
                                cursor-pointer transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
                         id="ch-save-${ch.name}">${t('channels_save')}</button>
                 </div>
-            </div>`;
+            </div>` : ''}`;
 
         container.appendChild(card);
         bindSecretFieldEvents(card);
+
+        if (weixinWaiting) {
+            startWeixinActiveStatusPoll();
+        }
     });
 }
 
@@ -1828,6 +1864,7 @@ function openAddChannelPanel() {
 }
 
 function closeAddChannelPanel() {
+    stopWeixinQrPoll();
     const panel = document.getElementById('channels-add-panel');
     if (panel) {
         panel.classList.add('hidden');
@@ -1836,12 +1873,23 @@ function closeAddChannelPanel() {
 }
 
 function onAddChannelSelect(chName) {
+    stopWeixinQrPoll();
     const fieldsContainer = document.getElementById('add-channel-fields');
     const actions = document.getElementById('add-channel-actions');
 
     if (!chName) {
         fieldsContainer.innerHTML = '';
         actions.classList.add('hidden');
+        return;
+    }
+
+    if (chName === 'weixin') {
+        actions.classList.add('hidden');
+        fieldsContainer.innerHTML = `
+            <div id="weixin-qr-panel" class="flex flex-col items-center py-4">
+                <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">${t('weixin_scan_loading')}</p>
+            </div>`;
+        startWeixinQrLogin();
         return;
     }
 
@@ -1898,6 +1946,172 @@ function submitAddChannel() {
     .catch(() => {
         if (btn) { btn.disabled = false; btn.textContent = t('channels_connect_btn'); }
     });
+}
+
+// =====================================================================
+// WeChat QR Login
+// =====================================================================
+let _weixinQrPollTimer = null;
+let _weixinStatusPollTimer = null;
+
+function stopWeixinStatusPoll() {
+    if (_weixinStatusPollTimer) {
+        clearTimeout(_weixinStatusPollTimer);
+        _weixinStatusPollTimer = null;
+    }
+}
+
+function startWeixinActiveStatusPoll() {
+    stopWeixinStatusPoll();
+    _weixinStatusPollTimer = setTimeout(() => {
+        fetch('/api/channels').then(r => r.json()).then(data => {
+            if (data.status !== 'success') return;
+            const wx = (data.channels || []).find(c => c.name === 'weixin');
+            if (!wx || !wx.active) return;
+            if (wx.login_status === 'logged_in') {
+                channelsData = data.channels;
+                renderActiveChannels();
+            } else {
+                const ch = channelsData.find(c => c.name === 'weixin');
+                if (ch) ch.login_status = wx.login_status;
+                startWeixinActiveStatusPoll();
+            }
+        }).catch(() => { startWeixinActiveStatusPoll(); });
+    }, 3000);
+}
+
+function showWeixinActiveQr() {
+    const container = document.getElementById('weixin-active-qr');
+    if (!container) return;
+    container.innerHTML = `
+        <div id="weixin-qr-panel" class="flex flex-col items-center py-2">
+            <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">${t('weixin_scan_loading')}</p>
+        </div>`;
+    stopWeixinStatusPoll();
+    startWeixinQrLogin();
+}
+
+function stopWeixinQrPoll() {
+    if (_weixinQrPollTimer) {
+        clearTimeout(_weixinQrPollTimer);
+        _weixinQrPollTimer = null;
+    }
+}
+
+function startWeixinQrLogin() {
+    stopWeixinQrPoll();
+    fetch('/api/weixin/qrlogin')
+        .then(r => r.json())
+        .then(data => {
+            const panel = document.getElementById('weixin-qr-panel');
+            if (!panel) return;
+            if (data.status !== 'success') {
+                panel.innerHTML = `<p class="text-sm text-red-500">${t('weixin_scan_fail')}: ${data.message || ''}</p>`;
+                return;
+            }
+            renderWeixinQr(data.qr_image || data.qrcode_url, 'waiting');
+            if (data.source === 'channel') {
+                startWeixinActiveStatusPoll();
+            } else {
+                pollWeixinQrStatus();
+            }
+        })
+        .catch(() => {
+            const panel = document.getElementById('weixin-qr-panel');
+            if (panel) panel.innerHTML = `<p class="text-sm text-red-500">${t('weixin_scan_fail')}</p>`;
+        });
+}
+
+function renderWeixinQr(qrcodeUrl, status) {
+    const panel = document.getElementById('weixin-qr-panel');
+    if (!panel) return;
+
+    let statusText = t('weixin_scan_waiting');
+    let statusColor = 'text-slate-500 dark:text-slate-400';
+    if (status === 'scanned') {
+        statusText = t('weixin_scan_scanned');
+        statusColor = 'text-primary-500';
+    } else if (status === 'expired') {
+        statusText = t('weixin_scan_expired');
+        statusColor = 'text-amber-500';
+    } else if (status === 'confirmed') {
+        statusText = t('weixin_scan_success');
+        statusColor = 'text-primary-500';
+    }
+
+    panel.innerHTML = `
+        <div class="flex flex-col items-center">
+            <p class="text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">${t('weixin_scan_title')}</p>
+            <p class="text-xs text-slate-400 dark:text-slate-500 mb-4">${t('weixin_scan_desc')}</p>
+            <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 mb-3">
+                <img src="${escapeHtml(qrcodeUrl)}" alt="QR Code" class="w-52 h-52" style="image-rendering: pixelated;"/>
+            </div>
+            <p class="text-xs ${statusColor} mb-1">${statusText}</p>
+            <p class="text-xs text-slate-400 dark:text-slate-500">${t('weixin_qr_tip')}</p>
+        </div>`;
+}
+
+function pollWeixinQrStatus() {
+    _weixinQrPollTimer = setTimeout(() => {
+        fetch('/api/weixin/qrlogin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'poll' })
+        })
+        .then(r => r.json())
+        .then(data => {
+            const panel = document.getElementById('weixin-qr-panel');
+            if (!panel) { stopWeixinQrPoll(); return; }
+
+            if (data.status !== 'success') {
+                pollWeixinQrStatus();
+                return;
+            }
+
+            const qrStatus = data.qr_status;
+            if (qrStatus === 'confirmed') {
+                renderWeixinQr('', 'confirmed');
+                panel.innerHTML = `
+                    <div class="flex flex-col items-center py-4">
+                        <div class="w-12 h-12 rounded-full bg-primary-50 dark:bg-primary-900/30 flex items-center justify-center mb-3">
+                            <i class="fas fa-check text-primary-500 text-lg"></i>
+                        </div>
+                        <p class="text-sm font-medium text-primary-600 dark:text-primary-400">${t('weixin_scan_success')}</p>
+                    </div>`;
+                connectWeixinAfterQr();
+            } else if (qrStatus === 'expired' && (data.qr_image || data.qrcode_url)) {
+                renderWeixinQr(data.qr_image || data.qrcode_url, 'waiting');
+                pollWeixinQrStatus();
+            } else if (qrStatus === 'scaned') {
+                const img = panel.querySelector('img');
+                const currentSrc = img ? img.src : '';
+                renderWeixinQr(currentSrc, 'scanned');
+                pollWeixinQrStatus();
+            } else {
+                pollWeixinQrStatus();
+            }
+        })
+        .catch(() => {
+            pollWeixinQrStatus();
+        });
+    }, 2000);
+}
+
+function connectWeixinAfterQr() {
+    fetch('/api/channels', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'connect', channel: 'weixin', config: {} })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'success') {
+            const ch = channelsData.find(c => c.name === 'weixin');
+            if (ch) ch.active = true;
+            setTimeout(() => renderActiveChannels(), 1500);
+        }
+    })
+    .catch(() => {});
 }
 
 // =====================================================================
