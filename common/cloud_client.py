@@ -222,7 +222,14 @@ class CloudClient(LinkAIClient):
             return
 
         existing_ch = self.channel_mgr.get_channel(channel_type)
-        if existing_ch and not cred_changed:
+        skip_restart = existing_ch and not cred_changed
+        if skip_restart and channel_type in ("weixin", "wx"):
+            login_status = getattr(existing_ch, "login_status", "")
+            if login_status != "logged_in":
+                skip_restart = False
+                logger.info(f"[CloudClient] Channel '{channel_type}' not logged in "
+                            f"(status={login_status}), forcing restart")
+        if skip_restart:
             logger.info(f"[CloudClient] Channel '{channel_type}' already running with same config, "
                         "skip restart, reporting status only")
             threading.Thread(
@@ -255,7 +262,14 @@ class CloudClient(LinkAIClient):
             ).start()
         else:
             existing_ch = self.channel_mgr.get_channel(channel_type)
-            if existing_ch and not cred_changed:
+            needs_restart = cred_changed or not existing_ch
+            if not needs_restart and channel_type in ("weixin", "wx"):
+                login_status = getattr(existing_ch, "login_status", "")
+                if login_status != "logged_in":
+                    needs_restart = True
+                    logger.info(f"[CloudClient] Channel '{channel_type}' not logged in "
+                                f"(status={login_status}), forcing restart")
+            if existing_ch and not needs_restart:
                 logger.info(f"[CloudClient] Channel '{channel_type}' already running with same config, "
                             "skip restart, reporting status only")
                 threading.Thread(
