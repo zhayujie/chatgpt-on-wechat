@@ -167,7 +167,7 @@ class Vision(BaseTool):
 
     @staticmethod
     def _maybe_compress(path: str) -> str:
-        """Compress image if larger than threshold; return path to use."""
+        """Compress image to under COMPRESS_THRESHOLD with max long-edge 1536px."""
         file_size = os.path.getsize(path)
         if file_size <= COMPRESS_THRESHOLD:
             return path
@@ -175,27 +175,47 @@ class Vision(BaseTool):
         tmp = tempfile.NamedTemporaryFile(suffix=".jpg", delete=False)
         tmp.close()
 
-        try:
-            # macOS: use sips
-            subprocess.run(
-                ["sips", "-Z", "800", path, "--out", tmp.name],
-                capture_output=True, check=True,
-            )
-            logger.debug(f"[Vision] Compressed image ({file_size // 1024}KB -> {os.path.getsize(tmp.name) // 1024}KB)")
-            return tmp.name
-        except (FileNotFoundError, subprocess.CalledProcessError):
-            pass
+        def _try_sips(max_dim: str, quality: str) -> bool:
+            try:
+                subprocess.run(
+                    ["sips", "-Z", max_dim, "-s", "formatOptions", quality,
+                     path, "--out", tmp.name],
+                    capture_output=True, check=True,
+                )
+                return True
+            except (FileNotFoundError, subprocess.CalledProcessError):
+                return False
 
-        try:
-            # Linux: use ImageMagick convert
-            subprocess.run(
-                ["convert", path, "-resize", "800x800>", tmp.name],
-                capture_output=True, check=True,
-            )
-            logger.debug(f"[Vision] Compressed image ({file_size // 1024}KB -> {os.path.getsize(tmp.name) // 1024}KB)")
+        def _try_convert(max_dim: str, quality: str) -> bool:
+            try:
+                subprocess.run(
+                    ["convert", path, "-resize", f"{max_dim}x{max_dim}>",
+                     "-quality", quality, tmp.name],
+                    capture_output=True, check=True,
+                )
+                return True
+            except (FileNotFoundError, subprocess.CalledProcessError):
+                return False
+
+        attempts = [
+            ("1536", "85"),
+            ("1536", "70"),
+            ("1536", "50"),
+        ]
+
+        for max_dim, quality in attempts:
+            ok = _try_sips(max_dim, quality) or _try_convert(max_dim, quality)
+            if not ok:
+                continue
+            new_size = os.path.getsize(tmp.name)
+            logger.debug(f"[Vision] Compressed image "
+                         f"({file_size // 1024}KB -> {new_size // 1024}KB, "
+                         f"max_dim={max_dim}, q={quality})")
+            if new_size <= COMPRESS_THRESHOLD:
+                return tmp.name
+
+        if os.path.exists(tmp.name) and os.path.getsize(tmp.name) > 0:
             return tmp.name
-        except (FileNotFoundError, subprocess.CalledProcessError):
-            pass
 
         os.remove(tmp.name)
         return path
