@@ -14,7 +14,7 @@ Option 1: Native integration (recommended):
 
 | Parameter | Description |
 | --- | --- |
-| `model` | `deepseek-chat` (DeepSeek-V3), `deepseek-reasoner` (DeepSeek-R1) |
+| `model` | `deepseek-chat` (DeepSeek-V3.2, non-thinking mode), `deepseek-reasoner` (DeepSeek-R1, thinking mode) |
 | `deepseek_api_key` | Create at [DeepSeek Platform](https://platform.deepseek.com/api_keys) |
 | `deepseek_api_base` | Optional, defaults to `https://api.deepseek.com/v1`. Can be changed to a third-party proxy |
 
@@ -29,6 +29,4 @@ Option 2: OpenAI-compatible configuration:
 }
 ```
 
-<Note>
-  Existing users who configured DeepSeek via `open_ai_api_key` / `open_ai_api_base` do not need to change anything — the program will automatically fall back to those fields. New users are recommended to use Option 1 to avoid config conflicts with OpenAI.
-</Note>
+

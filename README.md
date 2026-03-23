@@ -483,7 +483,7 @@ API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn)
 }
 ```
 
- - `model`: 可填 `deepseek-chat、deepseek-reasoner`，分别对应的是 DeepSeek-V3 和 DeepSeek-R1 模型
+ - `model`: 可填 `deepseek-chat、deepseek-reasoner`，分别对应的是 DeepSeek-V3.2（非思考模式）和 DeepSeek-R1（思考模式）
  - `deepseek_api_key`: DeepSeek平台的 API Key
  - `deepseek_api_base`: 可选，默认为 `https://api.deepseek.com/v1`，可修改为第三方代理地址
 
