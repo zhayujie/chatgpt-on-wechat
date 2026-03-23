@@ -3,7 +3,22 @@ title: DeepSeek
 description: DeepSeek model configuration
 ---
 
-Use OpenAI-compatible configuration:
+Option 1: Native integration (recommended):
+
+```json
+{
+  "model": "deepseek-chat",
+  "deepseek_api_key": "YOUR_API_KEY"
+}
+```
+
+| Parameter | Description |
+| --- | --- |
+| `model` | `deepseek-chat` (DeepSeek-V3), `deepseek-reasoner` (DeepSeek-R1) |
+| `deepseek_api_key` | Create at [DeepSeek Platform](https://platform.deepseek.com/api_keys) |
+| `deepseek_api_base` | Optional, defaults to `https://api.deepseek.com/v1`. Can be changed to a third-party proxy |
+
+Option 2: OpenAI-compatible configuration:
 
 ```json
 {
@@ -14,9 +29,6 @@ Use OpenAI-compatible configuration:
 }
 ```
 
-| Parameter | Description |
-| --- | --- |
-| `model` | `deepseek-chat` (DeepSeek-V3), `deepseek-reasoner` (DeepSeek-R1) |
-| `bot_type` | Must be `openai` (OpenAI-compatible mode) |
-| `open_ai_api_key` | Create at [DeepSeek Platform](https://platform.deepseek.com/api_keys) |
-| `open_ai_api_base` | DeepSeek platform BASE URL |
+<Note>
+  Existing users who configured DeepSeek via `open_ai_api_key` / `open_ai_api_base` do not need to change anything — the program will automatically fall back to those fields. New users are recommended to use Option 1 to avoid config conflicts with OpenAI.
+</Note>
