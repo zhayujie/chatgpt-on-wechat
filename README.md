@@ -498,8 +498,7 @@ API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn)
 }
 ```
 
-> 注：已有用户如果之前通过 `open_ai_api_key` / `open_ai_api_base` 配置 DeepSeek，无需修改，程序会自动兼容。推荐新用户使用方式一的独立配置，避免与 OpenAI 配置冲突。
-</details>
+ </details>
 
 <details>
 <summary>Azure</summary>
