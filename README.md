@@ -155,6 +155,8 @@ pip3 install -r requirements-optional.txt
   "claude_api_base": "https://api.anthropic.com/v1",          # Claude API 地址，修改可接入三方代理平台
   "gemini_api_key": "",                                       # Gemini API Key
   "gemini_api_base": "https://generativelanguage.googleapis.com", # Gemini API地址
+  "deepseek_api_key": "",                                      # DeepSeek API Key
+  "deepseek_api_base": "https://api.deepseek.com/v1",         # DeepSeek API 地址，可修改为第三方代理
   "open_ai_api_key": "",                                      # OpenAI API Key
   "open_ai_api_base": "https://api.openai.com/v1",            # OpenAI API 地址
   "linkai_api_key": "",                                       # LinkAI API Key
@@ -472,21 +474,31 @@ API Key创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn)
 
 2. 填写配置
 
+方式一：官方接入（推荐）：
+
 ```json
 {
     "model": "deepseek-chat",
-    "open_ai_api_key": "sk-xxxxxxxxxxx",
-    "open_ai_api_base": "https://api.deepseek.com/v1",
-    "bot_type": "openai"
-
+    "deepseek_api_key": "sk-xxxxxxxxxxx"
 }
 ```
 
- - `bot_type`: OpenAI兼容方式
  - `model`: 可填 `deepseek-chat、deepseek-reasoner`，分别对应的是 DeepSeek-V3 和 DeepSeek-R1 模型
- - `open_ai_api_key`: DeepSeek平台的 API Key
- - `open_ai_api_base`: DeepSeek平台 BASE URL
-</details>
+ - `deepseek_api_key`: DeepSeek平台的 API Key
+ - `deepseek_api_base`: 可选，默认为 `https://api.deepseek.com/v1`，可修改为第三方代理地址
+
+方式二：OpenAI兼容方式接入：
+
+```json
+{
+    "model": "deepseek-chat",
+    "bot_type": "openai",
+    "open_ai_api_key": "sk-xxxxxxxxxxx",
+    "open_ai_api_base": "https://api.deepseek.com/v1"
+}
+```
+
+ </details>
 
 <details>
 <summary>Azure</summary>

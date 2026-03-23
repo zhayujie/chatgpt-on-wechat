@@ -74,7 +74,7 @@ class AgentLLMModel(LLMModel):
         ("qwen", const.QWEN_DASHSCOPE), ("qwq", const.QWEN_DASHSCOPE), ("qvq", const.QWEN_DASHSCOPE),
         ("gemini", const.GEMINI), ("glm", const.ZHIPU_AI), ("claude", const.CLAUDEAPI),
         ("moonshot", const.MOONSHOT), ("kimi", const.MOONSHOT),
-        ("doubao", const.DOUBAO),
+        ("doubao", const.DOUBAO), ("deepseek", const.DEEPSEEK),
     ]
 
     def __init__(self, bridge: Bridge, bot_type: str = "chat"):
@@ -115,8 +115,6 @@ class AgentLLMModel(LLMModel):
             return const.QWEN_DASHSCOPE
         if model_name in [const.MOONSHOT, "moonshot-v1-8k", "moonshot-v1-32k", "moonshot-v1-128k"]:
             return const.MOONSHOT
-        if model_name in [const.DEEPSEEK_CHAT, const.DEEPSEEK_REASONER]:
-            return const.OPENAI
         for prefix, btype in self._MODEL_PREFIX_MAP:
             if model_name.startswith(prefix):
                 return btype

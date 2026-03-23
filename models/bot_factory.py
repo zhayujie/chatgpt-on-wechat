@@ -17,7 +17,11 @@ def create_bot(bot_type):
         from models.baidu.baidu_wenxin import BaiduWenxinBot
         return BaiduWenxinBot()
 
-    elif bot_type in (const.OPENAI, const.CHATGPT, const.DEEPSEEK):  # OpenAI-compatible API
+    elif bot_type == const.DEEPSEEK:
+        from models.deepseek.deepseek_bot import DeepSeekBot
+        return DeepSeekBot()
+
+    elif bot_type in (const.OPENAI, const.CHATGPT):  # OpenAI-compatible API
         from models.chatgpt.chat_gpt_bot import ChatGPTBot
         return ChatGPTBot()
 

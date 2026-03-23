@@ -3,20 +3,32 @@ title: DeepSeek
 description: DeepSeek 模型配置
 ---
 
-通过 OpenAI 兼容方式接入：
+方式一：官方接入（推荐）：
 
 ```json
 {
   "model": "deepseek-chat",
-  "open_ai_api_key": "YOUR_API_KEY",
-  "open_ai_api_base": "https://api.deepseek.com/v1",
-  "bot_type": "openai"
+  "deepseek_api_key": "YOUR_API_KEY"
 }
 ```
 
 | 参数 | 说明 |
 | --- | --- |
 | `model` | `deepseek-chat`（DeepSeek-V3）、`deepseek-reasoner`（DeepSeek-R1） |
-| `bot_type` | 固定为 `openai`（OpenAI 兼容方式） |
-| `open_ai_api_key` | 在 [DeepSeek 平台](https://platform.deepseek.com/api_keys) 创建 |
-| `open_ai_api_base` | DeepSeek 平台 BASE URL |
+| `deepseek_api_key` | 在 [DeepSeek 平台](https://platform.deepseek.com/api_keys) 创建 |
+| `deepseek_api_base` | 可选，默认为 `https://api.deepseek.com/v1`，可修改为第三方代理地址 |
+
+方式二：OpenAI 兼容方式接入：
+
+```json
+{
+  "model": "deepseek-chat",
+  "bot_type": "openai",
+  "open_ai_api_key": "YOUR_API_KEY",
+  "open_ai_api_base": "https://api.deepseek.com/v1"
+}
+```
+
+<Note>
+  已有用户如果之前通过 `open_ai_api_key` / `open_ai_api_base` 配置 DeepSeek，无需修改，程序会自动兼容。推荐新用户使用方式一的独立配置，避免与 OpenAI 配置冲突。
+</Note>
