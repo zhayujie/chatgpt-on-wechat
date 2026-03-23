@@ -215,7 +215,7 @@ class WeixinChannel(ChatChannel):
             return {}
 
         self._current_qr_url = qrcode_url
-        logger.info(f"[Weixin] QR code URL: {qrcode_url}")
+        logger.info(f"[Weixin] 微信二维码链接: {qrcode_url}")
         self._print_qr(qrcode_url)
         self._notify_cloud_qrcode(qrcode_url)
         print("  等待扫码...\n")
@@ -258,7 +258,7 @@ class WeixinChannel(ChatChannel):
                     qrcode_url = qr_resp.get("qrcode_img_content", "")
                     scanned_printed = False
                     self._current_qr_url = qrcode_url
-                    logger.info(f"[Weixin] New QR code ({refresh_count}/{QR_MAX_REFRESHES}): {qrcode_url}")
+                    logger.info(f"[Weixin] 微信二维码链接 ({refresh_count}/{QR_MAX_REFRESHES}): {qrcode_url}")
                     self._print_qr(qrcode_url)
                     self._notify_cloud_qrcode(qrcode_url)
                 except Exception as e:
