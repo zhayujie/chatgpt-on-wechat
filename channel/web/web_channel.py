@@ -568,6 +568,13 @@ class ConfigHandler:
             "api_base_default": "https://api.deepseek.com/v1",
             "models": [const.DEEPSEEK_CHAT, const.DEEPSEEK_REASONER],
         }),
+        ("modelscope", {
+            "label": "ModelScope",
+            "api_key_field": "modelscope_api_key",
+            "api_base_key": None,
+            "api_base_default": None,
+            "models": [const.Qwen3_5_27B, const.Qwen3_235B_A22B_Instruct_2507],
+        }),
         ("linkai", {
             "label": "LinkAI",
             "api_key_field": "linkai_api_key",

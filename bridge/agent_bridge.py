@@ -115,6 +115,8 @@ class AgentLLMModel(LLMModel):
             return const.QWEN_DASHSCOPE
         if model_name in [const.MOONSHOT, "moonshot-v1-8k", "moonshot-v1-32k", "moonshot-v1-128k"]:
             return const.MOONSHOT
+        if conf().get("bot_type") == "modelscope":
+            return const.MODELSCOPE
         for prefix, btype in self._MODEL_PREFIX_MAP:
             if model_name.startswith(prefix):
                 return btype
