@@ -129,6 +129,9 @@ pip3 install -r requirements.txt
 ```bash
 pip3 install -r requirements-optional.txt
 ```
+
+> 国内网络可使用镜像源加速：`pip3 install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple`
+
 如果某项依赖安装失败可注释掉对应的行后重试。
 
 ## 二、配置

@@ -2,14 +2,8 @@ tiktoken>=0.3.2 # openai calculate token
 
 #voice
 pydub>=0.25.1 # need ffmpeg
-SpeechRecognition # google speech to text
 gTTS>=2.3.1 # google text to speech
-pyttsx3>=2.90 # pytsx text to speech
-baidu_aip>=4.16.10 # baidu voice
-azure-cognitiveservices-speech # azure voice
 edge-tts # edge-tts
-numpy<=1.24.2
-langid # language detect
 elevenlabs==1.0.3 # elevenlabs TTS
 
 #install plugin
@@ -18,17 +12,8 @@ dulwich
 # xunfei spark
 websocket-client==1.2.0
 
-# claude API
-anthropic==0.25.0
-
-# tongyi qwen
-broadscope_bailian
-
 # google
 google-generativeai
-
-# tencentcloud sdk
-tencentcloud-sdk-python>=3.0.0
 
 # file parsing (web_fetch document support)
 pypdf

@@ -17,8 +17,7 @@ RUN apt-get update \
     && cp config-template.json config.json \
     && /usr/local/bin/python -m pip install --no-cache --upgrade pip \
     && pip install --no-cache -r requirements.txt \
-    && pip install --no-cache -r requirements-optional.txt \
-    && pip install azure-cognitiveservices-speech
+    && pip install --no-cache -r requirements-optional.txt
 
 WORKDIR ${BUILD_PREFIX}
 
@@ -29,7 +28,5 @@ RUN chmod +x /entrypoint.sh \
     && groupadd -r agent \
     && useradd -r -g agent -s /bin/bash -d /home/agent agent \
     && chown -R agent:agent /home/agent ${BUILD_PREFIX} /usr/local/lib
-
-USER agent
 
 ENTRYPOINT ["/entrypoint.sh"]
