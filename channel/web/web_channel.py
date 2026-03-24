@@ -573,7 +573,7 @@ class ConfigHandler:
             "api_key_field": "modelscope_api_key",
             "api_base_key": None,
             "api_base_default": None,
-            "models": [const.Qwen3_5_27B, const.Qwen3_235B_A22B_Instruct_2507],
+            "models": [const.QWEN3_5_27B, const.QWEN3_235B_A22B_INSTRUCT_2507],
         }),
         ("linkai", {
             "label": "LinkAI",
