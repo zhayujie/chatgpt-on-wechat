@@ -472,6 +472,7 @@ class AgentStreamExecutor:
             raise
 
         finally:
+            final_response = final_response.strip() if final_response else final_response
             logger.info(f"[Agent] 🏁 完成 ({turn}轮)")
             self._emit_event("agent_end", {"final_response": final_response})
 
