@@ -284,33 +284,36 @@ def upload_media_to_cdn(api: WeixinApi, file_path: str, to_user_id: str,
     raw_md5 = _md5_bytes(raw_data)
     cipher_size = _aes_ecb_padded_size(raw_size)
 
-    resp = api.get_upload_url(
-        filekey=filekey,
-        media_type=media_type,
-        to_user_id=to_user_id,
-        rawsize=raw_size,
-        rawfilemd5=raw_md5,
-        filesize=cipher_size,
-        aeskey=aes_key_hex,
-    )
-
-    upload_param = resp.get("upload_param", "")
-    if not upload_param:
-        raise RuntimeError(f"[Weixin] getUploadUrl returned no upload_param: {resp}")
-
     encrypted = _aes_ecb_encrypt(raw_data, aes_key)
 
     from urllib.parse import quote
-    cdn_url = (f"{api.cdn_base_url}/upload"
-               f"?encrypted_query_param={quote(upload_param)}"
-               f"&filekey={quote(filekey)}")
 
     download_param = None
     last_error = None
     for attempt in range(1, UPLOAD_MAX_RETRIES + 1):
         try:
+            if attempt > 1:
+                filekey = uuid.uuid4().hex
+            resp = api.get_upload_url(
+                filekey=filekey,
+                media_type=media_type,
+                to_user_id=to_user_id,
+                rawsize=raw_size,
+                rawfilemd5=raw_md5,
+                filesize=cipher_size,
+                aeskey=aes_key_hex,
+            )
+            upload_param = resp.get("upload_param", "")
+            if not upload_param:
+                raise RuntimeError(f"[Weixin] getUploadUrl returned no upload_param: {resp}")
+
+            cdn_url = (f"{api.cdn_base_url}/upload"
+                       f"?encrypted_query_param={quote(upload_param)}"
+                       f"&filekey={quote(filekey)}")
+
             cdn_resp = requests.post(cdn_url, data=encrypted, headers={
                 "Content-Type": "application/octet-stream",
+                "Content-Length": str(len(encrypted)),
             }, timeout=120)
             if 400 <= cdn_resp.status_code < 500:
                 err_msg = cdn_resp.headers.get("x-error-message", cdn_resp.text[:200])
@@ -326,7 +329,9 @@ def upload_media_to_cdn(api: WeixinApi, file_path: str, to_user_id: str,
             if "client error" in str(e):
                 raise
             if attempt < UPLOAD_MAX_RETRIES:
-                logger.warning(f"[Weixin] CDN upload attempt {attempt} failed, retrying: {e}")
+                backoff = 2 ** attempt
+                logger.warning(f"[Weixin] CDN upload attempt {attempt} failed, retrying in {backoff}s: {e}")
+                time.sleep(backoff)
             else:
                 logger.error(f"[Weixin] CDN upload failed after {UPLOAD_MAX_RETRIES} attempts: {e}")
 

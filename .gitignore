@@ -37,3 +37,7 @@ client_config.json
 ref/
 .cursor/
 local/
+
+# cow cli
+cowagent.egg-info/
+dist/
