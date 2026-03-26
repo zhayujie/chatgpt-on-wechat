@@ -29,11 +29,12 @@ def skill():
 # cow skill list
 # ------------------------------------------------------------------
 @skill.command("list")
-@click.option("--remote", is_flag=True, help="List skills available on Skill Hub")
-def skill_list(remote):
-    """List installed skills or browse remote Skill Hub."""
+@click.option("--remote", is_flag=True, help="Browse skills on Skill Hub")
+@click.option("--page", default=1, type=int, help="Page number for remote listing")
+def skill_list(remote, page):
+    """List installed skills or browse Skill Hub."""
     if remote:
-        _list_remote()
+        _list_remote(page=page)
     else:
         _list_local()
 
@@ -95,10 +96,17 @@ def _print_skill_table(entries):
     click.echo()
 
 
-def _list_remote():
-    """List skills from remote Skill Hub."""
+_REMOTE_PAGE_SIZE = 10
+
+
+def _list_remote(page: int = 1):
+    """List skills from remote Skill Hub with server-side pagination."""
     try:
-        resp = requests.get(f"{SKILL_HUB_API}/skills", timeout=10)
+        resp = requests.get(
+            f"{SKILL_HUB_API}/skills",
+            params={"page": page, "limit": _REMOTE_PAGE_SIZE},
+            timeout=10,
+        )
         resp.raise_for_status()
         data = resp.json()
     except Exception as e:
@@ -106,26 +114,40 @@ def _list_remote():
         sys.exit(1)
 
     skills = data.get("skills", [])
-    if not skills:
+    total = data.get("total", len(skills))
+
+    if not skills and page == 1:
         click.echo("No skills available on Skill Hub.")
         return
 
-    name_w = max(len(s.get("name", "")) for s in skills)
+    total_pages = max(1, (total + _REMOTE_PAGE_SIZE - 1) // _REMOTE_PAGE_SIZE)
+    page = min(page, total_pages)
+    installed = set(load_skills_config().keys())
+
+    name_w = max((len(s.get("name", "")) for s in skills), default=4)
     name_w = max(name_w, 4) + 2
 
-    click.echo(f"\n  Skill Hub ({len(skills)} available)\n")
-    click.echo(f"  {'Name':<{name_w}} {'Downloads':<12} {'Description'}")
+    click.echo(f"\n  Skill Hub ({total} available) — page {page}/{total_pages}\n")
+    click.echo(f"  {'Name':<{name_w}} {'Status':<12} {'Description'}")
     click.echo(f"  {'─' * (name_w + 12 + 50)}")
 
     for s in skills:
         name = s.get("name", "")
-        downloads = s.get("downloads", 0)
         desc = s.get("description", "") or s.get("display_name", "")
         if len(desc) > 50:
             desc = desc[:47] + "..."
-        click.echo(f"  {name:<{name_w}} {downloads:<12} {desc}")
+        status = click.style("installed", fg="green") if name in installed else "—"
+        click.echo(f"  {name:<{name_w}} {status:<12} {desc}")
 
-    click.echo(f"\n  Install with: cow skill install <name>\n")
+    click.echo()
+    nav_parts = []
+    if page > 1:
+        nav_parts.append(f"cow skill list --remote --page {page - 1}")
+    if page < total_pages:
+        nav_parts.append(f"cow skill list --remote --page {page + 1}")
+    if nav_parts:
+        click.echo(f"  Navigate: {' | '.join(nav_parts)}")
+    click.echo(f"  Install:  cow skill install <name>\n")
 
 
 # ------------------------------------------------------------------
@@ -148,20 +170,21 @@ def search(query):
         click.echo(f'No skills found for "{query}".')
         return
 
+    installed = set(load_skills_config().keys())
     name_w = max(len(s.get("name", "")) for s in skills)
     name_w = max(name_w, 4) + 2
 
     click.echo(f'\n  Search results for "{query}" ({len(skills)} found)\n')
-    click.echo(f"  {'Name':<{name_w}} {'Downloads':<12} {'Description'}")
+    click.echo(f"  {'Name':<{name_w}} {'Status':<12} {'Description'}")
     click.echo(f"  {'─' * (name_w + 12 + 50)}")
 
     for s in skills:
         name = s.get("name", "")
-        downloads = s.get("downloads", 0)
         desc = s.get("description", "") or s.get("display_name", "")
         if len(desc) > 50:
             desc = desc[:47] + "..."
-        click.echo(f"  {name:<{name_w}} {downloads:<12} {desc}")
+        status = click.style("installed", fg="green") if name in installed else "—"
+        click.echo(f"  {name:<{name_w}} {status:<12} {desc}")
 
     click.echo(f"\n  Install with: cow skill install <name>\n")
 

@@ -47,7 +47,8 @@ def _remove_pid():
 
 @click.command()
 @click.option("--foreground", "-f", is_flag=True, help="Run in foreground (don't daemonize)")
-def start(foreground):
+@click.option("--no-logs", is_flag=True, help="Don't tail logs after starting")
+def start(foreground, no_logs):
     """Start CowAgent."""
     pid = _read_pid()
     if pid:
@@ -81,6 +82,10 @@ def start(foreground):
         click.echo(click.style(f"✓ CowAgent started (PID: {proc.pid})", fg="green"))
         click.echo(f"  Logs: {log_file}")
 
+        if not no_logs:
+            click.echo("  Press Ctrl+C to stop tailing logs.\n")
+            _tail_log(log_file)
+
 
 @click.command()
 def stop():
@@ -109,22 +114,38 @@ def stop():
 
 
 @click.command()
+@click.option("--no-logs", is_flag=True, help="Don't tail logs after restarting")
 @click.pass_context
-def restart(ctx):
+def restart(ctx, no_logs):
     """Restart CowAgent."""
     ctx.invoke(stop)
     time.sleep(1)
-    ctx.invoke(start)
+    ctx.invoke(start, no_logs=no_logs)
 
 
 @click.command()
 def status():
     """Show CowAgent running status."""
+    from cli import __version__
+    from cli.utils import load_config_json
+
     pid = _read_pid()
     if pid:
         click.echo(click.style(f"● CowAgent is running (PID: {pid})", fg="green"))
     else:
         click.echo(click.style("● CowAgent is not running", fg="red"))
+
+    click.echo(f"  版本: v{__version__}")
+
+    cfg = load_config_json()
+    if cfg:
+        channel = cfg.get("channel_type", "unknown")
+        if isinstance(channel, list):
+            channel = ", ".join(channel)
+        click.echo(f"  通道: {channel}")
+        click.echo(f"  模型: {cfg.get('model', 'unknown')}")
+        mode = "Agent" if cfg.get("agent") else "Chat"
+        click.echo(f"  模式: {mode}")
 
 
 @click.command()
@@ -138,18 +159,23 @@ def logs(follow, lines):
         return
 
     if follow:
-        try:
-            proc = subprocess.Popen(
-                ["tail", "-f", "-n", str(lines), log_file],
-                stdout=sys.stdout,
-                stderr=sys.stderr,
-            )
-            proc.wait()
-        except KeyboardInterrupt:
-            pass
+        _tail_log(log_file, lines)
     else:
-        proc = subprocess.run(
+        subprocess.run(
             ["tail", "-n", str(lines), log_file],
             stdout=sys.stdout,
             stderr=sys.stderr,
         )
+
+
+def _tail_log(log_file: str, lines: int = 50):
+    """Follow log file output. Blocks until Ctrl+C."""
+    try:
+        proc = subprocess.Popen(
+            ["tail", "-f", "-n", str(lines), log_file],
+            stdout=sys.stdout,
+            stderr=sys.stderr,
+        )
+        proc.wait()
+    except KeyboardInterrupt:
+        pass

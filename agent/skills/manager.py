@@ -84,10 +84,10 @@ class SkillManager:
         """
         Merge directory-scanned skills with the persisted config file.
 
-        - New skills discovered on disk are added with enabled=True.
+        - New skills: use metadata.default_enabled as initial enabled state.
+        - Existing skills: preserve their persisted enabled state.
         - Skills that no longer exist on disk are removed.
-        - Existing entries preserve their enabled state; name/description/source
-          are refreshed from the latest scan.
+        - name/description/source are always refreshed from the latest scan.
         """
         saved = self._load_skills_config()
         merged: Dict[str, dict] = {}
@@ -95,13 +95,18 @@ class SkillManager:
         for name, entry in self.skills.items():
             skill = entry.skill
             prev = saved.get(name, {})
-            # category priority: persisted config (set by cloud) > default "skill"
             category = prev.get("category", "skill")
+
+            if name in saved:
+                enabled = prev.get("enabled", True)
+            else:
+                enabled = entry.metadata.default_enabled if entry.metadata else True
+
             merged[name] = {
                 "name": name,
                 "description": skill.description,
                 "source": skill.source,
-                "enabled": prev.get("enabled", True),
+                "enabled": enabled,
                 "category": category,
             }
 
@@ -157,69 +162,114 @@ class SkillManager:
         """
         return list(self.skills.values())
     
+    @staticmethod
+    def _normalize_skill_filter(skill_filter: Optional[List[str]]) -> Optional[List[str]]:
+        """Normalize a skill_filter list into a flat list of stripped names."""
+        if skill_filter is None:
+            return None
+        normalized = []
+        for item in skill_filter:
+            if isinstance(item, str):
+                name = item.strip()
+                if name:
+                    normalized.append(name)
+            elif isinstance(item, list):
+                for subitem in item:
+                    if isinstance(subitem, str):
+                        name = subitem.strip()
+                        if name:
+                            normalized.append(name)
+        return normalized or None
+
     def filter_skills(
         self,
         skill_filter: Optional[List[str]] = None,
         include_disabled: bool = False,
     ) -> List[SkillEntry]:
         """
-        Filter skills based on criteria.
-
-        Simple rule: Skills are auto-enabled if requirements are met.
-        - Has required API keys -> included
-        - Missing API keys -> excluded
+        Filter skills that are eligible (enabled + requirements met).
 
         :param skill_filter: List of skill names to include (None = all)
         :param include_disabled: Whether to include disabled skills
-        :return: Filtered list of skill entries
+        :return: Filtered list of eligible skill entries
         """
         from agent.skills.config import should_include_skill
 
         entries = list(self.skills.values())
 
-        # Check requirements (platform, binaries, env vars)
         entries = [e for e in entries if should_include_skill(e, self.config)]
 
-        # Apply skill filter
-        if skill_filter is not None:
-            normalized = []
-            for item in skill_filter:
-                if isinstance(item, str):
-                    name = item.strip()
-                    if name:
-                        normalized.append(name)
-                elif isinstance(item, list):
-                    for subitem in item:
-                        if isinstance(subitem, str):
-                            name = subitem.strip()
-                            if name:
-                                normalized.append(name)
-            if normalized:
-                entries = [e for e in entries if e.skill.name in normalized]
+        normalized = self._normalize_skill_filter(skill_filter)
+        if normalized is not None:
+            entries = [e for e in entries if e.skill.name in normalized]
 
-        # Filter out disabled skills based on skills_config.json
         if not include_disabled:
             entries = [e for e in entries if self.is_skill_enabled(e.skill.name)]
 
         return entries
-    
+
+    def filter_unavailable_skills(
+        self,
+        skill_filter: Optional[List[str]] = None,
+    ) -> tuple:
+        """
+        Find skills that are enabled but have unmet requirements.
+
+        :param skill_filter: Optional list of skill names to include
+        :return: Tuple of (entries, missing_map) where missing_map maps
+                 skill name to its missing requirements dict
+        """
+        from agent.skills.config import should_include_skill, get_missing_requirements
+
+        entries = list(self.skills.values())
+
+        # Only enabled skills
+        entries = [e for e in entries if self.is_skill_enabled(e.skill.name)]
+
+        normalized = self._normalize_skill_filter(skill_filter)
+        if normalized is not None:
+            entries = [e for e in entries if e.skill.name in normalized]
+
+        # Keep only those that fail should_include_skill (requirements not met)
+        unavailable = []
+        missing_map: Dict[str, dict] = {}
+        for e in entries:
+            if not should_include_skill(e, self.config):
+                missing = get_missing_requirements(e)
+                if missing:
+                    unavailable.append(e)
+                    missing_map[e.skill.name] = missing
+
+        return unavailable, missing_map
+
     def build_skills_prompt(
         self,
         skill_filter: Optional[List[str]] = None,
     ) -> str:
         """
-        Build a formatted prompt containing available skills.
-        
+        Build a formatted prompt containing available skills
+        and brief hints for unavailable ones.
+
         :param skill_filter: Optional list of skill names to include
         :return: Formatted skills prompt
         """
         from common.log import logger
-        entries = self.filter_skills(skill_filter=skill_filter, include_disabled=False)
-        logger.debug(f"[SkillManager] Filtered {len(entries)} skills for prompt (total: {len(self.skills)})")
-        if entries:
-            skill_names = [e.skill.name for e in entries]
-            logger.debug(f"[SkillManager] Skills to include: {skill_names}")
-        result = format_skill_entries_for_prompt(entries)
+        from agent.skills.formatter import format_unavailable_skills_for_prompt
+
+        eligible = self.filter_skills(skill_filter=skill_filter, include_disabled=False)
+        logger.debug(f"[SkillManager] Eligible: {len(eligible)} skills (total: {len(self.skills)})")
+        if eligible:
+            skill_names = [e.skill.name for e in eligible]
+            logger.debug(f"[SkillManager] Eligible skills: {skill_names}")
+
+        result = format_skill_entries_for_prompt(eligible)
+
+        unavailable, missing_map = self.filter_unavailable_skills(skill_filter=skill_filter)
+        if unavailable:
+            unavailable_names = [e.skill.name for e in unavailable]
+            logger.debug(f"[SkillManager] Unavailable skills (setup needed): {unavailable_names}")
+            result += format_unavailable_skills_for_prompt(unavailable, missing_map)
+
         logger.debug(f"[SkillManager] Generated prompt length: {len(result)}")
         return result
     

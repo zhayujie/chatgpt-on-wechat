@@ -390,6 +390,7 @@ class WebChannel(ChatChannel):
             '/api/scheduler', 'SchedulerHandler',
             '/api/history', 'HistoryHandler',
             '/api/logs', 'LogsHandler',
+            '/api/version', 'VersionHandler',
             '/assets/(.*)', 'AssetsHandler',
         )
         app = web.application(urls, globals(), autoreload=False)
@@ -1429,3 +1430,10 @@ class AssetsHandler:
         except Exception as e:
             logger.error(f"Error serving static file: {e}", exc_info=True)  # 添加更详细的错误信息
             raise web.notfound()
+
+
+class VersionHandler:
+    def GET(self):
+        web.header('Content-Type', 'application/json; charset=utf-8')
+        from cli import __version__
+        return json.dumps({"version": __version__})

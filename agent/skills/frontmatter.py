@@ -128,6 +128,7 @@ def parse_metadata(frontmatter: Dict[str, Any]) -> Optional[SkillMetadata]:
     
     return SkillMetadata(
         always=meta_obj.get('always', False),
+        default_enabled=meta_obj.get('default_enabled', True),
         skill_key=meta_obj.get('skillKey'),
         primary_env=meta_obj.get('primaryEnv'),
         emoji=meta_obj.get('emoji'),

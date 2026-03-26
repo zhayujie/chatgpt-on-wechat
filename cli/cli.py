@@ -7,11 +7,56 @@ from cli.commands.process import start, stop, restart, status, logs
 from cli.commands.context import context
 
 
-@click.group()
-@click.version_option(__version__, '--version', '-v', prog_name='cow')
-def main():
+HELP_TEXT = """Usage: cow COMMAND [ARGS]...
+
+  CowAgent CLI - Manage your CowAgent instance.
+
+Commands:
+  help     Show this message.
+  version  Show the version.
+  start    Start CowAgent.
+  stop     Stop CowAgent.
+  restart  Restart CowAgent.
+  status   Show CowAgent running status.
+  logs     View CowAgent logs.
+  context  View or manage conversation context.
+  skill    Manage CowAgent skills.
+
+Tip: You can also send /help, /skill list, etc. in chat."""
+
+
+class CowCLI(click.Group):
+
+    def format_help(self, ctx, formatter):
+        formatter.write(HELP_TEXT.strip())
+        formatter.write("\n")
+
+    def parse_args(self, ctx, args):
+        if args and args[0] == 'help':
+            click.echo(HELP_TEXT.strip())
+            ctx.exit(0)
+        return super().parse_args(ctx, args)
+
+
+@click.group(cls=CowCLI, invoke_without_command=True, context_settings=dict(help_option_names=[]))
+@click.pass_context
+def main(ctx):
     """CowAgent CLI - Manage your CowAgent instance."""
-    pass
+    if ctx.invoked_subcommand is None:
+        click.echo(HELP_TEXT.strip())
+
+
+@main.command()
+def version():
+    """Show the version."""
+    click.echo(f"cow {__version__}")
+
+
+@main.command(name='help')
+@click.pass_context
+def help_cmd(ctx):
+    """Show this message."""
+    click.echo(HELP_TEXT.strip())
 
 
 main.add_command(skill)

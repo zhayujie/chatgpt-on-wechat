@@ -4,6 +4,7 @@ description: Call LinkAI applications and workflows. Use bash with curl to invok
 homepage: https://link-ai.tech
 metadata:
   emoji: 🤖
+  default_enabled: false
   requires:
     bins: ["curl"]
     env: ["LINKAI_API_KEY"]

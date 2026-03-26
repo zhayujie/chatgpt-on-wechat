@@ -59,4 +59,4 @@ def ensure_sys_path():
         sys.path.insert(0, root)
 
 
-SKILL_HUB_API = "https://cow-skill-hub.pages.dev/api"
+SKILL_HUB_API = "https://skills.cowagent.ai/api"

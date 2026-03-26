@@ -29,6 +29,7 @@ class SkillInstallSpec:
 class SkillMetadata:
     """Metadata for a skill from frontmatter."""
     always: bool = False  # Always include this skill
+    default_enabled: bool = True  # Initial enabled state when first discovered
     skill_key: Optional[str] = None  # Override skill key
     primary_env: Optional[str] = None  # Primary environment variable
     emoji: Optional[str] = None

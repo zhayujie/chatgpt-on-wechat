@@ -3,9 +3,9 @@
    ===================================================================== */
 
 // =====================================================================
-// Version — update this before each release
+// Version — fetched from backend (single source: /VERSION file)
 // =====================================================================
-const APP_VERSION = 'v2.0.4';
+let APP_VERSION = '';
 
 // =====================================================================
 // i18n
@@ -2236,7 +2236,12 @@ navigateTo = function(viewId) {
 // =====================================================================
 applyTheme();
 applyI18n();
-document.getElementById('sidebar-version').textContent = `CowAgent ${APP_VERSION}`;
+fetch('/api/version').then(r => r.json()).then(data => {
+    APP_VERSION = `v${data.version}`;
+    document.getElementById('sidebar-version').textContent = `CowAgent ${APP_VERSION}`;
+}).catch(() => {
+    document.getElementById('sidebar-version').textContent = 'CowAgent';
+});
 chatInput.focus();
 
 // Re-enable color transition AFTER first paint so the theme applied in <head>
