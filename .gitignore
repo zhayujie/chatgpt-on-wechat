@@ -37,3 +37,11 @@ client_config.json
 ref/
 .cursor/
 local/
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# CLI runtime
+.cow.pid
