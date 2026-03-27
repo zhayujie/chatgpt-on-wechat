@@ -2,7 +2,6 @@
 
 import os
 import sys
-import signal
 import subprocess
 import time
 from typing import Optional
@@ -10,6 +9,8 @@ from typing import Optional
 import click
 
 from cli.utils import get_project_root
+
+_IS_WIN = sys.platform == "win32"
 
 
 def _get_pid_file():
@@ -20,6 +21,40 @@ def _get_log_file():
     return os.path.join(get_project_root(), "nohup.out")
 
 
+def _is_pid_alive(pid: int) -> bool:
+    """Check whether a process is still running (cross-platform)."""
+    if _IS_WIN:
+        try:
+            out = subprocess.check_output(
+                ["tasklist", "/FI", f"PID eq {pid}", "/NH"],
+                stderr=subprocess.DEVNULL,
+            )
+            return str(pid) in out.decode(errors="ignore")
+        except Exception:
+            return False
+    else:
+        try:
+            os.kill(pid, 0)
+            return True
+        except (ProcessLookupError, PermissionError):
+            return False
+
+
+def _kill_pid(pid: int, force: bool = False):
+    """Terminate a process by PID (cross-platform)."""
+    if _IS_WIN:
+        flag = "/F" if force else ""
+        cmd = ["taskkill"]
+        if force:
+            cmd.append("/F")
+        cmd.extend(["/PID", str(pid)])
+        subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    else:
+        import signal
+        sig = signal.SIGKILL if force else signal.SIGTERM
+        os.kill(pid, sig)
+
+
 def _read_pid() -> Optional[int]:
     pid_file = _get_pid_file()
     if not os.path.exists(pid_file):
@@ -27,10 +62,15 @@ def _read_pid() -> Optional[int]:
     try:
         with open(pid_file, "r") as f:
             pid = int(f.read().strip())
-        os.kill(pid, 0)
-        return pid
-    except (ValueError, ProcessLookupError, PermissionError):
+        if _is_pid_alive(pid):
+            return pid
         os.remove(pid_file)
+        return None
+    except (ValueError, OSError):
+        try:
+            os.remove(pid_file)
+        except OSError:
+            pass
         return None
 
 
@@ -65,18 +105,29 @@ def start(foreground, no_logs):
 
     if foreground:
         click.echo("Starting CowAgent in foreground...")
-        os.execv(python, [python, app_py])
+        if _IS_WIN:
+            sys.exit(subprocess.call([python, app_py], cwd=root))
+        else:
+            os.execv(python, [python, app_py])
     else:
         log_file = _get_log_file()
         click.echo("Starting CowAgent...")
 
+        popen_kwargs = dict(cwd=root)
+        if _IS_WIN:
+            CREATE_NO_WINDOW = 0x08000000
+            popen_kwargs["creationflags"] = (
+                subprocess.CREATE_NEW_PROCESS_GROUP | CREATE_NO_WINDOW
+            )
+        else:
+            popen_kwargs["start_new_session"] = True
+
         with open(log_file, "a") as log:
             proc = subprocess.Popen(
                 [python, app_py],
-                cwd=root,
                 stdout=log,
                 stderr=log,
-                start_new_session=True,
+                **popen_kwargs,
             )
         _write_pid(proc.pid)
         click.echo(click.style(f"✓ CowAgent started (PID: {proc.pid})", fg="green"))
@@ -97,16 +148,14 @@ def stop():
 
     click.echo(f"Stopping CowAgent (PID: {pid})...")
     try:
-        os.kill(pid, signal.SIGTERM)
+        _kill_pid(pid)
         for _ in range(30):
             time.sleep(0.1)
-            try:
-                os.kill(pid, 0)
-            except ProcessLookupError:
+            if not _is_pid_alive(pid):
                 break
         else:
-            os.kill(pid, signal.SIGKILL)
-    except ProcessLookupError:
+            _kill_pid(pid, force=True)
+    except (ProcessLookupError, OSError):
         pass
 
     _remove_pid()
@@ -161,21 +210,32 @@ def logs(follow, lines):
     if follow:
         _tail_log(log_file, lines)
     else:
-        subprocess.run(
-            ["tail", "-n", str(lines), log_file],
-            stdout=sys.stdout,
-            stderr=sys.stderr,
-        )
+        _print_last_lines(log_file, lines)
+
+
+def _print_last_lines(file_path: str, n: int = 50):
+    """Print the last N lines of a file (cross-platform)."""
+    try:
+        with open(file_path, "r", encoding="utf-8", errors="replace") as f:
+            all_lines = f.readlines()
+        for line in all_lines[-n:]:
+            click.echo(line, nl=False)
+    except Exception as e:
+        click.echo(f"Error reading log file: {e}", err=True)
 
 
 def _tail_log(log_file: str, lines: int = 50):
-    """Follow log file output. Blocks until Ctrl+C."""
+    """Follow log file output. Blocks until Ctrl+C (cross-platform)."""
+    _print_last_lines(log_file, lines)
+
     try:
-        proc = subprocess.Popen(
-            ["tail", "-f", "-n", str(lines), log_file],
-            stdout=sys.stdout,
-            stderr=sys.stderr,
-        )
-        proc.wait()
+        with open(log_file, "r", encoding="utf-8", errors="replace") as f:
+            f.seek(0, 2)
+            while True:
+                line = f.readline()
+                if line:
+                    click.echo(line, nl=False)
+                else:
+                    time.sleep(0.3)
     except KeyboardInterrupt:
         pass

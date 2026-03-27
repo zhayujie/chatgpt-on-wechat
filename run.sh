@@ -242,6 +242,17 @@ install_dependencies() {
     fi
 
     rm -f /tmp/pip_install.log
+
+    # Register `cow` CLI command via editable install
+    echo -e "${YELLOW}Registering cow CLI...${NC}"
+    set +e
+    $PYTHON_CMD -m pip install -e . $PIP_EXTRA_ARGS $PIP_MIRROR > /dev/null 2>&1
+    if command -v cow &> /dev/null; then
+        echo -e "${GREEN}✅ cow CLI registered.${NC}"
+    else
+        echo -e "${YELLOW}⚠️  cow CLI not in PATH, you can still use: $PYTHON_CMD -m cli.cli${NC}"
+    fi
+    set -e
 }
 
 # Select model
@@ -603,7 +614,7 @@ ensure_python_cmd() {
 # Get service PID (empty string if not running)
 get_pid() {
     ensure_python_cmd > /dev/null 2>&1
-    ps ax | grep -i app.py | grep "${BASE_DIR}" | grep "$PYTHON_CMD" | grep -v grep | awk '{print $1}' | grep -E '^[0-9]+$'
+    ps ax | grep -i app.py | grep "${BASE_DIR}" | grep "$PYTHON_CMD" | grep -v grep | awk '{print $1}' | grep -E '^[0-9]+$' | head -1
 }
 
 # Check if service is running

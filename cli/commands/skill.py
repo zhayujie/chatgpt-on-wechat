@@ -1,11 +1,15 @@
 """cow skill - Skill management commands."""
 
 import os
+import re
 import sys
 import json
+import hashlib
 import shutil
 import zipfile
 import tempfile
+
+from urllib.parse import urlparse
 
 import click
 import requests
@@ -17,6 +21,57 @@ from cli.utils import (
     load_skills_config,
     SKILL_HUB_API,
 )
+
+_SAFE_NAME_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_\-]{0,63}$")
+
+
+def _validate_skill_name(name: str):
+    """Reject names that contain path traversal or special characters."""
+    if not _SAFE_NAME_RE.match(name):
+        click.echo(
+            f"Error: Invalid skill name '{name}'. "
+            "Use only letters, digits, hyphens, and underscores.",
+            err=True,
+        )
+        sys.exit(1)
+
+
+def _validate_github_spec(spec: str):
+    """Reject specs that don't look like owner/repo."""
+    if not re.match(r"^[a-zA-Z0-9_\-]+/[a-zA-Z0-9_.\-]+$", spec):
+        click.echo(f"Error: Invalid GitHub spec '{spec}'. Expected format: owner/repo", err=True)
+        sys.exit(1)
+
+
+def _safe_extractall(zf: zipfile.ZipFile, dest: str):
+    """Extract zip while guarding against Zip Slip (path traversal)."""
+    dest = os.path.realpath(dest)
+    for member in zf.infolist():
+        target = os.path.realpath(os.path.join(dest, member.filename))
+        if not target.startswith(dest + os.sep) and target != dest:
+            raise ValueError(f"Unsafe zip entry detected: {member.filename}")
+    zf.extractall(dest)
+
+
+def _verify_checksum(content: bytes, expected: str):
+    """Verify SHA-256 checksum of downloaded content.
+
+    Returns True if checksum matches or no expected value provided.
+    Exits with error if mismatch.
+    """
+    if not expected:
+        return True
+    actual = hashlib.sha256(content).hexdigest()
+    if actual != expected.lower():
+        click.echo(
+            f"Error: Checksum mismatch!\n"
+            f"  Expected: {expected}\n"
+            f"  Actual:   {actual}\n"
+            f"The downloaded package may have been tampered with.",
+            err=True,
+        )
+        sys.exit(1)
+    return True
 
 
 @click.group()
@@ -208,6 +263,7 @@ def install(name):
     if name.startswith("github:"):
         _install_github(name[7:])
     else:
+        _validate_skill_name(name)
         _install_hub(name)
 
 
@@ -239,18 +295,40 @@ def _install_hub(name):
 
         if source_type == "github":
             source_url = data.get("source_url", "")
+            _validate_github_spec(source_url)
             source_path = data.get("source_path")
             click.echo(f"Source: GitHub ({source_url})")
             _install_github(source_url, subpath=source_path, skill_name=name)
             return
 
         if source_type == "registry":
-            click.echo(f"This skill is from an external registry: {data.get('source_url', '')}")
-            click.echo("Please install it through the corresponding platform.")
+            download_url = data.get("download_url")
+            if download_url:
+                parsed = urlparse(download_url)
+                if parsed.scheme != "https":
+                    click.echo(f"Error: Refusing to download from non-HTTPS URL.", err=True)
+                    sys.exit(1)
+                provider = data.get("source_provider", "registry")
+                expected_checksum = data.get("checksum") or data.get("sha256")
+                click.echo(f"Source: {provider}")
+                click.echo("Downloading skill package...")
+                try:
+                    dl_resp = requests.get(download_url, timeout=60, allow_redirects=True)
+                    dl_resp.raise_for_status()
+                except Exception as e:
+                    click.echo(f"Error: Failed to download from {provider}: {e}", err=True)
+                    sys.exit(1)
+                _verify_checksum(dl_resp.content, expected_checksum)
+                _install_zip_bytes(dl_resp.content, name, skills_dir)
+                click.echo(click.style(f"✓ Skill '{name}' installed successfully!", fg="green"))
+            else:
+                click.echo(f"Error: Unsupported registry provider.", err=True)
+                sys.exit(1)
             return
 
         if "redirect" in data:
             source_url = data.get("source_url", "")
+            _validate_github_spec(source_url)
             source_path = data.get("source_path")
             click.echo(f"Source: GitHub ({source_url})")
             _install_github(source_url, subpath=source_path, skill_name=name)
@@ -258,8 +336,9 @@ def _install_hub(name):
 
     elif "application/zip" in content_type:
         click.echo("Downloading skill package...")
+        expected_checksum = resp.headers.get("X-Checksum-Sha256")
+        _verify_checksum(resp.content, expected_checksum)
         _install_zip_bytes(resp.content, name, skills_dir)
-        _report_install(name)
         click.echo(click.style(f"✓ Skill '{name}' installed successfully!", fg="green"))
         return
 
@@ -275,8 +354,11 @@ def _install_github(spec, subpath=None, skill_name=None):
     if "#" in spec and not subpath:
         spec, subpath = spec.split("#", 1)
 
+    _validate_github_spec(spec)
+
     if not skill_name:
         skill_name = subpath.rstrip("/").split("/")[-1] if subpath else spec.split("/")[-1]
+    _validate_skill_name(skill_name)
 
     skills_dir = get_skills_dir()
     os.makedirs(skills_dir, exist_ok=True)
@@ -298,7 +380,7 @@ def _install_github(spec, subpath=None, skill_name=None):
 
         extract_dir = os.path.join(tmp_dir, "extracted")
         with zipfile.ZipFile(zip_path, "r") as zf:
-            zf.extractall(extract_dir)
+            _safe_extractall(zf, extract_dir)
 
         # GitHub archives have a top-level dir like "repo-main/"
         top_items = [d for d in os.listdir(extract_dir) if not d.startswith(".")]
@@ -319,7 +401,6 @@ def _install_github(spec, subpath=None, skill_name=None):
             shutil.rmtree(target_dir)
         shutil.copytree(source_dir, target_dir)
 
-    _report_install(skill_name)
     click.echo(click.style(f"✓ Skill '{skill_name}' installed successfully!", fg="green"))
 
 
@@ -332,7 +413,7 @@ def _install_zip_bytes(content, name, skills_dir):
 
         extract_dir = os.path.join(tmp_dir, "extracted")
         with zipfile.ZipFile(zip_path, "r") as zf:
-            zf.extractall(extract_dir)
+            _safe_extractall(zf, extract_dir)
 
         top_items = [d for d in os.listdir(extract_dir) if not d.startswith(".")]
         source = extract_dir
@@ -345,12 +426,6 @@ def _install_zip_bytes(content, name, skills_dir):
         shutil.copytree(source, target)
 
 
-def _report_install(name):
-    """Report installation to Skill Hub for download counting."""
-    try:
-        requests.post(f"{SKILL_HUB_API}/skills/{name}/install", json={}, timeout=5)
-    except Exception:
-        pass
 
 
 # ------------------------------------------------------------------
@@ -361,6 +436,7 @@ def _report_install(name):
 @click.option("--yes", "-y", is_flag=True, help="Skip confirmation")
 def uninstall(name, yes):
     """Uninstall a skill."""
+    _validate_skill_name(name)
     skills_dir = get_skills_dir()
     skill_dir = os.path.join(skills_dir, name)
 
@@ -405,6 +481,7 @@ def disable(name):
 
 
 def _set_enabled(name, enabled):
+    _validate_skill_name(name)
     skills_dir = get_skills_dir()
     config_path = os.path.join(skills_dir, "skills_config.json")
 
@@ -440,6 +517,7 @@ def _set_enabled(name, enabled):
 @click.argument("name")
 def info(name):
     """Show details about an installed skill."""
+    _validate_skill_name(name)
     skills_dir = get_skills_dir()
     builtin_dir = get_builtin_skills_dir()
 

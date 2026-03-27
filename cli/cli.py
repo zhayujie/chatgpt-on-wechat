@@ -22,7 +22,7 @@ Commands:
   context  View or manage conversation context.
   skill    Manage CowAgent skills.
 
-Tip: You can also send /help, /skill list, etc. in chat."""
+Tip: You can also send /help, /skill list, etc. in agent chat."""
 
 
 class CowCLI(click.Group):
