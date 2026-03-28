@@ -792,27 +792,43 @@ cmd_update() {
     echo -e "${GREEN}${EMOJI_WRENCH} Updating CowAgent...${NC}"
     cd "${BASE_DIR}"
     
-    # Stop service
-    if is_running; then
-        cmd_stop
-    fi
-    
-    # Update code
+    # Pull latest code first (service still running)
+    local pull_ok=false
     if [ -d .git ]; then
         echo -e "${GREEN}🔄 Pulling latest code...${NC}"
-        git pull || {
-            echo -e "${YELLOW}⚠️  GitHub failed, trying Gitee...${NC}"
+        if git pull; then
+            pull_ok=true
+        else
+            echo -e "${YELLOW}⚠️  git pull failed, trying Gitee mirror...${NC}"
             git remote set-url origin https://gitee.com/zhayujie/chatgpt-on-wechat.git
-            git pull
-        }
+            if git pull; then
+                pull_ok=true
+            else
+                echo -e "${RED}❌ Failed to pull code. Update aborted.${NC}"
+                exit 1
+            fi
+        fi
     else
         echo -e "${YELLOW}⚠️  Not a git repository, skipping code update${NC}"
     fi
     
+    # Re-exec with the updated run.sh to pick up new logic
+    exec "$0" _post_update
+}
+
+# Post-update: called by cmd_update after git pull to run with new code
+cmd_post_update() {
+    cd "${BASE_DIR}"
+
+    # Stop service
+    if is_running; then
+        cmd_stop
+    fi
+
     # Reinstall dependencies
     check_python_version
     install_dependencies
-    
+
     # Restart service
     cmd_start
 }
@@ -882,7 +898,7 @@ require_project_dir() {
 # Main function
 main() {
     case "$1" in
-        start|stop|restart|status|logs|config|update)
+        start|stop|restart|status|logs|config|update|_post_update)
             require_project_dir
             ;;
     esac
@@ -895,6 +911,7 @@ main() {
         logs)    cmd_logs ;;
         config)  cmd_config ;;
         update)  cmd_update ;;
+        _post_update) cmd_post_update ;;
         help|--help|-h)
             show_usage
             ;;
