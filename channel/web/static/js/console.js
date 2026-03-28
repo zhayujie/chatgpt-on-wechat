@@ -21,7 +21,7 @@ const I18N = {
         example_sys_title: '系统管理', example_sys_text: '帮我查看工作空间里有哪些文件',
         example_task_title: '技能系统', example_task_text: '查看所有支持的工具和技能',
         example_code_title: '编程助手', example_code_text: '帮我编写一个Python爬虫脚本',
-        input_placeholder: '输入消息...',
+        input_placeholder: '输入消息，或输入 / 使用指令',
         config_title: '配置管理', config_desc: '管理模型和 Agent 配置',
         config_model: '模型配置', config_agent: 'Agent 配置',
         config_channel: '通道配置',
@@ -72,7 +72,7 @@ const I18N = {
         example_sys_title: 'System', example_sys_text: 'Show me the files in the workspace',
         example_task_title: 'Skills', example_task_text: 'Show current tools and skills',
         example_code_title: 'Coding', example_code_text: 'Write a Python web scraper script',
-        input_placeholder: 'Type a message...',
+        input_placeholder: 'Type a message, or press / for commands',
         config_title: 'Configuration', config_desc: 'Manage model and agent settings',
         config_model: 'Model Configuration', config_agent: 'Agent Configuration',
         config_channel: 'Channel Configuration',
@@ -435,6 +435,99 @@ chatInput.addEventListener('paste', (e) => {
 chatInput.addEventListener('compositionstart', () => { isComposing = true; });
 chatInput.addEventListener('compositionend', () => { setTimeout(() => { isComposing = false; }, 100); });
 
+// ── Slash Command Menu ───────────────────────────────────────
+const SLASH_COMMANDS = [
+    { cmd: '/help',                desc: '显示命令帮助' },
+    { cmd: '/status',              desc: '查看运行状态' },
+    { cmd: '/context',             desc: '查看对话上下文' },
+    { cmd: '/context clear',       desc: '清除对话上下文' },
+    { cmd: '/skill list',          desc: '查看已安装技能' },
+    { cmd: '/skill list --remote', desc: '浏览技能广场' },
+    { cmd: '/skill search ',       desc: '搜索技能' },
+    { cmd: '/skill install ',      desc: '安装技能' },
+    { cmd: '/skill uninstall ',    desc: '卸载技能' },
+    { cmd: '/skill info ',         desc: '查看技能详情' },
+    { cmd: '/skill enable ',       desc: '启用技能' },
+    { cmd: '/skill disable ',      desc: '禁用技能' },
+    { cmd: '/config',              desc: '查看当前配置' },
+    { cmd: '/logs',                desc: '查看最近日志' },
+    { cmd: '/version',             desc: '查看版本' },
+];
+
+const slashMenu = document.getElementById('slash-menu');
+let slashActiveIdx = 0;
+let slashFiltered = [];
+let slashJustSelected = false;
+let slashLastFilter = '';
+
+function showSlashMenu(filter) {
+    const q = filter.toLowerCase();
+    if (q === slashLastFilter && !slashMenu.classList.contains('hidden')) return;
+    slashLastFilter = q;
+
+    const newFiltered = SLASH_COMMANDS.filter(c => c.cmd.toLowerCase().startsWith(q));
+    if (newFiltered.length === 0) {
+        hideSlashMenu();
+        return;
+    }
+
+    const changed = newFiltered.length !== slashFiltered.length ||
+        newFiltered.some((c, i) => c.cmd !== slashFiltered[i]?.cmd);
+    slashFiltered = newFiltered;
+    if (changed) slashActiveIdx = 0;
+    slashActiveIdx = Math.min(slashActiveIdx, slashFiltered.length - 1);
+
+    renderSlashItems();
+    slashMenu.classList.remove('hidden');
+}
+
+function hideSlashMenu() {
+    slashMenu.classList.add('hidden');
+    slashMenu.innerHTML = '';
+    slashFiltered = [];
+    slashActiveIdx = -1;
+    slashLastFilter = '';
+}
+
+function isSlashMenuVisible() {
+    return !slashMenu.classList.contains('hidden') && slashFiltered.length > 0;
+}
+
+function renderSlashItems() {
+    slashMenu.innerHTML =
+        '<div class="slash-menu-header">Commands</div>' +
+        slashFiltered.map((c, i) =>
+            `<div class="slash-menu-item${i === slashActiveIdx ? ' active' : ''}" data-idx="${i}">` +
+            `<span class="cmd">${escapeHtml(c.cmd)}</span>` +
+            `<span class="desc">${escapeHtml(c.desc)}</span></div>`
+        ).join('');
+
+    slashMenu.querySelectorAll('.slash-menu-item').forEach(el => {
+        el.addEventListener('mouseenter', () => {
+            slashActiveIdx = parseInt(el.dataset.idx);
+            renderSlashItems();
+        });
+        el.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            selectSlashCommand(parseInt(el.dataset.idx));
+        });
+    });
+
+    const activeEl = slashMenu.querySelector('.slash-menu-item.active');
+    if (activeEl) activeEl.scrollIntoView({ block: 'nearest' });
+}
+
+function selectSlashCommand(idx) {
+    if (idx < 0 || idx >= slashFiltered.length) return;
+    const chosen = slashFiltered[idx].cmd;
+    slashJustSelected = true;
+    chatInput.value = chosen;
+    chatInput.dispatchEvent(new Event('input'));
+    hideSlashMenu();
+    chatInput.focus();
+    chatInput.selectionStart = chatInput.selectionEnd = chosen.length;
+}
+
 chatInput.addEventListener('input', function() {
     this.style.height = '42px';
     const scrollH = this.scrollHeight;
@@ -442,11 +535,50 @@ chatInput.addEventListener('input', function() {
     this.style.height = newH + 'px';
     this.style.overflowY = scrollH > 180 ? 'auto' : 'hidden';
     updateSendBtnState();
+
+    const val = this.value;
+    if (slashJustSelected) {
+        slashJustSelected = false;
+    } else if (val.startsWith('/')) {
+        showSlashMenu(val);
+    } else {
+        hideSlashMenu();
+    }
 });
 
 chatInput.addEventListener('keydown', function(e) {
-    // keyCode 229 indicates an IME is processing the keystroke (reliable across browsers)
     if (e.keyCode === 229 || e.isComposing || isComposing) return;
+
+    if (isSlashMenuVisible()) {
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            slashActiveIdx = Math.min(slashActiveIdx + 1, slashFiltered.length - 1);
+            renderSlashItems();
+            return;
+        }
+        if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            slashActiveIdx = Math.max(slashActiveIdx - 1, 0);
+            renderSlashItems();
+            return;
+        }
+        if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey) {
+            e.preventDefault();
+            selectSlashCommand(slashActiveIdx);
+            return;
+        }
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            hideSlashMenu();
+            return;
+        }
+        if (e.key === 'Tab') {
+            e.preventDefault();
+            selectSlashCommand(slashActiveIdx);
+            return;
+        }
+    }
+
     if ((e.ctrlKey || e.shiftKey) && e.key === 'Enter') {
         const start = this.selectionStart;
         const end = this.selectionEnd;
@@ -458,6 +590,10 @@ chatInput.addEventListener('keydown', function(e) {
         sendMessage();
         e.preventDefault();
     }
+});
+
+chatInput.addEventListener('blur', () => {
+    setTimeout(hideSlashMenu, 150);
 });
 
 document.querySelectorAll('.example-card').forEach(card => {

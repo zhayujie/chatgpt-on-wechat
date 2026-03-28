@@ -198,7 +198,10 @@ clone_project() {
 # Install dependencies
 install_dependencies() {
     echo -e "${GREEN}📦 Installing dependencies...${NC}"
-    local PIP_MIRROR="-i https://pypi.tuna.tsinghua.edu.cn/simple"
+    local PIP_MIRROR=""
+    if curl -s --connect-timeout 5 https://pypi.tuna.tsinghua.edu.cn/simple/ > /dev/null 2>&1; then
+        PIP_MIRROR="-i https://pypi.tuna.tsinghua.edu.cn/simple"
+    fi
 
     PIP_EXTRA_ARGS=""
     if $PYTHON_CMD -c "import sys; exit(0 if sys.version_info >= (3, 11) else 1)" 2>/dev/null; then
@@ -541,23 +544,31 @@ start_project() {
     echo -e "${GREEN}${EMOJI_ROCKET} Starting CowAgent...${NC}"
     sleep 1
 
-    if [ ! -f "${BASE_DIR}/nohup.out" ]; then
-        touch "${BASE_DIR}/nohup.out"
+    local USE_COW=false
+    if command -v cow &> /dev/null; then
+        USE_COW=true
     fi
 
-    OS_TYPE=$(uname)
-
-    if [[ "$OS_TYPE" == "Linux" ]]; then
-        # Linux: use setsid to detach from terminal
-        nohup setsid $PYTHON_CMD "${BASE_DIR}/app.py" > "${BASE_DIR}/nohup.out" 2>&1 &
-        echo -e "${GREEN}${EMOJI_COW} CowAgent started on Linux (using $PYTHON_CMD)${NC}"
-    elif [[ "$OS_TYPE" == "Darwin" ]]; then
-        # macOS: use nohup to prevent SIGHUP
-        nohup $PYTHON_CMD "${BASE_DIR}/app.py" > "${BASE_DIR}/nohup.out" 2>&1 &
-        echo -e "${GREEN}${EMOJI_COW} CowAgent started on macOS (using $PYTHON_CMD)${NC}"
+    if $USE_COW; then
+        cd "${BASE_DIR}"
+        cow start --no-logs
     else
-        echo -e "${RED}❌ Unsupported OS: ${OS_TYPE}${NC}"
-        exit 1
+        if [ ! -f "${BASE_DIR}/nohup.out" ]; then
+            touch "${BASE_DIR}/nohup.out"
+        fi
+
+        OS_TYPE=$(uname)
+
+        if [[ "$OS_TYPE" == "Linux" ]]; then
+            nohup setsid $PYTHON_CMD "${BASE_DIR}/app.py" > "${BASE_DIR}/nohup.out" 2>&1 &
+            echo -e "${GREEN}${EMOJI_COW} CowAgent started on Linux (using $PYTHON_CMD)${NC}"
+        elif [[ "$OS_TYPE" == "Darwin" ]]; then
+            nohup $PYTHON_CMD "${BASE_DIR}/app.py" > "${BASE_DIR}/nohup.out" 2>&1 &
+            echo -e "${GREEN}${EMOJI_COW} CowAgent started on macOS (using $PYTHON_CMD)${NC}"
+        else
+            echo -e "${RED}❌ Unsupported OS: ${OS_TYPE}${NC}"
+            exit 1
+        fi
     fi
 
     sleep 2
@@ -568,14 +579,21 @@ start_project() {
     echo -e "${CYAN}$ACCESS_INFO${NC}"
     echo ""
     echo -e "${CYAN}${BOLD}Management Commands:${NC}"
-    echo -e "  ${GREEN}./run.sh stop${NC}       Stop the service"
-    echo -e "  ${GREEN}./run.sh restart${NC}    Restart the service"
-    echo -e "  ${GREEN}./run.sh status${NC}     Check status"
-    echo -e "  ${GREEN}./run.sh logs${NC}       View logs"
+    if $USE_COW; then
+        echo -e "  ${GREEN}cow stop${NC}       Stop the service"
+        echo -e "  ${GREEN}cow restart${NC}    Restart the service"
+        echo -e "  ${GREEN}cow status${NC}     Check status"
+        echo -e "  ${GREEN}cow logs${NC}       View logs"
+    else
+        echo -e "  ${GREEN}./run.sh stop${NC}       Stop the service"
+        echo -e "  ${GREEN}./run.sh restart${NC}    Restart the service"
+        echo -e "  ${GREEN}./run.sh status${NC}     Check status"
+        echo -e "  ${GREEN}./run.sh logs${NC}       View logs"
+    fi
     echo -e "  ${GREEN}./run.sh update${NC}     Update and restart"
     echo -e "${CYAN}${BOLD}=========================================${NC}"
     echo ""
-    
+
     echo -e "${YELLOW}Showing recent logs (Ctrl+C to exit, agent keeps running):${NC}"
     sleep 2
     tail -n 30 -f "${BASE_DIR}/nohup.out"
@@ -625,94 +643,122 @@ is_running() {
     [ -n "$(get_pid)" ]
 }
 
+# Check if cow CLI is available
+has_cow() {
+    command -v cow &> /dev/null
+}
+
 # Start service
 cmd_start() {
-    # Check if config.json exists
     if [ ! -f "${BASE_DIR}/config.json" ]; then
         echo -e "${RED}${EMOJI_CROSS} config.json not found${NC}"
         echo -e "${YELLOW}Please run './run.sh' to configure first${NC}"
         exit 1
     fi
-    
-    if is_running; then
-        echo -e "${YELLOW}${EMOJI_WARN} CowAgent is already running (PID: $(get_pid))${NC}"
-        echo -e "${YELLOW}Use './run.sh restart' to restart${NC}"
-        return
+
+    if has_cow; then
+        cd "${BASE_DIR}"
+        cow start
+    else
+        if is_running; then
+            echo -e "${YELLOW}${EMOJI_WARN} CowAgent is already running (PID: $(get_pid))${NC}"
+            echo -e "${YELLOW}Use './run.sh restart' to restart${NC}"
+            return
+        fi
+        check_python_version
+        start_project
     fi
-    
-    check_python_version
-    start_project
 }
 
 # Stop service
 cmd_stop() {
-    echo -e "${GREEN}${EMOJI_STOP} Stopping CowAgent...${NC}"
+    if has_cow; then
+        cd "${BASE_DIR}"
+        cow stop
+    else
+        echo -e "${GREEN}${EMOJI_STOP} Stopping CowAgent...${NC}"
 
-    if ! is_running; then
-        echo -e "${YELLOW}${EMOJI_WARN} CowAgent is not running${NC}"
-        return
+        if ! is_running; then
+            echo -e "${YELLOW}${EMOJI_WARN} CowAgent is not running${NC}"
+            return
+        fi
+
+        pid=$(get_pid)
+        if [ -z "$pid" ] || ! echo "$pid" | grep -qE '^[0-9]+$'; then
+            echo -e "${RED}❌ Failed to get valid PID (got: ${pid})${NC}"
+            return 1
+        fi
+
+        echo -e "${GREEN}Found running process (PID: ${pid})${NC}"
+
+        kill ${pid}
+        sleep 3
+
+        if ps -p ${pid} > /dev/null 2>&1; then
+            echo -e "${YELLOW}⚠️  Process not stopped, forcing termination...${NC}"
+            kill -9 ${pid}
+        fi
+
+        echo -e "${GREEN}${EMOJI_CHECK} CowAgent stopped${NC}"
     fi
-
-    pid=$(get_pid)
-    if [ -z "$pid" ] || ! echo "$pid" | grep -qE '^[0-9]+$'; then
-        echo -e "${RED}❌ Failed to get valid PID (got: ${pid})${NC}"
-        return 1
-    fi
-
-    echo -e "${GREEN}Found running process (PID: ${pid})${NC}"
-
-    kill ${pid}
-    sleep 3
-
-    if ps -p ${pid} > /dev/null 2>&1; then
-        echo -e "${YELLOW}⚠️  Process not stopped, forcing termination...${NC}"
-        kill -9 ${pid}
-    fi
-
-    echo -e "${GREEN}${EMOJI_CHECK} CowAgent stopped${NC}"
 }
 
 # Restart service
 cmd_restart() {
-    cmd_stop
-    sleep 1
-    cmd_start
+    if has_cow; then
+        cd "${BASE_DIR}"
+        cow restart
+    else
+        cmd_stop
+        sleep 1
+        cmd_start
+    fi
 }
 
 # Check status
 cmd_status() {
-    echo -e "${CYAN}${BOLD}=========================================${NC}"
-    echo -e "${CYAN}${BOLD}   ${EMOJI_COW} CowAgent Status${NC}"
-    echo -e "${CYAN}${BOLD}=========================================${NC}"
-    
-    if is_running; then
-        pid=$(get_pid)
-        echo -e "${GREEN}Status:${NC} ✅ Running"
-        echo -e "${GREEN}PID:${NC}    ${pid}"
-        if [ -f "${BASE_DIR}/nohup.out" ]; then
-            echo -e "${GREEN}Logs:${NC}   ${BASE_DIR}/nohup.out"
-        fi
+    if has_cow; then
+        cd "${BASE_DIR}"
+        cow status
     else
-        echo -e "${YELLOW}Status:${NC} ⭐ Stopped"
+        echo -e "${CYAN}${BOLD}=========================================${NC}"
+        echo -e "${CYAN}${BOLD}   ${EMOJI_COW} CowAgent Status${NC}"
+        echo -e "${CYAN}${BOLD}=========================================${NC}"
+
+        if is_running; then
+            pid=$(get_pid)
+            echo -e "${GREEN}Status:${NC} ✅ Running"
+            echo -e "${GREEN}PID:${NC}    ${pid}"
+            if [ -f "${BASE_DIR}/nohup.out" ]; then
+                echo -e "${GREEN}Logs:${NC}   ${BASE_DIR}/nohup.out"
+            fi
+        else
+            echo -e "${YELLOW}Status:${NC} ⭐ Stopped"
+        fi
+
+        if [ -f "${BASE_DIR}/config.json" ]; then
+            model=$(grep -o '"model"[[:space:]]*:[[:space:]]*"[^"]*"' "${BASE_DIR}/config.json" | cut -d'"' -f4)
+            channel=$(grep -o '"channel_type"[[:space:]]*:[[:space:]]*"[^"]*"' "${BASE_DIR}/config.json" | cut -d'"' -f4)
+            echo -e "${GREEN}Model:${NC}  ${model}"
+            echo -e "${GREEN}Channel:${NC} ${channel}"
+        fi
+
+        echo -e "${CYAN}${BOLD}=========================================${NC}"
     fi
-    
-    if [ -f "${BASE_DIR}/config.json" ]; then
-        model=$(grep -o '"model"[[:space:]]*:[[:space:]]*"[^"]*"' "${BASE_DIR}/config.json" | cut -d'"' -f4)
-        channel=$(grep -o '"channel_type"[[:space:]]*:[[:space:]]*"[^"]*"' "${BASE_DIR}/config.json" | cut -d'"' -f4)
-        echo -e "${GREEN}Model:${NC}  ${model}"
-        echo -e "${GREEN}Channel:${NC} ${channel}"
-    fi
-    
-    echo -e "${CYAN}${BOLD}=========================================${NC}"
 }
 
 # View logs
 cmd_logs() {
-    if [ -f "${BASE_DIR}/nohup.out" ]; then
-        echo -e "${YELLOW}Viewing logs (Ctrl+C to exit):${NC}"
-        tail -f "${BASE_DIR}/nohup.out"
+    if has_cow; then
+        cd "${BASE_DIR}"
+        cow logs -f
     else
-        echo -e "${RED}❌ Log file not found: ${BASE_DIR}/nohup.out${NC}"
+        if [ -f "${BASE_DIR}/nohup.out" ]; then
+            echo -e "${YELLOW}Viewing logs (Ctrl+C to exit):${NC}"
+            tail -f "${BASE_DIR}/nohup.out"
+        else
+            echo -e "${RED}❌ Log file not found: ${BASE_DIR}/nohup.out${NC}"
+        fi
     fi
 }
 
