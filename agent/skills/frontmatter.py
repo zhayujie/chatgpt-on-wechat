@@ -139,12 +139,12 @@ def parse_metadata(frontmatter: Dict[str, Any]) -> Optional[SkillMetadata]:
     )
 
 
-_KNOWN_METADATA_NAMESPACES = {"openclaw", "cowagent"}
+_KNOWN_METADATA_NAMESPACES = {"cowagent", "openclaw"}
 
 
 def _unwrap_metadata_namespace(metadata_raw: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Unwrap a single-key namespace wrapper like {"openclaw": {...}} or {"cowagent": {...}}.
+    Unwrap a single-key namespace wrapper like {"cowagent": {...} or {"openclaw": {...}}}.
     If the top-level dict has exactly one key matching a known namespace, return the inner dict.
     Otherwise return the original dict unchanged.
     """
