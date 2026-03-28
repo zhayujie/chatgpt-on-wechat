@@ -38,10 +38,8 @@ ref/
 .cursor/
 local/
 
-# Build artifacts
+# cow cli
 dist/
 build/
 *.egg-info/
-
-# CLI runtime
 .cow.pid
