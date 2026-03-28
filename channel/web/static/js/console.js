@@ -322,6 +322,11 @@ const attachmentPreview = document.getElementById('attachment-preview');
 let pendingAttachments = [];
 let uploadingCount = 0;
 
+// Input history (like terminal arrow-key recall)
+const inputHistory = [];
+let historyIdx = -1;
+let historySavedDraft = '';
+
 function updateSendBtnState() {
     sendBtn.disabled = uploadingCount > 0 || (!chatInput.value.trim() && pendingAttachments.length === 0);
 }
@@ -444,7 +449,7 @@ const SLASH_COMMANDS = [
     { cmd: '/skill list',          desc: '查看已安装技能' },
     { cmd: '/skill list --remote', desc: '浏览技能广场' },
     { cmd: '/skill search ',       desc: '搜索技能' },
-    { cmd: '/skill install ',      desc: '安装技能' },
+    { cmd: '/skill install ',      desc: '安装技能 (名称或 GitHub URL)' },
     { cmd: '/skill uninstall ',    desc: '卸载技能' },
     { cmd: '/skill info ',         desc: '查看技能详情' },
     { cmd: '/skill enable ',       desc: '启用技能' },
@@ -579,6 +584,46 @@ chatInput.addEventListener('keydown', function(e) {
         }
     }
 
+    // Arrow-key history recall (only when input is empty or already browsing history)
+    if (e.key === 'ArrowUp' && inputHistory.length > 0 && !isSlashMenuVisible()) {
+        const curVal = this.value.trim();
+        const isSingleLine = !this.value.includes('\n');
+        if (isSingleLine && (curVal === '' || historyIdx >= 0)) {
+            e.preventDefault();
+            if (historyIdx < 0) {
+                historySavedDraft = this.value;
+                historyIdx = inputHistory.length - 1;
+            } else if (historyIdx > 0) {
+                historyIdx--;
+            }
+            this.value = inputHistory[historyIdx];
+            slashJustSelected = true;
+            this.dispatchEvent(new Event('input'));
+            hideSlashMenu();
+            this.selectionStart = this.selectionEnd = this.value.length;
+            return;
+        }
+    }
+    if (e.key === 'ArrowDown' && historyIdx >= 0 && !isSlashMenuVisible()) {
+        const isSingleLine = !this.value.includes('\n');
+        if (isSingleLine) {
+            e.preventDefault();
+            if (historyIdx < inputHistory.length - 1) {
+                historyIdx++;
+                this.value = inputHistory[historyIdx];
+            } else {
+                historyIdx = -1;
+                this.value = historySavedDraft;
+                historySavedDraft = '';
+            }
+            slashJustSelected = true;
+            this.dispatchEvent(new Event('input'));
+            hideSlashMenu();
+            this.selectionStart = this.selectionEnd = this.value.length;
+            return;
+        }
+    }
+
     if ((e.ctrlKey || e.shiftKey) && e.key === 'Enter') {
         const start = this.selectionStart;
         const end = this.selectionEnd;
@@ -610,6 +655,12 @@ document.querySelectorAll('.example-card').forEach(card => {
 function sendMessage() {
     const text = chatInput.value.trim();
     if (!text && pendingAttachments.length === 0) return;
+
+    if (text) {
+        inputHistory.push(text);
+        historyIdx = -1;
+        historySavedDraft = '';
+    }
 
     const ws = document.getElementById('welcome-screen');
     if (ws) ws.remove();
@@ -868,7 +919,7 @@ function createUserMessageEl(content, timestamp, attachments) {
     const textHtml = content ? renderMarkdown(content) : '';
     el.innerHTML = `
         <div class="max-w-[75%] sm:max-w-[60%]">
-            <div class="bg-primary-400 text-white rounded-2xl px-4 py-2.5 text-sm leading-relaxed msg-content">
+            <div class="bg-primary-400 text-white rounded-2xl px-4 py-2.5 text-sm leading-relaxed msg-content user-bubble">
                 ${attachHtml}${textHtml}
             </div>
             <div class="text-xs text-slate-400 dark:text-slate-500 mt-1.5 text-right">${formatTime(timestamp)}</div>

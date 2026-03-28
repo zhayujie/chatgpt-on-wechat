@@ -486,10 +486,11 @@ class CowCliPlugin(Plugin):
             desc = entry.get("description", "")
             if len(desc) > 50:
                 desc = desc[:47] + "…"
-            source_tag = f" · {source}" if source else ""
-            line = f"{icon} {name}{source_tag}"
+            line = f"{icon} {name}"
             if desc:
                 line += f"\n   {desc}"
+            if source:
+                line += f"\n   来源: {source}"
             lines.append(line)
             lines.append("")
 
@@ -598,10 +599,9 @@ class CowCliPlugin(Plugin):
         if not name:
             return "请指定要安装的技能: /skill install <名称>"
 
-        # Run installation in a thread to avoid blocking
-        # For now, invoke the CLI logic directly
         try:
             from cli.utils import get_skills_dir, SKILL_HUB_API
+            from cli.commands.skill import _parse_github_url, _download_github_dir
             import requests
             import shutil
             import zipfile
@@ -609,6 +609,28 @@ class CowCliPlugin(Plugin):
 
             skills_dir = get_skills_dir()
             os.makedirs(skills_dir, exist_ok=True)
+
+            if name.startswith(("http://", "https://")) and name.rstrip("/").endswith("SKILL.md"):
+                import re as re_mod
+                dir_url = re_mod.sub(r'/SKILL\.md/?$', '', name)
+                gh = _parse_github_url(dir_url)
+                if gh:
+                    owner, repo, branch, subpath = gh
+                    spec = f"{owner}/{repo}"
+                    skill_name = subpath.rstrip("/").split("/")[-1] if subpath else repo
+                    return self._skill_install_github(
+                        spec, skills_dir, subpath=subpath, skill_name=skill_name, branch=branch
+                    )
+                return self._skill_install_url(name, skills_dir)
+
+            parsed = _parse_github_url(name)
+            if parsed:
+                owner, repo, branch, subpath = parsed
+                spec = f"{owner}/{repo}"
+                skill_name = subpath.rstrip("/").split("/")[-1] if subpath else repo
+                return self._skill_install_github(
+                    spec, skills_dir, subpath=subpath, skill_name=skill_name, branch=branch
+                )
 
             if name.startswith("github:"):
                 return self._skill_install_github(name[7:], skills_dir)
@@ -623,8 +645,14 @@ class CowCliPlugin(Plugin):
                 source_type = data.get("source_type")
                 if source_type == "github" or "redirect" in data:
                     source_url = data.get("source_url", "")
-                    source_path = data.get("source_path")
-                    return self._skill_install_github(source_url, skills_dir, subpath=source_path, skill_name=name)
+                    parsed_url = _parse_github_url(source_url)
+                    if parsed_url:
+                        owner, repo, branch, subpath = parsed_url
+                        return self._skill_install_github(
+                            f"{owner}/{repo}", skills_dir, subpath=subpath,
+                            skill_name=name, branch=branch
+                        )
+                    return self._skill_install_github(source_url, skills_dir, skill_name=name)
                 if source_type == "registry":
                     download_url = data.get("download_url")
                     if not download_url:
@@ -639,13 +667,13 @@ class CowCliPlugin(Plugin):
                     except Exception as e:
                         return f"从 {provider} 下载失败: {e}"
                     self._extract_zip(dl_resp.content, name, skills_dir)
-                    self._report_install(name)
-                    return f"✅ 技能 '{name}' 安装成功！"
+                    self._register_skill(name, source=provider)
+                    return self._format_install_success(name, provider)
 
             elif "application/zip" in content_type:
                 self._extract_zip(resp.content, name, skills_dir)
-                self._report_install(name)
-                return f"✅ 技能 '{name}' 安装成功！"
+                self._register_skill(name, source="cowhub")
+                return self._format_install_success(name, "cowhub")
 
             return "技能商店返回了未预期的响应格式"
 
@@ -656,19 +684,67 @@ class CowCliPlugin(Plugin):
         except Exception as e:
             return f"安装失败: {e}"
 
+    def _skill_install_url(self, url: str, skills_dir: str) -> str:
+        """Install a skill from a direct SKILL.md URL."""
+        import requests
+        from cli.commands.skill import _parse_skill_frontmatter
+
+        try:
+            resp = requests.get(url, timeout=30)
+            resp.raise_for_status()
+        except Exception as e:
+            return f"下载 SKILL.md 失败: {e}"
+
+        content = resp.text
+        fm = _parse_skill_frontmatter(content)
+        skill_name = fm.get("name")
+        if not skill_name:
+            return "SKILL.md 中未找到 name 字段，无法安装"
+
+        skill_name = skill_name.strip()
+        skill_dir = os.path.join(skills_dir, skill_name)
+        os.makedirs(skill_dir, exist_ok=True)
+
+        with open(os.path.join(skill_dir, "SKILL.md"), "w", encoding="utf-8") as f:
+            f.write(content)
+
+        self._register_skill(skill_name, source="url")
+        return self._format_install_success(skill_name, "url")
+
     def _skill_install_github(self, spec: str, skills_dir: str,
-                               subpath: str = None, skill_name: str = None) -> str:
+                               subpath: str = None, skill_name: str = None,
+                               branch: str = "main") -> str:
         import requests
         import shutil
         import zipfile
         import tempfile
+        from cli.commands.skill import _download_github_dir
 
         if "#" in spec and not subpath:
             spec, subpath = spec.split("#", 1)
         if not skill_name:
             skill_name = subpath.rstrip("/").split("/")[-1] if subpath else spec.split("/")[-1]
 
-        zip_url = f"https://github.com/{spec}/archive/refs/heads/main.zip"
+        owner, repo = spec.split("/", 1)
+        target_dir = os.path.join(skills_dir, skill_name)
+
+        # For subpath installs, try Contents API first
+        if subpath:
+            try:
+                with tempfile.TemporaryDirectory() as tmp_dir:
+                    api_dest = os.path.join(tmp_dir, skill_name)
+                    os.makedirs(api_dest)
+                    _download_github_dir(owner, repo, branch, subpath.strip("/"), api_dest)
+                    if os.path.exists(target_dir):
+                        shutil.rmtree(target_dir)
+                    shutil.copytree(api_dest, target_dir)
+                self._register_skill(skill_name, source="github")
+                return self._format_install_success(skill_name, "github")
+            except Exception:
+                pass  # fall through to zip download
+
+        # Fallback: download full repo zip
+        zip_url = f"https://github.com/{spec}/archive/refs/heads/{branch}.zip"
         try:
             resp = requests.get(zip_url, timeout=60, allow_redirects=True)
             resp.raise_for_status()
@@ -696,15 +772,12 @@ class CowCliPlugin(Plugin):
             else:
                 source_dir = repo_root
 
-            target_dir = os.path.join(skills_dir, skill_name)
             if os.path.exists(target_dir):
-                import shutil
                 shutil.rmtree(target_dir)
-            import shutil
             shutil.copytree(source_dir, target_dir)
 
-        self._report_install(skill_name)
-        return f"✅ 技能 '{skill_name}' 安装成功！"
+        self._register_skill(skill_name, source="github")
+        return self._format_install_success(skill_name, "github")
 
     def _extract_zip(self, content: bytes, name: str, skills_dir: str):
         import zipfile
@@ -730,13 +803,26 @@ class CowCliPlugin(Plugin):
                 shutil.rmtree(target)
             shutil.copytree(source, target)
 
-    def _report_install(self, name: str):
+    @staticmethod
+    def _register_skill(name: str, source: str = "cowhub"):
         try:
-            import requests
-            from cli.utils import SKILL_HUB_API
-            requests.post(f"{SKILL_HUB_API}/skills/{name}/install", json={}, timeout=5)
+            from cli.commands.skill import _register_installed_skill
+            _register_installed_skill(name, source=source)
         except Exception:
             pass
+
+    @staticmethod
+    def _format_install_success(name: str, source: str) -> str:
+        from cli.commands.skill import _read_skill_description
+        from cli.utils import get_skills_dir
+        desc = _read_skill_description(os.path.join(get_skills_dir(), name))
+        lines = [f"✅ {name}"]
+        if desc:
+            if len(desc) > 60:
+                desc = desc[:57] + "…"
+            lines.append(f"   {desc}")
+        lines.append(f"   来源: {source}")
+        return "\n".join(lines)
 
     def _skill_uninstall(self, name: str) -> str:
         if not name:
