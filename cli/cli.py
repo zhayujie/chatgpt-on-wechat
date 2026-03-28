@@ -3,7 +3,7 @@
 import click
 from cli import __version__
 from cli.commands.skill import skill
-from cli.commands.process import start, stop, restart, status, logs
+from cli.commands.process import start, stop, restart, update, status, logs
 from cli.commands.context import context
 
 
@@ -17,6 +17,7 @@ Commands:
   start    Start CowAgent.
   stop     Stop CowAgent.
   restart  Restart CowAgent.
+  update   Update CowAgent and restart.
   status   Show CowAgent running status.
   logs     View CowAgent logs.
   skill    Manage CowAgent skills.
@@ -62,6 +63,7 @@ main.add_command(skill)
 main.add_command(start)
 main.add_command(stop)
 main.add_command(restart)
+main.add_command(update)
 main.add_command(status)
 main.add_command(logs)
 main.add_command(context)

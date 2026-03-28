@@ -173,6 +173,46 @@ def restart(ctx, no_logs):
 
 
 @click.command()
+@click.pass_context
+def update(ctx):
+    """Update CowAgent and restart."""
+    root = get_project_root()
+
+    # 1. Git pull while service is still running
+    if os.path.isdir(os.path.join(root, ".git")):
+        click.echo("Pulling latest code...")
+        ret = subprocess.call(["git", "pull"], cwd=root)
+        if ret != 0:
+            click.echo("Error: git pull failed.", err=True)
+            sys.exit(1)
+    else:
+        click.echo("Not a git repository, skipping code update.")
+
+    # 2. Stop service
+    ctx.invoke(stop)
+
+    # 3. Install dependencies
+    python = sys.executable
+    req_file = os.path.join(root, "requirements.txt")
+    if os.path.exists(req_file):
+        click.echo("Installing dependencies...")
+        subprocess.call(
+            [python, "-m", "pip", "install", "-r", "requirements.txt", "-q"],
+            cwd=root,
+        )
+    click.echo("Reinstalling cow CLI...")
+    subprocess.call(
+        [python, "-m", "pip", "install", "-e", ".", "-q"],
+        cwd=root,
+    )
+
+    # 4. Start service
+    click.echo("")
+    time.sleep(1)
+    ctx.invoke(start, no_logs=True)
+
+
+@click.command()
 def status():
     """Show CowAgent running status."""
     from cli import __version__
