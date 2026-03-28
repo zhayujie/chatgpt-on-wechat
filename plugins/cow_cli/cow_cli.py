@@ -494,7 +494,6 @@ class CowCliPlugin(Plugin):
             lines.append(line)
             lines.append("")
 
-        lines.append("")
         lines.append("━━━━━━━━━━━━━━━━━━━━━━━━━━")
         lines.append("💡 /skill list --remote  浏览技能广场")
         lines.append("💡 /skill info <名称>     查看详情")
@@ -632,10 +631,21 @@ class CowCliPlugin(Plugin):
                     spec, skills_dir, subpath=subpath, skill_name=skill_name, branch=branch
                 )
 
+            provider = None
             if name.startswith("github:"):
-                return self._skill_install_github(name[7:], skills_dir)
+                name = name[7:]
+            elif name.startswith("clawhub:"):
+                name = name[8:]
+                provider = "clawhub"
 
-            resp = requests.get(f"{SKILL_HUB_API}/skills/{name}/download", timeout=15)
+            body = {}
+            if provider:
+                body["provider"] = provider
+            resp = requests.post(
+                f"{SKILL_HUB_API}/skills/{name}/download",
+                json=body,
+                timeout=15,
+            )
             resp.raise_for_status()
 
             content_type = resp.headers.get("Content-Type", "")

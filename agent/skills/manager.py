@@ -105,7 +105,7 @@ class SkillManager:
             merged[name] = {
                 "name": name,
                 "description": skill.description,
-                "source": skill.source,
+                "source": prev.get("source") or skill.source,
                 "enabled": enabled,
                 "category": category,
             }

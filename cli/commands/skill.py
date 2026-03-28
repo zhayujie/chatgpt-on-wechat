@@ -451,13 +451,19 @@ def install(name):
         skill_name = subpath.rstrip("/").split("/")[-1] if subpath else repo
         _install_github(spec, subpath=subpath, skill_name=skill_name, branch=branch)
     elif name.startswith("github:"):
-        _install_github(name[7:])
+        skill_name = name[7:]
+        _validate_skill_name(skill_name)
+        _install_hub(skill_name)
+    elif name.startswith("clawhub:"):
+        skill_name = name[8:]
+        _validate_skill_name(skill_name)
+        _install_hub(skill_name, provider="clawhub")
     else:
         _validate_skill_name(name)
         _install_hub(name)
 
 
-def _install_hub(name):
+def _install_hub(name, provider=None):
     """Install a skill from Skill Hub."""
     skills_dir = get_skills_dir()
     os.makedirs(skills_dir, exist_ok=True)
@@ -465,7 +471,14 @@ def _install_hub(name):
     click.echo(f"Fetching skill info for '{name}'...")
 
     try:
-        resp = requests.get(f"{SKILL_HUB_API}/skills/{name}/download", timeout=15)
+        body = {}
+        if provider:
+            body["provider"] = provider
+        resp = requests.post(
+            f"{SKILL_HUB_API}/skills/{name}/download",
+            json=body,
+            timeout=15,
+        )
         resp.raise_for_status()
     except requests.HTTPError as e:
         if e.response is not None and e.response.status_code == 404:
@@ -745,11 +758,12 @@ def info(name):
 
     skill_dir = None
     source = None
+    config = load_skills_config()
     for d, src in [(skills_dir, "custom"), (builtin_dir, "builtin")]:
         candidate = os.path.join(d, name)
         if os.path.isdir(candidate):
             skill_dir = candidate
-            source = src
+            source = config.get(name, {}).get("source") or src
             break
 
     if not skill_dir:
