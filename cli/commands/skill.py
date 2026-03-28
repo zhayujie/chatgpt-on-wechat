@@ -25,6 +25,62 @@ from cli.utils import (
 _SAFE_NAME_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_\-]{0,63}$")
 
 
+def _register_installed_skill(name: str):
+    """Register a newly installed skill into skills_config.json."""
+    skills_dir = get_skills_dir()
+    config_path = os.path.join(skills_dir, "skills_config.json")
+
+    config = {}
+    if os.path.exists(config_path):
+        try:
+            with open(config_path, "r", encoding="utf-8") as f:
+                config = json.load(f)
+        except Exception:
+            config = {}
+
+    if name in config:
+        return
+
+    skill_dir = os.path.join(skills_dir, name)
+    description = _read_skill_description(skill_dir) or ""
+
+    config[name] = {
+        "name": name,
+        "description": description,
+        "source": "custom",
+        "enabled": True,
+        "category": "skill",
+    }
+
+    try:
+        with open(config_path, "w", encoding="utf-8") as f:
+            json.dump(config, f, indent=4, ensure_ascii=False)
+    except Exception:
+        pass
+
+
+def _read_skill_description(skill_dir: str) -> str:
+    """Read the description from a skill's SKILL.md frontmatter."""
+    skill_md = os.path.join(skill_dir, "SKILL.md")
+    if not os.path.exists(skill_md):
+        return ""
+    try:
+        with open(skill_md, "r", encoding="utf-8") as f:
+            content = f.read()
+        import re as re_mod
+        match = re_mod.match(r'^---\s*\n(.*?)\n---\s*\n', content, re_mod.DOTALL)
+        if not match:
+            return ""
+        for line in match.group(1).split('\n'):
+            line = line.strip()
+            if line.startswith('description:'):
+                desc = line[len('description:'):].strip()
+                return desc.strip('"').strip("'")
+    except Exception:
+        pass
+    return ""
+
+
 def _validate_skill_name(name: str):
     """Reject names that contain path traversal or special characters."""
     if not _SAFE_NAME_RE.match(name):
@@ -320,6 +376,7 @@ def _install_hub(name):
                     sys.exit(1)
                 _verify_checksum(dl_resp.content, expected_checksum)
                 _install_zip_bytes(dl_resp.content, name, skills_dir)
+                _register_installed_skill(name)
                 click.echo(click.style(f"✓ Skill '{name}' installed successfully!", fg="green"))
             else:
                 click.echo(f"Error: Unsupported registry provider.", err=True)
@@ -339,6 +396,7 @@ def _install_hub(name):
         expected_checksum = resp.headers.get("X-Checksum-Sha256")
         _verify_checksum(resp.content, expected_checksum)
         _install_zip_bytes(resp.content, name, skills_dir)
+        _register_installed_skill(name)
         click.echo(click.style(f"✓ Skill '{name}' installed successfully!", fg="green"))
         return
 
@@ -401,6 +459,7 @@ def _install_github(spec, subpath=None, skill_name=None):
             shutil.rmtree(target_dir)
         shutil.copytree(source_dir, target_dir)
 
+    _register_installed_skill(skill_name)
     click.echo(click.style(f"✓ Skill '{skill_name}' installed successfully!", fg="green"))
 
 
