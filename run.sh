@@ -584,15 +584,12 @@ start_project() {
         echo -e "  ${GREEN}cow restart${NC}    Restart the service"
         echo -e "  ${GREEN}cow status${NC}     Check status"
         echo -e "  ${GREEN}cow logs${NC}       View logs"
+        echo -e "  ${GREEN}cow update${NC}     Update and restart"
     else
         echo -e "  ${GREEN}./run.sh stop${NC}       Stop the service"
         echo -e "  ${GREEN}./run.sh restart${NC}    Restart the service"
         echo -e "  ${GREEN}./run.sh status${NC}     Check status"
         echo -e "  ${GREEN}./run.sh logs${NC}       View logs"
-    fi
-    if $USE_COW; then
-        echo -e "  ${GREEN}cow update${NC}     Update and restart"
-    else
         echo -e "  ${GREEN}./run.sh update${NC}     Update and restart"
     fi
     echo -e "${CYAN}${BOLD}=========================================${NC}"
