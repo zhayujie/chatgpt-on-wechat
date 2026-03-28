@@ -452,7 +452,7 @@ class WecomBotChannel(ChatChannel):
         if req_id:
             state = self._stream_states.pop(req_id, None)
             if state:
-                final_content = state["committed"]
+                final_content = state["committed"] or content
                 stream_id = state["stream_id"]
             else:
                 final_content = content
