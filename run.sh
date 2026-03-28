@@ -171,8 +171,11 @@ clone_project() {
         mv chatgpt-on-wechat-master chatgpt-on-wechat
         rm chatgpt-on-wechat.zip
     else
-        git clone https://github.com/zhayujie/chatgpt-on-wechat.git || \
-        git clone https://gitee.com/zhayujie/chatgpt-on-wechat.git
+        GIT_HTTP_CONNECT_TIMEOUT=10 GIT_HTTP_LOW_SPEED_LIMIT=1024 GIT_HTTP_LOW_SPEED_TIME=15 \
+        git clone --depth 10 --progress https://github.com/zhayujie/chatgpt-on-wechat.git || {
+            echo -e "${YELLOW}⚠️  GitHub is slow, switching to Gitee mirror...${NC}"
+            git clone --depth 10 --progress https://gitee.com/zhayujie/chatgpt-on-wechat.git
+        }
         if [[ $? -ne 0 ]]; then
             echo -e "${RED}❌ Project clone failed. Please check network connection.${NC}"
             exit 1
