@@ -270,7 +270,7 @@
                         <div class="max-w-3xl mx-auto">
                             <!-- Attachment preview bar -->
                             <div id="attachment-preview" class="attachment-preview hidden"></div>
-                            <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-2 relative">
                                 <div class="flex items-center flex-shrink-0">
                                     <button id="new-chat-btn" class="w-9 h-10 flex items-center justify-center rounded-lg
                                                                      text-slate-400 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20
@@ -287,6 +287,7 @@
                                 </div>
                                 <input type="file" id="file-input" class="hidden" multiple
                                        accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.json,.xml,.zip,.rar,.7z,.py,.js,.ts,.java,.c,.cpp,.go,.rs,.md">
+                                <div id="slash-menu" class="slash-menu hidden"></div>
                                 <textarea id="chat-input"
                                           class="flex-1 min-w-0 px-4 py-[10px] rounded-xl border border-slate-200 dark:border-slate-600
                                                  bg-slate-50 dark:bg-white/5 text-slate-800 dark:text-slate-100
@@ -295,7 +296,7 @@
                                                  text-sm leading-relaxed"
                                           rows="1"
                                           data-i18n-placeholder="input_placeholder"
-                                          placeholder="Type a message..."></textarea>
+                                          placeholder="Type a message, or press / for commands"></textarea>
                                 <button id="send-btn"
                                         class="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg
                                                bg-primary-400 text-white hover:bg-primary-500

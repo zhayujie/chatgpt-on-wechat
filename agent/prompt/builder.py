@@ -199,7 +199,7 @@ def _build_tooling_section(tools: List[Any], language: str) -> List[str]:
         tool_lines.append(f"- {name}: {summary}" if summary else f"- {name}")
 
     lines = [
-        "## 工具系统",
+        "## 🔧 工具系统",
         "",
         "可用工具（名称大小写敏感，严格按列表调用）:",
         "\n".join(tool_lines),
@@ -231,7 +231,7 @@ def _build_skills_section(skill_manager: Any, tools: Optional[List[Any]], langua
                 break
     
     lines = [
-        "## 技能系统（mandatory）",
+        "## 🧩 技能系统（mandatory）",
         "",
         "在回复之前：扫描下方 <available_skills> 中每个技能的 <description>。",
         "",
@@ -281,7 +281,7 @@ def _build_memory_section(memory_manager: Any, tools: Optional[List[Any]], langu
     today_file = datetime.now().strftime("%Y-%m-%d") + ".md"
     
     lines = [
-        "## 记忆系统",
+        "## 🧠 记忆系统",
         "",
         "### 检索记忆",
         "",
@@ -325,7 +325,7 @@ def _build_user_identity_section(user_identity: Dict[str, str], language: str) -
         return []
     
     lines = [
-        "## 用户身份",
+        "## 👤 用户身份",
         "",
     ]
     
@@ -352,7 +352,7 @@ def _build_docs_section(workspace_dir: str, language: str) -> List[str]:
 def _build_workspace_section(workspace_dir: str, language: str) -> List[str]:
     """构建工作空间section"""
     lines = [
-        "## 工作空间",
+        "## 📂 工作空间",
         "",
         f"你的工作目录是: `{workspace_dir}`",
         "",
@@ -380,10 +380,12 @@ def _build_workspace_section(workspace_dir: str, language: str) -> List[str]:
         "- ✅ `USER.md`: 已加载 - 用户的身份信息。当用户修改称呼、姓名等身份信息时，用 `edit` 更新此文件",
         "- ✅ `RULE.md`: 已加载 - 工作空间使用指南和规则，请严格遵循",
         "",
-        "**交流规范**:",
+        "**💬 交流规范**:",
         "",
-        "- 在对话中，无需直接输出工作空间中的技术细节，例如 AGENT.md、USER.md、MEMORY.md 等文件名称",
-        "- 例如用自然表达例如「我已记住」而不是「已更新 MEMORY.md」",
+        "- 对话中不要暴露内部技术细节（文件名、工具名等），用自然语言表达。例如说「我已记住」而非「已更新 MEMORY.md」",
+        "- 做真正有帮助的助手，而不是表演式的客套。跳过「好的！」「当然可以！」之类的套话，直接帮忙解决问题",
+        "- 回复应结构清晰、重点突出。善用 **加粗**、列表、分段等格式让信息一目了然",
+        "- 适当使用 emoji 让表达更生动自然 🎯，但不要过度堆砌",
         "",
     ]
 
@@ -416,14 +418,14 @@ def _build_context_files_section(context_files: List[ContextFile], language: str
     )
     
     lines = [
-        "# 项目上下文",
+        "# 📋 项目上下文",
         "",
         "以下项目上下文文件已被加载：",
         "",
     ]
     
     if has_agent:
-        lines.append("**`AGENT.md` 是你的灵魂文件**：严格遵循其中定义的人格、规则、语气和设定，避免僵硬、模板化的回复。")
+        lines.append("**`AGENT.md` 是你的灵魂文件** 🪞：严格遵循其中定义的人格、语气和设定，做真实的自己，避免僵硬、模板化的回复。")
         lines.append("当用户通过对话透露了对你性格、风格、职责、能力边界的新期望，你应该主动用 `edit` 更新 AGENT.md 以反映这些演变。")
         lines.append("")
     
@@ -443,7 +445,7 @@ def _build_runtime_section(runtime_info: Dict[str, Any], language: str) -> List[
         return []
     
     lines = [
-        "## 运行时信息",
+        "## ⚙️ 运行时信息",
         "",
     ]
     

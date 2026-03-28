@@ -33,11 +33,15 @@ plugins/banwords/lib/__pycache__
 !plugins/keyword
 !plugins/linkai
 !plugins/agent
+!plugins/cow_cli
 client_config.json
 ref/
 .cursor/
 local/
+node_modules/
 
 # cow cli
-cowagent.egg-info/
 dist/
+build/
+*.egg-info/
+.cow.pid

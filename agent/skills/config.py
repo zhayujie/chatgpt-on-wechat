@@ -139,6 +139,47 @@ def should_include_skill(
     return True
 
 
+def get_missing_requirements(
+    entry: SkillEntry,
+    current_platform: Optional[str] = None,
+) -> Dict[str, List[str]]:
+    """
+    Return a dict of missing requirements for a skill.
+    Empty dict means all requirements are met.
+
+    :param entry: SkillEntry to check
+    :param current_platform: Current platform (default: auto-detect)
+    :return: Dict like {"bins": ["curl"], "env": ["API_KEY"]}
+    """
+    missing: Dict[str, List[str]] = {}
+    metadata = entry.metadata
+
+    if not metadata or not metadata.requires:
+        return missing
+
+    required_bins = metadata.requires.get('bins', [])
+    if required_bins:
+        missing_bins = [b for b in required_bins if not has_binary(b)]
+        if missing_bins:
+            missing['bins'] = missing_bins
+
+    any_bins = metadata.requires.get('anyBins', [])
+    if any_bins and not has_any_binary(any_bins):
+        missing['anyBins'] = any_bins
+
+    required_env = metadata.requires.get('env', [])
+    if required_env:
+        missing_env = [e for e in required_env if not has_env_var(e)]
+        if missing_env:
+            missing['env'] = missing_env
+
+    any_env = metadata.requires.get('anyEnv', [])
+    if any_env and not any(has_env_var(e) for e in any_env):
+        missing['anyEnv'] = any_env
+
+    return missing
+
+
 def is_config_path_truthy(config: Dict, path: str) -> bool:
     """
     Check if a config path resolves to a truthy value.

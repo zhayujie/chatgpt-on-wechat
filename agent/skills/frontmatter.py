@@ -87,8 +87,8 @@ def parse_metadata(frontmatter: Dict[str, Any]) -> Optional[SkillMetadata]:
     if not isinstance(metadata_raw, dict):
         return None
     
-    # Use metadata_raw directly (COW format)
-    meta_obj = metadata_raw
+    # Unwrap nested namespace (e.g. {"openclaw": {...}} or {"cowagent": {...}})
+    meta_obj = _unwrap_metadata_namespace(metadata_raw)
     
     # Parse install specs
     install_specs = []
@@ -128,6 +128,7 @@ def parse_metadata(frontmatter: Dict[str, Any]) -> Optional[SkillMetadata]:
     
     return SkillMetadata(
         always=meta_obj.get('always', False),
+        default_enabled=meta_obj.get('default_enabled', True),
         skill_key=meta_obj.get('skillKey'),
         primary_env=meta_obj.get('primaryEnv'),
         emoji=meta_obj.get('emoji'),
@@ -136,6 +137,25 @@ def parse_metadata(frontmatter: Dict[str, Any]) -> Optional[SkillMetadata]:
         requires=requires,
         install=install_specs,
     )
+
+
+_KNOWN_METADATA_NAMESPACES = {"cowagent", "openclaw"}
+
+
+def _unwrap_metadata_namespace(metadata_raw: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Unwrap a single-key namespace wrapper like {"cowagent": {...} or {"openclaw": {...}}}.
+    If the top-level dict has exactly one key matching a known namespace, return the inner dict.
+    Otherwise return the original dict unchanged.
+    """
+    keys = set(metadata_raw.keys())
+    ns_keys = keys & _KNOWN_METADATA_NAMESPACES
+    if len(ns_keys) == 1 and len(keys) == 1:
+        ns = ns_keys.pop()
+        inner = metadata_raw[ns]
+        if isinstance(inner, dict):
+            return inner
+    return metadata_raw
 
 
 def _normalize_string_list(value: Any) -> List[str]:
