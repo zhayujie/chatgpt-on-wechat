@@ -5,6 +5,7 @@ from cli import __version__
 from cli.commands.skill import skill
 from cli.commands.process import start, stop, restart, update, status, logs
 from cli.commands.context import context
+from cli.commands.install import install_browser
 
 
 HELP_TEXT = """Usage: cow COMMAND [ARGS]...
@@ -21,6 +22,7 @@ Commands:
   status   Show CowAgent running status.
   logs     View CowAgent logs.
   skill    Manage CowAgent skills.
+  install-browser  Install browser tool (Playwright + Chromium).
 
 Tip: You can also send /help, /skill list, etc. in agent chat."""
 
@@ -67,6 +69,7 @@ main.add_command(update)
 main.add_command(status)
 main.add_command(logs)
 main.add_command(context)
+main.add_command(install_browser)
 
 
 if __name__ == '__main__':

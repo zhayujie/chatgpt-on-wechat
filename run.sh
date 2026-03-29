@@ -585,6 +585,7 @@ start_project() {
         echo -e "  ${GREEN}cow status${NC}     Check status"
         echo -e "  ${GREEN}cow logs${NC}       View logs"
         echo -e "  ${GREEN}cow update${NC}     Update and restart"
+        echo -e "  ${GREEN}cow install-browser${NC}  Install browser tool"
     else
         echo -e "  ${GREEN}./run.sh stop${NC}       Stop the service"
         echo -e "  ${GREEN}./run.sh restart${NC}    Restart the service"
