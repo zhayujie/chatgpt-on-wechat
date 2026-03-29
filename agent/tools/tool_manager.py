@@ -84,11 +84,11 @@ class ToolManager:
                                 except ImportError as e:
                                     # Handle missing dependencies with helpful messages
                                     error_msg = str(e)
-                                    if "browser-use" in error_msg or "browser_use" in error_msg:
+                                    if "playwright" in error_msg:
                                         logger.warning(
                                             f"[ToolManager] Browser tool not loaded - missing dependencies.\n"
                                             f"  To enable browser tool, run:\n"
-                                            f"    pip install browser-use markdownify playwright\n"
+                                            f"    pip install playwright\n"
                                             f"    playwright install chromium"
                                         )
                                     elif "markdownify" in error_msg:
@@ -154,11 +154,11 @@ class ToolManager:
                             except ImportError as e:
                                 # Handle missing dependencies with helpful messages
                                 error_msg = str(e)
-                                if "browser-use" in error_msg or "browser_use" in error_msg:
+                                if "playwright" in error_msg:
                                     logger.warning(
                                         f"[ToolManager] Browser tool not loaded - missing dependencies.\n"
                                         f"  To enable browser tool, run:\n"
-                                        f"    pip install browser-use markdownify playwright\n"
+                                        f"    pip install playwright\n"
                                         f"    playwright install chromium"
                                     )
                                 elif "markdownify" in error_msg:
@@ -197,7 +197,7 @@ class ToolManager:
                         logger.warning(
                             f"[ToolManager] Browser tool is configured but not loaded.\n"
                             f"  To enable browser tool, run:\n"
-                            f"    pip install browser-use markdownify playwright\n"
+                            f"    pip install playwright\n"
                             f"    playwright install chromium"
                         )
                     elif tool_name == "google_search":
