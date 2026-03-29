@@ -122,6 +122,21 @@ def install_browser():
                 f"  Run manually: sudo {python} -m playwright install-deps chromium",
                 fg="yellow",
             ))
+        # Install CJK fonts for proper Chinese/Japanese/Korean rendering in screenshots
+        click.echo("  Installing CJK fonts...")
+        font_ret = subprocess.call(
+            ["sudo", "apt-get", "install", "-y", "fonts-noto-cjk", "fonts-wqy-zenhei"],
+            stderr=subprocess.DEVNULL,
+        )
+        if font_ret != 0:
+            click.echo(click.style(
+                "  Could not auto-install CJK fonts.\n"
+                "  Run manually: sudo apt-get install -y fonts-noto-cjk fonts-wqy-zenhei",
+                fg="yellow",
+            ))
+        else:
+            subprocess.call(["fc-cache", "-fv"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            click.echo(click.style("  CJK fonts installed.", fg="green"))
     else:
         click.echo(click.style(f"[2/3] Skipping system deps (not needed on {sys.platform}).", fg="yellow"))
     click.echo()
