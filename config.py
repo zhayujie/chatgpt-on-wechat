@@ -408,7 +408,7 @@ def get_root():
 
 
 def read_file(path):
-    with open(path, mode="r", encoding="utf-8") as f:
+    with open(path, mode="r", encoding="utf-8-sig") as f:
         return f.read()
 
 

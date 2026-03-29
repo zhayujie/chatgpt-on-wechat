@@ -61,8 +61,14 @@
 
 本プロジェクトは、インストール・設定・起動・管理をワンクリックで行えるスクリプトを提供しています：
 
+**Linux / macOS:**
 ```bash
 bash <(curl -fsSL https://cdn.link-ai.tech/code/cow/run.sh)
+```
+
+**Windows (PowerShell):**
+```powershell
+irm https://cdn.link-ai.tech/code/cow/run.ps1 | iex
 ```
 
 実行後、デフォルトでWebサービスが起動します。`http://localhost:9899/chat` にアクセスしてチャットを開始できます。

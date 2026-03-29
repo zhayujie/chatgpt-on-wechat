@@ -46,9 +46,18 @@ CowAgent can proactively think and plan tasks, operate computers and external re
 
 Run the following command in your terminal for one-click install, configuration, and startup:
 
-```bash
-bash <(curl -fsSL https://cdn.link-ai.tech/code/cow/run.sh)
-```
+<Tabs>
+  <Tab title="Linux / macOS">
+    ```bash
+    bash <(curl -fsSL https://cdn.link-ai.tech/code/cow/run.sh)
+    ```
+  </Tab>
+  <Tab title="Windows (PowerShell)">
+    ```powershell
+    irm https://cdn.link-ai.tech/code/cow/run.ps1 | iex
+    ```
+  </Tab>
+</Tabs>
 
 By default, the Web service starts after running. Access `http://localhost:9899/chat` to chat in the web interface.
 

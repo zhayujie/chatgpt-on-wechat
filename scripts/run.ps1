@@ -18,6 +18,11 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+# ── ensure UTF-8 console encoding on Windows ─────────────────────
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$env:PYTHONIOENCODING = "utf-8"
+chcp 65001 | Out-Null
+
 # ── colours ──────────────────────────────────────────────────────
 function Write-Cow   { param([string]$M) Write-Host $M -ForegroundColor Green  }
 function Write-Warn  { param([string]$M) Write-Host $M -ForegroundColor Yellow }
@@ -85,11 +90,17 @@ function Install-Project {
     }
 
     Write-Cow "Cloning CowAgent project..."
-    git clone https://github.com/zhayujie/chatgpt-on-wechat.git 2>$null
-    if ($LASTEXITCODE -ne 0) {
+    $prevEAP = $ErrorActionPreference; $ErrorActionPreference = "Continue"
+    git clone https://github.com/zhayujie/chatgpt-on-wechat.git 2>&1 | Out-Null
+    $cloneExit = $LASTEXITCODE
+    $ErrorActionPreference = $prevEAP
+    if ($cloneExit -ne 0) {
         Write-Warn "GitHub failed, trying Gitee..."
-        git clone https://gitee.com/zhayujie/chatgpt-on-wechat.git
-        if ($LASTEXITCODE -ne 0) {
+        $ErrorActionPreference = "Continue"
+        git clone https://gitee.com/zhayujie/chatgpt-on-wechat.git 2>&1 | Out-Null
+        $cloneExit = $LASTEXITCODE
+        $ErrorActionPreference = $prevEAP
+        if ($cloneExit -ne 0) {
             Write-Err "Clone failed. Check your network."
             exit 1
         }
@@ -105,20 +116,35 @@ function Install-Project {
 function Install-Dependencies {
     Write-Cow "Installing dependencies..."
 
-    & $PythonCmd -m pip install --upgrade pip setuptools wheel 2>$null | Out-Null
+    $prevEAP = $ErrorActionPreference; $ErrorActionPreference = "Continue"
+    & $PythonCmd -m pip install --upgrade pip setuptools wheel 2>&1 | Out-Null
 
     & $PythonCmd -m pip install -r "$BaseDir\requirements.txt" 2>&1 | ForEach-Object { Write-Host $_ }
-    if ($LASTEXITCODE -ne 0) {
+    $pipExit = $LASTEXITCODE
+    $ErrorActionPreference = $prevEAP
+    if ($pipExit -ne 0) {
         Write-Warn "Some dependencies may have issues, but continuing..."
     }
 
     Write-Cow "Registering cow CLI..."
-    & $PythonCmd -m pip install -e $BaseDir 2>$null | Out-Null
+    $prevEAP = $ErrorActionPreference; $ErrorActionPreference = "Continue"
+    & $PythonCmd -m pip install -e $BaseDir 2>&1 | Out-Null
+    $ErrorActionPreference = $prevEAP
+
+    # Ensure Python Scripts dir is in PATH for this session
+    $scriptsDir = & $PythonCmd -c "import sysconfig; print(sysconfig.get_path('scripts'))" 2>$null
+    if ($scriptsDir -and (Test-Path $scriptsDir)) {
+        if ($env:PATH -notlike "*$scriptsDir*") {
+            $env:PATH = "$scriptsDir;$env:PATH"
+        }
+    }
+
     $cowBin = Get-Command cow -ErrorAction SilentlyContinue
     if ($cowBin) {
-        Write-Cow "cow CLI registered."
+        Write-Cow "cow CLI registered: $($cowBin.Source)"
     } else {
         Write-Warn "cow CLI not in PATH. You can use: $PythonCmd -m cli.cli"
+        Write-Warn "To fix permanently, add Python Scripts directory to your system PATH."
     }
 }
 
@@ -302,7 +328,8 @@ function New-ConfigFile {
         $config[$k] = $ChannelExtra[$k]
     }
 
-    $config | ConvertTo-Json -Depth 5 | Set-Content -Path "$BaseDir\config.json" -Encoding UTF8
+    $jsonText = $config | ConvertTo-Json -Depth 5
+    [System.IO.File]::WriteAllText("$BaseDir\config.json", $jsonText, (New-Object System.Text.UTF8Encoding $false))
     Write-Cow "Configuration file created."
 }
 
@@ -401,15 +428,24 @@ function Update-Project {
 
     # Stop if running
     $cowBin = Get-Command cow -ErrorAction SilentlyContinue
-    if ($cowBin) { & cow stop 2>$null }
+    if ($cowBin) {
+        $prevEAP = $ErrorActionPreference; $ErrorActionPreference = "Continue"
+        & cow stop 2>&1 | Out-Null
+        $ErrorActionPreference = $prevEAP
+    }
 
     if (Test-Path "$BaseDir\.git") {
         Write-Cow "Pulling latest code..."
-        git pull 2>$null
-        if ($LASTEXITCODE -ne 0) {
+        $prevEAP = $ErrorActionPreference; $ErrorActionPreference = "Continue"
+        git pull 2>&1 | Out-Null
+        $pullExit = $LASTEXITCODE
+        $ErrorActionPreference = $prevEAP
+        if ($pullExit -ne 0) {
             Write-Warn "GitHub failed, trying Gitee..."
-            git remote set-url origin https://gitee.com/zhayujie/chatgpt-on-wechat.git
-            git pull
+            $ErrorActionPreference = "Continue"
+            git remote set-url origin https://gitee.com/zhayujie/chatgpt-on-wechat.git 2>&1 | Out-Null
+            git pull 2>&1 | Out-Null
+            $ErrorActionPreference = $prevEAP
         }
     } else {
         Write-Warn "Not a git repository, skipping code update."

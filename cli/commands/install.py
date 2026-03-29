@@ -6,7 +6,7 @@ import subprocess
 
 import click
 
-PLAYWRIGHT_VERSION = "1.49.0"
+PLAYWRIGHT_VERSION = "1.52.0"
 PLAYWRIGHT_LEGACY_VERSION = "1.28.0"
 GLIBC_THRESHOLD = (2, 28)
 CHINA_MIRROR = "https://registry.npmmirror.com/-/binary/playwright"
@@ -102,7 +102,7 @@ def install_browser():
 
     # Step 1: Install playwright package
     click.echo(click.style("[1/3] Installing playwright Python package...", fg="yellow"))
-    ret = _pip_install(f"playwright=={target_version}" if legacy_mode else f"playwright>={target_version}")
+    ret = _pip_install(f"playwright=={target_version}")
     if ret != 0:
         click.echo(click.style("Failed to install playwright package.", fg="red"))
         raise SystemExit(1)
@@ -143,11 +143,23 @@ def install_browser():
 
     # Use China mirror if pip is configured with a domestic index
     env = os.environ.copy()
-    if _is_china_network():
+    use_mirror = _is_china_network()
+    if use_mirror:
         env["PLAYWRIGHT_DOWNLOAD_HOST"] = CHINA_MIRROR
         click.echo(f"  (using China mirror: {CHINA_MIRROR})")
 
     ret = subprocess.call(cmd, env=env)
+
+    # Fallback: if mirror download failed, retry with official CDN
+    if ret != 0 and use_mirror:
+        click.echo(click.style(
+            "  Mirror download failed, retrying with official CDN...",
+            fg="yellow",
+        ))
+        env_no_mirror = os.environ.copy()
+        env_no_mirror.pop("PLAYWRIGHT_DOWNLOAD_HOST", None)
+        ret = subprocess.call(cmd, env=env_no_mirror)
+
     if ret != 0:
         click.echo(click.style("Failed to install Chromium.", fg="red"))
         raise SystemExit(1)

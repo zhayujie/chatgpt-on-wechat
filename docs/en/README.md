@@ -61,8 +61,14 @@ Full changelog: [Release Notes](https://docs.cowagent.ai/en/releases/overview)
 
 The project provides a one-click script for installation, configuration, startup, and management:
 
+**Linux / macOS:**
 ```bash
 bash <(curl -fsSL https://cdn.link-ai.tech/code/cow/run.sh)
+```
+
+**Windows (PowerShell):**
+```powershell
+irm https://cdn.link-ai.tech/code/cow/run.ps1 | iex
 ```
 
 After running, the Web service starts by default. Access `http://localhost:9899/chat` to chat.

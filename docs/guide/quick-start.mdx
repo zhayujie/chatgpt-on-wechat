@@ -9,9 +9,18 @@ description: 使用脚本一键安装和管理 CowAgent
 
 ## 安装命令
 
-```bash
-bash <(curl -fsSL https://cdn.link-ai.tech/code/cow/run.sh)
-```
+<Tabs>
+  <Tab title="Linux / macOS">
+    ```bash
+    bash <(curl -fsSL https://cdn.link-ai.tech/code/cow/run.sh)
+    ```
+  </Tab>
+  <Tab title="Windows (PowerShell)">
+    ```powershell
+    irm https://cdn.link-ai.tech/code/cow/run.ps1 | iex
+    ```
+  </Tab>
+</Tabs>
 
 脚本自动执行以下流程：
 
@@ -41,5 +50,5 @@ bash <(curl -fsSL https://cdn.link-ai.tech/code/cow/run.sh)
 更多命令和用法参考 [命令文档](/commands/index)。
 
 <Note>
-  如果 `cow` 命令不可用，也可以使用 `./run.sh <命令>` 作为替代（如 `./run.sh start`、`./run.sh stop`），二者功能等效。
+  如果 `cow` 命令不可用，也可以使用 `./run.sh <命令>`（Linux/macOS）或 `.\scripts\run.ps1 <命令>`（Windows）作为替代，功能等效。
 </Note>

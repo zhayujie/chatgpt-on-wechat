@@ -9,9 +9,18 @@ Supports Linux, macOS, and Windows. Requires Python 3.7-3.12 (3.9 recommended).
 
 ## Install Command
 
-```bash
-bash <(curl -fsSL https://cdn.link-ai.tech/code/cow/run.sh)
-```
+<Tabs>
+  <Tab title="Linux / macOS">
+    ```bash
+    bash <(curl -fsSL https://cdn.link-ai.tech/code/cow/run.sh)
+    ```
+  </Tab>
+  <Tab title="Windows (PowerShell)">
+    ```powershell
+    irm https://cdn.link-ai.tech/code/cow/run.ps1 | iex
+    ```
+  </Tab>
+</Tabs>
 
 The script automatically performs these steps:
 
@@ -36,9 +45,10 @@ After installation, use the `cow` command to manage the service:
 | `cow status` | Check run status |
 | `cow logs` | View real-time logs |
 | `cow update` | Update code and restart |
+| `cow install-browser` | Install browser tool dependencies |
 
 See the [Commands documentation](/en/commands/index) for more details.
 
 <Note>
-  If the `cow` command is not available, you can use `./run.sh <command>` as a fallback (e.g., `./run.sh start`, `./run.sh stop`). Both are functionally equivalent.
+  If the `cow` command is not available, you can use `./run.sh <command>` (Linux/macOS) or `.\scripts\run.ps1 <command>` (Windows) as a fallback. Both are functionally equivalent.
 </Note>

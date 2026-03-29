@@ -23,8 +23,8 @@
 
 -  ✅  **自主任务规划**：能够理解复杂任务并自主规划执行，持续思考和调用工具直到完成目标
 -  ✅  **长期记忆：** 自动将对话记忆持久化至本地文件和数据库中，包括核心记忆和日级记忆，支持关键词及向量检索
--  ✅  **技能系统：** 实现了 Skills 创建和运行的引擎，支持从 Skill Hub、GitHub 等安装技能，或通过对话创造自定义 Skills
--  ✅  **工具系统：** 内置文件读写、终端执行、浏览器操作、定时任务、消息发送等工具，Agent 自主调用以完成复杂任务
+-  ✅  **技能系统：** Skills 安装和运行的引擎，支持从 Skill Hub、GitHub 等安装技能，或通过对话创造 Skills
+-  ✅  **工具系统：** 内置文件读写、终端执行、浏览器操作、定时任务等工具，Agent 自主调用以完成复杂任务
 -  ✅  **CLI系统：** 提供终端命令和对话命令，支持进程管理、技能安装、配置修改等操作
 -  ✅  **多模态消息：** 支持对文本、图片、语音、文件等多类型消息进行解析、处理、生成、发送等操作
 -  ✅  **多模型支持：** 支持 OpenAI, Claude, Gemini, DeepSeek, MiniMax、GLM、Qwen、Kimi、Doubao 等国内外主流模型厂商
@@ -88,11 +88,17 @@
 
 在终端执行以下命令：
 
+**Linux / macOS：**
 ```bash
 bash <(curl -fsSL https://cdn.link-ai.tech/code/cow/run.sh)
 ```
 
-脚本使用说明：[一键运行脚本](https://docs.cowagent.ai/guide/quick-start)。安装后也可使用 `cow start`、`cow stop` 等 [CLI 命令](https://docs.cowagent.ai/commands/index) 管理服务。
+**Windows（PowerShell）：**
+```powershell
+irm https://cdn.link-ai.tech/code/cow/run.ps1 | iex
+```
+
+脚本使用说明：[一键运行脚本](https://docs.cowagent.ai/guide/quick-start)。安装后可使用 `cow start`、`cow stop` 等 [CLI 命令](https://docs.cowagent.ai/commands/index) 管理服务。
 
 
 ## 一、准备
