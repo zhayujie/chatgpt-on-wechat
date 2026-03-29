@@ -6,6 +6,8 @@ import subprocess
 
 import click
 
+MIN_PLAYWRIGHT_VERSION = "1.49.0"
+
 
 def _has_display() -> bool:
     """Check if a graphical display is available (Linux only)."""
@@ -17,18 +19,44 @@ def _is_headless_linux() -> bool:
     return sys.platform == "linux" and not _has_display()
 
 
+def _get_installed_version() -> str:
+    """Return installed playwright version string, or empty if not installed."""
+    python = sys.executable
+    try:
+        out = subprocess.check_output(
+            [python, "-c", "import playwright; print(playwright.__version__)"],
+            stderr=subprocess.DEVNULL,
+        )
+        return out.decode().strip()
+    except Exception:
+        return ""
+
+
+def _version_tuple(v: str):
+    """Parse '1.49.0' into (1, 49, 0)."""
+    try:
+        return tuple(int(x) for x in v.split(".")[:3])
+    except (ValueError, AttributeError):
+        return (0, 0, 0)
+
+
 @click.command("install-browser")
 def install_browser():
     """Install browser tool dependencies (Playwright + Chromium)."""
     python = sys.executable
 
-    # Step 1: Install playwright package
+    # Step 1: Install / upgrade playwright package
     click.echo(click.style("[1/3] Installing playwright Python package...", fg="yellow"))
-    ret = subprocess.call([python, "-m", "pip", "install", "playwright"])
+    ret = subprocess.call([python, "-m", "pip", "install", f"playwright>={MIN_PLAYWRIGHT_VERSION}"])
     if ret != 0:
         click.echo(click.style("Failed to install playwright package.", fg="red"))
         raise SystemExit(1)
-    click.echo(click.style("playwright package installed.", fg="green"))
+
+    installed = _get_installed_version()
+    if installed:
+        click.echo(click.style(f"playwright {installed} installed.", fg="green"))
+    else:
+        click.echo(click.style("playwright package installed.", fg="green"))
     click.echo()
 
     # Step 2: System dependencies (Linux only)
@@ -45,12 +73,18 @@ def install_browser():
         click.echo(click.style(f"[2/3] Skipping system deps (not needed on {sys.platform}).", fg="yellow"))
     click.echo()
 
-    # Step 3: Install Chromium (headless shell on Linux servers, full elsewhere)
+    # Step 3: Install Chromium
     click.echo(click.style("[3/3] Installing Chromium browser...", fg="yellow"))
     cmd = [python, "-m", "playwright", "install", "chromium"]
+
+    # --only-shell requires playwright >= 1.57
     if _is_headless_linux():
-        cmd.append("--only-shell")
-        click.echo("  (headless-only mode for Linux server)")
+        ver = _version_tuple(_get_installed_version())
+        if ver >= (1, 57, 0):
+            cmd.append("--only-shell")
+            click.echo("  (headless shell for Linux server)")
+        else:
+            click.echo("  (full Chromium - upgrade to playwright>=1.57 for headless-only shell)")
     elif sys.platform == "linux":
         click.echo("  (full browser for Linux desktop)")
 

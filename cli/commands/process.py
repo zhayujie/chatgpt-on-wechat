@@ -206,10 +206,10 @@ def update(ctx):
         cwd=root,
     )
 
-    # 4. Start service
+    # 4. Start service and follow logs
     click.echo("")
     time.sleep(1)
-    ctx.invoke(start, no_logs=True)
+    ctx.invoke(start, no_logs=False)
 
 
 @click.command()
