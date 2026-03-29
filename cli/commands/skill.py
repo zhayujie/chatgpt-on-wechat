@@ -419,6 +419,87 @@ def _install_url(url: str, result: InstallResult):
     result.messages.append(f"Installed '{skill_name}' from URL.")
 
 
+def _install_archive_url(url: str, result: InstallResult):
+    """Install skill(s) from a remote zip/tar.gz archive URL."""
+    parsed = urlparse(url)
+    if parsed.scheme != "https":
+        raise SkillInstallError("Refusing to download from non-HTTPS URL.")
+
+    filename = os.path.basename(parsed.path).split("?")[0]
+    fallback_name = re.sub(r'\.(zip|tar\.gz|tgz)$', '', filename, flags=re.IGNORECASE)
+    if not fallback_name or not _SAFE_NAME_RE.match(fallback_name):
+        fallback_name = "skill-package"
+
+    result.messages.append(f"Downloading archive from {url} ...")
+    try:
+        resp = requests.get(url, timeout=120, allow_redirects=True)
+        resp.raise_for_status()
+    except Exception as e:
+        raise SkillInstallError(f"Failed to download archive: {e}")
+
+    skills_dir = get_skills_dir()
+    os.makedirs(skills_dir, exist_ok=True)
+
+    content_type = resp.headers.get("Content-Type", "")
+    lower_url = url.lower()
+
+    if lower_url.endswith((".tar.gz", ".tgz")) or "gzip" in content_type:
+        _install_targz_bytes(resp.content, fallback_name, skills_dir, result)
+    else:
+        _install_zip_bytes(resp.content, fallback_name, skills_dir, result=result, source_label="url")
+
+
+def _install_targz_bytes(content: bytes, name: str, skills_dir: str, result: InstallResult):
+    """Extract a tar.gz archive and install skill(s)."""
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        tar_path = os.path.join(tmp_dir, "package.tar.gz")
+        with open(tar_path, "wb") as f:
+            f.write(content)
+
+        import tarfile
+        extract_dir = os.path.join(tmp_dir, "extracted")
+        os.makedirs(extract_dir)
+        with tarfile.open(tar_path, "r:gz") as tf:
+            for member in tf.getmembers():
+                resolved = os.path.realpath(os.path.join(extract_dir, member.name))
+                if not resolved.startswith(os.path.realpath(extract_dir)):
+                    raise SkillInstallError("Archive contains path traversal, aborting.")
+            tf.extractall(extract_dir)
+
+        top_items = [d for d in os.listdir(extract_dir) if not d.startswith(".")]
+        pkg_root = extract_dir
+        if len(top_items) == 1 and os.path.isdir(os.path.join(extract_dir, top_items[0])):
+            pkg_root = os.path.join(extract_dir, top_items[0])
+
+        discovered = _scan_skills_in_repo(pkg_root) or _scan_skills_in_dir(pkg_root)
+
+        if discovered and len(discovered) > 1:
+            _batch_install_skills(discovered, name, skills_dir, "url", result)
+            return
+
+        if discovered and len(discovered) == 1:
+            sname, sdir = discovered[0]
+            safe_name = re.sub(r'[^a-zA-Z0-9_\\-]', '-', sname)[:64]
+            if not _SAFE_NAME_RE.match(safe_name):
+                safe_name = name
+            target = os.path.join(skills_dir, safe_name)
+            if os.path.exists(target):
+                shutil.rmtree(target)
+            shutil.copytree(sdir, target)
+            _register_installed_skill(safe_name, source="url")
+            result.installed.append(safe_name)
+            result.messages.append(f"Installed '{safe_name}' from URL.")
+            return
+
+        target = os.path.join(skills_dir, name)
+        if os.path.exists(target):
+            shutil.rmtree(target)
+        shutil.copytree(pkg_root, target)
+        _register_installed_skill(name, source="url")
+        result.installed.append(name)
+        result.messages.append(f"Installed '{name}' from URL.")
+
+
 def _print_install_success(name: str, source: str):
     """Print a unified install success message with description and source."""
     skills_dir = get_skills_dir()
@@ -713,6 +794,11 @@ def _route_install(name: str, result: InstallResult):
             ), branch=branch)
             return
         _install_url(name, result)
+        return
+
+    # --- Zip / tar.gz archive URL ---
+    if name.startswith(("http://", "https://")) and re.search(r'\.(zip|tar\.gz|tgz)(\?.*)?$', name, re.IGNORECASE):
+        _install_archive_url(name, result)
         return
 
     # --- Full GitHub URL ---

@@ -7,20 +7,17 @@ description: CowAgent 技能系统介绍
 
 Skill 与 Tool 的区别：Tool 是由代码实现的原子操作（如读写文件、执行命令），Skill 则是基于说明文件的高级工作流，可以组合调用多个 Tool 来完成复杂任务。
 
-## 内置技能
+## 获取技能
 
-位于项目 `skills/` 目录下，根据依赖条件自动判断是否启用：
+CowAgent 提供多种方式获取技能：
 
-| 技能 | 说明 | 依赖 |
-| --- | --- | --- |
-| [`skill-creator`](/skills/skill-creator) | 通过对话创建自定义技能 | 无 |
-| [`openai-image-vision`](/skills/image-vision) | 使用 OpenAI 视觉模型识别图片 | `OPENAI_API_KEY` |
-| [`linkai-agent`](/skills/linkai-agent) | 对接 LinkAI 平台智能体 | `LINKAI_API_KEY` |
-| [`web-fetch`](/skills/web-fetch) | 抓取网页文本内容 | `curl`（默认启用） |
+- **Cow 技能广场** — 通过 `/skill list --remote` 浏览和安装社区技能
+- **GitHub** — 直接从 GitHub 仓库安装，支持批量安装
+- **ClawHub** — 通过 `/skill install clawhub:名称` 安装 ClawHub 上的技能
+- **URL** — 从 zip 压缩包或 SKILL.md 链接安装
+- **对话创建** — 通过自然语言对话让 Agent 自动创建技能
 
-## 自定义技能
-
-由用户通过对话创建，存放在工作空间中（`~/cow/skills/`），可实现任何复杂的业务流程和第三方系统对接。
+详细安装方式参考 [安装技能](/skills/install) 和 [技能管理命令](/commands/skill)。也可以通过对话 [创建技能](/skills/create)。
 
 ## 技能加载优先级
 

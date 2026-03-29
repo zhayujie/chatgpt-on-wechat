@@ -3,20 +3,25 @@ title: 更新升级
 description: CowAgent 的升级方式说明
 ---
 
-## 脚本升级（推荐）
+## 命令升级（推荐）
 
-如果使用 `run.sh` 管理服务，在项目根目录执行以下命令即可一键升级：
+使用 `cow update` 一键完成代码更新和服务重启：
 
 ```bash
-./run.sh update
+cow update
 ```
 
 该命令会自动完成以下流程：
 
-1. 停止当前运行的服务
-2. 拉取最新代码
-3. 重新检查依赖
-4. 启动服务
+1. 拉取最新代码（`git pull`）
+2. 停止当前服务
+3. 更新 Python 依赖
+4. 重新安装 CLI
+5. 启动服务
+
+<Note>
+  如果未安装 Cow CLI，也可以使用 `./run.sh update` 完成相同操作。
+</Note>
 
 ## 手动升级
 
@@ -25,15 +30,19 @@ description: CowAgent 的升级方式说明
 ```bash
 git pull
 pip3 install -r requirements.txt
+pip3 install -e .
 ```
 
 更新完成后重启服务：
 
 ```bash
-# 如果使用 run.sh 管理
+# 使用 Cow CLI
+cow restart
+
+# 或使用 run.sh
 ./run.sh restart
 
-# 如果使用 nohup 直接运行
+# 或使用 nohup 直接运行
 kill $(ps -ef | grep app.py | grep -v grep | awk '{print $2}')
 nohup python3 app.py & tail -f nohup.out
 ```

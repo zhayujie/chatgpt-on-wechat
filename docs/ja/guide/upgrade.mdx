@@ -3,20 +3,25 @@ title: アップデート
 description: CowAgent のアップグレード方法
 ---
 
-## スクリプトによるアップグレード（推奨）
+## コマンドによるアップグレード（推奨）
 
-`run.sh` でサービスを管理している場合、以下のコマンドでワンクリックアップグレードできます：
+`cow update` でコードの更新とサービスの再起動をワンクリックで実行できます：
 
 ```bash
-./run.sh update
+cow update
 ```
 
 このコマンドは以下のフローを自動的に実行します：
 
-1. 現在実行中のサービスを停止
-2. 最新コードをプル
-3. 依存関係を再チェック
-4. サービスを起動
+1. 最新コードをプル（`git pull`）
+2. 現在のサービスを停止
+3. Python 依存パッケージを更新
+4. CLI を再インストール
+5. サービスを起動
+
+<Note>
+  Cow CLI がインストールされていない場合は、`./run.sh update` でも同様の操作が可能です。
+</Note>
 
 ## 手動アップグレード
 
@@ -25,15 +30,19 @@ description: CowAgent のアップグレード方法
 ```bash
 git pull
 pip3 install -r requirements.txt
+pip3 install -e .
 ```
 
 更新完了後、サービスを再起動します：
 
 ```bash
-# run.sh で管理している場合
+# Cow CLI を使用
+cow restart
+
+# または run.sh を使用
 ./run.sh restart
 
-# nohup で直接実行している場合
+# または nohup で直接実行
 kill $(ps -ef | grep app.py | grep -v grep | awk '{print $2}')
 nohup python3 app.py & tail -f nohup.out
 ```

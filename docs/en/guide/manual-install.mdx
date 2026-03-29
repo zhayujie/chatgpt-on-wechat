@@ -30,7 +30,25 @@ Optional dependencies (recommended):
 pip3 install -r requirements-optional.txt
 ```
 
-### 3. Configure
+### 3. Install Cow CLI
+
+Install the command-line tool for managing services and skills:
+
+```bash
+pip3 install -e .
+```
+
+Then use the `cow` command:
+
+```bash
+cow help
+```
+
+<Note>
+  This step is recommended. After installation you can use `cow start`, `cow stop`, `cow update` to manage the service, and `cow skill` to manage skills. Without the CLI, you can use `./run.sh` or `python3 app.py` to run.
+</Note>
+
+### 4. Configure
 
 Copy the config template and edit:
 
@@ -40,21 +58,31 @@ cp config-template.json config.json
 
 Fill in model API keys, channel type, and other settings in `config.json`. See the [model docs](/en/models/index) for details.
 
-### 4. Run
+### 5. Run
 
-**Local run:**
+**Using Cow CLI (recommended):**
+
+```bash
+cow start
+```
+
+**Or run locally in foreground:**
 
 ```bash
 python3 app.py
 ```
 
-By default, the Web service starts. Access `http://localhost:9899/chat` to chat.
+By default, the Web console starts. Access `http://localhost:9899` to chat.
 
-**Background run on server:**
+**Background run on server (without CLI):**
 
 ```bash
 nohup python3 app.py & tail -f nohup.out
 ```
+
+<Tip>
+  If deploying on a server, open port `9899` in your firewall or security group to access the Web console. It's recommended to restrict access to specific IPs for security.
+</Tip>
 
 ## Docker Deployment
 
@@ -83,6 +111,10 @@ sudo docker compose up -d
 ```bash
 sudo docker logs -f chatgpt-on-wechat
 ```
+
+<Tip>
+  If deploying on a server, open port `9899` in your firewall or security group to access the Web console. It's recommended to restrict access to specific IPs for security.
+</Tip>
 
 ## Core Configuration
 

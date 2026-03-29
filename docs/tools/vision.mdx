@@ -1,0 +1,36 @@
+---
+title: vision - 图片分析
+description: 分析图片内容（识别、描述、OCR 等）
+---
+
+使用 Vision API 分析本地图片或图片 URL，支持内容描述、文字提取（OCR）、物体识别等。
+
+## 依赖
+
+需要配置至少一个 API Key（通过 `env_config` 工具或工作空间 `.env` 文件配置）：
+
+| 后端 | 环境变量 | 优先级 |
+| --- | --- | --- |
+| OpenAI | `OPENAI_API_KEY` | 优先使用 |
+| LinkAI | `LINKAI_API_KEY` | 备选 |
+
+## 参数
+
+| 参数 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `image` | string | 是 | 本地文件路径或 HTTP(S) 图片 URL |
+| `question` | string | 是 | 对图片提出的问题 |
+| `model` | string | 否 | 模型名称（默认 gpt-4.1-mini） |
+
+支持的图片格式：jpg、jpeg、png、gif、webp
+
+## 使用场景
+
+- 描述图片中的内容
+- 提取图片中的文字（OCR）
+- 识别物体、颜色、场景
+- 分析截图、文档扫描件
+
+<Note>
+  超过 1MB 的图片会自动压缩后上传。如果未配置任何 Vision API Key，该工具不会被加载。
+</Note>

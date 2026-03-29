@@ -1,25 +1,109 @@
 ---
 title: browser - 浏览器
-description: 访问和操作网页
+description: 控制浏览器访问和操作网页
 ---
 
-使用浏览器访问和操作网页，支持 JavaScript 渲染的动态页面。
+控制 Chromium 浏览器进行网页导航、元素交互和内容提取。支持 JavaScript 渲染的动态页面，使用精简 DOM 快照让 Agent 高效理解页面结构。
 
-## 依赖
+## 安装
 
-| 依赖 | 安装命令 |
-| --- | --- |
-| `browser-use` ≥ 0.1.40 | `pip install browser-use` |
-| `markdownify` | `pip install markdownify` |
-| `playwright` + chromium | `pip install playwright && playwright install chromium` |
+<Tabs>
+  <Tab title="CLI 安装（推荐）">
+    ```bash
+    cow install-browser
+    ```
+
+    该命令会自动完成：
+    - 安装 `playwright` Python 包（旧系统自动降级兼容版本）
+    - 在 Linux 上安装系统依赖
+    - 下载 Chromium 浏览器（Linux 服务器自动使用无头精简版）
+    - 自动检测国内网络并使用镜像加速
+  </Tab>
+  <Tab title="手动安装">
+    ```bash
+    pip install playwright
+    playwright install chromium
+    ```
+
+    Linux 服务器还需安装系统依赖：
+    ```bash
+    sudo playwright install-deps chromium
+    ```
+
+    如果系统较旧（如 Ubuntu 18.04，glibc < 2.28），需安装兼容版本：
+    ```bash
+    pip install playwright==1.28.0
+    python -m playwright install chromium
+    ```
+
+    国内网络下载 Chromium 较慢，可设置镜像加速：
+    ```bash
+    export PLAYWRIGHT_DOWNLOAD_HOST=https://registry.npmmirror.com/-/binary/playwright
+    python -m playwright install chromium
+    ```
+  </Tab>
+</Tabs>
+
+<Note>
+  支持 Ubuntu 20.04+、Debian 10+、macOS、Windows。Ubuntu 18.04 等旧系统会自动降级安装兼容版本。
+</Note>
+
+## 工作流程
+
+Agent 使用浏览器的典型流程：
+
+1. **`navigate`** — 打开目标 URL
+2. **`snapshot`** — 获取页面精简 DOM，交互元素自动编号（ref）
+3. **`click` / `fill` / `select`** — 通过 ref 编号操作元素
+4. **`snapshot`** — 再次快照验证操作结果
+
+## 支持的操作
+
+| 操作 | 说明 | 关键参数 |
+| --- | --- | --- |
+| `navigate` | 打开 URL | `url` |
+| `snapshot` | 获取页面结构化文本（主要方式） | `selector`（可选） |
+| `click` | 点击元素 | `ref` 或 `selector` |
+| `fill` | 填入文本 | `ref` 或 `selector`，`text` |
+| `select` | 下拉选择 | `ref` 或 `selector`，`value` |
+| `scroll` | 滚动页面 | `direction`（up/down/left/right） |
+| `screenshot` | 截图保存到工作区 | `full_page` |
+| `wait` | 等待元素或超时 | `selector`，`timeout` |
+| `press` | 按键（Enter、Tab 等） | `key` |
+| `back` / `forward` | 浏览器前进/后退 | - |
+| `get_text` | 获取元素文本内容 | `selector` |
+| `evaluate` | 执行 JavaScript | `script` |
 
 ## 使用场景
 
-- 访问指定 URL 获取页面内容
-- 操作网页元素（点击、输入等）
+- 访问指定 URL 获取动态页面内容
+- 填写表单、登录操作
+- 操作网页元素（点击按钮、选择选项等）
 - 验证部署后的网页效果
 - 抓取需要 JS 渲染的动态内容
 
+## 运行模式
+
+浏览器会根据运行环境自动选择模式：
+
+| 环境 | 模式 |
+| --- | --- |
+| macOS / Windows | 有头模式（显示浏览器窗口） |
+| Linux 桌面（有 DISPLAY） | 有头模式 |
+| Linux 服务器（无 DISPLAY） | 无头模式（headless） |
+
+可在 `config.json` 中手动覆盖：
+
+```json
+{
+  "tools": {
+    "browser": {
+      "headless": true
+    }
+  }
+}
+```
+
 <Note>
-  浏览器工具依赖较重，如不需要可不安装。轻量的网页内容获取可使用 `web-fetch` 技能。
+  浏览器工具依赖较重（~300MB），如不需要可不安装。轻量的网页内容获取可使用 `web_fetch` 工具。
 </Note>

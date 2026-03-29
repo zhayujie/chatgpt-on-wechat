@@ -20,13 +20,14 @@
 
 > CowAgentは、すぐに使えるAIスーパーアシスタントであると同時に、高い拡張性を持つAgentフレームワークでもあります。新しいモデルインターフェース、チャネル、組み込みツール、Skillシステムを拡張することで、さまざまなカスタマイズニーズに柔軟に対応できます。
 
-- ✅ **自律的タスク計画**: 複雑なタスクを理解し、自律的に実行計画を立て、目標達成までツールを呼び出しながら継続的に思考します。ツールを通じてファイル、ターミナル、ブラウザ、スケジューラなどのシステムリソースにアクセスできます。
+- ✅ **自律的タスク計画**: 複雑なタスクを理解し、自律的に実行計画を立て、目標達成までツールを呼び出しながら継続的に思考します。
 - ✅ **長期記憶**: 会話の記憶をローカルファイルやデータベースに自動的に永続化します。コアメモリとデイリーメモリを含み、キーワード検索やベクトル検索に対応しています。
-- ✅ **Skillシステム**: Skillの作成・実行エンジンを実装しており、複数の組み込みSkillを備え、自然言語での会話を通じたカスタムSkillの開発もサポートしています。
+- ✅ **Skillシステム**: Skillの作成・実行エンジンを実装。[Skill Hub](https://skills.cowagent.ai)、GitHubなどからSkillをインストールでき、会話を通じたカスタムSkill作成もサポートしています。
+- ✅ **ツールシステム**: ファイル読み書き、ターミナル実行、ブラウザ操作、スケジュールタスク、メッセージ送信などの組み込みツールを提供。Agentが自律的に呼び出して複雑なタスクを完了します。
+- ✅ **CLIシステム**: ターミナルコマンドとチャットコマンドを提供し、プロセス管理、Skillインストール、設定変更などの操作をサポートします。
 - ✅ **マルチモーダルメッセージ**: テキスト、画像、音声、ファイルなど、さまざまなメッセージタイプの解析・処理・生成・送信に対応しています。
 - ✅ **複数モデル対応**: OpenAI、Claude、Gemini、DeepSeek、MiniMax、GLM、Qwen、Kimi、Doubaoなど、主要なモデルプロバイダーに対応しています。
 - ✅ **マルチプラットフォームデプロイ**: ローカルPCやサーバー上で実行でき、WeChat、Web、Feishu、DingTalk、WeChat公式アカウント、WeComアプリケーションに統合可能です。
-- ✅ **ナレッジベース**: [LinkAI](https://link-ai.tech) プラットフォームを通じて、企業向けナレッジベース機能を統合できます。
 
 ## 免責事項
 
@@ -66,7 +67,7 @@ bash <(curl -fsSL https://cdn.link-ai.tech/code/cow/run.sh)
 
 実行後、デフォルトでWebサービスが起動します。`http://localhost:9899/chat` にアクセスしてチャットを開始できます。
 
-スクリプトの使い方: [ワンクリックインストール](https://docs.cowagent.ai/en/guide/quick-start)
+スクリプトの使い方: [ワンクリックインストール](https://docs.cowagent.ai/ja/guide/quick-start)。インストール後は `cow start`、`cow stop` などの [CLI コマンド](https://docs.cowagent.ai/ja/commands/index)でサービスを管理できます。
 
 ### 手動インストール
 
@@ -84,7 +85,25 @@ pip3 install -r requirements.txt
 pip3 install -r requirements-optional.txt   # 任意ですが推奨
 ```
 
-**3. 設定**
+**3. Cow CLI のインストール（推奨）**
+
+```bash
+pip3 install -e .
+```
+
+インストール後、`cow` コマンドでサービス管理（起動、停止、更新など）やSkill管理ができます。[コマンドドキュメント](https://docs.cowagent.ai/ja/commands/index)を参照してください。
+
+**4. ブラウザのインストール（任意）**
+
+Agentにブラウザ操作（Webページへのアクセス、フォーム入力など）が必要な場合：
+
+```bash
+cow install-browser
+```
+
+`playwright` と Chromium を自動インストールします。[ブラウザツールドキュメント](https://docs.cowagent.ai/ja/tools/browser)を参照してください。
+
+**5. 設定**
 
 ```bash
 cp config-template.json config.json
@@ -92,13 +111,25 @@ cp config-template.json config.json
 
 `config.json` にモデルのAPIキーとチャネルタイプを記入してください。詳細は[設定ドキュメント](https://docs.cowagent.ai/en/guide/manual-install)を参照してください。
 
-**4. 実行**
+**6. 実行**
 
 ```bash
-python3 app.py
+cow start              # 推奨、Cow CLI が必要
+python3 app.py         # または直接実行
 ```
 
-サーバーでバックグラウンド実行する場合：
+サーバーデプロイでは、`cow` コマンドでサービスを管理できます：
+
+```bash
+cow start              # バックグラウンドで起動
+cow stop               # サービス停止
+cow restart            # サービス再起動
+cow status             # 実行状態を確認
+cow logs               # ログを表示
+cow update             # 最新コードを取得して再起動
+```
+
+または従来の方法で実行：
 
 ```bash
 nohup python3 app.py & tail -f nohup.out
@@ -195,7 +226,7 @@ FAQ: <https://github.com/zhayujie/chatgpt-on-wechat/wiki/FAQs>
 
 ## 🛠️ コントリビューション
 
-新しいチャネルの追加を歓迎します。[Feishuチャネル](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/channel/feishu/feishu_channel.py)を参考にしてください。また、新しいSkillのコントリビューションも歓迎します。[Skill Creatorドキュメント](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/skills/skill-creator/SKILL.md)を参照してください。
+新しいチャネルの追加を歓迎します。[Feishuチャネル](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/channel/feishu/feishu_channel.py)を参考にしてください。また、新しいSkillのコントリビューションも歓迎します。[Skill作成ドキュメント](https://docs.cowagent.ai/ja/skills/create)を参照してください。
 
 ## ✉ お問い合わせ
 

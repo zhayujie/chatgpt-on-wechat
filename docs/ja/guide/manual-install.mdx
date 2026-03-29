@@ -30,7 +30,25 @@ pip3 install -r requirements.txt
 pip3 install -r requirements-optional.txt
 ```
 
-### 3. 設定
+### 3. Cow CLI をインストール
+
+サービスとスキルを管理するためのコマンドラインツールをインストールします：
+
+```bash
+pip3 install -e .
+```
+
+インストール後、`cow` コマンドが使用可能になります：
+
+```bash
+cow help
+```
+
+<Note>
+  このステップは推奨です。インストール後、`cow start`、`cow stop`、`cow update` でサービスを管理でき、`cow skill` でスキルを管理できます。CLI をインストールしない場合は、`./run.sh` または `python3 app.py` で実行できます。
+</Note>
+
+### 4. 設定
 
 設定テンプレートをコピーして編集します：
 
@@ -40,21 +58,31 @@ cp config-template.json config.json
 
 `config.json` にモデルの API キー、チャネルタイプ、その他の設定を入力します。詳細は[モデルのドキュメント](/ja/models/index)を参照してください。
 
-### 4. 実行
+### 5. 実行
 
-**ローカルで実行：**
+**Cow CLI を使用して実行（推奨）：**
+
+```bash
+cow start
+```
+
+**またはローカルでフォアグラウンド実行：**
 
 ```bash
 python3 app.py
 ```
 
-デフォルトではWebサービスが起動します。`http://localhost:9899/chat` にアクセスしてチャットできます。
+デフォルトでは Web コンソールが起動します。`http://localhost:9899` にアクセスしてチャットできます。
 
-**サーバーでバックグラウンド実行：**
+**サーバーでバックグラウンド実行（CLI 未使用時）：**
 
 ```bash
 nohup python3 app.py & tail -f nohup.out
 ```
+
+<Tip>
+  サーバーにデプロイする場合は、ファイアウォールまたはセキュリティグループでポート `9899` を開放して Web コンソールにアクセスできるようにしてください。セキュリティのため、特定の IP のみにアクセスを制限することを推奨します。
+</Tip>
 
 ## Docker によるデプロイ
 
@@ -83,6 +111,10 @@ sudo docker compose up -d
 ```bash
 sudo docker logs -f chatgpt-on-wechat
 ```
+
+<Tip>
+  サーバーにデプロイする場合は、ファイアウォールまたはセキュリティグループでポート `9899` を開放して Web コンソールにアクセスできるようにしてください。セキュリティのため、特定の IP のみにアクセスを制限することを推奨します。
+</Tip>
 
 ## 主要な設定項目
 

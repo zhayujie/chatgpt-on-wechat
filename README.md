@@ -21,12 +21,14 @@
 
 > 该项目既是一个可以开箱即用的超级 AI 助理，也是一个支持高扩展的 Agent 框架，可以通过为项目扩展大模型接口、接入渠道、内置工具、Skills 系统来灵活实现各种定制需求。核心能力如下：
 
--  ✅  **复杂任务规划**：能够理解复杂任务并自主规划执行，持续思考和调用工具直到完成目标，支持通过工具操作访问文件、终端、浏览器、定时任务等系统资源
--  ✅  **长期记忆：** 自动将对话记忆持久化至本地文件和数据库中，包括全局记忆和天级记忆，支持关键词及向量检索
--  ✅  **技能系统：** 实现了 Skills 创建和运行的引擎，内置多种技能，并支持通过自然语言对话完成自定义 Skills 开发
+-  ✅  **自主任务规划**：能够理解复杂任务并自主规划执行，持续思考和调用工具直到完成目标
+-  ✅  **长期记忆：** 自动将对话记忆持久化至本地文件和数据库中，包括核心记忆和日级记忆，支持关键词及向量检索
+-  ✅  **技能系统：** 实现了 Skills 创建和运行的引擎，支持从 Skill Hub、GitHub 等安装技能，或通过对话创造自定义 Skills
+-  ✅  **工具系统：** 内置文件读写、终端执行、浏览器操作、定时任务、消息发送等工具，Agent 自主调用以完成复杂任务
+-  ✅  **CLI系统：** 提供终端命令和对话命令，支持进程管理、技能安装、配置修改等操作
 -  ✅  **多模态消息：** 支持对文本、图片、语音、文件等多类型消息进行解析、处理、生成、发送等操作
--  ✅  **多模型接入：** 支持 OpenAI, Claude, Gemini, DeepSeek, MiniMax、GLM、Qwen、Kimi、Doubao 等国内外主流模型厂商
--  ✅  **多端部署：** 支持运行在本地计算机或服务器，可集成到微信、飞书、钉钉、企业微信、QQ、微信公众号、网页中使用
+-  ✅  **多模型支持：** 支持 OpenAI, Claude, Gemini, DeepSeek, MiniMax、GLM、Qwen、Kimi、Doubao 等国内外主流模型厂商
+-  ✅  **多通道接入：** 支持运行在本地计算机或服务器，可集成到微信、飞书、钉钉、企业微信、QQ、微信公众号、网页中使用
 
 ## 声明
 
@@ -90,7 +92,7 @@
 bash <(curl -fsSL https://cdn.link-ai.tech/code/cow/run.sh)
 ```
 
-脚本使用说明：[一键运行脚本](https://docs.cowagent.ai/guide/quick-start)
+脚本使用说明：[一键运行脚本](https://docs.cowagent.ai/guide/quick-start)。安装后也可使用 `cow start`、`cow stop` 等 [CLI 命令](https://docs.cowagent.ai/commands/index) 管理服务。
 
 
 ## 一、准备
@@ -133,6 +135,24 @@ pip3 install -r requirements-optional.txt
 > 国内网络可使用镜像源加速：`pip3 install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple`
 
 如果某项依赖安装失败可注释掉对应的行后重试。
+
+**(4) 安装 Cow CLI (推荐)：**
+
+```bash
+pip3 install -e .
+```
+
+安装后可使用 `cow` 命令管理服务（启动、停止、更新等）和技能，详见 [命令文档](https://docs.cowagent.ai/commands/index)。
+
+**(5) 安装浏览器工具 (可选)：**
+
+如果需要 Agent 操作浏览器（如访问网页、填写表单等），需要额外安装浏览器依赖：
+
+```bash
+cow install-browser
+```
+
+该命令会自动安装 `playwright` 和 Chromium 浏览器，国内网络自动使用镜像加速。详见 [浏览器工具文档](https://docs.cowagent.ai/tools/browser)。
 
 ## 二、配置
 
@@ -210,7 +230,8 @@ pip3 install -r requirements-optional.txt
 如果是个人计算机 **本地运行**，直接在项目根目录下执行：
 
 ```bash
-python3 app.py         # windows 环境下该命令通常为 python app.py
+cow start              # 推荐，需先安装 Cow CLI
+python3 app.py         # 或直接运行，windows 环境下该命令通常为 python app.py
 ```
 
 运行后默认会启动 web 服务，可通过访问 `http://localhost:9899/chat` 在网页端对话。
@@ -220,15 +241,24 @@ python3 app.py         # windows 环境下该命令通常为 python app.py
 
 ### 2.服务器部署
 
-在服务器中可使用 `nohup` 命令在后台运行程序：
+推荐使用 `cow` 命令管理服务：
+
+```bash
+cow start              # 后台启动
+cow stop               # 停止服务
+cow restart            # 重启服务
+cow status             # 查看运行状态
+cow logs               # 查看日志
+cow update             # 拉取最新代码并重启
+```
+
+也可以使用传统方式后台运行：
 
 ```bash
 nohup python3 app.py & tail -f nohup.out
 ```
 
-执行后程序运行于服务器后台，可通过 `ctrl+c` 关闭日志，不会影响后台程序的运行。使用 `ps -ef | grep app.py | grep -v grep` 命令可查看运行于后台的进程，如果想要重新启动程序可以先 `kill` 掉对应的进程。 日志关闭后如果想要再次打开只需输入 `tail -f nohup.out`。 
-
-此外，项目根目录下的 `run.sh` 脚本支持一键启动和管理服务，包括 `./run.sh start`、`./run.sh stop`、`./run.sh restart`、`./run.sh logs` 等命令，执行 `./run.sh help` 可查看全部用法。
+此外，项目根目录下的 `run.sh` 脚本也支持一键管理服务，包括 `./run.sh start`、`./run.sh stop`、`./run.sh restart` 等命令，执行 `./run.sh help` 可查看全部用法。
 
 > 如果需要通过浏览器访问 Web 控制台，请确保服务器的 `9899` 端口已在防火墙或安全组中放行，建议仅对指定 IP 开放以保证安全。
 
@@ -843,7 +873,7 @@ FAQs： <https://github.com/zhayujie/chatgpt-on-wechat/wiki/FAQs>
 
 # 🛠️ 开发
 
-欢迎接入更多应用通道，参考 [飞书通道](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/channel/feishu/feishu_channel.py) 新增自定义通道，实现接收和发送消息逻辑即可完成接入。 同时欢迎贡献新的Skills，参考 [Skill创造器说明](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/skills/skill-creator/SKILL.md)。
+欢迎接入更多应用通道，参考 [飞书通道](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/channel/feishu/feishu_channel.py) 新增自定义通道，实现接收和发送消息逻辑即可完成接入。同时欢迎贡献新的 Skills，参考 [技能创建文档](https://docs.cowagent.ai/skills/create)。
 
 # ✉ 联系
 

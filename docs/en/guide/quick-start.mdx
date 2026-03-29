@@ -18,22 +18,27 @@ The script automatically performs these steps:
 1. Check Python environment (requires Python 3.7+)
 2. Install required tools (git, curl, etc.)
 3. Clone project to `~/chatgpt-on-wechat`
-4. Install Python dependencies
+4. Install Python dependencies and Cow CLI
 5. Guided configuration for AI model and channel
 6. Start service
 
-By default, the Web service starts after installation. Access `http://localhost:9899/chat` to begin chatting.
+By default, the Web console starts after installation. Access `http://localhost:9899` to begin chatting.
 
 ## Management Commands
 
-After installation, use these commands to manage the service:
+After installation, use the `cow` command to manage the service:
 
 | Command | Description |
 | --- | --- |
-| `./run.sh start` | Start service |
-| `./run.sh stop` | Stop service |
-| `./run.sh restart` | Restart service |
-| `./run.sh status` | Check run status |
-| `./run.sh logs` | View real-time logs |
-| `./run.sh config` | Reconfigure |
-| `./run.sh update` | Update project code |
+| `cow start` | Start service |
+| `cow stop` | Stop service |
+| `cow restart` | Restart service |
+| `cow status` | Check run status |
+| `cow logs` | View real-time logs |
+| `cow update` | Update code and restart |
+
+See the [Commands documentation](/en/commands/index) for more details.
+
+<Note>
+  If the `cow` command is not available, you can use `./run.sh <command>` as a fallback (e.g., `./run.sh start`, `./run.sh stop`). Both are functionally equivalent.
+</Note>

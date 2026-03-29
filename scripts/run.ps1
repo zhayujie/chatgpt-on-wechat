@@ -4,7 +4,7 @@
     CowAgent installer & management script for Windows.
 .DESCRIPTION
     One-liner install:
-      irm https://raw.githubusercontent.com/zhayujie/chatgpt-on-wechat/master/scripts/run.ps1 | iex
+      irm https://cdn.link-ai.tech/code/cow/run.ps1 | iex
     Or from a local clone:
       .\scripts\run.ps1              # install / configure
       .\scripts\run.ps1 start        # start service  (delegates to cow CLI)

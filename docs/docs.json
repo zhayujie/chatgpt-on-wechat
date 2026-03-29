@@ -106,14 +106,17 @@
                   "tools/bash",
                   "tools/send",
                   "tools/memory",
-                  "tools/env-config"
+                  "tools/env-config",
+                  "tools/web-fetch",
+                  "tools/scheduler"
                 ]
               },
               {
                 "group": "可选工具",
                 "pages": [
                   "tools/web-search",
-                  "tools/scheduler"
+                  "tools/vision",
+                  "tools/browser"
                 ]
               }
             ]
@@ -125,15 +128,8 @@
                 "group": "技能系统",
                 "pages": [
                   "skills/index",
-                  "skills/skill-creator"
-                ]
-              },
-              {
-                "group": "内置技能",
-                "pages": [
-                  "skills/image-vision",
-                  "skills/linkai-agent",
-                  "skills/web-fetch"
+                  "skills/install",
+                  "skills/create"
                 ]
               }
             ]
@@ -144,7 +140,8 @@
               {
                 "group": "记忆系统",
                 "pages": [
-                  "memory"
+                  "memory/index",
+                  "memory/context"
                 ]
               }
             ]
@@ -163,6 +160,20 @@
                   "channels/qq",
                   "channels/wecom",
                   "channels/wechatmp"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "命令",
+            "groups": [
+              {
+                "group": "命令系统",
+                "pages": [
+                  "commands/index",
+                  "commands/process",
+                  "commands/skill",
+                  "commands/general"
                 ]
               }
             ]
@@ -254,14 +265,17 @@
                   "en/tools/bash",
                   "en/tools/send",
                   "en/tools/memory",
-                  "en/tools/env-config"
+                  "en/tools/env-config",
+                  "en/tools/web-fetch",
+                  "en/tools/scheduler"
                 ]
               },
               {
                 "group": "Optional Tools",
                 "pages": [
                   "en/tools/web-search",
-                  "en/tools/scheduler"
+                  "en/tools/vision",
+                  "en/tools/browser"
                 ]
               }
             ]
@@ -273,15 +287,8 @@
                 "group": "Skills System",
                 "pages": [
                   "en/skills/index",
+                  "en/skills/install",
                   "en/skills/skill-creator"
-                ]
-              },
-              {
-                "group": "Built-in Skills",
-                "pages": [
-                  "en/skills/image-vision",
-                  "en/skills/linkai-agent",
-                  "en/skills/web-fetch"
                 ]
               }
             ]
@@ -292,7 +299,8 @@
               {
                 "group": "Memory System",
                 "pages": [
-                  "en/memory"
+                  "en/memory/index",
+                  "en/memory/context"
                 ]
               }
             ]
@@ -311,6 +319,20 @@
                   "en/channels/qq",
                   "en/channels/wecom",
                   "en/channels/wechatmp"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Commands",
+            "groups": [
+              {
+                "group": "Command System",
+                "pages": [
+                  "en/commands/index",
+                  "en/commands/process",
+                  "en/commands/skill",
+                  "en/commands/chat"
                 ]
               }
             ]
@@ -403,14 +425,16 @@
                   "ja/tools/send",
                   "ja/tools/memory",
                   "ja/tools/env-config",
-                  "ja/tools/browser"
+                  "ja/tools/web-fetch",
+                  "ja/tools/scheduler"
                 ]
               },
               {
                 "group": "オプションツール",
                 "pages": [
                   "ja/tools/web-search",
-                  "ja/tools/scheduler"
+                  "ja/tools/vision",
+                  "ja/tools/browser"
                 ]
               }
             ]
@@ -422,15 +446,8 @@
                 "group": "スキルシステム",
                 "pages": [
                   "ja/skills/index",
-                  "ja/skills/skill-creator"
-                ]
-              },
-              {
-                "group": "内蔵スキル",
-                "pages": [
-                  "ja/skills/image-vision",
-                  "ja/skills/linkai-agent",
-                  "ja/skills/web-fetch"
+                  "ja/skills/install",
+                  "ja/skills/create"
                 ]
               }
             ]
@@ -441,7 +458,8 @@
               {
                 "group": "メモリシステム",
                 "pages": [
-                  "ja/memory"
+                  "ja/memory/index",
+                  "ja/memory/context"
                 ]
               }
             ]
@@ -460,6 +478,20 @@
                   "ja/channels/qq",
                   "ja/channels/wecom",
                   "ja/channels/wechatmp"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "コマンド",
+            "groups": [
+              {
+                "group": "コマンドシステム",
+                "pages": [
+                  "ja/commands/index",
+                  "ja/commands/process",
+                  "ja/commands/skill",
+                  "ja/commands/general"
                 ]
               }
             ]

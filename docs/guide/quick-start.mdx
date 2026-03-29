@@ -18,7 +18,7 @@ bash <(curl -fsSL https://cdn.link-ai.tech/code/cow/run.sh)
 1. 检查 Python 环境（需要 Python 3.7+）
 2. 安装必要工具（git、curl 等）
 3. 克隆项目代码到 `~/chatgpt-on-wechat`
-4. 安装 Python 依赖
+4. 安装 Python 依赖和 Cow CLI
 5. 引导配置 AI 模型和通信渠道
 6. 启动服务
 
@@ -26,14 +26,20 @@ bash <(curl -fsSL https://cdn.link-ai.tech/code/cow/run.sh)
 
 ## 管理命令
 
-安装完成后，可使用以下命令管理服务：
+安装完成后，使用 `cow` CLI 管理服务：
 
 | 命令 | 说明 |
 | --- | --- |
-| `./run.sh start` | 启动服务 |
-| `./run.sh stop` | 停止服务 |
-| `./run.sh restart` | 重启服务 |
-| `./run.sh status` | 查看运行状态 |
-| `./run.sh logs` | 查看实时日志 |
-| `./run.sh config` | 重新配置 |
-| `./run.sh update` | 更新项目代码 |
+| `cow start` | 启动服务 |
+| `cow stop` | 停止服务 |
+| `cow restart` | 重启服务 |
+| `cow status` | 查看运行状态 |
+| `cow logs` | 查看实时日志 |
+| `cow update` | 更新代码并重启 |
+| `cow install-browser` | 安装浏览器工具依赖 |
+
+更多命令和用法参考 [命令文档](/commands/index)。
+
+<Note>
+  如果 `cow` 命令不可用，也可以使用 `./run.sh <命令>` 作为替代（如 `./run.sh start`、`./run.sh stop`），二者功能等效。
+</Note>

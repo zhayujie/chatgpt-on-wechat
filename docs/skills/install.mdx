@@ -1,0 +1,53 @@
+---
+title: 安装技能
+description: 通过命令一键安装来自多种来源的技能
+---
+
+CowAgent 支持通过统一的 `install` 命令安装来自 **Cow 技能广场、GitHub、ClawHub** 以及任意 URL 上的技能。在对话中使用 `/skill install`，在终端中使用 `cow skill install`。
+
+## 从Cow技能广场安装
+
+浏览技能广场，找到想要的技能后直接安装：
+
+```text
+/skill list --remote
+/skill install pptx
+```
+
+## 从 GitHub 安装
+
+支持仓库级批量安装和指定子目录安装：
+
+```text
+/skill install larksuite/cli
+/skill install https://github.com/larksuite/cli/tree/main/skills/lark-im
+```
+
+## 从 ClawHub 安装
+
+```text
+/skill install clawhub:baidu-search
+```
+
+## 从 URL 安装
+
+支持 zip 压缩包和 SKILL.md 文件链接：
+
+```text
+/skill install https://cdn.link-ai.tech/skills/pptx.zip
+/skill install https://example.com/path/to/SKILL.md
+```
+
+## 管理技能
+
+```text
+/skill list                  # 查看已安装技能
+/skill info pptx             # 查看技能详情
+/skill enable pptx           # 启用技能
+/skill disable pptx          # 禁用技能
+/skill uninstall pptx        # 卸载技能
+```
+
+<Tip>
+  以上所有命令在终端中使用时，将 `/skill` 替换为 `cow skill` 即可。完整命令说明参考 [技能管理命令](/commands/skill)。
+</Tip>
