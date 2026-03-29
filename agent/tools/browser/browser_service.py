@@ -10,6 +10,7 @@ import os
 import sys
 import re
 import uuid
+import threading
 from typing import Optional, Dict, Any, List
 
 from common.log import logger
@@ -206,13 +207,21 @@ class BrowserService:
         self._page: Optional[Page] = None
         self._headless: Optional[bool] = None
         self._screenshot_dir: Optional[str] = None
+        self._owner_thread: Optional[int] = None
 
     # ------------------------------------------------------------------
     # Lifecycle
     # ------------------------------------------------------------------
 
     def _ensure_browser(self):
-        """Lazily launch browser on first use."""
+        """Lazily launch browser on first use. Re-launch if called from a different thread."""
+        current_thread = threading.current_thread().ident
+
+        # Playwright sync API is single-threaded; if called from a different thread, restart
+        if self._owner_thread and self._owner_thread != current_thread and self._playwright:
+            logger.info("[Browser] Thread changed, restarting browser instance")
+            self.close()
+
         if self._page and not self._page.is_closed():
             return
 
@@ -248,6 +257,7 @@ class BrowserService:
             ),
         )
         self._page = self._context.new_page()
+        self._owner_thread = current_thread
         logger.info("[Browser] Browser ready")
 
     @property
@@ -276,6 +286,7 @@ class BrowserService:
         self._context = None
         self._browser = None
         self._playwright = None
+        self._owner_thread = None
         logger.info("[Browser] Browser closed")
 
     # ------------------------------------------------------------------
