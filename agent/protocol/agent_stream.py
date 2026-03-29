@@ -300,13 +300,13 @@ class AgentStreamExecutor:
                                     f"with same arguments. This may indicate a loop."
                                 )
                         
-                        # Check if this is a file to send (from read tool)
+                        # Check if this is a file to send
                         if result.get("status") == "success" and isinstance(result.get("result"), dict):
                             result_data = result.get("result")
                             if result_data.get("type") == "file_to_send":
-                                # Store file metadata for later sending
                                 self.files_to_send.append(result_data)
                                 logger.info(f"📎 检测到待发送文件: {result_data.get('file_name', result_data.get('path'))}")
+                                self._emit_event("file_to_send", result_data)
                         
                         # Check for critical error - abort entire conversation
                         if result.get("status") == "critical_error":

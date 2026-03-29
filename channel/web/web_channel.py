@@ -99,6 +99,21 @@ class WebChannel(ChatChannel):
             # SSE mode: push done event to SSE queue
             if request_id in self.sse_queues:
                 content = reply.content if reply.content is not None else ""
+
+                # Files are already pushed via on_event (file_to_send) during agent execution.
+                # Skip duplicate file pushes here; just let the done event through.
+                if reply.type in (ReplyType.IMAGE_URL, ReplyType.FILE) and content.startswith("file://"):
+                    text_content = getattr(reply, 'text_content', '')
+                    if text_content:
+                        self.sse_queues[request_id].put({
+                            "type": "done",
+                            "content": text_content,
+                            "request_id": request_id,
+                            "timestamp": time.time()
+                        })
+                    logger.debug(f"SSE skipped duplicate file for request {request_id}")
+                    return
+
                 self.sse_queues[request_id].put({
                     "type": "done",
                     "content": content,
@@ -159,6 +174,19 @@ class WebChannel(ChatChannel):
                     "status": status,
                     "result": result_str,
                     "execution_time": round(exec_time, 2)
+                })
+
+            elif event_type == "file_to_send":
+                file_path = data.get("path", "")
+                file_name = data.get("file_name", os.path.basename(file_path))
+                file_type = data.get("file_type", "file")
+                from urllib.parse import quote
+                web_url = f"/api/file?path={quote(file_path)}"
+                is_image = file_type == "image"
+                q.put({
+                    "type": "image" if is_image else "file",
+                    "content": web_url,
+                    "file_name": file_name,
                 })
 
         return on_event
@@ -377,6 +405,7 @@ class WebChannel(ChatChannel):
             '/message', 'MessageHandler',
             '/upload', 'UploadHandler',
             '/uploads/(.*)', 'UploadsHandler',
+            '/api/file', 'FileServeHandler',
             '/poll', 'PollHandler',
             '/stream', 'StreamHandler',
             '/chat', 'ChatHandler',
@@ -460,6 +489,32 @@ class UploadsHandler:
             raise
         except Exception as e:
             logger.error(f"[WebChannel] Error serving upload: {e}")
+            raise web.notfound()
+
+
+class FileServeHandler:
+    def GET(self):
+        """Serve a local file by absolute path (for agent send tool)."""
+        try:
+            params = web.input(path="")
+            file_path = params.path
+            if not file_path or not os.path.isabs(file_path):
+                raise web.notfound()
+            file_path = os.path.normpath(file_path)
+            if not os.path.isfile(file_path):
+                raise web.notfound()
+            content_type = mimetypes.guess_type(file_path)[0] or "application/octet-stream"
+            file_name = os.path.basename(file_path)
+            from urllib.parse import quote
+            web.header('Content-Type', content_type)
+            web.header('Content-Disposition', f"inline; filename*=UTF-8''{quote(file_name)}")
+            web.header('Cache-Control', 'public, max-age=3600')
+            with open(file_path, 'rb') as f:
+                return f.read()
+        except web.HTTPError:
+            raise
+        except Exception as e:
+            logger.error(f"[WebChannel] Error serving file: {e}")
             raise web.notfound()
 
 

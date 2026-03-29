@@ -23,9 +23,9 @@ class BrowserTool(BaseTool):
         "Control a browser to navigate web pages, interact with elements, and extract content. "
         "Actions: navigate, snapshot, click, fill, select, scroll, screenshot, wait, back, forward, "
         "get_text, press, evaluate.\n\n"
-        "Workflow: navigate to a URL → snapshot to see the page (elements get numeric refs) → "
-        "use refs in click/fill/select actions → snapshot again to verify.\n\n"
-        "Use snapshot (not screenshot) as the primary way to read page content."
+        "Workflow: navigate (auto-includes snapshot with element refs) → click/fill/select by ref → snapshot to verify.\n\n"
+        "Use snapshot as the primary way to read pages. Use screenshot + send to show key results to the user. "
+        "For login/CAPTCHA/authorization etc., screenshot and ask the user for help."
     )
 
     params: dict = {
@@ -136,12 +136,15 @@ class BrowserTool(BaseTool):
         if not url.startswith(("http://", "https://")):
             url = "https://" + url
         timeout = args.get("timeout", 30000)
-        result = self._get_service().navigate(url, timeout=timeout)
+        service = self._get_service()
+        result = service.navigate(url, timeout=timeout)
         if "error" in result:
             return ToolResult.fail(result["error"])
+        # Auto-snapshot after navigation so the agent gets page content in one call
+        snapshot_text = service.snapshot()
         return ToolResult.success(
             f"Navigated to: {result['url']}\nTitle: {result['title']}\nStatus: {result['status']}\n\n"
-            f"Use action 'snapshot' to see the page content."
+            f"--- Page Snapshot ---\n{snapshot_text}"
         )
 
     def _do_snapshot(self, args: Dict[str, Any]) -> ToolResult:

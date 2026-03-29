@@ -719,6 +719,7 @@ function startSSE(requestId, loadingEl, timestamp) {
     let botEl = null;
     let stepsEl = null;    // .agent-steps  (thinking summaries + tool indicators)
     let contentEl = null;  // .answer-content (final streaming answer)
+    let mediaEl = null;    // .media-content (images & file attachments)
     let accumulatedText = '';
     let currentToolEl = null;
 
@@ -734,6 +735,7 @@ function startSSE(requestId, loadingEl, timestamp) {
                 <div class="bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-3 text-sm leading-relaxed msg-content text-slate-700 dark:text-slate-200">
                     <div class="agent-steps"></div>
                     <div class="answer-content sse-streaming"></div>
+                    <div class="media-content"></div>
                 </div>
                 <div class="text-xs text-slate-400 dark:text-slate-500 mt-1.5">${formatTime(timestamp)}</div>
             </div>
@@ -741,6 +743,7 @@ function startSSE(requestId, loadingEl, timestamp) {
         messagesDiv.appendChild(botEl);
         stepsEl = botEl.querySelector('.agent-steps');
         contentEl = botEl.querySelector('.answer-content');
+        mediaEl = botEl.querySelector('.media-content');
     }
 
     es.onmessage = function(e) {
@@ -830,6 +833,29 @@ function startSSE(requestId, loadingEl, timestamp) {
                 if (isError) currentToolEl.classList.add('tool-failed');
                 currentToolEl = null;
             }
+
+        } else if (item.type === 'image') {
+            ensureBotEl();
+            const imgEl = document.createElement('img');
+            imgEl.src = item.content;
+            imgEl.alt = 'screenshot';
+            imgEl.style.cssText = 'max-width:360px;border-radius:8px;margin:8px 0;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,0.1);';
+            imgEl.onclick = () => window.open(item.content, '_blank');
+            mediaEl.appendChild(imgEl);
+            scrollChatToBottom();
+
+        } else if (item.type === 'file') {
+            ensureBotEl();
+            const fileName = item.file_name || item.content.split('/').pop();
+            const fileEl = document.createElement('a');
+            fileEl.href = item.content;
+            fileEl.download = fileName;
+            fileEl.target = '_blank';
+            fileEl.className = 'file-attachment';
+            fileEl.style.cssText = 'display:inline-flex;align-items:center;gap:6px;padding:8px 14px;margin:8px 0;border-radius:8px;background:var(--bg-secondary,#f3f4f6);color:var(--text-primary,#374151);text-decoration:none;font-size:14px;border:1px solid var(--border-color,#e5e7eb);';
+            fileEl.innerHTML = `<i class="fas fa-file-download" style="color:#6b7280;"></i> ${fileName}`;
+            mediaEl.appendChild(fileEl);
+            scrollChatToBottom();
 
         } else if (item.type === 'done') {
             es.close();

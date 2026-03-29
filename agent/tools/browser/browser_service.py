@@ -283,13 +283,21 @@ class BrowserService:
     # ------------------------------------------------------------------
 
     def navigate(self, url: str, timeout: int = 30000) -> Dict[str, Any]:
-        """Navigate to a URL and return page info."""
+        """Navigate to a URL and wait for the page to be fully rendered."""
         page = self.page
         try:
             resp = page.goto(url, wait_until="domcontentloaded", timeout=timeout)
             status = resp.status if resp else None
         except Exception as e:
             return {"error": f"Navigation failed: {e}"}
+
+        # Wait for network idle and visual stability
+        try:
+            page.wait_for_load_state("networkidle", timeout=10000)
+        except Exception:
+            pass
+        # Extra settle time for JS-rendered content (SPA frameworks, animations)
+        page.wait_for_timeout(800)
 
         return {
             "url": page.url,

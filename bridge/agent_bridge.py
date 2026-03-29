@@ -271,10 +271,13 @@ class AgentBridge:
             tool_manager.load_tools()
             
             tools = []
+            workspace_dir = kwargs.get("workspace_dir")
             for tool_name in tool_manager.tool_classes.keys():
                 try:
                     tool = tool_manager.create_tool(tool_name)
                     if tool:
+                        if workspace_dir and hasattr(tool, 'cwd'):
+                            tool.cwd = workspace_dir
                         tools.append(tool)
                 except Exception as e:
                     logger.warning(f"[AgentBridge] Failed to load tool {tool_name}: {e}")
