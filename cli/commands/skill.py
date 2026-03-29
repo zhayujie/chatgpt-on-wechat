@@ -828,8 +828,11 @@ def _route_install(name: str, result: InstallResult):
         subpath = None
         if "#" in raw:
             raw, subpath = raw.split("#", 1)
-        _check_github_spec(raw)
-        _install_github(raw, result, subpath=subpath)
+        if re.match(r"^[a-zA-Z0-9_\-]+/[a-zA-Z0-9_.\-]+$", raw):
+            _install_github(raw, result, subpath=subpath)
+        else:
+            _check_skill_name(raw)
+            _install_hub(raw, result, provider="github")
         return
 
     # --- clawhub: prefix ---
@@ -928,11 +931,9 @@ def _install_hub(name, result: InstallResult, provider=None):
             parsed_url = _parse_github_url(source_url)
             if parsed_url:
                 owner, repo, branch, subpath = parsed_url
-                result.messages.append(f"Source: GitHub ({source_url})")
                 _install_github(f"{owner}/{repo}", result, subpath=subpath, skill_name=name, branch=branch)
             else:
                 _check_github_spec(source_url)
-                result.messages.append(f"Source: GitHub ({source_url})")
                 _install_github(source_url, result, skill_name=name)
             return
 
@@ -967,11 +968,9 @@ def _install_hub(name, result: InstallResult, provider=None):
             parsed_url = _parse_github_url(source_url)
             if parsed_url:
                 owner, repo, branch, subpath = parsed_url
-                result.messages.append(f"Source: GitHub ({source_url})")
                 _install_github(f"{owner}/{repo}", result, subpath=subpath, skill_name=name, branch=branch)
             else:
                 _check_github_spec(source_url)
-                result.messages.append(f"Source: GitHub ({source_url})")
                 _install_github(source_url, result, skill_name=name)
             return
 
