@@ -171,6 +171,7 @@ def _build_tooling_section(tools: List[Any], language: str) -> List[str]:
         "env_config": "管理API密钥和技能配置",
         "scheduler": "管理定时任务和提醒",
         "send": "发送本地文件给用户（仅限本地文件，URL直接放在回复文本中）",
+        "vision": "分析图片内容（识别、描述、OCR文字提取等）",
     }
 
     # Preferred display order
@@ -179,7 +180,7 @@ def _build_tooling_section(tools: List[Any], language: str) -> List[str]:
         "bash", "terminal",
         "web_search", "web_fetch", "browser",
         "memory_search", "memory_get",
-        "env_config", "scheduler", "send",
+        "env_config", "scheduler", "send", "vision",
     ]
 
     # Build name -> summary mapping for available tools

@@ -7,6 +7,7 @@ import subprocess
 import click
 
 MIN_PLAYWRIGHT_VERSION = "1.49.0"
+MIN_GLIBC_VERSION = (2, 28)
 
 
 def _has_display() -> bool:
@@ -40,10 +41,44 @@ def _version_tuple(v: str):
         return (0, 0, 0)
 
 
+def _get_glibc_version():
+    """Return glibc version as (major, minor) tuple, or None if unavailable."""
+    if sys.platform != "linux":
+        return None
+    try:
+        import ctypes
+        libc = ctypes.CDLL("libc.so.6")
+        gnu_get_libc_version = libc.gnu_get_libc_version
+        gnu_get_libc_version.restype = ctypes.c_char_p
+        ver = gnu_get_libc_version().decode()
+        parts = ver.split(".")
+        return (int(parts[0]), int(parts[1]))
+    except Exception:
+        return None
+
+
 @click.command("install-browser")
 def install_browser():
     """Install browser tool dependencies (Playwright + Chromium)."""
     python = sys.executable
+
+    # Pre-check: glibc version on Linux
+    if sys.platform == "linux":
+        glibc = _get_glibc_version()
+        if glibc and glibc < MIN_GLIBC_VERSION:
+            glibc_str = f"{glibc[0]}.{glibc[1]}"
+            click.echo(click.style(
+                f"Your system glibc version is {glibc_str}, "
+                f"but Playwright requires glibc >= {MIN_GLIBC_VERSION[0]}.{MIN_GLIBC_VERSION[1]}.\n"
+                f"(e.g. Ubuntu 18.04 ships glibc 2.27, CentOS 7 ships glibc 2.17)\n\n"
+                f"Options:\n"
+                f"  1. Upgrade your OS (e.g. Ubuntu 20.04+, Debian 10+, CentOS 8+)\n"
+                f"  2. Use Docker with a newer Linux image\n"
+                f"  3. Install an older playwright version manually (not recommended):\n"
+                f"     pip install playwright==1.30.0 && playwright install chromium",
+                fg="red",
+            ))
+            raise SystemExit(1)
 
     # Step 1: Install / upgrade playwright package
     click.echo(click.style("[1/3] Installing playwright Python package...", fg="yellow"))
@@ -84,7 +119,7 @@ def install_browser():
             cmd.append("--only-shell")
             click.echo("  (headless shell for Linux server)")
         else:
-            click.echo("  (full Chromium - upgrade to playwright>=1.57 for headless-only shell)")
+            click.echo("  (full Chromium - upgrade to playwright>=1.57 for smaller headless-only install)")
     elif sys.platform == "linux":
         click.echo("  (full browser for Linux desktop)")
 
