@@ -6,6 +6,7 @@ and cleans up on close(). Headless mode is auto-detected based on platform and
 display availability.
 """
 
+import asyncio
 import os
 import sys
 import re
@@ -220,7 +221,7 @@ class BrowserService:
         # Playwright sync API is single-threaded; if called from a different thread, restart
         if self._owner_thread and self._owner_thread != current_thread and self._playwright:
             logger.info("[Browser] Thread changed, restarting browser instance")
-            self.close()
+            self._force_cleanup()
 
         if self._page and not self._page.is_closed():
             return
@@ -265,8 +266,45 @@ class BrowserService:
         self._ensure_browser()
         return self._page
 
+    def _force_cleanup(self):
+        """Force-release resources when the owner thread has already exited.
+
+        Normal close() calls Playwright's sync API which requires the original
+        thread to still be alive.  When the thread is gone we can only kill the
+        underlying browser process and discard all references.
+        """
+        logger.info("[Browser] Force-cleaning stale browser (owner thread exited)")
+        try:
+            if self._browser and self._browser.is_connected():
+                pid = self._browser.process and self._browser.process.pid
+                if pid:
+                    import signal, os as _os
+                    try:
+                        _os.kill(pid, signal.SIGKILL)
+                        logger.debug(f"[Browser] Killed browser process {pid}")
+                    except OSError:
+                        pass
+        except Exception as e:
+            logger.debug(f"[Browser] force cleanup browser kill: {e}")
+        self._page = None
+        self._context = None
+        self._browser = None
+        try:
+            if self._playwright:
+                self._playwright.stop()
+        except Exception:
+            pass
+        self._playwright = None
+        self._owner_thread = None
+
     def close(self):
         """Release all browser resources."""
+        try:
+            loop = asyncio.get_event_loop()
+            old_handler = loop.get_exception_handler()
+            loop.set_exception_handler(lambda l, c: None)
+        except Exception:
+            loop, old_handler = None, None
         try:
             if self._context:
                 self._context.close()
@@ -287,6 +325,11 @@ class BrowserService:
         self._browser = None
         self._playwright = None
         self._owner_thread = None
+        if loop and old_handler:
+            try:
+                loop.set_exception_handler(old_handler)
+            except Exception:
+                pass
         logger.info("[Browser] Browser closed")
 
     # ------------------------------------------------------------------
@@ -294,7 +337,7 @@ class BrowserService:
     # ------------------------------------------------------------------
 
     def navigate(self, url: str, timeout: int = 30000) -> Dict[str, Any]:
-        """Navigate to a URL and wait for the page to be fully rendered."""
+        """Navigate to a URL and wait for the page to be ready."""
         page = self.page
         try:
             resp = page.goto(url, wait_until="domcontentloaded", timeout=timeout)
@@ -302,17 +345,24 @@ class BrowserService:
         except Exception as e:
             return {"error": f"Navigation failed: {e}"}
 
-        # Wait for network idle and visual stability
         try:
-            page.wait_for_load_state("networkidle", timeout=10000)
+            page.wait_for_load_state("networkidle", timeout=8000)
         except Exception:
             pass
-        # Extra settle time for JS-rendered content (SPA frameworks, animations)
-        page.wait_for_timeout(800)
+        page.wait_for_timeout(500)
+
+        try:
+            title = page.title()
+        except Exception:
+            title = ""
+        try:
+            current_url = page.url
+        except Exception:
+            current_url = url
 
         return {
-            "url": page.url,
-            "title": page.title(),
+            "url": current_url,
+            "title": title,
             "status": status,
         }
 
