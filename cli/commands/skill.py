@@ -122,7 +122,7 @@ def _clone_repo(git_url: str):
     return tmp_dir, repo_dir
 
 
-def _download_repo_zip(spec: str, branch: str = "main", host: str = "github"):
+def _download_repo_zip(spec: str, branch: str = "main", host: str = "github", timeout: int = 120):
     """Download a GitHub/GitLab repo as zip and extract it.
 
     Returns (tmp_dir, repo_root) where tmp_dir is the temp directory to clean up
@@ -132,7 +132,11 @@ def _download_repo_zip(spec: str, branch: str = "main", host: str = "github"):
         zip_url = f"https://gitlab.com/{spec}/-/archive/{branch}/{spec.split('/')[-1]}-{branch}.zip"
     else:
         zip_url = f"https://github.com/{spec}/archive/refs/heads/{branch}.zip"
-    resp = requests.get(zip_url, timeout=120, allow_redirects=True)
+    if isinstance(timeout, (list, tuple)):
+        req_timeout = timeout
+    else:
+        req_timeout = (min(timeout, 5), timeout)
+    resp = requests.get(zip_url, timeout=req_timeout, allow_redirects=True)
     resp.raise_for_status()
 
     tmp_dir = tempfile.mkdtemp(prefix="cow-skill-")
@@ -928,13 +932,52 @@ def _install_hub(name, result: InstallResult, provider=None):
 
         if source_type == "github":
             source_url = data.get("source_url", "")
-            parsed_url = _parse_github_url(source_url)
-            if parsed_url:
-                owner, repo, branch, subpath = parsed_url
-                _install_github(f"{owner}/{repo}", result, subpath=subpath, skill_name=name, branch=branch)
-            else:
-                _check_github_spec(source_url)
-                _install_github(source_url, result, skill_name=name)
+            has_mirror = data.get("has_mirror", False)
+            gh_err = None
+
+            gh_timeout = 15 if has_mirror else 120
+            try:
+                parsed_url = _parse_github_url(source_url)
+                if parsed_url:
+                    owner, repo, branch, subpath = parsed_url
+                    _install_github(f"{owner}/{repo}", result, subpath=subpath, skill_name=name, branch=branch, timeout=gh_timeout)
+                else:
+                    _check_github_spec(source_url)
+                    _install_github(source_url, result, skill_name=name, timeout=gh_timeout)
+                return
+            except Exception as e:
+                gh_err = e
+                if not has_mirror:
+                    raise SkillInstallError(f"GitHub download failed: {e}")
+
+            # Fallback: download mirror from Skill Hub
+            result.messages.append(f"GitHub download failed ({gh_err}), trying mirror...")
+            try:
+                mirror_resp = requests.post(
+                    f"{SKILL_HUB_API}/skills/{name}/download",
+                    json={"mirror": True},
+                    timeout=60,
+                )
+                mirror_resp.raise_for_status()
+            except Exception as e:
+                raise SkillInstallError(
+                    f"GitHub download failed ({gh_err}) and mirror also failed: {e}"
+                )
+
+            mirror_ct = mirror_resp.headers.get("Content-Type", "")
+            if "application/zip" not in mirror_ct:
+                raise SkillInstallError(
+                    f"GitHub download failed ({gh_err}) and mirror returned unexpected content."
+                )
+
+            expected_checksum = mirror_resp.headers.get("X-Checksum-Sha256")
+            _check_checksum(mirror_resp.content, expected_checksum)
+            installed_before = len(result.installed)
+            _install_zip_bytes(mirror_resp.content, name, skills_dir, result=result, source_label="cowhub")
+            if len(result.installed) == installed_before:
+                _register_installed_skill(name, source="cowhub")
+                result.installed.append(name)
+                result.messages.append(f"Installed '{name}' from mirror.")
             return
 
         if source_type == "registry":
@@ -989,7 +1032,7 @@ def _install_hub(name, result: InstallResult, provider=None):
     raise SkillInstallError("Unexpected response from Skill Hub.")
 
 
-def _install_github(spec, result: InstallResult, subpath=None, skill_name=None, branch="main", source="github"):
+def _install_github(spec, result: InstallResult, subpath=None, skill_name=None, branch="main", source="github", timeout=120):
     """Install skill(s) from a GitHub repo.
 
     Strategy: zip download first (no API rate limit), Contents API as fallback.
@@ -1008,7 +1051,7 @@ def _install_github(spec, result: InstallResult, subpath=None, skill_name=None, 
     tmp_dir = None
     repo_root = None
     try:
-        tmp_dir, repo_root = _download_repo_zip(spec, branch)
+        tmp_dir, repo_root = _download_repo_zip(spec, branch, timeout=timeout)
     except Exception:
         result.messages.append("Zip download failed, falling back to Contents API...")
 
