@@ -548,14 +548,26 @@ def _check_github_spec(spec: str):
         raise SkillInstallError(f"Invalid GitHub spec '{spec}'. Expected format: owner/repo")
 
 
+_JUNK_NAMES = {'.DS_Store', 'Thumbs.db', 'desktop.ini'}
+
+
+def _is_junk_entry(filename: str) -> bool:
+    parts = filename.replace('\\', '/').split('/')
+    return any(p in _JUNK_NAMES or p == '__MACOSX' or p.startswith('._.') for p in parts)
+
+
 def _safe_extractall(zf: zipfile.ZipFile, dest: str):
-    """Extract zip while guarding against Zip Slip (path traversal)."""
+    """Extract zip while guarding against Zip Slip and filtering junk files."""
     dest = os.path.realpath(dest)
+    members = []
     for member in zf.infolist():
+        if _is_junk_entry(member.filename):
+            continue
         target = os.path.realpath(os.path.join(dest, member.filename))
         if not target.startswith(dest + os.sep) and target != dest:
             raise ValueError(f"Unsafe zip entry detected: {member.filename}")
-    zf.extractall(dest)
+        members.append(member)
+    zf.extractall(dest, members=members)
 
 
 def _verify_checksum(content: bytes, expected: str):
@@ -987,21 +999,60 @@ def _install_hub(name, result: InstallResult, provider=None):
                 if parsed.scheme != "https":
                     raise SkillInstallError("Refusing to download from non-HTTPS URL.")
                 src_provider = data.get("source_provider", "registry")
+                has_mirror = data.get("has_mirror", False)
                 expected_checksum = data.get("checksum") or data.get("sha256")
                 result.messages.append(f"Source: {src_provider}")
                 result.messages.append("Downloading skill package...")
+                dl_err = None
+                dl_timeout = 15 if has_mirror else 60
                 try:
-                    dl_resp = requests.get(download_url, timeout=60, allow_redirects=True)
+                    dl_resp = requests.get(
+                        download_url,
+                        timeout=(min(dl_timeout, 5), dl_timeout),
+                        allow_redirects=True,
+                    )
                     dl_resp.raise_for_status()
                 except Exception as e:
-                    raise SkillInstallError(f"Failed to download from {src_provider}: {e}")
-                _check_checksum(dl_resp.content, expected_checksum)
+                    dl_err = e
+                    if not has_mirror:
+                        raise SkillInstallError(f"Failed to download from {src_provider}: {e}")
+
+                if dl_err is None:
+                    _check_checksum(dl_resp.content, expected_checksum)
+                    installed_before = len(result.installed)
+                    _install_zip_bytes(dl_resp.content, name, skills_dir, result=result, source_label=src_provider)
+                    if len(result.installed) == installed_before:
+                        _register_installed_skill(name, source=src_provider)
+                        result.installed.append(name)
+                        result.messages.append(f"Installed '{name}' from {src_provider}.")
+                    return
+
+                # Fallback: download mirror from Skill Hub
+                result.messages.append(f"Direct download failed ({dl_err}), trying mirror...")
+                try:
+                    mirror_resp = requests.post(
+                        f"{SKILL_HUB_API}/skills/{name}/download",
+                        json={"mirror": True},
+                        timeout=60,
+                    )
+                    mirror_resp.raise_for_status()
+                except Exception as e:
+                    raise SkillInstallError(
+                        f"Direct download failed ({dl_err}) and mirror also failed: {e}"
+                    )
+                mirror_ct = mirror_resp.headers.get("Content-Type", "")
+                if "application/zip" not in mirror_ct:
+                    raise SkillInstallError(
+                        f"Direct download failed ({dl_err}) and mirror returned unexpected content."
+                    )
+                expected_checksum = mirror_resp.headers.get("X-Checksum-Sha256")
+                _check_checksum(mirror_resp.content, expected_checksum)
                 installed_before = len(result.installed)
-                _install_zip_bytes(dl_resp.content, name, skills_dir, result=result, source_label=src_provider)
+                _install_zip_bytes(mirror_resp.content, name, skills_dir, result=result, source_label="cowhub")
                 if len(result.installed) == installed_before:
-                    _register_installed_skill(name, source=src_provider)
+                    _register_installed_skill(name, source="cowhub")
                     result.installed.append(name)
-                    result.messages.append(f"Installed '{name}' from {src_provider}.")
+                    result.messages.append(f"Installed '{name}' from mirror.")
             else:
                 raise SkillInstallError("Unsupported registry provider.")
             return
