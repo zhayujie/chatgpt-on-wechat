@@ -464,6 +464,8 @@ let slashActiveIdx = 0;
 let slashFiltered = [];
 let slashJustSelected = false;
 let slashLastFilter = '';
+let slashLastMouseX = -1;
+let slashLastMouseY = -1;
 
 function showSlashMenu(filter) {
     const q = filter.toLowerCase();
@@ -482,6 +484,7 @@ function showSlashMenu(filter) {
     if (changed) slashActiveIdx = 0;
     slashActiveIdx = Math.min(slashActiveIdx, slashFiltered.length - 1);
 
+    slashNavByKeyboard = true;
     renderSlashItems();
     slashMenu.classList.remove('hidden');
 }
@@ -492,6 +495,9 @@ function hideSlashMenu() {
     slashFiltered = [];
     slashActiveIdx = -1;
     slashLastFilter = '';
+    slashNavByKeyboard = false;
+    slashLastMouseX = -1;
+    slashLastMouseY = -1;
 }
 
 function isSlashMenuVisible() {
@@ -512,7 +518,25 @@ function renderSlashItems() {
 }
 
 // Delegated events on the persistent slashMenu container (not destroyed by innerHTML)
+// Use coordinate comparison to distinguish real mouse movement from DOM-rebuild phantom events.
+slashMenu.addEventListener('mousemove', (e) => {
+    if (e.clientX === slashLastMouseX && e.clientY === slashLastMouseY) return;
+    slashLastMouseX = e.clientX;
+    slashLastMouseY = e.clientY;
+    if (!slashNavByKeyboard) return;
+    slashNavByKeyboard = false;
+    const item = e.target.closest('.slash-menu-item');
+    if (!item) return;
+    const idx = parseInt(item.dataset.idx);
+    if (idx === slashActiveIdx) return;
+    slashActiveIdx = idx;
+    slashMenu.querySelectorAll('.slash-menu-item').forEach(el => {
+        el.classList.toggle('active', parseInt(el.dataset.idx) === idx);
+    });
+});
+
 slashMenu.addEventListener('mouseover', (e) => {
+    if (slashNavByKeyboard) return;
     const item = e.target.closest('.slash-menu-item');
     if (!item) return;
     const idx = parseInt(item.dataset.idx);
@@ -565,12 +589,14 @@ chatInput.addEventListener('keydown', function(e) {
     if (isSlashMenuVisible()) {
         if (e.key === 'ArrowDown') {
             e.preventDefault();
+            slashNavByKeyboard = true;
             slashActiveIdx = Math.min(slashActiveIdx + 1, slashFiltered.length - 1);
             renderSlashItems();
             return;
         }
         if (e.key === 'ArrowUp') {
             e.preventDefault();
+            slashNavByKeyboard = true;
             slashActiveIdx = Math.max(slashActiveIdx - 1, 0);
             renderSlashItems();
             return;
