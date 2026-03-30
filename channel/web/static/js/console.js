@@ -507,20 +507,28 @@ function renderSlashItems() {
             `<span class="desc">${escapeHtml(c.desc)}</span></div>`
         ).join('');
 
-    slashMenu.querySelectorAll('.slash-menu-item').forEach(el => {
-        el.addEventListener('mouseenter', () => {
-            slashActiveIdx = parseInt(el.dataset.idx);
-            renderSlashItems();
-        });
-        el.addEventListener('mousedown', (e) => {
-            e.preventDefault();
-            selectSlashCommand(parseInt(el.dataset.idx));
-        });
-    });
-
     const activeEl = slashMenu.querySelector('.slash-menu-item.active');
     if (activeEl) activeEl.scrollIntoView({ block: 'nearest' });
 }
+
+// Delegated events on the persistent slashMenu container (not destroyed by innerHTML)
+slashMenu.addEventListener('mouseover', (e) => {
+    const item = e.target.closest('.slash-menu-item');
+    if (!item) return;
+    const idx = parseInt(item.dataset.idx);
+    if (idx === slashActiveIdx) return;
+    slashActiveIdx = idx;
+    slashMenu.querySelectorAll('.slash-menu-item').forEach(el => {
+        el.classList.toggle('active', parseInt(el.dataset.idx) === idx);
+    });
+});
+
+slashMenu.addEventListener('mousedown', (e) => {
+    const item = e.target.closest('.slash-menu-item');
+    if (!item) return;
+    e.preventDefault();
+    selectSlashCommand(parseInt(item.dataset.idx));
+});
 
 function selectSlashCommand(idx) {
     if (idx < 0 || idx >= slashFiltered.length) return;
