@@ -263,8 +263,9 @@ def _scan_skills_in_dir(directory: str) -> list:
     return found
 
 
-def _batch_install_skills(discovered, spec, skills_dir, source, result: InstallResult):
+def _batch_install_skills(discovered, spec, skills_dir, source, result: InstallResult, display_name: str = ""):
     """Install a list of discovered skills into skills_dir."""
+    single = len(discovered) == 1
     result.messages.append(f"Found {len(discovered)} skill(s) in {spec}:")
     for sname, sdir in discovered:
         safe_name = re.sub(r'[^a-zA-Z0-9_\-]', '-', sname)[:64]
@@ -275,7 +276,7 @@ def _batch_install_skills(discovered, spec, skills_dir, source, result: InstallR
         if os.path.exists(target_dir):
             shutil.rmtree(target_dir)
         shutil.copytree(sdir, target_dir)
-        _register_installed_skill(safe_name, source=source)
+        _register_installed_skill(safe_name, source=source, display_name=display_name if single else "")
         result.installed.append(safe_name)
         result.messages.append(f"  + {safe_name}")
 
@@ -1006,13 +1007,11 @@ def _install_hub(name, result: InstallResult, provider=None):
             expected_checksum = mirror_resp.headers.get("X-Checksum-Sha256")
             _check_checksum(mirror_resp.content, expected_checksum)
             installed_before = len(result.installed)
-            _install_zip_bytes(mirror_resp.content, name, skills_dir, result=result, source_label="cowhub")
+            _install_zip_bytes(mirror_resp.content, name, skills_dir, result=result, source_label="cowhub", display_name=hub_display_name)
             if len(result.installed) == installed_before:
                 _register_installed_skill(name, source="cowhub", display_name=hub_display_name)
                 result.installed.append(name)
                 result.messages.append(f"Installed '{name}' from mirror.")
-            elif hub_display_name:
-                _register_installed_skill(name, display_name=hub_display_name)
             return
 
         if source_type == "registry":
@@ -1043,13 +1042,11 @@ def _install_hub(name, result: InstallResult, provider=None):
                 if dl_err is None:
                     _check_checksum(dl_resp.content, expected_checksum)
                     installed_before = len(result.installed)
-                    _install_zip_bytes(dl_resp.content, name, skills_dir, result=result, source_label=src_provider)
+                    _install_zip_bytes(dl_resp.content, name, skills_dir, result=result, source_label=src_provider, display_name=hub_display_name)
                     if len(result.installed) == installed_before:
                         _register_installed_skill(name, source=src_provider, display_name=hub_display_name)
                         result.installed.append(name)
                         result.messages.append(f"Installed '{name}' from {src_provider}.")
-                    elif hub_display_name:
-                        _register_installed_skill(name, display_name=hub_display_name)
                     return
 
                 # Fallback: download mirror from Skill Hub
@@ -1073,13 +1070,11 @@ def _install_hub(name, result: InstallResult, provider=None):
                 expected_checksum = mirror_resp.headers.get("X-Checksum-Sha256")
                 _check_checksum(mirror_resp.content, expected_checksum)
                 installed_before = len(result.installed)
-                _install_zip_bytes(mirror_resp.content, name, skills_dir, result=result, source_label="cowhub")
+                _install_zip_bytes(mirror_resp.content, name, skills_dir, result=result, source_label="cowhub", display_name=hub_display_name)
                 if len(result.installed) == installed_before:
                     _register_installed_skill(name, source="cowhub", display_name=hub_display_name)
                     result.installed.append(name)
                     result.messages.append(f"Installed '{name}' from mirror.")
-                elif hub_display_name:
-                    _register_installed_skill(name, display_name=hub_display_name)
             else:
                 raise SkillInstallError("Unsupported registry provider.")
             return
@@ -1264,7 +1259,7 @@ def _install_git_clone(git_url: str, result: InstallResult, display_name: str = 
         shutil.rmtree(tmp_dir, ignore_errors=True)
 
 
-def _install_zip_bytes(content, name, skills_dir, result: InstallResult = None, source_label: str = "zip"):
+def _install_zip_bytes(content, name, skills_dir, result: InstallResult = None, source_label: str = "zip", display_name: str = ""):
     """Extract a zip archive and install skill(s).
 
     Supports three scenarios:
@@ -1289,7 +1284,7 @@ def _install_zip_bytes(content, name, skills_dir, result: InstallResult = None, 
         discovered = _scan_skills_in_repo(pkg_root) or _scan_skills_in_dir(pkg_root)
 
         if discovered and len(discovered) > 1 and result is not None:
-            _batch_install_skills(discovered, name, skills_dir, source_label, result)
+            _batch_install_skills(discovered, name, skills_dir, source_label, result, display_name=display_name)
             return
 
         if discovered and len(discovered) == 1:
@@ -1301,7 +1296,7 @@ def _install_zip_bytes(content, name, skills_dir, result: InstallResult = None, 
             if os.path.exists(target):
                 shutil.rmtree(target)
             shutil.copytree(sdir, target)
-            _register_installed_skill(safe_name, source=source_label)
+            _register_installed_skill(safe_name, source=source_label, display_name=display_name)
             if result is not None:
                 result.installed.append(safe_name)
                 result.messages.append(f"Installed '{safe_name}' from {source_label}.")
