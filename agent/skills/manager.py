@@ -102,13 +102,17 @@ class SkillManager:
             else:
                 enabled = entry.metadata.default_enabled if entry.metadata else True
 
-            merged[name] = {
+            entry_dict = {
                 "name": name,
                 "description": skill.description,
                 "source": prev.get("source") or skill.source,
                 "enabled": enabled,
                 "category": category,
             }
+            display_name = prev.get("display_name")
+            if display_name:
+                entry_dict["display_name"] = display_name
+            merged[name] = entry_dict
 
         self.skills_config = merged
         self._save_skills_config()

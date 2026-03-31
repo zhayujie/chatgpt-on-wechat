@@ -56,6 +56,10 @@ const I18N = {
         weixin_scan_scanned: '已扫码，请在手机上确认', weixin_scan_expired: '二维码已过期，正在刷新...',
         weixin_scan_success: '登录成功，正在启动通道...', weixin_scan_fail: '获取二维码失败',
         weixin_qr_tip: '二维码约2分钟后过期',
+        wecom_scan_btn: '扫码创建企微机器人', wecom_scan_desc: '使用企业微信扫码，一键创建智能机器人',
+        wecom_scan_success: '创建成功，正在启动通道...',
+        wecom_scan_fail: '创建失败',
+        wecom_mode_scan: '扫码接入', wecom_mode_manual: '手动填写',
         tasks_title: '定时任务', tasks_desc: '查看和管理定时任务',
         tasks_coming: '即将推出', tasks_coming_desc: '定时任务管理功能即将在此提供',
         logs_title: '日志', logs_desc: '实时日志输出 (run.log)',
@@ -107,6 +111,10 @@ const I18N = {
         weixin_scan_scanned: 'Scanned, please confirm on your phone', weixin_scan_expired: 'QR code expired, refreshing...',
         weixin_scan_success: 'Login successful, starting channel...', weixin_scan_fail: 'Failed to load QR code',
         weixin_qr_tip: 'QR code expires in ~2 minutes',
+        wecom_scan_btn: 'Scan to Create WeCom Bot', wecom_scan_desc: 'Scan with WeCom to create a bot instantly',
+        wecom_scan_success: 'Bot created, starting channel...',
+        wecom_scan_fail: 'Bot creation failed',
+        wecom_mode_scan: 'Scan QR', wecom_mode_manual: 'Manual',
         tasks_title: 'Scheduled Tasks', tasks_desc: 'View and manage scheduled tasks',
         tasks_coming: 'Coming Soon', tasks_coming_desc: 'Scheduled task management will be available here',
         logs_title: 'Logs', logs_desc: 'Real-time log output (run.log)',
@@ -1684,7 +1692,7 @@ function renderSkillCard(card, sk) {
         </div>
         <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2 mb-1">
-                <span class="font-medium text-sm text-slate-700 dark:text-slate-200 truncate flex-1">${escapeHtml(sk.name)}</span>
+                <span class="font-medium text-sm text-slate-700 dark:text-slate-200 truncate flex-1">${escapeHtml(sk.display_name || sk.name)}</span>
                 <button
                     role="switch"
                     aria-checked="${enabled}"
@@ -1879,19 +1887,23 @@ function renderActiveChannels() {
         const hasFields = (ch.fields || []).length > 0;
 
         const weixinWaiting = ch.name === 'weixin' && ch.login_status && ch.login_status !== 'logged_in';
+        const wecomNeedsCreds = ch.name === 'wecom_bot' && !_wecomBotHasCreds(ch);
         let statusDot, statusText;
         if (weixinWaiting) {
             statusDot = 'bg-amber-400 animate-pulse';
             statusText = ch.login_status === 'scanned'
                 ? `<span class="text-xs text-primary-500">${t('weixin_scan_scanned')}</span>`
                 : `<span class="text-xs text-amber-500">${t('weixin_scan_waiting')}</span>`;
+        } else if (wecomNeedsCreds) {
+            statusDot = 'bg-amber-400 animate-pulse';
+            statusText = `<span class="text-xs text-amber-500">${t('channels_connecting')}</span>`;
         } else {
             statusDot = 'bg-primary-400';
             statusText = `<span class="text-xs text-primary-500">${t('channels_connected')}</span>`;
         }
 
         card.innerHTML = `
-            <div class="flex items-center gap-4${hasFields || weixinWaiting ? ' mb-5' : ''}">
+            <div class="flex items-center gap-4${hasFields || weixinWaiting || wecomNeedsCreds ? ' mb-5' : ''}">
                 <div class="w-10 h-10 rounded-xl bg-${ch.color}-50 dark:bg-${ch.color}-900/20 flex items-center justify-center flex-shrink-0">
                     <i class="fas ${ch.icon} text-${ch.color}-500 text-base"></i>
                 </div>
@@ -1917,6 +1929,15 @@ function renderActiveChannels() {
                            cursor-pointer transition-colors duration-150">
                     ${t('weixin_scan_title')}
                 </button>
+            </div>` : ''}
+            ${wecomNeedsCreds ? `<div id="wecom-active-auth" class="flex flex-col items-center py-2">
+                <p class="text-sm text-slate-500 dark:text-slate-400 mb-3">${t('wecom_scan_desc')}</p>
+                <button onclick="startWecomBotAuthInCard()"
+                    class="px-5 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium
+                           cursor-pointer transition-colors duration-150">
+                    <i class="fas fa-qrcode mr-2"></i>${t('wecom_scan_btn')}
+                </button>
+                <div id="wecom-card-scan-status" class="mt-3"></div>
             </div>` : ''}
             ${hasFields ? `<div class="space-y-4">
                 ${fieldsHtml}
@@ -2154,6 +2175,13 @@ function onAddChannelSelect(chName) {
         return;
     }
 
+    if (chName === 'wecom_bot') {
+        actions.classList.add('hidden');
+        const ch = channelsData.find(c => c.name === chName);
+        fieldsContainer.innerHTML = buildWecomBotPanel(ch);
+        return;
+    }
+
     const ch = channelsData.find(c => c.name === chName);
     if (!ch) return;
 
@@ -2374,6 +2402,191 @@ function connectWeixinAfterQr() {
     })
     .catch(() => {});
 }
+
+// =====================================================================
+// WeCom Bot QR Auth
+// =====================================================================
+const WECOM_BOT_SDK_URL = 'https://wwcdn.weixin.qq.com/node/wework/js/wecom-aibot-sdk@0.1.0.min.js';
+const WECOM_BOT_SOURCE = 'cowagent';
+let _wecomSdkLoaded = false;
+
+function ensureWecomSdkLoaded() {
+    return new Promise((resolve, reject) => {
+        if (_wecomSdkLoaded && window.WecomAIBotSDK) { resolve(); return; }
+        if (document.querySelector(`script[src="${WECOM_BOT_SDK_URL}"]`)) {
+            _wecomSdkLoaded = true; resolve(); return;
+        }
+        const s = document.createElement('script');
+        s.src = WECOM_BOT_SDK_URL;
+        s.onload = () => { _wecomSdkLoaded = true; resolve(); };
+        s.onerror = () => reject(new Error('Failed to load WecomAIBotSDK'));
+        document.head.appendChild(s);
+    });
+}
+
+function _wecomBotHasCreds(ch) {
+    if (!ch || !ch.fields) return false;
+    const idField = ch.fields.find(f => f.key === 'wecom_bot_id');
+    const secretField = ch.fields.find(f => f.key === 'wecom_bot_secret');
+    return !!(idField && idField.value && secretField && secretField.value);
+}
+
+function buildWecomBotPanel(ch) {
+    const scanLabel = t('wecom_mode_scan');
+    const manualLabel = t('wecom_mode_manual');
+    const hasCreds = _wecomBotHasCreds(ch);
+    const defaultMode = hasCreds ? 'manual' : 'scan';
+    return `
+        <div id="wecom-bot-panel" data-default-mode="${defaultMode}">
+            <div class="flex items-center justify-center gap-1 mb-5 bg-slate-100 dark:bg-white/5 rounded-lg p-1">
+                <button id="wecom-tab-scan" onclick="switchWecomBotMode('scan')"
+                    class="flex-1 px-3 py-1.5 rounded-md text-xs font-medium transition-colors
+                           bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm">
+                    ${scanLabel}
+                </button>
+                <button id="wecom-tab-manual" onclick="switchWecomBotMode('manual')"
+                    class="flex-1 px-3 py-1.5 rounded-md text-xs font-medium transition-colors
+                           text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
+                    ${manualLabel}
+                </button>
+            </div>
+            <div id="wecom-mode-content"></div>
+        </div>`;
+}
+
+function switchWecomBotMode(mode) {
+    const scanTab = document.getElementById('wecom-tab-scan');
+    const manualTab = document.getElementById('wecom-tab-manual');
+    const content = document.getElementById('wecom-mode-content');
+    const actions = document.getElementById('add-channel-actions');
+    if (!scanTab || !manualTab || !content) return;
+
+    const activeClasses = 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm';
+    const inactiveClasses = 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200';
+
+    if (mode === 'scan') {
+        scanTab.className = scanTab.className.replace(/text-slate-500[^\s]*/g, '').replace(/hover:\S+/g, '');
+        scanTab.className = `flex-1 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${activeClasses}`;
+        manualTab.className = `flex-1 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${inactiveClasses}`;
+        actions.classList.add('hidden');
+        content.innerHTML = `
+            <div class="flex flex-col items-center py-4">
+                <p class="text-sm text-slate-600 dark:text-slate-300 mb-2">${t('wecom_scan_desc')}</p>
+                <button onclick="startWecomBotAuth()"
+                    class="mt-3 px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium
+                           cursor-pointer transition-colors duration-150">
+                    <i class="fas fa-qrcode mr-2"></i>${t('wecom_scan_btn')}
+                </button>
+                <div id="wecom-scan-status" class="mt-3"></div>
+            </div>`;
+    } else {
+        manualTab.className = `flex-1 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${activeClasses}`;
+        scanTab.className = `flex-1 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${inactiveClasses}`;
+        const ch = channelsData.find(c => c.name === 'wecom_bot');
+        content.innerHTML = `<div class="space-y-4">${buildChannelFieldsHtml('wecom_bot', ch ? ch.fields || [] : [])}</div>`;
+        bindSecretFieldEvents(content);
+        actions.classList.remove('hidden');
+    }
+}
+
+function startWecomBotAuth() {
+    const statusEl = document.getElementById('wecom-scan-status');
+    ensureWecomSdkLoaded().then(() => {
+        WecomAIBotSDK.openBotInfoAuthWindow({
+            source: WECOM_BOT_SOURCE,
+            onCreated: function(bot) {
+                if (statusEl) {
+                    statusEl.innerHTML = `
+                        <div class="flex flex-col items-center py-2">
+                            <div class="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center mb-2">
+                                <i class="fas fa-check text-emerald-500 text-lg"></i>
+                            </div>
+                            <p class="text-sm font-medium text-emerald-600 dark:text-emerald-400">${t('wecom_scan_success')}</p>
+                        </div>`;
+                }
+                connectWecomBotAfterAuth(bot.botid, bot.secret);
+            },
+            onError: function(err) {
+                if (statusEl) {
+                    statusEl.innerHTML = `<p class="text-sm text-red-500">${t('wecom_scan_fail')}: ${err.message || err.code || ''}</p>`;
+                }
+            }
+        });
+    }).catch(err => {
+        if (statusEl) {
+            statusEl.innerHTML = `<p class="text-sm text-red-500">SDK load failed: ${err.message}</p>`;
+        }
+    });
+}
+
+function connectWecomBotAfterAuth(botId, secret) {
+    fetch('/api/channels', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            action: 'connect',
+            channel: 'wecom_bot',
+            config: { wecom_bot_id: botId, wecom_bot_secret: secret }
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'success') {
+            const ch = channelsData.find(c => c.name === 'wecom_bot');
+            if (ch) {
+                ch.active = true;
+                (ch.fields || []).forEach(f => {
+                    if (f.key === 'wecom_bot_id') f.value = botId;
+                    if (f.key === 'wecom_bot_secret') f.value = ChannelsHandler_maskSecret(secret);
+                });
+            }
+            setTimeout(() => renderActiveChannels(), 1500);
+        }
+    })
+    .catch(() => {});
+}
+
+function startWecomBotAuthInCard() {
+    const statusEl = document.getElementById('wecom-card-scan-status');
+    ensureWecomSdkLoaded().then(() => {
+        WecomAIBotSDK.openBotInfoAuthWindow({
+            source: WECOM_BOT_SOURCE,
+            onCreated: function(bot) {
+                if (statusEl) {
+                    statusEl.innerHTML = `
+                        <div class="flex flex-col items-center py-2">
+                            <div class="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center mb-2">
+                                <i class="fas fa-check text-emerald-500 text-lg"></i>
+                            </div>
+                            <p class="text-sm font-medium text-emerald-600 dark:text-emerald-400">${t('wecom_scan_success')}</p>
+                        </div>`;
+                }
+                connectWecomBotAfterAuth(bot.botid, bot.secret);
+            },
+            onError: function(err) {
+                if (statusEl) {
+                    statusEl.innerHTML = `<p class="text-sm text-red-500">${t('wecom_scan_fail')}: ${err.message || err.code || ''}</p>`;
+                }
+            }
+        });
+    }).catch(err => {
+        if (statusEl) {
+            statusEl.innerHTML = `<p class="text-sm text-red-500">SDK load failed: ${err.message}</p>`;
+        }
+    });
+}
+
+// Initialize wecom bot panel with correct default mode when inserted into DOM
+document.addEventListener('DOMContentLoaded', function() {
+    const observer = new MutationObserver(function() {
+        const panel = document.getElementById('wecom-bot-panel');
+        if (panel && !panel.dataset.initialized) {
+            panel.dataset.initialized = '1';
+            switchWecomBotMode(panel.dataset.defaultMode || 'scan');
+        }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+});
 
 // =====================================================================
 // Scheduler View

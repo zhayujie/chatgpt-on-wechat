@@ -330,28 +330,42 @@ class WecomBotChannel(ChatChannel):
 
         All intermediate segments (thinking before tool calls) and the final answer
         are accumulated into a single stream message, separated by '---'.
+        Throttles push to at most once per 100ms to avoid WebSocket congestion.
         """
         stream_id = uuid.uuid4().hex[:16]
         self._stream_states[req_id] = {
             "stream_id": stream_id,
-            "committed": "",  # finalized content from previous segments
-            "current": "",    # current segment being streamed
+            "committed": "",
+            "current": "",
+            "last_push_time": 0,
+            "last_push_len": 0,
         }
 
-        def _push_stream(state: dict):
-            """Push current stream content to wecom."""
-            self._ws_send({
-                "cmd": "aibot_respond_msg",
-                "headers": {"req_id": req_id},
-                "body": {
-                    "msgtype": "stream",
-                    "stream": {
-                        "id": state["stream_id"],
-                        "finish": False,
-                        "content": state["committed"] + state["current"],
+        def _push_stream(state: dict, force: bool = False):
+            """Push current stream content to wecom (throttled unless forced)."""
+            now = time.time()
+            if not force and now - state["last_push_time"] < 0.1:
+                return
+            content = state["committed"] + state["current"]
+            if len(content) == state["last_push_len"]:
+                return
+            state["last_push_time"] = now
+            state["last_push_len"] = len(content)
+            try:
+                self._ws_send({
+                    "cmd": "aibot_respond_msg",
+                    "headers": {"req_id": req_id},
+                    "body": {
+                        "msgtype": "stream",
+                        "stream": {
+                            "id": state["stream_id"],
+                            "finish": False,
+                            "content": content,
+                        },
                     },
-                },
-            })
+                })
+            except Exception as e:
+                logger.warning(f"[WecomBot] Stream push failed: {e}")
 
         def on_event(event: dict):
             event_type = event.get("type")
@@ -378,6 +392,7 @@ class WecomBotChannel(ChatChannel):
                 else:
                     state["committed"] += state["current"]
                     state["current"] = ""
+                _push_stream(state, force=True)
 
         return on_event
 
@@ -452,11 +467,16 @@ class WecomBotChannel(ChatChannel):
         if req_id:
             state = self._stream_states.pop(req_id, None)
             if state:
-                final_content = state["committed"] or content
+                final_content = state["committed"] if state["committed"] else content
                 stream_id = state["stream_id"]
             else:
                 final_content = content
                 stream_id = uuid.uuid4().hex[:16]
+
+            # Brief pause so the server finishes processing the last intermediate chunk
+            # before receiving the finish packet
+            time.sleep(0.15)
+
             self._ws_send({
                 "cmd": "aibot_respond_msg",
                 "headers": {"req_id": req_id},
