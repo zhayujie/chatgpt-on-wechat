@@ -111,7 +111,7 @@ def _clone_repo(git_url: str):
         import subprocess
         subprocess.run(
             ["git", "clone", "--depth", "1", git_url, repo_dir],
-            check=True, capture_output=True, timeout=120,
+            check=True, capture_output=True, timeout=30,
         )
     except FileNotFoundError:
         shutil.rmtree(tmp_dir, ignore_errors=True)
@@ -122,7 +122,7 @@ def _clone_repo(git_url: str):
     return tmp_dir, repo_dir
 
 
-def _download_repo_zip(spec: str, branch: str = "main", host: str = "github", timeout: int = 120):
+def _download_repo_zip(spec: str, branch: str = "main", host: str = "github", timeout: int = 30):
     """Download a GitHub/GitLab repo as zip and extract it.
 
     Returns (tmp_dir, repo_root) where tmp_dir is the temp directory to clean up
@@ -436,7 +436,7 @@ def _install_archive_url(url: str, result: InstallResult):
 
     result.messages.append(f"Downloading archive from {url} ...")
     try:
-        resp = requests.get(url, timeout=120, allow_redirects=True)
+        resp = requests.get(url, timeout=30, allow_redirects=True)
         resp.raise_for_status()
     except Exception as e:
         raise SkillInstallError(f"Failed to download archive: {e}")
@@ -947,7 +947,7 @@ def _install_hub(name, result: InstallResult, provider=None):
             has_mirror = data.get("has_mirror", False)
             gh_err = None
 
-            gh_timeout = 15 if has_mirror else 120
+            gh_timeout = 15 if has_mirror else 30
             try:
                 parsed_url = _parse_github_url(source_url)
                 if parsed_url:
@@ -968,7 +968,7 @@ def _install_hub(name, result: InstallResult, provider=None):
                 mirror_resp = requests.post(
                     f"{SKILL_HUB_API}/skills/{name}/download",
                     json={"mirror": True},
-                    timeout=60,
+                    timeout=30,
                 )
                 mirror_resp.raise_for_status()
             except Exception as e:
@@ -1004,7 +1004,7 @@ def _install_hub(name, result: InstallResult, provider=None):
                 result.messages.append(f"Source: {src_provider}")
                 result.messages.append("Downloading skill package...")
                 dl_err = None
-                dl_timeout = 15 if has_mirror else 60
+                dl_timeout = 15 if has_mirror else 30
                 try:
                     dl_resp = requests.get(
                         download_url,
@@ -1033,7 +1033,7 @@ def _install_hub(name, result: InstallResult, provider=None):
                     mirror_resp = requests.post(
                         f"{SKILL_HUB_API}/skills/{name}/download",
                         json={"mirror": True},
-                        timeout=60,
+                        timeout=30,
                     )
                     mirror_resp.raise_for_status()
                 except Exception as e:
@@ -1083,7 +1083,7 @@ def _install_hub(name, result: InstallResult, provider=None):
     raise SkillInstallError("Unexpected response from Skill Hub.")
 
 
-def _install_github(spec, result: InstallResult, subpath=None, skill_name=None, branch="main", source="github", timeout=120):
+def _install_github(spec, result: InstallResult, subpath=None, skill_name=None, branch="main", source="github", timeout=30):
     """Install skill(s) from a GitHub repo.
 
     Strategy: zip download first (no API rate limit), Contents API as fallback.

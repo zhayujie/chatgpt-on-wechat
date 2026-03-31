@@ -655,13 +655,19 @@ class CowCliPlugin(Plugin):
         lines.append("💡 /skill install <名称>  安装技能")
         return "\n".join(lines)
 
+    _INSTALL_TIMEOUT = 60
+
     def _skill_install(self, name: str, e_context: EventContext) -> str:
         if not name:
             return "请指定要安装的技能: /skill install <名称>"
 
+        from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeout
+        from cli.commands.skill import install_skill
+
         try:
-            from cli.commands.skill import install_skill
-            result = install_skill(name)
+            with ThreadPoolExecutor(max_workers=1) as pool:
+                future = pool.submit(install_skill, name)
+                result = future.result(timeout=self._INSTALL_TIMEOUT)
 
             if result.error:
                 return f"安装失败: {result.error}"
@@ -670,6 +676,8 @@ class CowCliPlugin(Plugin):
                 return "\n".join(result.messages) if result.messages else "未找到可安装的技能"
 
             return self._format_install_result(result)
+        except FuturesTimeout:
+            return "安装超时，请稍后重试或检查网络连接"
         except Exception as e:
             return f"安装失败: {e}"
 
