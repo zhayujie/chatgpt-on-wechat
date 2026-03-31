@@ -491,9 +491,9 @@ class CloudClient(LinkAIClient):
         try:
             from plugins import PluginManager
             mgr = PluginManager()
-            plugin = mgr.plugins.get("cow_cli")
-            if plugin and hasattr(plugin, "execute"):
-                result = plugin.execute(query, session_id=session_id)
+            instance = mgr.instances.get("COW_CLI")
+            if instance and hasattr(instance, "execute"):
+                result = instance.execute(query, session_id=session_id)
                 if result is not None:
                     send_chunk_fn({"chunk_type": "content", "delta": result, "segment_id": 0})
                     return
