@@ -4,6 +4,10 @@ LABEL maintainer="foo@bar.com"
 ARG TZ='Asia/Shanghai'
 
 ARG CHATGPT_ON_WECHAT_VER
+# Set to "false" to skip Playwright/Chromium and produce a smaller image
+ARG INSTALL_BROWSER=true
+
+ENV PLAYWRIGHT_BROWSERS_PATH=/app/ms-playwright
 
 RUN echo /etc/apt/sources.list
 # RUN sed -i 's/deb.debian.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list
@@ -12,13 +16,20 @@ ENV BUILD_PREFIX=/app
 ADD . ${BUILD_PREFIX}
 
 RUN apt-get update \
-    &&apt-get install -y --no-install-recommends bash ffmpeg espeak libavcodec-extra\
+    && apt-get install -y --no-install-recommends bash ffmpeg espeak libavcodec-extra \
     && cd ${BUILD_PREFIX} \
     && cp config-template.json config.json \
     && /usr/local/bin/python -m pip install --no-cache --upgrade pip \
     && pip install --no-cache -r requirements.txt \
     && pip install --no-cache -r requirements-optional.txt \
-    && pip install --no-cache -e .
+    && pip install --no-cache -e . \
+    && if [ "$INSTALL_BROWSER" = "true" ]; then \
+        pip install --no-cache "playwright==1.52.0" \
+        && python -m playwright install-deps chromium \
+        && mkdir -p /app/ms-playwright \
+        && python -m playwright install chromium; \
+    fi \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR ${BUILD_PREFIX}
 
@@ -28,6 +39,7 @@ RUN chmod +x /entrypoint.sh \
     && mkdir -p /home/agent/cow \
     && groupadd -r agent \
     && useradd -r -g agent -s /bin/bash -d /home/agent agent \
-    && chown -R agent:agent /home/agent ${BUILD_PREFIX} /usr/local/lib
+    && chown -R agent:agent /home/agent ${BUILD_PREFIX} /usr/local/lib \
+    && if [ -d /app/ms-playwright ]; then chown -R agent:agent /app/ms-playwright; fi
 
 ENTRYPOINT ["/entrypoint.sh"]
