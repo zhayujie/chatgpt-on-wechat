@@ -20,6 +20,7 @@ RUN if [ "$USE_CN_MIRROR" = "true" ]; then \
 
 ADD . ${BUILD_PREFIX}
 
+# All heavy installs + user creation in ONE layer to avoid chown duplication
 RUN apt-get update \
     && apt-get install -y --no-install-recommends bash ffmpeg espeak libavcodec-extra \
     && cd ${BUILD_PREFIX} \
@@ -39,17 +40,17 @@ RUN apt-get update \
             python -m playwright install chromium; \
         fi; \
     fi \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p /home/agent/cow \
+    && groupadd -r agent \
+    && useradd -r -g agent -s /bin/bash -d /home/agent agent \
+    && chown -R agent:agent /home/agent ${BUILD_PREFIX} /usr/local/lib
 
 WORKDIR ${BUILD_PREFIX}
 
 ADD docker/entrypoint.sh /entrypoint.sh
 
 RUN chmod +x /entrypoint.sh \
-    && mkdir -p /home/agent/cow \
-    && groupadd -r agent \
-    && useradd -r -g agent -s /bin/bash -d /home/agent agent \
-    && chown -R agent:agent /home/agent ${BUILD_PREFIX} /usr/local/lib \
-    && if [ -d /app/ms-playwright ]; then chown -R agent:agent /app/ms-playwright; fi
+    && chown agent:agent /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]
