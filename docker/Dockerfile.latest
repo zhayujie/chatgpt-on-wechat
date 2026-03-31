@@ -6,15 +6,17 @@ ARG TZ='Asia/Shanghai'
 ARG CHATGPT_ON_WECHAT_VER
 # Set to "false" to skip Playwright/Chromium and produce a smaller image
 ARG INSTALL_BROWSER=true
-# pip index URL (override for faster builds in CN)
-ARG PIP_INDEX_URL=https://pypi.org/simple
+# Set to "true" to use China mirrors for apt / pip / playwright (faster in CN)
+ARG USE_CN_MIRROR=false
 
 ENV PLAYWRIGHT_BROWSERS_PATH=/app/ms-playwright
-ENV PIP_INDEX_URL=${PIP_INDEX_URL}
-
-RUN echo /etc/apt/sources.list
-# RUN sed -i 's/deb.debian.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list
 ENV BUILD_PREFIX=/app
+
+# Optionally switch apt and pip to China mirrors
+RUN if [ "$USE_CN_MIRROR" = "true" ]; then \
+        sed -i 's/deb.debian.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list; \
+        pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple/; \
+    fi
 
 ADD . ${BUILD_PREFIX}
 
@@ -30,7 +32,12 @@ RUN apt-get update \
         pip install --no-cache "playwright==1.52.0" \
         && python -m playwright install-deps chromium \
         && mkdir -p /app/ms-playwright \
-        && python -m playwright install chromium; \
+        && if [ "$USE_CN_MIRROR" = "true" ]; then \
+            PLAYWRIGHT_DOWNLOAD_HOST=https://registry.npmmirror.com/-/binary/playwright \
+            python -m playwright install chromium; \
+        else \
+            python -m playwright install chromium; \
+        fi; \
     fi \
     && rm -rf /var/lib/apt/lists/*
 
