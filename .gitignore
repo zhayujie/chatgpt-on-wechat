@@ -36,6 +36,7 @@ plugins/banwords/lib/__pycache__
 !plugins/cow_cli
 client_config.json
 ref/
+**/.dev.vars
 .cursor/
 local/
 node_modules/

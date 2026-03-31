@@ -96,9 +96,21 @@ class WebChannel(ChatChannel):
                 logger.error(f"No session_id found for request {request_id}")
                 return
 
-            # SSE mode: push done event to SSE queue
+            # SSE mode: push events to SSE queue
             if request_id in self.sse_queues:
                 content = reply.content if reply.content is not None else ""
+
+                # Intermediate status lines (e.g. /install-browser phases) must NOT use "done",
+                # or the frontend closes EventSource and drops subsequent events.
+                if getattr(reply, "sse_phase", False):
+                    self.sse_queues[request_id].put({
+                        "type": "phase",
+                        "content": content,
+                        "request_id": request_id,
+                        "timestamp": time.time(),
+                    })
+                    logger.debug(f"SSE phase for request {request_id}")
+                    return
 
                 # Files are already pushed via on_event (file_to_send) during agent execution.
                 # Skip duplicate file pushes here; just let the done event through.

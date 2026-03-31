@@ -3,10 +3,11 @@ CowCli plugin - Intercept cow/slash commands in chat messages.
 
 Matches messages like:
   cow skill list
-  cow context clear
+  cow install-browser
   /skill list
   /context clear
   /status
+  /install-browser
 
 Does NOT match:
   cow是什么
@@ -30,6 +31,7 @@ KNOWN_COMMANDS = {
     "help", "version", "status", "logs",
     "start", "stop", "restart",
     "skill", "context", "config",
+    "install-browser",
 }
 
 # Commands that can only run from the CLI (terminal), not in chat
@@ -106,14 +108,27 @@ class CowCliPlugin(Plugin):
     # Command dispatch
     # ------------------------------------------------------------------
 
-    def _dispatch(self, cmd: str, args: str, e_context: EventContext) -> str:
+    def execute(self, query: str, session_id: str = "") -> str:
+        """Execute a cow/slash command string without a channel context.
+
+        Used by cloud on_chat to intercept commands before the agent runs.
+        Returns None when *query* is not a recognised command.
+        """
+        parsed = self._parse_command(query.strip())
+        if not parsed:
+            return None
+        cmd, args = parsed
+        return self._dispatch(cmd, args, e_context=None, session_id=session_id)
+
+    def _dispatch(self, cmd: str, args: str, e_context: EventContext, session_id: str = "") -> str:
         if cmd in CLI_ONLY_COMMANDS:
             return f"⚠️ `cow {cmd}` 只能在命令行终端中执行。\n请在终端运行: cow {cmd}"
 
-        handler = getattr(self, f"_cmd_{cmd}", None)
+        handler_attr = "_cmd_" + cmd.replace("-", "_")
+        handler = getattr(self, handler_attr, None)
         if handler:
             try:
-                return handler(args, e_context)
+                return handler(args, e_context, session_id=session_id)
             except Exception as e:
                 logger.error(f"[CowCli] command '{cmd}' failed: {e}")
                 return f"命令执行失败: {e}"
@@ -124,7 +139,7 @@ class CowCliPlugin(Plugin):
     # help / version
     # ------------------------------------------------------------------
 
-    def _cmd_help(self, args: str, e_context: EventContext) -> str:
+    def _cmd_help(self, args: str, e_context, **_) -> str:
         lines = [
             "📋 CowAgent 命令列表",
             "",
@@ -142,19 +157,20 @@ class CowCliPlugin(Plugin):
             "  /config              查看当前配置",
             "  /config <key>        查看某项配置",
             "  /config <key> <val>  修改配置",
+            "  /install-browser  安装浏览器工具依赖",
             "",
             "💡 也可以用 cow <command> 代替 /<command>",
         ]
         return "\n".join(lines)
 
-    def _cmd_version(self, args: str, e_context: EventContext) -> str:
+    def _cmd_version(self, args: str, e_context, **_) -> str:
         return f"CowAgent v{__version__}"
 
     # ------------------------------------------------------------------
     # status
     # ------------------------------------------------------------------
 
-    def _cmd_status(self, args: str, e_context: EventContext) -> str:
+    def _cmd_status(self, args: str, e_context: EventContext, session_id: str = "") -> str:
         from config import conf
 
         cfg = conf()
@@ -174,7 +190,7 @@ class CowCliPlugin(Plugin):
         mode = "Agent" if cfg.get("agent") else "Chat"
         lines.append(f"  模式: {mode}")
 
-        session_id = self._get_session_id(e_context)
+        session_id = self._get_session_id(e_context, fallback=session_id)
         agent = self._get_agent(session_id)
         if agent:
             lines.append("")
@@ -199,7 +215,7 @@ class CowCliPlugin(Plugin):
     # logs
     # ------------------------------------------------------------------
 
-    def _cmd_logs(self, args: str, e_context: EventContext) -> str:
+    def _cmd_logs(self, args: str, e_context, **_) -> str:
         num_lines = 20
         if args.strip().isdigit():
             num_lines = min(int(args.strip()), 50)
@@ -236,8 +252,8 @@ class CowCliPlugin(Plugin):
     # context
     # ------------------------------------------------------------------
 
-    def _cmd_context(self, args: str, e_context: EventContext) -> str:
-        session_id = self._get_session_id(e_context)
+    def _cmd_context(self, args: str, e_context: EventContext, session_id: str = "") -> str:
+        session_id = self._get_session_id(e_context, fallback=session_id)
         agent = self._get_agent(session_id)
 
         sub = args.strip().lower()
@@ -299,7 +315,7 @@ class CowCliPlugin(Plugin):
 
     _CONFIG_READABLE = _CONFIG_WRITABLE | {"channel_type"}
 
-    def _cmd_config(self, args: str, e_context: EventContext) -> str:
+    def _cmd_config(self, args: str, e_context, **_) -> str:
         from config import conf, load_config
         import json as _json
 
@@ -419,10 +435,55 @@ class CowCliPlugin(Plugin):
         return const.OPENAI
 
     # ------------------------------------------------------------------
+    # install-browser (shared logic with cow install-browser CLI)
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _send_install_progress(e_context, text: str) -> None:
+        """Push a short status line to the chat channel (SSE: phase event, not done)."""
+        if e_context is None:
+            logger.info(f"[CowCli] install-browser: {text}")
+            return
+        try:
+            channel = e_context["channel"]
+            context = e_context["context"]
+            if channel and context:
+                r = Reply(ReplyType.TEXT, text)
+                r.sse_phase = True
+                channel.send(r, context)
+        except Exception as e:
+            logger.warning(f"[CowCli] install-browser progress send failed: {e}")
+
+    def _cmd_install_browser(self, args: str, e_context, **_) -> str:
+        from cli.commands.install import run_install_browser
+
+        if args.strip():
+            return (
+                "用法: /install-browser\n\n"
+                "无需参数，等同于终端执行 `cow install-browser`。\n"
+                "安装过程可能持续数分钟；进度会以多条消息推送，pip 详细输出见服务日志。"
+            )
+
+        # Suppress detailed stream in chat; phases go through channel.send
+        def _noop_stream(msg: str, fg=None):
+            pass
+
+        code = run_install_browser(
+            stream=_noop_stream,
+            on_phase=lambda m: self._send_install_progress(e_context, m),
+        )
+        if code != 0:
+            return (
+                "❌ 安装未成功结束，请查看上方分段提示或服务器日志；"
+                "也可在终端执行 `cow install-browser`。"
+            )
+        return "✅ 安装流程已结束。请重启 CowAgent 后使用 browser 工具（进度见上方消息）。"
+
+    # ------------------------------------------------------------------
     # skill
     # ------------------------------------------------------------------
 
-    def _cmd_skill(self, args: str, e_context: EventContext) -> str:
+    def _cmd_skill(self, args: str, e_context, **_) -> str:
         parts = args.strip().split(None, 1)
         sub = parts[0].lower() if parts else ""
         sub_args = parts[1].strip() if len(parts) > 1 else ""
@@ -781,7 +842,9 @@ class CowCliPlugin(Plugin):
     # Helpers
     # ------------------------------------------------------------------
 
-    def _get_session_id(self, e_context: EventContext) -> str:
+    def _get_session_id(self, e_context, fallback: str = "") -> str:
+        if e_context is None:
+            return fallback
         context = e_context["context"]
         return context.kwargs.get("session_id") or context.get("session_id", "")
 
