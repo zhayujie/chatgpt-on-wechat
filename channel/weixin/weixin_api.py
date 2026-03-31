@@ -303,13 +303,18 @@ def upload_media_to_cdn(api: WeixinApi, file_path: str, to_user_id: str,
                 filesize=cipher_size,
                 aeskey=aes_key_hex,
             )
-            upload_param = resp.get("upload_param", "")
-            if not upload_param:
-                raise RuntimeError(f"[Weixin] getUploadUrl returned no upload_param: {resp}")
 
-            cdn_url = (f"{api.cdn_base_url}/upload"
-                       f"?encrypted_query_param={quote(upload_param)}"
-                       f"&filekey={quote(filekey)}")
+            # API may return either upload_full_url (new) or upload_param (legacy)
+            upload_full_url = resp.get("upload_full_url", "")
+            upload_param = resp.get("upload_param", "")
+            if upload_full_url:
+                cdn_url = upload_full_url
+            elif upload_param:
+                cdn_url = (f"{api.cdn_base_url}/upload"
+                           f"?encrypted_query_param={quote(upload_param)}"
+                           f"&filekey={quote(filekey)}")
+            else:
+                raise RuntimeError(f"[Weixin] getUploadUrl returned neither upload_full_url nor upload_param: {resp}")
 
             cdn_resp = requests.post(cdn_url, data=encrypted, headers={
                 "Content-Type": "application/octet-stream",

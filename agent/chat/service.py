@@ -75,26 +75,6 @@ class ChatService:
                     # a new segment; collect tool results until turn_end.
                     state.pending_tool_results = []
 
-            elif event_type == "file_to_send":
-                # Cloud CHAT stream: local paths are useless to the web UI; push a markdown link when we have a public URL.
-                url = data.get("url") or ""
-                if url:
-                    msg = (data.get("message") or "").strip()
-                    fname = data.get("file_name") or "file"
-                    ft = data.get("file_type") or "file"
-                    parts = []
-                    if msg:
-                        parts.append(f"{msg}\n\n")
-                    if ft == "image":
-                        parts.append(f"![{fname}]({url})")
-                    else:
-                        parts.append(f"[{fname}]({url})")
-                    send_chunk_fn({
-                        "chunk_type": "content",
-                        "delta": "\n\n" + "".join(parts) + "\n\n",
-                        "segment_id": state.segment_id,
-                    })
-
             elif event_type == "tool_execution_start":
                 # Notify the client that a tool is about to run (with its input args)
                 tool_name = data.get("tool_name", "")

@@ -683,10 +683,8 @@ class CowCliPlugin(Plugin):
         lines = []
         for skill_name in result.installed:
             desc = _read_skill_description(os.path.join(skills_dir, skill_name))
-            lines.append(f"✅ {skill_name}")
+            lines.append(f"✅ 技能安装成功：{skill_name}")
             if desc:
-                if len(desc) > 60:
-                    desc = desc[:57] + "…"
                 lines.append(f"   {desc}")
 
         if len(result.installed) > 1:
