@@ -544,10 +544,13 @@ class CowCliPlugin(Plugin):
             enabled = entry.get("enabled", True)
             source = entry.get("source", "")
             icon = "✅" if enabled else "⏸️"
+            display = entry.get("display_name", "") or name
             desc = entry.get("description", "")
             if len(desc) > 50:
                 desc = desc[:47] + "…"
-            line = f"{icon} {name}"
+            line = f"{icon} {display}"
+            if display != name:
+                line += f" ({name})"
             if desc:
                 line += f"\n   {desc}"
             if source:
@@ -685,13 +688,16 @@ class CowCliPlugin(Plugin):
     def _format_install_result(result) -> str:
         """Format InstallResult into a chat-friendly message."""
         from cli.commands.skill import _read_skill_description
-        from cli.utils import get_skills_dir
+        from cli.utils import get_skills_dir, load_skills_config
         skills_dir = get_skills_dir()
+        config = load_skills_config()
 
         lines = []
         for skill_name in result.installed:
             desc = _read_skill_description(os.path.join(skills_dir, skill_name))
-            lines.append(f"✅ 技能安装成功：{skill_name}")
+            display = config.get(skill_name, {}).get("display_name", "") or skill_name
+            label = f"{display} ({skill_name})" if display != skill_name else skill_name
+            lines.append(f"✅ 技能安装成功：{label}")
             if desc:
                 lines.append(f"   {desc}")
 

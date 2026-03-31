@@ -244,10 +244,13 @@ class BrowserService:
         with self._lock:
             if self._alive and self._thread and self._thread.is_alive():
                 return
+            # Wait for old thread to fully exit before creating a new one
+            old = self._thread
+            if old and old.is_alive():
+                old.join(timeout=5)
+            # Fresh queue to avoid stale sentinels from a previous close()
+            self._task_queue = queue.Queue()
             self._alive = True
-            # Reuse existing queue so tasks queued during restart are not lost
-            if self._task_queue is None:
-                self._task_queue = queue.Queue()
             self._ready = threading.Event()
             self._thread = threading.Thread(target=self._run_loop, daemon=True, name="BrowserThread")
             self._thread.start()

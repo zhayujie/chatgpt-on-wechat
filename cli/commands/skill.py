@@ -324,7 +324,7 @@ def _install_local(path: str, result: InstallResult):
     _batch_install_skills(discovered, path, skills_dir, "local", result)
 
 
-def _register_installed_skill(name: str, source: str = "cowhub"):
+def _register_installed_skill(name: str, source: str = "cowhub", display_name: str = ""):
     """Register a newly installed skill into skills_config.json.
 
     source values: builtin, cow, github, clawhub, linkai, local, url
@@ -341,18 +341,28 @@ def _register_installed_skill(name: str, source: str = "cowhub"):
             config = {}
 
     if name in config:
+        if display_name and not config[name].get("display_name"):
+            config[name]["display_name"] = display_name
+            try:
+                with open(config_path, "w", encoding="utf-8") as f:
+                    json.dump(config, f, indent=4, ensure_ascii=False)
+            except Exception:
+                pass
         return
 
     skill_dir = os.path.join(skills_dir, name)
     description = _read_skill_description(skill_dir) or ""
 
-    config[name] = {
+    entry = {
         "name": name,
         "description": description,
         "source": source,
         "enabled": True,
         "category": "skill",
     }
+    if display_name:
+        entry["display_name"] = display_name
+    config[name] = entry
 
     try:
         with open(config_path, "w", encoding="utf-8") as f:
@@ -657,7 +667,15 @@ def _list_local():
 
 def _print_skill_table(entries):
     """Print skills as a formatted table."""
-    name_w = max(len(e.get("name", "")) for e in entries)
+    def _display_label(e):
+        display = e.get("display_name", "")
+        name = e.get("name", "")
+        if display and display != name:
+            return f"{display} ({name})"
+        return name
+
+    labels = [_display_label(e) for e in entries]
+    name_w = max((len(l) for l in labels), default=4)
     name_w = max(name_w, 4) + 2
     desc_w = 40
 
@@ -666,8 +684,7 @@ def _print_skill_table(entries):
     click.echo(f"  {header}")
     click.echo(f"  {'─' * (name_w + 10 + 10 + desc_w)}")
 
-    for e in entries:
-        name = e.get("name", "")
+    for e, label in zip(entries, labels):
         enabled = e.get("enabled", True)
         source = e.get("source", "")
         desc = e.get("description", "") or ""
@@ -675,7 +692,7 @@ def _print_skill_table(entries):
             desc = desc[:desc_w - 3] + "..."
 
         status_icon = click.style("✓ on ", fg="green") if enabled else click.style("✗ off", fg="red")
-        click.echo(f"  {name:<{name_w}} {status_icon}  {source:<10} {desc}")
+        click.echo(f"  {label:<{name_w}} {status_icon}  {source:<10} {desc}")
 
     click.echo()
 
@@ -937,10 +954,12 @@ def _install_hub(name, result: InstallResult, provider=None):
         raise SkillInstallError(f"Failed to connect to Skill Hub: {e}")
 
     content_type = resp.headers.get("Content-Type", "")
+    hub_display_name = ""
 
     if "application/json" in content_type:
         data = resp.json()
         source_type = data.get("source_type")
+        hub_display_name = data.get("display_name", "")
 
         if source_type == "github":
             source_url = data.get("source_url", "")
@@ -956,6 +975,8 @@ def _install_hub(name, result: InstallResult, provider=None):
                 else:
                     _check_github_spec(source_url)
                     _install_github(source_url, result, skill_name=name, timeout=gh_timeout)
+                if hub_display_name:
+                    _register_installed_skill(name, display_name=hub_display_name)
                 return
             except Exception as e:
                 gh_err = e
@@ -987,9 +1008,11 @@ def _install_hub(name, result: InstallResult, provider=None):
             installed_before = len(result.installed)
             _install_zip_bytes(mirror_resp.content, name, skills_dir, result=result, source_label="cowhub")
             if len(result.installed) == installed_before:
-                _register_installed_skill(name, source="cowhub")
+                _register_installed_skill(name, source="cowhub", display_name=hub_display_name)
                 result.installed.append(name)
                 result.messages.append(f"Installed '{name}' from mirror.")
+            elif hub_display_name:
+                _register_installed_skill(name, display_name=hub_display_name)
             return
 
         if source_type == "registry":
@@ -1022,9 +1045,11 @@ def _install_hub(name, result: InstallResult, provider=None):
                     installed_before = len(result.installed)
                     _install_zip_bytes(dl_resp.content, name, skills_dir, result=result, source_label=src_provider)
                     if len(result.installed) == installed_before:
-                        _register_installed_skill(name, source=src_provider)
+                        _register_installed_skill(name, source=src_provider, display_name=hub_display_name)
                         result.installed.append(name)
                         result.messages.append(f"Installed '{name}' from {src_provider}.")
+                    elif hub_display_name:
+                        _register_installed_skill(name, display_name=hub_display_name)
                     return
 
                 # Fallback: download mirror from Skill Hub
@@ -1050,9 +1075,11 @@ def _install_hub(name, result: InstallResult, provider=None):
                 installed_before = len(result.installed)
                 _install_zip_bytes(mirror_resp.content, name, skills_dir, result=result, source_label="cowhub")
                 if len(result.installed) == installed_before:
-                    _register_installed_skill(name, source="cowhub")
+                    _register_installed_skill(name, source="cowhub", display_name=hub_display_name)
                     result.installed.append(name)
                     result.messages.append(f"Installed '{name}' from mirror.")
+                elif hub_display_name:
+                    _register_installed_skill(name, display_name=hub_display_name)
             else:
                 raise SkillInstallError("Unsupported registry provider.")
             return
@@ -1066,6 +1093,8 @@ def _install_hub(name, result: InstallResult, provider=None):
             else:
                 _check_github_spec(source_url)
                 _install_github(source_url, result, skill_name=name)
+            if hub_display_name:
+                _register_installed_skill(name, display_name=hub_display_name)
             return
 
     elif "application/zip" in content_type:
@@ -1407,7 +1436,10 @@ def info(name):
     enabled = entry.get("enabled", True)
     status_str = click.style("✓ enabled", fg="green") if enabled else click.style("✗ disabled", fg="red")
 
+    display_name = entry.get("display_name", "")
     click.echo(f"\n  Skill: {name}")
+    if display_name and display_name != name:
+        click.echo(f"  Display: {display_name}")
     click.echo(f"  Source: {source}")
     click.echo(f"  Status: {status_str}")
     click.echo(f"  Path: {skill_dir}")
