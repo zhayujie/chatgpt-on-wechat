@@ -75,6 +75,23 @@ class ChatService:
                     # a new segment; collect tool results until turn_end.
                     state.pending_tool_results = []
 
+            elif event_type == "file_to_send":
+                url = data.get("url") or ""
+                if url:
+                    fname = data.get("file_name") or "file"
+                    ft = data.get("file_type") or "file"
+                    if ft == "image":
+                        link = f"![{fname}]({url})"
+                    else:
+                        link = f"[{fname}]({url})"
+                    send_chunk_fn({
+                        "chunk_type": "content",
+                        "delta": "\n\n" + link + "\n\n",
+                        "segment_id": state.segment_id,
+                    })
+                    # Remove url so the model won't repeat it in its reply
+                    data.pop("url", None)
+
             elif event_type == "tool_execution_start":
                 # Notify the client that a tool is about to run (with its input args)
                 tool_name = data.get("tool_name", "")

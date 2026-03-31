@@ -30,7 +30,8 @@ RUN apt-get update \
     && pip install --no-cache -r requirements-optional.txt \
     && pip install --no-cache -e . \
     && if [ "$INSTALL_BROWSER" = "true" ]; then \
-        pip install --no-cache "playwright==1.52.0" \
+        apt-get install -y --no-install-recommends fonts-wqy-zenhei \
+        && pip install --no-cache "playwright==1.52.0" \
         && python -m playwright install-deps chromium \
         && mkdir -p /app/ms-playwright \
         && if [ "$USE_CN_MIRROR" = "true" ]; then \
