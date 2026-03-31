@@ -6,8 +6,11 @@ ARG TZ='Asia/Shanghai'
 ARG CHATGPT_ON_WECHAT_VER
 # Set to "false" to skip Playwright/Chromium and produce a smaller image
 ARG INSTALL_BROWSER=true
+# pip index URL (override for faster builds in CN)
+ARG PIP_INDEX_URL=https://pypi.org/simple
 
 ENV PLAYWRIGHT_BROWSERS_PATH=/app/ms-playwright
+ENV PIP_INDEX_URL=${PIP_INDEX_URL}
 
 RUN echo /etc/apt/sources.list
 # RUN sed -i 's/deb.debian.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list
