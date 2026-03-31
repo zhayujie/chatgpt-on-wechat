@@ -1,0 +1,82 @@
+---
+title: v2.0.5
+description: CowAgent 2.0.5 - Cow CLI、Skill Hub 开源、浏览器工具、企微扫码创建、DeepSeek 独立模块及多项优化
+---
+
+## 🖥️ Cow CLI 命令系统
+
+新增 Cow CLI 命令系统，支持在终端和对话中执行命令，实现对 CowAgent 的全方位管理：
+
+- **终端命令**：在系统终端中执行 `cow <命令>`，支持 `start`、`stop`、`restart`、`update`、`status`、`logs` 等服务管理操作
+- **对话命令**：在对话中输入 `/<命令>` 或 `cow <命令>`，支持 `/help`、`/status`、`/config`、`/skill`、`/context`、`/logs`、`/version` 等
+- **斜杠指令菜单**：Web 控制台输入框输入 `/` 即可弹出指令菜单，快速选择命令
+- **输入历史**：支持方向键回溯历史输入
+- **Windows 支持**：新增 PowerShell 脚本 `run.ps1`，Windows 下可使用 `cow` 命令
+
+相关文档：[命令总览](https://docs.cowagent.ai/commands)、[技能管理命令](https://docs.cowagent.ai/commands/skill)、[服务管理命令](https://docs.cowagent.ai/commands/process)、[通用命令](https://docs.cowagent.ai/commands/general)。
+
+相关提交：[#2726](https://github.com/zhayujie/chatgpt-on-wechat/pull/2726)
+
+## 🧩 Cow Skill Hub 开源
+
+Cow Skill Hub（技能广场）正式开源并上线，提供 AI Agent 技能的浏览、搜索、安装和发布：
+
+- **技能广场**：访问 [skills.cowagent.ai](https://skills.cowagent.ai) 浏览所有可用技能，支持按类别（推荐 / 社区 / 第三方）和标签筛选
+- **一键安装**：在对话中 `/skill install <名称>` 或终端 `cow skill install <名称>` 一键安装
+- **多来源支持**：支持从 Skill Hub、GitHub、ClawHub、URL（zip / SKILL.md）等多种来源安装，支持 GitHub 批量安装和子目录指定
+- **技能搜索**：`/skill search` 和 `/skill list --remote` 浏览和搜索技能广场
+- **技能发布**：通过 [skills.cowagent.ai/submit](https://skills.cowagent.ai/submit) 提交自己的技能
+- **国内镜像**：支持 Skill Hub 镜像加速，国内环境下载更流畅
+
+Skill Hub 开源仓库：[cow-skill-hub](https://github.com/zhayujie/chatgpt-on-wechat/tree/master/ref/cow-skill-hub)。
+
+相关文档：[技能概览](https://docs.cowagent.ai/skills)、[安装技能](https://docs.cowagent.ai/skills/install)、[创建技能](https://docs.cowagent.ai/skills/create)、[技能管理命令](https://docs.cowagent.ai/commands/skill)。
+
+相关提交：[#2726](https://github.com/zhayujie/chatgpt-on-wechat/pull/2726)
+
+## 🌐 新增浏览器工具
+
+新增 Browser 工具，Agent 可控制 Chromium 浏览器访问和操作网页：
+
+- **网页导航与交互**：支持 `navigate`、`click`、`fill`、`select`、`scroll`、`press` 等操作
+- **页面快照**：使用精简 DOM 快照技术，让 Agent 高效理解页面结构，导航后自动快照
+- **截图能力**：支持页面截图保存到工作区
+- **JavaScript 执行**：支持在页面中执行自定义脚本
+- **CLI 安装**：通过 `cow install-browser` 一键安装浏览器及依赖，自动适配系统环境
+- **对话中安装**：支持在对话中触发浏览器安装
+- **Docker 支持**：Docker 镜像已内置浏览器安装支持
+- **跨平台适配**：Linux 下自动安装中文字体，服务器环境自动使用无头模式
+
+相关文档：[浏览器工具](https://docs.cowagent.ai/tools/browser)。
+
+相关提交：[#2727](https://github.com/zhayujie/chatgpt-on-wechat/pull/2727)
+
+## 🤖 企微智能机器人扫码创建
+
+企业微信智能机器人通道新增扫码一键创建功能：
+
+- **Web 控制台扫码**：在 Web 控制台通道页面，选择「扫码接入」模式，使用企业微信扫码即可自动创建并接入智能机器人，无需手动到企业微信后台配置
+- **手动模式保留**：同时保留「手动填写」模式，可输入已有的 Bot ID 和 Secret 接入
+- **流式推送优化**：增加推送节流（100ms 间隔），避免 WebSocket 拥塞
+
+相关文档：[企微智能机器人接入](https://docs.cowagent.ai/channels/wecom-bot)。
+
+相关提交：[#2735](https://github.com/zhayujie/chatgpt-on-wechat/pull/2735)
+
+Thanks [@WecomTeam](https://github.com/WecomTeam)
+
+## 🐛 其他优化与修复
+
+- **DeepSeek 独立模块**：新增独立的 DeepSeek Bot 模块，支持 `deepseek_api_key` 专属配置，无需再通过 OpenAI 兼容方式接入（[#2719](https://github.com/zhayujie/chatgpt-on-wechat/pull/2719)）。Thanks [@6vision](https://github.com/6vision)
+- **Web 控制台斜杠菜单**：输入框输入 `/` 弹出指令快捷菜单（[#2731](https://github.com/zhayujie/chatgpt-on-wechat/pull/2731)）。Thanks [@zkjqd](https://github.com/zkjqd)
+- **上下文丢失**：修复上下文裁剪后丢失的问题 ([393f0c0](https://github.com/zhayujie/chatgpt-on-wechat/commit/393f0c0))
+- **系统提示词**：修复系统提示词未在每轮重建的问题 ([13f5fde](https://github.com/zhayujie/chatgpt-on-wechat/commit/13f5fde))
+- **Gemini 模型**：修复 GoogleGeminiBot 缺少 model 属性的问题（[#2716](https://github.com/zhayujie/chatgpt-on-wechat/pull/2716)）。Thanks [@cowagent](https://github.com/cowagent)
+- **微信通道**：修复文件发送失败、文件名丢失等问题 ([6d9b7ba](https://github.com/zhayujie/chatgpt-on-wechat/commit/6d9b7ba)、[45faa9c](https://github.com/zhayujie/chatgpt-on-wechat/commit/45faa9c))
+- **Docker 优化**：修复卷权限问题，精简镜像体积 ([3eb8348](https://github.com/zhayujie/chatgpt-on-wechat/commit/3eb8348)、[4470d4c](https://github.com/zhayujie/chatgpt-on-wechat/commit/4470d4c))
+
+## 📦 升级方式
+
+源码部署可执行 `cow update` 或 `./run.sh update` 一键升级，或手动拉取代码后重启。详见 [更新升级文档](https://docs.cowagent.ai/guide/upgrade)。
+
+**发布日期**：2026.03.31 | [Full Changelog](https://github.com/zhayujie/chatgpt-on-wechat/compare/2.0.4...master)

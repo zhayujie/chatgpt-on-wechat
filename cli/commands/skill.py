@@ -518,12 +518,16 @@ def _install_targz_bytes(content: bytes, name: str, skills_dir: str, result: Ins
 def _print_install_success(name: str, source: str):
     """Print a unified install success message with description and source."""
     skills_dir = get_skills_dir()
+    config = load_skills_config()
+    display = config.get(name, {}).get("display_name", "")
     desc = _read_skill_description(os.path.join(skills_dir, name))
     click.echo(click.style(f"✓ {name}", fg="green"))
+    if display and display != name:
+        click.echo(f"  名称: {display}")
     if desc:
         if len(desc) > 60:
             desc = desc[:57] + "…"
-        click.echo(f"  {desc}")
+        click.echo(f"  描述: {desc}")
     click.echo(f"  来源: {source}")
 
 

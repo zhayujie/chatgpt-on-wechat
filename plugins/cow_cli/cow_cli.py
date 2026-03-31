@@ -695,11 +695,12 @@ class CowCliPlugin(Plugin):
         lines = []
         for skill_name in result.installed:
             desc = _read_skill_description(os.path.join(skills_dir, skill_name))
-            display = config.get(skill_name, {}).get("display_name", "") or skill_name
-            label = f"{display} ({skill_name})" if display != skill_name else skill_name
-            lines.append(f"✅ 技能安装成功：{label}")
+            display = config.get(skill_name, {}).get("display_name", "")
+            lines.append(f"✅ 技能安装成功：{skill_name}")
+            if display and display != skill_name:
+                lines.append(f"   名称：{display}")
             if desc:
-                lines.append(f"   {desc}")
+                lines.append(f"   描述：{desc}")
 
         if len(result.installed) > 1:
             lines.append(f"\n共安装 {len(result.installed)} 个技能")
