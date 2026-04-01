@@ -116,7 +116,7 @@ irm https://cdn.link-ai.tech/code/cow/run.ps1 | iex
 
 ### 2.环境安装
 
-支持 Linux、MacOS、Windows 操作系统，可在个人计算机及服务器上运行，需安装 `Python`，Python 版本需在3.7 ~ 3.12 之间，推荐使用3.9版本。
+支持 Linux、MacOS、Windows 操作系统，可在个人计算机及服务器上运行，需安装 `Python`，Python 版本需在3.7 ~ 3.12 之间。
 
 > 注意：Agent 模式推荐使用源码运行，若选择 Docker 部署则无需安装 python 环境和下载源码，可直接快进到下一节。
 
