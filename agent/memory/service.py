@@ -134,6 +134,8 @@ class MemoryService:
             else:
                 return {"action": action, "code": 400, "message": f"unknown action: {action}", "payload": None}
 
+        except ValueError as e:
+            return {"action": action, "code": 403, "message": "invalid filename", "payload": None}
         except FileNotFoundError as e:
             return {"action": action, "code": 404, "message": str(e), "payload": None}
         except Exception as e:
@@ -145,14 +147,26 @@ class MemoryService:
     # ------------------------------------------------------------------
     def _resolve_path(self, filename: str) -> str:
         """
-        Resolve a filename to its absolute path.
+        Safely resolve a filename to its absolute path within the allowed directory.
 
         - ``MEMORY.md`` → ``{workspace_root}/MEMORY.md``
         - ``2026-02-20.md`` → ``{workspace_root}/memory/2026-02-20.md``
+
+        Raises ValueError if the resolved path escapes the allowed directory
+        (path traversal protection).
         """
         if filename == "MEMORY.md":
-            return os.path.join(self.workspace_root, filename)
-        return os.path.join(self.memory_dir, filename)
+            base_dir = self.workspace_root
+        else:
+            base_dir = self.memory_dir
+
+        resolved = os.path.realpath(os.path.join(base_dir, filename))
+        allowed = os.path.realpath(base_dir)
+
+        if resolved != allowed and not resolved.startswith(allowed + os.sep):
+            raise ValueError(f"Invalid filename: path traversal detected")
+
+        return resolved
 
     @staticmethod
     def _file_info(path: str, filename: str, file_type: str) -> dict:

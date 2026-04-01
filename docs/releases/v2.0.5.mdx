@@ -68,12 +68,15 @@ Thanks [@WecomTeam](https://github.com/WecomTeam)
 ## 🐛 其他优化与修复
 
 - **DeepSeek 独立模块**：新增独立的 DeepSeek Bot 模块，支持 `deepseek_api_key` 专属配置，无需再通过 OpenAI 兼容方式接入（[#2719](https://github.com/zhayujie/chatgpt-on-wechat/pull/2719)）。Thanks [@6vision](https://github.com/6vision)
-- **Web 控制台斜杠菜单**：输入框输入 `/` 弹出指令快捷菜单（[#2731](https://github.com/zhayujie/chatgpt-on-wechat/pull/2731)）。Thanks [@zkjqd](https://github.com/zkjqd)
+- **Web 控制台优化**：新增斜杠指令菜单和输入历史回溯，新增模型选项，优化移动端适配（[#2731](https://github.com/zhayujie/chatgpt-on-wechat/pull/2731)）。Thanks [@zkjqd](https://github.com/zkjqd)
 - **上下文丢失**：修复上下文裁剪后丢失的问题 ([393f0c0](https://github.com/zhayujie/chatgpt-on-wechat/commit/393f0c0))
 - **系统提示词**：修复系统提示词未在每轮重建的问题 ([13f5fde](https://github.com/zhayujie/chatgpt-on-wechat/commit/13f5fde))
+- **Agent 响应**：去除 Agent 响应首尾空白字符 ([f890318](https://github.com/zhayujie/chatgpt-on-wechat/commit/f890318))
+- **视觉压缩**：优化视觉图片压缩策略 ([22b8ca0](https://github.com/zhayujie/chatgpt-on-wechat/commit/22b8ca0))
 - **Gemini 模型**：修复 GoogleGeminiBot 缺少 model 属性的问题（[#2716](https://github.com/zhayujie/chatgpt-on-wechat/pull/2716)）。Thanks [@cowagent](https://github.com/cowagent)
-- **微信通道**：修复文件发送失败、文件名丢失等问题 ([6d9b7ba](https://github.com/zhayujie/chatgpt-on-wechat/commit/6d9b7ba)、[45faa9c](https://github.com/zhayujie/chatgpt-on-wechat/commit/45faa9c))
+- **微信通道**：修复文件发送失败、文件名丢失等问题 ([6d9b7ba](https://github.com/zhayujie/chatgpt-on-wechat/commit/6d9b7ba)、[baf66a1](https://github.com/zhayujie/chatgpt-on-wechat/commit/baf66a1)、[45faa9c](https://github.com/zhayujie/chatgpt-on-wechat/commit/45faa9c))
 - **Docker 优化**：修复卷权限问题，精简镜像体积 ([3eb8348](https://github.com/zhayujie/chatgpt-on-wechat/commit/3eb8348)、[4470d4c](https://github.com/zhayujie/chatgpt-on-wechat/commit/4470d4c))
+- **README 排版**：优化中英文排版空格（[#2723](https://github.com/zhayujie/chatgpt-on-wechat/pull/2723)）。Thanks [@Xiaozhou345](https://github.com/Xiaozhou345)
 
 ## 📦 升级方式
 

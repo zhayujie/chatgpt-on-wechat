@@ -1365,6 +1365,8 @@ class MemoryContentHandler:
             service = MemoryService(workspace_root)
             result = service.get_content(params.filename)
             return json.dumps({"status": "success", **result}, ensure_ascii=False)
+        except ValueError:
+            return json.dumps({"status": "error", "message": "invalid filename"})
         except FileNotFoundError:
             return json.dumps({"status": "error", "message": "file not found"})
         except Exception as e:

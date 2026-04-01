@@ -599,7 +599,7 @@ class CowCliPlugin(Plugin):
         page = min(page, total_pages)
         installed = set(load_skills_config().keys())
 
-        lines = [f"🌐 技能广场 (共 {total} 个技能)", ""]
+        lines = ["🌐 技能广场", ""]
         for s in skills:
             name = s.get("name", "")
             display = s.get("display_name", "") or name
