@@ -171,10 +171,10 @@
               {
                 "group": "命令系统",
                 "pages": [
-                  "commands/index",
-                  "commands/process",
-                  "commands/skill",
-                  "commands/general"
+                  "cli/index",
+                  "cli/process",
+                  "cli/skill",
+                  "cli/general"
                 ]
               }
             ]
@@ -327,15 +327,15 @@
             ]
           },
           {
-            "tab": "Commands",
+            "tab": "CLI",
             "groups": [
               {
                 "group": "Command System",
                 "pages": [
-                  "en/commands/index",
-                  "en/commands/process",
-                  "en/commands/skill",
-                  "en/commands/chat"
+                  "en/cli/index",
+                  "en/cli/process",
+                  "en/cli/skill",
+                  "en/cli/chat"
                 ]
               }
             ]
@@ -488,15 +488,15 @@
             ]
           },
           {
-            "tab": "コマンド",
+            "tab": "CLI",
             "groups": [
               {
                 "group": "コマンドシステム",
                 "pages": [
-                  "ja/commands/index",
-                  "ja/commands/process",
-                  "ja/commands/skill",
-                  "ja/commands/general"
+                  "ja/cli/index",
+                  "ja/cli/process",
+                  "ja/cli/skill",
+                  "ja/cli/general"
                 ]
               }
             ]

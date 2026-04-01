@@ -76,7 +76,7 @@ irm https://cdn.link-ai.tech/code/cow/run.ps1 | iex
 
 After running, the Web service starts by default. Access `http://localhost:9899/chat` to chat.
 
-Script usage: [One-click Install](https://docs.cowagent.ai/en/guide/quick-start). After installation, you can also use `cow start`, `cow stop`, and other [CLI commands](https://docs.cowagent.ai/en/commands/index) to manage the service.
+Script usage: [One-click Install](https://docs.cowagent.ai/en/guide/quick-start). After installation, you can also use `cow start`, `cow stop`, and other [CLI commands](https://docs.cowagent.ai/en/cli/index) to manage the service.
 
 ### Manual Installation
 
@@ -100,7 +100,7 @@ pip3 install -r requirements-optional.txt   # optional but recommended
 pip3 install -e .
 ```
 
-After installation, use `cow` commands to manage the service (start, stop, update, etc.) and skills. See [Command Docs](https://docs.cowagent.ai/en/commands/index).
+After installation, use `cow` commands to manage the service (start, stop, update, etc.) and skills. See [Command Docs](https://docs.cowagent.ai/en/cli/index).
 
 **4. Install browser (optional)**
 

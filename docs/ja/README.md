@@ -76,7 +76,7 @@ irm https://cdn.link-ai.tech/code/cow/run.ps1 | iex
 
 実行後、デフォルトでWebサービスが起動します。`http://localhost:9899/chat` にアクセスしてチャットを開始できます。
 
-スクリプトの使い方: [ワンクリックインストール](https://docs.cowagent.ai/ja/guide/quick-start)。インストール後は `cow start`、`cow stop` などの [CLI コマンド](https://docs.cowagent.ai/ja/commands/index)でサービスを管理できます。
+スクリプトの使い方: [ワンクリックインストール](https://docs.cowagent.ai/ja/guide/quick-start)。インストール後は `cow start`、`cow stop` などの [CLI コマンド](https://docs.cowagent.ai/ja/cli/index)でサービスを管理できます。
 
 ### 手動インストール
 
@@ -100,7 +100,7 @@ pip3 install -r requirements-optional.txt   # 任意ですが推奨
 pip3 install -e .
 ```
 
-インストール後、`cow` コマンドでサービス管理（起動、停止、更新など）やSkill管理ができます。[コマンドドキュメント](https://docs.cowagent.ai/ja/commands/index)を参照してください。
+インストール後、`cow` コマンドでサービス管理（起動、停止、更新など）やSkill管理ができます。[コマンドドキュメント](https://docs.cowagent.ai/ja/cli/index)を参照してください。
 
 **4. ブラウザのインストール（任意）**
 

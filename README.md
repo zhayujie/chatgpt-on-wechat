@@ -101,7 +101,7 @@ bash <(curl -fsSL https://cdn.link-ai.tech/code/cow/run.sh)
 irm https://cdn.link-ai.tech/code/cow/run.ps1 | iex
 ```
 
-脚本使用说明：[一键运行脚本](https://docs.cowagent.ai/guide/quick-start)。安装后可使用 `cow start`、`cow stop` 等 [CLI 命令](https://docs.cowagent.ai/commands/index) 管理服务。
+脚本使用说明：[一键运行脚本](https://docs.cowagent.ai/guide/quick-start)。安装后可使用 `cow start`、`cow stop` 等 [CLI 命令](https://docs.cowagent.ai/cli/index) 管理服务。
 
 
 ## 一、准备
@@ -151,7 +151,7 @@ pip3 install -r requirements-optional.txt
 pip3 install -e .
 ```
 
-安装后可使用 `cow` 命令管理服务（启动、停止、更新等）和技能，详见 [命令文档](https://docs.cowagent.ai/commands/index)。
+安装后可使用 `cow` 命令管理服务（启动、停止、更新等）和技能，详见 [命令文档](https://docs.cowagent.ai/cli/index)。
 
 **(5) 安装浏览器工具 (可选)：**
 
