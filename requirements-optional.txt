@@ -15,6 +15,10 @@ websocket-client==1.2.0
 # google
 google-generativeai
 
+# linkai
+linkai
+agentmesh-sdk
+
 # file parsing (web_fetch document support)
 pypdf
 python-docx
