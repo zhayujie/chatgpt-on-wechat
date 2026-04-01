@@ -166,10 +166,18 @@ class WeixinChannel(ChatChannel):
         print("=" * 60)
         try:
             import qrcode as qr_lib
+            import io
             qr = qr_lib.QRCode(error_correction=qr_lib.constants.ERROR_CORRECT_L, box_size=1, border=1)
             qr.add_data(qrcode_url)
             qr.make(fit=True)
-            qr.print_ascii(invert=True)
+            buf = io.StringIO()
+            qr.print_ascii(out=buf, invert=True)
+            try:
+                print(buf.getvalue())
+            except UnicodeEncodeError:
+                # Windows GBK terminals cannot render Unicode block characters
+                print(f"\n  (终端不支持显示二维码，请使用链接扫码)")
+                print(f"  二维码链接: {qrcode_url}\n")
         except ImportError:
             print(f"\n  二维码链接: {qrcode_url}")
             print("  (安装 'qrcode' 包可在终端显示二维码)\n")
