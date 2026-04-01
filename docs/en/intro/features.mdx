@@ -1,6 +1,6 @@
 ---
 title: Features
-description: CowAgent long-term memory, task planning, and skills system in detail
+description: CowAgent long-term memory, task planning, skills system, CLI commands, and browser tool in detail
 ---
 
 ## 1. Long-term Memory
@@ -19,7 +19,7 @@ In subsequent long-term conversations, the Agent intelligently stores or retriev
 
 Tools are the core of how the Agent accesses operating system resources. The Agent intelligently selects and invokes tools based on task requirements, performing file read/write, command execution, scheduled tasks, and more. Built-in tools are implemented in the project's `agent/tools/` directory.
 
-**Key tools:** file read/write/edit, Bash terminal, file send, scheduler, memory search, web search, environment config, and more.
+**Key tools:** file read/write/edit, Bash terminal, browser, file send, scheduler, memory search, web search, environment config, and more.
 
 ### 2.1 Terminal and File Access
 
@@ -45,7 +45,15 @@ The `scheduler` tool enables dynamic scheduled tasks, supporting **one-time task
   <img src="https://cdn.link-ai.tech/doc/20260202195402.png" width="800" />
 </Frame>
 
-### 2.4 Environment Variable Management
+### 2.4 Browser
+
+The built-in `browser` tool allows the Agent to control a Chromium browser to visit web pages, fill forms, click elements, and take screenshots, with support for dynamic JS-rendered pages. Run `cow install-browser` to install with one command, automatically adapting to server (headless) and desktop environments:
+
+<Frame>
+  <img src="https://cdn.link-ai.tech/doc/20260401110103.png" width="800" />
+</Frame>
+
+### 2.5 Environment Variable Management
 
 Secrets required by skills are stored in an environment variable file, managed by the `env_config` tool. You can update secrets through conversation, with built-in security protection and desensitization:
 
@@ -57,8 +65,11 @@ Secrets required by skills are stored in an environment variable file, managed b
 
 The Skills system provides infinite extensibility for the Agent. Each Skill consists of a description file, execution scripts (optional), and resources (optional), describing how to complete specific types of tasks. Skills allow the Agent to follow instructions for complex workflows, invoke tools, or integrate third-party systems.
 
+- **[Skill Hub](https://skills.cowagent.ai/):** An open skill marketplace featuring official, community, and third-party skills. Install with one command.
 - **Built-in skills:** Located in the project's `skills/` directory, including skill creator, image recognition, LinkAI agent, web fetch, and more. Built-in skills are automatically enabled based on dependency conditions (API keys, system commands, etc.).
 - **Custom skills:** Created by users through conversation, stored in the workspace (`~/cow/skills/`), capable of implementing any complex business process or third-party integration.
+
+Install skills: `/skill install <name>` or `cow skill install <name>`, supporting Skill Hub, GitHub, ClawHub, URL, and more.
 
 ### 3.1 Creating Skills
 
@@ -77,29 +88,33 @@ The `skill-creator` skill enables rapid skill creation through conversation. You
   <img src="https://cdn.link-ai.tech/doc/20260202213219.png" width="800" />
 </Frame>
 
-### 3.3 Third-party Knowledge Bases and Plugins
+### 3.3 Skill Hub
 
-The `linkai-agent` skill makes all agents on [LinkAI](https://link-ai.tech/) available as Skills for the Agent, enabling multi-agent decision making.
+Visit [skills.cowagent.ai](https://skills.cowagent.ai/) to browse all available skills, or use commands in conversation:
 
-Configuration: set `LINKAI_API_KEY` via `env_config`, then add agent descriptions in `skills/linkai-agent/config.json`:
-
-```json
-{
-  "apps": [
-    {
-      "app_code": "G7z6vKwp",
-      "app_name": "LinkAI Customer Support",
-      "app_description": "Select only when the user needs help with LinkAI platform questions"
-    },
-    {
-      "app_code": "SFY5x7JR",
-      "app_name": "Content Creator",
-      "app_description": "Use only when the user needs to create images or videos"
-    }
-  ]
-}
+```text
+/skill list --remote          # Browse Skill Hub
+/skill search <keyword>       # Search skills
+/skill install <name>          # Install with one command
 ```
 
-<Frame>
-  <img src="https://cdn.link-ai.tech/doc/20260202234350.png" width="750" />
-</Frame>
+Also supports installing skills from GitHub, ClawHub, LinkAI, and other third-party platforms. See [Install Skills](/en/skills/install) for details.
+
+<img src="https://cdn.link-ai.tech/doc/20260401110103.png" width="750" />
+
+## 4. CLI Command System
+
+CowAgent provides two command interaction methods, covering service management, skill installation, configuration, and more:
+
+- **Terminal CLI:** Run `cow <command>` in the system terminal, supporting `start`, `stop`, `restart`, `update`, `status`, `logs`, `skill`, etc.
+- **Chat commands:** Type `/<command>` in conversation. The Web console shows a command menu when you type `/`.
+
+```bash
+cow start              # Start service
+cow stop               # Stop service
+cow update             # Update and restart
+cow skill install pptx # Install a skill
+cow install-browser    # Install browser tool
+```
+
+See [Command Overview](https://docs.cowagent.ai/en/commands) for details.

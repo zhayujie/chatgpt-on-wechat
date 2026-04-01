@@ -1,124 +1,89 @@
-# Skills Directory
+# Skills
 
-This directory contains skills for the COW agent system. Skills are markdown files that provide specialized instructions for specific tasks.
+Skills are reusable instruction sets that extend the agent's capabilities. Each skill is a `SKILL.md` file in its own directory, providing specialized knowledge, workflows, and tool integrations for specific tasks.
 
-## What are Skills?
+## Skill Hub
 
-Skills are reusable instruction sets that help the agent perform specific tasks more effectively. Each skill:
+Browse, search, and install skills from [Cow Skill Hub](https://skills.cowagent.ai/).
 
-- Provides context-specific guidance
-- Documents best practices
-- Includes examples and usage patterns
-- Can have requirements (binaries, environment variables, etc.)
+Open source: [github.com/zhayujie/cow-skill-hub](https://github.com/zhayujie/cow-skill-hub)
+
+## Install Skills
+
+Install skills from multiple sources via chat (`/skill`) or terminal (`cow skill`):
+
+```bash
+/skill install <name>                   # From Skill Hub
+/skill install <owner>/<repo>           # From GitHub
+/skill install clawhub:<name>           # From ClawHub
+/skill install linkai:<code>            # From LinkAI
+/skill install <url>                    # From URL (zip or SKILL.md)
+```
+
+List all available remote skills:
+
+```bash
+/skill list --remote
+```
+
+## Manage Skills
+
+```bash
+/skill list                  # List installed skills
+/skill info <name>           # View skill details
+/skill enable <name>         # Enable a skill
+/skill disable <name>        # Disable a skill
+/skill uninstall <name>      # Uninstall a skill
+```
+
+> In terminal, replace `/skill` with `cow skill`.
 
 ## Skill Structure
 
-Each skill is a markdown file (`SKILL.md`) in its own directory with frontmatter:
+```
+skills/
+  my-skill/
+    SKILL.md          # Required: skill definition
+    scripts/          # Optional: bundled scripts
+    resources/        # Optional: reference files
+```
+
+`SKILL.md` uses YAML frontmatter:
 
 ```markdown
 ---
-name: skill-name
+name: my-skill
 description: Brief description of what the skill does
-metadata: {"cow":{"emoji":"🎯","requires":{"bins":["tool"]}}}
+metadata: {"cow":{"emoji":"🔧","requires":{"bins":["tool"],"env":["API_KEY"]}}}
 ---
 
-# Skill Name
+# My Skill
 
-Detailed instructions and examples...
+Instructions, examples, and usage patterns...
 ```
-
-## Available Skills
-
-- **calculator**: Mathematical calculations and expressions
-- **web-search**: Search the web for current information
-- **file-operations**: Read, write, and manage files
-
-## Creating Custom Skills
-
-To create a new skill:
-
-1. Create a directory: `skills/my-skill/`
-2. Create `SKILL.md` with frontmatter and content
-3. Restart the agent to load the new skill
 
 ### Frontmatter Fields
 
-- `name`: Skill name (must match directory name)
-- `description`: Brief description (required)
-- `metadata`: JSON object with additional configuration
-  - `emoji`: Display emoji
-  - `always`: Always include this skill (default: false)
-  - `primaryEnv`: Primary environment variable needed
-  - `os`: Supported operating systems (e.g., ["darwin", "linux"])
-  - `requires`: Requirements object
-    - `bins`: Required binaries
-    - `env`: Required environment variables
-    - `config`: Required config paths
-- `disable-model-invocation`: If true, skill won't be shown to model (default: false)
-- `user-invocable`: If false, users can't invoke directly (default: true)
+| Field | Description |
+|---|---|
+| `name` | Skill name (must match directory name) |
+| `description` | Brief description (required) |
+| `metadata.cow.emoji` | Display emoji |
+| `metadata.cow.always` | Always include this skill (default: false) |
+| `metadata.cow.requires.bins` | Required binaries |
+| `metadata.cow.requires.env` | Required environment variables |
+| `metadata.cow.requires.config` | Required config paths |
+| `metadata.cow.os` | Supported OS (e.g., `["darwin", "linux"]`) |
 
-### Example Skill
+## Skill Loading Order
 
-```markdown
----
-name: my-tool
-description: Use my-tool to process data
-metadata: {"cow":{"emoji":"🔧","requires":{"bins":["my-tool"],"env":["MY_TOOL_API_KEY"]}}}
----
+Skills are loaded from two locations (higher precedence overrides lower):
 
-# My Tool Skill
+1. **Builtin skills** (lower): `<project_root>/skills/` — shipped with the codebase
+2. **Custom skills** (higher): `~/cow/skills/` — installed via `cow skill install` or skill creator
 
-Use this skill when you need to process data with my-tool.
+Skills with the same name in the custom directory override builtin ones.
 
-## Prerequisites
+## Create & Contribute
 
-- Install my-tool: `pip install my-tool`
-- Set `MY_TOOL_API_KEY` environment variable
-
-## Usage
-
-\`\`\`python
-# Example usage
-my_tool_command("input data")
-\`\`\`
-```
-
-## Skill Loading
-
-Skills are loaded from multiple locations with precedence:
-
-1. **Workspace skills** (highest): `workspace/skills/` - Project-specific skills
-2. **Managed skills**: `~/.cow/skills/` - User-installed skills
-3. **Bundled skills** (lowest): Built-in skills
-
-Skills with the same name in higher-precedence locations override lower ones.
-
-## Skill Requirements
-
-Skills can specify requirements that determine when they're available:
-
-- **OS requirements**: Only load on specific operating systems
-- **Binary requirements**: Only load if required binaries are installed
-- **Environment variables**: Only load if required env vars are set
-- **Config requirements**: Only load if config values are set
-
-## Best Practices
-
-1. **Clear descriptions**: Write clear, concise skill descriptions
-2. **Include examples**: Provide practical usage examples
-3. **Document prerequisites**: List all requirements clearly
-4. **Use appropriate metadata**: Set correct requirements and flags
-5. **Keep skills focused**: Each skill should have a single, clear purpose
-
-## Workspace Skills
-
-You can create workspace-specific skills in your agent's workspace:
-
-```
-workspace/
-  skills/
-    custom-skill/
-      SKILL.md
-```
-
-These skills are only available when working in that specific workspace.
+See the [Skill Creation docs](https://docs.cowagent.ai/skills/create) for details, or submit your skill to [Skill Hub](https://skills.cowagent.ai/submit).

@@ -97,35 +97,11 @@ description: CowAgent 长期记忆、任务规划、技能系统、CLI 命令、
 /skill search <关键词>         # 搜索技能
 /skill install <名称>          # 一键安装
 ```
+
+同时还支持安装Github、ClawHub、LinkAI等第三方平台上的所有技能，详情查看 [技能安装](/skills/install)
+
 <img src="https://cdn.link-ai.tech/doc/20260401110103.png" width="750" />
 
-
-### 3.4 三方知识库和插件
-
-`linkai-agent` 技能可以将 [LinkAI](https://link-ai.tech/) 上的所有智能体作为 Skill 交给 Agent 使用，实现多智能体决策效果。
-
-配置方式：通过 `env_config` 配置 `LINKAI_API_KEY`，并在 `skills/linkai-agent/config.json` 中添加智能体说明：
-
-```json
-{
-  "apps": [
-    {
-      "app_code": "G7z6vKwp",
-      "app_name": "LinkAI客服助手",
-      "app_description": "当用户需要了解LinkAI平台相关问题时才选择该助手"
-    },
-    {
-      "app_code": "SFY5x7JR",
-      "app_name": "内容创作助手",
-      "app_description": "当用户需要创作图片或视频时才使用该助手"
-    }
-  ]
-}
-```
-
-<Frame>
-  <img src="https://cdn.link-ai.tech/doc/20260202234350.png" width="750" />
-</Frame>
 
 ## 4. CLI 命令系统
 

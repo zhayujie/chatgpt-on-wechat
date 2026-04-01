@@ -13,6 +13,7 @@
   <a href="https://cowagent.ai/">🌐 Website</a> &nbsp;·&nbsp;
   <a href="https://docs.cowagent.ai/en/intro/index">📖 Docs</a> &nbsp;·&nbsp;
   <a href="https://docs.cowagent.ai/en/guide/quick-start">🚀 Quick Start</a> &nbsp;·&nbsp;
+  <a href="https://skills.cowagent.ai/">🧩 Skill Hub</a> &nbsp;·&nbsp;
   <a href="https://link-ai.tech/cowagent/create">☁️ Try Online</a>
 </p>
 
@@ -40,6 +41,8 @@
 Try online (no deployment needed): [CowAgent](https://link-ai.tech/cowagent/create)
 
 ## Changelog
+
+> **2026.04.01:** [v2.0.5](https://github.com/zhayujie/chatgpt-on-wechat/releases/tag/2.0.5) — Cow CLI, Skill Hub open source, Browser tool, WeCom Bot QR scan, and more.
 
 > **2026.02.27:** [v2.0.2](https://github.com/zhayujie/chatgpt-on-wechat/releases/tag/2.0.2) — Web console overhaul (streaming chat, model/skill/memory/channel/scheduler/log management), multi-channel concurrent running, session persistence, new models including Gemini 3.1 Pro / Claude 4.6 Sonnet / Qwen3.5 Plus.
 
@@ -223,6 +226,7 @@ Multiple channels can be enabled simultaneously, separated by commas: `"channel_
 
 ## 🔗 Related Projects
 
+- [Cow Skill Hub](https://github.com/zhayujie/cow-skill-hub): Open skill marketplace for AI Agents — browse, search, install, and publish skills for CowAgent, OpenClaw, Claude Code, and more.
 - [bot-on-anything](https://github.com/zhayujie/bot-on-anything): Lightweight and highly extensible LLM application framework supporting Slack, Telegram, Discord, Gmail, and more.
 - [AgentMesh](https://github.com/MinimalFuture/AgentMesh): Open-source Multi-Agent framework for complex problem solving through agent team collaboration.
 
@@ -232,7 +236,7 @@ FAQs: <https://github.com/zhayujie/chatgpt-on-wechat/wiki/FAQs>
 
 ## 🛠️ Contributing
 
-Welcome to add new channels, referring to the [Feishu channel](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/channel/feishu/feishu_channel.py) as an example. Also welcome to contribute new Skills, see the [Skill Creation docs](https://docs.cowagent.ai/en/skills/create).
+Welcome to add new channels, referring to the [Feishu channel](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/channel/feishu/feishu_channel.py) as an example. Also welcome to contribute new Skills, see the [Skill Creation docs](https://docs.cowagent.ai/en/skills/create), or submit to [Skill Hub](https://skills.cowagent.ai/submit).
 
 ## ✉ Contact
 

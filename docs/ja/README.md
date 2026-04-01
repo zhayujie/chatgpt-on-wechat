@@ -13,6 +13,7 @@
   <a href="https://cowagent.ai/">🌐 ウェブサイト</a> &nbsp;·&nbsp;
   <a href="https://docs.cowagent.ai/en/intro/index">📖 ドキュメント</a> &nbsp;·&nbsp;
   <a href="https://docs.cowagent.ai/en/guide/quick-start">🚀 クイックスタート</a> &nbsp;·&nbsp;
+  <a href="https://skills.cowagent.ai/">🧩 Skill Hub</a> &nbsp;·&nbsp;
   <a href="https://link-ai.tech/cowagent/create">☁️ オンラインで試す</a>
 </p>
 
@@ -40,6 +41,8 @@
 オンラインで試す（デプロイ不要）: [CowAgent](https://link-ai.tech/cowagent/create)
 
 ## 更新履歴
+
+> **2026.04.01:** [v2.0.5](https://github.com/zhayujie/chatgpt-on-wechat/releases/tag/2.0.5) — Cow CLI、Skill Hubオープンソース化、ブラウザツール、WeCom Botスキャン作成など。
 
 > **2026.02.27:** [v2.0.2](https://github.com/zhayujie/chatgpt-on-wechat/releases/tag/2.0.2) — Webコンソールの全面刷新（ストリーミングチャット、モデル/Skill/メモリ/チャネル/スケジューラ/ログ管理）、マルチチャネル同時実行、セッション永続化、Gemini 3.1 Pro / Claude 4.6 Sonnet / Qwen3.5 Plusなど新モデル追加。
 
@@ -223,6 +226,7 @@ Coding Planは各プロバイダーが提供する月額サブスクリプショ
 
 ## 🔗 関連プロジェクト
 
+- [Cow Skill Hub](https://github.com/zhayujie/cow-skill-hub): AIエージェント向けのオープンSkillマーケットプレイス。CowAgent、OpenClaw、Claude Codeなどで利用可能なSkillの閲覧・検索・インストール・公開が可能。
 - [bot-on-anything](https://github.com/zhayujie/bot-on-anything): 軽量で高い拡張性を持つLLMアプリケーションフレームワーク。Slack、Telegram、Discord、Gmailなどに対応。
 - [AgentMesh](https://github.com/MinimalFuture/AgentMesh): エージェントチームの協調による複雑な問題解決のためのオープンソースのマルチエージェントフレームワーク。
 
@@ -232,7 +236,7 @@ FAQ: <https://github.com/zhayujie/chatgpt-on-wechat/wiki/FAQs>
 
 ## 🛠️ コントリビューション
 
-新しいチャネルの追加を歓迎します。[Feishuチャネル](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/channel/feishu/feishu_channel.py)を参考にしてください。また、新しいSkillのコントリビューションも歓迎します。[Skill作成ドキュメント](https://docs.cowagent.ai/ja/skills/create)を参照してください。
+新しいチャネルの追加を歓迎します。[Feishuチャネル](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/channel/feishu/feishu_channel.py)を参考にしてください。また、新しいSkillのコントリビューションも歓迎します。[Skill作成ドキュメント](https://docs.cowagent.ai/ja/skills/create)を参照するか、[Skill Hub](https://skills.cowagent.ai/submit)に提出してください。
 
 ## ✉ お問い合わせ
 
