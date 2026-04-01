@@ -129,7 +129,8 @@
                 "pages": [
                   "skills/index",
                   "skills/install",
-                  "skills/create"
+                  "skills/create",
+                  "skills/hub"
                 ]
               }
             ]
@@ -289,7 +290,8 @@
                 "pages": [
                   "en/skills/index",
                   "en/skills/install",
-                  "en/skills/skill-creator"
+                  "en/skills/skill-creator",
+                  "en/skills/hub"
                 ]
               }
             ]
@@ -449,7 +451,8 @@
                 "pages": [
                   "ja/skills/index",
                   "ja/skills/install",
-                  "ja/skills/create"
+                  "ja/skills/create",
+                  "ja/skills/hub"
                 ]
               }
             ]

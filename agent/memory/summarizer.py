@@ -16,16 +16,26 @@ from datetime import datetime
 from common.log import logger
 
 
-SUMMARIZE_SYSTEM_PROMPT = """你是一个记忆提取助手。你的任务是从对话记录中提取值得记住的信息，生成简洁的记忆摘要。
+SUMMARIZE_SYSTEM_PROMPT = """你是一个记忆提取助手。你的任务是从对话记录中提炼出值得长期记住的关键事件和核心信息。
+
+核心原则：
+- 按「事件」维度归纳，而不是按对话轮次逐条记录
+- 多轮对话如果围绕同一件事，合并为一条摘要
+- 只记录有长期价值的信息，忽略闲聊、问候、无意义的短消息
 
 输出要求：
-1. 以事件/关键信息为维度记录，每条一行，用 "- " 开头
-2. 记录有价值的关键信息，例如用户提出的要求及助手的解决方案，对话中涉及的事实信息，用户的偏好、决策或重要结论
-3. 每条摘要需要简明扼要，只保留关键信息
-4. 直接输出摘要内容，不要加任何前缀说明
-5. 当对话没有任何记录价值例如只是简单问候，可回复"无\""""
+1. 每条一行，用 "- " 开头，格式为：事件/主题 + 关键结论或结果
+2. 值得记录的信息类型：用户提出的需求及最终解决方案、重要的事实信息、用户的偏好或决策、关键技术方案或配置变更
+3. 不值得记录的信息：简单问候、闲聊、无实质内容的短消息、重复的中间过程
+4. 每条摘要应当简明扼要，一句话概括事件的核心内容和结果
+5. 直接输出摘要内容，不要加任何前缀说明
+6. 当对话没有任何记录价值（仅含问候或无意义内容），回复"无"
 
-SUMMARIZE_USER_PROMPT = """请从以下对话记录中提取关键信息，生成记忆摘要：
+示例（仅供参考格式）：
+- 用户配置了 XX 功能，设置参数为 YY，已生效
+- 用户反馈了 XX 问题，原因是 YY，通过 ZZ 方式解决"""
+
+SUMMARIZE_USER_PROMPT = """请从以下对话记录中，按关键事件维度提炼记忆摘要（合并同一事件的多轮对话，不要逐条列出）：
 
 {conversation}"""
 
@@ -220,14 +230,16 @@ class MemoryFlushManager:
         if not conversation_text.strip():
             return ""
         
-        # Try LLM summarization first
         if self.llm_model:
             try:
                 summary = self._call_llm_for_summary(conversation_text)
                 if summary and summary.strip() and summary.strip() != "无":
                     return summary.strip()
+                logger.info(f"[MemoryFlush] LLM returned empty or '无', using fallback")
             except Exception as e:
                 logger.warning(f"[MemoryFlush] LLM summarization failed, using fallback: {e}")
+        else:
+            logger.info("[MemoryFlush] No LLM model available, using rule-based fallback")
         
         return self._extract_summary_fallback(messages, max_messages)
 
@@ -277,27 +289,38 @@ class MemoryFlushManager:
 
     @staticmethod
     def _extract_summary_fallback(messages: List[Dict], max_messages: int = 0) -> str:
-        """Rule-based fallback when LLM is unavailable."""
+        """
+        Rule-based fallback when LLM is unavailable.
+        Groups consecutive user+assistant messages into events instead of
+        listing each message individually.
+        """
         msgs = messages if max_messages == 0 else messages[-max_messages * 2:]
-        
-        items = []
+
+        events: List[str] = []
+        current_user_text = ""
         for msg in msgs:
             role = msg.get("role", "")
             text = MemoryFlushManager._extract_text_from_content(msg.get("content", ""))
             if not text or not text.strip():
                 continue
             text = text.strip()
-            
+
             if role == "user":
                 if len(text) <= 5:
                     continue
-                items.append(f"- 用户请求: {text[:200]}")
-            elif role == "assistant":
+                current_user_text = text[:150]
+            elif role == "assistant" and current_user_text:
                 first_line = text.split("\n")[0].strip()
                 if len(first_line) > 10:
-                    items.append(f"- 处理结果: {first_line[:200]}")
-        
-        return "\n".join(items[:15])
+                    events.append(f"- {current_user_text} → {first_line[:150]}")
+                else:
+                    events.append(f"- {current_user_text}")
+                current_user_text = ""
+
+        if current_user_text:
+            events.append(f"- {current_user_text}")
+
+        return "\n".join(events[:10])
     
     @staticmethod
     def _extract_text_from_content(content) -> str:

@@ -1,6 +1,6 @@
 ---
 title: 功能介绍
-description: CowAgent 长期记忆、任务规划、技能系统详细说明
+description: CowAgent 长期记忆、任务规划、技能系统、CLI 命令、浏览器工具详细说明
 ---
 
 ## 1. 长期记忆
@@ -19,7 +19,7 @@ description: CowAgent 长期记忆、任务规划、技能系统详细说明
 
 工具是 Agent 访问操作系统资源的核心，Agent 会根据任务需求智能选择和调用工具，完成文件读写、命令执行、定时任务等各类操作。内置工具的实现在项目的 `agent/tools/` 目录下。
 
-**主要工具：** 文件读写编辑、Bash 终端、文件发送、定时调度、记忆搜索、联网搜索、环境配置等。
+**主要工具：** 文件读写编辑、Bash 终端、浏览器操作、文件发送、定时调度、记忆搜索、联网搜索、环境配置等。
 
 ### 2.1 终端和文件访问
 
@@ -45,7 +45,15 @@ description: CowAgent 长期记忆、任务规划、技能系统详细说明
   <img src="https://cdn.link-ai.tech/doc/20260202195402.png" width="800" />
 </Frame>
 
-### 2.4 环境变量管理
+### 2.4 浏览器操作
+
+内置 `browser` 工具，Agent 可控制浏览器访问网页、填写表单、点击元素、截图，支持动态 JS 渲染页面。运行 `cow install-browser` 一键安装，自动适配服务器（无头模式）和桌面环境：
+
+<Frame>
+  <img src="https://cdn.link-ai.tech/doc/20260401115728.png" width="750" />
+</Frame>
+
+### 2.5 环境变量管理
 
 技能所需的秘钥存储在环境变量文件中，由 `env_config` 工具进行管理，你可以通过对话的方式更新秘钥，工具内置安全保护和脱敏策略：
 
@@ -57,8 +65,11 @@ description: CowAgent 长期记忆、任务规划、技能系统详细说明
 
 技能系统为 Agent 提供无限的扩展性，每个 Skill 由说明文件、运行脚本（可选）、资源（可选）组成，描述如何完成特定类型的任务。通过 Skill 可以让 Agent 遵循说明完成复杂流程、调用各类工具或对接第三方系统。
 
+- **[Skill Hub](https://skills.cowagent.ai/)：** 开放的技能广场，汇集官方推荐、社区贡献和第三方技能，支持一键安装。
 - **内置技能：** 在项目的 `skills/` 目录下，包含技能创造器、图像识别、LinkAI 智能体、网页抓取等。内置 Skill 根据依赖条件（API Key、系统命令等）自动判断是否启用。
 - **自定义技能：** 由用户通过对话创建，存放在工作空间中（`~/cow/skills/`），可实现任何复杂的业务流程和第三方系统对接。
+
+安装技能：`/skill install <名称>` 或 `cow skill install <名称>`，支持从 Skill Hub、GitHub、ClawHub、URL 等来源安装。
 
 ### 3.1 创建技能
 
@@ -77,7 +88,19 @@ description: CowAgent 长期记忆、任务规划、技能系统详细说明
   <img src="https://cdn.link-ai.tech/doc/20260202213219.png" width="800" />
 </Frame>
 
-### 3.3 三方知识库和插件
+### 3.3 技能广场
+
+访问 [skills.cowagent.ai](https://skills.cowagent.ai/) 浏览所有可用技能，或在对话中执行：
+
+```text
+/skill list --remote          # 浏览技能广场
+/skill search <关键词>         # 搜索技能
+/skill install <名称>          # 一键安装
+```
+<img src="https://cdn.link-ai.tech/doc/20260401110103.png" width="750" />
+
+
+### 3.4 三方知识库和插件
 
 `linkai-agent` 技能可以将 [LinkAI](https://link-ai.tech/) 上的所有智能体作为 Skill 交给 Agent 使用，实现多智能体决策效果。
 
@@ -103,3 +126,22 @@ description: CowAgent 长期记忆、任务规划、技能系统详细说明
 <Frame>
   <img src="https://cdn.link-ai.tech/doc/20260202234350.png" width="750" />
 </Frame>
+
+## 4. CLI 命令系统
+
+CowAgent 提供两种命令交互方式，覆盖服务管理、技能安装、配置调整等日常运维操作：
+
+- **终端 CLI：** 在系统终端执行 `cow <命令>`，支持 `start`、`stop`、`restart`、`update`、`status`、`logs`、`skill` 等
+- **对话命令：** 在对话中输入 `/<命令>`，Web 控制台输入 `/` 可弹出指令菜单快速选择
+
+```bash
+cow start              # 启动服务
+cow stop               # 停止服务
+cow update             # 更新并重启
+cow skill install pptx # 安装技能
+cow install-browser    # 安装浏览器工具
+```
+
+详细命令参考 [命令总览](https://docs.cowagent.ai/commands)。
+
+<img src="https://cdn.link-ai.tech/doc/20260401114549.png" width="750" />

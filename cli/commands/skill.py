@@ -753,7 +753,8 @@ def _list_remote(page: int = 1):
         nav_parts.append(f"cow skill list --remote --page {page + 1}")
     if nav_parts:
         click.echo(f"  Navigate: {' | '.join(nav_parts)}")
-    click.echo(f"  Install:  cow skill install <name>\n")
+    click.echo(f"  Install:  cow skill install <name>")
+    click.echo(f"  Browse:   https://skills.cowagent.ai\n")
 
 
 # ------------------------------------------------------------------
@@ -878,6 +879,15 @@ def _route_install(name: str, result: InstallResult):
         skill_name = name[8:]
         _check_skill_name(skill_name)
         _install_hub(skill_name, result, provider="clawhub")
+        return
+
+    # --- linkai: prefix ---
+    if name.startswith("linkai:"):
+        skill_code = name[7:]
+        # LinkAI codes can be mixed-case alphanumeric; validate loosely
+        if not re.match(r"^[a-zA-Z0-9_\-]{1,128}$", skill_code):
+            raise SkillInstallError(f"Invalid LinkAI skill code '{skill_code}'.")
+        _install_hub(skill_code, result, provider="linkai")
         return
 
     # --- owner/repo or owner/repo#subpath shorthand ---

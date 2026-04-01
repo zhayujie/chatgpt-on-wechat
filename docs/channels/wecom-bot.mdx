@@ -9,7 +9,23 @@ description: 将 CowAgent 接入企业微信智能机器人（长连接模式）
   智能机器人与企业微信自建应用是两种不同的接入方式。智能机器人使用 WebSocket 长连接，无需服务器公网 IP 和域名，配置更简单。
 </Note>
 
-## 一、创建智能机器人
+## 一、接入方式
+
+### 方式一：扫码一键接入（推荐）
+
+无需提前创建机器人，启动 Cow 项目后打开 Web 控制台（本地链接：http://127.0.0.1:9899/），选择 **通道** 菜单，点击**接入通道**，选择**企微智能机器人**，切换到「扫码接入」模式，使用**企业微信**扫码即可自动完成机器人创建和接入。
+
+<img src="https://cdn.link-ai.tech/doc/20260401121213.png" width="800"/>
+
+<Note>
+  扫码成功后，可在企业微信工作台 - **智能机器人**页面对机器人进行进一步配置，包括修改名称、头像、可见范围等。
+</Note>
+
+### 方式二：手动创建接入
+
+需要先在企业微信中创建智能机器人并获取 Bot ID 和 Secret，再通过 Web 控制台或配置文件接入。
+
+**步骤一：创建智能机器人**
 
 1. 打开企业微信客户端，进入工作台，点击**智能机器人**：
 
@@ -25,34 +41,35 @@ description: 将 CowAgent 接入企业微信智能机器人（长连接模式）
 
 4. 设置机器人名称、头像、可见范围，并选择**长连接模式**，记录下 **Bot ID** 和 **Secret** 信息后点击保存。
 
-## 二、配置和运行
+**步骤二：接入 CowAgent**
 
-### 方式一：Web 控制台接入
+<Tabs>
+  <Tab title="Web 控制台">
+    打开 Web 控制台，选择**通道**菜单，点击**接入通道**，选择**企微智能机器人**，切换到「手动填写」模式，输入 Bot ID 和 Secret，点击接入即可。
 
-启动Cow项目后打开 Web 控制台 (本地链接为: http://127.0.0.1:9899/ )，选择 **通道** 菜单，点击 **接入通道**，选择 **企微智能机器人**，填写上一步保存的 Bot ID 和 Secret，点击接入即可。
+    <img src="https://cdn.link-ai.tech/doc/20260316181711.png" width="800"/>
+  </Tab>
+  <Tab title="配置文件">
+    在 `config.json` 中添加以下配置后启动程序：
 
-<img src="https://cdn.link-ai.tech/doc/20260316181711.png" width="800"/>
+    ```json
+    {
+      "channel_type": "wecom_bot",
+      "wecom_bot_id": "YOUR_BOT_ID",
+      "wecom_bot_secret": "YOUR_SECRET"
+    }
+    ```
 
-### 方式二：配置文件接入
+    | 参数 | 说明 |
+    | --- | --- |
+    | `wecom_bot_id` | 智能机器人的 BotID |
+    | `wecom_bot_secret` | 智能机器人的 Secret |
+  </Tab>
+</Tabs>
 
-在 `config.json` 中添加以下配置：
+日志显示 `[WecomBot] Subscribe success` 即表示连接成功。
 
-```json
-{
-  "channel_type": "wecom_bot",
-  "wecom_bot_id": "YOUR_BOT_ID",
-  "wecom_bot_secret": "YOUR_SECRET"
-}
-```
-
-| 参数 | 说明 |
-| --- | --- |
-| `wecom_bot_id` | 智能机器人的 BotID |
-| `wecom_bot_secret` | 智能机器人的 Secret |
-
-配置完成后启动程序，日志显示 `[WecomBot] Subscribe success` 即表示连接成功。
-
-## 三、功能说明
+## 二、功能说明
 
 | 功能 | 支持情况 |
 | --- | --- |
@@ -64,7 +81,7 @@ description: 将 CowAgent 接入企业微信智能机器人（长连接模式）
 | 流式回复 | ✅ |
 | 定时任务主动推送 | ✅ |
 
-## 四、使用
+## 三、使用
 
 在企业微信中搜索创建的机器人名称，即可开始单聊对话。
 

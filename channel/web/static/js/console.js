@@ -33,7 +33,7 @@ const I18N = {
         config_save: '保存', config_saved: '已保存',
         config_save_error: '保存失败',
         config_custom_option: '自定义...',
-        skills_title: '技能管理', skills_desc: '查看、启用或禁用 Agent 技能',
+        skills_title: '技能管理', skills_desc: '查看、启用或禁用 Agent 技能', skills_hub_btn: '探索技能广场',
         skills_loading: '加载技能中...', skills_loading_desc: '技能加载后将显示在此处',
         tools_section_title: '内置工具', tools_loading: '加载工具中...',
         skills_section_title: '技能', skill_enable: '启用', skill_disable: '禁用',
@@ -88,7 +88,7 @@ const I18N = {
         config_save: 'Save', config_saved: 'Saved',
         config_save_error: 'Save failed',
         config_custom_option: 'Custom...',
-        skills_title: 'Skills', skills_desc: 'View, enable, or disable agent skills',
+        skills_title: 'Skills', skills_desc: 'View, enable, or disable agent skills', skills_hub_btn: 'Skill Hub',
         skills_loading: 'Loading skills...', skills_loading_desc: 'Skills will be displayed here after loading',
         tools_section_title: 'Built-in Tools', tools_loading: 'Loading tools...',
         skills_section_title: 'Skills', skill_enable: 'Enable', skill_disable: 'Disable',
@@ -881,7 +881,7 @@ function startSSE(requestId, loadingEl, timestamp) {
             const imgEl = document.createElement('img');
             imgEl.src = item.content;
             imgEl.alt = 'screenshot';
-            imgEl.style.cssText = 'max-width:360px;border-radius:8px;margin:8px 0;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,0.1);';
+            imgEl.style.cssText = 'max-width:600px;border-radius:8px;margin:8px 0;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,0.1);';
             imgEl.onclick = () => window.open(item.content, '_blank');
             mediaEl.appendChild(imgEl);
             scrollChatToBottom();

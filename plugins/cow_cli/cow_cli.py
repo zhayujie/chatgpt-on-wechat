@@ -621,6 +621,7 @@ class CowCliPlugin(Plugin):
             lines.append(f"💡 /skill list --remote --page {page - 1}  上一页")
         lines.append("💡 /skill install <名称>  安装技能")
         lines.append("💡 /skill search <关键词>  搜索技能")
+        lines.append("🌐 https://skills.cowagent.ai  在线浏览全部技能")
         return "\n".join(lines)
 
     def _skill_search(self, query: str) -> str:
