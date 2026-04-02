@@ -478,7 +478,14 @@ def _build_runtime_section(runtime_info: Dict[str, Any], language: str) -> List[
     
     # Add other runtime info
     runtime_parts = []
-    if runtime_info.get("model"):
+    # Support dynamic model via callable, fallback to static value
+    if callable(runtime_info.get("_get_model")):
+        try:
+            runtime_parts.append(f"模型={runtime_info['_get_model']()}")
+        except Exception:
+            if runtime_info.get("model"):
+                runtime_parts.append(f"模型={runtime_info['model']}")
+    elif runtime_info.get("model"):
         runtime_parts.append(f"模型={runtime_info['model']}")
     if runtime_info.get("workspace"):
         runtime_parts.append(f"工作空间={runtime_info['workspace']}")

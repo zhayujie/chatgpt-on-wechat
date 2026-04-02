@@ -465,8 +465,12 @@ class AgentInitializer:
                 'timezone': timezone_name
             }
         
+        def get_model():
+            """Get current model name dynamically from config"""
+            return conf().get("model", "unknown")
+
         return {
-            "model": conf().get("model", "unknown"),
+            "_get_model": get_model,
             "workspace": workspace_root,
             "channel": ", ".join(conf().get("channel_type")) if isinstance(conf().get("channel_type"), list) else conf().get("channel_type", "unknown"),
             "_get_current_time": get_current_time  # Dynamic time function
