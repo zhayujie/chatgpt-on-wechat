@@ -172,7 +172,7 @@ MODEL_LIST = [
               DEEPSEEK_CHAT, DEEPSEEK_REASONER,
               
               # Qwen
-              QWEN, QWEN_TURBO, QWEN_PLUS, QWEN_MAX, QWEN_LONG, QWEN3_MAX, QWEN35_PLUS,
+              QWEN35_PLUS, QWEN3_MAX, QWEN_MAX, QWEN_PLUS, QWEN_TURBO, QWEN_LONG, QWEN,
               
               # MiniMax
               MiniMax, MINIMAX_M2_7, MINIMAX_M2_5, MINIMAX_M2_1, MINIMAX_M2_1_LIGHTNING, MINIMAX_M2, MINIMAX_ABAB6_5,

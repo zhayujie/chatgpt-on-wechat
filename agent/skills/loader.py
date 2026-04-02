@@ -53,6 +53,12 @@ class SkillLoader:
         """
         Recursively load skills from a directory.
         
+        If a subdirectory contains its own SKILL.md, it is treated as a
+        self-contained skill (or skill-collection) and its children are
+        NOT scanned further. This prevents sub-skills inside a collection
+        (e.g. style-collection/style-anjing) from being listed as
+        independent top-level skills.
+        
         :param dir_path: Directory to scan
         :param source: Source identifier
         :param include_root_files: Whether to include root-level .md files
@@ -66,38 +72,41 @@ class SkillLoader:
         except Exception as e:
             diagnostics.append(f"Failed to list directory {dir_path}: {e}")
             return LoadSkillsResult(skills=skills, diagnostics=diagnostics)
+
+        # If this directory has its own SKILL.md, load it and stop recursing.
+        # The sub-directories are internal resources of this skill.
+        if not include_root_files and 'SKILL.md' in entries:
+            skill_md_path = os.path.join(dir_path, 'SKILL.md')
+            if os.path.isfile(skill_md_path):
+                skill_result = self._load_skill_from_file(skill_md_path, source)
+                if skill_result.skills:
+                    skills.extend(skill_result.skills)
+                diagnostics.extend(skill_result.diagnostics)
+                return LoadSkillsResult(skills=skills, diagnostics=diagnostics)
         
         for entry in entries:
-            # Skip hidden files and directories
             if entry.startswith('.'):
                 continue
             
-            # Skip common non-skill directories
             if entry in ('node_modules', '__pycache__', 'venv', '.git'):
                 continue
             
             full_path = os.path.join(dir_path, entry)
             
-            # Handle directories
             if os.path.isdir(full_path):
-                # Recursively scan subdirectories
                 sub_result = self._load_skills_recursive(full_path, source, include_root_files=False)
                 skills.extend(sub_result.skills)
                 diagnostics.extend(sub_result.diagnostics)
                 continue
             
-            # Handle files
             if not os.path.isfile(full_path):
                 continue
             
-            # Check if this is a skill file
             is_root_md = include_root_files and entry.endswith('.md') and entry.upper() != 'README.MD'
-            is_skill_md = not include_root_files and entry == 'SKILL.md'
             
-            if not (is_root_md or is_skill_md):
+            if not is_root_md:
                 continue
             
-            # Load the skill
             skill_result = self._load_skill_from_file(full_path, source)
             if skill_result.skills:
                 skills.extend(skill_result.skills)

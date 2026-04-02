@@ -563,7 +563,7 @@ class ConfigHandler:
     _RECOMMENDED_MODELS = [
         const.MINIMAX_M2_7, const.MINIMAX_M2_5, const.MINIMAX_M2_1, const.MINIMAX_M2_1_LIGHTNING,
         const.GLM_5_TURBO, const.GLM_5, const.GLM_4_7,
-        const.QWEN3_MAX, const.QWEN35_PLUS,
+        const.QWEN35_PLUS, const.QWEN3_MAX,
         const.KIMI_K2_5, const.KIMI_K2,
         const.DOUBAO_SEED_2_PRO, const.DOUBAO_SEED_2_CODE,
         const.CLAUDE_4_6_SONNET, const.CLAUDE_4_6_OPUS, const.CLAUDE_4_5_SONNET,
@@ -592,7 +592,7 @@ class ConfigHandler:
             "api_key_field": "dashscope_api_key",
             "api_base_key": None,
             "api_base_default": None,
-            "models": [const.QWEN3_MAX, const.QWEN35_PLUS],
+            "models": [const.QWEN35_PLUS, const.QWEN3_MAX],
         }),
         ("moonshot", {
             "label": "Kimi",
