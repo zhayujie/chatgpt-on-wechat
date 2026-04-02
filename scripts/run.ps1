@@ -154,7 +154,7 @@ $ModelChoices = @{
     "2" = @{ Provider = "Zhipu AI";                 Default = "glm-5-turbo";                            Key = "ZHIPU_KEY" }
     "3" = @{ Provider = "Kimi (Moonshot)";          Default = "kimi-k2.5";                              Key = "MOONSHOT_KEY" }
     "4" = @{ Provider = "Doubao (Volcengine Ark)";  Default = "doubao-seed-2-0-code-preview-260215";    Key = "ARK_KEY" }
-    "5" = @{ Provider = "Qwen (DashScope)";         Default = "qwen3.5-plus";                           Key = "DASHSCOPE_KEY" }
+    "5" = @{ Provider = "Qwen (DashScope)";         Default = "qwen3.6-plus";                           Key = "DASHSCOPE_KEY" }
     "6" = @{ Provider = "Claude";                   Default = "claude-sonnet-4-6";                      Key = "CLAUDE_KEY";  Base = "https://api.anthropic.com/v1" }
     "7" = @{ Provider = "Gemini";                   Default = "gemini-3.1-pro-preview";                 Key = "GEMINI_KEY";  Base = "https://generativelanguage.googleapis.com" }
     "8" = @{ Provider = "OpenAI GPT";               Default = "gpt-5.4";                                Key = "OPENAI_KEY";  Base = "https://api.openai.com/v1" }
@@ -169,7 +169,7 @@ function Select-Model {
     Write-Host "2) Zhipu AI (glm-5-turbo, glm-5, etc.)"
     Write-Host "3) Kimi (kimi-k2.5, kimi-k2, etc.)"
     Write-Host "4) Doubao (doubao-seed-2-0-code-preview-260215, etc.)"
-    Write-Host "5) Qwen (qwen3.5-plus, qwen3-max, qwq-plus, etc.)"
+    Write-Host "5) Qwen (qwen3.6-plus, qwen3.5-plus, qwen3-max, qwq-plus, etc.)"
     Write-Host "6) Claude (claude-sonnet-4-6, claude-opus-4-6, etc.)"
     Write-Host "7) Gemini (gemini-3.1-flash-lite-preview, gemini-3.1-pro-preview, etc.)"
     Write-Host "8) OpenAI GPT (gpt-5.4, gpt-5.2, gpt-4.1, etc.)"

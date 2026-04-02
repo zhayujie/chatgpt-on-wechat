@@ -271,7 +271,7 @@ select_model() {
     echo -e "${YELLOW}2) Zhipu AI (glm-5-turbo, glm-5, etc.)${NC}"
     echo -e "${YELLOW}3) Kimi (kimi-k2.5, kimi-k2, etc.)${NC}"
     echo -e "${YELLOW}4) Doubao (doubao-seed-2-0-code-preview-260215, etc.)${NC}"
-    echo -e "${YELLOW}5) Qwen (qwen3.5-plus, qwen3-max, qwq-plus, etc.)${NC}"
+    echo -e "${YELLOW}5) Qwen (qwen3.6-plus, qwen3.5-plus, qwen3-max, qwq-plus, etc.)${NC}"
     echo -e "${YELLOW}6) Claude (claude-sonnet-4-6, claude-opus-4-6, etc.)${NC}"
     echo -e "${YELLOW}7) Gemini (gemini-3.1-flash-lite-preview, gemini-3.1-pro-preview, etc.)${NC}"
     echo -e "${YELLOW}8) OpenAI GPT (gpt-5.4, gpt-5.2, gpt-4.1, etc.)${NC}"
@@ -318,7 +318,7 @@ configure_model() {
         2) read_model_config "Zhipu AI" "glm-5-turbo" "ZHIPU_KEY" ;;
         3) read_model_config "Kimi (Moonshot)" "kimi-k2.5" "MOONSHOT_KEY" ;;
         4) read_model_config "Doubao (Volcengine Ark)" "doubao-seed-2-0-code-preview-260215" "ARK_KEY" ;;
-        5) read_model_config "Qwen (DashScope)" "qwen3.5-plus" "DASHSCOPE_KEY" ;;
+        5) read_model_config "Qwen (DashScope)" "qwen3.6-plus" "DASHSCOPE_KEY" ;;
         6)
             read_model_config "Claude" "claude-sonnet-4-6" "CLAUDE_KEY"
             read_api_base "CLAUDE_BASE" "https://api.anthropic.com/v1"

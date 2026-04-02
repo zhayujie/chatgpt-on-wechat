@@ -67,7 +67,7 @@ class AgentLLMModel(LLMModel):
 
     _MODEL_BOT_TYPE_MAP = {
         "wenxin": const.BAIDU, "wenxin-4": const.BAIDU,
-        "xunfei": const.XUNFEI, const.QWEN: const.QWEN,
+        "xunfei": const.XUNFEI, const.QWEN: const.QWEN_DASHSCOPE,
         const.MODELSCOPE: const.MODELSCOPE,
     }
     _MODEL_PREFIX_MAP = [

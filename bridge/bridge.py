@@ -39,11 +39,8 @@ class Bridge(object):
                 self.btype["chat"] = const.BAIDU
             if model_type in ["xunfei"]:
                 self.btype["chat"] = const.XUNFEI
-            if model_type in [const.QWEN]:
-                self.btype["chat"] = const.QWEN
-            if model_type in [const.QWEN_TURBO, const.QWEN_PLUS, const.QWEN_MAX]:
+            if model_type in [const.QWEN, const.QWEN_TURBO, const.QWEN_PLUS, const.QWEN_MAX]:
                 self.btype["chat"] = const.QWEN_DASHSCOPE
-            # Support Qwen3 and other DashScope models
             if model_type and (model_type.startswith("qwen") or model_type.startswith("qwq") or model_type.startswith("qvq")):
                 self.btype["chat"] = const.QWEN_DASHSCOPE
             if model_type and model_type.startswith("gemini"):

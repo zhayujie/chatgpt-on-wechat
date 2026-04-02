@@ -407,7 +407,7 @@ class CowCliPlugin(Plugin):
         from common import const
         _EXACT = {
             "wenxin": const.BAIDU, "wenxin-4": const.BAIDU,
-            "xunfei": const.XUNFEI, const.QWEN: const.QWEN,
+            "xunfei": const.XUNFEI, const.QWEN: const.QWEN_DASHSCOPE,
             const.MODELSCOPE: const.MODELSCOPE,
             const.MOONSHOT: const.MOONSHOT,
             "moonshot-v1-8k": const.MOONSHOT, "moonshot-v1-32k": const.MOONSHOT,

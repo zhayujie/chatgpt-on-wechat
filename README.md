@@ -218,7 +218,7 @@ cow install-browser
 <details>
 <summary>2. 其他配置</summary>
 
-+ `model`: 模型名称，Agent 模式下推荐使用 `MiniMax-M2.7`、`glm-5-turbo`、`kimi-k2.5`、`qwen3.5-plus`、`claude-sonnet-4-6`、`gemini-3.1-pro-preview`，全部模型名称参考[common/const.py](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/common/const.py)文件
++ `model`: 模型名称，Agent 模式下推荐使用 `MiniMax-M2.7`、`glm-5-turbo`、`kimi-k2.5`、`qwen3.6-plus`、`claude-sonnet-4-6`、`gemini-3.1-pro-preview`，全部模型名称参考[common/const.py](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/common/const.py)文件
 + `character_desc`：普通对话模式下的机器人系统提示词。在 Agent 模式下该配置不生效，由工作空间中的文件内容构成。
 + `subscribe_msg`：订阅消息，公众号和企业微信 channel 中请填写，当被订阅时会自动回复， 可使用特殊占位符。目前支持的占位符有{trigger_prefix}，在程序中它会自动替换成 bot 的触发词。
 </details>
@@ -303,7 +303,7 @@ sudo docker logs -f chatgpt-on-wechat
 
 ## 模型说明
 
-以下对所有可支持的模型的配置和使用方法进行说明，模型接口实现在项目的 `models/` 目录下。
+推荐通过 Web 控制台在线管理模型配置，无需手动编辑文件，详见 [模型文档](https://docs.cowagent.ai/models)。以下是手动修改 `config.json` 配置模型的说明：
 
 <details>
 <summary>OpenAI</summary>
@@ -411,18 +411,18 @@ sudo docker logs -f chatgpt-on-wechat
 
 ```json
 {
-    "model": "qwen3.5-plus",
+    "model": "qwen3.6-plus",
     "dashscope_api_key": "sk-qVxxxxG"
 }
 ```
- - `model`: 可填写 `qwen3.5-plus、qwen3-max、qwen-max、qwen-plus、qwen-turbo、qwen-long、qwq-plus` 等
- - `dashscope_api_key`: 通义千问的 API-KEY，参考 [官方文档](https://bailian.console.aliyun.com/?tab=api#/api) ，在 [控制台](https://bailian.console.aliyun.com/?tab=model#/api-key) 创建
+ - `model`: 可填写 `qwen3.6-plus、qwen3.5-plus、qwen3-max、qwen-max、qwen-plus、qwen-turbo、qwen-long、qwq-plus` 等
+ - `dashscope_api_key`: 通义千问的 API-KEY，参考 [官方文档](https://bailian.console.aliyun.com/?tab=api#/api) ，在 [百炼控制台](https://bailian.console.aliyun.com/?tab=model#/api-key) 创建
 
 方式二：OpenAI 兼容方式接入，配置如下：
 ```json
 {
   "bot_type": "openai",
-  "model": "qwen3.5-plus",
+  "model": "qwen3.6-plus",
   "open_ai_api_base": "https://dashscope.aliyuncs.com/compatible-mode/v1",
   "open_ai_api_key": "sk-qVxxxxG"
 }
@@ -674,7 +674,7 @@ Coding Plan 是各厂商推出的编程包月套餐，所有厂商均可通过 O
 
 ## 通道说明
 
-以下对可接入通道的配置方式进行说明，应用通道代码在项目的 `channel/` 目录下。
+推荐通过 Web 控制台在线管理通道配置，无需手动编辑文件，详见 [通道文档](https://docs.cowagent.ai/channels/weixin)。以下为手动修改 `config.json` 配置通道的说明：
 
 支持同时可接入多个通道，配置时可通过逗号进行分割，例如 `"channel_type": "feishu,dingtalk"`。
 

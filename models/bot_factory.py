@@ -46,10 +46,7 @@ def create_bot(bot_type):
     elif bot_type == const.CLAUDEAPI:
         from models.claudeapi.claude_api_bot import ClaudeAPIBot
         return ClaudeAPIBot()
-    elif bot_type == const.QWEN:
-        from models.ali.ali_qwen_bot import AliQwenBot
-        return AliQwenBot()
-    elif bot_type == const.QWEN_DASHSCOPE:
+    elif bot_type in (const.QWEN, const.QWEN_DASHSCOPE):
         from models.dashscope.dashscope_bot import DashscopeBot
         return DashscopeBot()
     elif bot_type == const.GEMINI:

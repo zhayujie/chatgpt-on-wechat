@@ -7,8 +7,8 @@ XUNFEI = "xunfei"
 CHATGPTONAZURE = "chatGPTOnAzure"
 LINKAI = "linkai"
 CLAUDEAPI= "claudeAPI"
-QWEN = "qwen"  # 旧版千问接入
-QWEN_DASHSCOPE = "dashscope"  # 新版千问接入(百炼)
+QWEN = "qwen"  # 千问 (兼容旧配置，实际走 DashscopeBot)
+QWEN_DASHSCOPE = "dashscope"  # 千问 DashScope 接入
 GEMINI = "gemini" 
 ZHIPU_AI = "zhipu"  
 MOONSHOT = "moonshot"
@@ -81,14 +81,14 @@ TTS_1_HD = "tts-1-hd"
 DEEPSEEK_CHAT = "deepseek-chat"  # DeepSeek-V3对话模型
 DEEPSEEK_REASONER = "deepseek-reasoner"  # DeepSeek-R1模型
 
-# Qwen (通义千问 - 阿里云)
-QWEN = "qwen"
+# Qwen (通义千问 - 阿里云 DashScope)
 QWEN_TURBO = "qwen-turbo"
 QWEN_PLUS = "qwen-plus"
 QWEN_MAX = "qwen-max"
 QWEN_LONG = "qwen-long"
 QWEN3_MAX = "qwen3-max"  # Qwen3 Max - Agent推荐模型
 QWEN35_PLUS = "qwen3.5-plus"  # Qwen3.5 Plus - Omni model (MultiModalConversation)
+QWEN36_PLUS = "qwen3.6-plus"  # Qwen3.6 Plus - Omni model (MultiModalConversation)
 QWQ_PLUS = "qwq-plus"
 
 # MiniMax
@@ -172,7 +172,7 @@ MODEL_LIST = [
               DEEPSEEK_CHAT, DEEPSEEK_REASONER,
               
               # Qwen
-              QWEN35_PLUS, QWEN3_MAX, QWEN_MAX, QWEN_PLUS, QWEN_TURBO, QWEN_LONG, QWEN,
+              QWEN36_PLUS, QWEN35_PLUS, QWEN3_MAX, QWEN_MAX, QWEN_PLUS, QWEN_TURBO, QWEN_LONG,
               
               # MiniMax
               MiniMax, MINIMAX_M2_7, MINIMAX_M2_5, MINIMAX_M2_1, MINIMAX_M2_1_LIGHTNING, MINIMAX_M2, MINIMAX_ABAB6_5,

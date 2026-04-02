@@ -165,7 +165,7 @@ Supports mainstream model providers. Recommended models for Agent mode:
 | GLM | `glm-5-turbo` |
 | Kimi | `kimi-k2.5` |
 | Doubao | `doubao-seed-2-0-code-preview-260215` |
-| Qwen | `qwen3.5-plus` |
+| Qwen | `qwen3.6-plus` |
 | Claude | `claude-sonnet-4-6` |
 | Gemini | `gemini-3.1-pro-preview` |
 | OpenAI | `gpt-5.4` |
