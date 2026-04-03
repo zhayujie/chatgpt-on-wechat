@@ -126,6 +126,13 @@ class WebChannel(ChatChannel):
                     logger.debug(f"SSE skipped duplicate file for request {request_id}")
                     return
 
+                # Skip http-URL FILE/IMAGE_URL replies produced by chat_channel's media extraction:
+                # the text reply (already sent as "done") contains the URL and the frontend will
+                # render it via renderMarkdown/injectVideoPlayers, so no separate SSE event needed.
+                if reply.type in (ReplyType.FILE, ReplyType.IMAGE_URL) and content.startswith(("http://", "https://")):
+                    logger.debug(f"SSE skipped http media reply for request {request_id}")
+                    return
+
                 self.sse_queues[request_id].put({
                     "type": "done",
                     "content": content,

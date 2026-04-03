@@ -270,8 +270,42 @@ function createMd() {
 
 const md = createMd();
 
+const VIDEO_EXT_RE = /\.(?:mp4|webm|mov|avi|mkv)$/i;  // tested against URL without query string
+
+function _buildVideoHtml(url) {
+    const fileName = url.split('/').pop().split('?')[0];
+    return `<div style="margin:10px 0;">` +
+        `<video controls preload="metadata" ` +
+        `style="max-width:100%;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.15);display:block;">` +
+        `<source src="${url}"></video>` +
+        `<a href="${url}" target="_blank" ` +
+        `style="display:inline-flex;align-items:center;gap:4px;margin-top:4px;font-size:12px;color:#8b8fa8;text-decoration:none;">` +
+        `<i class="fas fa-download"></i> ${escapeHtml(fileName)}</a></div>`;
+}
+
+function injectVideoPlayers(html) {
+    // Step 1: replace markdown-it anchor tags whose href points to a video file.
+    const step1 = html.replace(
+        /<a\s+href="(https?:\/\/[^"]+)"[^>]*>[^<]*<\/a>/gi,
+        (match, url) => VIDEO_EXT_RE.test(url.split('?')[0]) ? _buildVideoHtml(url) : match
+    );
+    // Step 2: replace any remaining bare video URLs in text nodes (not inside HTML tags).
+    // Split on HTML tags to avoid touching src/href attributes already in markup.
+    return step1.split(/(<[^>]+>)/).map((chunk, idx) => {
+        // Even indices are text nodes; odd indices are HTML tags — leave them untouched.
+        if (idx % 2 !== 0) return chunk;
+        return chunk.replace(/https?:\/\/\S+/gi, (url) => {
+            const bare = url.replace(/[),.\s]+$/, '');  // strip trailing punctuation
+            return VIDEO_EXT_RE.test(bare.split('?')[0]) ? _buildVideoHtml(bare) : url;
+        });
+    }).join('');
+}
+
 function renderMarkdown(text) {
-    try { return md.render(text); }
+    try {
+        const html = md.render(text);
+        return injectVideoPlayers(html);
+    }
     catch (e) { return text.replace(/\n/g, '<br>'); }
 }
 
@@ -886,6 +920,22 @@ function startSSE(requestId, loadingEl, timestamp) {
             mediaEl.appendChild(imgEl);
             scrollChatToBottom();
 
+        } else if (item.type === 'text') {
+            // Intermediate text sent before media items; display it but keep SSE open.
+            ensureBotEl();
+            contentEl.classList.remove('sse-streaming');
+            const textContent = item.content || accumulatedText;
+            if (textContent) contentEl.innerHTML = renderMarkdown(textContent);
+            applyHighlighting(botEl);
+            scrollChatToBottom();
+
+        } else if (item.type === 'video') {
+            ensureBotEl();
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = _buildVideoHtml(item.content);
+            mediaEl.appendChild(wrapper.firstElementChild || wrapper);
+            scrollChatToBottom();
+
         } else if (item.type === 'file') {
             ensureBotEl();
             const fileName = item.file_name || item.content.split('/').pop();
@@ -912,6 +962,7 @@ function startSSE(requestId, loadingEl, timestamp) {
             es.close();
             delete activeStreams[requestId];
 
+            // item.content may be empty when "done" is only a stream-close signal after media.
             const finalText = item.content || accumulatedText;
 
             if (!botEl && finalText) {
@@ -919,6 +970,7 @@ function startSSE(requestId, loadingEl, timestamp) {
                 addBotMessage(finalText, new Date((item.timestamp || Date.now() / 1000) * 1000), requestId);
             } else if (botEl) {
                 contentEl.classList.remove('sse-streaming');
+                // Only update text content when there is something new to show.
                 if (finalText) contentEl.innerHTML = renderMarkdown(finalText);
                 applyHighlighting(botEl);
             }

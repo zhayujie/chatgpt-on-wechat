@@ -347,38 +347,30 @@ class ChatChannel(Channel):
         if media_items:
             logger.info(f"[chat_channel] Extracted {len(media_items)} media item(s) from reply")
             
-            # 先发送文本（保持原文本不变）
+            # Send text first (the frontend will embed video players via renderMarkdown).
             logger.info(f"[chat_channel] Sending text content before media: {reply.content[:100]}...")
             self._send(reply, context)
             logger.info(f"[chat_channel] Text sent, now sending {len(media_items)} media item(s)")
             
-            # 然后逐个发送媒体文件
             for i, (url, media_type) in enumerate(media_items):
                 try:
-                    # 判断是本地文件还是URL
+                    # Determine whether it is a remote URL or a local file.
                     if url.startswith(('http://', 'https://')):
-                        # 网络资源
                         if media_type == 'video':
-                            # 视频使用 FILE 类型发送
                             media_reply = Reply(ReplyType.FILE, url)
                             media_reply.file_name = os.path.basename(url)
                         else:
-                            # 图片使用 IMAGE_URL 类型
                             media_reply = Reply(ReplyType.IMAGE_URL, url)
                     elif os.path.exists(url):
-                        # 本地文件
                         if media_type == 'video':
-                            # 视频使用 FILE 类型，转换为 file:// URL
                             media_reply = Reply(ReplyType.FILE, f"file://{url}")
                             media_reply.file_name = os.path.basename(url)
                         else:
-                            # 图片使用 IMAGE_URL 类型，转换为 file:// URL
                             media_reply = Reply(ReplyType.IMAGE_URL, f"file://{url}")
                     else:
                         logger.warning(f"[chat_channel] Media file not found or invalid URL: {url}")
                         continue
                     
-                    # 发送媒体文件（添加小延迟避免频率限制）
                     if i > 0:
                         time.sleep(0.5)
                     self._send(media_reply, context)
