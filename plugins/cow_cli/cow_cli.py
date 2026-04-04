@@ -157,7 +157,6 @@ class CowCliPlugin(Plugin):
             "  /config              查看当前配置",
             "  /config <key>        查看某项配置",
             "  /config <key> <val>  修改配置",
-            "  /install-browser  安装浏览器工具依赖",
             "",
             "💡 也可以用 cow <command> 代替 /<command>",
         ]
