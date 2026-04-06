@@ -45,6 +45,11 @@ _SNAPSHOT_JS = """
     const KEEP = new Set(%s);
     const INTERACTIVE = new Set(%s);
     const SKIP = new Set(["script","style","noscript","svg","path","meta","link","br","hr"]);
+    const CLICKABLE_ROLES = new Set([
+        "button","link","tab","menuitem","menuitemcheckbox","menuitemradio",
+        "option","switch","checkbox","radio","combobox","searchbox","slider",
+        "spinbutton","textbox","treeitem"
+    ]);
     let refCounter = 0;
     const refMap = {};
 
@@ -54,6 +59,58 @@ _SNAPSHOT_JS = """
         if (st.display === "none" || st.visibility === "hidden") return false;
         if (parseFloat(st.opacity) === 0) return false;
         return true;
+    }
+
+    // Strong signals: these attributes alone are enough to mark as interactive
+    function hasStrongInteractiveSignal(el) {
+        const role = el.getAttribute("role");
+        if (role && CLICKABLE_ROLES.has(role)) return true;
+        if (el.hasAttribute("onclick") || el.hasAttribute("tabindex")) return true;
+        if (el.hasAttribute("data-click") || el.hasAttribute("data-action")) return true;
+        if (el.getAttribute("contenteditable") === "true") return true;
+        return false;
+    }
+
+    // Check if cursor:pointer is set directly (not just inherited from parent)
+    function hasOwnPointerCursor(el) {
+        try {
+            const st = window.getComputedStyle(el);
+            if (st.cursor !== "pointer") return false;
+            const parent = el.parentElement;
+            if (parent) {
+                const pst = window.getComputedStyle(parent);
+                if (pst.cursor === "pointer") return false;
+            }
+            return true;
+        } catch(e) {}
+        return false;
+    }
+
+    function hasTextOrContent(el) {
+        const t = el.textContent || "";
+        if (t.trim().length > 0) return true;
+        if (el.querySelector("img,video,audio,canvas")) return true;
+        const ariaLabel = el.getAttribute("aria-label");
+        if (ariaLabel && ariaLabel.trim()) return true;
+        const title = el.getAttribute("title");
+        if (title && title.trim()) return true;
+        return false;
+    }
+
+    function isImplicitInteractive(el) {
+        if (hasStrongInteractiveSignal(el)) return true;
+        if (hasOwnPointerCursor(el) && hasTextOrContent(el)) return true;
+        return false;
+    }
+
+    function getTextContent(el) {
+        let text = "";
+        for (const ch of el.childNodes) {
+            if (ch.nodeType === Node.TEXT_NODE) {
+                text += ch.textContent;
+            }
+        }
+        return text.trim();
     }
 
     function walk(node) {
@@ -75,19 +132,33 @@ _SNAPSHOT_JS = """
             }
         }
 
-        const keep = KEEP.has(tag);
+        const nativeInteractive = INTERACTIVE.has(tag);
+        const implicitInteractive = !nativeInteractive && (node instanceof HTMLElement) && isImplicitInteractive(node);
+        const keep = KEEP.has(tag) || implicitInteractive;
+
         if (!keep) {
-            // Unwrap: promote children
             if (children.length === 0) return null;
             if (children.length === 1) return children[0];
             return children;
         }
 
         const obj = { tag };
-        if (INTERACTIVE.has(tag)) {
+        if (nativeInteractive || implicitInteractive) {
             refCounter++;
             obj.ref = refCounter;
             refMap[refCounter] = node;
+        }
+
+        if (implicitInteractive) {
+            const role = node.getAttribute("role");
+            if (role) obj.role = role;
+            const directText = getTextContent(node);
+            if (!directText && children.length === 0) {
+                const ariaLabel = node.getAttribute("aria-label");
+                const title = node.getAttribute("title");
+                if (ariaLabel) obj.ariaLabel = ariaLabel;
+                else if (title) obj.ariaLabel = title;
+            }
         }
 
         // Attributes
@@ -113,11 +184,13 @@ _SNAPSHOT_JS = """
         }
         if (tag === "label" && node.htmlFor) obj.for = node.htmlFor;
 
-        // Role / aria-label
-        const role = node.getAttribute("role");
-        if (role) obj.role = role;
-        const ariaLabel = node.getAttribute("aria-label");
-        if (ariaLabel) obj.ariaLabel = ariaLabel;
+        // Role / aria-label for native interactive & semantic elements
+        if (!implicitInteractive) {
+            const role = node.getAttribute("role");
+            if (role) obj.role = role;
+            const ariaLabel = node.getAttribute("aria-label");
+            if (ariaLabel) obj.ariaLabel = ariaLabel;
+        }
 
         // Children
         if (children.length === 1 && typeof children[0] === "string") {
@@ -129,7 +202,6 @@ _SNAPSHOT_JS = """
         return obj;
     }
 
-    // Store refMap on window for later use by click/fill actions
     const result = walk(document.body);
     window.__cowRefMap = refMap;
     return { tree: result, refCount: refCounter };
