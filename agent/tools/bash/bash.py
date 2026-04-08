@@ -108,12 +108,13 @@ SAFETY:
             
             if self._IS_WIN:
                 env["PYTHONIOENCODING"] = "utf-8"
-                # Use PowerShell so that LLM-generated commands can use
-                # Select-String, Select-Object, curl (Invoke-WebRequest alias),
-                # etc. instead of Unix-only head/grep/tail.
+                wrapped = (
+                    "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; "
+                    f"{command}; exit $LASTEXITCODE"
+                )
                 result = subprocess.run(
                     ["powershell.exe", "-NoProfile", "-NonInteractive",
-                     "-ExecutionPolicy", "Bypass", "-Command", command],
+                     "-ExecutionPolicy", "Bypass", "-Command", wrapped],
                     cwd=self.cwd,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
