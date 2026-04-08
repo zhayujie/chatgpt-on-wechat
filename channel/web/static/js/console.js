@@ -763,29 +763,46 @@ function sendMessage() {
         }));
     }
 
-    fetch('/message', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.status === 'success') {
-            if (data.stream) {
-                startSSE(data.request_id, loadingEl, timestamp);
+    const MAX_RETRIES = 2;
+    const RETRY_DELAY_MS = 1000;
+
+    function postWithRetry(attempt) {
+        fetch('/message', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.status === 'success') {
+                if (data.stream) {
+                    startSSE(data.request_id, loadingEl, timestamp);
+                } else {
+                    loadingContainers[data.request_id] = loadingEl;
+                    if (!isPolling) startPolling();
+                }
             } else {
-                loadingContainers[data.request_id] = loadingEl;
-                if (!isPolling) startPolling();
+                loadingEl.remove();
+                addBotMessage(t('error_send'), new Date());
             }
-        } else {
+        })
+        .catch(err => {
+            if (err.name === 'AbortError') {
+                loadingEl.remove();
+                addBotMessage(t('error_timeout'), new Date());
+                return;
+            }
+            if (attempt < MAX_RETRIES) {
+                console.warn(`[sendMessage] attempt ${attempt + 1} failed, retrying...`, err);
+                setTimeout(() => postWithRetry(attempt + 1), RETRY_DELAY_MS * (attempt + 1));
+                return;
+            }
             loadingEl.remove();
             addBotMessage(t('error_send'), new Date());
-        }
-    })
-    .catch(err => {
-        loadingEl.remove();
-        addBotMessage(err.name === 'AbortError' ? t('error_timeout') : t('error_send'), new Date());
-    });
+        });
+    }
+
+    postWithRetry(0);
 }
 
 function startSSE(requestId, loadingEl, timestamp) {

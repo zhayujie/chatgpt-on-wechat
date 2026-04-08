@@ -454,8 +454,14 @@ class WebChannel(ChatChannel):
         func = web.httpserver.StaticMiddleware(app.wsgifunc())
         func = web.httpserver.LogMiddleware(func)
         server = web.httpserver.WSGIServer(("0.0.0.0", port), func)
-        # Allow concurrent requests by not blocking on in-flight handler threads
         server.daemon_threads = True
+        # Default request_queue_size(5) / timeout(10s) / numthreads(10) are
+        # too small: when SSE streams occupy many threads, the backlog fills
+        # and new connections get refused (ERR_CONNECTION_ABORTED).
+        server.request_queue_size = 128
+        server.timeout = 300
+        server.requests.min = 20
+        server.requests.max = 80
         self._http_server = server
         try:
             server.start()
