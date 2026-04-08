@@ -18,9 +18,13 @@ from common.utils import expand_path
 class Bash(BaseTool):
     """Tool for executing bash commands"""
 
+    _IS_WIN = sys.platform == "win32"
+
     name: str = "bash"
     description: str = f"""Execute a bash command in the current working directory. Returns stdout and stderr. Output is truncated to last {DEFAULT_MAX_LINES} lines or {DEFAULT_MAX_BYTES // 1024}KB (whichever is hit first). If truncated, full output is saved to a temp file.
-
+{'''
+PLATFORM: Windows (PowerShell).
+''' if _IS_WIN else ''}
 ENVIRONMENT: All API keys from env_config are auto-injected. Use $VAR_NAME directly.
 
 SAFETY:
@@ -102,26 +106,36 @@ SAFETY:
             else:
                 logger.debug(f"[Bash] Process User: {os.environ.get('USERNAME', os.environ.get('USER', 'unknown'))}")
             
-            # On Windows, convert $VAR references to %VAR% for cmd.exe
-            if sys.platform == "win32":
+            if self._IS_WIN:
                 env["PYTHONIOENCODING"] = "utf-8"
-                command = self._convert_env_vars_for_windows(command, dotenv_vars)
-                if command and not command.strip().lower().startswith("chcp"):
-                    command = f"chcp 65001 >nul 2>&1 && {command}"
-
-            # Execute command with inherited environment variables
-            result = subprocess.run(
-                command,
-                shell=True,
-                cwd=self.cwd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                encoding="utf-8",
-                errors="replace",
-                timeout=timeout,
-                env=env
-            )
+                # Use PowerShell so that LLM-generated commands can use
+                # Select-String, Select-Object, curl (Invoke-WebRequest alias),
+                # etc. instead of Unix-only head/grep/tail.
+                result = subprocess.run(
+                    ["powershell.exe", "-NoProfile", "-NonInteractive",
+                     "-ExecutionPolicy", "Bypass", "-Command", command],
+                    cwd=self.cwd,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    encoding="utf-8",
+                    errors="replace",
+                    timeout=timeout,
+                    env=env,
+                )
+            else:
+                result = subprocess.run(
+                    command,
+                    shell=True,
+                    cwd=self.cwd,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    encoding="utf-8",
+                    errors="replace",
+                    timeout=timeout,
+                    env=env,
+                )
             
             logger.debug(f"[Bash] Exit code: {result.returncode}")
             logger.debug(f"[Bash] Stdout length: {len(result.stdout)}")
