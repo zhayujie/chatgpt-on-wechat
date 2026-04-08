@@ -178,7 +178,10 @@ def update(ctx):
     """Update CowAgent and restart."""
     root = get_project_root()
 
-    # 1. Git pull while service is still running
+    # 1. Stop service first so git pull won't conflict with running code
+    ctx.invoke(stop)
+
+    # 2. Git pull
     if os.path.isdir(os.path.join(root, ".git")):
         click.echo("Pulling latest code...")
         ret = subprocess.call(["git", "pull"], cwd=root)
@@ -187,9 +190,6 @@ def update(ctx):
             sys.exit(1)
     else:
         click.echo("Not a git repository, skipping code update.")
-
-    # 2. Stop service
-    ctx.invoke(stop)
 
     # 3. Install dependencies
     python = sys.executable
@@ -206,10 +206,21 @@ def update(ctx):
         cwd=root,
     )
 
-    # 4. Start service and follow logs
+    # 4. Start service via a fresh subprocess so the new cow entry-point is
+    #    used.  On Windows the current cow.exe is locked by this process;
+    #    spawning `python -m cli.cli start` avoids the stale-exe problem.
     click.echo("")
     time.sleep(1)
-    ctx.invoke(start, no_logs=False)
+    if _IS_WIN:
+        click.echo("Starting CowAgent...")
+        subprocess.Popen(
+            [python, "-m", "cli.cli", "start"],
+            cwd=root,
+            creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
+        )
+        click.echo(click.style("✓ Update complete. CowAgent is starting in background.", fg="green"))
+    else:
+        ctx.invoke(start, no_logs=False)
 
 
 @click.command()

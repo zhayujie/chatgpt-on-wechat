@@ -453,7 +453,11 @@ function Update-Project {
 
     Assert-Python
     Install-Dependencies
-    Start-CowAgent
+
+    # Start via python -m cli.cli instead of cow.exe, because the exe may
+    # still be cached/locked from the previous installation on Windows.
+    Write-Cow "Starting CowAgent..."
+    & $PythonCmd -m cli.cli start
 }
 
 # ── main ──────────────────────────────────────────────────────────
