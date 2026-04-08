@@ -191,35 +191,60 @@ def update(ctx):
     else:
         click.echo("Not a git repository, skipping code update.")
 
-    # 3. Install dependencies
     python = sys.executable
     req_file = os.path.join(root, "requirements.txt")
-    if os.path.exists(req_file):
-        click.echo("Installing dependencies...")
-        subprocess.call(
-            [python, "-m", "pip", "install", "-r", "requirements.txt", "-q"],
-            cwd=root,
-        )
-    click.echo("Reinstalling cow CLI...")
-    subprocess.call(
-        [python, "-m", "pip", "install", "-e", ".", "-q"],
-        cwd=root,
-    )
 
-    # 4. Start service via a fresh subprocess so the new cow entry-point is
-    #    used.  On Windows the current cow.exe is locked by this process;
-    #    spawning `python -m cli.cli start` avoids the stale-exe problem.
-    click.echo("")
-    time.sleep(1)
     if _IS_WIN:
-        click.echo("Starting CowAgent...")
+        # On Windows, `cow.exe` (this process) locks the exe file, so
+        # `pip install -e .` fails with WinError 5.  Write a small .bat
+        # helper that waits for cow.exe to exit, then installs & starts.
+        bat = os.path.join(root, "_cow_update.bat")
+        lines = [
+            "@echo off",
+            "chcp 65001 >nul",
+            "echo Waiting for cow.exe to exit...",
+            "timeout /t 3 /nobreak >nul",
+        ]
+        if os.path.exists(req_file):
+            lines.append(f'echo Installing dependencies...')
+            lines.append(f'"{python}" -m pip install -r requirements.txt -q')
+        lines += [
+            "echo Reinstalling cow CLI...",
+            f'"{python}" -m pip install -e . -q',
+            "echo Starting CowAgent...",
+            f'"{python}" -m cli.cli start --no-logs',
+            "echo.",
+            "echo Update complete. You can close this window.",
+            "pause >nul",
+            "del \"%~f0\"",
+        ]
+        with open(bat, "w", encoding="utf-8") as f:
+            f.write("\n".join(lines) + "\n")
+
         subprocess.Popen(
-            [python, "-m", "cli.cli", "start"],
+            ["cmd.exe", "/c", "start", "CowAgent Update", "/wait", bat],
             cwd=root,
-            creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
         )
-        click.echo(click.style("✓ Update complete. CowAgent is starting in background.", fg="green"))
+        click.echo(click.style(
+            "✓ Update script launched. Please follow the new window for progress.",
+            fg="green"))
     else:
+        # 3. Install dependencies
+        if os.path.exists(req_file):
+            click.echo("Installing dependencies...")
+            subprocess.call(
+                [python, "-m", "pip", "install", "-r", "requirements.txt", "-q"],
+                cwd=root,
+            )
+        click.echo("Reinstalling cow CLI...")
+        subprocess.call(
+            [python, "-m", "pip", "install", "-e", ".", "-q"],
+            cwd=root,
+        )
+
+        # 4. Start service
+        click.echo("")
+        time.sleep(1)
         ctx.invoke(start, no_logs=False)
 
 
