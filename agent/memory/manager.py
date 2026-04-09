@@ -285,6 +285,10 @@ class MemoryManager:
         # Scan memory directory (including daily summaries)
         if memory_dir.exists():
             for file_path in memory_dir.rglob("*.md"):
+                # Skip hidden directories (e.g. .dreams/)
+                if any(part.startswith('.') for part in file_path.relative_to(workspace_dir).parts):
+                    continue
+
                 # Determine scope and user_id from path
                 rel_path = file_path.relative_to(workspace_dir)
                 parts = rel_path.parts
@@ -312,6 +316,12 @@ class MemoryManager:
                     scope = "shared"
                 
                 await self._sync_file(file_path, "memory", scope, user_id)
+
+        # Scan knowledge directory (structured knowledge wiki)
+        knowledge_dir = Path(workspace_dir) / "knowledge"
+        if knowledge_dir.exists():
+            for file_path in knowledge_dir.rglob("*.md"):
+                await self._sync_file(file_path, "knowledge", "shared", None)
         
         self._dirty = False
     

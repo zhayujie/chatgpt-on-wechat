@@ -92,10 +92,11 @@ def build_agent_system_prompt(
     顺序说明（按重要性和逻辑关系排列）:
     1. 工具系统 - 核心能力，最先介绍
     2. 技能系统 - 紧跟工具，因为技能需要用 read 工具读取
-    3. 记忆系统 - 独立的记忆能力
+    3. 记忆系统 - 记忆检索与写入引导
+    3.5 知识系统 - 结构化知识库（knowledge/index.md 注入）
     4. 工作空间 - 工作环境说明
     5. 用户身份 - 用户信息（可选）
-    6. 项目上下文 - AGENT.md, USER.md, RULE.md, BOOTSTRAP.md（定义人格、身份、规则、初始化引导）
+    6. 项目上下文 - AGENT.md, USER.md, RULE.md, MEMORY.md, BOOTSTRAP.md
     7. 运行时信息 - 元信息（时间、模型等）
     
     Args:
@@ -126,6 +127,9 @@ def build_agent_system_prompt(
     # 3. 记忆系统（独立的记忆能力）
     if memory_manager:
         sections.extend(_build_memory_section(memory_manager, tools, language))
+
+    # 3.5 知识系统（结构化知识库）
+    sections.extend(_build_knowledge_section(workspace_dir, language))
     
     # 4. 工作空间（工作环境说明）
     sections.extend(_build_workspace_section(workspace_dir, language))
@@ -268,55 +272,105 @@ def _build_memory_section(memory_manager: Any, tools: Optional[List[Any]], langu
     """构建记忆系统section"""
     if not memory_manager:
         return []
-    
-    # 检查是否有memory工具
+
     has_memory_tools = False
     if tools:
         tool_names = [tool.name if hasattr(tool, 'name') else str(tool) for tool in tools]
         has_memory_tools = any(name in ['memory_search', 'memory_get'] for name in tool_names)
-    
+
     if not has_memory_tools:
         return []
-    
+
     from datetime import datetime
     today_file = datetime.now().strftime("%Y-%m-%d") + ".md"
-    
+
     lines = [
         "## 🧠 记忆系统",
         "",
-        "### 检索记忆",
+        "### Memory Recall（mandatory）",
         "",
-        "在回答关于以前的工作、决定、日期、人物、偏好或待办事项的任何问题之前：",
+        "在回答任何关于过往工作、决策、日期、人物、偏好或待办事项的问题之前，**必须**先检索记忆。",
+        "MEMORY.md 已自动加载在项目上下文中（可能被截断），完整内容和每日记忆需要通过工具检索。",
         "",
-        "1. 不确定记忆文件位置 → 先用 `memory_search` 通过关键词和语义检索相关内容",
-        "2. 已知文件位置 → 直接用 `memory_get` 读取相应的行 (例如：MEMORY.md, memory/YYYY-MM-DD.md)",
-        "3. search 无结果 → 尝试用 `memory_get` 读取MEMORY.md及最近两天记忆文件",
+        "1. 不确定位置 → `memory_search` 关键词/语义检索",
+        "2. 已知位置 → `memory_get` 直接读取对应行",
+        "3. search 无结果 → `memory_get` 读最近两天记忆",
         "",
         "**记忆文件结构**:",
-        f"- `MEMORY.md`: 长期记忆（核心信息、偏好、决策等）",
+        "- `MEMORY.md`: 长期记忆索引（已自动加载到上下文，核心信息、偏好、决策等）",
         f"- `memory/YYYY-MM-DD.md`: 每日记忆，今天是 `memory/{today_file}`",
+        "- `knowledge/`: 结构化知识库（见下方知识系统）",
         "",
         "### 写入记忆",
         "",
-        "**主动存储**：遇到以下情况时，应主动将信息写入记忆文件（无需告知用户）：",
+        "遇到以下情况时，**主动**将信息写入记忆文件（无需告知用户）：",
         "",
-        "- 用户明确要求你记住某些信息",
+        "- 用户要求记住某些信息",
         "- 用户分享了重要的个人偏好、习惯、决策",
         "- 对话中产生了重要的结论、方案、约定",
         "- 完成了复杂任务，值得记录关键步骤和结果",
-        "- 发现了用户经常遇到的问题或解决方案",
         "",
         "**存储规则**:",
-        f"- 长期有效的核心信息 → `MEMORY.md`（文件保持精简，< 2000 tokens）",
-        f"- 当天的事件、进展、笔记 → `memory/{today_file}`",
-        "- 追加内容 → `edit` 工具，oldText 留空",
-        "- 修改内容 → `edit` 工具，oldText 填写要替换的文本",
-        "- **禁止写入敏感信息**：API密钥、令牌等敏感信息严禁写入记忆文件",
+        f"- 长期核心信息 → `MEMORY.md`",
+        f"- 当天事件/进展 → `memory/{today_file}`",
+        "- 结构化知识 → `knowledge/`（见知识系统）",
+        "- 追加 → `edit` 工具，oldText 留空",
+        "- 修改 → `edit` 工具，oldText 填写要替换的文本",
+        "- **禁止写入敏感信息**（API密钥、令牌等）",
         "",
         "**使用原则**: 自然使用记忆，就像你本来就知道；不用刻意提起，除非用户问起。",
         "",
     ]
-    
+
+    return lines
+
+
+def _build_knowledge_section(workspace_dir: str, language: str) -> List[str]:
+    """Build knowledge wiki section. Injects knowledge/index.md when present."""
+    index_path = os.path.join(workspace_dir, "knowledge", "index.md")
+    if not os.path.exists(index_path):
+        return []
+
+    try:
+        with open(index_path, 'r', encoding='utf-8') as f:
+            index_content = f.read().strip()
+    except Exception:
+        return []
+
+    lines = [
+        "## 📚 知识系统",
+        "",
+        "你拥有一个持续积累的个人知识库 `knowledge/`，这是你的长期结构化知识存储。",
+        "",
+        "### 自动写入规则（mandatory）",
+        "",
+        "以下场景**必须**在回复的同时写入知识库，**直接写入，不要询问用户是否需要**：",
+        "",
+        "1. **用户分享了文章/链接/文档** → 阅读理解后，在同一轮回复中将要点写入 `knowledge/sources/<slug>.md`",
+        "2. **深度讨论产生了结论/方案** → 整理为 `knowledge/analysis/<slug>.md`",
+        "3. **对话涉及重要实体**（人物/公司/项目）→ 创建或更新 `knowledge/entities/<name>.md`",
+        "4. **讨论了技术概念/方法论** → 整理为 `knowledge/concepts/<topic>.md`",
+        "",
+        "每次写入知识页面后，**必须同步更新** `knowledge/index.md` 添加一行索引。",
+        "详细的页面格式和操作规范，请读取技能 `knowledge-wiki` 的 SKILL.md。",
+        "",
+        "⚠️ 不要问「要不要存到知识库」——符合上述场景就直接写入，这是你的本能行为。",
+        "",
+    ]
+
+    if index_content:
+        lines.extend([
+            "### 当前知识索引",
+            "",
+            index_content,
+            "",
+        ])
+
+    lines.extend([
+        "**查询方式**：用 `read` 读取知识页面，或用 `memory_search` 检索（知识已纳入向量索引）。",
+        "",
+    ])
+
     return lines
 
 
@@ -375,11 +429,12 @@ def _build_workspace_section(workspace_dir: str, language: str) -> List[str]:
         "",
         "**重要说明 - 文件已自动加载**:",
         "",
-        "以下文件在会话启动时**已经自动加载**到系统提示词的「项目上下文」section 中，你**无需再用 read 工具读取它们**：",
+        "以下文件在会话启动时**已经自动加载**到系统提示词中，你**无需再用 read 工具读取**：",
         "",
         "- ✅ `AGENT.md`: 已加载 - 你的人格和灵魂设定，请严格遵循。当你的名字、性格或交流风格发生变化时，主动用 `edit` 更新此文件",
         "- ✅ `USER.md`: 已加载 - 用户的身份信息。当用户修改称呼、姓名等身份信息时，用 `edit` 更新此文件",
         "- ✅ `RULE.md`: 已加载 - 工作空间使用指南和规则，请严格遵循",
+        "- ✅ `MEMORY.md`: 已加载 - 长期记忆索引",
         "",
         "**💬 交流规范**:",
         "",
