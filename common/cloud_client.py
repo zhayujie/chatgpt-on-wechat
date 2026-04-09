@@ -47,8 +47,8 @@ CREDENTIAL_MAP = {
 
 
 class CloudClient(LinkAIClient):
-    def __init__(self, api_key: str, channel, host: str = ""):
-        super().__init__(api_key, host)
+    def __init__(self, api_key: str, channel, host: str = "", port=None):
+        super().__init__(api_key, host, port=port)
         self.channel = channel
         self.client_type = channel.channel_type
         self.channel_mgr = None
@@ -733,7 +733,7 @@ def start(channel, channel_mgr=None):
         return
 
     global chat_client
-    chat_client = CloudClient(api_key=conf().get("linkai_api_key"), host=conf().get("cloud_host", ""), channel=channel)
+    chat_client = CloudClient(api_key=conf().get("linkai_api_key"), host=conf().get("cloud_host", ""), port=conf().get("cloud_port"), channel=channel)
     chat_client.channel_mgr = channel_mgr
     chat_client.config = _build_config()
     chat_client.start()
