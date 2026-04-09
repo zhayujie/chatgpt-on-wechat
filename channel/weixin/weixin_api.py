@@ -37,11 +37,19 @@ def _random_wechat_uin() -> str:
     return base64.b64encode(str(val).encode("utf-8")).decode("utf-8")
 
 
+CHANNEL_VERSION = "2.0.0"
+# iLink-App-ClientVersion: uint32 encoded as major<<16 | minor<<8 | patch
+# 2.0.0 → 0x00020000 = 131072
+CLIENT_VERSION = "131072"
+
+
 def _build_headers(token: str = "") -> dict:
     headers = {
         "Content-Type": "application/json",
         "AuthorizationType": "ilink_bot_token",
         "X-WECHAT-UIN": _random_wechat_uin(),
+        "iLink-App-Id": "bot",
+        "iLink-App-ClientVersion": CLIENT_VERSION,
     }
     if token:
         headers["Authorization"] = f"Bearer {token}"
@@ -64,6 +72,7 @@ class WeixinApi:
     def _post(self, endpoint: str, body: dict, timeout: int = DEFAULT_API_TIMEOUT) -> dict:
         url = _ensure_trailing_slash(self.base_url) + endpoint
         headers = _build_headers(self.token)
+        body.setdefault("base_info", {}).setdefault("channel_version", CHANNEL_VERSION)
         try:
             resp = requests.post(url, json=body, headers=headers, timeout=timeout)
             resp.raise_for_status()
@@ -210,7 +219,10 @@ class WeixinApi:
     def poll_qr_status(self, qrcode: str, timeout: int = QR_POLL_TIMEOUT) -> dict:
         url = (_ensure_trailing_slash(self.base_url) +
                f"ilink/bot/get_qrcode_status?qrcode={requests.utils.quote(qrcode)}")
-        headers = {"iLink-App-ClientVersion": "1"}
+        headers = {
+            "iLink-App-Id": "bot",
+            "iLink-App-ClientVersion": CLIENT_VERSION,
+        }
         try:
             resp = requests.get(url, headers=headers, timeout=timeout)
             resp.raise_for_status()
