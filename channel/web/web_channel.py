@@ -168,7 +168,12 @@ class WebChannel(ChatChannel):
             event_type = event.get("type")
             data = event.get("data", {})
 
-            if event_type == "message_update":
+            if event_type == "reasoning_update":
+                delta = data.get("delta", "")
+                if delta:
+                    q.put({"type": "reasoning", "content": delta})
+
+            elif event_type == "message_update":
                 delta = data.get("delta", "")
                 if delta:
                     q.put({"type": "delta", "content": delta})
@@ -194,6 +199,11 @@ class WebChannel(ChatChannel):
                     "result": result_str,
                     "execution_time": round(exec_time, 2)
                 })
+
+            elif event_type == "message_end":
+                tool_calls = data.get("tool_calls", [])
+                if tool_calls:
+                    q.put({"type": "message_end", "has_tool_calls": True})
 
             elif event_type == "file_to_send":
                 file_path = data.get("path", "")

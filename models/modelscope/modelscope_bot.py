@@ -576,6 +576,15 @@ class ModelScopeBot(Bot):
                         continue
                     
                     if delta.get("reasoning_content"):
+                        yield {
+                            "choices": [{
+                                "index": 0,
+                                "delta": {
+                                    "role": "assistant",
+                                    "reasoning_content": delta["reasoning_content"]
+                                }
+                            }]
+                        }
                         continue
                     
                     tool_call_chunks = delta.get("tool_calls")

@@ -188,8 +188,9 @@ def _group_into_display_turns(
             if text:
                 turns.append({"role": "user", "content": text, "created_at": created_at})
 
-        # Collect all tool_calls and tool_results from the rest of the group
-        all_tool_calls: List[Dict[str, Any]] = []
+        # Build an ordered list of steps preserving the original sequence:
+        #   thinking → content → tool_call → content → ...
+        steps: List[Dict[str, Any]] = []
         tool_results: Dict[str, str] = {}
         final_text = ""
         final_ts: Optional[int] = None
@@ -198,24 +199,46 @@ def _group_into_display_turns(
             if role == "user":
                 tool_results.update(_extract_tool_results(content))
             elif role == "assistant":
-                tcs = _extract_tool_calls(content)
-                all_tool_calls.extend(tcs)
-                t = _extract_display_text(content)
-                if t:
-                    final_text = t
+                # Walk content blocks in order to preserve interleaving
+                if isinstance(content, list):
+                    for block in content:
+                        if not isinstance(block, dict):
+                            continue
+                        btype = block.get("type")
+                        if btype == "thinking":
+                            txt = block.get("thinking", "").strip()
+                            if txt:
+                                steps.append({"type": "thinking", "content": txt})
+                        elif btype == "text":
+                            txt = block.get("text", "").strip()
+                            if txt:
+                                steps.append({"type": "content", "content": txt})
+                                final_text = txt
+                        elif btype == "tool_use":
+                            steps.append({
+                                "type": "tool",
+                                "id": block.get("id", ""),
+                                "name": block.get("name", ""),
+                                "arguments": block.get("input", {}),
+                            })
+                elif isinstance(content, str) and content.strip():
+                    steps.append({"type": "content", "content": content.strip()})
+                    final_text = content.strip()
                 final_ts = created_at
 
-        # Attach tool results to their matching tool_call entries
-        for tc in all_tool_calls:
-            tc["result"] = tool_results.get(tc.get("id", ""), "")
+        # Attach tool results to tool steps
+        for step in steps:
+            if step["type"] == "tool":
+                step["result"] = tool_results.get(step.get("id", ""), "")
 
-        if final_text or all_tool_calls:
-            turns.append({
+        if steps or final_text:
+            turn = {
                 "role": "assistant",
                 "content": final_text,
-                "tool_calls": all_tool_calls,
+                "steps": steps,
                 "created_at": final_ts or (user_row[1] if user_row else 0),
-            })
+            }
+            turns.append(turn)
 
     return turns
 
@@ -312,6 +335,9 @@ class ConversationStore:
                 content = json.loads(raw_content)
             except Exception:
                 content = raw_content
+            # Strip thinking blocks — they are stored for UI display only
+            if role == "assistant" and isinstance(content, list):
+                content = [b for b in content if b.get("type") != "thinking"]
             result.append({"role": role, "content": content})
         return result
 

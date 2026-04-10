@@ -146,7 +146,7 @@
     font-size: 0.75rem;
     line-height: 1.5;
     color: #94a3b8;
-    max-height: 200px;
+    max-height: 300px;
     overflow-y: auto;
 }
 .dark .agent-thinking-step .thinking-full {
@@ -157,6 +157,20 @@
 .agent-thinking-step .thinking-full p { margin: 0.25em 0; }
 .agent-thinking-step .thinking-full p:first-child { margin-top: 0; }
 .agent-thinking-step .thinking-full p:last-child { margin-bottom: 0; }
+
+/* Content step - real text output frozen before tool calls */
+.agent-content-step {
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: inherit;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px dashed rgba(0, 0, 0, 0.06);
+}
+.dark .agent-content-step { border-bottom-color: rgba(255, 255, 255, 0.06); }
+.agent-content-step .agent-content-body p { margin: 0.25em 0; }
+.agent-content-step .agent-content-body p:first-child { margin-top: 0; }
+.agent-content-step .agent-content-body p:last-child { margin-bottom: 0; }
 
 /* Tool step - collapsible */
 .agent-tool-step .tool-header {

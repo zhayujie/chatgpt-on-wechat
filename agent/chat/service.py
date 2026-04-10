@@ -57,7 +57,16 @@ class ChatService:
             event_type = event.get("type")
             data = event.get("data", {})
 
-            if event_type == "message_update":
+            if event_type == "reasoning_update":
+                delta = data.get("delta", "")
+                if delta:
+                    send_chunk_fn({
+                        "chunk_type": "reasoning",
+                        "delta": delta,
+                        "segment_id": state.segment_id,
+                    })
+
+            elif event_type == "message_update":
                 # Incremental text delta
                 delta = data.get("delta", "")
                 if delta:

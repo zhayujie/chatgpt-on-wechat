@@ -815,6 +815,8 @@ function startSSE(requestId, loadingEl, timestamp) {
     let mediaEl = null;    // .media-content (images & file attachments)
     let accumulatedText = '';
     let currentToolEl = null;
+    let currentReasoningEl = null;  // live reasoning bubble
+    let reasoningText = '';
 
     function ensureBotEl() {
         if (botEl) return;
@@ -843,39 +845,61 @@ function startSSE(requestId, loadingEl, timestamp) {
         let item;
         try { item = JSON.parse(e.data); } catch (_) { return; }
 
-        if (item.type === 'delta') {
+        if (item.type === 'reasoning') {
             ensureBotEl();
+            reasoningText += item.content;
+            if (!currentReasoningEl) {
+                currentReasoningEl = document.createElement('div');
+                currentReasoningEl.className = 'agent-step agent-thinking-step';
+                currentReasoningEl.innerHTML = `
+                    <div class="thinking-header" onclick="this.parentElement.classList.toggle('expanded')">
+                        <i class="fas fa-lightbulb text-amber-400 flex-shrink-0"></i>
+                        <span class="thinking-summary"></span>
+                        <i class="fas fa-chevron-right thinking-chevron"></i>
+                    </div>
+                    <div class="thinking-full"></div>`;
+                stepsEl.appendChild(currentReasoningEl);
+            }
+            // Stream reasoning as a single-line summary (collapsed); full text available on expand
+            const oneLine = reasoningText.trim().replace(/\n+/g, ' ');
+            currentReasoningEl.querySelector('.thinking-summary').textContent =
+                oneLine.length > 80 ? oneLine.substring(0, 80) + '…' : oneLine;
+            currentReasoningEl.querySelector('.thinking-full').innerHTML = renderMarkdown(reasoningText);
+            scrollChatToBottom();
+
+        } else if (item.type === 'delta') {
+            ensureBotEl();
+            if (currentReasoningEl) {
+                if (reasoningText.trim().replace(/\n+/g, ' ').length <= 80)
+                    currentReasoningEl.classList.add('no-expand');
+                currentReasoningEl = null;
+                reasoningText = '';
+            }
             accumulatedText += item.content;
             contentEl.innerHTML = renderMarkdown(accumulatedText);
             scrollChatToBottom();
 
+        } else if (item.type === 'message_end') {
+            // Backend already strips reasoning_content; all deltas are real content.
+            // Freeze accumulated text as visible content before tool execution begins.
+            if (item.has_tool_calls && accumulatedText.trim()) {
+                ensureBotEl();
+                const frozenEl = document.createElement('div');
+                frozenEl.className = 'agent-step agent-content-step';
+                frozenEl.innerHTML = `<div class="agent-content-body">${renderMarkdown(accumulatedText.trim())}</div>`;
+                stepsEl.appendChild(frozenEl);
+                accumulatedText = '';
+                contentEl.innerHTML = '';
+                scrollChatToBottom();
+            }
+
         } else if (item.type === 'tool_start') {
             ensureBotEl();
-
-            // Save current thinking as a collapsible step
-            if (accumulatedText.trim()) {
-                const fullText = accumulatedText.trim();
-                const oneLine = fullText.replace(/\n+/g, ' ');
-                const needsTruncate = oneLine.length > 80;
-                const stepEl = document.createElement('div');
-                stepEl.className = 'agent-step agent-thinking-step' + (needsTruncate ? '' : ' no-expand');
-                if (needsTruncate) {
-                    const truncated = oneLine.substring(0, 80) + '…';
-                    stepEl.innerHTML = `
-                        <div class="thinking-header" onclick="this.parentElement.classList.toggle('expanded')">
-                            <i class="fas fa-lightbulb text-amber-400 flex-shrink-0"></i>
-                            <span class="thinking-summary">${escapeHtml(truncated)}</span>
-                            <i class="fas fa-chevron-right thinking-chevron"></i>
-                        </div>
-                        <div class="thinking-full">${renderMarkdown(fullText)}</div>`;
-                } else {
-                    stepEl.innerHTML = `
-                        <div class="thinking-header no-toggle">
-                            <i class="fas fa-lightbulb text-amber-400 flex-shrink-0"></i>
-                            <span>${escapeHtml(oneLine)}</span>
-                        </div>`;
-                }
-                stepsEl.appendChild(stepEl);
+            if (currentReasoningEl) {
+                if (reasoningText.trim().replace(/\n+/g, ' ').length <= 80)
+                    currentReasoningEl.classList.add('no-expand');
+                currentReasoningEl = null;
+                reasoningText = '';
             }
             accumulatedText = '';
             contentEl.innerHTML = '';
@@ -978,6 +1002,13 @@ function startSSE(requestId, loadingEl, timestamp) {
         } else if (item.type === 'done') {
             es.close();
             delete activeStreams[requestId];
+
+            if (currentReasoningEl) {
+                if (reasoningText.trim().replace(/\n+/g, ' ').length <= 80)
+                    currentReasoningEl.classList.add('no-expand');
+                currentReasoningEl = null;
+                reasoningText = '';
+            }
 
             // item.content may be empty when "done" is only a stream-close signal after media.
             const finalText = item.content || accumulatedText;
@@ -1102,17 +1133,106 @@ function renderToolCallsHtml(toolCalls) {
     }).join('');
 }
 
-function createBotMessageEl(content, timestamp, requestId, toolCalls) {
+function renderThinkingHtml(text) {
+    if (!text || !text.trim()) return '';
+    const full = text.trim();
+    const oneLine = full.replace(/\n+/g, ' ');
+    if (oneLine.length > 80) {
+        const truncated = oneLine.substring(0, 80) + '…';
+        return `
+<div class="agent-step agent-thinking-step">
+    <div class="thinking-header" onclick="this.parentElement.classList.toggle('expanded')">
+        <i class="fas fa-lightbulb text-amber-400 flex-shrink-0"></i>
+        <span class="thinking-summary">${escapeHtml(truncated)}</span>
+        <i class="fas fa-chevron-right thinking-chevron"></i>
+    </div>
+    <div class="thinking-full">${renderMarkdown(full)}</div>
+</div>`;
+    }
+    return `
+<div class="agent-step agent-thinking-step no-expand">
+    <div class="thinking-header no-toggle">
+        <i class="fas fa-lightbulb text-amber-400 flex-shrink-0"></i>
+        <span>${escapeHtml(oneLine)}</span>
+    </div>
+</div>`;
+}
+
+function renderStepsHtml(steps) {
+    if (!steps || steps.length === 0) return { stepsHtml: '', finalContent: '' };
+
+    // Find the index of the last content step — it becomes the main answer, not a step
+    let lastContentIdx = -1;
+    for (let i = steps.length - 1; i >= 0; i--) {
+        if (steps[i].type === 'content') { lastContentIdx = i; break; }
+    }
+
+    let html = '';
+    let lastContentText = '';
+    for (let i = 0; i < steps.length; i++) {
+        const step = steps[i];
+        if (step.type === 'thinking') {
+            html += renderThinkingHtml(step.content);
+        } else if (step.type === 'content') {
+            if (i === lastContentIdx) {
+                lastContentText = step.content;
+            } else {
+                html += `<div class="agent-step agent-content-step"><div class="agent-content-body">${renderMarkdown(step.content)}</div></div>`;
+            }
+        } else if (step.type === 'tool') {
+            const argsStr = formatToolArgs(step.arguments || {});
+            const resultStr = step.result ? escapeHtml(String(step.result)) : '';
+            html += `
+<div class="agent-step agent-tool-step">
+    <div class="tool-header" onclick="this.parentElement.classList.toggle('expanded')">
+        <i class="fas fa-check text-primary-400 flex-shrink-0 tool-icon"></i>
+        <span class="tool-name">${escapeHtml(step.name || '')}</span>
+        <i class="fas fa-chevron-right tool-chevron"></i>
+    </div>
+    <div class="tool-detail">
+        <div class="tool-detail-section">
+            <div class="tool-detail-label">Input</div>
+            <pre class="tool-detail-content">${argsStr}</pre>
+        </div>
+        ${resultStr ? `
+        <div class="tool-detail-section tool-output-section">
+            <div class="tool-detail-label">Output</div>
+            <pre class="tool-detail-content">${resultStr}</pre>
+        </div>` : ''}
+    </div>
+</div>`;
+        }
+    }
+    return { stepsHtml: html, lastContentText };
+}
+
+function createBotMessageEl(content, timestamp, requestId, msg) {
     const el = document.createElement('div');
     el.className = 'flex gap-3 px-4 sm:px-6 py-3';
     if (requestId) el.dataset.requestId = requestId;
-    const toolsHtml = renderToolCallsHtml(toolCalls);
+
+    let stepsHtml = '';
+    let displayContent = content;
+
+    if (msg && msg.steps && msg.steps.length > 0) {
+        // New format: ordered steps with interleaved content
+        const result = renderStepsHtml(msg.steps);
+        stepsHtml = result.stepsHtml;
+        // The final content (last text after all steps) is the main answer
+        displayContent = content || result.lastContentText;
+    } else {
+        // Legacy format: separate tool_calls + optional reasoning
+        const toolCalls = msg && msg.tool_calls;
+        const reasoning = msg && msg.reasoning;
+        stepsHtml = renderThinkingHtml(reasoning) + renderToolCallsHtml(toolCalls);
+    }
+
     el.innerHTML = `
         <img src="assets/logo.jpg" alt="CowAgent" class="w-8 h-8 rounded-lg flex-shrink-0">
         <div class="min-w-0 flex-1 max-w-[85%]">
             <div class="bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-3 text-sm leading-relaxed msg-content text-slate-700 dark:text-slate-200">
-                ${toolsHtml ? `<div class="agent-steps">${toolsHtml}</div>` : ''}
-                <div class="answer-content">${renderMarkdown(content)}</div>
+                ${stepsHtml ? `<div class="agent-steps">${stepsHtml}</div>` : ''}
+                <div class="answer-content">${renderMarkdown(displayContent)}</div>
             </div>
             <div class="text-xs text-slate-400 dark:text-slate-500 mt-1.5">${formatTime(timestamp)}</div>
         </div>
@@ -1167,7 +1287,7 @@ function loadHistory(page) {
                 const ts = new Date(msg.created_at * 1000);
                 const el = msg.role === 'user'
                     ? createUserMessageEl(msg.content, ts)
-                    : createBotMessageEl(msg.content || '', ts, null, msg.tool_calls);
+                    : createBotMessageEl(msg.content || '', ts, null, msg);
                 fragment.appendChild(el);
             });
 

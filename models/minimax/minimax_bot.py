@@ -233,11 +233,8 @@ class MinimaxBot(Bot):
 
             logger.debug(f"[MINIMAX] API call: model={model}, tools={len(converted_tools) if converted_tools else 0}, stream={stream}")
 
-            # Check if we should show thinking process
-            show_thinking = kwargs.pop("show_thinking", conf().get("minimax_show_thinking", False))
-            
             if stream:
-                return self._handle_stream_response(request_body, show_thinking=show_thinking)
+                return self._handle_stream_response(request_body)
             else:
                 return self._handle_sync_response(request_body)
 
@@ -466,12 +463,11 @@ class MinimaxBot(Bot):
             logger.error(traceback.format_exc())
             yield {"error": True, "message": str(e), "status_code": 500}
 
-    def _handle_stream_response(self, request_body, show_thinking=False):
+    def _handle_stream_response(self, request_body):
         """Handle streaming API response
-        
+
         Args:
             request_body: API request parameters
-            show_thinking: Whether to show thinking/reasoning process to users
         """
         try:
             headers = {
@@ -550,19 +546,15 @@ class MinimaxBot(Bot):
 
                             current_reasoning[reasoning_index]["text"] += reasoning_text
 
-                            # Optionally yield thinking as visible content
-                            if show_thinking:
-                                # Yield thinking text as-is (without emoji decoration)
-                                # The reasoning text will be displayed to users
-                                yield {
-                                    "choices": [{
-                                        "index": 0,
-                                        "delta": {
-                                            "role": "assistant",
-                                            "content": reasoning_text
-                                        }
-                                    }]
-                                }
+                            yield {
+                                "choices": [{
+                                    "index": 0,
+                                    "delta": {
+                                        "role": "assistant",
+                                        "reasoning_content": reasoning_text
+                                    }
+                                }]
+                            }
 
                 # Handle text content
                 if "content" in delta and delta["content"]:
