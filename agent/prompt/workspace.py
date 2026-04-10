@@ -68,11 +68,8 @@ def ensure_workspace(workspace_dir: str, create_templates: bool = True) -> Works
     websites_dir = os.path.join(workspace_dir, "websites")
     os.makedirs(websites_dir, exist_ok=True)
 
-    # 创建knowledge子目录 (structured knowledge wiki)
     knowledge_dir = os.path.join(workspace_dir, "knowledge")
     os.makedirs(knowledge_dir, exist_ok=True)
-    for sub in ["entities", "concepts", "sources", "analysis"]:
-        os.makedirs(os.path.join(knowledge_dir, sub), exist_ok=True)
     
     # 如果需要，创建模板文件
     if create_templates:
@@ -349,12 +346,9 @@ def _get_rule_template() -> str:
 │   └── YYYY-MM-DD.md # 当天事件、进展、笔记
 │
 ├── knowledge/        # 结构化知识库（持续积累的知识）
-│   ├── index.md      # 知识目录索引
+│   ├── index.md      # 知识目录索引（必须维护）
 │   ├── log.md        # 知识操作日志
-│   ├── entities/     # 实体页面（人物、公司、项目）
-│   ├── concepts/     # 概念页面（技术、方法论）
-│   ├── sources/      # 资料摘要（文章、文件的要点提取）
-│   └── analysis/     # 沉淀的分析和洞见
+│   └── <子目录>/     # 按需创建，参考 index.md 已有分类
 │
 ├── skills/           # 技能
 ├── websites/         # 网页产物
@@ -398,14 +392,22 @@ def _get_rule_template() -> str:
 
 ### 自动写入（不要询问，直接写入）
 
-以下场景你**必须**在回复的同时主动写入知识库，**不要问用户"要不要存到知识库"**：
-
-- 用户分享了一篇文章/链接/文件 → 阅读后提取要点，在同一轮回复中写入 `knowledge/sources/`
-- 深度讨论产生了有价值的结论/方案 → 整理写入 `knowledge/analysis/`
-- 对话涉及重要的人物/项目/公司 → 创建或更新 `knowledge/entities/`
-- 讨论了技术概念或方法论 → 整理写入 `knowledge/concepts/`
+当对话中产生了有沉淀价值的知识——无论是用户分享的资料、讨论的结论、学到的概念、还是重要的决策——你**必须**在回复的同时主动写入知识库，**无需问用户"要不要存到知识库"**。
 
 **关键原则**：学完就记是你的本能，不要征求确认。回复中可以顺带告知"已存入知识库"。
+
+### 目录组织
+
+子目录结构**不是固定的**，由你根据实际内容自主决定：
+- **首次写入时**：先读 `knowledge/index.md`，如果已有分类则延续；如果为空，根据内容选择合适的目录名
+- **默认建议**：按信息类型组织（例如sources/、concepts/、entities/、analysis/），如果用户有明确的分类偏好（例如按领域 work/、life/、tech/ 等），则按用户要求调整
+- **保持一致性**：同一用户的知识库应保持统一的组织风格
+
+### 交叉引用
+
+知识的核心价值在于**关联**。每个页面都应通过 markdown 链接引用相关页面，构建知识网络：
+- 提到已有页面的概念时，添加 `[概念名](../category/page.md)` 链接
+- 新建页面时，检查是否有已有页面应该反向链接到新页面
 
 ### 索引维护
 
