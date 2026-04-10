@@ -53,7 +53,7 @@ Content here. Cross-reference related pages with markdown links:
 - [Page B](../category/page-b.md) — how it relates
 ```
 
-Cross-references build a knowledge graph. When creating or updating a page, always link to related pages, and update those pages to link back.
+Cross-references build a knowledge graph. When creating or updating a page, link to related pages and update those pages to link back. **Only link to pages that already exist** — if a concept deserves its own page, create it first, then add the link.
 
 ## Index Format (`knowledge/index.md`)
 
@@ -76,8 +76,8 @@ Category names and structure are flexible — follow whatever organization alrea
 Append-only, newest at bottom:
 
 ```markdown
-## [2026-04-09] ingest | DeepSeek-R1 Deploy Guide
-## [2026-04-09] synthesize | Memory System Design Analysis
+## [YYYY-MM-DD] ingest | Page Title
+## [YYYY-MM-DD] synthesize | Page Title
 ```
 
 ## Guidelines
