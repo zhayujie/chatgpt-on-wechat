@@ -54,4 +54,8 @@ def create_voice(voice_type):
         from voice.tencent.tencent_voice import TencentVoice
 
         return TencentVoice()
+    elif voice_type == "minimax":
+        from voice.minimax.minimax_voice import MinimaxVoice
+
+        return MinimaxVoice()
     raise RuntimeError
