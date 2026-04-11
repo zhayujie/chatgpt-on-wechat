@@ -2,6 +2,7 @@
 
 import json
 import time
+from typing import Optional
 
 import requests
 from models.bot import Bot
@@ -146,6 +147,49 @@ class DoubaoBot(Bot):
                 return self.reply_text(session, args, retry_count + 1)
             else:
                 return result
+
+    def call_vision(self, image_url: str, question: str,
+                    model: Optional[str] = None,
+                    max_tokens: int = 1000) -> dict:
+        """Analyze an image using Doubao (Volcengine Ark) OpenAI-compatible API."""
+        try:
+            vision_model = model or self.args.get("model", "doubao-seed-2-0-pro-260215")
+            payload = {
+                "model": vision_model,
+                "max_tokens": max_tokens,
+                "messages": [{
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": question},
+                        {"type": "image_url", "image_url": {"url": image_url}},
+                    ],
+                }],
+            }
+            headers = {
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json",
+            }
+            resp = requests.post(f"{self.base_url}/chat/completions",
+                                 headers=headers, json=payload, timeout=60)
+            if resp.status_code != 200:
+                return {"error": True, "message": f"HTTP {resp.status_code}: {resp.text[:300]}"}
+            data = resp.json()
+            if "error" in data:
+                return {"error": True, "message": data["error"].get("message", str(data["error"]))}
+            content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+            usage = data.get("usage", {})
+            return {
+                "model": vision_model,
+                "content": content,
+                "usage": {
+                    "prompt_tokens": usage.get("prompt_tokens", 0),
+                    "completion_tokens": usage.get("completion_tokens", 0),
+                    "total_tokens": usage.get("total_tokens", 0),
+                },
+            }
+        except Exception as e:
+            logger.error(f"[DOUBAO] call_vision error: {e}")
+            return {"error": True, "message": str(e)}
 
     # ==================== Agent mode support ====================
 
@@ -434,31 +478,37 @@ class DoubaoBot(Bot):
                 continue
 
             if role == "user":
-                text_parts = []
-                tool_results = []
+                has_tool_result = any(
+                    isinstance(b, dict) and b.get("type") == "tool_result" for b in content
+                )
+                if has_tool_result:
+                    text_parts = []
+                    tool_results = []
 
-                for block in content:
-                    if not isinstance(block, dict):
-                        continue
-                    if block.get("type") == "text":
-                        text_parts.append(block.get("text", ""))
-                    elif block.get("type") == "tool_result":
-                        tool_call_id = block.get("tool_use_id") or ""
-                        result_content = block.get("content", "")
-                        if not isinstance(result_content, str):
-                            result_content = json.dumps(result_content, ensure_ascii=False)
-                        tool_results.append({
-                            "role": "tool",
-                            "tool_call_id": tool_call_id,
-                            "content": result_content
-                        })
+                    for block in content:
+                        if not isinstance(block, dict):
+                            continue
+                        if block.get("type") == "text":
+                            text_parts.append(block.get("text", ""))
+                        elif block.get("type") == "tool_result":
+                            tool_call_id = block.get("tool_use_id") or ""
+                            result_content = block.get("content", "")
+                            if not isinstance(result_content, str):
+                                result_content = json.dumps(result_content, ensure_ascii=False)
+                            tool_results.append({
+                                "role": "tool",
+                                "tool_call_id": tool_call_id,
+                                "content": result_content
+                            })
 
-                # Tool results first (must come right after assistant with tool_calls)
-                for tr in tool_results:
-                    converted.append(tr)
+                    for tr in tool_results:
+                        converted.append(tr)
 
-                if text_parts:
-                    converted.append({"role": "user", "content": "\n".join(text_parts)})
+                    if text_parts:
+                        converted.append({"role": "user", "content": "\n".join(text_parts)})
+                else:
+                    # Keep as-is for multimodal content (e.g. image_url blocks)
+                    converted.append(msg)
 
             elif role == "assistant":
                 openai_msg = {"role": "assistant"}

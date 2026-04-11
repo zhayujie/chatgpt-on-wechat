@@ -2,6 +2,8 @@
 
 import time
 import json
+from typing import Optional
+
 import requests
 
 from models.bot import Bot
@@ -175,6 +177,51 @@ class MinimaxBot(Bot):
             else:
                 return result
 
+    def call_vision(self, image_url: str, question: str,
+                    model: Optional[str] = None,
+                    max_tokens: int = 1000) -> dict:
+        """Analyze an image using MiniMax OpenAI-compatible API.
+        Always uses MiniMax-Text-01 — other MiniMax models do not support vision.
+        """
+        try:
+            vision_model = "MiniMax-Text-01"
+            payload = {
+                "model": vision_model,
+                "max_tokens": max_tokens,
+                "messages": [{
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": question},
+                        {"type": "image_url", "image_url": {"url": image_url}},
+                    ],
+                }],
+            }
+            headers = {
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json",
+            }
+            resp = requests.post(f"{self.api_base}/chat/completions",
+                                 headers=headers, json=payload, timeout=60)
+            if resp.status_code != 200:
+                return {"error": True, "message": f"HTTP {resp.status_code}: {resp.text[:300]}"}
+            data = resp.json()
+            if "error" in data:
+                return {"error": True, "message": data["error"].get("message", str(data["error"]))}
+            content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+            usage = data.get("usage", {})
+            return {
+                "model": vision_model,
+                "content": content,
+                "usage": {
+                    "prompt_tokens": usage.get("prompt_tokens", 0),
+                    "completion_tokens": usage.get("completion_tokens", 0),
+                    "total_tokens": usage.get("total_tokens", 0),
+                },
+            }
+        except Exception as e:
+            logger.error(f"[MINIMAX] call_vision error: {e}")
+            return {"error": True, "message": str(e)}
+
     def call_with_tools(self, messages, tools=None, stream=False, **kwargs):
         """
         Call MiniMax API with tool support for agent integration
@@ -273,37 +320,41 @@ class MinimaxBot(Bot):
             if role == "user":
                 # Handle user message
                 if isinstance(content, list):
-                    # Extract text from content blocks
-                    text_parts = []
-                    tool_results = []
+                    has_tool_result = any(
+                        isinstance(b, dict) and b.get("type") == "tool_result" for b in content
+                    )
+                    if has_tool_result:
+                        text_parts = []
+                        tool_results = []
 
-                    for block in content:
-                        if isinstance(block, dict):
-                            if block.get("type") == "text":
-                                text_parts.append(block.get("text", ""))
-                            elif block.get("type") == "tool_result":
-                                # Tool result should be a separate message with role="tool"
-                                tool_call_id = block.get("tool_use_id") or ""
-                                if not tool_call_id:
-                                    logger.warning(f"[MINIMAX] tool_result missing tool_use_id")
-                                result_content = block.get("content", "")
-                                if not isinstance(result_content, str):
-                                    result_content = json.dumps(result_content, ensure_ascii=False)
-                                tool_results.append({
-                                    "role": "tool",
-                                    "tool_call_id": tool_call_id,
-                                    "content": result_content
-                                })
+                        for block in content:
+                            if isinstance(block, dict):
+                                if block.get("type") == "text":
+                                    text_parts.append(block.get("text", ""))
+                                elif block.get("type") == "tool_result":
+                                    tool_call_id = block.get("tool_use_id") or ""
+                                    if not tool_call_id:
+                                        logger.warning(f"[MINIMAX] tool_result missing tool_use_id")
+                                    result_content = block.get("content", "")
+                                    if not isinstance(result_content, str):
+                                        result_content = json.dumps(result_content, ensure_ascii=False)
+                                    tool_results.append({
+                                        "role": "tool",
+                                        "tool_call_id": tool_call_id,
+                                        "content": result_content
+                                    })
 
-                    if text_parts:
-                        converted.append({
-                            "role": "user",
-                            "content": "\n".join(text_parts)
-                        })
+                        if text_parts:
+                            converted.append({
+                                "role": "user",
+                                "content": "\n".join(text_parts)
+                            })
 
-                    # Add all tool results (not just the last one)
-                    for tool_result in tool_results:
-                        converted.append(tool_result)
+                        for tool_result in tool_results:
+                            converted.append(tool_result)
+                    else:
+                        # Keep as-is for multimodal content (e.g. image_url blocks)
+                        converted.append(msg)
                 else:
                     # Simple text content
                     converted.append({

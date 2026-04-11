@@ -9,6 +9,8 @@ This includes: OpenAI, LinkAI, Azure OpenAI, and many third-party providers.
 
 import json
 import openai
+import requests
+from typing import Optional
 from common.log import logger
 from agent.protocol.message_utils import drop_orphaned_tool_results_openai
 
@@ -306,3 +308,51 @@ class OpenAICompatibleBot:
                 openai_messages.append(msg)
 
         return drop_orphaned_tool_results_openai(openai_messages)
+
+    def call_vision(self, image_url: str, question: str,
+                    model: Optional[str] = None,
+                    max_tokens: int = 1000) -> dict:
+        """Analyze an image using the OpenAI-compatible /chat/completions endpoint."""
+        try:
+            api_config = self.get_api_config()
+            vision_model = model or api_config.get("model", "gpt-4o")
+            api_key = api_config.get("api_key", "")
+            api_base = (api_config.get("api_base") or "https://api.openai.com/v1").rstrip("/")
+
+            payload = {
+                "model": vision_model,
+                "messages": [{
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": question},
+                        {"type": "image_url", "image_url": {"url": image_url}},
+                    ],
+                }],
+            }
+            headers = {
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            }
+            resp = requests.post(
+                f"{api_base}/chat/completions",
+                headers=headers, json=payload, timeout=60,
+            )
+            if resp.status_code != 200:
+                body = resp.text[:500]
+                logger.error(f"[{self.__class__.__name__}] call_vision HTTP {resp.status_code}: {body}")
+                return {"error": True, "message": f"HTTP {resp.status_code}: {body}"}
+            data = resp.json()
+            content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+            usage = data.get("usage", {})
+            return {
+                "model": vision_model,
+                "content": content,
+                "usage": {
+                    "prompt_tokens": usage.get("prompt_tokens", 0),
+                    "completion_tokens": usage.get("completion_tokens", 0),
+                    "total_tokens": usage.get("total_tokens", 0),
+                },
+            }
+        except Exception as e:
+            logger.error(f"[{self.__class__.__name__}] call_vision error: {e}")
+            return {"error": True, "message": str(e)}
