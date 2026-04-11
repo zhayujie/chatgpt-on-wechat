@@ -1,6 +1,8 @@
 # encoding:utf-8
 
 import json
+from typing import Optional
+
 from models.bot import Bot
 from models.session_manager import SessionManager
 from bridge.context import ContextType
@@ -152,6 +154,56 @@ class DashscopeBot(Bot):
                 return self.reply_text(session, retry_count + 1)
             else:
                 return result
+
+    def call_vision(self, image_url: str, question: str,
+                    model: Optional[str] = None,
+                    max_tokens: int = 1000) -> dict:
+        """Analyze an image using DashScope MultiModalConversation API."""
+        try:
+            dashscope.api_key = self.api_key
+            vision_model = model or "qwen-vl-max"
+
+            # DashScope multimodal format: {"image": url} + {"text": question}
+            messages = [{
+                "role": "user",
+                "content": [
+                    {"image": image_url},
+                    {"text": question},
+                ],
+            }]
+
+            response = MultiModalConversation.call(
+                model=vision_model,
+                messages=messages,
+                max_tokens=max_tokens,
+            )
+
+            if response.status_code != HTTPStatus.OK:
+                return {
+                    "error": True,
+                    "message": f"{response.code} - {response.message}",
+                }
+
+            resp_dict = self._response_to_dict(response)
+            choice = resp_dict["output"]["choices"][0]
+            content = choice.get("message", {}).get("content", "")
+            if isinstance(content, list):
+                content = "".join(
+                    item.get("text", "") for item in content if isinstance(item, dict)
+                )
+            usage = resp_dict.get("usage", {})
+            return {
+                "model": vision_model,
+                "content": content,
+                "usage": {
+                    "prompt_tokens": usage.get("input_tokens", 0),
+                    "completion_tokens": usage.get("output_tokens", 0),
+                    "total_tokens": usage.get("total_tokens", 0),
+                },
+            }
+        except Exception as e:
+            logger.error(f"[DASHSCOPE] call_vision error: {e}")
+            return {"error": True, "message": str(e)}
 
     def call_with_tools(self, messages, tools=None, stream=False, **kwargs):
         """

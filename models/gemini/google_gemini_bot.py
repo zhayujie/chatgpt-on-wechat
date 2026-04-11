@@ -12,6 +12,8 @@ import mimetypes
 import os
 import re
 import time
+from typing import Optional
+
 import requests
 from models.bot import Bot
 from models.session_manager import SessionManager
@@ -144,7 +146,12 @@ class GoogleGeminiBot(Bot):
             return "", []
         pattern = r"\[图片:\s*([^\]]+)\]"
         image_paths = [m.strip().strip("'\"") for m in re.findall(pattern, content) if m.strip()]
-        cleaned_text = re.sub(pattern, "", content)
+        # Replace markers with path-only hints so the model still knows the
+        # original file location (needed when it calls tools like vision).
+        def _replace_with_hint(m):
+            path = m.group(1).strip().strip("'\"")
+            return f"[attached image: {path}]"
+        cleaned_text = re.sub(pattern, _replace_with_hint, content)
         cleaned_text = re.sub(r"\n{3,}", "\n\n", cleaned_text).strip()
         return cleaned_text, image_paths
 
@@ -224,6 +231,57 @@ class GoogleGeminiBot(Bot):
 
         logger.warning(f"[Gemini] Unsupported image URL format: {image_url[:120]}")
         return None
+
+    def call_vision(self, image_url: str, question: str,
+                    model: Optional[str] = None,
+                    max_tokens: int = 1000) -> dict:
+        """Analyze an image using Gemini REST API."""
+        try:
+            model_name = model or self.model or "gemini-2.0-flash"
+            image_part = self._build_inline_part_from_image_url({"url": image_url})
+            if not image_part:
+                return {"error": True, "message": f"Cannot process image URL: {image_url[:120]}"}
+
+            payload = {
+                "contents": [{
+                    "role": "user",
+                    "parts": [image_part, {"text": question}],
+                }],
+                "generationConfig": {"maxOutputTokens": max_tokens},
+                "safetySettings": [
+                    {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
+                    {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
+                    {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
+                    {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
+                ],
+            }
+            endpoint = f"{self.api_base}/v1beta/models/{model_name}:generateContent"
+            headers = {"x-goog-api-key": self.api_key, "Content-Type": "application/json"}
+            resp = requests.post(endpoint, headers=headers, json=payload, timeout=60)
+
+            if resp.status_code != 200:
+                return {"error": True, "message": f"HTTP {resp.status_code}: {resp.text[:300]}"}
+
+            body = resp.json()
+            candidates = body.get("candidates", [])
+            text_parts = []
+            for part in candidates[0].get("content", {}).get("parts", []) if candidates else []:
+                if "text" in part:
+                    text_parts.append(part["text"])
+
+            usage_meta = body.get("usageMetadata", {})
+            return {
+                "model": model_name,
+                "content": "".join(text_parts),
+                "usage": {
+                    "prompt_tokens": usage_meta.get("promptTokenCount", 0),
+                    "completion_tokens": usage_meta.get("candidatesTokenCount", 0),
+                    "total_tokens": usage_meta.get("totalTokenCount", 0),
+                },
+            }
+        except Exception as e:
+            logger.error(f"[Gemini] call_vision error: {e}")
+            return {"error": True, "message": str(e)}
 
     def call_with_tools(self, messages, tools=None, stream=False, **kwargs):
         """
