@@ -15,8 +15,14 @@ const I18N = {
         console: '控制台',
         nav_chat: '对话', nav_manage: '管理', nav_monitor: '监控',
         menu_chat: '对话', menu_config: '配置', menu_skills: '技能',
-        menu_memory: '记忆', menu_channels: '通道', menu_tasks: '定时',
+        menu_memory: '记忆', menu_knowledge: '知识', menu_channels: '通道', menu_tasks: '定时',
         menu_logs: '日志',
+        knowledge_title: '知识库', knowledge_desc: '浏览和探索你的知识库',
+        knowledge_tab_docs: '文档', knowledge_tab_graph: '图谱',
+        knowledge_loading: '加载知识库中...', knowledge_loading_desc: '知识页面将显示在这里',
+        knowledge_select_hint: '选择一个文档查看', knowledge_empty_hint: '暂无知识页面',
+        knowledge_empty_guide: '在对话中发送文档、链接或主题给 Agent，它会自动整理到你的知识库中。',
+        knowledge_go_chat: '开始对话',
         welcome_subtitle: '我可以帮你解答问题、管理计算机、创造和执行技能，并通过长期记忆<br>不断成长',
         example_sys_title: '系统管理', example_sys_text: '帮我查看工作空间里有哪些文件',
         example_task_title: '技能系统', example_task_text: '查看所有支持的工具和技能',
@@ -70,8 +76,14 @@ const I18N = {
         console: 'Console',
         nav_chat: 'Chat', nav_manage: 'Management', nav_monitor: 'Monitor',
         menu_chat: 'Chat', menu_config: 'Config', menu_skills: 'Skills',
-        menu_memory: 'Memory', menu_channels: 'Channels', menu_tasks: 'Tasks',
+        menu_memory: 'Memory', menu_knowledge: 'Knowledge', menu_channels: 'Channels', menu_tasks: 'Tasks',
         menu_logs: 'Logs',
+        knowledge_title: 'Knowledge', knowledge_desc: 'Browse and explore your knowledge base',
+        knowledge_tab_docs: 'Documents', knowledge_tab_graph: 'Graph',
+        knowledge_loading: 'Loading knowledge base...', knowledge_loading_desc: 'Knowledge pages will be displayed here',
+        knowledge_select_hint: 'Select a document to view', knowledge_empty_hint: 'No knowledge pages yet',
+        knowledge_empty_guide: 'Send documents, links or topics to the agent in chat, and it will automatically organize them into your knowledge base.',
+        knowledge_go_chat: 'Start a conversation',
         welcome_subtitle: 'I can help you answer questions, manage your computer, create and execute skills, and keep growing through <br> long-term memory.',
         example_sys_title: 'System', example_sys_text: 'Show me the files in the workspace',
         example_task_title: 'Skills', example_task_text: 'Show current tools and skills',
@@ -182,6 +194,7 @@ const VIEW_META = {
     config:   { group: 'nav_manage',  page: 'menu_config' },
     skills:   { group: 'nav_manage',  page: 'menu_skills' },
     memory:   { group: 'nav_manage',  page: 'menu_memory' },
+    knowledge:{ group: 'nav_manage',  page: 'menu_knowledge' },
     channels: { group: 'nav_manage',  page: 'menu_channels' },
     tasks:    { group: 'nav_manage',  page: 'menu_tasks' },
     logs:     { group: 'nav_monitor', page: 'menu_logs' },
@@ -2888,10 +2901,333 @@ navigateTo = function(viewId) {
         document.getElementById('memory-panel-list').classList.remove('hidden');
         loadMemoryView(1);
     }
+    else if (viewId === 'knowledge') loadKnowledgeView();
     else if (viewId === 'channels') loadChannelsView();
     else if (viewId === 'tasks') loadTasksView();
     else if (viewId === 'logs') startLogStream();
 };
+
+// =====================================================================
+// Knowledge View
+// =====================================================================
+let _knowledgeTreeData = [];
+let _knowledgeCurrentFile = null;
+let _knowledgeGraphLoaded = false;
+
+function loadKnowledgeView() {
+    // Reset to docs tab
+    switchKnowledgeTab('docs');
+    _knowledgeGraphLoaded = false;
+    _knowledgeCurrentFile = null;
+
+    fetch('/api/knowledge/list').then(r => r.json()).then(data => {
+        if (data.status !== 'success') return;
+
+        const emptyEl = document.getElementById('knowledge-empty');
+        const docsPanel = document.getElementById('knowledge-panel-docs');
+        const statsEl = document.getElementById('knowledge-stats');
+
+        const tree = data.tree || [];
+        _knowledgeTreeData = tree;
+        const stats = data.stats || {};
+        const totalPages = stats.pages || 0;
+        const sizeStr = stats.size < 1024 ? stats.size + ' B' : (stats.size / 1024).toFixed(1) + ' KB';
+
+        statsEl.textContent = totalPages + ' pages · ' + sizeStr;
+
+        if (totalPages === 0) {
+            emptyEl.querySelector('p').textContent = t('knowledge_empty_hint');
+            const guideEl = document.getElementById('knowledge-empty-guide');
+            if (guideEl) guideEl.classList.remove('hidden');
+            emptyEl.classList.remove('hidden');
+            docsPanel.classList.add('hidden');
+            return;
+        }
+        emptyEl.classList.add('hidden');
+        docsPanel.classList.remove('hidden');
+
+        renderKnowledgeTree(tree);
+
+        // Auto-select the first file (desktop only)
+        if (window.innerWidth >= 768) {
+            const firstGroup = tree.find(g => g.files && g.files.length > 0);
+            if (firstGroup) {
+                const firstFile = firstGroup.files[0];
+                openKnowledgeFile(firstGroup.dir + '/' + firstFile.name, firstFile.title);
+            }
+        } else {
+            document.getElementById('knowledge-content-placeholder').classList.add('hidden');
+            document.getElementById('knowledge-content-viewer').classList.add('hidden');
+        }
+    }).catch(() => {});
+}
+
+function renderKnowledgeTree(tree, filter) {
+    const container = document.getElementById('knowledge-tree');
+    container.innerHTML = '';
+    const lowerFilter = (filter || '').toLowerCase();
+
+    tree.forEach(group => {
+        const files = group.files.filter(f =>
+            !lowerFilter || f.title.toLowerCase().includes(lowerFilter) || f.name.toLowerCase().includes(lowerFilter)
+        );
+        if (files.length === 0 && lowerFilter) return;
+
+        const div = document.createElement('div');
+        div.className = 'knowledge-tree-group open';
+
+        const btn = document.createElement('button');
+        btn.className = 'knowledge-tree-group-btn';
+        btn.innerHTML = `<i class="fas fa-chevron-right chevron"></i><i class="fas fa-folder text-amber-400 text-[11px]"></i><span>${escapeHtml(group.dir)}</span><span class="ml-auto text-[10px] text-slate-400">${files.length}</span>`;
+        btn.onclick = () => div.classList.toggle('open');
+        div.appendChild(btn);
+
+        const items = document.createElement('div');
+        items.className = 'knowledge-tree-group-items';
+        files.forEach(f => {
+            const fbtn = document.createElement('button');
+            const fpath = group.dir + '/' + f.name;
+            fbtn.className = 'knowledge-tree-file' + (_knowledgeCurrentFile === fpath ? ' active' : '');
+            fbtn.dataset.path = fpath;
+            fbtn.innerHTML = `<i class="fas fa-file-lines text-[10px] text-slate-400"></i><span class="truncate">${escapeHtml(f.title)}</span>`;
+            fbtn.onclick = () => openKnowledgeFile(fpath, f.title);
+            items.appendChild(fbtn);
+        });
+        div.appendChild(items);
+        container.appendChild(div);
+    });
+}
+
+function filterKnowledgeTree(query) {
+    renderKnowledgeTree(_knowledgeTreeData, query);
+}
+
+function openKnowledgeFile(path, title) {
+    _knowledgeCurrentFile = path;
+    // Update active state in tree via data-path
+    document.querySelectorAll('.knowledge-tree-file').forEach(el => {
+        el.classList.toggle('active', el.dataset.path === path);
+    });
+
+    // Immediately hide placeholder
+    document.getElementById('knowledge-content-placeholder').classList.add('hidden');
+
+    fetch(`/api/knowledge/read?path=${encodeURIComponent(path)}`).then(r => r.json()).then(data => {
+        if (data.status !== 'success') return;
+        const viewer = document.getElementById('knowledge-content-viewer');
+        document.getElementById('knowledge-viewer-title').textContent = title;
+        document.getElementById('knowledge-viewer-path').textContent = path;
+        document.getElementById('knowledge-viewer-body').innerHTML = renderMarkdown(data.content || '');
+        viewer.classList.remove('hidden');
+        applyHighlighting(viewer);
+
+        // Mobile: hide sidebar, show content
+        if (window.innerWidth < 768) {
+            document.getElementById('knowledge-sidebar').classList.add('hidden');
+        }
+    }).catch(() => {});
+}
+
+function knowledgeMobileBack() {
+    document.getElementById('knowledge-sidebar').classList.remove('hidden');
+    document.getElementById('knowledge-content-viewer').classList.add('hidden');
+}
+
+function switchKnowledgeTab(tab) {
+    document.querySelectorAll('.knowledge-tab').forEach(el => el.classList.remove('active'));
+    document.getElementById('knowledge-tab-' + tab).classList.add('active');
+
+    const docsPanel = document.getElementById('knowledge-panel-docs');
+    const graphPanel = document.getElementById('knowledge-panel-graph');
+
+    if (tab === 'docs') {
+        docsPanel.classList.remove('hidden');
+        graphPanel.classList.add('hidden');
+    } else {
+        docsPanel.classList.add('hidden');
+        graphPanel.classList.remove('hidden');
+        if (!_knowledgeGraphLoaded) {
+            loadKnowledgeGraph();
+        }
+    }
+}
+
+function loadKnowledgeGraph() {
+    _knowledgeGraphLoaded = true;
+    const container = document.getElementById('knowledge-graph-container');
+    container.innerHTML = '';
+
+    fetch('/api/knowledge/graph').then(r => r.json()).then(data => {
+        const nodes = data.nodes || [];
+        const links = data.links || [];
+        if (nodes.length === 0) {
+            container.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-slate-400"><i class="fas fa-diagram-project text-3xl mb-3 opacity-40"></i><p class="text-sm">${t('knowledge_empty_hint')}</p></div>`;
+            return;
+        }
+        renderKnowledgeGraph(container, nodes, links);
+    }).catch(() => {
+        container.innerHTML = '<div class="flex items-center justify-center h-full text-slate-400 text-sm">Failed to load graph</div>';
+    });
+}
+
+function renderKnowledgeGraph(container, nodes, links) {
+    const width = container.clientWidth;
+    const height = container.clientHeight || 600;
+
+    const categories = [...new Set(nodes.map(n => n.category))];
+    const colorScale = d3.scaleOrdinal(d3.schemeTableau10).domain(categories);
+
+    // Connection count for sizing
+    const connCount = {};
+    nodes.forEach(n => connCount[n.id] = 0);
+    links.forEach(l => {
+        connCount[l.source] = (connCount[l.source] || 0) + 1;
+        connCount[l.target] = (connCount[l.target] || 0) + 1;
+    });
+
+    const svg = d3.select(container)
+        .append('svg')
+        .attr('width', width)
+        .attr('height', height);
+
+    const g = svg.append('g');
+
+    // Zoom with adaptive label visibility
+    let currentZoomScale = 1;
+    const zoom = d3.zoom()
+        .scaleExtent([0.2, 5])
+        .on('zoom', (event) => {
+            g.attr('transform', event.transform);
+            currentZoomScale = event.transform.k;
+            updateLabelVisibility();
+        });
+    svg.call(zoom);
+
+    function updateLabelVisibility() {
+        if (!label) return;
+        if (currentZoomScale < 0.8) {
+            label.attr('opacity', 0);
+        } else {
+            const baseFontSize = Math.min(12, 10 / Math.max(currentZoomScale * 0.7, 0.5));
+            label.attr('opacity', 1).attr('font-size', baseFontSize);
+        }
+    }
+
+    const simulation = d3.forceSimulation(nodes)
+        .force('link', d3.forceLink(links).id(d => d.id).distance(90))
+        .force('charge', d3.forceManyBody().strength(-180))
+        .force('center', d3.forceCenter(width / 2, height / 2))
+        .force('x', d3.forceX(width / 2).strength(0.06))
+        .force('y', d3.forceY(height / 2).strength(0.06))
+        .force('collision', d3.forceCollide().radius(d => getNodeRadius(d) + 30));
+
+    function getNodeRadius(d) {
+        return Math.max(5, Math.min(16, 5 + (connCount[d.id] || 0) * 2));
+    }
+
+    const link = g.append('g')
+        .selectAll('line')
+        .data(links)
+        .join('line')
+        .attr('stroke', '#94a3b8')
+        .attr('stroke-opacity', 0.3)
+        .attr('stroke-width', 1);
+
+    const node = g.append('g')
+        .selectAll('circle')
+        .data(nodes)
+        .join('circle')
+        .attr('r', d => getNodeRadius(d))
+        .attr('fill', d => colorScale(d.category))
+        .attr('stroke', '#fff')
+        .attr('stroke-width', 1.5)
+        .style('cursor', 'pointer')
+        .call(d3.drag()
+            .on('start', (event, d) => { if (!event.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
+            .on('drag', (event, d) => { d.fx = event.x; d.fy = event.y; })
+            .on('end', (event, d) => { if (!event.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; })
+        );
+
+    const label = g.append('g')
+        .selectAll('text')
+        .data(nodes)
+        .join('text')
+        .text(d => d.label.length > 15 ? d.label.slice(0, 14) + '…' : d.label)
+        .attr('font-size', 9)
+        .attr('dx', d => getNodeRadius(d) + 4)
+        .attr('dy', 3)
+        .attr('fill', '#64748b')
+        .style('pointer-events', 'none');
+
+    // Tooltip
+    const tooltip = document.createElement('div');
+    tooltip.className = 'knowledge-graph-tooltip';
+    container.style.position = 'relative';
+    container.appendChild(tooltip);
+
+    node.on('mouseover', (event, d) => {
+        tooltip.textContent = d.label + ' (' + d.category + ')';
+        tooltip.style.opacity = '1';
+        tooltip.style.left = (event.offsetX + 12) + 'px';
+        tooltip.style.top = (event.offsetY - 8) + 'px';
+        // Highlight connections
+        link.attr('stroke-opacity', l => (l.source.id === d.id || l.target.id === d.id) ? 0.8 : 0.1);
+        node.attr('opacity', n => n.id === d.id || links.some(l => (l.source.id === d.id && l.target.id === n.id) || (l.target.id === d.id && l.source.id === n.id)) ? 1 : 0.2);
+        label.attr('opacity', n => n.id === d.id || links.some(l => (l.source.id === d.id && l.target.id === n.id) || (l.target.id === d.id && l.source.id === n.id)) ? 1 : 0.1);
+    }).on('mousemove', (event) => {
+        tooltip.style.left = (event.offsetX + 12) + 'px';
+        tooltip.style.top = (event.offsetY - 8) + 'px';
+    }).on('mouseout', () => {
+        tooltip.style.opacity = '0';
+        link.attr('stroke-opacity', 0.3);
+        node.attr('opacity', 1);
+        label.attr('opacity', 1);
+    }).on('click', (event, d) => {
+        // Switch to docs tab and open the file
+        switchKnowledgeTab('docs');
+        openKnowledgeFile(d.id, d.label);
+    });
+
+    simulation.on('tick', () => {
+        link.attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+            .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+        node.attr('cx', d => d.x).attr('cy', d => d.y);
+        label.attr('x', d => d.x).attr('y', d => d.y);
+    });
+
+    // Auto fit-to-view when simulation settles
+    simulation.on('end', () => {
+        const pad = 16;
+        let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+        nodes.forEach(n => {
+            if (n.x < x0) x0 = n.x;
+            if (n.y < y0) y0 = n.y;
+            if (n.x > x1) x1 = n.x;
+            if (n.y > y1) y1 = n.y;
+        });
+        const bw = x1 - x0 + pad * 2;
+        const bh = y1 - y0 + pad * 2;
+        if (bw > 0 && bh > 0) {
+            const scale = Math.min(width / bw, height / bh, 4);
+            const tx = width / 2 - (x0 + x1) / 2 * scale;
+            const ty = height / 2 - (y0 + y1) / 2 * scale;
+            svg.transition().duration(500).call(
+                zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale)
+            );
+        }
+    });
+
+    // Legend
+    const legendDiv = document.createElement('div');
+    legendDiv.className = 'knowledge-graph-legend';
+    categories.forEach(cat => {
+        const item = document.createElement('span');
+        item.className = 'knowledge-graph-legend-item';
+        item.innerHTML = `<span class="knowledge-graph-legend-dot" style="background:${colorScale(cat)}"></span>${escapeHtml(cat)}`;
+        legendDiv.appendChild(item);
+    });
+    container.appendChild(legendDiv);
+}
 
 // =====================================================================
 // Initialization

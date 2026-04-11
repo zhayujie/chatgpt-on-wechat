@@ -445,6 +445,9 @@ class WebChannel(ChatChannel):
             '/api/skills', 'SkillsHandler',
             '/api/memory', 'MemoryHandler',
             '/api/memory/content', 'MemoryContentHandler',
+            '/api/knowledge/list', 'KnowledgeListHandler',
+            '/api/knowledge/read', 'KnowledgeReadHandler',
+            '/api/knowledge/graph', 'KnowledgeGraphHandler',
             '/api/scheduler', 'SchedulerHandler',
             '/api/history', 'HistoryHandler',
             '/api/logs', 'LogsHandler',
@@ -1529,6 +1532,143 @@ class AssetsHandler:
         except Exception as e:
             logger.error(f"Error serving static file: {e}", exc_info=True)  # 添加更详细的错误信息
             raise web.notfound()
+
+
+class KnowledgeListHandler:
+    """Return the knowledge directory tree as JSON."""
+
+    def GET(self):
+        web.header('Content-Type', 'application/json; charset=utf-8')
+        try:
+            workspace_root = _get_workspace_root()
+            knowledge_dir = os.path.join(workspace_root, "knowledge")
+            if not os.path.isdir(knowledge_dir):
+                return json.dumps({"status": "success", "tree": [], "stats": {"pages": 0, "size": 0}})
+
+            tree = []
+            total_files = 0
+            total_bytes = 0
+            for name in sorted(os.listdir(knowledge_dir)):
+                full = os.path.join(knowledge_dir, name)
+                if not os.path.isdir(full) or name.startswith("."):
+                    continue
+                files = []
+                for fname in sorted(os.listdir(full)):
+                    if fname.endswith(".md") and not fname.startswith("."):
+                        fpath = os.path.join(full, fname)
+                        size = os.path.getsize(fpath)
+                        total_files += 1
+                        total_bytes += size
+                        title = fname.replace(".md", "")
+                        try:
+                            with open(fpath, "r", encoding="utf-8") as f:
+                                first_line = f.readline().strip()
+                            if first_line.startswith("# "):
+                                title = first_line[2:].strip()
+                        except Exception:
+                            pass
+                        files.append({"name": fname, "title": title, "size": size})
+                tree.append({"dir": name, "files": files})
+
+            return json.dumps({
+                "status": "success",
+                "tree": tree,
+                "stats": {"pages": total_files, "size": total_bytes},
+                "enabled": conf().get("knowledge", True),
+            }, ensure_ascii=False)
+        except Exception as e:
+            logger.error(f"[WebChannel] Knowledge list error: {e}")
+            return json.dumps({"status": "error", "message": str(e)})
+
+
+class KnowledgeReadHandler:
+    """Read a single knowledge markdown file."""
+
+    def GET(self):
+        web.header('Content-Type', 'application/json; charset=utf-8')
+        try:
+            params = web.input(path='')
+            rel_path = params.path
+            if not rel_path or ".." in rel_path:
+                return json.dumps({"status": "error", "message": "invalid path"})
+
+            workspace_root = _get_workspace_root()
+            full_path = os.path.join(workspace_root, "knowledge", rel_path)
+            full_path = os.path.normpath(full_path)
+            knowledge_dir = os.path.normpath(os.path.join(workspace_root, "knowledge"))
+            if not full_path.startswith(knowledge_dir):
+                return json.dumps({"status": "error", "message": "path outside knowledge dir"})
+
+            if not os.path.isfile(full_path):
+                return json.dumps({"status": "error", "message": "file not found"})
+
+            with open(full_path, "r", encoding="utf-8") as f:
+                content = f.read()
+            return json.dumps({"status": "success", "content": content, "path": rel_path}, ensure_ascii=False)
+        except Exception as e:
+            logger.error(f"[WebChannel] Knowledge read error: {e}")
+            return json.dumps({"status": "error", "message": str(e)})
+
+
+class KnowledgeGraphHandler:
+    """Return nodes and links for the knowledge graph visualization."""
+
+    def GET(self):
+        web.header('Content-Type', 'application/json; charset=utf-8')
+        import re
+        from pathlib import Path
+
+        workspace_root = _get_workspace_root()
+        knowledge_dir = Path(workspace_root) / "knowledge"
+        if not knowledge_dir.is_dir():
+            return json.dumps({"nodes": [], "links": []})
+
+        nodes = {}
+        links = []
+        link_re = re.compile(r'\[([^\]]*)\]\(([^)]+\.md)\)')
+
+        for md_file in knowledge_dir.rglob("*.md"):
+            rel = str(md_file.relative_to(knowledge_dir))
+            if rel in ("index.md", "log.md"):
+                continue
+            parts = rel.split("/")
+            category = parts[0] if len(parts) > 1 else "root"
+            title = md_file.stem.replace("-", " ").title()
+            try:
+                content = md_file.read_text(encoding="utf-8")
+                first_line = content.strip().split("\n")[0]
+                if first_line.startswith("# "):
+                    title = first_line[2:].strip()
+            except Exception:
+                pass
+            nodes[rel] = {"id": rel, "label": title, "category": category}
+            try:
+                content = md_file.read_text(encoding="utf-8")
+                for _, link_target in link_re.findall(content):
+                    resolved = (md_file.parent / link_target).resolve()
+                    try:
+                        target_rel = str(resolved.relative_to(knowledge_dir))
+                    except ValueError:
+                        continue
+                    if target_rel != rel:
+                        links.append({"source": rel, "target": target_rel})
+            except Exception:
+                pass
+
+        valid_ids = set(nodes.keys())
+        links = [l for l in links if l["source"] in valid_ids and l["target"] in valid_ids]
+        seen = set()
+        deduped = []
+        for l in links:
+            key = tuple(sorted([l["source"], l["target"]]))
+            if key not in seen:
+                seen.add(key)
+                deduped.append(l)
+
+        return json.dumps({
+            "nodes": list(nodes.values()),
+            "links": deduped,
+        }, ensure_ascii=False)
 
 
 class VersionHandler:
