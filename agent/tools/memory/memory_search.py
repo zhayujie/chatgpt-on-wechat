@@ -48,6 +48,13 @@ class MemorySearchTool(BaseTool):
         super().__init__()
         self.memory_manager = memory_manager
         self.user_id = user_id
+
+        from config import conf
+        if conf().get("knowledge", True):
+            self.description = (
+                "Search agent's long-term memory and knowledge base using semantic and keyword search. "
+                "Use this to recall past conversations, preferences, and knowledge pages."
+            )
     
     def execute(self, args: dict):
         """

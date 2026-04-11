@@ -1038,6 +1038,7 @@ function startSSE(requestId, loadingEl, timestamp) {
                 // Only update text content when there is something new to show.
                 if (finalText) contentEl.innerHTML = renderMarkdown(finalText);
                 applyHighlighting(botEl);
+                bindChatKnowledgeLinks(botEl);
             }
             scrollChatToBottom();
 
@@ -1255,6 +1256,7 @@ function createBotMessageEl(content, timestamp, requestId, msg) {
         </div>
     `;
     applyHighlighting(el);
+    bindChatKnowledgeLinks(el);
     return el;
 }
 
@@ -3002,6 +3004,92 @@ function filterKnowledgeTree(query) {
     renderKnowledgeTree(_knowledgeTreeData, query);
 }
 
+function resolveKnowledgePath(currentFilePath, relativeHref) {
+    // currentFilePath: e.g. "concepts/mcp-protocol.md"
+    // relativeHref: e.g. "../entities/openai.md"
+    const parts = currentFilePath.split('/');
+    parts.pop(); // remove filename, keep directory
+    const segments = [...parts, ...relativeHref.split('/')];
+    const resolved = [];
+    for (const seg of segments) {
+        if (seg === '..') resolved.pop();
+        else if (seg !== '.' && seg !== '') resolved.push(seg);
+    }
+    return resolved.join('/');
+}
+
+function bindKnowledgeLinks(container, currentFilePath) {
+    container.querySelectorAll('a').forEach(a => {
+        const href = a.getAttribute('href');
+        if (!href || !href.endsWith('.md')) return;
+        // Skip absolute URLs
+        if (/^https?:\/\//.test(href)) return;
+
+        a.addEventListener('click', (e) => {
+            e.preventDefault();
+            const resolved = resolveKnowledgePath(currentFilePath, href);
+            const linkTitle = a.textContent.trim() || resolved.replace(/\.md$/, '').split('/').pop();
+            openKnowledgeFile(resolved, linkTitle);
+        });
+        a.style.cursor = 'pointer';
+        a.classList.add('text-primary-500', 'hover:underline');
+    });
+}
+
+function bindChatKnowledgeLinks(container) {
+    if (!container) return;
+    container.querySelectorAll('a').forEach(a => {
+        const href = a.getAttribute('href');
+        if (!href || !href.endsWith('.md')) return;
+        if (/^https?:\/\//.test(href)) return;
+
+        // Determine knowledge path
+        let knowledgePath = null;
+        if (href.startsWith('knowledge/')) {
+            // Full path from workspace root: knowledge/concepts/moe.md
+            knowledgePath = href.replace(/^knowledge\//, '');
+        } else if (/^[a-z0-9_-]+\/[a-z0-9_.-]+\.md$/i.test(href)) {
+            // Looks like category/file.md pattern without knowledge/ prefix
+            knowledgePath = href;
+        } else if (href.includes('/') && !href.startsWith('/')) {
+            // Relative path like ../entities/deepseek.md — extract filename and search
+            const filename = href.split('/').pop();
+            knowledgePath = '__search__:' + filename;
+        }
+        if (!knowledgePath) return;
+
+        a.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (knowledgePath.startsWith('__search__:')) {
+                const filename = knowledgePath.replace('__search__:', '');
+                // Find the file in cached tree data
+                const found = _findKnowledgeFileByName(filename);
+                if (found) {
+                    navigateTo('knowledge');
+                    setTimeout(() => openKnowledgeFile(found.path, found.title), 100);
+                }
+            } else {
+                navigateTo('knowledge');
+                const linkTitle = a.textContent.trim() || knowledgePath.replace(/\.md$/, '').split('/').pop();
+                setTimeout(() => openKnowledgeFile(knowledgePath, linkTitle), 100);
+            }
+        });
+        a.style.cursor = 'pointer';
+        a.classList.add('text-primary-500', 'hover:underline');
+    });
+}
+
+function _findKnowledgeFileByName(filename) {
+    for (const group of _knowledgeTreeData) {
+        for (const f of group.files) {
+            if (f.name === filename) {
+                return { path: group.dir + '/' + f.name, title: f.title };
+            }
+        }
+    }
+    return null;
+}
+
 function openKnowledgeFile(path, title) {
     _knowledgeCurrentFile = path;
     // Update active state in tree via data-path
@@ -3017,9 +3105,11 @@ function openKnowledgeFile(path, title) {
         const viewer = document.getElementById('knowledge-content-viewer');
         document.getElementById('knowledge-viewer-title').textContent = title;
         document.getElementById('knowledge-viewer-path').textContent = path;
-        document.getElementById('knowledge-viewer-body').innerHTML = renderMarkdown(data.content || '');
+        const bodyEl = document.getElementById('knowledge-viewer-body');
+        bodyEl.innerHTML = renderMarkdown(data.content || '');
         viewer.classList.remove('hidden');
         applyHighlighting(viewer);
+        bindKnowledgeLinks(bodyEl, path);
 
         // Mobile: hide sidebar, show content
         if (window.innerWidth < 768) {
@@ -3234,6 +3324,12 @@ function renderKnowledgeGraph(container, nodes, links) {
 // =====================================================================
 applyTheme();
 applyI18n();
+
+// Pre-fetch knowledge tree for chat link resolution
+fetch('/api/knowledge/list').then(r => r.json()).then(data => {
+    if (data.status === 'success') _knowledgeTreeData = data.tree || [];
+}).catch(() => {});
+
 fetch('/api/version').then(r => r.json()).then(data => {
     APP_VERSION = `v${data.version}`;
     document.getElementById('sidebar-version').textContent = `CowAgent ${APP_VERSION}`;
