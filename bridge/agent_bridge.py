@@ -498,10 +498,14 @@ class AgentBridge:
                 reply.text_content = text_response
             return reply
         
-        # For other unknown file types, return text with file info
-        message = text_response or file_info.get("message", "文件已准备")
-        message += f"\n\n[文件: {file_info.get('file_name', file_path)}]"
-        return Reply(ReplyType.TEXT, message)
+        # For all other file types (tar.gz, zip, etc.), also use FILE type
+        file_url = f"file://{file_path}"
+        logger.info(f"[AgentBridge] Sending generic file: {file_url}")
+        reply = Reply(ReplyType.FILE, file_url)
+        reply.file_name = file_info.get("file_name", os.path.basename(file_path))
+        if text_response:
+            reply.text_content = text_response
+        return reply
     
     def _migrate_config_to_env(self, workspace_root: str):
         """
