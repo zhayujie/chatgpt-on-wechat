@@ -318,10 +318,12 @@ class MemoryManager:
                 await self._sync_file(file_path, "memory", scope, user_id)
 
         # Scan knowledge directory (structured knowledge wiki)
-        knowledge_dir = Path(workspace_dir) / "knowledge"
-        if knowledge_dir.exists():
-            for file_path in knowledge_dir.rglob("*.md"):
-                await self._sync_file(file_path, "knowledge", "shared", None)
+        from config import conf
+        if conf().get("knowledge", True):
+            knowledge_dir = Path(workspace_dir) / "knowledge"
+            if knowledge_dir.exists():
+                for file_path in knowledge_dir.rglob("*.md"):
+                    await self._sync_file(file_path, "knowledge", "shared", None)
         
         self._dirty = False
     

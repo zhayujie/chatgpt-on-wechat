@@ -10,6 +10,7 @@ from typing import List, Dict, Optional, Any
 from dataclasses import dataclass
 
 from common.log import logger
+from config import conf
 
 
 @dataclass
@@ -129,7 +130,8 @@ def build_agent_system_prompt(
         sections.extend(_build_memory_section(memory_manager, tools, language))
 
     # 3.5 知识系统（结构化知识库）
-    sections.extend(_build_knowledge_section(workspace_dir, language))
+    if conf().get("knowledge", True):
+        sections.extend(_build_knowledge_section(workspace_dir, language))
     
     # 4. 工作空间（工作环境说明）
     sections.extend(_build_workspace_section(workspace_dir, language))

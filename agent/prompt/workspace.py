@@ -68,8 +68,11 @@ def ensure_workspace(workspace_dir: str, create_templates: bool = True) -> Works
     websites_dir = os.path.join(workspace_dir, "websites")
     os.makedirs(websites_dir, exist_ok=True)
 
-    knowledge_dir = os.path.join(workspace_dir, "knowledge")
-    os.makedirs(knowledge_dir, exist_ok=True)
+    from config import conf
+    knowledge_enabled = conf().get("knowledge", True)
+    if knowledge_enabled:
+        knowledge_dir = os.path.join(workspace_dir, "knowledge")
+        os.makedirs(knowledge_dir, exist_ok=True)
     
     # 如果需要，创建模板文件
     if create_templates:
@@ -77,14 +80,15 @@ def ensure_workspace(workspace_dir: str, create_templates: bool = True) -> Works
         _create_template_if_missing(user_path, _get_user_template())
         _create_template_if_missing(rule_path, _get_rule_template())
         _create_template_if_missing(memory_path, _get_memory_template())
-        _create_template_if_missing(
-            os.path.join(knowledge_dir, "index.md"),
-            _get_knowledge_index_template()
-        )
-        _create_template_if_missing(
-            os.path.join(knowledge_dir, "log.md"),
-            _get_knowledge_log_template()
-        )
+        if knowledge_enabled:
+            _create_template_if_missing(
+                os.path.join(knowledge_dir, "index.md"),
+                _get_knowledge_index_template()
+            )
+            _create_template_if_missing(
+                os.path.join(knowledge_dir, "log.md"),
+                _get_knowledge_log_template()
+            )
         
         # Only create BOOTSTRAP.md for brand new workspaces;
         # agent deletes it after completing onboarding

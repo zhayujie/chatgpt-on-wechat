@@ -199,6 +199,7 @@ available_setting = {
     "agent_max_context_tokens": 50000,  # Agent模式下最大上下文tokens
     "agent_max_context_turns": 30,  # Agent模式下最大上下文记忆轮次
     "agent_max_steps": 15,  # Agent模式下单次运行最大决策步数
+    "knowledge": True,  # 是否开启知识库功能
 }
 
 

@@ -45,7 +45,8 @@
 .msg-content h1 { font-size: 1.4em; }
 .msg-content h2 { font-size: 1.25em; }
 .msg-content h3 { font-size: 1.1em; }
-.msg-content ul, .msg-content ol { margin: 0.5em 0; padding-left: 1.8em; }
+.msg-content ul { margin: 0.5em 0; padding-left: 1.8em; list-style: disc; }
+.msg-content ol { margin: 0.5em 0; padding-left: 1.8em; list-style: decimal; }
 .msg-content li { margin: 0.25em 0; }
 .msg-content pre {
     border-radius: 8px; overflow-x: auto; margin: 0.8em 0;
