@@ -44,6 +44,19 @@ class MemoryGetTool(BaseTool):
         """
         super().__init__()
         self.memory_manager = memory_manager
+
+        from config import conf
+        if conf().get("knowledge", True):
+            self.description = (
+                "Read specific content from memory or knowledge files. "
+                "Use this to get full context from a memory file, knowledge page, or specific line range."
+            )
+            self.params = {**self.params}
+            self.params["properties"] = {**self.params["properties"]}
+            self.params["properties"]["path"] = {
+                "type": "string",
+                "description": "Relative path to the memory or knowledge file (e.g. 'MEMORY.md', 'memory/2026-01-01.md', 'knowledge/concepts/moe.md')"
+            }
     
     def execute(self, args: dict):
         """
@@ -68,11 +81,15 @@ class MemoryGetTool(BaseTool):
             workspace_dir = self.memory_manager.config.get_workspace()
             
             # Auto-prepend memory/ if not present and not absolute path
-            # Exception: MEMORY.md is in the root directory
-            if not path.startswith('memory/') and not path.startswith('/') and path != 'MEMORY.md':
+            # Exceptions: MEMORY.md in root, knowledge/ files at workspace root
+            if not path.startswith('memory/') and not path.startswith('knowledge/') and not path.startswith('/') and path != 'MEMORY.md':
                 path = f'memory/{path}'
             
-            file_path = workspace_dir / path
+            file_path = (workspace_dir / path).resolve()
+            workspace_resolved = workspace_dir.resolve()
+            
+            if not str(file_path).startswith(str(workspace_resolved) + '/') and file_path != workspace_resolved:
+                return ToolResult.fail(f"Error: Access denied: path outside workspace")
             
             if not file_path.exists():
                 return ToolResult.fail(f"Error: File not found: {path}")

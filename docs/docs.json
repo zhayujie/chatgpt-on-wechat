@@ -148,6 +148,17 @@
             ]
           },
           {
+            "tab": "知识",
+            "groups": [
+              {
+                "group": "知识库",
+                "pages": [
+                  "knowledge/index"
+                ]
+              }
+            ]
+          },
+          {
             "tab": "通道",
             "groups": [
               {
@@ -309,6 +320,17 @@
             ]
           },
           {
+            "tab": "Knowledge",
+            "groups": [
+              {
+                "group": "Knowledge Base",
+                "pages": [
+                  "en/knowledge/index"
+                ]
+              }
+            ]
+          },
+          {
             "tab": "Channels",
             "groups": [
               {
@@ -465,6 +487,17 @@
                 "pages": [
                   "ja/memory/index",
                   "ja/memory/context"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "ナレッジ",
+            "groups": [
+              {
+                "group": "ナレッジベース",
+                "pages": [
+                  "ja/knowledge/index"
                 ]
               }
             ]

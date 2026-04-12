@@ -15,13 +15,26 @@ In subsequent long-term conversations, the Agent intelligently stores or retriev
   <img src="https://cdn.link-ai.tech/doc/20260203000455.png" width="800" />
 </Frame>
 
-## 2. Task Planning and Tool Use
+## 2. Personal Knowledge Base
+
+> The knowledge base system enables the Agent to continuously accumulate and organize structured knowledge. Unlike memory which records along a timeline, the knowledge base is organized by topics, transforming articles, conversation insights, and learning materials into interconnected Markdown pages that form a continuously growing knowledge network.
+
+The Agent automatically organizes valuable information from conversations into knowledge pages, maintaining cross-references and indexes. The Web console provides document browsing and knowledge graph visualization. Knowledge is stored in `~/cow/knowledge/` within the workspace.
+
+- **Auto-organization**: The Agent autonomously extracts and organizes structured knowledge during conversations, maintaining indexes and cross-references
+- **Knowledge graph**: Automatically builds a knowledge graph from cross-references between pages, with interactive graph visualization in the Web console
+- **Chat integration**: Knowledge document links referenced in Agent replies can be clicked directly in the Web console for viewing
+- **CLI management**: Use `/knowledge` commands to view stats, browse directory, and toggle the feature with `/knowledge on|off`
+
+See [Personal Knowledge Base](/en/knowledge) for details.
+
+## 3. Task Planning and Tool Use
 
 Tools are the core of how the Agent accesses operating system resources. The Agent intelligently selects and invokes tools based on task requirements, performing file read/write, command execution, scheduled tasks, and more. Built-in tools are implemented in the project's `agent/tools/` directory.
 
 **Key tools:** file read/write/edit, Bash terminal, browser, file send, scheduler, memory search, web search, environment config, and more.
 
-### 2.1 Terminal and File Access
+### 3.1 Terminal and File Access
 
 Access to the OS terminal and file system is the most fundamental and core capability. Many other tools and skills build on top of this. Users can interact with the Agent from a mobile device to operate resources on their personal computer or server:
 
@@ -29,7 +42,7 @@ Access to the OS terminal and file system is the most fundamental and core capab
   <img src="https://cdn.link-ai.tech/doc/20260202181130.png" width="800" />
 </Frame>
 
-### 2.2 Programming Capability
+### 3.2 Programming Capability
 
 Combining programming and system access, the Agent can execute the complete **Vibecoding workflow** — from information search, asset generation, coding, testing, deployment, Nginx configuration, to publishing — all triggered by a single command from your phone:
 
@@ -37,7 +50,7 @@ Combining programming and system access, the Agent can execute the complete **Vi
   <img src="https://cdn.link-ai.tech/doc/20260203121008.png" width="800" />
 </Frame>
 
-### 2.3 Scheduled Tasks
+### 3.3 Scheduled Tasks
 
 The `scheduler` tool enables dynamic scheduled tasks, supporting **one-time tasks, fixed intervals, and Cron expressions**. Tasks can be triggered as either a **fixed message send** or an **Agent dynamic task** execution:
 
@@ -45,7 +58,7 @@ The `scheduler` tool enables dynamic scheduled tasks, supporting **one-time task
   <img src="https://cdn.link-ai.tech/doc/20260202195402.png" width="800" />
 </Frame>
 
-### 2.4 Browser
+### 3.4 Browser
 
 The built-in `browser` tool allows the Agent to control a Chromium browser to visit web pages, fill forms, click elements, and take screenshots, with support for dynamic JS-rendered pages. Run `cow install-browser` to install with one command, automatically adapting to server (headless) and desktop environments:
 
@@ -53,7 +66,7 @@ The built-in `browser` tool allows the Agent to control a Chromium browser to vi
   <img src="https://cdn.link-ai.tech/doc/20260401110103.png" width="800" />
 </Frame>
 
-### 2.5 Environment Variable Management
+### 3.5 Environment Variable Management
 
 Secrets required by skills are stored in an environment variable file, managed by the `env_config` tool. You can update secrets through conversation, with built-in security protection and desensitization:
 
@@ -61,7 +74,7 @@ Secrets required by skills are stored in an environment variable file, managed b
   <img src="https://cdn.link-ai.tech/doc/20260202234939.png" width="800" />
 </Frame>
 
-## 3. Skills System
+## 4. Skills System
 
 The Skills system provides infinite extensibility for the Agent. Each Skill consists of a description file, execution scripts (optional), and resources (optional), describing how to complete specific types of tasks. Skills allow the Agent to follow instructions for complex workflows, invoke tools, or integrate third-party systems.
 
@@ -71,7 +84,7 @@ The Skills system provides infinite extensibility for the Agent. Each Skill cons
 
 Install skills: `/skill install <name>` or `cow skill install <name>`, supporting Skill Hub, GitHub, ClawHub, URL, and more.
 
-### 3.1 Creating Skills
+### 4.1 Creating Skills
 
 The `skill-creator` skill enables rapid skill creation through conversation. You can ask the Agent to codify a workflow as a skill, or send any API documentation and examples for the Agent to complete the integration directly:
 
@@ -79,7 +92,7 @@ The `skill-creator` skill enables rapid skill creation through conversation. You
   <img src="https://cdn.link-ai.tech/doc/20260202202247.png" width="800" />
 </Frame>
 
-### 3.2 Web Search and Image Recognition
+### 4.2 Web Search and Image Recognition
 
 - **Web search:** Built-in `web_search` tool, supports multiple search engines. Configure `BOCHA_API_KEY` or `LINKAI_API_KEY` to enable.
 - **Image recognition:** Built-in `openai-image-vision` skill, supports `gpt-4.1-mini`, `gpt-4.1`, and other models. Requires `OPENAI_API_KEY`.
@@ -88,7 +101,7 @@ The `skill-creator` skill enables rapid skill creation through conversation. You
   <img src="https://cdn.link-ai.tech/doc/20260202213219.png" width="800" />
 </Frame>
 
-### 3.3 Skill Hub
+### 4.3 Skill Hub
 
 Visit [skills.cowagent.ai](https://skills.cowagent.ai/) to browse all available skills, or use commands in conversation:
 
@@ -102,7 +115,7 @@ Also supports installing skills from GitHub, ClawHub, LinkAI, and other third-pa
 
 <img src="https://cdn.link-ai.tech/doc/20260401110103.png" width="750" />
 
-## 4. CLI Command System
+## 5. CLI Command System
 
 CowAgent provides two command interaction methods, covering service management, skill installation, configuration, and more:
 

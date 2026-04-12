@@ -527,6 +527,7 @@ class AgentStreamExecutor:
 
         # Streaming response
         full_content = ""
+        full_reasoning = ""
         tool_calls_buffer = {}  # {index: {id, name, arguments}}
         gemini_raw_parts = None  # Preserve Gemini thoughtSignature for round-trip
         stop_reason = None  # Track why the stream stopped
@@ -584,10 +585,10 @@ class AgentStreamExecutor:
                     if finish_reason:
                         stop_reason = finish_reason
 
-                    # Skip reasoning_content (internal thinking from models like GLM-5)
                     reasoning_delta = delta.get("reasoning_content") or ""
-                    # if reasoning_delta:
-                    #     logger.debug(f"🧠 [thinking] {reasoning_delta[:100]}...")
+                    if reasoning_delta:
+                        full_reasoning += reasoning_delta
+                        self._emit_event("reasoning_update", {"delta": reasoning_delta})
 
                     # Handle text content
                     content_delta = delta.get("content") or ""
@@ -788,7 +789,12 @@ class AgentStreamExecutor:
         # Add assistant message to history (Claude format uses content blocks)
         assistant_msg = {"role": "assistant", "content": []}
 
-        # Add text content block if present
+        if full_reasoning:
+            assistant_msg["content"].append({
+                "type": "thinking",
+                "thinking": full_reasoning
+            })
+
         if full_content:
             assistant_msg["content"].append({
                 "type": "text",

@@ -54,6 +54,7 @@ class CloudClient(LinkAIClient):
         self.channel_mgr = None
         self._skill_service = None
         self._memory_service = None
+        self._knowledge_service = None
         self._chat_service = None
 
     @property
@@ -87,6 +88,21 @@ class CloudClient(LinkAIClient):
             except Exception as e:
                 logger.error(f"[CloudClient] Failed to init MemoryService: {e}")
         return self._memory_service
+
+    @property
+    def knowledge_service(self):
+        """Lazy-init KnowledgeService."""
+        if self._knowledge_service is None:
+            try:
+                from agent.knowledge.service import KnowledgeService
+                from config import conf
+                from common.utils import expand_path
+                workspace_root = expand_path(conf().get("agent_workspace", "~/cow"))
+                self._knowledge_service = KnowledgeService(workspace_root)
+                logger.debug("[CloudClient] KnowledgeService initialised")
+            except Exception as e:
+                logger.error(f"[CloudClient] Failed to init KnowledgeService: {e}")
+        return self._knowledge_service
 
     @property
     def chat_service(self):
@@ -465,6 +481,27 @@ class CloudClient(LinkAIClient):
         svc = self.memory_service
         if svc is None:
             return {"action": action, "code": 500, "message": "MemoryService not available", "payload": None}
+
+        return svc.dispatch(action, payload)
+
+    # ------------------------------------------------------------------
+    # knowledge callback
+    # ------------------------------------------------------------------
+    def on_knowledge(self, data: dict) -> dict:
+        """
+        Handle KNOWLEDGE messages from the cloud console.
+        Delegates to KnowledgeService.dispatch for the actual operations.
+
+        :param data: message data with 'action', 'clientId', 'payload'
+        :return: response dict
+        """
+        action = data.get("action", "")
+        payload = data.get("payload")
+        logger.info(f"[CloudClient] on_knowledge: action={action}")
+
+        svc = self.knowledge_service
+        if svc is None:
+            return {"action": action, "code": 500, "message": "KnowledgeService not available", "payload": None}
 
         return svc.dispatch(action, payload)
 

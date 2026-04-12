@@ -26,8 +26,7 @@ class AgentEventHandler:
         if context:
             self.channel = context.kwargs.get("channel") if hasattr(context, "kwargs") else None
         
-        # Track current thinking for channel output
-        self.current_thinking = ""
+        self.current_content = ""
         self.turn_number = 0
     
     def handle_event(self, event):
@@ -47,6 +46,8 @@ class AgentEventHandler:
             self._handle_message_update(data)
         elif event_type == "message_end":
             self._handle_message_end(data)
+        elif event_type == "reasoning_update":
+            pass
         elif event_type == "tool_execution_start":
             self._handle_tool_execution_start(data)
         elif event_type == "tool_execution_end":
@@ -59,30 +60,26 @@ class AgentEventHandler:
     def _handle_turn_start(self, data):
         """Handle turn start event"""
         self.turn_number = data.get("turn", 0)
-        self.has_tool_calls_in_turn = False
-        self.current_thinking = ""
+        self.current_content = ""
     
     def _handle_message_update(self, data):
-        """Handle message update event (streaming text)"""
+        """Handle message update event (streaming content text)"""
         delta = data.get("delta", "")
-        self.current_thinking += delta
+        self.current_content += delta
     
     def _handle_message_end(self, data):
         """Handle message end event"""
         tool_calls = data.get("tool_calls", [])
         
-        # Only send thinking process if followed by tool calls
         if tool_calls:
-            if self.current_thinking.strip():
-                logger.info(f"💭 {self.current_thinking.strip()[:200]}{'...' if len(self.current_thinking) > 200 else ''}")
-                # Send thinking process to channel
-                self._send_to_channel(f"{self.current_thinking.strip()}")
+            if self.current_content.strip():
+                logger.info(f"💭 {self.current_content.strip()[:200]}{'...' if len(self.current_content) > 200 else ''}")
+                self._send_to_channel(self.current_content.strip())
         else:
-            # No tool calls = final response (logged at agent_stream level)
-            if self.current_thinking.strip():
-                logger.debug(f"💬 {self.current_thinking.strip()[:200]}{'...' if len(self.current_thinking) > 200 else ''}")
+            if self.current_content.strip():
+                logger.debug(f"💬 {self.current_content.strip()[:200]}{'...' if len(self.current_content) > 200 else ''}")
         
-        self.current_thinking = ""
+        self.current_content = ""
     
     def _handle_tool_execution_start(self, data):
         """Handle tool execution start event - logged by agent_stream.py"""

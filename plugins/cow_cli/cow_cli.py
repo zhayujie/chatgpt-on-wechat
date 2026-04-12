@@ -31,6 +31,7 @@ KNOWN_COMMANDS = {
     "help", "version", "status", "logs",
     "start", "stop", "restart",
     "skill", "context", "config",
+    "knowledge",
     "install-browser",
 }
 
@@ -157,6 +158,9 @@ class CowCliPlugin(Plugin):
             "  /config              查看当前配置",
             "  /config <key>        查看某项配置",
             "  /config <key> <val>  修改配置",
+            "  /knowledge           查看知识库统计",
+            "  /knowledge list      查看知识库文件树",
+            "  /knowledge on|off    开启/关闭知识库",
             "",
             "💡 也可以用 cow <command> 代替 /<command>",
         ]
@@ -310,6 +314,7 @@ class CowCliPlugin(Plugin):
         "agent_max_context_tokens",
         "agent_max_context_turns",
         "agent_max_steps",
+        "knowledge",
     }
 
     _CONFIG_READABLE = _CONFIG_WRITABLE | {"channel_type"}
@@ -850,6 +855,133 @@ class CowCliPlugin(Plugin):
         action = "启用" if enabled else "禁用"
         icon = "✅" if enabled else "⬚"
         return f"{icon} 技能 '{name}' 已{action}"
+
+    # ------------------------------------------------------------------
+    # knowledge
+    # ------------------------------------------------------------------
+
+    def _cmd_knowledge(self, args: str, e_context, **_) -> str:
+        sub = args.strip().lower().split(None, 1)[0] if args.strip() else ""
+
+        if sub == "on":
+            return self._knowledge_toggle(True)
+        elif sub == "off":
+            return self._knowledge_toggle(False)
+        elif sub in ("list", "tree"):
+            return self._knowledge_tree()
+        else:
+            return self._knowledge_stats()
+
+    def _knowledge_toggle(self, enabled: bool) -> str:
+        from config import conf
+        import json as _json
+
+        conf()["knowledge"] = enabled
+
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        config_path = os.path.join(project_root, "config.json")
+        try:
+            with open(config_path, "r", encoding="utf-8") as f:
+                file_config = _json.load(f)
+            file_config["knowledge"] = enabled
+            with open(config_path, "w", encoding="utf-8") as f:
+                _json.dump(file_config, f, indent=4, ensure_ascii=False)
+        except Exception as e:
+            return f"⚠️ 内存中已切换，但写入 config.json 失败: {e}"
+
+        status = "开启 ✅" if enabled else "关闭 ❌"
+        note = "知识库将在下次对话中生效" if enabled else "知识库系统已停用，不再注入提示词和索引知识文件"
+        return f"📚 知识库已{status}\n\n{note}"
+
+    def _knowledge_stats(self) -> str:
+        from config import conf
+        from common.utils import expand_path
+        knowledge_dir = os.path.join(
+            expand_path(conf().get("agent_workspace", "~/cow")),
+            "knowledge"
+        )
+        if not os.path.isdir(knowledge_dir):
+            return "📚 知识库目录不存在\n\n💡 开启知识库: /knowledge on"
+
+        enabled = conf().get("knowledge", True)
+        total_files = 0
+        total_bytes = 0
+        cat_count = {}
+
+        for root, dirs, files in os.walk(knowledge_dir):
+            dirs[:] = [d for d in dirs if not d.startswith(".")]
+            rel_root = os.path.relpath(root, knowledge_dir)
+            category = rel_root.split(os.sep)[0] if rel_root != "." else "root"
+            for f in files:
+                if f.endswith(".md") and f not in ("index.md", "log.md"):
+                    total_files += 1
+                    total_bytes += os.path.getsize(os.path.join(root, f))
+                    cat_count[category] = cat_count.get(category, 0) + 1
+
+        status = "✅ 已开启" if enabled else "❌ 已关闭"
+        lines = [
+            "📚 知识库统计",
+            "",
+            f"状态: {status}",
+            f"页面: {total_files} 篇",
+            f"大小: {total_bytes / 1024:.1f} KB",
+            "",
+        ]
+        if cat_count:
+            for cat in sorted(cat_count.keys()):
+                lines.append(f"- {cat}/ ({cat_count[cat]} pages)")
+            lines.append("")
+
+        lines.append(f"路径: {knowledge_dir}")
+        lines.extend([
+            "",
+            "━━━━━━━━━━━━━━━━━━━━━━━━━━",
+            "💡 /knowledge list    查看文件树",
+            "💡 /knowledge on|off  开关知识库",
+        ])
+        return "\n".join(lines)
+
+    def _knowledge_tree(self) -> str:
+        from config import conf
+        from common.utils import expand_path
+        knowledge_dir = os.path.join(
+            expand_path(conf().get("agent_workspace", "~/cow")),
+            "knowledge"
+        )
+        if not os.path.isdir(knowledge_dir):
+            return "📚 知识库目录不存在\n\n💡 开启知识库: /knowledge on"
+
+        tree = ["knowledge/"]
+
+        subdirs = sorted([
+            d for d in os.listdir(knowledge_dir)
+            if os.path.isdir(os.path.join(knowledge_dir, d)) and not d.startswith(".")
+        ])
+
+        for i, subdir in enumerate(subdirs):
+            is_last_dir = (i == len(subdirs) - 1)
+            branch = "└── " if is_last_dir else "├── "
+            subdir_path = os.path.join(knowledge_dir, subdir)
+            md_files = sorted([
+                f for f in os.listdir(subdir_path)
+                if f.endswith(".md") and not f.startswith(".")
+            ])
+            tree.append(f"{branch}{subdir}/ ({len(md_files)})")
+
+            child_prefix = "    " if is_last_dir else "│   "
+            max_show = 12
+            for j, fname in enumerate(md_files[:max_show]):
+                is_last_file = (j == len(md_files[:max_show]) - 1) and len(md_files) <= max_show
+                fb = "└── " if is_last_file else "├── "
+                name = fname.replace(".md", "")
+                tree.append(f"{child_prefix}{fb}{name}")
+            if len(md_files) > max_show:
+                tree.append(f"{child_prefix}└── ... +{len(md_files) - max_show} more")
+
+        if not subdirs:
+            tree.append("(空)")
+
+        return "```\n" + "\n".join(tree) + "\n```"
 
     # ------------------------------------------------------------------
     # Helpers

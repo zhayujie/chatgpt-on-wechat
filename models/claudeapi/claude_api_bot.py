@@ -505,8 +505,21 @@ class ClaudeAPIBot(Bot, OpenAIImage):
                                 delta = event.get("delta", {})
                                 delta_type = delta.get("type")
 
-                                if delta_type == "text_delta":
-                                    # Text content
+                                if delta_type == "thinking_delta":
+                                    thinking_text = delta.get("thinking", "")
+                                    if thinking_text:
+                                        yield {
+                                            "choices": [{
+                                                "index": 0,
+                                                "delta": {
+                                                    "role": "assistant",
+                                                    "reasoning_content": thinking_text
+                                                },
+                                                "finish_reason": None
+                                            }]
+                                        }
+
+                                elif delta_type == "text_delta":
                                     content = delta.get("text", "")
                                     yield {
                                         "id": event.get("id", ""),

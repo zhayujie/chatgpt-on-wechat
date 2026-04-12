@@ -1,9 +1,10 @@
 """
-Memory flush manager
+Memory flush manager (with Light Dream)
 
 Handles memory persistence when conversation context is trimmed or overflows:
 - Uses LLM to summarize discarded messages into concise key-information entries
 - Writes to daily memory files (lazy creation)
+- Light Dream: extracts long-term memories to MEMORY.md in the same LLM call
 - Deduplicates trim flushes to avoid repeated writes
 - Runs summarization asynchronously to avoid blocking normal replies
 - Provides daily summary interface for scheduler
@@ -16,26 +17,41 @@ from datetime import datetime
 from common.log import logger
 
 
-SUMMARIZE_SYSTEM_PROMPT = """你是一个记忆提取助手。你的任务是从对话记录中提炼出值得长期记住的关键事件和核心信息。
+SUMMARIZE_SYSTEM_PROMPT = """你是一个记忆提取助手。你的任务是从对话记录中提炼出两种记忆：
 
-核心原则：
-- 按「事件」维度归纳，而不是按对话轮次逐条记录
-- 多轮对话如果围绕同一件事，合并为一条摘要
-- 只记录有长期价值的信息，忽略闲聊、问候、无意义的短消息
+## 第一部分：日常记录（[DAILY]）
 
-输出要求：
-1. 每条一行，用 "- " 开头，格式为：事件/主题 + 关键结论或结果
-2. 值得记录的信息类型：用户提出的需求及最终解决方案、重要的事实信息、用户的偏好或决策、关键技术方案或配置变更
-3. 不值得记录的信息：简单问候、闲聊、无实质内容的短消息、重复的中间过程
-4. 每条摘要应当简明扼要，一句话概括事件的核心内容和结果
-5. 直接输出摘要内容，不要加任何前缀说明
-6. 当对话没有任何记录价值（仅含问候或无意义内容），回复"无"
+按「事件」维度归纳当天发生的事，不要按对话轮次逐条记录：
+- 每条一行，用 "- " 开头
+- 合并同一件事的多轮对话
+- 只记录有意义的事件，忽略闲聊和问候
 
-示例（仅供参考格式）：
-- 用户配置了 XX 功能，设置参数为 YY，已生效
-- 用户反馈了 XX 问题，原因是 YY，通过 ZZ 方式解决"""
+## 第二部分：长期记忆（[MEMORY]）
 
-SUMMARIZE_USER_PROMPT = """请从以下对话记录中，按关键事件维度提炼记忆摘要（合并同一事件的多轮对话，不要逐条列出）：
+提取值得**永久记住**的关键信息，这些信息在未来的对话中仍然有价值：
+- 用户的偏好、习惯、风格（如"用户偏好中文回复"、"用户喜欢简洁风格"）
+- 重要的决策或约定（如"项目决定使用 PostgreSQL"）
+- 关键人物信息（如"张总是用户的上级"）
+- 用户明确要求记住的内容
+- 重要的教训或经验总结
+
+**如果没有值得永久记住的信息，[MEMORY] 部分留空即可。**
+
+## 输出格式（严格遵守）
+
+```
+[DAILY]
+- 事件1的摘要
+- 事件2的摘要
+
+[MEMORY]
+- 值得永久记住的信息1
+- 值得永久记住的信息2
+```
+
+当对话没有任何记录价值（仅含问候或无意义内容），直接回复"无"。"""
+
+SUMMARIZE_USER_PROMPT = """请从以下对话记录中提取记忆（按 [DAILY] 和 [MEMORY] 两部分输出）：
 
 {conversation}"""
 
@@ -160,40 +176,111 @@ class MemoryFlushManager:
         reason: str,
         max_messages: int,
     ):
-        """Background worker: summarize with LLM and write to daily file."""
+        """Background worker: summarize with LLM, write daily file + MEMORY.md (Light Dream)."""
         try:
-            summary = self._summarize_messages(messages, max_messages)
-            if not summary or not summary.strip() or summary.strip() == "无":
+            raw_summary = self._summarize_messages(messages, max_messages)
+            if not raw_summary or not raw_summary.strip() or raw_summary.strip() == "无":
                 logger.info(f"[MemoryFlush] No valuable content to flush (reason={reason})")
                 return
-            
-            daily_file = ensure_daily_memory_file(self.workspace_dir, user_id)
-            
-            if reason == "overflow":
-                header = f"## Context Overflow Recovery ({datetime.now().strftime('%H:%M')})"
-                note = "The following conversation was trimmed due to context overflow:\n"
-            elif reason == "trim":
-                header = f"## Trimmed Context ({datetime.now().strftime('%H:%M')})"
-                note = ""
-            elif reason == "daily_summary":
-                header = f"## Daily Summary ({datetime.now().strftime('%H:%M')})"
-                note = ""
-            else:
-                header = f"## Session Notes ({datetime.now().strftime('%H:%M')})"
-                note = ""
-            
-            flush_entry = f"\n{header}\n\n{note}{summary}\n"
-            
-            with open(daily_file, "a", encoding="utf-8") as f:
-                f.write(flush_entry)
-            
+
+            daily_part, memory_part = self._parse_dual_output(raw_summary)
+
+            # --- Write daily memory ---
+            if daily_part:
+                daily_file = ensure_daily_memory_file(self.workspace_dir, user_id)
+
+                if reason == "overflow":
+                    header = f"## Context Overflow Recovery ({datetime.now().strftime('%H:%M')})"
+                    note = "The following conversation was trimmed due to context overflow:\n"
+                elif reason == "trim":
+                    header = f"## Trimmed Context ({datetime.now().strftime('%H:%M')})"
+                    note = ""
+                elif reason == "daily_summary":
+                    header = f"## Daily Summary ({datetime.now().strftime('%H:%M')})"
+                    note = ""
+                else:
+                    header = f"## Session Notes ({datetime.now().strftime('%H:%M')})"
+                    note = ""
+
+                flush_entry = f"\n{header}\n\n{note}{daily_part}\n"
+
+                with open(daily_file, "a", encoding="utf-8") as f:
+                    f.write(flush_entry)
+
+                logger.info(f"[MemoryFlush] Wrote daily memory to {daily_file.name} (reason={reason}, chars={len(daily_part)})")
+
+            # --- Light Dream: write long-term memory to MEMORY.md ---
+            if memory_part:
+                self._append_to_main_memory(memory_part, user_id)
+
             self.last_flush_timestamp = datetime.now()
-            
-            logger.info(f"[MemoryFlush] Wrote to {daily_file.name} (reason={reason}, chars={len(summary)})")
-            
+
         except Exception as e:
             logger.warning(f"[MemoryFlush] Async flush failed (reason={reason}): {e}")
-    
+
+    @staticmethod
+    def _parse_dual_output(raw: str) -> tuple:
+        """
+        Parse LLM output into (daily_part, memory_part).
+        Handles both new [DAILY]/[MEMORY] format and legacy single-section format.
+        """
+        raw = raw.strip()
+
+        if "[DAILY]" in raw or "[MEMORY]" in raw:
+            daily_part = ""
+            memory_part = ""
+
+            # Extract [DAILY] section
+            if "[DAILY]" in raw:
+                start = raw.index("[DAILY]") + len("[DAILY]")
+                end = raw.index("[MEMORY]") if "[MEMORY]" in raw else len(raw)
+                daily_part = raw[start:end].strip()
+
+            # Extract [MEMORY] section
+            if "[MEMORY]" in raw:
+                start = raw.index("[MEMORY]") + len("[MEMORY]")
+                memory_part = raw[start:].strip()
+
+            # Filter out empty markers
+            if memory_part and all(
+                not line.strip() or line.strip() == "-"
+                for line in memory_part.split("\n")
+            ):
+                memory_part = ""
+
+            return daily_part, memory_part
+
+        # Legacy format: treat entire output as daily, no memory extraction
+        return raw, ""
+
+    def _append_to_main_memory(self, memory_entries: str, user_id: Optional[str] = None):
+        """Append extracted long-term memories to MEMORY.md with date stamp."""
+        try:
+            main_file = self.get_main_memory_file(user_id)
+            today = datetime.now().strftime("%Y-%m-%d")
+
+            # Add date prefix to each entry line
+            stamped_lines = []
+            for line in memory_entries.strip().split("\n"):
+                line = line.strip()
+                if line.startswith("- "):
+                    stamped_lines.append(f"- ({today}) {line[2:]}")
+                elif line:
+                    stamped_lines.append(f"- ({today}) {line}")
+
+            if not stamped_lines:
+                return
+
+            stamped_text = "\n".join(stamped_lines)
+
+            with open(main_file, "a", encoding="utf-8") as f:
+                f.write(f"\n{stamped_text}\n")
+
+            logger.info(f"[LightDream] Appended {len(stamped_lines)} entries to MEMORY.md")
+
+        except Exception as e:
+            logger.warning(f"[LightDream] Failed to append to MEMORY.md: {e}")
+
     def create_daily_summary(
         self,
         messages: List[Dict],

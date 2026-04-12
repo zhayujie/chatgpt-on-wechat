@@ -45,7 +45,8 @@
 .msg-content h1 { font-size: 1.4em; }
 .msg-content h2 { font-size: 1.25em; }
 .msg-content h3 { font-size: 1.1em; }
-.msg-content ul, .msg-content ol { margin: 0.5em 0; padding-left: 1.8em; }
+.msg-content ul { margin: 0.5em 0; padding-left: 1.8em; list-style: disc; }
+.msg-content ol { margin: 0.5em 0; padding-left: 1.8em; list-style: decimal; }
 .msg-content li { margin: 0.25em 0; }
 .msg-content pre {
     border-radius: 8px; overflow-x: auto; margin: 0.8em 0;
@@ -146,7 +147,7 @@
     font-size: 0.75rem;
     line-height: 1.5;
     color: #94a3b8;
-    max-height: 200px;
+    max-height: 300px;
     overflow-y: auto;
 }
 .dark .agent-thinking-step .thinking-full {
@@ -157,6 +158,20 @@
 .agent-thinking-step .thinking-full p { margin: 0.25em 0; }
 .agent-thinking-step .thinking-full p:first-child { margin-top: 0; }
 .agent-thinking-step .thinking-full p:last-child { margin-bottom: 0; }
+
+/* Content step - real text output frozen before tool calls */
+.agent-content-step {
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: inherit;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px dashed rgba(0, 0, 0, 0.06);
+}
+.dark .agent-content-step { border-bottom-color: rgba(255, 255, 255, 0.06); }
+.agent-content-step .agent-content-body p { margin: 0.25em 0; }
+.agent-content-step .agent-content-body p:first-child { margin-top: 0; }
+.agent-content-step .agent-content-body p:last-child { margin-bottom: 0; }
 
 /* Tool step - collapsible */
 .agent-tool-step .tool-header {
@@ -534,4 +549,143 @@
 }
 .dark .slash-menu-item .desc {
     color: #64748b;
+}
+
+/* ============================================================
+   Knowledge View
+   ============================================================ */
+
+/* Tab toggle */
+.knowledge-tab {
+    color: #64748b;
+}
+.knowledge-tab.active {
+    background: #fff;
+    color: #334155;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.dark .knowledge-tab.active {
+    background: rgba(255,255,255,0.1);
+    color: #e2e8f0;
+}
+
+/* File tree */
+.knowledge-tree-group {
+    margin-bottom: 2px;
+}
+.knowledge-tree-group-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    padding: 6px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    cursor: pointer;
+    border: none;
+    background: none;
+    transition: background 0.15s, color 0.15s;
+    text-transform: capitalize;
+}
+.knowledge-tree-group-btn:hover {
+    background: rgba(0,0,0,0.04);
+    color: #334155;
+}
+.dark .knowledge-tree-group-btn:hover {
+    background: rgba(255,255,255,0.06);
+    color: #e2e8f0;
+}
+.knowledge-tree-group-btn i.chevron {
+    font-size: 8px;
+    transition: transform 0.15s;
+}
+.knowledge-tree-group.open .chevron {
+    transform: rotate(90deg);
+}
+.knowledge-tree-group-items {
+    display: none;
+}
+.knowledge-tree-group.open .knowledge-tree-group-items {
+    display: block;
+}
+
+.knowledge-tree-file {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 8px 5px 24px;
+    border-radius: 6px;
+    font-size: 12px;
+    color: #64748b;
+    cursor: pointer;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    transition: background 0.15s, color 0.15s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.knowledge-tree-file:hover {
+    background: rgba(0,0,0,0.04);
+    color: #334155;
+}
+.knowledge-tree-file.active {
+    background: #EDFDF3;
+    color: #228547;
+}
+.dark .knowledge-tree-file:hover {
+    background: rgba(255,255,255,0.06);
+    color: #e2e8f0;
+}
+.dark .knowledge-tree-file.active {
+    background: rgba(74, 190, 110, 0.1);
+    color: #4ABE6E;
+}
+
+/* Graph legend */
+.knowledge-graph-legend {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 11px;
+    color: #64748b;
+    z-index: 10;
+}
+.knowledge-graph-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.knowledge-graph-legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+/* Graph tooltip */
+.knowledge-graph-tooltip {
+    position: absolute;
+    padding: 6px 10px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 12px;
+    color: #334155;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+    z-index: 20;
+}
+.dark .knowledge-graph-tooltip {
+    background: #1A1A1A;
+    border-color: rgba(255,255,255,0.1);
+    color: #e2e8f0;
 }

@@ -180,14 +180,14 @@ available_setting = {
     # 豆包(火山方舟) 平台配置
     "ark_api_key": "",
     "ark_base_url": "https://ark.cn-beijing.volces.com/api/v3",
-    #魔搭社区 平台配置
+    # 魔搭社区 平台配置
     "modelscope_api_key": "",
     "modelscope_base_url": "https://api-inference.modelscope.cn/v1/chat/completions",
     # LinkAI平台配置
     "use_linkai": False,
     "linkai_api_key": "",
     "linkai_app_code": "",
-    "linkai_api_base": "https://api.link-ai.tech",  # linkAI服务地址
+    "linkai_api_base": "https://api.link-ai.tech",
     "cloud_host": "client.link-ai.tech",
     "cloud_port": None,
     "cloud_deployment_id": "",
@@ -200,6 +200,7 @@ available_setting = {
     "agent_max_context_tokens": 50000,  # Agent模式下最大上下文tokens
     "agent_max_context_turns": 30,  # Agent模式下最大上下文记忆轮次
     "agent_max_steps": 15,  # Agent模式下单次运行最大决策步数
+    "knowledge": True,  # 是否开启知识库功能
 }
 
 

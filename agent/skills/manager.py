@@ -210,6 +210,10 @@ class SkillManager:
         if not include_disabled:
             entries = [e for e in entries if self.is_skill_enabled(e.skill.name)]
 
+        from config import conf
+        if not conf().get("knowledge", True):
+            entries = [e for e in entries if e.skill.name != "knowledge-wiki"]
+
         return entries
 
     def filter_unavailable_skills(

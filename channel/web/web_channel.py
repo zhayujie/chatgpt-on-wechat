@@ -168,7 +168,12 @@ class WebChannel(ChatChannel):
             event_type = event.get("type")
             data = event.get("data", {})
 
-            if event_type == "message_update":
+            if event_type == "reasoning_update":
+                delta = data.get("delta", "")
+                if delta:
+                    q.put({"type": "reasoning", "content": delta})
+
+            elif event_type == "message_update":
                 delta = data.get("delta", "")
                 if delta:
                     q.put({"type": "delta", "content": delta})
@@ -194,6 +199,11 @@ class WebChannel(ChatChannel):
                     "result": result_str,
                     "execution_time": round(exec_time, 2)
                 })
+
+            elif event_type == "message_end":
+                tool_calls = data.get("tool_calls", [])
+                if tool_calls:
+                    q.put({"type": "message_end", "has_tool_calls": True})
 
             elif event_type == "file_to_send":
                 file_path = data.get("path", "")
@@ -444,6 +454,9 @@ class WebChannel(ChatChannel):
             '/api/skills', 'SkillsHandler',
             '/api/memory', 'MemoryHandler',
             '/api/memory/content', 'MemoryContentHandler',
+            '/api/knowledge/list', 'KnowledgeListHandler',
+            '/api/knowledge/read', 'KnowledgeReadHandler',
+            '/api/knowledge/graph', 'KnowledgeGraphHandler',
             '/api/scheduler', 'SchedulerHandler',
             '/api/history', 'HistoryHandler',
             '/api/logs', 'LogsHandler',
@@ -1528,6 +1541,47 @@ class AssetsHandler:
         except Exception as e:
             logger.error(f"Error serving static file: {e}", exc_info=True)  # 添加更详细的错误信息
             raise web.notfound()
+
+
+class KnowledgeListHandler:
+    def GET(self):
+        web.header('Content-Type', 'application/json; charset=utf-8')
+        try:
+            from agent.knowledge.service import KnowledgeService
+            svc = KnowledgeService(_get_workspace_root())
+            result = svc.list_tree()
+            return json.dumps({"status": "success", **result}, ensure_ascii=False)
+        except Exception as e:
+            logger.error(f"[WebChannel] Knowledge list error: {e}")
+            return json.dumps({"status": "error", "message": str(e)})
+
+
+class KnowledgeReadHandler:
+    def GET(self):
+        web.header('Content-Type', 'application/json; charset=utf-8')
+        try:
+            from agent.knowledge.service import KnowledgeService
+            params = web.input(path='')
+            svc = KnowledgeService(_get_workspace_root())
+            result = svc.read_file(params.path)
+            return json.dumps({"status": "success", **result}, ensure_ascii=False)
+        except (ValueError, FileNotFoundError) as e:
+            return json.dumps({"status": "error", "message": str(e)})
+        except Exception as e:
+            logger.error(f"[WebChannel] Knowledge read error: {e}")
+            return json.dumps({"status": "error", "message": str(e)})
+
+
+class KnowledgeGraphHandler:
+    def GET(self):
+        web.header('Content-Type', 'application/json; charset=utf-8')
+        try:
+            from agent.knowledge.service import KnowledgeService
+            svc = KnowledgeService(_get_workspace_root())
+            return json.dumps(svc.build_graph(), ensure_ascii=False)
+        except Exception as e:
+            logger.error(f"[WebChannel] Knowledge graph error: {e}")
+            return json.dumps({"nodes": [], "links": []})
 
 
 class VersionHandler:
