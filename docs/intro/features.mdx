@@ -1,6 +1,6 @@
 ---
 title: 功能介绍
-description: CowAgent 长期记忆、任务规划、技能系统、CLI 命令、浏览器工具详细说明
+description: CowAgent 长期记忆、个人知识库、任务规划、技能系统、CLI 命令、浏览器工具详细说明
 ---
 
 ## 1. 长期记忆
@@ -15,13 +15,26 @@ description: CowAgent 长期记忆、任务规划、技能系统、CLI 命令、
   <img src="https://cdn.link-ai.tech/doc/20260203000455.png" width="800" />
 </Frame>
 
-## 2. 任务规划和工具调用
+## 2. 个人知识库
+
+> 知识库系统让 Agent 能够持续积累和组织结构化知识。与按时间线记录的记忆不同，知识库以主题为维度，将文章、对话洞察、学习材料等整理为互相关联的 Markdown 页面，形成持续增长的知识网络。
+
+Agent 会在对话中自动将有价值的信息整理为知识页面，维护交叉引用和索引，通过 Web 控制台可浏览文档和查看知识图谱。知识库存储在工作空间的 `~/cow/knowledge/` 目录下。
+
+- **自动整理**：Agent 在对话中自主提取和整理结构化知识，维护索引和交叉引用
+- **知识图谱**：基于页面间的交叉引用自动构建知识图谱，Web 控制台提供可视化关系图浏览
+- **对话联动**：Agent 回复中引用的知识文档链接可在 Web 控制台中直接点击跳转查看
+- **CLI 管理**：通过 `/knowledge` 命令查看统计、浏览目录，通过 `/knowledge on|off` 开关功能
+
+详细说明请参考 [个人知识库](/knowledge)。
+
+## 3. 任务规划和工具调用
 
 工具是 Agent 访问操作系统资源的核心，Agent 会根据任务需求智能选择和调用工具，完成文件读写、命令执行、定时任务等各类操作。内置工具的实现在项目的 `agent/tools/` 目录下。
 
 **主要工具：** 文件读写编辑、Bash 终端、浏览器操作、文件发送、定时调度、记忆搜索、联网搜索、环境配置等。
 
-### 2.1 终端和文件访问
+### 3.1 终端和文件访问
 
 针对操作系统的终端和文件的访问能力，是最基础和核心的工具，其他很多工具或技能都是基于此进行扩展。用户可通过手机端与 Agent 交互，操作个人电脑或服务器上的资源：
 
@@ -29,7 +42,7 @@ description: CowAgent 长期记忆、任务规划、技能系统、CLI 命令、
   <img src="https://cdn.link-ai.tech/doc/20260202181130.png" width="800" />
 </Frame>
 
-### 2.2 编程能力
+### 3.2 编程能力
 
 基于编程能力和系统访问能力，Agent 可以实现从信息搜索、图片等素材生成、编码、测试、部署、Nginx 配置修改、发布的 **Vibecoding 全流程**，通过手机端简单的一句命令完成应用的快速 demo：
 
@@ -37,7 +50,7 @@ description: CowAgent 长期记忆、任务规划、技能系统、CLI 命令、
   <img src="https://cdn.link-ai.tech/doc/20260203121008.png" width="800" />
 </Frame>
 
-### 2.3 定时任务
+### 3.3 定时任务
 
 基于 `scheduler` 工具实现动态定时任务，支持**一次性任务、固定时间间隔、Cron 表达式**三种形式，任务触发可选择**固定消息发送**或 **Agent 动态任务**执行两种模式：
 
@@ -45,7 +58,7 @@ description: CowAgent 长期记忆、任务规划、技能系统、CLI 命令、
   <img src="https://cdn.link-ai.tech/doc/20260202195402.png" width="800" />
 </Frame>
 
-### 2.4 浏览器操作
+### 3.4 浏览器操作
 
 内置 `browser` 工具，Agent 可控制浏览器访问网页、填写表单、点击元素、截图，支持动态 JS 渲染页面。运行 `cow install-browser` 一键安装，自动适配服务器（无头模式）和桌面环境：
 
@@ -53,7 +66,7 @@ description: CowAgent 长期记忆、任务规划、技能系统、CLI 命令、
   <img src="https://cdn.link-ai.tech/doc/20260401115728.png" width="750" />
 </Frame>
 
-### 2.5 环境变量管理
+### 3.5 环境变量管理
 
 技能所需的秘钥存储在环境变量文件中，由 `env_config` 工具进行管理，你可以通过对话的方式更新秘钥，工具内置安全保护和脱敏策略：
 
@@ -61,7 +74,7 @@ description: CowAgent 长期记忆、任务规划、技能系统、CLI 命令、
   <img src="https://cdn.link-ai.tech/doc/20260202234939.png" width="800" />
 </Frame>
 
-## 3. 技能系统
+## 4. 技能系统
 
 技能系统为 Agent 提供无限的扩展性，每个 Skill 由说明文件、运行脚本（可选）、资源（可选）组成，描述如何完成特定类型的任务。通过 Skill 可以让 Agent 遵循说明完成复杂流程、调用各类工具或对接第三方系统。
 
@@ -71,7 +84,7 @@ description: CowAgent 长期记忆、任务规划、技能系统、CLI 命令、
 
 安装技能：`/skill install <名称>` 或 `cow skill install <名称>`，支持从 Skill Hub、GitHub、ClawHub、URL 等来源安装。
 
-### 3.1 创建技能
+### 4.1 创建技能
 
 通过 `skill-creator` 技能可以通过对话的方式快速创建技能。你可以让 Agent 将某个工作流程固化为技能，或者把任意接口文档和示例发送给 Agent，让他直接完成对接：
 
@@ -79,7 +92,7 @@ description: CowAgent 长期记忆、任务规划、技能系统、CLI 命令、
   <img src="https://cdn.link-ai.tech/doc/20260202202247.png" width="800" />
 </Frame>
 
-### 3.2 搜索和图像识别
+### 4.2 搜索和图像识别
 
 - **联网搜索：** 内置 `web_search` 工具，支持多种搜索引擎，配置 `BOCHA_API_KEY` 或 `LINKAI_API_KEY` 后启用。
 - **图像识别：** 内置 `openai-image-vision` 技能，可使用 `gpt-4.1-mini`、`gpt-4.1` 等模型，依赖 `OPENAI_API_KEY`。
@@ -88,7 +101,7 @@ description: CowAgent 长期记忆、任务规划、技能系统、CLI 命令、
   <img src="https://cdn.link-ai.tech/doc/20260202213219.png" width="800" />
 </Frame>
 
-### 3.3 技能广场
+### 4.3 技能广场
 
 访问 [skills.cowagent.ai](https://skills.cowagent.ai/) 浏览所有可用技能，或在对话中执行：
 
@@ -103,7 +116,7 @@ description: CowAgent 长期记忆、任务规划、技能系统、CLI 命令、
 <img src="https://cdn.link-ai.tech/doc/20260401110103.png" width="750" />
 
 
-## 4. CLI 命令系统
+## 5. CLI 命令系统
 
 CowAgent 提供两种命令交互方式，覆盖服务管理、技能安装、配置调整等日常运维操作：
 

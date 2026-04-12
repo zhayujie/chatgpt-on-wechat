@@ -85,7 +85,11 @@ class MemoryGetTool(BaseTool):
             if not path.startswith('memory/') and not path.startswith('knowledge/') and not path.startswith('/') and path != 'MEMORY.md':
                 path = f'memory/{path}'
             
-            file_path = workspace_dir / path
+            file_path = (workspace_dir / path).resolve()
+            workspace_resolved = workspace_dir.resolve()
+            
+            if not str(file_path).startswith(str(workspace_resolved) + '/') and file_path != workspace_resolved:
+                return ToolResult.fail(f"Error: Access denied: path outside workspace")
             
             if not file_path.exists():
                 return ToolResult.fail(f"Error: File not found: {path}")

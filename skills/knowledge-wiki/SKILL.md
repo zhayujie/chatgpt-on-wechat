@@ -89,3 +89,4 @@ Append-only, newest at bottom:
 - **Index is mandatory**: always update `knowledge/index.md` after any change
 - **Be concise**: capture essence, not copy entire sources
 - **Full paths in replies**: when referencing knowledge files in conversation replies, use the full path from workspace root (e.g. `[Title](knowledge/<category>/<slug>.md)`), not relative paths. Relative paths are only for cross-references inside knowledge pages themselves.
+- **Cite sources**: when answering based on knowledge pages, include links to the relevant pages so the user can explore further.

@@ -106,6 +106,45 @@ Session: 12 messages | 8 skills loaded
 /logs 50
 ```
 
+## knowledge
+
+查看和管理个人知识库。默认显示知识库统计信息。
+
+```text
+/knowledge
+```
+
+输出示例：
+
+```
+📚 知识库
+
+- 状态：已开启
+- 页面数：12
+- 总大小：45.2 KB
+- 分类明细：
+  - concepts/: 5 篇
+  - entities/: 4 篇
+  - sources/: 3 篇
+```
+
+**查看目录结构：**
+
+```text
+/knowledge list
+```
+
+**开启 / 关闭知识库：**
+
+```text
+/knowledge on
+/knowledge off
+```
+
+<Note>
+  终端 CLI 中 `cow knowledge` 和 `cow knowledge list` 可用，但 `on|off` 仅支持在对话中使用（需实时生效）。
+</Note>
+
 ## version
 
 显示当前 CowAgent 版本号。

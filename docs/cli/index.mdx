@@ -40,6 +40,9 @@ Service:
 Skills:
   skill     Manage skills (list / search / install / uninstall ...)
 
+Knowledge:
+  knowledge View knowledge base stats and structure
+
 Others:
   help      Show this help message
   version   Show version
@@ -55,6 +58,9 @@ Others:
 | `/status` | 查看服务状态和配置 |
 | `/config` | 查看或修改运行时配置 |
 | `/skill` | 管理技能（安装、卸载、启用、禁用等） |
+| `/knowledge` | 查看知识库统计信息 |
+| `/knowledge list` | 查看知识库目录结构 |
+| `/knowledge on\|off` | 开启或关闭知识库 |
 | `/context` | 查看当前会话上下文信息 |
 | `/context clear` | 清空当前会话上下文 |
 | `/logs` | 查看最近日志 |
@@ -76,6 +82,7 @@ Others:
 | logs | ✓ | ✓ |
 | config | ✗ | ✓ |
 | context | — | ✓ |
+| knowledge (子命令) | ✓ | ✓ |
 | skill (子命令) | ✓ | ✓ |
 | start / stop / restart | ✓ | ✗ |
 | update | ✓ | ✗ |

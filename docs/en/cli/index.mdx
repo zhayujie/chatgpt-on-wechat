@@ -40,6 +40,9 @@ Service:
 Skills:
   skill     Manage skills (list / search / install / uninstall ...)
 
+Knowledge:
+  knowledge View knowledge base stats and structure
+
 Others:
   help      Show this help message
   version   Show version
@@ -55,6 +58,9 @@ In the Web console or any connected channel, type `/` to see command suggestions
 | `/status` | View service status and configuration |
 | `/config` | View or modify runtime configuration |
 | `/skill` | Manage skills (install, uninstall, enable, disable, etc.) |
+| `/knowledge` | View knowledge base statistics |
+| `/knowledge list` | View knowledge base directory structure |
+| `/knowledge on\|off` | Enable or disable knowledge base |
 | `/context` | View current session context info |
 | `/context clear` | Clear current session context |
 | `/logs` | View recent logs |
@@ -74,6 +80,7 @@ In the Web console or any connected channel, type `/` to see command suggestions
 | logs | ✓ | ✓ |
 | config | ✗ | ✓ |
 | context | — | ✓ |
+| knowledge (subcommands) | ✓ | ✓ |
 | skill (subcommands) | ✓ | ✓ |
 | start / stop / restart | ✓ | ✗ |
 | update | ✓ | ✗ |
