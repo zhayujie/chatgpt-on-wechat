@@ -127,21 +127,21 @@ check_python_version() {
 
 # Clone project
 clone_project() {
-    echo -e "${GREEN}🔍 Cloning ChatGPT-on-WeChat project...${NC}"
+    echo -e "${GREEN}🔍 Cloning CowAgent project...${NC}"
 
-    if [ -d "chatgpt-on-wechat" ]; then
-        echo -e "${YELLOW}⚠️  Directory 'chatgpt-on-wechat' already exists.${NC}"
+    if [ -d "CowAgent" ]; then
+        echo -e "${YELLOW}⚠️  Directory 'CowAgent' already exists.${NC}"
         read -p "Choose action: overwrite(o), backup(b), or quit(q)? [press Enter for default: b]: " choice
         choice=${choice:-b}
         case "$choice" in
             o|O)
-                echo -e "${YELLOW}🗑️  Overwriting 'chatgpt-on-wechat' directory...${NC}"
-                rm -rf chatgpt-on-wechat
+                echo -e "${YELLOW}🗑️  Overwriting 'CowAgent' directory...${NC}"
+                rm -rf CowAgent
                 ;;
             b|B)
-                backup_dir="chatgpt-on-wechat_backup_$(date +%s)"
+                backup_dir="CowAgent_backup_$(date +%s)"
                 echo -e "${YELLOW}🔀 Backing up to '$backup_dir'...${NC}"
-                mv chatgpt-on-wechat "$backup_dir"
+                mv CowAgent "$backup_dir"
                 ;;
             q|Q)
                 echo -e "${RED}❌ Installation cancelled.${NC}"
@@ -158,23 +158,23 @@ clone_project() {
 
     if ! command -v git &> /dev/null; then
         echo -e "${YELLOW}⚠️  Git not available. Trying wget/curl...${NC}"
-        local zip_url="https://gitee.com/zhayujie/chatgpt-on-wechat/repository/archive/master.zip"
+        local zip_url="https://gitee.com/zhayujie/CowAgent/repository/archive/master.zip"
         if command -v wget &> /dev/null; then
-            wget "$zip_url" -O chatgpt-on-wechat.zip
+            wget "$zip_url" -O CowAgent.zip
         elif command -v curl &> /dev/null; then
-            curl -L "$zip_url" -o chatgpt-on-wechat.zip
+            curl -L "$zip_url" -o CowAgent.zip
         else
             echo -e "${RED}❌ Cannot download project. Please install Git, wget, or curl.${NC}"
             exit 1
         fi
-        unzip chatgpt-on-wechat.zip
-        mv chatgpt-on-wechat-master chatgpt-on-wechat
-        rm chatgpt-on-wechat.zip
+        unzip CowAgent.zip
+        mv CowAgent-master CowAgent
+        rm CowAgent.zip
     else
         GIT_HTTP_CONNECT_TIMEOUT=10 GIT_HTTP_LOW_SPEED_LIMIT=1024 GIT_HTTP_LOW_SPEED_TIME=15 \
-        git clone --depth 10 --progress https://github.com/zhayujie/chatgpt-on-wechat.git || {
+        git clone --depth 10 --progress https://github.com/zhayujie/CowAgent.git || {
             echo -e "${YELLOW}⚠️  GitHub is slow, switching to Gitee mirror...${NC}"
-            git clone --depth 10 --progress https://gitee.com/zhayujie/chatgpt-on-wechat.git
+            git clone --depth 10 --progress https://gitee.com/zhayujie/CowAgent.git
         }
         if [[ $? -ne 0 ]]; then
             echo -e "${RED}❌ Project clone failed. Please check network connection.${NC}"
@@ -182,7 +182,7 @@ clone_project() {
         fi
     fi
 
-    cd chatgpt-on-wechat || { echo -e "${RED}❌ Failed to enter project directory.${NC}"; exit 1; }
+    cd CowAgent || { echo -e "${RED}❌ Failed to enter project directory.${NC}"; exit 1; }
     export BASE_DIR=$(pwd)
     echo -e "${GREEN}✅ Project cloned successfully: $BASE_DIR${NC}"
     
@@ -802,7 +802,7 @@ cmd_update() {
             pull_ok=true
         else
             echo -e "${YELLOW}⚠️  git pull failed, trying Gitee mirror...${NC}"
-            git remote set-url origin https://gitee.com/zhayujie/chatgpt-on-wechat.git
+            git remote set-url origin https://gitee.com/zhayujie/CowAgent.git
             if git pull; then
                 pull_ok=true
             else

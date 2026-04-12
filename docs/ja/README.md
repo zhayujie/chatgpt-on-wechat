@@ -1,10 +1,10 @@
 <p align="center"><img src="https://github.com/user-attachments/assets/eca9a9ec-8534-4615-9e0f-96c5ac1d10a3" alt="CowAgent" width="550" /></p>
 
 <p align="center">
-  <a href="https://github.com/zhayujie/chatgpt-on-wechat/releases/latest"><img src="https://img.shields.io/github/v/release/zhayujie/chatgpt-on-wechat" alt="Latest release"></a>
-  <a href="https://github.com/zhayujie/chatgpt-on-wechat/blob/master/LICENSE"><img src="https://img.shields.io/github/license/zhayujie/chatgpt-on-wechat" alt="License: MIT"></a>
-  <a href="https://github.com/zhayujie/chatgpt-on-wechat"><img src="https://img.shields.io/github/stars/zhayujie/chatgpt-on-wechat?style=flat-square" alt="Stars"></a> <br/>
-  [<a href="https://github.com/zhayujie/chatgpt-on-wechat/blob/master/README.md">中文</a>] | [<a href="https://github.com/zhayujie/chatgpt-on-wechat/blob/master/docs/en/README.md">English</a>] | [日本語]
+  <a href="https://github.com/zhayujie/CowAgent/releases/latest"><img src="https://img.shields.io/github/v/release/zhayujie/CowAgent" alt="Latest release"></a>
+  <a href="https://github.com/zhayujie/CowAgent/blob/master/LICENSE"><img src="https://img.shields.io/github/license/zhayujie/CowAgent" alt="License: MIT"></a>
+  <a href="https://github.com/zhayujie/CowAgent"><img src="https://img.shields.io/github/stars/zhayujie/CowAgent?style=flat-square" alt="Stars"></a> <br/>
+  [<a href="https://github.com/zhayujie/CowAgent/blob/master/README.md">中文</a>] | [<a href="https://github.com/zhayujie/CowAgent/blob/master/docs/en/README.md">English</a>] | [日本語]
 </p>
 
 **CowAgent** はLLMを搭載したAIスーパーアシスタントです。自律的なタスク計画、コンピュータや外部リソースの操作、Skillの作成・実行、長期記憶による継続的な成長が可能です。柔軟なモデル切り替えに対応し、テキスト・音声・画像・ファイルを処理でき、WeChat、Web、Feishu（飛書）、DingTalk（釘釘）、WeCom Bot（企業微信ボット）、WeComアプリ、WeChat公式アカウントに統合可能で、個人のPCやサーバー上で24時間365日稼働できます。
@@ -42,19 +42,19 @@
 
 ## 更新履歴
 
-> **2026.04.01:** [v2.0.5](https://github.com/zhayujie/chatgpt-on-wechat/releases/tag/2.0.5) — Cow CLI、Skill Hubオープンソース化、ブラウザツール、WeCom Botスキャン作成など。
+> **2026.04.01:** [v2.0.5](https://github.com/zhayujie/CowAgent/releases/tag/2.0.5) — Cow CLI、Skill Hubオープンソース化、ブラウザツール、WeCom Botスキャン作成など。
 
-> **2026.02.27:** [v2.0.2](https://github.com/zhayujie/chatgpt-on-wechat/releases/tag/2.0.2) — Webコンソールの全面刷新（ストリーミングチャット、モデル/Skill/メモリ/チャネル/スケジューラ/ログ管理）、マルチチャネル同時実行、セッション永続化、Gemini 3.1 Pro / Claude 4.6 Sonnet / Qwen3.5 Plusなど新モデル追加。
+> **2026.02.27:** [v2.0.2](https://github.com/zhayujie/CowAgent/releases/tag/2.0.2) — Webコンソールの全面刷新（ストリーミングチャット、モデル/Skill/メモリ/チャネル/スケジューラ/ログ管理）、マルチチャネル同時実行、セッション永続化、Gemini 3.1 Pro / Claude 4.6 Sonnet / Qwen3.5 Plusなど新モデル追加。
 
-> **2026.02.13:** [v2.0.1](https://github.com/zhayujie/chatgpt-on-wechat/releases/tag/2.0.1) — 組み込みWeb検索ツール、スマートコンテキストトリミング、ランタイム情報の動的更新、Windows互換性、スケジューラのメモリ喪失やFeishu接続問題などの修正。
+> **2026.02.13:** [v2.0.1](https://github.com/zhayujie/CowAgent/releases/tag/2.0.1) — 組み込みWeb検索ツール、スマートコンテキストトリミング、ランタイム情報の動的更新、Windows互換性、スケジューラのメモリ喪失やFeishu接続問題などの修正。
 
-> **2026.02.03:** [v2.0.0](https://github.com/zhayujie/chatgpt-on-wechat/releases/tag/2.0.0) — マルチステップタスク計画、長期記憶、組み込みツール、Skillフレームワーク、新モデル、チャネル最適化を備えたAIスーパーアシスタントへの全面アップグレード。
+> **2026.02.03:** [v2.0.0](https://github.com/zhayujie/CowAgent/releases/tag/2.0.0) — マルチステップタスク計画、長期記憶、組み込みツール、Skillフレームワーク、新モデル、チャネル最適化を備えたAIスーパーアシスタントへの全面アップグレード。
 
-> **2025.05.23:** [v1.7.6](https://github.com/zhayujie/chatgpt-on-wechat/releases/tag/1.7.6) — Webチャネル最適化、AgentMeshマルチエージェントプラグイン、Baidu TTS、claude-4-sonnet/opus対応。
+> **2025.05.23:** [v1.7.6](https://github.com/zhayujie/CowAgent/releases/tag/1.7.6) — Webチャネル最適化、AgentMeshマルチエージェントプラグイン、Baidu TTS、claude-4-sonnet/opus対応。
 
-> **2025.04.11:** [v1.7.5](https://github.com/zhayujie/chatgpt-on-wechat/releases/tag/1.7.5) — wechatferryプロトコル、DeepSeekモデル、Tencent Cloud音声、ModelScope・Gitee-AI対応。
+> **2025.04.11:** [v1.7.5](https://github.com/zhayujie/CowAgent/releases/tag/1.7.5) — wechatferryプロトコル、DeepSeekモデル、Tencent Cloud音声、ModelScope・Gitee-AI対応。
 
-> **2024.12.13:** [v1.7.4](https://github.com/zhayujie/chatgpt-on-wechat/releases/tag/1.7.4) — Gemini 2.0モデル、Webチャネル、メモリリーク修正。
+> **2024.12.13:** [v1.7.4](https://github.com/zhayujie/CowAgent/releases/tag/1.7.4) — Gemini 2.0モデル、Webチャネル、メモリリーク修正。
 
 全更新履歴: [リリースノート](https://docs.cowagent.ai/en/releases/overview)
 
@@ -83,8 +83,8 @@ irm https://cdn.link-ai.tech/code/cow/run.ps1 | iex
 **1. プロジェクトのクローン**
 
 ```bash
-git clone https://github.com/zhayujie/chatgpt-on-wechat
-cd chatgpt-on-wechat/
+git clone https://github.com/zhayujie/CowAgent
+cd CowAgent/
 ```
 
 **2. 依存関係のインストール**
@@ -232,16 +232,16 @@ Coding Planは各プロバイダーが提供する月額サブスクリプショ
 
 ## 🔎 よくある質問
 
-FAQ: <https://github.com/zhayujie/chatgpt-on-wechat/wiki/FAQs>
+FAQ: <https://github.com/zhayujie/CowAgent/wiki/FAQs>
 
 ## 🛠️ コントリビューション
 
-新しいチャネルの追加を歓迎します。[Feishuチャネル](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/channel/feishu/feishu_channel.py)を参考にしてください。また、新しいSkillのコントリビューションも歓迎します。[Skill作成ドキュメント](https://docs.cowagent.ai/ja/skills/create)を参照するか、[Skill Hub](https://skills.cowagent.ai/submit)に提出してください。
+新しいチャネルの追加を歓迎します。[Feishuチャネル](https://github.com/zhayujie/CowAgent/blob/master/channel/feishu/feishu_channel.py)を参考にしてください。また、新しいSkillのコントリビューションも歓迎します。[Skill作成ドキュメント](https://docs.cowagent.ai/ja/skills/create)を参照するか、[Skill Hub](https://skills.cowagent.ai/submit)に提出してください。
 
 ## ✉ お問い合わせ
 
-PRやIssueの提出を歓迎します。🌟 Starでプロジェクトをサポートしてください。ご質問がある場合は、[FAQリスト](https://github.com/zhayujie/chatgpt-on-wechat/wiki/FAQs)を確認するか、[Issues](https://github.com/zhayujie/chatgpt-on-wechat/issues)を検索してください。
+PRやIssueの提出を歓迎します。🌟 Starでプロジェクトをサポートしてください。ご質問がある場合は、[FAQリスト](https://github.com/zhayujie/CowAgent/wiki/FAQs)を確認するか、[Issues](https://github.com/zhayujie/CowAgent/issues)を検索してください。
 
 ## 🌟 コントリビューター
 
-![cow contributors](https://contrib.rocks/image?repo=zhayujie/chatgpt-on-wechat&max=1000)
+![cow contributors](https://contrib.rocks/image?repo=zhayujie/CowAgent&max=1000)

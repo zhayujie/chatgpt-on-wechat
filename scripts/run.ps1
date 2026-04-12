@@ -67,15 +67,15 @@ function Assert-Python {
 
 # ── clone project ────────────────────────────────────────────────
 function Install-Project {
-    if (Test-Path "chatgpt-on-wechat") {
-        Write-Warn "Directory 'chatgpt-on-wechat' already exists."
+    if (Test-Path "CowAgent") {
+        Write-Warn "Directory 'CowAgent' already exists."
         $choice = Read-Host "Overwrite(o), backup(b), or quit(q)? [default: b]"
         if (-not $choice) { $choice = "b" }
         switch ($choice.ToLower()) {
-            "o" { Remove-Item -Recurse -Force "chatgpt-on-wechat" }
+            "o" { Remove-Item -Recurse -Force "CowAgent" }
             "b" {
-                $backup = "chatgpt-on-wechat_backup_$(Get-Date -Format 'yyyyMMddHHmmss')"
-                Rename-Item "chatgpt-on-wechat" $backup
+                $backup = "CowAgent_backup_$(Get-Date -Format 'yyyyMMddHHmmss')"
+                Rename-Item "CowAgent" $backup
                 Write-Cow "Backed up to '$backup'"
             }
             "q" { Write-Err "Installation cancelled."; exit 1 }
@@ -91,13 +91,13 @@ function Install-Project {
 
     Write-Cow "Cloning CowAgent project..."
     $prevEAP = $ErrorActionPreference; $ErrorActionPreference = "Continue"
-    git clone https://github.com/zhayujie/chatgpt-on-wechat.git 2>&1 | Out-Null
+    git clone https://github.com/zhayujie/CowAgent.git 2>&1 | Out-Null
     $cloneExit = $LASTEXITCODE
     $ErrorActionPreference = $prevEAP
     if ($cloneExit -ne 0) {
         Write-Warn "GitHub failed, trying Gitee..."
         $ErrorActionPreference = "Continue"
-        git clone https://gitee.com/zhayujie/chatgpt-on-wechat.git 2>&1 | Out-Null
+        git clone https://gitee.com/zhayujie/CowAgent.git 2>&1 | Out-Null
         $cloneExit = $LASTEXITCODE
         $ErrorActionPreference = $prevEAP
         if ($cloneExit -ne 0) {
@@ -106,7 +106,7 @@ function Install-Project {
         }
     }
 
-    Set-Location "chatgpt-on-wechat"
+    Set-Location "CowAgent"
     $script:BaseDir = $PWD.Path
     $script:IsProjectDir = $true
     Write-Cow "Project cloned: $BaseDir"
@@ -443,7 +443,7 @@ function Update-Project {
         if ($pullExit -ne 0) {
             Write-Warn "GitHub failed, trying Gitee..."
             $ErrorActionPreference = "Continue"
-            git remote set-url origin https://gitee.com/zhayujie/chatgpt-on-wechat.git 2>&1 | Out-Null
+            git remote set-url origin https://gitee.com/zhayujie/CowAgent.git 2>&1 | Out-Null
             git pull 2>&1 | Out-Null
             $ErrorActionPreference = $prevEAP
         }

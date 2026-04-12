@@ -8,12 +8,12 @@ description: 手动部署 CowAgent（源码 / Docker）
 ### 1. 克隆项目代码
 
 ```bash
-git clone https://github.com/zhayujie/chatgpt-on-wechat
-cd chatgpt-on-wechat/
+git clone https://github.com/zhayujie/CowAgent
+cd CowAgent/
 ```
 
 <Tip>
-  若遇到网络问题可使用国内仓库地址：https://gitee.com/zhayujie/chatgpt-on-wechat
+  若遇到网络问题可使用国内仓库地址：https://gitee.com/zhayujie/CowAgent
 </Tip>
 
 ### 2. 安装依赖
@@ -173,5 +173,5 @@ sudo docker logs -f chatgpt-on-wechat
 | `agent_max_steps` | `AGENT_MAX_STEPS` | 单次任务最大决策步数 | `15` |
 
 <Tip>
-  全部配置项可在项目 [`config.py`](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/config.py) 文件中查看。Docker 部署时，配置项名称需转为大写环境变量格式。
+  全部配置项可在项目 [`config.py`](https://github.com/zhayujie/CowAgent/blob/master/config.py) 文件中查看。Docker 部署时，配置项名称需转为大写环境变量格式。
 </Tip>

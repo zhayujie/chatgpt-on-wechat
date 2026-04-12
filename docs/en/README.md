@@ -1,10 +1,10 @@
 <p align="center"><img src="https://github.com/user-attachments/assets/eca9a9ec-8534-4615-9e0f-96c5ac1d10a3" alt="CowAgent" width="550" /></p>
 
 <p align="center">
-  <a href="https://github.com/zhayujie/chatgpt-on-wechat/releases/latest"><img src="https://img.shields.io/github/v/release/zhayujie/chatgpt-on-wechat" alt="Latest release"></a>
-  <a href="https://github.com/zhayujie/chatgpt-on-wechat/blob/master/LICENSE"><img src="https://img.shields.io/github/license/zhayujie/chatgpt-on-wechat" alt="License: MIT"></a>
-  <a href="https://github.com/zhayujie/chatgpt-on-wechat"><img src="https://img.shields.io/github/stars/zhayujie/chatgpt-on-wechat?style=flat-square" alt="Stars"></a> <br/>
-  [<a href="https://github.com/zhayujie/chatgpt-on-wechat/blob/master/README.md">中文</a>] | [English] | [<a href="https://github.com/zhayujie/chatgpt-on-wechat/blob/master/docs/ja/README.md">日本語</a>]
+  <a href="https://github.com/zhayujie/CowAgent/releases/latest"><img src="https://img.shields.io/github/v/release/zhayujie/CowAgent" alt="Latest release"></a>
+  <a href="https://github.com/zhayujie/CowAgent/blob/master/LICENSE"><img src="https://img.shields.io/github/license/zhayujie/CowAgent" alt="License: MIT"></a>
+  <a href="https://github.com/zhayujie/CowAgent"><img src="https://img.shields.io/github/stars/zhayujie/CowAgent?style=flat-square" alt="Stars"></a> <br/>
+  [<a href="https://github.com/zhayujie/CowAgent/blob/master/README.md">中文</a>] | [English] | [<a href="https://github.com/zhayujie/CowAgent/blob/master/docs/ja/README.md">日本語</a>]
 </p>
 
 **CowAgent** is an AI super assistant powered by LLMs, capable of autonomous task planning, operating computers and external resources, creating and executing Skills, and continuously growing with long-term memory. It supports flexible model switching, handles text, voice, images, and files, and can be integrated into WeChat, Web, Feishu, DingTalk, WeCom Bot, WeCom App, and WeChat Official Account — running 7×24 hours on your personal computer or server.
@@ -42,19 +42,19 @@ Try online (no deployment needed): [CowAgent](https://link-ai.tech/cowagent/crea
 
 ## Changelog
 
-> **2026.04.01:** [v2.0.5](https://github.com/zhayujie/chatgpt-on-wechat/releases/tag/2.0.5) — Cow CLI, Skill Hub open source, Browser tool, WeCom Bot QR scan, and more.
+> **2026.04.01:** [v2.0.5](https://github.com/zhayujie/CowAgent/releases/tag/2.0.5) — Cow CLI, Skill Hub open source, Browser tool, WeCom Bot QR scan, and more.
 
-> **2026.02.27:** [v2.0.2](https://github.com/zhayujie/chatgpt-on-wechat/releases/tag/2.0.2) — Web console overhaul (streaming chat, model/skill/memory/channel/scheduler/log management), multi-channel concurrent running, session persistence, new models including Gemini 3.1 Pro / Claude 4.6 Sonnet / Qwen3.5 Plus.
+> **2026.02.27:** [v2.0.2](https://github.com/zhayujie/CowAgent/releases/tag/2.0.2) — Web console overhaul (streaming chat, model/skill/memory/channel/scheduler/log management), multi-channel concurrent running, session persistence, new models including Gemini 3.1 Pro / Claude 4.6 Sonnet / Qwen3.5 Plus.
 
-> **2026.02.13:** [v2.0.1](https://github.com/zhayujie/chatgpt-on-wechat/releases/tag/2.0.1) — Built-in Web Search tool, smart context trimming, runtime info dynamic update, Windows compatibility, fixes for scheduler memory loss, Feishu connection issues, and more.
+> **2026.02.13:** [v2.0.1](https://github.com/zhayujie/CowAgent/releases/tag/2.0.1) — Built-in Web Search tool, smart context trimming, runtime info dynamic update, Windows compatibility, fixes for scheduler memory loss, Feishu connection issues, and more.
 
-> **2026.02.03:** [v2.0.0](https://github.com/zhayujie/chatgpt-on-wechat/releases/tag/2.0.0) — Full upgrade to AI super assistant with multi-step task planning, long-term memory, built-in tools, Skills framework, new models, and optimized channels.
+> **2026.02.03:** [v2.0.0](https://github.com/zhayujie/CowAgent/releases/tag/2.0.0) — Full upgrade to AI super assistant with multi-step task planning, long-term memory, built-in tools, Skills framework, new models, and optimized channels.
 
-> **2025.05.23:** [v1.7.6](https://github.com/zhayujie/chatgpt-on-wechat/releases/tag/1.7.6) — Web channel optimization, AgentMesh multi-agent plugin, Baidu TTS, claude-4-sonnet/opus support.
+> **2025.05.23:** [v1.7.6](https://github.com/zhayujie/CowAgent/releases/tag/1.7.6) — Web channel optimization, AgentMesh multi-agent plugin, Baidu TTS, claude-4-sonnet/opus support.
 
-> **2025.04.11:** [v1.7.5](https://github.com/zhayujie/chatgpt-on-wechat/releases/tag/1.7.5) — wechatferry protocol, DeepSeek model, Tencent Cloud voice, ModelScope and Gitee-AI support.
+> **2025.04.11:** [v1.7.5](https://github.com/zhayujie/CowAgent/releases/tag/1.7.5) — wechatferry protocol, DeepSeek model, Tencent Cloud voice, ModelScope and Gitee-AI support.
 
-> **2024.12.13:** [v1.7.4](https://github.com/zhayujie/chatgpt-on-wechat/releases/tag/1.7.4) — Gemini 2.0 model, Web channel, memory leak fix.
+> **2024.12.13:** [v1.7.4](https://github.com/zhayujie/CowAgent/releases/tag/1.7.4) — Gemini 2.0 model, Web channel, memory leak fix.
 
 Full changelog: [Release Notes](https://docs.cowagent.ai/en/releases/overview)
 
@@ -83,8 +83,8 @@ Script usage: [One-click Install](https://docs.cowagent.ai/en/guide/quick-start)
 **1. Clone the project**
 
 ```bash
-git clone https://github.com/zhayujie/chatgpt-on-wechat
-cd chatgpt-on-wechat/
+git clone https://github.com/zhayujie/CowAgent
+cd CowAgent/
 ```
 
 **2. Install dependencies**
@@ -232,16 +232,16 @@ Multiple channels can be enabled simultaneously, separated by commas: `"channel_
 
 ## 🔎 FAQ
 
-FAQs: <https://github.com/zhayujie/chatgpt-on-wechat/wiki/FAQs>
+FAQs: <https://github.com/zhayujie/CowAgent/wiki/FAQs>
 
 ## 🛠️ Contributing
 
-Welcome to add new channels, referring to the [Feishu channel](https://github.com/zhayujie/chatgpt-on-wechat/blob/master/channel/feishu/feishu_channel.py) as an example. Also welcome to contribute new Skills, see the [Skill Creation docs](https://docs.cowagent.ai/en/skills/create), or submit to [Skill Hub](https://skills.cowagent.ai/submit).
+Welcome to add new channels, referring to the [Feishu channel](https://github.com/zhayujie/CowAgent/blob/master/channel/feishu/feishu_channel.py) as an example. Also welcome to contribute new Skills, see the [Skill Creation docs](https://docs.cowagent.ai/en/skills/create), or submit to [Skill Hub](https://skills.cowagent.ai/submit).
 
 ## ✉ Contact
 
-Welcome to submit PRs and Issues, and support the project with a 🌟 Star. For questions, check the [FAQ list](https://github.com/zhayujie/chatgpt-on-wechat/wiki/FAQs) or search [Issues](https://github.com/zhayujie/chatgpt-on-wechat/issues).
+Welcome to submit PRs and Issues, and support the project with a 🌟 Star. For questions, check the [FAQ list](https://github.com/zhayujie/CowAgent/wiki/FAQs) or search [Issues](https://github.com/zhayujie/CowAgent/issues).
 
 ## 🌟 Contributors
 
-![cow contributors](https://contrib.rocks/image?repo=zhayujie/chatgpt-on-wechat&max=1000)
+![cow contributors](https://contrib.rocks/image?repo=zhayujie/CowAgent&max=1000)
