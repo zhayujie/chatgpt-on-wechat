@@ -1,7 +1,13 @@
 """
-Vision tool - Analyze images using OpenAI-compatible Vision API.
+Vision tool - Analyze images using Vision API.
 Supports local files (auto base64-encoded) and HTTP URLs.
-Providers are tried in priority order with automatic fallback on failure.
+
+Provider priority (default):
+  1. Main model via bot.call_vision — zero extra cost
+  2. Other models whose API key is configured — auto-discovered
+  3. OpenAI / LinkAI raw HTTP — reliable fallback
+  When use_linkai=true, LinkAI is promoted to #1.
+  When tool.vision.model is set, that model is used exclusively first.
 """
 
 import base64
@@ -14,10 +20,11 @@ from typing import Any, Dict, List, Optional
 import requests
 
 from agent.tools.base_tool import BaseTool, ToolResult
+from common import const
 from common.log import logger
 from config import conf
 
-DEFAULT_MODEL = "gpt-4.1-mini"
+DEFAULT_MODEL = const.GPT_41_MINI
 DEFAULT_TIMEOUT = 60
 MAX_TOKENS = 1000
 COMPRESS_THRESHOLD = 1_048_576  # 1 MB
@@ -30,8 +37,20 @@ SUPPORTED_EXTENSIONS = {
     "webp": "image/webp",
 }
 
+_MAIN_MODEL_PROVIDER_NAME = "MainModel"
 
-OPENAI_COMPATIBLE_BOT_TYPES = {"openai", "openAI", "chatGPT"}
+# (config_key_for_api_key, bot_type, default_vision_model, provider_display_name)
+# Auto-discovered as fallback vision providers when their API key is configured.
+# OpenAI and LinkAI are handled separately (raw HTTP providers), so not listed here.
+_DISCOVERABLE_MODELS = [
+    ("moonshot_api_key", const.MOONSHOT, const.KIMI_K2_5, "Moonshot"),
+    ("ark_api_key", const.DOUBAO, const.DOUBAO_SEED_2_PRO, "Doubao"),
+    ("dashscope_api_key", const.QWEN_DASHSCOPE, const.QWEN36_PLUS, "DashScope"),
+    ("claude_api_key", const.CLAUDEAPI, const.CLAUDE_4_6_SONNET, "Claude"),
+    ("gemini_api_key", const.GEMINI, const.GEMINI_31_FLASH_LITE_PRE, "Gemini"),
+    ("zhipu_ai_api_key", const.ZHIPU_AI, const.GLM_4_7, "ZhipuAI"),
+    ("minimax_api_key", const.MiniMax, const.MINIMAX_M2_7, "MiniMax"),
+]
 
 
 @dataclass
@@ -42,6 +61,8 @@ class VisionProvider:
     api_base: str
     extra_headers: dict = field(default_factory=dict)
     model_override: Optional[str] = None
+    use_bot: bool = False  # When True, call via bot.call_vision instead of raw HTTP
+    fallback_bot: Any = None  # Bot instance for non-main-model providers
 
 
 class VisionAPIError(Exception):
@@ -50,13 +71,12 @@ class VisionAPIError(Exception):
 
 
 class Vision(BaseTool):
-    """Analyze images using OpenAI-compatible Vision API"""
+    """Analyze images using Vision API"""
 
     name: str = "vision"
     description: str = (
         "Analyze a local image or image URL (jpg/jpeg/png) using Vision API. "
         "Can describe content, extract text, identify objects, colors, etc. "
-        "Requires OPENAI_API_KEY or LINKAI_API_KEY."
     )
 
     params: dict = {
@@ -70,13 +90,6 @@ class Vision(BaseTool):
                 "type": "string",
                 "description": "Question to ask about the image",
             },
-            "model": {
-                "type": "string",
-                "description": (
-                    f"Vision model to use (default: {DEFAULT_MODEL}). "
-                    "Options: gpt-4.1-mini, gpt-4.1, gpt-4o-mini, gpt-4o"
-                ),
-            },
         },
         "required": ["image", "question"],
     }
@@ -86,15 +99,11 @@ class Vision(BaseTool):
 
     @staticmethod
     def is_available() -> bool:
-        return bool(
-            conf().get("open_ai_api_key") or os.environ.get("OPENAI_API_KEY")
-            or conf().get("linkai_api_key") or os.environ.get("LINKAI_API_KEY")
-        )
+        return True
 
     def execute(self, args: Dict[str, Any]) -> ToolResult:
         image = args.get("image", "").strip()
         question = args.get("question", "").strip()
-        model = args.get("model", DEFAULT_MODEL).strip() or DEFAULT_MODEL
 
         if not image:
             return ToolResult.fail("Error: 'image' parameter is required")
@@ -104,11 +113,12 @@ class Vision(BaseTool):
         providers = self._resolve_providers()
         if not providers:
             return ToolResult.fail(
-                "Error: No API key configured for Vision.\n"
-                "Please configure one of the following using env_config tool:\n"
-                "  1. OPENAI_API_KEY (preferred): env_config(action=\"set\", key=\"OPENAI_API_KEY\", value=\"your-key\")\n"
-                "  2. LINKAI_API_KEY (fallback): env_config(action=\"set\", key=\"LINKAI_API_KEY\", value=\"your-key\")\n\n"
-                "Get your key at: https://platform.openai.com/api-keys or https://link-ai.tech"
+                "Error: No model available for Vision.\n"
+                "The main model does not support vision and no other API keys are configured.\n"
+                "Options:\n"
+                "  1. Switch to a multimodal model (e.g. qwen3.6-plus, claude-sonnet-4-6, gemini-2.0-flash)\n"
+                "  2. Configure OPENAI_API_KEY: env_config(action=\"set\", key=\"OPENAI_API_KEY\", value=\"your-key\")\n"
+                "  3. Configure LINKAI_API_KEY: env_config(action=\"set\", key=\"LINKAI_API_KEY\", value=\"your-key\")"
             )
 
         try:
@@ -116,7 +126,7 @@ class Vision(BaseTool):
         except Exception as e:
             return ToolResult.fail(f"Error: {e}")
 
-        return self._call_with_fallback(providers, model, question, image_content)
+        return self._call_with_fallback(providers, DEFAULT_MODEL, question, image_content)
 
     def _call_with_fallback(self, providers: List[VisionProvider], model: str,
                             question: str, image_content: dict) -> ToolResult:
@@ -125,9 +135,14 @@ class Vision(BaseTool):
         for i, provider in enumerate(providers):
             use_model = provider.model_override or model
             try:
-                logger.debug(f"[Vision] Trying provider '{provider.name}' "
-                             f"with model '{use_model}' ({i + 1}/{len(providers)})")
-                return self._call_api(provider, use_model, question, image_content)
+                logger.info(f"[Vision] Trying provider '{provider.name}' "
+                            f"with model '{use_model}' ({i + 1}/{len(providers)})")
+                if provider.use_bot:
+                    result = self._call_via_bot(use_model, question, image_content, provider)
+                else:
+                    result = self._call_api(provider, use_model, question, image_content)
+                logger.info(f"[Vision] ✅ Success via {provider.name} (model={use_model})")
+                return result
             except VisionAPIError as e:
                 errors.append(f"[{provider.name}/{use_model}] {e}")
                 logger.warning(f"[Vision] Provider '{provider.name}' failed: {e}")
@@ -148,35 +163,113 @@ class Vision(BaseTool):
     def _resolve_providers(self) -> List[VisionProvider]:
         """
         Build an ordered list of available providers.
-        Each provider builder returns a VisionProvider or None.
-        To add a new provider, append a builder method to _PROVIDER_BUILDERS.
+
+        Priority:
+          - use_linkai=true  → [LinkAI, MainModel, OtherModels…, OpenAI]
+          - default          → [MainModel, OtherModels…, OpenAI, LinkAI]
+
+        "OtherModels" are auto-discovered from configured API keys.
+        The main model's bot_type is excluded from OtherModels to avoid
+        duplicating the MainModel provider.
         """
+        use_linkai = conf().get("use_linkai", False) and conf().get("linkai_api_key")
         providers: List[VisionProvider] = []
-        for builder in self._PROVIDER_BUILDERS:
-            provider = builder(self)
-            if provider:
-                providers.append(provider)
+
+        if use_linkai:
+            self._append_provider(providers, self._build_linkai_provider)
+            self._append_provider(providers, self._build_main_model_provider)
+            self._append_other_model_providers(providers)
+            self._append_provider(providers, self._build_openai_provider)
+        else:
+            self._append_provider(providers, self._build_main_model_provider)
+            self._append_other_model_providers(providers)
+            self._append_provider(providers, self._build_openai_provider)
+            self._append_provider(providers, self._build_linkai_provider)
+
         return providers
 
-    def _build_custom_model_provider(self) -> Optional[VisionProvider]:
+    @staticmethod
+    def _append_provider(providers: List[VisionProvider], builder) -> None:
+        p = builder()
+        if p:
+            providers.append(p)
+
+    def _append_other_model_providers(self, providers: List[VisionProvider]) -> None:
         """
-        When bot_type is openai-compatible and a custom model is configured,
-        try the user's own model first — it may already support multimodal input.
+        Auto-discover other models whose API key is configured.
+        Skip the main model's own bot_type (already covered by MainModel provider).
+        Skip bot_types that already have a provider in the list (e.g. OpenAI).
         """
-        bot_type = conf().get("bot_type", "")
-        if bot_type not in OPENAI_COMPATIBLE_BOT_TYPES:
+        # Determine main model's bot_type so we can skip it
+        main_bot_type = None
+        if self.model and hasattr(self.model, '_resolve_bot_type'):
+            main_bot_type = self.model._resolve_bot_type(conf().get("model", ""))
+
+        existing_names = {p.name for p in providers}
+
+        for config_key, bot_type, default_model, display_name in _DISCOVERABLE_MODELS:
+            if display_name in existing_names:
+                continue
+            if bot_type == main_bot_type:
+                continue
+            api_key = conf().get(config_key, "")
+            if not api_key or not api_key.strip():
+                continue
+
+            # Create a bot instance and check if it supports call_vision
+            try:
+                from models.bot_factory import create_bot
+                bot = create_bot(bot_type)
+                if not hasattr(bot, 'call_vision'):
+                    continue
+            except Exception:
+                continue
+
+            providers.append(VisionProvider(
+                name=display_name,
+                api_key="",
+                api_base="",
+                model_override=default_model,
+                use_bot=True,
+                fallback_bot=bot,
+            ))
+
+    def _resolve_vision_model(self) -> Optional[str]:
+        """
+        Determine which model to use for vision.
+
+        1. User explicit config: tool.vision.model in config.json
+        2. Fallback to the main configured model name
+        """
+        tool_conf = conf().get("tool", {})
+        user_vision_model = tool_conf.get("vision", {}).get("model") if isinstance(tool_conf, dict) else None
+        if user_vision_model:
+            return user_vision_model
+        model_name = conf().get("model", "")
+        return model_name or None
+
+    def _build_main_model_provider(self) -> Optional[VisionProvider]:
+        """
+        Use the vendor's own model for vision via bot.call_vision.
+        Only available when the bot class has call_vision.
+        """
+        if not (self.model and hasattr(self.model, 'bot')):
             return None
-        custom_model = conf().get("model", "")
-        if not custom_model or custom_model == DEFAULT_MODEL:
+        try:
+            bot = self.model.bot
+            if not hasattr(bot, 'call_vision'):
+                return None
+        except Exception:
             return None
-        api_key = conf().get("open_ai_api_key") or os.environ.get("OPENAI_API_KEY")
-        if not api_key:
-            return None
-        api_base = (conf().get("open_ai_api_base") or os.environ.get("OPENAI_API_BASE", "")).rstrip("/") \
-            or "https://api.openai.com/v1"
+
+        vision_model = self._resolve_vision_model()
+
         return VisionProvider(
-            name="CustomModel", api_key=api_key, api_base=self._ensure_v1(api_base),
-            model_override=custom_model,
+            name=_MAIN_MODEL_PROVIDER_NAME,
+            api_key="",
+            api_base="",
+            model_override=vision_model,
+            use_bot=True,
         )
 
     def _build_openai_provider(self) -> Optional[VisionProvider]:
@@ -200,7 +293,54 @@ class Vision(BaseTool):
         return VisionProvider(name="LinkAI", api_key=api_key, api_base=self._ensure_v1(api_base),
                               extra_headers=extra)
 
-    _PROVIDER_BUILDERS = [_build_custom_model_provider, _build_openai_provider, _build_linkai_provider]
+    def _call_via_bot(self, model: str, question: str, image_content: dict,
+                      provider: Optional[VisionProvider] = None) -> ToolResult:
+        """
+        Call a model's call_vision with vendor-native API format.
+        Uses the provider's _fallback_bot if set, otherwise the main model bot.
+        Raises VisionAPIError on failure so fallback can proceed.
+        """
+        try:
+            bot = (provider and provider.fallback_bot) or self.model.bot
+        except Exception as e:
+            raise VisionAPIError(f"Cannot access bot: {e}")
+
+        # Extract the raw image URL from the OpenAI-format image_content block
+        image_url = image_content.get("image_url", {}).get("url", "")
+        if not image_url:
+            raise VisionAPIError("No image URL in content block")
+
+        try:
+            response = bot.call_vision(
+                image_url=image_url,
+                question=question,
+                model=model,
+                max_tokens=MAX_TOKENS,
+            )
+        except Exception as e:
+            raise VisionAPIError(f"call_vision failed: {e}")
+
+        if response is NotImplemented:
+            raise VisionAPIError("Bot does not support vision")
+
+        if isinstance(response, dict) and response.get("error"):
+            raise VisionAPIError(f"API error - {response.get('message', 'Unknown')}")
+
+        content = response.get("content", "") if isinstance(response, dict) else ""
+        if not content:
+            raise VisionAPIError("Empty response from main model")
+
+        usage_info = response.get("usage", {}) if isinstance(response, dict) else {}
+
+        # Use the actual model name from the bot response if available
+        actual_model = response.get("model", model) if isinstance(response, dict) else model
+        provider_name = provider.name if provider else _MAIN_MODEL_PROVIDER_NAME
+        return ToolResult.success({
+            "model": actual_model,
+            "provider": provider_name,
+            "content": content,
+            "usage": usage_info,
+        })
 
     @staticmethod
     def _ensure_v1(api_base: str) -> str:
@@ -213,9 +353,13 @@ class Vision(BaseTool):
         return api_base.rstrip("/") + "/v1"
 
     def _build_image_content(self, image: str) -> dict:
-        """Build the image_url content block for the API request."""
+        """
+        Build the image_url content block.
+        Both remote URLs and local files are converted to base64 data URLs
+        so every bot backend can consume them without extra downloads.
+        """
         if image.startswith(("http://", "https://")):
-            return {"type": "image_url", "image_url": {"url": image}}
+            return self._download_to_data_url(image)
 
         if not os.path.isfile(image):
             raise FileNotFoundError(f"Image file not found: {image}")
@@ -237,6 +381,19 @@ class Vision(BaseTool):
                 os.remove(file_path)
 
         data_url = f"data:{mime_type};base64,{b64}"
+        return {"type": "image_url", "image_url": {"url": data_url}}
+
+    @staticmethod
+    def _download_to_data_url(url: str) -> dict:
+        """Download a remote image and return it as a base64 data URL."""
+        resp = requests.get(url, timeout=30)
+        if resp.status_code != 200:
+            raise VisionAPIError(f"Failed to download image: HTTP {resp.status_code}")
+        content_type = resp.headers.get("Content-Type", "image/jpeg").split(";")[0].strip()
+        if not content_type.startswith("image/"):
+            content_type = "image/jpeg"
+        b64 = base64.b64encode(resp.content).decode("ascii")
+        data_url = f"data:{content_type};base64,{b64}"
         return {"type": "image_url", "image_url": {"url": data_url}}
 
     @staticmethod
@@ -312,7 +469,6 @@ class Vision(BaseTool):
                     ],
                 }
             ],
-            "max_completion_tokens": MAX_TOKENS,
         }
 
         headers = {

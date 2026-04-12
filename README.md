@@ -214,6 +214,7 @@ cow install-browser
 + 添加 `"speech_recognition": true` 将开启语音识别，默认使用 openai 的 whisper 模型识别为文字，同时以文字回复，该参数仅支持私聊 (注意由于语音消息无法匹配前缀，一旦开启将对所有语音自动回复，支持语音触发画图)；
 + 添加 `"group_speech_recognition": true` 将开启群组语音识别，默认使用 openai 的 whisper 模型识别为文字，同时以文字回复，参数仅支持群聊 (会匹配 group_chat_prefix 和 group_chat_keyword, 支持语音触发画图)；
 + 添加 `"voice_reply_voice": true` 将开启语音回复语音（同时作用于私聊和群聊）
++ 使用 MiniMax TTS：设置 `"text_to_voice": "minimax"`，并配置 `minimax_api_key`；可通过 `"tts_voice_id"` 指定发音人（如 `English_Graceful_Lady`），`"text_to_voice_model"` 指定模型（如 `speech-2.8-hd`、`speech-2.8-turbo`）
 </details>
 
 <details>
@@ -358,7 +359,7 @@ sudo docker logs -f chatgpt-on-wechat
     "minimax_api_key": ""
 }
 ```
- - `model`: 可填写 `MiniMax-M2.7、MiniMax-M2.5、MiniMax-M2.1、MiniMax-M2.1-lightning、MiniMax-M2、abab6.5-chat` 等
+ - `model`: 可填写 `MiniMax-M2.7、MiniMax-M2.7-highspeed、MiniMax-M2.5、MiniMax-M2.1、MiniMax-M2.1-lightning、MiniMax-M2、abab6.5-chat` 等
  - `minimax_api_key`：MiniMax 平台的 API-KEY，在 [控制台](https://platform.minimaxi.com/user-center/basic-information/interface-key) 创建
 
 方式二：OpenAI 兼容方式接入，配置如下：
@@ -371,7 +372,7 @@ sudo docker logs -f chatgpt-on-wechat
 }
 ```
 - `bot_type`: OpenAI 兼容方式
-- `model`: 可填 `MiniMax-M2.7、MiniMax-M2.5、MiniMax-M2.1、MiniMax-M2.1-lightning、MiniMax-M2`，参考[API文档](https://platform.minimaxi.com/document/%E5%AF%B9%E8%AF%9D?key=66701d281d57f38758d581d0#QklxsNSbaf6kM4j6wjO5eEek)
+- `model`: 可填 `MiniMax-M2.7、MiniMax-M2.7-highspeed、MiniMax-M2.5、MiniMax-M2.1、MiniMax-M2.1-lightning、MiniMax-M2`，参考[API文档](https://platform.minimaxi.com/document/%E5%AF%B9%E8%AF%9D?key=66701d281d57f38758d581d0#QklxsNSbaf6kM4j6wjO5eEek)
 - `open_ai_api_base`: MiniMax 平台 API 的 BASE URL
 - `open_ai_api_key`: MiniMax 平台的 API-KEY
 </details>

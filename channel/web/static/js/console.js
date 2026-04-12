@@ -823,9 +823,6 @@ function sendMessage() {
 }
 
 function startSSE(requestId, loadingEl, timestamp) {
-    const es = new EventSource(`/stream?request_id=${encodeURIComponent(requestId)}`);
-    activeStreams[requestId] = es;
-
     let botEl = null;
     let stepsEl = null;    // .agent-steps  (thinking summaries + tool indicators)
     let contentEl = null;  // .answer-content (final streaming answer)
@@ -834,6 +831,11 @@ function startSSE(requestId, loadingEl, timestamp) {
     let currentToolEl = null;
     let currentReasoningEl = null;  // live reasoning bubble
     let reasoningText = '';
+    let done = false;
+
+    const MAX_RECONNECTS = 10;
+    const RECONNECT_BASE_MS = 1000;
+    let reconnectCount = 0;
 
     function ensureBotEl() {
         if (botEl) return;
@@ -858,168 +860,202 @@ function startSSE(requestId, loadingEl, timestamp) {
         mediaEl = botEl.querySelector('.media-content');
     }
 
-    es.onmessage = function(e) {
-        let item;
-        try { item = JSON.parse(e.data); } catch (_) { return; }
+    function connect() {
+        const es = new EventSource(`/stream?request_id=${encodeURIComponent(requestId)}`);
+        activeStreams[requestId] = es;
 
-        if (item.type === 'reasoning') {
-            ensureBotEl();
-            reasoningText += item.content;
-            if (!currentReasoningEl) {
-                currentReasoningEl = document.createElement('div');
-                currentReasoningEl.className = 'agent-step agent-thinking-step';
-                currentReasoningEl.innerHTML = `
-                    <div class="thinking-header" onclick="this.parentElement.classList.toggle('expanded')">
-                        <i class="fas fa-lightbulb text-amber-400 flex-shrink-0"></i>
-                        <span class="thinking-summary"></span>
-                        <i class="fas fa-chevron-right thinking-chevron"></i>
-                    </div>
-                    <div class="thinking-full"></div>`;
-                stepsEl.appendChild(currentReasoningEl);
-            }
-            // Stream reasoning as a single-line summary (collapsed); full text available on expand
-            const oneLine = reasoningText.trim().replace(/\n+/g, ' ');
-            currentReasoningEl.querySelector('.thinking-summary').textContent =
-                oneLine.length > 80 ? oneLine.substring(0, 80) + '…' : oneLine;
-            currentReasoningEl.querySelector('.thinking-full').innerHTML = renderMarkdown(reasoningText);
-            scrollChatToBottom();
+        es.onmessage = function(e) {
+            let item;
+            try { item = JSON.parse(e.data); } catch (_) { return; }
 
-        } else if (item.type === 'delta') {
-            ensureBotEl();
-            if (currentReasoningEl) {
-                if (reasoningText.trim().replace(/\n+/g, ' ').length <= 80)
-                    currentReasoningEl.classList.add('no-expand');
-                currentReasoningEl = null;
-                reasoningText = '';
-            }
-            accumulatedText += item.content;
-            contentEl.innerHTML = renderMarkdown(accumulatedText);
-            scrollChatToBottom();
+            // Successful data received, reset reconnect counter
+            reconnectCount = 0;
 
-        } else if (item.type === 'message_end') {
-            // Backend already strips reasoning_content; all deltas are real content.
-            // Freeze accumulated text as visible content before tool execution begins.
-            if (item.has_tool_calls && accumulatedText.trim()) {
+            if (item.type === 'reasoning') {
                 ensureBotEl();
-                const frozenEl = document.createElement('div');
-                frozenEl.className = 'agent-step agent-content-step';
-                frozenEl.innerHTML = `<div class="agent-content-body">${renderMarkdown(accumulatedText.trim())}</div>`;
-                stepsEl.appendChild(frozenEl);
+                reasoningText += item.content;
+                if (!currentReasoningEl) {
+                    currentReasoningEl = document.createElement('div');
+                    currentReasoningEl.className = 'agent-step agent-thinking-step';
+                    currentReasoningEl.innerHTML = `
+                        <div class="thinking-header" onclick="this.parentElement.classList.toggle('expanded')">
+                            <i class="fas fa-lightbulb text-amber-400 flex-shrink-0"></i>
+                            <span class="thinking-summary"></span>
+                            <i class="fas fa-chevron-right thinking-chevron"></i>
+                        </div>
+                        <div class="thinking-full"></div>`;
+                    stepsEl.appendChild(currentReasoningEl);
+                }
+                const oneLine = reasoningText.trim().replace(/\n+/g, ' ');
+                currentReasoningEl.querySelector('.thinking-summary').textContent =
+                    oneLine.length > 80 ? oneLine.substring(0, 80) + '…' : oneLine;
+                currentReasoningEl.querySelector('.thinking-full').innerHTML = renderMarkdown(reasoningText);
+                scrollChatToBottom();
+
+            } else if (item.type === 'delta') {
+                ensureBotEl();
+                if (currentReasoningEl) {
+                    if (reasoningText.trim().replace(/\n+/g, ' ').length <= 80)
+                        currentReasoningEl.classList.add('no-expand');
+                    currentReasoningEl = null;
+                    reasoningText = '';
+                }
+                accumulatedText += item.content;
+                contentEl.innerHTML = renderMarkdown(accumulatedText);
+                scrollChatToBottom();
+
+            } else if (item.type === 'message_end') {
+                if (item.has_tool_calls && accumulatedText.trim()) {
+                    ensureBotEl();
+                    const frozenEl = document.createElement('div');
+                    frozenEl.className = 'agent-step agent-content-step';
+                    frozenEl.innerHTML = `<div class="agent-content-body">${renderMarkdown(accumulatedText.trim())}</div>`;
+                    stepsEl.appendChild(frozenEl);
+                    accumulatedText = '';
+                    contentEl.innerHTML = '';
+                    scrollChatToBottom();
+                }
+
+            } else if (item.type === 'tool_start') {
+                ensureBotEl();
+                if (currentReasoningEl) {
+                    if (reasoningText.trim().replace(/\n+/g, ' ').length <= 80)
+                        currentReasoningEl.classList.add('no-expand');
+                    currentReasoningEl = null;
+                    reasoningText = '';
+                }
                 accumulatedText = '';
                 contentEl.innerHTML = '';
-                scrollChatToBottom();
-            }
 
-        } else if (item.type === 'tool_start') {
-            ensureBotEl();
-            if (currentReasoningEl) {
-                if (reasoningText.trim().replace(/\n+/g, ' ').length <= 80)
-                    currentReasoningEl.classList.add('no-expand');
-                currentReasoningEl = null;
-                reasoningText = '';
-            }
-            accumulatedText = '';
-            contentEl.innerHTML = '';
-
-            // Add tool execution indicator (collapsible)
-            currentToolEl = document.createElement('div');
-            currentToolEl.className = 'agent-step agent-tool-step';
-            const argsStr = formatToolArgs(item.arguments || {});
-            currentToolEl.innerHTML = `
-                <div class="tool-header" onclick="this.parentElement.classList.toggle('expanded')">
-                    <i class="fas fa-cog fa-spin text-primary-400 flex-shrink-0 tool-icon"></i>
-                    <span class="tool-name">${item.tool}</span>
-                    <i class="fas fa-chevron-right tool-chevron"></i>
-                </div>
-                <div class="tool-detail">
-                    <div class="tool-detail-section">
-                        <div class="tool-detail-label">Input</div>
-                        <pre class="tool-detail-content">${argsStr}</pre>
+                // Add tool execution indicator (collapsible)
+                currentToolEl = document.createElement('div');
+                currentToolEl.className = 'agent-step agent-tool-step';
+                const argsStr = formatToolArgs(item.arguments || {});
+                currentToolEl.innerHTML = `
+                    <div class="tool-header" onclick="this.parentElement.classList.toggle('expanded')">
+                        <i class="fas fa-cog fa-spin text-primary-400 flex-shrink-0 tool-icon"></i>
+                        <span class="tool-name">${item.tool}</span>
+                        <i class="fas fa-chevron-right tool-chevron"></i>
                     </div>
-                    <div class="tool-detail-section tool-output-section"></div>
-                </div>`;
-            stepsEl.appendChild(currentToolEl);
+                    <div class="tool-detail">
+                        <div class="tool-detail-section">
+                            <div class="tool-detail-label">Input</div>
+                            <pre class="tool-detail-content">${argsStr}</pre>
+                        </div>
+                        <div class="tool-detail-section tool-output-section"></div>
+                    </div>`;
+                stepsEl.appendChild(currentToolEl);
 
-            scrollChatToBottom();
+                scrollChatToBottom();
 
-        } else if (item.type === 'tool_end') {
-            if (currentToolEl) {
-                const isError = item.status !== 'success';
-                const icon = currentToolEl.querySelector('.tool-icon');
-                icon.className = isError
-                    ? 'fas fa-times text-red-400 flex-shrink-0 tool-icon'
-                    : 'fas fa-check text-primary-400 flex-shrink-0 tool-icon';
+            } else if (item.type === 'tool_end') {
+                if (currentToolEl) {
+                    const isError = item.status !== 'success';
+                    const icon = currentToolEl.querySelector('.tool-icon');
+                    icon.className = isError
+                        ? 'fas fa-times text-red-400 flex-shrink-0 tool-icon'
+                        : 'fas fa-check text-primary-400 flex-shrink-0 tool-icon';
 
-                // Show execution time
-                const nameEl = currentToolEl.querySelector('.tool-name');
-                if (item.execution_time !== undefined) {
-                    nameEl.innerHTML += ` <span class="tool-time">${item.execution_time}s</span>`;
+                    // Show execution time
+                    const nameEl = currentToolEl.querySelector('.tool-name');
+                    if (item.execution_time !== undefined) {
+                        nameEl.innerHTML += ` <span class="tool-time">${item.execution_time}s</span>`;
+                    }
+
+                    // Fill output section
+                    const outputSection = currentToolEl.querySelector('.tool-output-section');
+                    if (outputSection && item.result) {
+                        outputSection.innerHTML = `
+                            <div class="tool-detail-label">${isError ? 'Error' : 'Output'}</div>
+                            <pre class="tool-detail-content ${isError ? 'tool-error-text' : ''}">${escapeHtml(String(item.result))}</pre>`;
+                    }
+
+                    if (isError) currentToolEl.classList.add('tool-failed');
+                    currentToolEl = null;
                 }
 
-                // Fill output section
-                const outputSection = currentToolEl.querySelector('.tool-output-section');
-                if (outputSection && item.result) {
-                    outputSection.innerHTML = `
-                        <div class="tool-detail-label">${isError ? 'Error' : 'Output'}</div>
-                        <pre class="tool-detail-content ${isError ? 'tool-error-text' : ''}">${escapeHtml(String(item.result))}</pre>`;
-                }
+            } else if (item.type === 'image') {
+                ensureBotEl();
+                const imgEl = document.createElement('img');
+                imgEl.src = item.content;
+                imgEl.alt = 'screenshot';
+                imgEl.style.cssText = 'max-width:600px;border-radius:8px;margin:8px 0;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,0.1);';
+                imgEl.onclick = () => window.open(item.content, '_blank');
+                mediaEl.appendChild(imgEl);
+                scrollChatToBottom();
 
-                if (isError) currentToolEl.classList.add('tool-failed');
-                currentToolEl = null;
+            } else if (item.type === 'text') {
+                // Intermediate text sent before media items; display it but keep SSE open.
+                ensureBotEl();
+                contentEl.classList.remove('sse-streaming');
+                const textContent = item.content || accumulatedText;
+                if (textContent) contentEl.innerHTML = renderMarkdown(textContent);
+                applyHighlighting(botEl);
+                scrollChatToBottom();
+
+            } else if (item.type === 'video') {
+                ensureBotEl();
+                const wrapper = document.createElement('div');
+                wrapper.innerHTML = _buildVideoHtml(item.content);
+                mediaEl.appendChild(wrapper.firstElementChild || wrapper);
+                scrollChatToBottom();
+
+            } else if (item.type === 'file') {
+                ensureBotEl();
+                const fileName = item.file_name || item.content.split('/').pop();
+                const fileEl = document.createElement('a');
+                fileEl.href = item.content;
+                fileEl.download = fileName;
+                fileEl.target = '_blank';
+                fileEl.className = 'file-attachment';
+                fileEl.style.cssText = 'display:inline-flex;align-items:center;gap:6px;padding:8px 14px;margin:8px 0;border-radius:8px;background:var(--bg-secondary,#f3f4f6);color:var(--text-primary,#374151);text-decoration:none;font-size:14px;border:1px solid var(--border-color,#e5e7eb);';
+                fileEl.innerHTML = `<i class="fas fa-file-download" style="color:#6b7280;"></i> ${fileName}`;
+                mediaEl.appendChild(fileEl);
+                scrollChatToBottom();
+
+            } else if (item.type === 'phase') {
+                // Coarse progress (e.g. cow install-browser); must not close SSE (unlike "done")
+                ensureBotEl();
+                const wrap = document.createElement('div');
+                wrap.className = 'text-xs sm:text-sm text-slate-600 dark:text-slate-400 border-l-2 border-primary-400 pl-2 py-1 my-0.5';
+                wrap.textContent = String(item.content || '');
+                stepsEl.appendChild(wrap);
+                scrollChatToBottom();
+
+            } else if (item.type === 'done') {
+                done = true;
+                es.close();
+                delete activeStreams[requestId];
+
+                // item.content may be empty when "done" is only a stream-close signal after media.
+                const finalText = item.content || accumulatedText;
+
+                if (!botEl && finalText) {
+                    if (loadingEl) { loadingEl.remove(); loadingEl = null; }
+                    addBotMessage(finalText, new Date((item.timestamp || Date.now() / 1000) * 1000), requestId);
+                } else if (botEl) {
+                    contentEl.classList.remove('sse-streaming');
+                    // Only update text content when there is something new to show.
+                    if (finalText) contentEl.innerHTML = renderMarkdown(finalText);
+                    applyHighlighting(botEl);
+                }
+                scrollChatToBottom();
+
+            } else if (item.type === 'error') {
+                done = true;
+                es.close();
+                delete activeStreams[requestId];
+                if (loadingEl) { loadingEl.remove(); loadingEl = null; }
+                addBotMessage(t('error_send'), new Date());
             }
+        };
 
-        } else if (item.type === 'image') {
-            ensureBotEl();
-            const imgEl = document.createElement('img');
-            imgEl.src = item.content;
-            imgEl.alt = 'screenshot';
-            imgEl.style.cssText = 'max-width:600px;border-radius:8px;margin:8px 0;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,0.1);';
-            imgEl.onclick = () => window.open(item.content, '_blank');
-            mediaEl.appendChild(imgEl);
-            scrollChatToBottom();
-
-        } else if (item.type === 'text') {
-            // Intermediate text sent before media items; display it but keep SSE open.
-            ensureBotEl();
-            contentEl.classList.remove('sse-streaming');
-            const textContent = item.content || accumulatedText;
-            if (textContent) contentEl.innerHTML = renderMarkdown(textContent);
-            applyHighlighting(botEl);
-            scrollChatToBottom();
-
-        } else if (item.type === 'video') {
-            ensureBotEl();
-            const wrapper = document.createElement('div');
-            wrapper.innerHTML = _buildVideoHtml(item.content);
-            mediaEl.appendChild(wrapper.firstElementChild || wrapper);
-            scrollChatToBottom();
-
-        } else if (item.type === 'file') {
-            ensureBotEl();
-            const fileName = item.file_name || item.content.split('/').pop();
-            const fileEl = document.createElement('a');
-            fileEl.href = item.content;
-            fileEl.download = fileName;
-            fileEl.target = '_blank';
-            fileEl.className = 'file-attachment';
-            fileEl.style.cssText = 'display:inline-flex;align-items:center;gap:6px;padding:8px 14px;margin:8px 0;border-radius:8px;background:var(--bg-secondary,#f3f4f6);color:var(--text-primary,#374151);text-decoration:none;font-size:14px;border:1px solid var(--border-color,#e5e7eb);';
-            fileEl.innerHTML = `<i class="fas fa-file-download" style="color:#6b7280;"></i> ${fileName}`;
-            mediaEl.appendChild(fileEl);
-            scrollChatToBottom();
-
-        } else if (item.type === 'phase') {
-            // Coarse progress (e.g. cow install-browser); must not close SSE (unlike "done")
-            ensureBotEl();
-            const wrap = document.createElement('div');
-            wrap.className = 'text-xs sm:text-sm text-slate-600 dark:text-slate-400 border-l-2 border-primary-400 pl-2 py-1 my-0.5';
-            wrap.textContent = String(item.content || '');
-            stepsEl.appendChild(wrap);
-            scrollChatToBottom();
-
-        } else if (item.type === 'done') {
+        es.onerror = function() {
             es.close();
             delete activeStreams[requestId];
 
+            if (done) return;
+
             if (currentReasoningEl) {
                 if (reasoningText.trim().replace(/\n+/g, ' ').length <= 80)
                     currentReasoningEl.classList.add('no-expand');
@@ -1027,41 +1063,28 @@ function startSSE(requestId, loadingEl, timestamp) {
                 reasoningText = '';
             }
 
-            // item.content may be empty when "done" is only a stream-close signal after media.
-            const finalText = item.content || accumulatedText;
+            if (reconnectCount < MAX_RECONNECTS) {
+                reconnectCount++;
+                const delay = Math.min(RECONNECT_BASE_MS * reconnectCount, 5000);
+                console.warn(`[SSE] connection lost for ${requestId}, reconnecting in ${delay}ms (attempt ${reconnectCount}/${MAX_RECONNECTS})`);
+                setTimeout(connect, delay);
+                return;
+            }
 
-            if (!botEl && finalText) {
-                if (loadingEl) { loadingEl.remove(); loadingEl = null; }
-                addBotMessage(finalText, new Date((item.timestamp || Date.now() / 1000) * 1000), requestId);
-            } else if (botEl) {
+            // Exhausted retries, show whatever we have
+            if (loadingEl) { loadingEl.remove(); loadingEl = null; }
+            if (!botEl) {
+                addBotMessage(t('error_send'), new Date());
+            } else if (accumulatedText) {
                 contentEl.classList.remove('sse-streaming');
-                // Only update text content when there is something new to show.
-                if (finalText) contentEl.innerHTML = renderMarkdown(finalText);
+                contentEl.innerHTML = renderMarkdown(accumulatedText);
                 applyHighlighting(botEl);
                 bindChatKnowledgeLinks(botEl);
             }
-            scrollChatToBottom();
+        };
+    }
 
-        } else if (item.type === 'error') {
-            es.close();
-            delete activeStreams[requestId];
-            if (loadingEl) { loadingEl.remove(); loadingEl = null; }
-            addBotMessage(t('error_send'), new Date());
-        }
-    };
-
-    es.onerror = function() {
-        es.close();
-        delete activeStreams[requestId];
-        if (loadingEl) { loadingEl.remove(); loadingEl = null; }
-        if (!botEl) {
-            addBotMessage(t('error_send'), new Date());
-        } else if (accumulatedText) {
-            contentEl.classList.remove('sse-streaming');
-            contentEl.innerHTML = renderMarkdown(accumulatedText);
-            applyHighlighting(botEl);
-        }
-    };
+    connect();
 }
 
 function startPolling() {

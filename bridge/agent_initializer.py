@@ -490,7 +490,7 @@ class AgentInitializer:
         
         env_file = expand_path("~/.cow/.env")
         
-        # Read existing env vars
+        # Read existing env vars (key -> value)
         existing_env_vars = {}
         if os.path.exists(env_file):
             try:
@@ -498,38 +498,46 @@ class AgentInitializer:
                     for line in f:
                         line = line.strip()
                         if line and not line.startswith('#') and '=' in line:
-                            key, _ = line.split('=', 1)
-                            existing_env_vars[key.strip()] = True
+                            key, val = line.split('=', 1)
+                            existing_env_vars[key.strip()] = val.strip()
             except Exception as e:
                 logger.warning(f"[AgentInitializer] Failed to read .env file: {e}")
         
-        # Check which keys need migration
-        keys_to_migrate = {}
+        # Sync config.json values into .env (add/update/remove)
+        updated = False
         for config_key, env_key in key_mapping.items():
-            if env_key in existing_env_vars:
-                continue
-            value = conf().get(config_key, "")
-            if value and value.strip():
-                keys_to_migrate[env_key] = value.strip()
-        
-        # Write new keys
-        if keys_to_migrate:
+            raw = conf().get(config_key, "")
+            value = raw.strip() if raw else ""
+            old_value = existing_env_vars.get(env_key)
+
+            if value:
+                if old_value == value:
+                    continue
+                existing_env_vars[env_key] = value
+                os.environ[env_key] = value
+                updated = True
+            else:
+                if old_value is None:
+                    continue
+                existing_env_vars.pop(env_key, None)
+                os.environ.pop(env_key, None)
+                updated = True
+
+        if updated:
             try:
                 env_dir = os.path.dirname(env_file)
-                if not os.path.exists(env_dir):
-                    os.makedirs(env_dir, exist_ok=True)
-                if not os.path.exists(env_file):
-                    open(env_file, 'a').close()
-                
-                with open(env_file, 'a', encoding='utf-8') as f:
-                    f.write('\n# Auto-migrated from config.json\n')
-                    for key, value in keys_to_migrate.items():
+                os.makedirs(env_dir, exist_ok=True)
+
+                # Rewrite the entire .env file to ensure consistency
+                with open(env_file, 'w', encoding='utf-8') as f:
+                    f.write('# Environment variables for agent\n')
+                    f.write('# Auto-managed - synced from config.json on startup\n\n')
+                    for key, value in sorted(existing_env_vars.items()):
                         f.write(f'{key}={value}\n')
-                        os.environ[key] = value
-                
-                logger.info(f"[AgentInitializer] Migrated {len(keys_to_migrate)} API keys to .env: {list(keys_to_migrate.keys())}")
+
+                logger.info(f"[AgentInitializer] Synced API keys from config.json to .env")
             except Exception as e:
-                logger.warning(f"[AgentInitializer] Failed to migrate API keys: {e}")
+                logger.warning(f"[AgentInitializer] Failed to sync API keys: {e}")
 
     def _start_daily_flush_timer(self):
         """Start a background thread that flushes all agents' memory daily at 23:55."""

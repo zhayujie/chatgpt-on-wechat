@@ -339,14 +339,18 @@ class WebChannel(ChatChannel):
         """
         SSE generator for a given request_id.
         Yields UTF-8 encoded bytes to avoid WSGI Latin-1 mangling.
+        Supports client reconnection: the queue is only removed after a
+        "done" event is consumed, so a new GET /stream with the same
+        request_id can resume reading remaining events.
         """
         if request_id not in self.sse_queues:
             yield b"data: {\"type\": \"error\", \"message\": \"invalid request_id\"}\n\n"
             return
 
         q = self.sse_queues[request_id]
-        timeout = 300  # 5 minutes max
-        deadline = time.time() + timeout
+        idle_timeout = 600  # 10 minutes without any real event
+        deadline = time.time() + idle_timeout
+        done = False
 
         try:
             while time.time() < deadline:
@@ -356,13 +360,18 @@ class WebChannel(ChatChannel):
                     yield b": keepalive\n\n"
                     continue
 
+                # Real event received, reset idle deadline
+                deadline = time.time() + idle_timeout
+
                 payload = json.dumps(item, ensure_ascii=False)
                 yield f"data: {payload}\n\n".encode("utf-8")
 
                 if item.get("type") == "done":
+                    done = True
                     break
         finally:
-            self.sse_queues.pop(request_id, None)
+            if done:
+                self.sse_queues.pop(request_id, None)
 
     def poll_response(self):
         """

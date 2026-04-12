@@ -2,6 +2,7 @@
 
 import time
 import json
+from typing import Optional
 
 from models.bot import Bot
 from models.zhipuai.zhipu_ai_session import ZhipuAISession
@@ -148,6 +149,40 @@ class ZHIPUAIBot(Bot, ZhipuAIImage):
                 return self.reply_text(session, args, retry_count + 1)
             else:
                 return result
+
+    def call_vision(self, image_url: str, question: str,
+                    model: Optional[str] = None,
+                    max_tokens: int = 1000) -> dict:
+        """Analyze an image using ZhipuAI OpenAI-compatible SDK.
+        Always uses glm-5v-turbo — the text models (glm-5-turbo etc.) do not support vision.
+        """
+        try:
+            vision_model = "glm-5v-turbo"
+            response = self.client.chat.completions.create(
+                model=vision_model,
+                max_tokens=max_tokens,
+                messages=[{
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": question},
+                        {"type": "image_url", "image_url": {"url": image_url}},
+                    ],
+                }],
+            )
+            content = response.choices[0].message.content or ""
+            usage = response.usage
+            return {
+                "model": vision_model,
+                "content": content,
+                "usage": {
+                    "prompt_tokens": getattr(usage, "prompt_tokens", 0),
+                    "completion_tokens": getattr(usage, "completion_tokens", 0),
+                    "total_tokens": getattr(usage, "total_tokens", 0),
+                },
+            }
+        except Exception as e:
+            logger.error(f"[ZHIPU_AI] call_vision error: {e}")
+            return {"error": True, "message": str(e)}
 
     def call_with_tools(self, messages, tools=None, stream=False, **kwargs):
         """

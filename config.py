@@ -189,6 +189,7 @@ available_setting = {
     "linkai_app_code": "",
     "linkai_api_base": "https://api.link-ai.tech",
     "cloud_host": "client.link-ai.tech",
+    "cloud_port": None,
     "cloud_deployment_id": "",
     "minimax_api_key": "",
     "Minimax_group_id": "",
