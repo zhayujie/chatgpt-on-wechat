@@ -689,3 +689,42 @@
     border-color: rgba(255,255,255,0.1);
     color: #e2e8f0;
 }
+
+/* Config field tooltip */
+.cfg-tip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    color: #94a3b8;
+    cursor: help;
+    font-size: 12px;
+}
+.cfg-tip:hover { color: #64748b; }
+.dark .cfg-tip:hover { color: #cbd5e1; }
+.cfg-tip::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 6px);
+    transform: translateX(-50%);
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1.4;
+    white-space: nowrap;
+    background: #1e293b;
+    color: #e2e8f0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s;
+    z-index: 50;
+}
+.dark .cfg-tip::after {
+    background: #334155;
+    color: #f1f5f9;
+}
+.cfg-tip:hover::after {
+    opacity: 1;
+}

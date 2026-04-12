@@ -54,6 +54,41 @@
     </script>
 </head>
 <body class="h-screen overflow-hidden bg-gray-50 dark:bg-[#111111] text-slate-800 dark:text-slate-200 font-sans">
+
+    <!-- Login Overlay -->
+    <div id="login-overlay" class="fixed inset-0 z-[200] bg-gray-50 dark:bg-[#111111] flex items-center justify-center hidden">
+        <div class="w-full max-w-sm mx-4">
+            <div class="flex flex-col items-center mb-8">
+                <img src="assets/logo.jpg" alt="CowAgent" class="w-16 h-16 rounded-2xl mb-4 shadow-lg">
+                <h1 class="text-xl font-bold text-slate-800 dark:text-slate-100">CowAgent</h1>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1" id="login-subtitle">请输入密码以访问控制台</p>
+            </div>
+            <form id="login-form" class="space-y-4" onsubmit="return false;">
+                <div class="relative">
+                    <input id="login-password" type="password" autocomplete="current-password"
+                           placeholder="Password"
+                           class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-white/10
+                                  bg-white dark:bg-[#1A1A1A] text-slate-800 dark:text-slate-200
+                                  placeholder-slate-400 dark:placeholder-slate-500
+                                  focus:outline-none focus:ring-2 focus:ring-primary-400/50 focus:border-primary-400
+                                  transition-all duration-150 text-sm">
+                    <button type="button" id="login-toggle-pwd"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600
+                                   dark:hover:text-slate-300 cursor-pointer transition-colors"
+                            onclick="toggleLoginPassword()">
+                        <i class="fas fa-eye text-sm"></i>
+                    </button>
+                </div>
+                <p id="login-error" class="text-sm text-red-500 hidden"></p>
+                <button id="login-btn" type="submit"
+                        class="w-full py-3 rounded-xl bg-primary-500 hover:bg-primary-600 text-white font-medium
+                               text-sm cursor-pointer transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed">
+                    登录
+                </button>
+            </form>
+        </div>
+    </div>
+
     <div id="app" class="flex h-screen">
 
         <!-- ================================================================ -->
@@ -414,21 +449,30 @@
                                     </div>
                                     <div class="space-y-4">
                                         <div>
-                                            <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5" data-i18n="config_max_tokens">Max Context Tokens</label>
+                                            <label class="flex items-center gap-1.5 text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">
+                                                <span data-i18n="config_max_tokens">Max Context Tokens</span>
+                                                <span class="cfg-tip" data-tip-key="config_max_tokens_hint"><i class="fas fa-circle-question"></i></span>
+                                            </label>
                                             <input id="cfg-max-tokens" type="number" min="1000" max="200000" step="1000"
                                                    class="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600
                                                           bg-slate-50 dark:bg-white/5 text-sm text-slate-800 dark:text-slate-100
                                                           focus:outline-none focus:border-primary-500 font-mono transition-colors">
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5" data-i18n="config_max_turns">Max Context Turns</label>
+                                            <label class="flex items-center gap-1.5 text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">
+                                                <span data-i18n="config_max_turns">Max Memory Turns</span>
+                                                <span class="cfg-tip" data-tip-key="config_max_turns_hint"><i class="fas fa-circle-question"></i></span>
+                                            </label>
                                             <input id="cfg-max-turns" type="number" min="1" max="100" step="1"
                                                    class="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600
                                                           bg-slate-50 dark:bg-white/5 text-sm text-slate-800 dark:text-slate-100
                                                           focus:outline-none focus:border-primary-500 font-mono transition-colors">
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5" data-i18n="config_max_steps">Max Steps</label>
+                                            <label class="flex items-center gap-1.5 text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">
+                                                <span data-i18n="config_max_steps">Max Steps</span>
+                                                <span class="cfg-tip" data-tip-key="config_max_steps_hint"><i class="fas fa-circle-question"></i></span>
+                                            </label>
                                             <input id="cfg-max-steps" type="number" min="1" max="50" step="1"
                                                    class="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600
                                                           bg-slate-50 dark:bg-white/5 text-sm text-slate-800 dark:text-slate-100
@@ -440,6 +484,35 @@
                                                     class="px-4 py-2 rounded-lg bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium
                                                            cursor-pointer transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
                                                     onclick="saveAgentConfig()" data-i18n="config_save">Save</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Security Config Card -->
+                                <div class="bg-white dark:bg-[#1A1A1A] rounded-xl border border-slate-200 dark:border-white/10 p-6">
+                                    <div class="flex items-center gap-3 mb-5">
+                                        <div class="w-9 h-9 rounded-lg bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center">
+                                            <i class="fas fa-lock text-amber-500 text-sm"></i>
+                                        </div>
+                                        <h3 class="font-semibold text-slate-800 dark:text-slate-100" data-i18n="config_security">Security</h3>
+                                    </div>
+                                    <div class="space-y-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5" data-i18n="config_password">Password</label>
+                                            <input id="cfg-password" type="password" autocomplete="new-password"
+                                                   class="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600
+                                                          bg-slate-50 dark:bg-white/5 text-sm text-slate-800 dark:text-slate-100
+                                                          focus:outline-none focus:border-primary-500 font-mono transition-colors
+                                                          cfg-key-masked"
+                                                   data-masked="1">
+                                            <p class="text-xs text-slate-400 dark:text-slate-500 mt-1.5" data-i18n="config_password_hint">Leave empty to disable password protection</p>
+                                        </div>
+                                        <div class="flex items-center justify-end gap-3 pt-1">
+                                            <span id="cfg-password-status" class="text-xs text-primary-500 opacity-0 transition-opacity duration-300"></span>
+                                            <button id="cfg-password-save"
+                                                    class="px-4 py-2 rounded-lg bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium
+                                                           cursor-pointer transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    onclick="savePasswordConfig()" data-i18n="config_save">Save</button>
                                         </div>
                                     </div>
                                 </div>

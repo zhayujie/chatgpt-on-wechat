@@ -7,7 +7,7 @@
   [<a href="https://github.com/zhayujie/CowAgent/blob/master/README.md">中文</a>] | [English] | [<a href="https://github.com/zhayujie/CowAgent/blob/master/docs/ja/README.md">日本語</a>]
 </p>
 
-**CowAgent** is an AI super assistant powered by LLMs, capable of autonomous task planning, operating computers and external resources, creating and executing Skills, and continuously growing with long-term memory. It supports flexible model switching, handles text, voice, images, and files, and can be integrated into WeChat, Web, Feishu, DingTalk, WeCom Bot, WeCom App, and WeChat Official Account — running 7×24 hours on your personal computer or server.
+**CowAgent** is an AI super assistant powered by LLMs, capable of autonomous task planning, operating computers and external resources, creating and executing Skills, and continuously growing with long-term memory and a personal knowledge base. It supports flexible model switching, handles text, voice, images, and files, and can be integrated into WeChat, Web, Feishu, DingTalk, WeCom Bot, WeCom App, and WeChat Official Account — running 7×24 hours on your personal computer or server.
 
 <p align="center">
   <a href="https://cowagent.ai/">🌐 Website</a> &nbsp;·&nbsp;
@@ -23,6 +23,7 @@
 
 - ✅ **Autonomous Task Planning**: Understands complex tasks and autonomously plans execution, continuously thinking and invoking tools until goals are achieved.
 - ✅ **Long-term Memory**: Automatically persists conversation memory to local files and databases, including core memory and daily memory, with keyword and vector retrieval support.
+- ✅ **Personal Knowledge Base**: Automatically organizes structured knowledge with cross-references to build a knowledge graph, with web-based visualization and conversational management.
 - ✅ **Skills System**: Implements a Skills creation and execution engine, supports installing skills from [Skill Hub](https://skills.cowagent.ai), GitHub, etc., or creating custom Skills through conversation.
 - ✅ **Tool System**: Built-in tools for file I/O, terminal execution, browser automation, scheduled tasks, messaging, and more — autonomously invoked by the Agent.
 - ✅ **CLI System**: Provides terminal commands and in-chat commands for process management, skill installation, configuration, and more.

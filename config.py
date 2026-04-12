@@ -195,11 +195,13 @@ available_setting = {
     "Minimax_group_id": "",
     "Minimax_base_url": "",
     "web_port": 9899,
+    "web_password": "",  # Web console password; empty means no authentication required
+    "web_session_expire_days": 30,  # Auth session expiry in days
     "agent": True,  # 是否开启Agent模式
     "agent_workspace": "~/cow",  # agent工作空间路径，用于存储skills、memory等
     "agent_max_context_tokens": 50000,  # Agent模式下最大上下文tokens
-    "agent_max_context_turns": 30,  # Agent模式下最大上下文记忆轮次
-    "agent_max_steps": 15,  # Agent模式下单次运行最大决策步数
+    "agent_max_context_turns": 20,  # Agent模式下最大上下文记忆轮次
+    "agent_max_steps": 20,  # Agent模式下单次运行最大决策步数
     "knowledge": True,  # 是否开启知识库功能
 }
 
