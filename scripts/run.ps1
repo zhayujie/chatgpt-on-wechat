@@ -60,6 +60,7 @@ $PythonCmd = Find-Python
 function Assert-Python {
     if (-not $PythonCmd) {
         Write-Err "Python 3.9-3.13 not found. Please install from https://www.python.org/downloads/"
+        Read-Host "Press Enter to exit"
         exit 1
     }
     Write-Cow "Found Python: $PythonCmd"
@@ -86,6 +87,7 @@ function Install-Project {
     $gitBin = Get-Command git -ErrorAction SilentlyContinue
     if (-not $gitBin) {
         Write-Err "Git not found. Please install from https://git-scm.com/download/win"
+        Read-Host "Press Enter to exit"
         exit 1
     }
 
@@ -96,30 +98,30 @@ function Install-Project {
     try {
         $null = Invoke-WebRequest -Uri "https://github.com" -UseBasicParsing -TimeoutSec 5 -ErrorAction Stop
         Write-Cow "GitHub is reachable, cloning from GitHub..."
-        $proc = Start-Process -FilePath "git" -ArgumentList "clone","--depth","10","--progress","https://github.com/zhayujie/CowAgent.git" `
-            -NoNewWindow -PassThru -RedirectStandardError "$env:TEMP\git_clone_err.txt"
-        if ($proc.WaitForExit(15000) -and $proc.ExitCode -eq 0) {
-            $cloneOk = $true
-        } else {
-            if (-not $proc.HasExited) { $proc.Kill() }
+        $prevEAP = $ErrorActionPreference; $ErrorActionPreference = "Continue"
+        git clone --depth 10 --progress "https://github.com/zhayujie/CowAgent.git" 2>&1 | ForEach-Object { Write-Host $_ }
+        if ($LASTEXITCODE -eq 0) { $cloneOk = $true }
+        $ErrorActionPreference = $prevEAP
+        if (-not $cloneOk) {
             if (Test-Path "CowAgent") { Remove-Item -Recurse -Force "CowAgent" }
         }
     } catch {}
 
     if (-not $cloneOk) {
         Write-Warn "GitHub clone failed or timed out, switching to Gitee mirror..."
-        $proc = Start-Process -FilePath "git" -ArgumentList "clone","--depth","10","--progress","https://gitee.com/zhayujie/CowAgent.git" `
-            -NoNewWindow -PassThru -RedirectStandardError "$env:TEMP\git_clone_err.txt"
-        if ($proc.WaitForExit(30000) -and $proc.ExitCode -eq 0) {
-            $cloneOk = $true
-        } else {
-            if (-not $proc.HasExited) { $proc.Kill() }
+        $prevEAP = $ErrorActionPreference; $ErrorActionPreference = "Continue"
+        git clone --depth 10 --progress "https://gitee.com/zhayujie/CowAgent.git" 2>&1 | ForEach-Object { Write-Host $_ }
+        if ($LASTEXITCODE -eq 0) { $cloneOk = $true }
+        $ErrorActionPreference = $prevEAP
+        if (-not $cloneOk) {
             if (Test-Path "CowAgent") { Remove-Item -Recurse -Force "CowAgent" }
         }
     }
 
     if (-not $cloneOk) {
-        Write-Err "Clone failed. Check your network."
+        Write-Err "Clone failed from both GitHub and Gitee. Please check your network connection."
+        Write-Err "You can also manually clone: git clone https://gitee.com/zhayujie/CowAgent.git"
+        Read-Host "Press Enter to exit"
         exit 1
     }
 
