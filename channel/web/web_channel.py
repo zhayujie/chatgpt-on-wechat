@@ -1,3 +1,5 @@
+import hashlib
+import hmac
 import time
 import json
 import logging
@@ -22,6 +24,62 @@ from config import conf
 
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".svg"}
 VIDEO_EXTENSIONS = {".mp4", ".webm", ".avi", ".mov", ".mkv"}
+
+def _is_password_enabled():
+    return bool(conf().get("web_password", ""))
+
+
+def _session_expire_seconds():
+    return int(conf().get("web_session_expire_days", 30)) * 86400
+
+
+def _create_auth_token():
+    """Create a stateless signed token: ``<timestamp_hex>.<hmac_hex>``."""
+    ts = format(int(time.time()), "x")
+    sig = hmac.new(
+        conf().get("web_password", "").encode(),
+        ts.encode(),
+        hashlib.sha256,
+    ).hexdigest()
+    return f"{ts}.{sig}"
+
+
+def _verify_auth_token(token):
+    """Verify a signed token is valid and not expired.
+
+    The token is derived from the password, so it survives server restarts
+    and automatically invalidates when the password changes.
+    """
+    if not token or "." not in token:
+        return False
+    ts_hex, sig = token.split(".", 1)
+    try:
+        ts = int(ts_hex, 16)
+    except ValueError:
+        return False
+    if time.time() - ts > _session_expire_seconds():
+        return False
+    expected = hmac.new(
+        conf().get("web_password", "").encode(),
+        ts_hex.encode(),
+        hashlib.sha256,
+    ).hexdigest()
+    return hmac.compare_digest(sig, expected)
+
+
+def _check_auth():
+    """Return True if request is authenticated or password not enabled."""
+    if not _is_password_enabled():
+        return True
+    return _verify_auth_token(web.cookies().get("cow_auth_token", ""))
+
+
+def _require_auth():
+    """Raise 401 if not authenticated. Call at the top of protected handlers."""
+    if not _check_auth():
+        raise web.HTTPError("401 Unauthorized",
+                            {"Content-Type": "application/json; charset=utf-8"},
+                            json.dumps({"status": "error", "message": "Unauthorized"}))
 
 
 def _get_upload_dir() -> str:
@@ -440,6 +498,9 @@ class WebChannel(ChatChannel):
 
         urls = (
             '/', 'RootHandler',
+            '/auth/login', 'AuthLoginHandler',
+            '/auth/check', 'AuthCheckHandler',
+            '/auth/logout', 'AuthLogoutHandler',
             '/message', 'MessageHandler',
             '/upload', 'UploadHandler',
             '/uploads/(.*)', 'UploadsHandler',
@@ -502,24 +563,62 @@ class WebChannel(ChatChannel):
 
 class RootHandler:
     def GET(self):
-        # 重定向到/chat
         raise web.seeother('/chat')
+
+
+class AuthCheckHandler:
+    def GET(self):
+        web.header('Content-Type', 'application/json; charset=utf-8')
+        if not _is_password_enabled():
+            return json.dumps({"status": "success", "auth_required": False})
+        if _check_auth():
+            return json.dumps({"status": "success", "auth_required": True, "authenticated": True})
+        return json.dumps({"status": "success", "auth_required": True, "authenticated": False})
+
+
+class AuthLoginHandler:
+    def POST(self):
+        web.header('Content-Type', 'application/json; charset=utf-8')
+        if not _is_password_enabled():
+            return json.dumps({"status": "success"})
+        try:
+            data = json.loads(web.data())
+        except Exception:
+            return json.dumps({"status": "error", "message": "Invalid request"})
+        password = data.get("password", "")
+        expected = conf().get("web_password", "")
+        if not hmac.compare_digest(password, expected):
+            logger.warning("[WebChannel] Invalid login attempt")
+            return json.dumps({"status": "error", "message": "Wrong password"})
+        token = _create_auth_token()
+        web.setcookie("cow_auth_token", token, expires=_session_expire_seconds(),
+                       path="/", httponly=True, samesite="Lax")
+        return json.dumps({"status": "success"})
+
+
+class AuthLogoutHandler:
+    def POST(self):
+        web.header('Content-Type', 'application/json; charset=utf-8')
+        web.setcookie("cow_auth_token", "", expires=-1, path="/")
+        return json.dumps({"status": "success"})
 
 
 class MessageHandler:
     def POST(self):
+        _require_auth()
         return WebChannel().post_message()
 
 
 class UploadHandler:
     def POST(self):
+        _require_auth()
         web.header('Content-Type', 'application/json; charset=utf-8')
         return WebChannel().upload_file()
 
 
 class UploadsHandler:
     def GET(self, file_name):
-        """Serve uploaded files from workspace/tmp/ for preview."""
+        _require_auth()
         try:
             upload_dir = _get_upload_dir()
             full_path = os.path.normpath(os.path.join(upload_dir, file_name))
@@ -541,7 +640,7 @@ class UploadsHandler:
 
 class FileServeHandler:
     def GET(self):
-        """Serve a local file by absolute path (for agent send tool)."""
+        _require_auth()
         try:
             params = web.input(path="")
             file_path = params.path
@@ -567,11 +666,13 @@ class FileServeHandler:
 
 class PollHandler:
     def POST(self):
+        _require_auth()
         return WebChannel().poll_response()
 
 
 class StreamHandler:
     def GET(self):
+        _require_auth()
         params = web.input(request_id='')
         request_id = params.request_id
         if not request_id:
@@ -695,6 +796,7 @@ class ConfigHandler:
         "zhipu_ai_api_key", "dashscope_api_key", "moonshot_api_key",
         "ark_api_key", "minimax_api_key", "linkai_api_key",
         "agent_max_context_tokens", "agent_max_context_turns", "agent_max_steps",
+        "web_password",
     }
 
     @staticmethod
@@ -705,7 +807,7 @@ class ConfigHandler:
         return value[:4] + "*" * (len(value) - 8) + value[-4:]
 
     def GET(self):
-        """Return configuration info and provider/model metadata."""
+        _require_auth()
         web.header('Content-Type', 'application/json; charset=utf-8')
         try:
             local_config = conf()
@@ -733,6 +835,9 @@ class ConfigHandler:
                     "api_key_field": p.get("api_key_field"),
                 }
 
+            raw_pwd = local_config.get("web_password", "")
+            masked_pwd = ("*" * len(raw_pwd)) if raw_pwd else ""
+
             return json.dumps({
                 "status": "success",
                 "use_agent": use_agent,
@@ -743,17 +848,18 @@ class ConfigHandler:
                 "channel_type": local_config.get("channel_type", ""),
                 "agent_max_context_tokens": local_config.get("agent_max_context_tokens", 50000),
                 "agent_max_context_turns": local_config.get("agent_max_context_turns", 20),
-                "agent_max_steps": local_config.get("agent_max_steps", 15),
+                "agent_max_steps": local_config.get("agent_max_steps", 20),
                 "api_bases": api_bases,
                 "api_keys": api_keys_masked,
                 "providers": providers,
+                "web_password_masked": masked_pwd,
             }, ensure_ascii=False)
         except Exception as e:
             logger.error(f"Error getting config: {e}")
             return json.dumps({"status": "error", "message": str(e)})
 
     def POST(self):
-        """Update configuration values in memory and persist to config.json."""
+        _require_auth()
         web.header('Content-Type', 'application/json; charset=utf-8')
         try:
             data = json.loads(web.data())
@@ -902,6 +1008,7 @@ class ChannelsHandler:
         return set(cls._parse_channel_list(conf().get("channel_type", "")))
 
     def GET(self):
+        _require_auth()
         web.header('Content-Type', 'application/json; charset=utf-8')
         try:
             local_config = conf()
@@ -939,6 +1046,7 @@ class ChannelsHandler:
             return json.dumps({"status": "error", "message": str(e)})
 
     def POST(self):
+        _require_auth()
         web.header('Content-Type', 'application/json; charset=utf-8')
         try:
             body = json.loads(web.data())
@@ -1192,6 +1300,7 @@ class WeixinQrHandler:
         return None
 
     def GET(self):
+        _require_auth()
         web.header('Content-Type', 'application/json; charset=utf-8')
         try:
             running_ch = self._get_running_channel()
@@ -1224,6 +1333,7 @@ class WeixinQrHandler:
             return json.dumps({"status": "error", "message": str(e)})
 
     def POST(self):
+        _require_auth()
         web.header('Content-Type', 'application/json; charset=utf-8')
         try:
             body = json.loads(web.data())
@@ -1311,6 +1421,7 @@ def _get_workspace_root():
 
 class ToolsHandler:
     def GET(self):
+        _require_auth()
         web.header('Content-Type', 'application/json; charset=utf-8')
         try:
             from agent.tools.tool_manager import ToolManager
@@ -1335,6 +1446,7 @@ class ToolsHandler:
 
 class SkillsHandler:
     def GET(self):
+        _require_auth()
         web.header('Content-Type', 'application/json; charset=utf-8')
         try:
             from agent.skills.service import SkillService
@@ -1349,6 +1461,7 @@ class SkillsHandler:
             return json.dumps({"status": "error", "message": str(e)})
 
     def POST(self):
+        _require_auth()
         web.header('Content-Type', 'application/json; charset=utf-8')
         try:
             from agent.skills.service import SkillService
@@ -1375,6 +1488,7 @@ class SkillsHandler:
 
 class MemoryHandler:
     def GET(self):
+        _require_auth()
         web.header('Content-Type', 'application/json; charset=utf-8')
         try:
             from agent.memory.service import MemoryService
@@ -1390,6 +1504,7 @@ class MemoryHandler:
 
 class MemoryContentHandler:
     def GET(self):
+        _require_auth()
         web.header('Content-Type', 'application/json; charset=utf-8')
         try:
             from agent.memory.service import MemoryService
@@ -1411,6 +1526,7 @@ class MemoryContentHandler:
 
 class SchedulerHandler:
     def GET(self):
+        _require_auth()
         web.header('Content-Type', 'application/json; charset=utf-8')
         try:
             from agent.tools.scheduler.task_store import TaskStore
@@ -1426,14 +1542,7 @@ class SchedulerHandler:
 
 class HistoryHandler:
     def GET(self):
-        """
-        Return paginated conversation history for a session.
-
-        Query params:
-            session_id  (required)
-            page        int, default 1  (1 = most recent messages)
-            page_size   int, default 20
-        """
+        _require_auth()
         web.header('Content-Type', 'application/json; charset=utf-8')
         web.header('Access-Control-Allow-Origin', '*')
         try:
@@ -1457,7 +1566,7 @@ class HistoryHandler:
 
 class LogsHandler:
     def GET(self):
-        """Stream the last N lines of run.log as SSE, then tail new lines."""
+        _require_auth()
         web.header('Content-Type', 'text/event-stream; charset=utf-8')
         web.header('Cache-Control', 'no-cache')
         web.header('X-Accel-Buffering', 'no')
@@ -1545,6 +1654,7 @@ class AssetsHandler:
 
 class KnowledgeListHandler:
     def GET(self):
+        _require_auth()
         web.header('Content-Type', 'application/json; charset=utf-8')
         try:
             from agent.knowledge.service import KnowledgeService
@@ -1558,6 +1668,7 @@ class KnowledgeListHandler:
 
 class KnowledgeReadHandler:
     def GET(self):
+        _require_auth()
         web.header('Content-Type', 'application/json; charset=utf-8')
         try:
             from agent.knowledge.service import KnowledgeService
@@ -1574,6 +1685,7 @@ class KnowledgeReadHandler:
 
 class KnowledgeGraphHandler:
     def GET(self):
+        _require_auth()
         web.header('Content-Type', 'application/json; charset=utf-8')
         try:
             from agent.knowledge.service import KnowledgeService

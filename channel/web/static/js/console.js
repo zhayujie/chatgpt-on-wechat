@@ -31,14 +31,20 @@ const I18N = {
         config_title: '配置管理', config_desc: '管理模型和 Agent 配置',
         config_model: '模型配置', config_agent: 'Agent 配置',
         config_channel: '通道配置',
-        config_agent_enabled: 'Agent 模式', config_max_tokens: '最大 Token',
-        config_max_turns: '最大轮次', config_max_steps: '最大步数',
+        config_agent_enabled: 'Agent 模式',
+        config_max_tokens: '最大上下文 Token', config_max_tokens_hint: '对话中 Agent 能输入的最大 Token 长度，超过后会智能压缩处理',
+        config_max_turns: '最大记忆轮次', config_max_turns_hint: '一问一答为一轮，超过后会智能压缩处理',
+        config_max_steps: '最大执行步数', config_max_steps_hint: '单次对话中 Agent 最多调用工具的次数',
         config_channel_type: '通道类型',
         config_provider: '模型厂商', config_model_name: '模型',
         config_custom_model_hint: '输入自定义模型名称',
         config_save: '保存', config_saved: '已保存',
         config_save_error: '保存失败',
         config_custom_option: '自定义...',
+        config_security: '安全设置', config_password: '访问密码',
+        config_password_hint: '留空则不启用密码保护',
+        config_password_changed: '密码已更新，请重新登录',
+        config_password_cleared: '密码已清除',
         skills_title: '技能管理', skills_desc: '查看、启用或禁用 Agent 技能', skills_hub_btn: '探索技能广场',
         skills_loading: '加载技能中...', skills_loading_desc: '技能加载后将显示在此处',
         tools_section_title: '内置工具', tools_loading: '加载工具中...',
@@ -92,14 +98,20 @@ const I18N = {
         config_title: 'Configuration', config_desc: 'Manage model and agent settings',
         config_model: 'Model Configuration', config_agent: 'Agent Configuration',
         config_channel: 'Channel Configuration',
-        config_agent_enabled: 'Agent Mode', config_max_tokens: 'Max Tokens',
-        config_max_turns: 'Max Turns', config_max_steps: 'Max Steps',
+        config_agent_enabled: 'Agent Mode',
+        config_max_tokens: 'Max Context Tokens', config_max_tokens_hint: 'Max tokens the Agent can input per conversation, auto-compressed when exceeded',
+        config_max_turns: 'Max Memory Turns', config_max_turns_hint: 'One Q&A pair = one turn, auto-compressed when exceeded',
+        config_max_steps: 'Max Steps', config_max_steps_hint: 'Max tool calls the Agent can make in a single conversation',
         config_channel_type: 'Channel Type',
         config_provider: 'Provider', config_model_name: 'Model',
         config_custom_model_hint: 'Enter custom model name',
         config_save: 'Save', config_saved: 'Saved',
         config_save_error: 'Save failed',
         config_custom_option: 'Custom...',
+        config_security: 'Security', config_password: 'Password',
+        config_password_hint: 'Leave empty to disable password protection',
+        config_password_changed: 'Password updated, please re-login',
+        config_password_cleared: 'Password cleared',
         skills_title: 'Skills', skills_desc: 'View, enable, or disable agent skills', skills_hub_btn: 'Skill Hub',
         skills_loading: 'Loading skills...', skills_loading_desc: 'Skills will be displayed here after loading',
         tools_section_title: 'Built-in Tools', tools_loading: 'Loading tools...',
@@ -150,6 +162,9 @@ function applyI18n() {
     });
     document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
         el.placeholder = t(el.dataset['i18nPlaceholder']);
+    });
+    document.querySelectorAll('[data-tip-key]').forEach(el => {
+        el.setAttribute('data-tooltip', t(el.dataset.tipKey));
     });
     document.getElementById('lang-label').textContent = currentLang === 'zh' ? 'EN' : '中文';
 }
@@ -1572,8 +1587,35 @@ function initConfigView(data) {
     syncModelSelection(configCurrentModel);
 
     document.getElementById('cfg-max-tokens').value = data.agent_max_context_tokens || 50000;
-    document.getElementById('cfg-max-turns').value = data.agent_max_context_turns || 30;
-    document.getElementById('cfg-max-steps').value = data.agent_max_steps || 15;
+    document.getElementById('cfg-max-turns').value = data.agent_max_context_turns || 20;
+    document.getElementById('cfg-max-steps').value = data.agent_max_steps || 20;
+
+    const pwdInput = document.getElementById('cfg-password');
+    const maskedPwd = data.web_password_masked || '';
+    pwdInput.value = maskedPwd;
+    pwdInput.dataset.masked = maskedPwd ? '1' : '';
+    pwdInput.dataset.maskedVal = maskedPwd;
+    pwdInput.classList.toggle('cfg-key-masked', !!maskedPwd);
+
+    if (maskedPwd) {
+        pwdInput.placeholder = '••••••••';
+    } else {
+        pwdInput.placeholder = '';
+    }
+
+    if (!pwdInput._cfgBound) {
+        pwdInput.addEventListener('focus', function() {
+            if (this.dataset.masked === '1') {
+                this.value = '';
+                this.dataset.masked = '';
+                this.classList.remove('cfg-key-masked');
+            }
+        });
+        pwdInput.addEventListener('input', function() {
+            this.dataset.masked = '';
+        });
+        pwdInput._cfgBound = true;
+    }
 }
 
 function detectProvider(model) {
@@ -1779,8 +1821,8 @@ function saveModelConfig() {
 function saveAgentConfig() {
     const updates = {
         agent_max_context_tokens: parseInt(document.getElementById('cfg-max-tokens').value) || 50000,
-        agent_max_context_turns: parseInt(document.getElementById('cfg-max-turns').value) || 30,
-        agent_max_steps: parseInt(document.getElementById('cfg-max-steps').value) || 15,
+        agent_max_context_turns: parseInt(document.getElementById('cfg-max-turns').value) || 20,
+        agent_max_steps: parseInt(document.getElementById('cfg-max-steps').value) || 20,
     };
 
     const btn = document.getElementById('cfg-agent-save');
@@ -1799,6 +1841,40 @@ function saveAgentConfig() {
         }
     })
     .catch(() => showStatus('cfg-agent-status', 'config_save_error', true))
+    .finally(() => { btn.disabled = false; });
+}
+
+function savePasswordConfig() {
+    const input = document.getElementById('cfg-password');
+    if (input.dataset.masked === '1') {
+        showStatus('cfg-password-status', 'config_saved', false);
+        return;
+    }
+    const newPwd = input.value.trim();
+    const btn = document.getElementById('cfg-password-save');
+    btn.disabled = true;
+    fetch('/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ updates: { web_password: newPwd } })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'success') {
+            if (newPwd) {
+                showStatus('cfg-password-status', 'config_password_changed', false);
+                setTimeout(() => { window.location.reload(); }, 1500);
+            } else {
+                input.dataset.masked = '';
+                input.dataset.maskedVal = '';
+                input.classList.remove('cfg-key-masked');
+                showStatus('cfg-password-status', 'config_password_cleared', false);
+            }
+        } else {
+            showStatus('cfg-password-status', 'config_save_error', true);
+        }
+    })
+    .catch(() => showStatus('cfg-password-status', 'config_save_error', true))
     .finally(() => { btn.disabled = false; });
 }
 
@@ -3343,28 +3419,119 @@ function renderKnowledgeGraph(container, nodes, links) {
 }
 
 // =====================================================================
+// Authentication
+// =====================================================================
+function toggleLoginPassword() {
+    const input = document.getElementById('login-password');
+    const icon = document.querySelector('#login-toggle-pwd i');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.replace('fa-eye', 'fa-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.replace('fa-eye-slash', 'fa-eye');
+    }
+}
+window.toggleLoginPassword = toggleLoginPassword;
+
+function showLoginScreen() {
+    const overlay = document.getElementById('login-overlay');
+    if (!overlay) return;
+    overlay.classList.remove('hidden');
+    document.getElementById('app').classList.add('hidden');
+
+    const subtitle = document.getElementById('login-subtitle');
+    const loginBtn = document.getElementById('login-btn');
+    if (currentLang === 'en') {
+        subtitle.textContent = 'Enter password to access the console';
+        loginBtn.textContent = 'Login';
+    } else {
+        subtitle.textContent = '请输入密码以访问控制台';
+        loginBtn.textContent = '登录';
+    }
+
+    const form = document.getElementById('login-form');
+    const pwdInput = document.getElementById('login-password');
+    pwdInput.focus();
+
+    form.onsubmit = function(e) {
+        e.preventDefault();
+        const pwd = pwdInput.value;
+        if (!pwd) return;
+        const btn = document.getElementById('login-btn');
+        const errEl = document.getElementById('login-error');
+        btn.disabled = true;
+        errEl.classList.add('hidden');
+
+        fetch('/auth/login', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({password: pwd})
+        }).then(r => r.json()).then(data => {
+            if (data.status === 'success') {
+                overlay.classList.add('hidden');
+                document.getElementById('app').classList.remove('hidden');
+                initApp();
+            } else {
+                errEl.textContent = currentLang === 'zh' ? '密码错误' : 'Wrong password';
+                errEl.classList.remove('hidden');
+                pwdInput.value = '';
+                pwdInput.focus();
+            }
+            btn.disabled = false;
+        }).catch(() => {
+            errEl.textContent = currentLang === 'zh' ? '网络错误，请重试' : 'Network error, please retry';
+            errEl.classList.remove('hidden');
+            btn.disabled = false;
+        });
+        return false;
+    };
+}
+
+// Intercept 401 responses globally to show login screen on session expiry
+const _originalFetch = window.fetch;
+window.fetch = function(...args) {
+    return _originalFetch.apply(this, args).then(response => {
+        if (response.status === 401) {
+            const url = typeof args[0] === 'string' ? args[0] : (args[0]?.url || '');
+            if (!url.startsWith('/auth/')) {
+                showLoginScreen();
+            }
+        }
+        return response;
+    });
+};
+
+function initApp() {
+    fetch('/api/knowledge/list').then(r => r.json()).then(data => {
+        if (data.status === 'success') _knowledgeTreeData = data.tree || [];
+    }).catch(() => {});
+
+    fetch('/api/version').then(r => r.json()).then(data => {
+        APP_VERSION = `v${data.version}`;
+        document.getElementById('sidebar-version').textContent = `CowAgent ${APP_VERSION}`;
+    }).catch(() => {
+        document.getElementById('sidebar-version').textContent = 'CowAgent';
+    });
+    chatInput.focus();
+}
+
+// =====================================================================
 // Initialization
 // =====================================================================
 applyTheme();
 applyI18n();
 
-// Pre-fetch knowledge tree for chat link resolution
-fetch('/api/knowledge/list').then(r => r.json()).then(data => {
-    if (data.status === 'success') _knowledgeTreeData = data.tree || [];
-}).catch(() => {});
-
-fetch('/api/version').then(r => r.json()).then(data => {
-    APP_VERSION = `v${data.version}`;
-    document.getElementById('sidebar-version').textContent = `CowAgent ${APP_VERSION}`;
+fetch('/auth/check').then(r => r.json()).then(data => {
+    if (data.auth_required && !data.authenticated) {
+        showLoginScreen();
+    } else {
+        initApp();
+    }
 }).catch(() => {
-    document.getElementById('sidebar-version').textContent = 'CowAgent';
+    initApp();
 });
-chatInput.focus();
 
-// Re-enable color transition AFTER first paint so the theme applied in <head>
-// doesn't produce an animated flash on load.  The class is missing from the
-// body initially; adding it here means transitions only fire on user-triggered
-// theme toggles, not on page load.
 requestAnimationFrame(() => {
     document.body.classList.add('transition-colors', 'duration-200');
 });

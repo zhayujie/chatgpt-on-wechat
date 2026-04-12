@@ -35,9 +35,10 @@ services:
       DINGTALK_CLIENT_SECRET: ''
       WECOM_BOT_ID: ''
       WECOM_BOT_SECRET: ''
+      WEB_PASSWORD: ''
       AGENT: 'True'
-      AGENT_MAX_CONTEXT_TOKENS: 40000
+      AGENT_MAX_CONTEXT_TOKENS: 50000
       AGENT_MAX_CONTEXT_TURNS: 20
-      AGENT_MAX_STEPS: 15
+      AGENT_MAX_STEPS: 20
     volumes:
       - ./cow:/home/agent/cow
