@@ -28,6 +28,20 @@ if [ -z "$BASH_VERSION" ]; then
     exit 1
 fi
 
+# Fallback for 'timeout' on macOS where GNU Coreutils is not installed by default.
+# If 'gtimeout' (Homebrew's coreutils) is present, we use it. Otherwise, we gracefully
+# degrade by using `shift` to discard the time limit argument ($1) and executing the rest of the command.
+if ! command -v timeout &> /dev/null; then
+    timeout() {
+        if command -v gtimeout &> /dev/null; then
+            gtimeout "$@"
+        else
+            shift
+            "$@"
+        fi
+    }
+fi
+
 # Get current script directory
 export BASE_DIR=$(cd "$(dirname "$0")"; pwd)
 
