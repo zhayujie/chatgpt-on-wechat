@@ -171,12 +171,17 @@ clone_project() {
         mv CowAgent-master CowAgent
         rm CowAgent.zip
     else
-        GIT_HTTP_CONNECT_TIMEOUT=10 GIT_HTTP_LOW_SPEED_LIMIT=1024 GIT_HTTP_LOW_SPEED_TIME=15 \
-        git clone --depth 10 --progress https://github.com/zhayujie/CowAgent.git || {
-            echo -e "${YELLOW}⚠️  GitHub is slow, switching to Gitee mirror...${NC}"
-            git clone --depth 10 --progress https://gitee.com/zhayujie/CowAgent.git
-        }
-        if [[ $? -ne 0 ]]; then
+        local clone_ok=false
+        # Test GitHub connectivity before attempting clone
+        if curl -s --connect-timeout 5 --max-time 10 https://github.com > /dev/null 2>&1; then
+            echo -e "${YELLOW}🌐 GitHub is reachable, cloning from GitHub...${NC}"
+            timeout 15 git clone --depth 10 --progress https://github.com/zhayujie/CowAgent.git && clone_ok=true
+        fi
+        if [ "$clone_ok" = false ]; then
+            echo -e "${YELLOW}⚠️  GitHub clone failed or timed out, switching to Gitee mirror...${NC}"
+            timeout 30 git clone --depth 10 --progress https://gitee.com/zhayujie/CowAgent.git && clone_ok=true
+        fi
+        if [ "$clone_ok" = false ]; then
             echo -e "${RED}❌ Project clone failed. Please check network connection.${NC}"
             exit 1
         fi

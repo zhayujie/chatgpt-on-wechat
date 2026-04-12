@@ -90,20 +90,37 @@ function Install-Project {
     }
 
     Write-Cow "Cloning CowAgent project..."
-    $prevEAP = $ErrorActionPreference; $ErrorActionPreference = "Continue"
-    git clone https://github.com/zhayujie/CowAgent.git 2>&1 | Out-Null
-    $cloneExit = $LASTEXITCODE
-    $ErrorActionPreference = $prevEAP
-    if ($cloneExit -ne 0) {
-        Write-Warn "GitHub failed, trying Gitee..."
-        $ErrorActionPreference = "Continue"
-        git clone https://gitee.com/zhayujie/CowAgent.git 2>&1 | Out-Null
-        $cloneExit = $LASTEXITCODE
-        $ErrorActionPreference = $prevEAP
-        if ($cloneExit -ne 0) {
-            Write-Err "Clone failed. Check your network."
-            exit 1
+    $cloneOk = $false
+
+    # Test GitHub connectivity before attempting clone
+    try {
+        $null = Invoke-WebRequest -Uri "https://github.com" -UseBasicParsing -TimeoutSec 5 -ErrorAction Stop
+        Write-Cow "GitHub is reachable, cloning from GitHub..."
+        $proc = Start-Process -FilePath "git" -ArgumentList "clone","--depth","10","--progress","https://github.com/zhayujie/CowAgent.git" `
+            -NoNewWindow -PassThru -RedirectStandardError "$env:TEMP\git_clone_err.txt"
+        if ($proc.WaitForExit(15000) -and $proc.ExitCode -eq 0) {
+            $cloneOk = $true
+        } else {
+            if (-not $proc.HasExited) { $proc.Kill() }
+            if (Test-Path "CowAgent") { Remove-Item -Recurse -Force "CowAgent" }
         }
+    } catch {}
+
+    if (-not $cloneOk) {
+        Write-Warn "GitHub clone failed or timed out, switching to Gitee mirror..."
+        $proc = Start-Process -FilePath "git" -ArgumentList "clone","--depth","10","--progress","https://gitee.com/zhayujie/CowAgent.git" `
+            -NoNewWindow -PassThru -RedirectStandardError "$env:TEMP\git_clone_err.txt"
+        if ($proc.WaitForExit(30000) -and $proc.ExitCode -eq 0) {
+            $cloneOk = $true
+        } else {
+            if (-not $proc.HasExited) { $proc.Kill() }
+            if (Test-Path "CowAgent") { Remove-Item -Recurse -Force "CowAgent" }
+        }
+    }
+
+    if (-not $cloneOk) {
+        Write-Err "Clone failed. Check your network."
+        exit 1
     }
 
     Set-Location "CowAgent"

@@ -898,7 +898,7 @@ FAQs： <https://github.com/zhayujie/CowAgent/wiki/FAQs>
 
 # 📌 项目更名说明
 
-本项目原名 `chatgpt-on-wechat`（GitHub 原地址：https://github.com/zhayujie/chatgpt-on-wechat），
+本项目原名 `chatgpt-on-wechat`（GitHub 原地址：https://github.com/zhayujie/chatgpt-on-wechat ），
 于 2026.04.13 正式更名为 **CowAgent**。GitHub 已自动设置重定向，原有链接仍可正常访问。
 
 如需更新本地仓库的远程地址（可选）：
