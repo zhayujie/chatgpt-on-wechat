@@ -23,10 +23,13 @@ const I18N = {
         knowledge_select_hint: '选择一个文档查看', knowledge_empty_hint: '暂无知识页面',
         knowledge_empty_guide: '在对话中发送文档、链接或主题给 Agent，它会自动整理到你的知识库中。',
         knowledge_go_chat: '开始对话',
-        welcome_subtitle: '我可以帮你解答问题、管理计算机、创造和执行技能，并通过长期记忆<br>不断成长',
-        example_sys_title: '系统管理', example_sys_text: '帮我查看工作空间里有哪些文件',
-        example_task_title: '技能系统', example_task_text: '查看所有支持的工具和技能',
-        example_code_title: '编程助手', example_code_text: '帮我编写一个Python爬虫脚本',
+        welcome_subtitle: '我可以帮你解答问题、管理计算机、创造和执行技能，并通过<br>长期记忆和知识库不断成长',
+        example_sys_title: '系统管理', example_sys_text: '查看工作空间里有哪些文件',
+        example_task_title: '定时任务', example_task_text: '1分钟后提醒我检查服务器',
+        example_code_title: '编程助手', example_code_text: '搜索AI资讯并生成可视化网页报告',
+        example_knowledge_title: '知识库', example_knowledge_text: '查看知识库当前文档情况',
+        example_skill_title: '技能系统', example_skill_text: '查看所有支持的工具和技能',
+        example_web_title: '指令中心', example_web_text: '查看全部命令',
         input_placeholder: '输入消息，或输入 / 使用指令',
         config_title: '配置管理', config_desc: '管理模型和 Agent 配置',
         config_model: '模型配置', config_agent: 'Agent 配置',
@@ -90,10 +93,13 @@ const I18N = {
         knowledge_select_hint: 'Select a document to view', knowledge_empty_hint: 'No knowledge pages yet',
         knowledge_empty_guide: 'Send documents, links or topics to the agent in chat, and it will automatically organize them into your knowledge base.',
         knowledge_go_chat: 'Start a conversation',
-        welcome_subtitle: 'I can help you answer questions, manage your computer, create and execute skills, and keep growing through <br> long-term memory.',
+        welcome_subtitle: 'I can help you answer questions, manage your computer, create and execute skills, and keep growing through <br> long-term memory and a personal knowledge base.',
         example_sys_title: 'System', example_sys_text: 'Show me the files in the workspace',
-        example_task_title: 'Skills', example_task_text: 'Show current tools and skills',
-        example_code_title: 'Coding', example_code_text: 'Write a Python web scraper script',
+        example_task_title: 'Scheduler', example_task_text: 'Remind me to check the server in 5 minutes',
+        example_code_title: 'Coding', example_code_text: 'Search today\'s AI news and generate a visual report webpage',
+        example_knowledge_title: 'Knowledge', example_knowledge_text: 'Show me the current knowledge base',
+        example_skill_title: 'Skills', example_skill_text: 'Show current tools and skills',
+        example_web_title: 'Commands', example_web_text: 'Show all commands',
         input_placeholder: 'Type a message, or press / for commands',
         config_title: 'Configuration', config_desc: 'Manage model and agent settings',
         config_model: 'Model Configuration', config_agent: 'Agent Configuration',
@@ -341,6 +347,7 @@ function renderMarkdown(text) {
 // Chat Module
 // =====================================================================
 let isPolling = false;
+let pollGeneration = 0;   // incremented on each restart to cancel stale poll loops
 let loadingContainers = {};
 let activeStreams = {};   // request_id -> EventSource
 let isComposing = false;
@@ -380,6 +387,9 @@ fetch('/config').then(r => r.json()).then(data => {
     }
     loadHistory(1);
 }).catch(() => { loadHistory(1); });
+
+// Start polling immediately so scheduler/push messages are received at any time
+startPolling();
 
 const chatInput = document.getElementById('chat-input');
 const sendBtn = document.getElementById('send-btn');
@@ -751,6 +761,14 @@ chatInput.addEventListener('blur', () => {
 
 document.querySelectorAll('.example-card').forEach(card => {
     card.addEventListener('click', () => {
+        // data-send overrides the visible text (e.g. show "查看全部命令" but send "/help")
+        const sendText = card.dataset.send;
+        if (sendText) {
+            chatInput.value = sendText;
+            chatInput.dispatchEvent(new Event('input'));
+            chatInput.focus();
+            return;
+        }
         const textEl = card.querySelector('[data-i18n*="text"]');
         if (textEl) {
             chatInput.value = textEl.textContent;
@@ -811,7 +829,6 @@ function sendMessage() {
                     startSSE(data.request_id, loadingEl, timestamp);
                 } else {
                     loadingContainers[data.request_id] = loadingEl;
-                    if (!isPolling) startPolling();
                 }
             } else {
                 loadingEl.remove();
@@ -1103,13 +1120,16 @@ function startSSE(requestId, loadingEl, timestamp) {
 }
 
 function startPolling() {
-    if (isPolling) return;
+    const gen = ++pollGeneration;
     isPolling = true;
+    let pollInFlight = false;
 
     function poll() {
-        if (!isPolling) return;
-        if (document.hidden) { setTimeout(poll, 5000); return; }
+        if (gen !== pollGeneration) return;
+        if (pollInFlight) return;
+        if (document.hidden) { setTimeout(poll, 10000); return; }
 
+        pollInFlight = true;
         fetch('/poll', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1117,18 +1137,23 @@ function startPolling() {
         })
         .then(r => r.json())
         .then(data => {
+            pollInFlight = false;
+            if (gen !== pollGeneration) return;
             if (data.status === 'success' && data.has_content) {
                 const rid = data.request_id;
                 if (loadingContainers[rid]) {
                     loadingContainers[rid].remove();
                     delete loadingContainers[rid];
                 }
+                const welcomeScreen = document.getElementById('welcome-screen');
+                if (welcomeScreen) welcomeScreen.remove();
                 addBotMessage(data.content, new Date(data.timestamp * 1000), rid);
                 scrollChatToBottom();
             }
-            setTimeout(poll, 2000);
+            const delay = (data.status === 'success' && data.has_content) ? 5000 : 10000;
+            setTimeout(poll, delay);
         })
-        .catch(() => { setTimeout(poll, 3000); });
+        .catch(() => { pollInFlight = false; setTimeout(poll, 10000); });
     }
     poll();
 }
@@ -1409,17 +1434,18 @@ function newChat() {
     // Generate a fresh session and persist it so the next page load also starts clean
     sessionId = generateSessionId();
     localStorage.setItem(SESSION_ID_KEY, sessionId);
-    isPolling = false;
     loadingContainers = {};
+    startPolling();  // bump generation so old loop self-cancels, new loop uses fresh sessionId
     messagesDiv.innerHTML = '';
     const ws = document.createElement('div');
     ws.id = 'welcome-screen';
-    ws.className = 'flex flex-col items-center justify-center h-full px-6 py-12';
+    ws.className = 'flex flex-col items-center justify-center h-full px-6 pb-16';
+    ws.style.paddingTop = '6vh';
     ws.innerHTML = `
         <img src="assets/logo.jpg" alt="CowAgent" class="w-16 h-16 rounded-2xl mb-6 shadow-lg shadow-primary-500/20">
         <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-3">${appConfig.title || 'CowAgent'}</h1>
         <p class="text-slate-500 dark:text-slate-400 text-center max-w-lg mb-10 leading-relaxed" data-i18n="welcome_subtitle">${t('welcome_subtitle')}</p>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-2xl">
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 w-full max-w-2xl">
             <div class="example-card group bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 rounded-xl p-4 cursor-pointer hover:border-primary-300 dark:hover:border-primary-600 hover:shadow-md transition-all duration-200">
                 <div class="flex items-center gap-2 mb-2">
                     <div class="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
@@ -1447,11 +1473,45 @@ function newChat() {
                 </div>
                 <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed" data-i18n="example_code_text">${t('example_code_text')}</p>
             </div>
+            <div class="example-card group bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 rounded-xl p-4 cursor-pointer hover:border-primary-300 dark:hover:border-primary-600 hover:shadow-md transition-all duration-200">
+                <div class="flex items-center gap-2 mb-2">
+                    <div class="w-7 h-7 rounded-lg bg-violet-50 dark:bg-violet-900/30 flex items-center justify-center">
+                        <i class="fas fa-book text-violet-500 text-xs"></i>
+                    </div>
+                    <span class="font-medium text-sm text-slate-700 dark:text-slate-200" data-i18n="example_knowledge_title">${t('example_knowledge_title')}</span>
+                </div>
+                <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed" data-i18n="example_knowledge_text">${t('example_knowledge_text')}</p>
+            </div>
+            <div class="example-card group bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 rounded-xl p-4 cursor-pointer hover:border-primary-300 dark:hover:border-primary-600 hover:shadow-md transition-all duration-200">
+                <div class="flex items-center gap-2 mb-2">
+                    <div class="w-7 h-7 rounded-lg bg-rose-50 dark:bg-rose-900/30 flex items-center justify-center">
+                        <i class="fas fa-puzzle-piece text-rose-500 text-xs"></i>
+                    </div>
+                    <span class="font-medium text-sm text-slate-700 dark:text-slate-200" data-i18n="example_skill_title">${t('example_skill_title')}</span>
+                </div>
+                <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed" data-i18n="example_skill_text">${t('example_skill_text')}</p>
+            </div>
+            <div class="example-card group bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 rounded-xl p-4 cursor-pointer hover:border-primary-300 dark:hover:border-primary-600 hover:shadow-md transition-all duration-200" data-send="/help">
+                <div class="flex items-center gap-2 mb-2">
+                    <div class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                        <i class="fas fa-terminal text-slate-500 text-xs"></i>
+                    </div>
+                    <span class="font-medium text-sm text-slate-700 dark:text-slate-200" data-i18n="example_web_title">${t('example_web_title')}</span>
+                </div>
+                <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed" data-i18n="example_web_text">${t('example_web_text')}</p>
+            </div>
         </div>
     `;
     messagesDiv.appendChild(ws);
     ws.querySelectorAll('.example-card').forEach(card => {
         card.addEventListener('click', () => {
+            const sendText = card.dataset.send;
+            if (sendText) {
+                chatInput.value = sendText;
+                chatInput.dispatchEvent(new Event('input'));
+                chatInput.focus();
+                return;
+            }
             const textEl = card.querySelector('[data-i18n*="text"]');
             if (textEl) {
                 chatInput.value = textEl.textContent;
