@@ -55,6 +55,7 @@ const I18N = {
         skills_section_title: '技能', skill_enable: '启用', skill_disable: '禁用',
         skill_toggle_error: '操作失败，请稍后再试',
         memory_title: '记忆管理', memory_desc: '查看 Agent 记忆文件和内容',
+        memory_tab_files: '记忆文件', memory_tab_dreams: '梦境日记',
         memory_loading: '加载记忆文件中...', memory_loading_desc: '记忆文件将显示在此处',
         memory_back: '返回列表',
         memory_col_name: '文件名', memory_col_type: '类型', memory_col_size: '大小', memory_col_updated: '更新时间',
@@ -139,6 +140,7 @@ const I18N = {
         skills_section_title: 'Skills', skill_enable: 'Enable', skill_disable: 'Disable',
         skill_toggle_error: 'Operation failed, please try again',
         memory_title: 'Memory', memory_desc: 'View agent memory files and contents',
+        memory_tab_files: 'Memory Files', memory_tab_dreams: 'Dream Diary',
         memory_loading: 'Loading memory files...', memory_loading_desc: 'Memory files will be displayed here',
         memory_back: 'Back to list',
         memory_col_name: 'Filename', memory_col_type: 'Type', memory_col_size: 'Size', memory_col_updated: 'Updated',
@@ -2495,12 +2497,20 @@ function toggleSkill(name, currentlyEnabled) {
 // Memory View
 // =====================================================================
 let memoryPage = 1;
+let memoryCategory = 'memory';   // 'memory' | 'dream'
 const memoryPageSize = 10;
+
+function switchMemoryTab(tab) {
+    document.querySelectorAll('.memory-tab').forEach(el => el.classList.remove('active'));
+    document.getElementById('memory-tab-' + tab).classList.add('active');
+    memoryCategory = tab === 'dreams' ? 'dream' : 'memory';
+    loadMemoryView(1);
+}
 
 function loadMemoryView(page) {
     page = page || 1;
     memoryPage = page;
-    fetch(`/api/memory?page=${page}&page_size=${memoryPageSize}`).then(r => r.json()).then(data => {
+    fetch(`/api/memory?page=${page}&page_size=${memoryPageSize}&category=${memoryCategory}`).then(r => r.json()).then(data => {
         if (data.status !== 'success') return;
         const emptyEl = document.getElementById('memory-empty');
         const listEl = document.getElementById('memory-list');
@@ -2508,7 +2518,15 @@ function loadMemoryView(page) {
         const total = data.total || 0;
 
         if (total === 0) {
-            emptyEl.querySelector('p').textContent = currentLang === 'zh' ? '暂无记忆文件' : 'No memory files';
+            const emptyIcon = emptyEl.querySelector('i');
+            const emptyTitle = emptyEl.querySelector('p');
+            if (memoryCategory === 'dream') {
+                emptyIcon.className = 'fas fa-moon text-purple-400 text-xl';
+                emptyTitle.textContent = currentLang === 'zh' ? '暂无梦境日记' : 'No dream diaries yet';
+            } else {
+                emptyIcon.className = 'fas fa-brain text-purple-400 text-xl';
+                emptyTitle.textContent = currentLang === 'zh' ? '暂无记忆文件' : 'No memory files';
+            }
             emptyEl.classList.remove('hidden');
             listEl.classList.add('hidden');
             return;
@@ -2521,10 +2539,15 @@ function loadMemoryView(page) {
         files.forEach(f => {
             const tr = document.createElement('tr');
             tr.className = 'border-b border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer transition-colors';
-            tr.onclick = () => openMemoryFile(f.filename);
-            const typeLabel = f.type === 'global'
-                ? '<span class="px-2 py-0.5 rounded-full text-xs bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400">Global</span>'
-                : '<span class="px-2 py-0.5 rounded-full text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">Daily</span>';
+            tr.onclick = () => openMemoryFile(f.filename, memoryCategory);
+            let typeLabel;
+            if (f.type === 'global') {
+                typeLabel = '<span class="px-2 py-0.5 rounded-full text-xs bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400">Global</span>';
+            } else if (f.type === 'dream') {
+                typeLabel = '<span class="px-2 py-0.5 rounded-full text-xs bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400">Dream</span>';
+            } else {
+                typeLabel = '<span class="px-2 py-0.5 rounded-full text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">Daily</span>';
+            }
             const sizeStr = f.size < 1024 ? f.size + ' B' : (f.size / 1024).toFixed(1) + ' KB';
             tr.innerHTML = `
                 <td class="px-4 py-3 text-sm font-mono text-slate-700 dark:text-slate-200">${escapeHtml(f.filename)}</td>
@@ -2546,8 +2569,9 @@ function loadMemoryView(page) {
     }).catch(() => {});
 }
 
-function openMemoryFile(filename) {
-    fetch(`/api/memory/content?filename=${encodeURIComponent(filename)}`).then(r => r.json()).then(data => {
+function openMemoryFile(filename, category) {
+    category = category || 'memory';
+    fetch(`/api/memory/content?filename=${encodeURIComponent(filename)}&category=${category}`).then(r => r.json()).then(data => {
         if (data.status !== 'success') return;
         document.getElementById('memory-panel-list').classList.add('hidden');
         const panel = document.getElementById('memory-panel-viewer');
@@ -3444,10 +3468,9 @@ navigateTo = function(viewId) {
     if (viewId === 'config') loadConfigView();
     else if (viewId === 'skills') loadSkillsView();
     else if (viewId === 'memory') {
-        // Always start from the list panel when navigating to memory
         document.getElementById('memory-panel-viewer').classList.add('hidden');
         document.getElementById('memory-panel-list').classList.remove('hidden');
-        loadMemoryView(1);
+        switchMemoryTab('files');
     }
     else if (viewId === 'knowledge') loadKnowledgeView();
     else if (viewId === 'channels') loadChannelsView();

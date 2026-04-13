@@ -660,6 +660,16 @@
                                         <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100" data-i18n="memory_title">记忆管理</h2>
                                         <p class="text-sm text-slate-500 dark:text-slate-400 mt-1" data-i18n="memory_desc">查看 Agent 记忆文件和内容</p>
                                     </div>
+                                    <div class="flex items-center bg-slate-100 dark:bg-white/10 rounded-lg p-0.5">
+                                        <button id="memory-tab-files" onclick="switchMemoryTab('files')"
+                                                class="memory-tab px-3 py-1.5 rounded-md text-xs font-medium cursor-pointer transition-colors duration-150 active">
+                                            <i class="fas fa-file-lines mr-1.5"></i><span data-i18n="memory_tab_files">记忆文件</span>
+                                        </button>
+                                        <button id="memory-tab-dreams" onclick="switchMemoryTab('dreams')"
+                                                class="memory-tab px-3 py-1.5 rounded-md text-xs font-medium cursor-pointer transition-colors duration-150">
+                                            <i class="fas fa-moon mr-1.5"></i><span data-i18n="memory_tab_dreams">梦境日记</span>
+                                        </button>
+                                    </div>
                                 </div>
                                 <div id="memory-empty" class="flex flex-col items-center justify-center py-20">
                                     <div class="w-16 h-16 rounded-2xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center mb-4">

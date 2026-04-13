@@ -32,68 +32,80 @@ class MemoryService:
     # ------------------------------------------------------------------
     # list — paginated file metadata
     # ------------------------------------------------------------------
-    def list_files(self, page: int = 1, page_size: int = 20) -> dict:
+    def list_files(self, page: int = 1, page_size: int = 20, category: str = "memory") -> dict:
         """
-        List all memory files with metadata (without content).
+        List memory or dream files with metadata (without content).
 
-        Returns::
-
-            {
-                "page": 1,
-                "page_size": 20,
-                "total": 15,
-                "list": [
-                    {"filename": "MEMORY.md", "type": "global", "size": 2048, "updated_at": "2026-02-20 10:00:00"},
-                    {"filename": "2026-02-20.md", "type": "daily", "size": 512, "updated_at": "2026-02-20 09:30:00"},
-                    ...
-                ]
-            }
+        Args:
+            category: ``"memory"`` (default) — MEMORY.md + daily files;
+                      ``"dream"``  — dream diary files from memory/dreams/
         """
+        if category == "dream":
+            files = self._list_dream_files()
+        else:
+            files = self._list_memory_files()
+
+        total = len(files)
+        start = (page - 1) * page_size
+        end = start + page_size
+
+        return {
+            "page": page,
+            "page_size": page_size,
+            "total": total,
+            "list": files[start:end],
+        }
+
+    def _list_memory_files(self) -> List[dict]:
+        """MEMORY.md + memory/*.md (newest first)."""
         files: List[dict] = []
 
-        # 1. Global memory — MEMORY.md in workspace root
         global_path = os.path.join(self.workspace_root, "MEMORY.md")
         if os.path.isfile(global_path):
             files.append(self._file_info(global_path, "MEMORY.md", "global"))
 
-        # 2. Daily memory files — memory/*.md (sorted newest first)
         if os.path.isdir(self.memory_dir):
             daily_files = []
             for name in os.listdir(self.memory_dir):
                 full = os.path.join(self.memory_dir, name)
                 if os.path.isfile(full) and name.endswith(".md"):
                     daily_files.append((name, full))
-            # Sort by filename descending (newest date first)
             daily_files.sort(key=lambda x: x[0], reverse=True)
             for name, full in daily_files:
                 files.append(self._file_info(full, name, "daily"))
 
-        total = len(files)
+        return files
 
-        # Paginate
-        start = (page - 1) * page_size
-        end = start + page_size
-        page_items = files[start:end]
+    def _list_dream_files(self) -> List[dict]:
+        """memory/dreams/*.md (newest first)."""
+        files: List[dict] = []
+        dreams_dir = os.path.join(self.memory_dir, "dreams")
 
-        return {
-            "page": page,
-            "page_size": page_size,
-            "total": total,
-            "list": page_items,
-        }
+        if os.path.isdir(dreams_dir):
+            entries = []
+            for name in os.listdir(dreams_dir):
+                full = os.path.join(dreams_dir, name)
+                if os.path.isfile(full) and name.endswith(".md"):
+                    entries.append((name, full))
+            entries.sort(key=lambda x: x[0], reverse=True)
+            for name, full in entries:
+                files.append(self._file_info(full, name, "dream"))
+
+        return files
 
     # ------------------------------------------------------------------
     # content — read a single file
     # ------------------------------------------------------------------
-    def get_content(self, filename: str) -> dict:
+    def get_content(self, filename: str, category: str = "memory") -> dict:
         """
-        Read the full content of a memory file.
+        Read the full content of a memory or dream file.
 
-        :param filename: File name, e.g. ``MEMORY.md`` or ``2026-02-20.md``
+        :param filename: File name, e.g. ``MEMORY.md``, ``2026-02-20.md``
+        :param category: ``"memory"`` or ``"dream"``
         :return: dict with ``filename`` and ``content``
         :raises FileNotFoundError: if the file does not exist
         """
-        path = self._resolve_path(filename)
+        path = self._resolve_path(filename, category)
         if not os.path.isfile(path):
             raise FileNotFoundError(f"Memory file not found: {filename}")
 
@@ -113,7 +125,7 @@ class MemoryService:
         Dispatch a memory management action.
 
         :param action: ``list`` or ``content``
-        :param payload: action-specific payload
+        :param payload: action-specific payload (supports ``category``: ``"memory"`` | ``"dream"``)
         :return: protocol-compatible response dict
         """
         payload = payload or {}
@@ -121,14 +133,16 @@ class MemoryService:
             if action == "list":
                 page = payload.get("page", 1)
                 page_size = payload.get("page_size", 20)
-                result_payload = self.list_files(page=page, page_size=page_size)
+                category = payload.get("category", "memory")
+                result_payload = self.list_files(page=page, page_size=page_size, category=category)
                 return {"action": action, "code": 200, "message": "success", "payload": result_payload}
 
             elif action == "content":
                 filename = payload.get("filename")
                 if not filename:
                     return {"action": action, "code": 400, "message": "filename is required", "payload": None}
-                result_payload = self.get_content(filename)
+                category = payload.get("category", "memory")
+                result_payload = self.get_content(filename, category=category)
                 return {"action": action, "code": 200, "message": "success", "payload": result_payload}
 
             else:
@@ -145,18 +159,20 @@ class MemoryService:
     # ------------------------------------------------------------------
     # internal helpers
     # ------------------------------------------------------------------
-    def _resolve_path(self, filename: str) -> str:
+    def _resolve_path(self, filename: str, category: str = "memory") -> str:
         """
         Safely resolve a filename to its absolute path within the allowed directory.
 
         - ``MEMORY.md`` → ``{workspace_root}/MEMORY.md``
-        - ``2026-02-20.md`` → ``{workspace_root}/memory/2026-02-20.md``
+        - ``2026-02-20.md`` (memory) → ``{workspace_root}/memory/2026-02-20.md``
+        - ``2026-02-20.md`` (dream) → ``{workspace_root}/memory/dreams/2026-02-20.md``
 
-        Raises ValueError if the resolved path escapes the allowed directory
-        (path traversal protection).
+        Raises ValueError if the resolved path escapes the allowed directory.
         """
         if filename == "MEMORY.md":
             base_dir = self.workspace_root
+        elif category == "dream":
+            base_dir = os.path.join(self.memory_dir, "dreams")
         else:
             base_dir = self.memory_dir
 

@@ -1538,10 +1538,13 @@ class MemoryHandler:
         web.header('Content-Type', 'application/json; charset=utf-8')
         try:
             from agent.memory.service import MemoryService
-            params = web.input(page='1', page_size='20')
+            params = web.input(page='1', page_size='20', category='memory')
             workspace_root = _get_workspace_root()
             service = MemoryService(workspace_root)
-            result = service.list_files(page=int(params.page), page_size=int(params.page_size))
+            result = service.list_files(
+                page=int(params.page), page_size=int(params.page_size),
+                category=params.category,
+            )
             return json.dumps({"status": "success", **result}, ensure_ascii=False)
         except Exception as e:
             logger.error(f"[WebChannel] Memory API error: {e}")
@@ -1554,12 +1557,12 @@ class MemoryContentHandler:
         web.header('Content-Type', 'application/json; charset=utf-8')
         try:
             from agent.memory.service import MemoryService
-            params = web.input(filename='')
+            params = web.input(filename='', category='memory')
             if not params.filename:
                 return json.dumps({"status": "error", "message": "filename required"})
             workspace_root = _get_workspace_root()
             service = MemoryService(workspace_root)
-            result = service.get_content(params.filename)
+            result = service.get_content(params.filename, category=params.category)
             return json.dumps({"status": "success", **result}, ensure_ascii=False)
         except ValueError:
             return json.dumps({"status": "error", "message": "invalid filename"})

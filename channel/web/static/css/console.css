@@ -890,15 +890,15 @@
    ============================================================ */
 
 /* Tab toggle */
-.knowledge-tab {
+.knowledge-tab, .memory-tab {
     color: #64748b;
 }
-.knowledge-tab.active {
+.knowledge-tab.active, .memory-tab.active {
     background: #fff;
     color: #334155;
     box-shadow: 0 1px 3px rgba(0,0,0,0.08);
 }
-.dark .knowledge-tab.active {
+.dark .knowledge-tab.active, .dark .memory-tab.active {
     background: rgba(255,255,255,0.1);
     color: #e2e8f0;
 }
