@@ -38,6 +38,16 @@ Supports streaming output with real-time display of the Agent's reasoning proces
 
 <img width="850" src="https://cdn.link-ai.tech/doc/20260227180120.png" />
 
+#### Multi-Session Management
+
+The chat interface supports multi-session management. All session records are persistently stored in a SQLite database:
+
+- **Session List**: Click the history icon on the left to expand/collapse the session list panel, with scroll-to-load support for all historical sessions
+- **AI-Generated Titles**: After the first exchange in a new session, the model is automatically called to generate a short summary title
+- **New Session**: Click the "New Chat" button at the top of the session list or the `+` button in the input area to create a new session
+- **Delete Session**: Click the delete button on a session item and confirm to permanently delete the session and all its messages
+- **Clear Context**: Click the clear button in the input area to insert a divider in the current session. Messages above the divider are still displayed but no longer included as context for the model
+
 ### Model Management
 
 Manage model configurations online without manually editing config files:
