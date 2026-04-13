@@ -39,14 +39,15 @@ When conversation turns exceed `agent_max_context_turns`:
 
 - The **oldest half** of complete turns is trimmed (preserving tool call chain integrity)
 - Trimmed messages are summarized by LLM and **written to the daily memory file**
-- Remaining turns stay intact
+- Once the LLM summary is ready, it is also **injected into the first user message** of the retained context, helping the model maintain conversational continuity
+- Summary injection runs asynchronously in the background and takes effect from the next turn onward
 
 ### 3. Token Budget Trimming
 
 After turn trimming, if tokens still exceed the budget:
 
 - **Fewer than 5 turns**: All turns undergo **text compression** — each turn keeps only the first user text and last Agent reply, removing intermediate tool call chains
-- **5 or more turns**: The **first half** of turns is trimmed again, with discarded content also written to memory
+- **5 or more turns**: The **first half** of turns is trimmed again, with discarded content written to memory and a context summary injected
 
 ### 4. Overflow Emergency Handling
 

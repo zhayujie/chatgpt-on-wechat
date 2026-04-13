@@ -1207,6 +1207,56 @@ class AgentStreamExecutor:
         logger.warning("🔧 Aggressive trim: nothing to trim, will clear history")
         return False
 
+    def _build_context_summary_callback(self, discarded_turns: list, kept_turns: list):
+        """
+        Build a callback that injects an LLM summary into the first user
+        message of *kept_turns*. Returns None if no valid injection target.
+
+        The callback is passed to flush_from_messages so that the same LLM
+        call that writes daily memory also provides the in-context summary.
+        """
+        if not kept_turns:
+            return None
+
+        # Find the first user text block in kept_turns as injection target
+        target_block = None
+        for turn in kept_turns:
+            for msg in turn["messages"]:
+                if msg.get("role") == "user":
+                    content = msg.get("content", [])
+                    if isinstance(content, list):
+                        for block in content:
+                            if isinstance(block, dict) and block.get("type") == "text":
+                                target_block = block
+                                break
+                    if target_block:
+                        break
+            if target_block:
+                break
+
+        if not target_block:
+            return None
+
+        turn_count = len(discarded_turns)
+        original_text = target_block["text"]
+
+        def _on_summary_ready(summary: str):
+            if not summary or not summary.strip():
+                return
+            target_block["text"] = (
+                f"[System: Previous conversation summary — "
+                f"{turn_count} turns were compacted]\n\n"
+                f"{summary.strip()}\n\n"
+                f"The recent conversation continues below.\n\n---\n\n"
+                f"{original_text}"
+            )
+            logger.info(
+                f"📝 Context summary injected "
+                f"({len(summary)} chars, {turn_count} turns)"
+            )
+
+        return _on_summary_ready
+
     def _trim_messages(self):
         """
         智能清理消息历史，保持对话完整性
@@ -1233,24 +1283,27 @@ class AgentStreamExecutor:
             removed_count = len(turns) // 2
             keep_count = len(turns) - removed_count
             
-            # Flush discarded turns to daily memory
-            if self.agent.memory_manager:
-                discarded_messages = []
-                for turn in turns[:removed_count]:
-                    discarded_messages.extend(turn["messages"])
-                if discarded_messages:
-                    user_id = getattr(self.agent, '_current_user_id', None)
-                    self.agent.memory_manager.flush_memory(
-                        messages=discarded_messages, user_id=user_id,
-                        reason="trim", max_messages=0
-                    )
-            
+            discarded_turns = turns[:removed_count]
             turns = turns[-keep_count:]
-            
+
             logger.info(
                 f"💾 上下文轮次超限: {keep_count + removed_count} > {self.max_context_turns}，"
                 f"裁剪至 {keep_count} 轮（移除 {removed_count} 轮）"
             )
+
+            # Flush to daily memory + inject context summary (single async LLM call)
+            if self.agent.memory_manager:
+                discarded_messages = []
+                for turn in discarded_turns:
+                    discarded_messages.extend(turn["messages"])
+                if discarded_messages:
+                    user_id = getattr(self.agent, '_current_user_id', None)
+                    cb = self._build_context_summary_callback(discarded_turns, turns)
+                    self.agent.memory_manager.flush_memory(
+                        messages=discarded_messages, user_id=user_id,
+                        reason="trim", max_messages=0,
+                        context_summary_callback=cb,
+                    )
 
         # Step 3: Token 限制 - 保留完整轮次
         # Get context window from agent (based on model)
@@ -1327,6 +1380,7 @@ class AgentStreamExecutor:
         # --- Many turns (>=5): discard the older half, keep the newer half ---
         removed_count = len(turns) // 2
         keep_count = len(turns) - removed_count
+        discarded_turns = turns[:removed_count]
         kept_turns = turns[-keep_count:]
         kept_tokens = sum(self._estimate_turn_tokens(t) for t in kept_turns)
 
@@ -1337,13 +1391,15 @@ class AgentStreamExecutor:
 
         if self.agent.memory_manager:
             discarded_messages = []
-            for turn in turns[:removed_count]:
+            for turn in discarded_turns:
                 discarded_messages.extend(turn["messages"])
             if discarded_messages:
                 user_id = getattr(self.agent, '_current_user_id', None)
+                cb = self._build_context_summary_callback(discarded_turns, kept_turns)
                 self.agent.memory_manager.flush_memory(
                     messages=discarded_messages, user_id=user_id,
-                    reason="trim", max_messages=0
+                    reason="trim", max_messages=0,
+                    context_summary_callback=cb,
                 )
 
         new_messages = []

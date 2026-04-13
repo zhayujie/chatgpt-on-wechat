@@ -401,24 +401,28 @@ class MemoryManager:
         user_id: Optional[str] = None,
         reason: str = "threshold",
         max_messages: int = 10,
+        context_summary_callback=None,
     ) -> bool:
         """
         Flush conversation summary to daily memory file.
-        
+
         Args:
             messages: Conversation message list
             user_id: Optional user ID
             reason: "threshold" | "overflow" | "daily_summary"
             max_messages: Max recent messages to include (0 = all)
-        
+            context_summary_callback: Optional callback(str) invoked with the
+                daily summary text for in-context injection
+
         Returns:
-            True if content was written
+            True if flush was dispatched
         """
         success = self.flush_manager.flush_from_messages(
             messages=messages,
             user_id=user_id,
             reason=reason,
             max_messages=max_messages,
+            context_summary_callback=context_summary_callback,
         )
         if success:
             self._dirty = True

@@ -29,9 +29,9 @@ SUMMARIZE_SYSTEM_PROMPT = """你是一个记忆提取助手。你的任务是从
 ## 第二部分：长期记忆（[MEMORY]）
 
 提取值得**永久记住**的关键信息，这些信息在未来的对话中仍然有价值：
-- 用户的偏好、习惯、风格（如"用户偏好中文回复"、"用户喜欢简洁风格"）
-- 重要的决策或约定（如"项目决定使用 PostgreSQL"）
-- 关键人物信息（如"张总是用户的上级"）
+- 用户的偏好、习惯、风格
+- 重要的决策或约定
+- 关键人物关系
 - 用户明确要求记住的内容
 - 重要的教训或经验总结
 
@@ -54,6 +54,7 @@ SUMMARIZE_SYSTEM_PROMPT = """你是一个记忆提取助手。你的任务是从
 SUMMARIZE_USER_PROMPT = """请从以下对话记录中提取记忆（按 [DAILY] 和 [MEMORY] 两部分输出）：
 
 {conversation}"""
+
 
 
 class MemoryFlushManager:
@@ -124,21 +125,19 @@ class MemoryFlushManager:
         user_id: Optional[str] = None,
         reason: str = "trim",
         max_messages: int = 0,
+        context_summary_callback: Optional[Callable[[str], None]] = None,
     ) -> bool:
         """
         Asynchronously summarize and flush messages to daily memory.
-        
+
         Deduplication runs synchronously, then LLM summarization + file write
         run in a background thread so the main reply flow is never blocked.
-        
-        Args:
-            messages: Conversation message list (OpenAI/Claude format)
-            user_id: Optional user ID for user-scoped memory
-            reason: Why flush was triggered ("trim" | "overflow" | "daily_summary")
-            max_messages: Max recent messages to summarize (0 = all)
-        
-        Returns:
-            True if flush was dispatched
+
+        If *context_summary_callback* is provided, it is called with the
+        [DAILY] portion of the LLM summary once available. The caller can use
+        this to inject the summary into the live message list for context
+        continuity — one LLM call serves both disk persistence and in-context
+        injection.
         """
         try:
             import hashlib
@@ -153,18 +152,18 @@ class MemoryFlushManager:
                     deduped.append(m)
             if not deduped:
                 return False
-            
+
             import copy
             snapshot = copy.deepcopy(deduped)
             thread = threading.Thread(
                 target=self._flush_worker,
-                args=(snapshot, user_id, reason, max_messages),
+                args=(snapshot, user_id, reason, max_messages, context_summary_callback),
                 daemon=True,
             )
             thread.start()
             logger.info(f"[MemoryFlush] Async flush dispatched (reason={reason}, msgs={len(snapshot)})")
             return True
-            
+
         except Exception as e:
             logger.warning(f"[MemoryFlush] Failed to dispatch flush (reason={reason}): {e}")
             return False
@@ -175,6 +174,7 @@ class MemoryFlushManager:
         user_id: Optional[str],
         reason: str,
         max_messages: int,
+        context_summary_callback: Optional[Callable[[str], None]] = None,
     ):
         """Background worker: summarize with LLM, write daily file + MEMORY.md (Light Dream)."""
         try:
@@ -212,6 +212,13 @@ class MemoryFlushManager:
             # --- Light Dream: write long-term memory to MEMORY.md ---
             if memory_part:
                 self._append_to_main_memory(memory_part, user_id)
+
+            # --- Inject context summary into live messages (if callback provided) ---
+            if context_summary_callback and daily_part:
+                try:
+                    context_summary_callback(daily_part)
+                except Exception as e:
+                    logger.warning(f"[MemoryFlush] Context summary callback failed: {e}")
 
             self.last_flush_timestamp = datetime.now()
 
@@ -346,6 +353,52 @@ class MemoryFlushManager:
                 lines.append(f"助手: {text[:500]}")
         return "\n".join(lines)
 
+    @staticmethod
+    def _extract_response_text(response) -> str:
+        """
+        Extract text from LLM response regardless of format.
+
+        Handles:
+        - Generator (MiniMax _handle_sync_response yields Claude-format dicts)
+        - Claude format: {"role":"assistant","content":[{"type":"text","text":"..."}]}
+        - OpenAI format: {"choices":[{"message":{"content":"..."}}]}
+        - OpenAI SDK response object with .choices attribute
+        """
+        import types
+
+        # Unwrap generator — consume first yielded item
+        if isinstance(response, types.GeneratorType):
+            try:
+                response = next(response)
+            except StopIteration:
+                return ""
+
+        if not response:
+            return ""
+
+        if isinstance(response, dict):
+            # Check for error
+            if response.get("error"):
+                raise RuntimeError(response.get("message", "LLM call failed"))
+
+            # Claude format: content is a list of blocks
+            content = response.get("content")
+            if isinstance(content, list):
+                for block in content:
+                    if isinstance(block, dict) and block.get("type") == "text":
+                        return block.get("text", "")
+
+            # OpenAI format
+            choices = response.get("choices", [])
+            if choices:
+                return choices[0].get("message", {}).get("content", "")
+
+        # OpenAI SDK response object
+        if hasattr(response, "choices") and response.choices:
+            return response.choices[0].message.content or ""
+
+        return ""
+
     def _call_llm_for_summary(self, conversation_text: str) -> str:
         """Call LLM to generate a concise summary of the conversation."""
         from agent.protocol.models import LLMRequest
@@ -359,27 +412,31 @@ class MemoryFlushManager:
         )
         
         response = self.llm_model.call(request)
-        
-        if isinstance(response, dict):
-            if response.get("error"):
-                raise RuntimeError(response.get("message", "LLM call failed"))
-            # OpenAI format
-            choices = response.get("choices", [])
-            if choices:
-                return choices[0].get("message", {}).get("content", "")
-        
-        # Handle response object with attribute access (e.g. OpenAI SDK response)
-        if hasattr(response, "choices") and response.choices:
-            return response.choices[0].message.content or ""
-        
-        return ""
+        return self._extract_response_text(response)
+
+    @staticmethod
+    def _extract_first_meaningful_line(text: str, max_len: int = 120) -> str:
+        """Extract the first meaningful line from assistant reply, skipping markdown noise."""
+        import re
+        for line in text.split("\n"):
+            line = line.strip()
+            if not line:
+                continue
+            # Skip markdown headings, horizontal rules, code fences, pure emoji/symbols
+            if re.match(r'^(#{1,4}\s|```|---|\*\*\*|[-*]\s*$|[^\w\u4e00-\u9fff]{1,5}$)', line):
+                continue
+            # Strip leading markdown bold/emoji decorations
+            cleaned = re.sub(r'^[\*#>\-\s]+', '', line).strip()
+            cleaned = re.sub(r'^[\U0001f300-\U0001f9ff\u2600-\u27bf\s]+', '', cleaned).strip()
+            if len(cleaned) >= 5:
+                return cleaned[:max_len]
+        return text.split("\n")[0].strip()[:max_len]
 
     @staticmethod
     def _extract_summary_fallback(messages: List[Dict], max_messages: int = 0) -> str:
         """
-        Rule-based fallback when LLM is unavailable.
-        Groups consecutive user+assistant messages into events instead of
-        listing each message individually.
+        Rule-based summary of discarded messages.
+        Format: "用户问了X; 助手回答了Y" per event, compact and readable.
         """
         msgs = messages if max_messages == 0 else messages[-max_messages * 2:]
 
@@ -393,19 +450,19 @@ class MemoryFlushManager:
             text = text.strip()
 
             if role == "user":
-                if len(text) <= 5:
+                if len(text) <= 3:
                     continue
-                current_user_text = text[:150]
+                current_user_text = text[:120]
             elif role == "assistant" and current_user_text:
-                first_line = text.split("\n")[0].strip()
-                if len(first_line) > 10:
-                    events.append(f"- {current_user_text} → {first_line[:150]}")
+                reply_summary = MemoryFlushManager._extract_first_meaningful_line(text)
+                if reply_summary:
+                    events.append(f"- 用户: {current_user_text} → 回复: {reply_summary}")
                 else:
-                    events.append(f"- {current_user_text}")
+                    events.append(f"- 用户: {current_user_text}")
                 current_user_text = ""
 
         if current_user_text:
-            events.append(f"- {current_user_text}")
+            events.append(f"- 用户: {current_user_text}")
 
         return "\n".join(events[:10])
     
