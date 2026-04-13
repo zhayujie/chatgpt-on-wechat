@@ -125,9 +125,8 @@
     cursor: pointer;
     user-select: none;
 }
-.agent-thinking-step .thinking-header.no-toggle { cursor: default; }
-.agent-thinking-step .thinking-header:not(.no-toggle):hover { color: #64748b; }
-.dark .agent-thinking-step .thinking-header:not(.no-toggle):hover { color: #cbd5e1; }
+.agent-thinking-step .thinking-header:hover { color: #64748b; }
+.dark .agent-thinking-step .thinking-header:hover { color: #cbd5e1; }
 .agent-thinking-step .thinking-header i:first-child { font-size: 0.625rem; margin-top: 1px; }
 .agent-thinking-step .thinking-chevron {
     font-size: 0.5rem;
@@ -158,6 +157,11 @@
 .agent-thinking-step .thinking-full p { margin: 0.25em 0; }
 .agent-thinking-step .thinking-full p:first-child { margin-top: 0; }
 .agent-thinking-step .thinking-full p:last-child { margin-bottom: 0; }
+.agent-thinking-step .thinking-duration {
+    font-size: 0.625rem;
+    color: #b0b8c4;
+    margin-bottom: 0.375rem;
+}
 
 /* Content step - real text output frozen before tool calls */
 .agent-content-step {

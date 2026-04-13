@@ -38,6 +38,7 @@ const I18N = {
         config_max_tokens: '最大上下文 Token', config_max_tokens_hint: '对话中 Agent 能输入的最大 Token 长度，超过后会智能压缩处理',
         config_max_turns: '最大记忆轮次', config_max_turns_hint: '一问一答为一轮，超过后会智能压缩处理',
         config_max_steps: '最大执行步数', config_max_steps_hint: '单次对话中 Agent 最多调用工具的次数',
+        config_enable_thinking: '深度思考', config_enable_thinking_hint: '启用后在 Web 端展示模型推理过程',
         config_channel_type: '通道类型',
         config_provider: '模型厂商', config_model_name: '模型',
         config_custom_model_hint: '输入自定义模型名称',
@@ -80,6 +81,7 @@ const I18N = {
         logs_title: '日志', logs_desc: '实时日志输出 (run.log)',
         logs_live: '实时', logs_coming_msg: '日志流即将在此提供。将连接 run.log 实现类似 tail -f 的实时输出。',
         error_send: '发送失败，请稍后再试。', error_timeout: '请求超时，请再试一次。',
+        thinking_in_progress: '思考中...', thinking_done: '已深度思考', thinking_duration: '耗时',
     },
     en: {
         console: 'Console',
@@ -108,6 +110,7 @@ const I18N = {
         config_max_tokens: 'Max Context Tokens', config_max_tokens_hint: 'Max tokens the Agent can input per conversation, auto-compressed when exceeded',
         config_max_turns: 'Max Memory Turns', config_max_turns_hint: 'One Q&A pair = one turn, auto-compressed when exceeded',
         config_max_steps: 'Max Steps', config_max_steps_hint: 'Max tool calls the Agent can make in a single conversation',
+        config_enable_thinking: 'Deep Thinking', config_enable_thinking_hint: 'Show model reasoning on web console',
         config_channel_type: 'Channel Type',
         config_provider: 'Provider', config_model_name: 'Model',
         config_custom_model_hint: 'Enter custom model name',
@@ -150,6 +153,7 @@ const I18N = {
         logs_title: 'Logs', logs_desc: 'Real-time log output (run.log)',
         logs_live: 'Live', logs_coming_msg: 'Log streaming will be available here. Connects to run.log for real-time output similar to tail -f.',
         error_send: 'Failed to send. Please try again.', error_timeout: 'Request timeout. Please try again.',
+        thinking_in_progress: 'Thinking...', thinking_done: 'Thought', thinking_duration: 'Duration',
     }
 };
 
@@ -863,6 +867,7 @@ function startSSE(requestId, loadingEl, timestamp) {
     let currentToolEl = null;
     let currentReasoningEl = null;  // live reasoning bubble
     let reasoningText = '';
+    let reasoningStartTime = 0;
     let done = false;
 
     const MAX_RECONNECTS = 10;
@@ -907,28 +912,25 @@ function startSSE(requestId, loadingEl, timestamp) {
                 ensureBotEl();
                 reasoningText += item.content;
                 if (!currentReasoningEl) {
+                    reasoningStartTime = Date.now();
                     currentReasoningEl = document.createElement('div');
                     currentReasoningEl.className = 'agent-step agent-thinking-step';
                     currentReasoningEl.innerHTML = `
                         <div class="thinking-header" onclick="this.parentElement.classList.toggle('expanded')">
                             <i class="fas fa-lightbulb text-amber-400 flex-shrink-0"></i>
-                            <span class="thinking-summary"></span>
+                            <span class="thinking-summary">${t('thinking_in_progress')}</span>
                             <i class="fas fa-chevron-right thinking-chevron"></i>
                         </div>
                         <div class="thinking-full"></div>`;
                     stepsEl.appendChild(currentReasoningEl);
                 }
-                const oneLine = reasoningText.trim().replace(/\n+/g, ' ');
-                currentReasoningEl.querySelector('.thinking-summary').textContent =
-                    oneLine.length > 80 ? oneLine.substring(0, 80) + '…' : oneLine;
                 currentReasoningEl.querySelector('.thinking-full').innerHTML = renderMarkdown(reasoningText);
                 scrollChatToBottom();
 
             } else if (item.type === 'delta') {
                 ensureBotEl();
                 if (currentReasoningEl) {
-                    if (reasoningText.trim().replace(/\n+/g, ' ').length <= 80)
-                        currentReasoningEl.classList.add('no-expand');
+                    finalizeThinking(currentReasoningEl, reasoningStartTime, reasoningText);
                     currentReasoningEl = null;
                     reasoningText = '';
                 }
@@ -951,8 +953,7 @@ function startSSE(requestId, loadingEl, timestamp) {
             } else if (item.type === 'tool_start') {
                 ensureBotEl();
                 if (currentReasoningEl) {
-                    if (reasoningText.trim().replace(/\n+/g, ' ').length <= 80)
-                        currentReasoningEl.classList.add('no-expand');
+                    finalizeThinking(currentReasoningEl, reasoningStartTime, reasoningText);
                     currentReasoningEl = null;
                     reasoningText = '';
                 }
@@ -1089,8 +1090,7 @@ function startSSE(requestId, loadingEl, timestamp) {
             if (done) return;
 
             if (currentReasoningEl) {
-                if (reasoningText.trim().replace(/\n+/g, ' ').length <= 80)
-                    currentReasoningEl.classList.add('no-expand');
+                finalizeThinking(currentReasoningEl, reasoningStartTime, reasoningText);
                 currentReasoningEl = null;
                 reasoningText = '';
             }
@@ -1214,28 +1214,24 @@ function renderToolCallsHtml(toolCalls) {
     }).join('');
 }
 
+function finalizeThinking(el, startTime, text) {
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+    el.querySelector('.thinking-summary').textContent = t('thinking_done');
+    const fullDiv = el.querySelector('.thinking-full');
+    fullDiv.innerHTML = `<div class="thinking-duration">${t('thinking_duration')} ${elapsed}s</div>` + renderMarkdown(text);
+}
+
 function renderThinkingHtml(text) {
     if (!text || !text.trim()) return '';
     const full = text.trim();
-    const oneLine = full.replace(/\n+/g, ' ');
-    if (oneLine.length > 80) {
-        const truncated = oneLine.substring(0, 80) + '…';
-        return `
+    return `
 <div class="agent-step agent-thinking-step">
     <div class="thinking-header" onclick="this.parentElement.classList.toggle('expanded')">
         <i class="fas fa-lightbulb text-amber-400 flex-shrink-0"></i>
-        <span class="thinking-summary">${escapeHtml(truncated)}</span>
+        <span class="thinking-summary">${t('thinking_done')}</span>
         <i class="fas fa-chevron-right thinking-chevron"></i>
     </div>
     <div class="thinking-full">${renderMarkdown(full)}</div>
-</div>`;
-    }
-    return `
-<div class="agent-step agent-thinking-step no-expand">
-    <div class="thinking-header no-toggle">
-        <i class="fas fa-lightbulb text-amber-400 flex-shrink-0"></i>
-        <span>${escapeHtml(oneLine)}</span>
-    </div>
 </div>`;
 }
 
@@ -1649,6 +1645,7 @@ function initConfigView(data) {
     document.getElementById('cfg-max-tokens').value = data.agent_max_context_tokens || 50000;
     document.getElementById('cfg-max-turns').value = data.agent_max_context_turns || 20;
     document.getElementById('cfg-max-steps').value = data.agent_max_steps || 20;
+    document.getElementById('cfg-enable-thinking').checked = data.enable_thinking !== false;
 
     const pwdInput = document.getElementById('cfg-password');
     const maskedPwd = data.web_password_masked || '';
@@ -1883,6 +1880,7 @@ function saveAgentConfig() {
         agent_max_context_tokens: parseInt(document.getElementById('cfg-max-tokens').value) || 50000,
         agent_max_context_turns: parseInt(document.getElementById('cfg-max-turns').value) || 20,
         agent_max_steps: parseInt(document.getElementById('cfg-max-steps').value) || 20,
+        enable_thinking: document.getElementById('cfg-enable-thinking').checked,
     };
 
     const btn = document.getElementById('cfg-agent-save');

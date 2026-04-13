@@ -249,10 +249,7 @@ class MoonshotBot(Bot):
                 request_body["tools"] = converted_tools
                 request_body["tool_choice"] = "auto"
 
-            # Explicitly disable thinking to avoid reasoning_content issues in multi-turn tool calls.
-            # kimi-k2.5 may enable thinking by default; without preserving reasoning_content
-            # in conversation history the API will reject subsequent requests.
-            request_body["thinking"] = {"type": "disabled"}
+            request_body["thinking"] = kwargs.get("thinking", {"type": "enabled"})
 
             logger.debug(f"[MOONSHOT] API call: model={model}, "
                          f"tools={len(converted_tools) if converted_tools else 0}, stream={stream}")
@@ -325,8 +322,17 @@ class MoonshotBot(Bot):
                 choice = chunk["choices"][0]
                 delta = choice.get("delta", {})
 
-                # Skip reasoning_content (thinking) – don't log or forward
                 if delta.get("reasoning_content"):
+                    yield {
+                        "choices": [{
+                            "index": 0,
+                            "delta": {
+                                "role": "assistant",
+                                "reasoning_content": delta["reasoning_content"]
+                            },
+                            "finish_reason": None
+                        }]
+                    }
                     continue
 
                 # Handle text content

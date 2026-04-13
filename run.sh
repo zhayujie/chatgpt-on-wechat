@@ -193,6 +193,16 @@ clone_project() {
         rm CowAgent.zip
     else
         local clone_ok=false
+        # Detect and temporarily disable invalid git proxy settings
+        local _git_proxy_unset=false
+        local _http_proxy=$(git config --global http.proxy 2>/dev/null)
+        local _https_proxy=$(git config --global https.proxy 2>/dev/null)
+        if [ -n "$_http_proxy" ] && ! curl -s --connect-timeout 3 --max-time 5 --proxy "$_http_proxy" https://github.com > /dev/null 2>&1; then
+            echo -e "${YELLOW}⚠️  Invalid git proxy detected: $_http_proxy, temporarily disabling...${NC}"
+            git config --global --unset http.proxy
+            [ -n "$_https_proxy" ] && git config --global --unset https.proxy
+            _git_proxy_unset=true
+        fi
         # Test GitHub connectivity before attempting clone
         if curl -sI --connect-timeout 5 --max-time 10 https://github.com > /dev/null 2>&1; then
             echo -e "${YELLOW}🌐 GitHub is reachable, cloning from GitHub...${NC}"
@@ -204,6 +214,12 @@ clone_project() {
         fi
         if [ "$clone_ok" = false ]; then
             echo -e "${RED}❌ Project clone failed. Please check network connection.${NC}"
+            if git config --global http.proxy &> /dev/null || git config --global https.proxy &> /dev/null || [ -n "$http_proxy" ] || [ -n "$https_proxy" ] || [ -n "$HTTP_PROXY" ] || [ -n "$HTTPS_PROXY" ]; then
+                echo -e "${YELLOW}💡 Detected proxy settings. If proxy is misconfigured, try removing it with:${NC}"
+                echo -e "${YELLOW}   git config --global --unset http.proxy${NC}"
+                echo -e "${YELLOW}   git config --global --unset https.proxy${NC}"
+                echo -e "${YELLOW}   unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY${NC}"
+            fi
             exit 1
         fi
     fi

@@ -509,6 +509,18 @@
                                                           bg-slate-50 dark:bg-white/5 text-sm text-slate-800 dark:text-slate-100
                                                           focus:outline-none focus:border-primary-500 font-mono transition-colors">
                                         </div>
+                                        <div class="flex items-center justify-between">
+                                            <label class="flex items-center gap-1.5 text-sm font-medium text-slate-600 dark:text-slate-400">
+                                                <span data-i18n="config_enable_thinking">Deep Thinking</span>
+                                                <span class="cfg-tip" data-tip-key="config_enable_thinking_hint"><i class="fas fa-circle-question"></i></span>
+                                            </label>
+                                            <label class="relative inline-flex items-center cursor-pointer">
+                                                <input id="cfg-enable-thinking" type="checkbox" class="sr-only peer" checked>
+                                                <div class="w-9 h-5 bg-slate-200 dark:bg-slate-700 peer-checked:bg-primary-400 rounded-full
+                                                            after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white
+                                                            after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"></div>
+                                            </label>
+                                        </div>
                                         <div class="flex items-center justify-end gap-3 pt-1">
                                             <span id="cfg-agent-status" class="text-xs text-primary-500 opacity-0 transition-opacity duration-300"></span>
                                             <button id="cfg-agent-save"

@@ -160,12 +160,20 @@ class AgentLLMModel(LLMModel):
                     kwargs['system'] = system_prompt
 
                 # Pass context metadata to bot
-                channel_type = getattr(self, 'channel_type', None)
+                channel_type = getattr(self, 'channel_type', None) or ''
                 if channel_type:
                     kwargs['channel_type'] = channel_type
                 session_id = getattr(self, 'session_id', None)
                 if session_id:
                     kwargs['session_id'] = session_id
+
+                # Determine thinking: respect global config, then channel_type
+                from config import conf
+                global_thinking = conf().get("enable_thinking", True)
+                if not global_thinking:
+                    kwargs['thinking'] = {"type": "disabled"}
+                else:
+                    kwargs['thinking'] = {"type": "enabled"} if channel_type == "web" else {"type": "disabled"}
 
                 response = self.bot.call_with_tools(**kwargs)
                 return self._format_response(response)
@@ -205,12 +213,20 @@ class AgentLLMModel(LLMModel):
                     kwargs['system'] = system_prompt
 
                 # Pass context metadata to bot
-                channel_type = getattr(self, 'channel_type', None)
+                channel_type = getattr(self, 'channel_type', None) or ''
                 if channel_type:
                     kwargs['channel_type'] = channel_type
                 session_id = getattr(self, 'session_id', None)
                 if session_id:
                     kwargs['session_id'] = session_id
+
+                # Determine thinking: respect global config, then channel_type
+                from config import conf
+                global_thinking = conf().get("enable_thinking", True)
+                if not global_thinking:
+                    kwargs['thinking'] = {"type": "disabled"}
+                else:
+                    kwargs['thinking'] = {"type": "enabled"} if channel_type == "web" else {"type": "disabled"}
 
                 stream = self.bot.call_with_tools(**kwargs)
                 

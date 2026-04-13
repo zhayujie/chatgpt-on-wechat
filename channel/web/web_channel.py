@@ -714,7 +714,7 @@ class ConfigHandler:
             "api_key_field": "minimax_api_key",
             "api_base_key": None,
             "api_base_default": None,
-            "models": [const.MINIMAX_M2_7, const.MINIMAX_M2_5, const.MINIMAX_M2_1, const.MINIMAX_M2_1_LIGHTNING],
+            "models": [const.MINIMAX_M2_7, const.MINIMAX_M2_7_HIGHSPEED, const.MINIMAX_M2_5, const.MINIMAX_M2_1, const.MINIMAX_M2_1_LIGHTNING],
         }),
         ("zhipu", {
             "label": "智谱AI",
@@ -796,7 +796,7 @@ class ConfigHandler:
         "zhipu_ai_api_key", "dashscope_api_key", "moonshot_api_key",
         "ark_api_key", "minimax_api_key", "linkai_api_key",
         "agent_max_context_tokens", "agent_max_context_turns", "agent_max_steps",
-        "web_password",
+        "enable_thinking", "web_password",
     }
 
     @staticmethod
@@ -849,6 +849,7 @@ class ConfigHandler:
                 "agent_max_context_tokens": local_config.get("agent_max_context_tokens", 50000),
                 "agent_max_context_turns": local_config.get("agent_max_context_turns", 20),
                 "agent_max_steps": local_config.get("agent_max_steps", 20),
+                "enable_thinking": bool(local_config.get("enable_thinking", True)),
                 "api_bases": api_bases,
                 "api_keys": api_keys_masked,
                 "providers": providers,
@@ -874,7 +875,7 @@ class ConfigHandler:
                     continue
                 if key in ("agent_max_context_tokens", "agent_max_context_turns", "agent_max_steps"):
                     value = int(value)
-                if key == "use_linkai":
+                if key in ("use_linkai", "enable_thinking"):
                     value = bool(value)
                 local_config[key] = value
                 applied[key] = value

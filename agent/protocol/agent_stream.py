@@ -78,6 +78,11 @@ class AgentStreamExecutor:
             except Exception as e:
                 logger.error(f"Event callback error: {e}")
     
+    def _is_thinking_enabled(self) -> bool:
+        from config import conf
+        channel_type = getattr(self.model, 'channel_type', '') or ''
+        return conf().get("enable_thinking", True) and channel_type == 'web'
+
     def _filter_think_tags(self, text: str) -> str:
         """
         Remove <think> and </think> tags but keep the content inside.
@@ -178,7 +183,10 @@ class AgentStreamExecutor:
             Final response text
         """
         # Log user message with model info
-        logger.info(f"🤖 {self.model.model} | 👤 {user_message}")
+        
+        thinking_enabled = self._is_thinking_enabled()
+        thinking_label = "💭 thinking" if thinking_enabled else "⚡ fast"
+        logger.info(f"🤖 {self.model.model} | {thinking_label} | 👤 {user_message}")        
         
         # Add user message (Claude format - use content blocks for consistency)
         self.messages.append({
@@ -588,7 +596,8 @@ class AgentStreamExecutor:
                     reasoning_delta = delta.get("reasoning_content") or ""
                     if reasoning_delta:
                         full_reasoning += reasoning_delta
-                        self._emit_event("reasoning_update", {"delta": reasoning_delta})
+                        if self._is_thinking_enabled():
+                            self._emit_event("reasoning_update", {"delta": reasoning_delta})
 
                     # Handle text content
                     content_delta = delta.get("content") or ""

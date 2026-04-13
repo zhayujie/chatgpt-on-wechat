@@ -249,9 +249,7 @@ class DoubaoBot(Bot):
                 request_body["tools"] = converted_tools
                 request_body["tool_choice"] = "auto"
 
-            # Explicitly disable thinking to avoid reasoning_content issues
-            # in multi-turn tool calls
-            request_body["thinking"] = {"type": "disabled"}
+            request_body["thinking"] = kwargs.get("thinking", {"type": "enabled"})
 
             logger.debug(f"[DOUBAO] API call: model={model}, "
                          f"tools={len(converted_tools) if converted_tools else 0}, stream={stream}")
@@ -324,8 +322,17 @@ class DoubaoBot(Bot):
                 choice = chunk["choices"][0]
                 delta = choice.get("delta", {})
 
-                # Skip reasoning_content (thinking) - don't log or forward
                 if delta.get("reasoning_content"):
+                    yield {
+                        "choices": [{
+                            "index": 0,
+                            "delta": {
+                                "role": "assistant",
+                                "reasoning_content": delta["reasoning_content"]
+                            },
+                            "finish_reason": None
+                        }]
+                    }
                     continue
 
                 # Handle text content

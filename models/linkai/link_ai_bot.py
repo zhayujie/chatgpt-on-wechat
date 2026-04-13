@@ -560,6 +560,10 @@ def _linkai_call_with_tools(self, messages, tools=None, stream=False, **kwargs):
             body["tools"] = tools
             body["tool_choice"] = kwargs.get("tool_choice", "auto")
 
+        thinking = kwargs.get("thinking")
+        if thinking:
+            body["thinking"] = thinking
+
         # Prepare headers
         headers = {"Authorization": "Bearer " + conf().get("linkai_api_key")}
         base_url = conf().get("linkai_api_base", "https://api.link-ai.tech")

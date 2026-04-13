@@ -262,20 +262,17 @@ class DashscopeBot(Bot):
                 if kwargs.get("tool_choice"):
                     parameters["tool_choice"] = kwargs["tool_choice"]
             
-            # Add thinking parameters for Qwen3 models (disabled by default for stability)
+            # Add thinking parameters for Qwen3/QwQ models
             if "qwen3" in model_name.lower() or "qwq" in model_name.lower():
-                # Only enable thinking mode if explicitly requested
-                enable_thinking = kwargs.get("enable_thinking", False)
-                if enable_thinking:
+                thinking = kwargs.get("thinking", {"type": "enabled"})
+                if thinking.get("type") == "enabled":
                     parameters["enable_thinking"] = True
-                    
-                    # Set thinking budget if specified
                     if kwargs.get("thinking_budget"):
                         parameters["thinking_budget"] = kwargs["thinking_budget"]
-                    
-                    # Qwen3 requires incremental_output=true in thinking mode
                     if stream:
                         parameters["incremental_output"] = True
+                else:
+                    parameters["enable_thinking"] = False
             
             # Always use incremental_output for streaming (for better token-by-token streaming)
             # This is especially important for tool calling to avoid incomplete responses
