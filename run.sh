@@ -28,17 +28,24 @@ if [ -z "$BASH_VERSION" ]; then
     exit 1
 fi
 
-# Fallback for 'timeout' on macOS where GNU Coreutils is not installed by default.
-# If 'gtimeout' (Homebrew's coreutils) is present, we use it. Otherwise, we gracefully
-# degrade by using `shift` to discard the time limit argument ($1) and executing the rest of the command.
-if ! command -v timeout &> /dev/null; then
-    timeout() {
-        if command -v gtimeout &> /dev/null; then
-            gtimeout "$@"
-        else
-            shift
-            "$@"
-        fi
+# Cross-platform timeout: prefer GNU timeout/gtimeout, fallback to a pure-bash implementation
+# that uses background process + sleep to enforce a hard time limit.
+if command -v timeout &> /dev/null; then
+    _timeout() { timeout "$@"; }
+elif command -v gtimeout &> /dev/null; then
+    _timeout() { gtimeout "$@"; }
+else
+    _timeout() {
+        local secs=$1; shift
+        "$@" &
+        local cmd_pid=$!
+        ( sleep "$secs"; kill $cmd_pid 2>/dev/null ) &
+        local watcher_pid=$!
+        wait $cmd_pid 2>/dev/null
+        local exit_code=$?
+        kill $watcher_pid 2>/dev/null
+        wait $watcher_pid 2>/dev/null
+        return $exit_code
     }
 fi
 
@@ -187,13 +194,13 @@ clone_project() {
     else
         local clone_ok=false
         # Test GitHub connectivity before attempting clone
-        if curl -s --connect-timeout 5 --max-time 10 https://github.com > /dev/null 2>&1; then
+        if curl -sI --connect-timeout 5 --max-time 10 https://github.com > /dev/null 2>&1; then
             echo -e "${YELLOW}🌐 GitHub is reachable, cloning from GitHub...${NC}"
-            timeout 15 git clone --depth 10 --progress https://github.com/zhayujie/CowAgent.git && clone_ok=true
+            _timeout 15 git clone --depth 10 --progress https://github.com/zhayujie/CowAgent.git && clone_ok=true
         fi
         if [ "$clone_ok" = false ]; then
             echo -e "${YELLOW}⚠️  GitHub clone failed or timed out, switching to Gitee mirror...${NC}"
-            timeout 30 git clone --depth 10 --progress https://gitee.com/zhayujie/CowAgent.git && clone_ok=true
+            _timeout 30 git clone --depth 10 --progress https://gitee.com/zhayujie/CowAgent.git && clone_ok=true
         fi
         if [ "$clone_ok" = false ]; then
             echo -e "${RED}❌ Project clone failed. Please check network connection.${NC}"
