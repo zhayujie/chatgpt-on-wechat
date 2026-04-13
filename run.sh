@@ -196,7 +196,7 @@ clone_project() {
         # Test GitHub connectivity before attempting clone
         if curl -sI --connect-timeout 5 --max-time 10 https://github.com > /dev/null 2>&1; then
             echo -e "${YELLOW}🌐 GitHub is reachable, cloning from GitHub...${NC}"
-            _timeout 15 git clone --depth 10 --progress https://github.com/zhayujie/CowAgent.git && clone_ok=true
+            _timeout 60 git clone --depth 10 --progress https://github.com/zhayujie/CowAgent.git && clone_ok=true
         fi
         if [ "$clone_ok" = false ]; then
             echo -e "${YELLOW}⚠️  GitHub clone failed or timed out, switching to Gitee mirror...${NC}"

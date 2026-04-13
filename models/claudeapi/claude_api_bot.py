@@ -323,7 +323,7 @@ class ClaudeAPIBot(Bot, OpenAIImage):
             if msg.get("role") == "system":
                 system_prompt = msg["content"]
             else:
-                claude_messages.append(msg)
+                claude_messages.append(self._sanitize_message(msg))
 
         request_params = {
             "model": actual_model,
@@ -362,6 +362,30 @@ class ClaudeAPIBot(Bot, OpenAIImage):
                     "message": str(e),
                     "status_code": 500
                 }
+
+    @staticmethod
+    def _sanitize_message(msg: dict) -> dict:
+        """Strip thinking blocks without a ``signature`` from assistant messages.
+
+        When the session switches from another model (e.g. MiniMax) to Claude,
+        the in-memory history may contain thinking blocks that lack the
+        ``signature`` field required by the Anthropic API, causing 400 errors.
+        We create a shallow copy so the original history is not mutated.
+        """
+        if msg.get("role") != "assistant":
+            return msg
+        content = msg.get("content")
+        if not isinstance(content, list):
+            return msg
+        cleaned = [
+            block for block in content
+            if not (isinstance(block, dict)
+                    and block.get("type") == "thinking"
+                    and "signature" not in block)
+        ]
+        if len(cleaned) == len(content):
+            return msg
+        return {**msg, "content": cleaned}
 
     def _handle_sync_response(self, request_params):
         """Handle synchronous Claude API response"""
