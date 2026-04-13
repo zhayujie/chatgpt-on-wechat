@@ -50,6 +50,8 @@
     (function() {
         var theme = localStorage.getItem('cow_theme') || 'dark';
         if (theme === 'dark') document.documentElement.classList.add('dark');
+        var lang = localStorage.getItem('cow_lang') || 'zh';
+        document.documentElement.setAttribute('lang', lang);
     })();
     </script>
 </head>
@@ -94,7 +96,7 @@
         <!-- ================================================================ -->
         <!-- SIDEBAR                                                          -->
         <!-- ================================================================ -->
-        <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-[#0A0A0A] text-neutral-400 flex flex-col
+        <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-52 bg-[#0A0A0A] text-neutral-400 flex flex-col
                                     transform -translate-x-full lg:relative lg:translate-x-0
                                     transition-transform duration-300 ease-in-out">
             <!-- Logo -->
@@ -102,7 +104,7 @@
                 <img src="assets/logo.jpg" alt="CowAgent" class="w-8 h-8 rounded-lg flex-shrink-0">
                 <div class="flex flex-col min-w-0">
                     <span class="text-white font-semibold text-sm truncate">CowAgent</span>
-                    <span class="text-neutral-500 text-xs" data-i18n="console">Console</span>
+                    <span class="text-neutral-500 text-xs" data-i18n="console">控制台</span>
                 </div>
             </div>
 
@@ -112,13 +114,13 @@
                 <div class="menu-group open" data-group="chat">
                     <button class="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-neutral-500 hover:text-neutral-300 cursor-pointer transition-colors duration-150">
                         <i class="fas fa-chevron-right text-[10px] chevron"></i>
-                        <span data-i18n="nav_chat">Chat</span>
+                        <span data-i18n="nav_chat">对话</span>
                     </button>
                     <div class="menu-group-items pl-2">
                         <a class="sidebar-item active flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all duration-150 hover:bg-white/5 hover:text-neutral-200 text-[14px]"
                            data-view="chat">
                             <i class="fas fa-message item-icon text-xs w-5 text-center"></i>
-                            <span data-i18n="menu_chat">Chat</span>
+                            <span data-i18n="menu_chat">对话</span>
                         </a>
                     </div>
                 </div>
@@ -127,38 +129,38 @@
                 <div class="menu-group open" data-group="manage">
                     <button class="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-neutral-500 hover:text-neutral-300 cursor-pointer transition-colors duration-150">
                         <i class="fas fa-chevron-right text-[10px] chevron"></i>
-                        <span data-i18n="nav_manage">Management</span>
+                        <span data-i18n="nav_manage">管理</span>
                     </button>
                     <div class="menu-group-items pl-2">
                         <a class="sidebar-item flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all duration-150 hover:bg-white/5 hover:text-neutral-200 text-[14px]"
                            data-view="config">
                             <i class="fas fa-sliders item-icon text-xs w-5 text-center"></i>
-                            <span data-i18n="menu_config">Config</span>
+                            <span data-i18n="menu_config">配置</span>
                         </a>
                         <a class="sidebar-item flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all duration-150 hover:bg-white/5 hover:text-neutral-200 text-[14px]"
                            data-view="skills">
                             <i class="fas fa-bolt item-icon text-xs w-5 text-center"></i>
-                            <span data-i18n="menu_skills">Skills</span>
+                            <span data-i18n="menu_skills">技能</span>
                         </a>
                         <a class="sidebar-item flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all duration-150 hover:bg-white/5 hover:text-neutral-200 text-[14px]"
                            data-view="memory">
                             <i class="fas fa-brain item-icon text-xs w-5 text-center"></i>
-                            <span data-i18n="menu_memory">Memory</span>
+                            <span data-i18n="menu_memory">记忆</span>
                         </a>
                         <a class="sidebar-item flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all duration-150 hover:bg-white/5 hover:text-neutral-200 text-[14px]"
                            data-view="knowledge">
                             <i class="fas fa-book item-icon text-xs w-5 text-center"></i>
-                            <span data-i18n="menu_knowledge">Knowledge</span>
+                            <span data-i18n="menu_knowledge">知识</span>
                         </a>
                         <a class="sidebar-item flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all duration-150 hover:bg-white/5 hover:text-neutral-200 text-[14px]"
                            data-view="channels">
                             <i class="fas fa-tower-broadcast item-icon text-xs w-5 text-center"></i>
-                            <span data-i18n="menu_channels">Channels</span>
+                            <span data-i18n="menu_channels">通道</span>
                         </a>
                         <a class="sidebar-item flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all duration-150 hover:bg-white/5 hover:text-neutral-200 text-[14px]"
                            data-view="tasks">
                             <i class="fas fa-clock item-icon text-xs w-5 text-center"></i>
-                            <span data-i18n="menu_tasks">Tasks</span>
+                            <span data-i18n="menu_tasks">定时</span>
                         </a>
                     </div>
                 </div>
@@ -167,13 +169,13 @@
                 <div class="menu-group open" data-group="monitor">
                     <button class="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-neutral-500 hover:text-neutral-300 cursor-pointer transition-colors duration-150">
                         <i class="fas fa-chevron-right text-[10px] chevron"></i>
-                        <span data-i18n="nav_monitor">Monitor</span>
+                        <span data-i18n="nav_monitor">监控</span>
                     </button>
                     <div class="menu-group-items pl-2">
                         <a class="sidebar-item flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all duration-150 hover:bg-white/5 hover:text-neutral-200 text-[14px]"
                            data-view="logs">
                             <i class="fas fa-terminal item-icon text-xs w-5 text-center"></i>
-                            <span data-i18n="menu_logs">Logs</span>
+                            <span data-i18n="menu_logs">日志</span>
                         </a>
                     </div>
                 </div>
@@ -195,6 +197,23 @@
         <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden lg:hidden cursor-pointer" onclick="toggleSidebar()"></div>
 
         <!-- ================================================================ -->
+        <!-- SESSION PANEL (collapsible)                                      -->
+        <!-- ================================================================ -->
+        <aside id="session-panel" class="session-panel hidden">
+            <div class="session-panel-header">
+                <span class="session-panel-title" data-i18n="session_history">历史会话</span>
+                <button class="session-panel-close" onclick="toggleSessionPanel()" title="Close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <button class="session-panel-new" onclick="newChat()">
+                <i class="fas fa-plus"></i>
+                <span data-i18n="new_chat">新对话</span>
+            </button>
+            <div id="session-list" class="session-list"></div>
+        </aside>
+
+        <!-- ================================================================ -->
         <!-- MAIN CONTENT                                                     -->
         <!-- ================================================================ -->
         <div id="main-content" class="flex-1 flex flex-col min-w-0 h-screen">
@@ -206,11 +225,17 @@
                     <i class="fas fa-bars text-slate-600 dark:text-slate-300"></i>
                 </button>
 
+                <!-- Session panel toggle -->
+                <button id="session-toggle-btn" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 cursor-pointer transition-colors duration-150"
+                        onclick="toggleSessionPanel()">
+                    <i class="fas fa-clock-rotate-left text-slate-500 dark:text-slate-400"></i>
+                </button>
+
                 <!-- Breadcrumb (hidden on mobile) -->
                 <div class="hidden lg:flex items-center gap-2 text-sm min-w-0">
-                    <span id="breadcrumb-group" class="text-slate-400 dark:text-slate-500 truncate" data-i18n="nav_chat">Chat</span>
+                    <span id="breadcrumb-group" class="text-slate-400 dark:text-slate-500 truncate" data-i18n="nav_chat">对话</span>
                     <i class="fas fa-chevron-right text-[10px] text-slate-300 dark:text-slate-600"></i>
-                    <span id="breadcrumb-page" class="font-medium text-slate-700 dark:text-slate-200 truncate" data-i18n="menu_chat">Chat</span>
+                    <span id="breadcrumb-page" class="font-medium text-slate-700 dark:text-slate-200 truncate" data-i18n="menu_chat">对话</span>
                 </div>
 
                 <div class="flex-1"></div>
@@ -268,7 +293,7 @@
                             <img src="assets/logo.jpg" alt="CowAgent" class="w-16 h-16 rounded-2xl mb-6 shadow-lg shadow-primary-500/20">
                             <h1 id="welcome-title" class="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-3">CowAgent</h1>
                             <p id="welcome-subtitle" class="text-slate-500 dark:text-slate-400 text-center max-w-lg mb-10 leading-relaxed"
-                               data-i18n-html="welcome_subtitle">I can help you answer questions, manage your computer, create and execute skills,<br>and keep growing through long-term memory.</p>
+                               data-i18n-html="welcome_subtitle">我可以帮你解答问题、管理计算机、创造和执行技能，并通过<br>长期记忆和知识库不断成长</p>
 
                             <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 w-full max-w-2xl">
                                 <div class="example-card group bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 rounded-xl p-4
@@ -277,9 +302,9 @@
                                         <div class="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
                                             <i class="fas fa-folder-open text-blue-500 text-xs"></i>
                                         </div>
-                                        <span class="font-medium text-sm text-slate-700 dark:text-slate-200" data-i18n="example_sys_title">System</span>
+                                        <span class="font-medium text-sm text-slate-700 dark:text-slate-200" data-i18n="example_sys_title">系统管理</span>
                                     </div>
-                                    <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed" data-i18n="example_sys_text">Show me the files in the workspace</p>
+                                    <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed" data-i18n="example_sys_text">查看工作空间里有哪些文件</p>
                                 </div>
                                 <div class="example-card group bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 rounded-xl p-4
                                             cursor-pointer hover:border-primary-300 dark:hover:border-primary-600 hover:shadow-md transition-all duration-200">
@@ -289,7 +314,7 @@
                                         </div>
                                         <span class="font-medium text-sm text-slate-700 dark:text-slate-200" data-i18n="example_task_title">定时任务</span>
                                     </div>
-                                    <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed" data-i18n="example_task_text">Remind me to check the server in 5 minutes</p>
+                                    <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed" data-i18n="example_task_text">1分钟后提醒我检查服务器</p>
                                 </div>
                                 <div class="example-card group bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 rounded-xl p-4
                                             cursor-pointer hover:border-primary-300 dark:hover:border-primary-600 hover:shadow-md transition-all duration-200">
@@ -297,9 +322,9 @@
                                         <div class="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center">
                                             <i class="fas fa-code text-emerald-500 text-xs"></i>
                                         </div>
-                                        <span class="font-medium text-sm text-slate-700 dark:text-slate-200" data-i18n="example_code_title">Coding</span>
+                                        <span class="font-medium text-sm text-slate-700 dark:text-slate-200" data-i18n="example_code_title">编程助手</span>
                                     </div>
-                                    <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed" data-i18n="example_code_text">Write a Python web scraper script</p>
+                                    <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed" data-i18n="example_code_text">搜索AI资讯并生成可视化网页报告</p>
                                 </div>
                                 <div class="example-card group bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 rounded-xl p-4
                                             cursor-pointer hover:border-primary-300 dark:hover:border-primary-600 hover:shadow-md transition-all duration-200">
@@ -309,7 +334,7 @@
                                         </div>
                                         <span class="font-medium text-sm text-slate-700 dark:text-slate-200" data-i18n="example_knowledge_title">知识库</span>
                                     </div>
-                                    <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed" data-i18n="example_knowledge_text">帮我把这篇文章整理到知识库</p>
+                                    <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed" data-i18n="example_knowledge_text">查看知识库当前文档情况</p>
                                 </div>
                                 <div class="example-card group bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 rounded-xl p-4
                                             cursor-pointer hover:border-primary-300 dark:hover:border-primary-600 hover:shadow-md transition-all duration-200">
@@ -345,14 +370,20 @@
                                 <div class="flex items-center flex-shrink-0">
                                     <button id="new-chat-btn" class="w-9 h-10 flex items-center justify-center rounded-lg
                                                                      text-slate-400 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20
-                                                                     cursor-pointer transition-colors duration-150" title="New Chat"
+                                                                     cursor-pointer transition-colors duration-150"
                                             onclick="newChat()">
                                         <i class="fas fa-plus text-base"></i>
+                                    </button>
+                                    <button id="clear-context-btn" class="w-9 h-10 flex items-center justify-center rounded-lg
+                                                                          text-slate-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20
+                                                                          cursor-pointer transition-colors duration-150"
+                                            onclick="clearContext()">
+                                        <i class="fas fa-trash-can text-base"></i>
                                     </button>
                                     <button id="attach-btn" class="w-9 h-10 flex items-center justify-center rounded-lg
                                                                    text-slate-400 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20
                                                                    cursor-pointer transition-colors duration-150"
-                                            title="Attach file" onclick="document.getElementById('file-input').click()">
+                                            onclick="document.getElementById('file-input').click()">
                                         <i class="fas fa-paperclip text-base"></i>
                                     </button>
                                 </div>
@@ -367,7 +398,7 @@
                                                  text-sm leading-relaxed"
                                           rows="1"
                                           data-i18n-placeholder="input_placeholder"
-                                          placeholder="Type a message, or press / for commands"></textarea>
+                                          placeholder="输入消息，或输入 / 使用指令"></textarea>
                                 <button id="send-btn"
                                         class="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg
                                                bg-primary-400 text-white hover:bg-primary-500
@@ -389,8 +420,8 @@
                         <div class="max-w-4xl mx-auto">
                             <div class="flex items-center justify-between mb-6">
                                 <div>
-                                    <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100" data-i18n="config_title">Configuration</h2>
-                                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1" data-i18n="config_desc">Manage model and agent settings</p>
+                                    <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100" data-i18n="config_title">配置管理</h2>
+                                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1" data-i18n="config_desc">管理模型和 Agent 配置</p>
                                 </div>
                             </div>
                             <div class="grid gap-6">
@@ -401,12 +432,12 @@
                                         <div class="w-9 h-9 rounded-lg bg-primary-50 dark:bg-primary-900/30 flex items-center justify-center">
                                             <i class="fas fa-microchip text-primary-500 text-sm"></i>
                                         </div>
-                                        <h3 class="font-semibold text-slate-800 dark:text-slate-100" data-i18n="config_model">Model Configuration</h3>
+                                        <h3 class="font-semibold text-slate-800 dark:text-slate-100" data-i18n="config_model">模型配置</h3>
                                     </div>
                                     <div class="space-y-5">
                                         <!-- Provider -->
                                         <div>
-                                            <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5" data-i18n="config_provider">Provider</label>
+                                            <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5" data-i18n="config_provider">模型厂商</label>
                                             <div id="cfg-provider" class="cfg-dropdown" tabindex="0">
                                                 <div class="cfg-dropdown-selected">
                                                     <span class="cfg-dropdown-text">--</span>
@@ -417,7 +448,7 @@
                                         </div>
                                         <!-- Model -->
                                         <div>
-                                            <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5" data-i18n="config_model_name">Model</label>
+                                            <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5" data-i18n="config_model_name">模型</label>
                                             <div id="cfg-model-select" class="cfg-dropdown" tabindex="0">
                                                 <div class="cfg-dropdown-selected">
                                                     <span class="cfg-dropdown-text">--</span>
@@ -430,7 +461,7 @@
                                                        class="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600
                                                               bg-slate-50 dark:bg-white/5 text-sm text-slate-800 dark:text-slate-100
                                                               focus:outline-none focus:border-primary-500 font-mono transition-colors"
-                                                       data-i18n-placeholder="config_custom_model_hint" placeholder="Enter custom model name">
+                                                       data-i18n-placeholder="config_custom_model_hint" placeholder="输入自定义模型名称">
                                             </div>
                                         </div>
                                         <!-- API Key -->
@@ -465,7 +496,7 @@
                                             <button id="cfg-model-save"
                                                     class="px-4 py-2 rounded-lg bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium
                                                            cursor-pointer transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
-                                                    onclick="saveModelConfig()" data-i18n="config_save">Save</button>
+                                                    onclick="saveModelConfig()" data-i18n="config_save">保存</button>
                                         </div>
                                     </div>
                                 </div>
@@ -476,12 +507,12 @@
                                         <div class="w-9 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center">
                                             <i class="fas fa-robot text-emerald-500 text-sm"></i>
                                         </div>
-                                        <h3 class="font-semibold text-slate-800 dark:text-slate-100" data-i18n="config_agent">Agent Configuration</h3>
+                                        <h3 class="font-semibold text-slate-800 dark:text-slate-100" data-i18n="config_agent">Agent 配置</h3>
                                     </div>
                                     <div class="space-y-4">
                                         <div>
                                             <label class="flex items-center gap-1.5 text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">
-                                                <span data-i18n="config_max_tokens">Max Context Tokens</span>
+                                                <span data-i18n="config_max_tokens">最大上下文 Token</span>
                                                 <span class="cfg-tip" data-tip-key="config_max_tokens_hint"><i class="fas fa-circle-question"></i></span>
                                             </label>
                                             <input id="cfg-max-tokens" type="number" min="1000" max="200000" step="1000"
@@ -491,7 +522,7 @@
                                         </div>
                                         <div>
                                             <label class="flex items-center gap-1.5 text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">
-                                                <span data-i18n="config_max_turns">Max Memory Turns</span>
+                                                <span data-i18n="config_max_turns">最大记忆轮次</span>
                                                 <span class="cfg-tip" data-tip-key="config_max_turns_hint"><i class="fas fa-circle-question"></i></span>
                                             </label>
                                             <input id="cfg-max-turns" type="number" min="1" max="100" step="1"
@@ -501,7 +532,7 @@
                                         </div>
                                         <div>
                                             <label class="flex items-center gap-1.5 text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">
-                                                <span data-i18n="config_max_steps">Max Steps</span>
+                                                <span data-i18n="config_max_steps">最大执行步数</span>
                                                 <span class="cfg-tip" data-tip-key="config_max_steps_hint"><i class="fas fa-circle-question"></i></span>
                                             </label>
                                             <input id="cfg-max-steps" type="number" min="1" max="50" step="1"
@@ -526,7 +557,7 @@
                                             <button id="cfg-agent-save"
                                                     class="px-4 py-2 rounded-lg bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium
                                                            cursor-pointer transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
-                                                    onclick="saveAgentConfig()" data-i18n="config_save">Save</button>
+                                                    onclick="saveAgentConfig()" data-i18n="config_save">保存</button>
                                         </div>
                                     </div>
                                 </div>
@@ -537,25 +568,25 @@
                                         <div class="w-9 h-9 rounded-lg bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center">
                                             <i class="fas fa-lock text-amber-500 text-sm"></i>
                                         </div>
-                                        <h3 class="font-semibold text-slate-800 dark:text-slate-100" data-i18n="config_security">Security</h3>
+                                        <h3 class="font-semibold text-slate-800 dark:text-slate-100" data-i18n="config_security">安全设置</h3>
                                     </div>
                                     <div class="space-y-4">
                                         <div>
-                                            <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5" data-i18n="config_password">Password</label>
+                                            <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5" data-i18n="config_password">访问密码</label>
                                             <input id="cfg-password" type="password" autocomplete="new-password"
                                                    class="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600
                                                           bg-slate-50 dark:bg-white/5 text-sm text-slate-800 dark:text-slate-100
                                                           focus:outline-none focus:border-primary-500 font-mono transition-colors
                                                           cfg-key-masked"
                                                    data-masked="1">
-                                            <p class="text-xs text-slate-400 dark:text-slate-500 mt-1.5" data-i18n="config_password_hint">Leave empty to disable password protection</p>
+                                            <p class="text-xs text-slate-400 dark:text-slate-500 mt-1.5" data-i18n="config_password_hint">留空则不启用密码保护</p>
                                         </div>
                                         <div class="flex items-center justify-end gap-3 pt-1">
                                             <span id="cfg-password-status" class="text-xs text-primary-500 opacity-0 transition-opacity duration-300"></span>
                                             <button id="cfg-password-save"
                                                     class="px-4 py-2 rounded-lg bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium
                                                            cursor-pointer transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
-                                                    onclick="savePasswordConfig()" data-i18n="config_save">Save</button>
+                                                    onclick="savePasswordConfig()" data-i18n="config_save">保存</button>
                                         </div>
                                     </div>
                                 </div>
@@ -573,25 +604,25 @@
                         <div class="max-w-4xl mx-auto">
                             <div class="flex items-center justify-between mb-6">
                                 <div>
-                                    <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100" data-i18n="skills_title">Skills</h2>
-                                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1" data-i18n="skills_desc">View, enable, or disable agent skills</p>
+                                    <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100" data-i18n="skills_title">技能管理</h2>
+                                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1" data-i18n="skills_desc">查看、启用或禁用 Agent 技能</p>
                                 </div>
                                 <a href="https://skills.cowagent.ai/" target="_blank"
                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-primary-500 bg-primary-50 dark:bg-primary-900/20 hover:bg-primary-100 dark:hover:bg-primary-900/30 transition-colors">
                                     <i class="fas fa-puzzle-piece text-[10px]"></i>
-                                    <span data-i18n="skills_hub_btn">Skill Hub</span>
+                                    <span data-i18n="skills_hub_btn">探索技能广场</span>
                                 </a>
                             </div>
 
                             <!-- Built-in Tools Section -->
                             <div class="mb-8">
                                 <div class="flex items-center gap-2 mb-3">
-                                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500" data-i18n="tools_section_title">Built-in Tools</span>
+                                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500" data-i18n="tools_section_title">内置工具</span>
                                     <span id="tools-count-badge" class="hidden px-2 py-0.5 rounded-full text-xs bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400"></span>
                                 </div>
                                 <div id="tools-empty" class="flex items-center gap-2 py-4 text-slate-400 dark:text-slate-500 text-sm">
                                     <i class="fas fa-spinner fa-spin text-xs"></i>
-                                    <span data-i18n="tools_loading">Loading tools...</span>
+                                    <span data-i18n="tools_loading">加载工具中...</span>
                                 </div>
                                 <div id="tools-list" class="grid gap-3 sm:grid-cols-2 hidden"></div>
                             </div>
@@ -599,15 +630,15 @@
                             <!-- Skills Section -->
                             <div>
                                 <div class="flex items-center gap-2 mb-3">
-                                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500" data-i18n="skills_section_title">Skills</span>
+                                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500" data-i18n="skills_section_title">技能</span>
                                     <span id="skills-count-badge" class="hidden px-2 py-0.5 rounded-full text-xs bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400"></span>
                                 </div>
                                 <div id="skills-empty" class="flex flex-col items-center justify-center py-12">
                                     <div class="w-14 h-14 rounded-2xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center mb-3">
                                         <i class="fas fa-bolt text-amber-400 text-lg"></i>
                                     </div>
-                                    <p class="text-slate-500 dark:text-slate-400 font-medium" data-i18n="skills_loading">Loading skills...</p>
-                                    <p class="text-sm text-slate-400 dark:text-slate-500 mt-1" data-i18n="skills_loading_desc">Skills will be displayed here after loading</p>
+                                    <p class="text-slate-500 dark:text-slate-400 font-medium" data-i18n="skills_loading">加载技能中...</p>
+                                    <p class="text-sm text-slate-400 dark:text-slate-500 mt-1" data-i18n="skills_loading_desc">技能加载后将显示在此处</p>
                                 </div>
                                 <div id="skills-list" class="grid gap-4 sm:grid-cols-2"></div>
                             </div>
@@ -626,26 +657,26 @@
                             <div id="memory-panel-list">
                                 <div class="flex items-center justify-between mb-6">
                                     <div>
-                                        <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100" data-i18n="memory_title">Memory</h2>
-                                        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1" data-i18n="memory_desc">View agent memory files and contents</p>
+                                        <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100" data-i18n="memory_title">记忆管理</h2>
+                                        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1" data-i18n="memory_desc">查看 Agent 记忆文件和内容</p>
                                     </div>
                                 </div>
                                 <div id="memory-empty" class="flex flex-col items-center justify-center py-20">
                                     <div class="w-16 h-16 rounded-2xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center mb-4">
                                         <i class="fas fa-brain text-purple-400 text-xl"></i>
                                     </div>
-                                    <p class="text-slate-500 dark:text-slate-400 font-medium" data-i18n="memory_loading">Loading memory files...</p>
-                                    <p class="text-sm text-slate-400 dark:text-slate-500 mt-1" data-i18n="memory_loading_desc">Memory files will be displayed here</p>
+                                    <p class="text-slate-500 dark:text-slate-400 font-medium" data-i18n="memory_loading">加载记忆文件中...</p>
+                                    <p class="text-sm text-slate-400 dark:text-slate-500 mt-1" data-i18n="memory_loading_desc">记忆文件将显示在此处</p>
                                 </div>
                                 <div id="memory-list" class="hidden">
                                     <div class="bg-white dark:bg-[#1A1A1A] rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden">
                                         <table class="w-full">
                                             <thead>
                                                 <tr class="border-b border-slate-200 dark:border-white/10">
-                                                    <th class="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400" data-i18n="memory_col_name">Filename</th>
-                                                    <th class="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400" data-i18n="memory_col_type">Type</th>
-                                                    <th class="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400" data-i18n="memory_col_size">Size</th>
-                                                    <th class="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400" data-i18n="memory_col_updated">Updated</th>
+                                                    <th class="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400" data-i18n="memory_col_name">文件名</th>
+                                                    <th class="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400" data-i18n="memory_col_type">类型</th>
+                                                    <th class="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400" data-i18n="memory_col_size">大小</th>
+                                                    <th class="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400" data-i18n="memory_col_updated">更新时间</th>
                                                 </tr>
                                             </thead>
                                             <tbody id="memory-table-body"></tbody>
@@ -663,7 +694,7 @@
                                                    text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10
                                                    border border-slate-200 dark:border-white/10 transition-colors cursor-pointer">
                                         <i class="fas fa-arrow-left text-xs"></i>
-                                        <span data-i18n="memory_back">Back</span>
+                                        <span data-i18n="memory_back">返回列表</span>
                                     </button>
                                     <h2 id="memory-viewer-title"
                                         class="text-base font-semibold text-slate-800 dark:text-slate-100 font-mono truncate"></h2>
@@ -689,19 +720,19 @@
                             <!-- Header -->
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 md:mb-6">
                                 <div>
-                                    <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100" data-i18n="knowledge_title">Knowledge</h2>
-                                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1" data-i18n="knowledge_desc">Browse and explore your knowledge base</p>
+                                    <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100" data-i18n="knowledge_title">知识库</h2>
+                                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1" data-i18n="knowledge_desc">浏览和探索你的知识库</p>
                                 </div>
                                 <div class="flex items-center gap-2">
                                     <span id="knowledge-stats" class="text-xs text-slate-400 dark:text-slate-500 hidden sm:inline"></span>
                                     <div class="flex items-center bg-slate-100 dark:bg-white/10 rounded-lg p-0.5">
                                         <button id="knowledge-tab-docs" onclick="switchKnowledgeTab('docs')"
                                                 class="knowledge-tab px-3 py-1.5 rounded-md text-xs font-medium cursor-pointer transition-colors duration-150 active">
-                                            <i class="fas fa-folder-tree mr-1.5"></i><span data-i18n="knowledge_tab_docs">Documents</span>
+                                            <i class="fas fa-folder-tree mr-1.5"></i><span data-i18n="knowledge_tab_docs">文档</span>
                                         </button>
                                         <button id="knowledge-tab-graph" onclick="switchKnowledgeTab('graph')"
                                                 class="knowledge-tab px-3 py-1.5 rounded-md text-xs font-medium cursor-pointer transition-colors duration-150">
-                                            <i class="fas fa-diagram-project mr-1.5"></i><span data-i18n="knowledge_tab_graph">Graph</span>
+                                            <i class="fas fa-diagram-project mr-1.5"></i><span data-i18n="knowledge_tab_graph">图谱</span>
                                         </button>
                                     </div>
                                 </div>
@@ -712,15 +743,15 @@
                                 <div class="w-16 h-16 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center mb-4">
                                     <i class="fas fa-book text-emerald-400 text-xl"></i>
                                 </div>
-                                <p class="text-slate-500 dark:text-slate-400 font-medium" data-i18n="knowledge_loading">Loading knowledge base...</p>
-                                <p class="text-sm text-slate-400 dark:text-slate-500 mt-1" data-i18n="knowledge_loading_desc">Knowledge pages will be displayed here</p>
+                                <p class="text-slate-500 dark:text-slate-400 font-medium" data-i18n="knowledge_loading">加载知识库中...</p>
+                                <p class="text-sm text-slate-400 dark:text-slate-500 mt-1" data-i18n="knowledge_loading_desc">知识页面将显示在这里</p>
                                 <div id="knowledge-empty-guide" class="hidden mt-6 max-w-sm text-center">
-                                    <p class="text-sm text-slate-500 dark:text-slate-400 mb-4" data-i18n="knowledge_empty_guide">Send documents, links or topics to the agent in chat, and it will automatically organize them into your knowledge base.</p>
+                                    <p class="text-sm text-slate-500 dark:text-slate-400 mb-4" data-i18n="knowledge_empty_guide">在对话中发送文档、链接或主题给 Agent，它会自动整理到你的知识库中。</p>
                                     <button onclick="navigateTo('chat')"
                                             class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-500 hover:bg-primary-600
                                                    text-white text-sm font-medium cursor-pointer transition-colors duration-150">
                                         <i class="fas fa-message text-xs"></i>
-                                        <span data-i18n="knowledge_go_chat">Start a conversation</span>
+                                        <span data-i18n="knowledge_go_chat">开始对话</span>
                                     </button>
                                 </div>
                             </div>
@@ -745,9 +776,9 @@
                                     <!-- Content viewer -->
                                     <div class="flex-1 min-w-0">
                                         <div id="knowledge-content-placeholder"
-                                             class="flex flex-col items-center justify-center py-20 text-slate-400 dark:text-slate-500"
+                                             class="flex flex-col items-center justify-center py-20 text-slate-400 dark:text-slate-500">
                                             <i class="fas fa-file-lines text-3xl mb-3 opacity-40"></i>
-                                            <p class="text-sm" data-i18n="knowledge_select_hint">Select a document to view</p>
+                                            <p class="text-sm" data-i18n="knowledge_select_hint">选择一个文档查看</p>
                                         </div>
                                         <div id="knowledge-content-viewer" class="hidden">
                                             <div class="bg-white dark:bg-[#1A1A1A] rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden">
@@ -787,14 +818,14 @@
                         <div class="max-w-4xl mx-auto">
                             <div class="flex items-center justify-between mb-6">
                                 <div>
-                                    <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100" data-i18n="channels_title">Channels</h2>
-                                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1" data-i18n="channels_desc">View and manage messaging channels</p>
+                                    <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100" data-i18n="channels_title">通道管理</h2>
+                                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1" data-i18n="channels_desc">管理已接入的消息通道</p>
                                 </div>
                                 <button id="add-channel-btn" onclick="openAddChannelPanel()"
                                         class="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-500 hover:bg-primary-600
                                                text-white text-sm font-medium cursor-pointer transition-colors duration-150">
                                     <i class="fas fa-plus text-xs"></i>
-                                    <span data-i18n="channels_add">Connect</span>
+                                    <span data-i18n="channels_add">接入通道</span>
                                 </button>
                             </div>
                             <div id="channels-content" class="grid gap-4"></div>
@@ -811,8 +842,8 @@
                         <div class="max-w-4xl mx-auto">
                             <div class="flex items-center justify-between mb-6">
                                 <div>
-                                    <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100" data-i18n="tasks_title">Scheduled Tasks</h2>
-                                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1" data-i18n="tasks_desc">View and manage scheduled tasks</p>
+                                    <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100" data-i18n="tasks_title">定时任务</h2>
+                                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1" data-i18n="tasks_desc">查看和管理定时任务</p>
                                 </div>
                             </div>
                             <div id="tasks-empty" class="flex flex-col items-center justify-center py-20">
@@ -834,8 +865,8 @@
                         <div class="max-w-5xl mx-auto">
                             <div class="flex items-center justify-between mb-6">
                                 <div>
-                                    <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100" data-i18n="logs_title">Logs</h2>
-                                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1" data-i18n="logs_desc">Real-time log output (run.log)</p>
+                                    <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100" data-i18n="logs_title">日志</h2>
+                                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1" data-i18n="logs_desc">实时日志输出 (run.log)</p>
                                 </div>
                             </div>
                             <!-- Log Terminal -->
@@ -850,11 +881,11 @@
                                     <div class="flex-1"></div>
                                     <div class="flex items-center gap-1.5">
                                         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                                        <span class="text-xs text-slate-500" data-i18n="logs_live">Live</span>
+                                        <span class="text-xs text-slate-500" data-i18n="logs_live">实时</span>
                                     </div>
                                 </div>
                                 <div id="log-output" class="p-4 overflow-y-auto font-mono text-xs leading-relaxed text-slate-300 whitespace-pre-wrap break-all" style="height: calc(100vh - 272px)">
-                                    <p class="text-slate-500" data-i18n="logs_coming_msg">Log streaming will be available here. Connects to run.log for real-time output similar to tail -f.</p>
+                                    <p class="text-slate-500" data-i18n="logs_coming_msg">日志流即将在此提供。将连接 run.log 实现类似 tail -f 的实时输出。</p>
                                 </div>
                             </div>
                         </div>
