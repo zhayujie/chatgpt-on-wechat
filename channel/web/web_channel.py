@@ -90,6 +90,42 @@ def _get_upload_dir() -> str:
     return tmp_dir
 
 
+def _generate_session_title(user_message: str, assistant_reply: str = "") -> str:
+    """
+    Generate a short session title by calling the current bot's reply_text.
+    """
+    import re
+    fallback = user_message[:50].split("\n")[0].strip() or "New Chat"
+    try:
+        from bridge.bridge import Bridge
+        from models.session_manager import Session
+        bot = Bridge().get_bot("chat")
+
+        prompt_parts = [f"User: {user_message[:300]}"]
+        if assistant_reply:
+            prompt_parts.append(f"Assistant: {assistant_reply[:300]}")
+
+        session = Session("__title_gen__", system_prompt="")
+        session.messages = [
+            {"role": "user", "content": (
+                "Generate a very short title (max 15 characters for Chinese, max 6 words for English) "
+                "summarizing this conversation. Return ONLY the title text, nothing else.\n\n"
+                + "\n".join(prompt_parts)
+            )}
+        ]
+
+        result = bot.reply_text(session)
+        raw = (result.get("content") or "").strip()
+        # Strip <think>...</think> reasoning blocks
+        title = re.sub(r'<think>.*?</think>', '', raw, flags=re.DOTALL).strip().strip('"\'')
+        logger.info(f"[WebChannel] Title generation result: '{title}' (len={len(title)})")
+        if title and len(title) <= 50:
+            return title
+    except Exception as e:
+        logger.warning(f"[WebChannel] Title generation failed: {e}")
+    return fallback
+
+
 class WebMessage(ChatMessage):
     def __init__(
             self,
@@ -519,6 +555,10 @@ class WebChannel(ChatChannel):
             '/api/knowledge/read', 'KnowledgeReadHandler',
             '/api/knowledge/graph', 'KnowledgeGraphHandler',
             '/api/scheduler', 'SchedulerHandler',
+            '/api/sessions', 'SessionsHandler',
+            '/api/sessions/(.*)/generate_title', 'SessionTitleHandler',
+            '/api/sessions/(.*)/clear_context', 'SessionClearContextHandler',
+            '/api/sessions/(.*)', 'SessionDetailHandler',
             '/api/history', 'HistoryHandler',
             '/api/logs', 'LogsHandler',
             '/api/version', 'VersionHandler',
@@ -688,10 +728,15 @@ class StreamHandler:
 
 class ChatHandler:
     def GET(self):
-        # 正常返回聊天页面
+        web.header('Cache-Control', 'no-cache, no-store, must-revalidate')
+        web.header('Pragma', 'no-cache')
         file_path = os.path.join(os.path.dirname(__file__), 'chat.html')
         with open(file_path, 'r', encoding='utf-8') as f:
-            return f.read()
+            html = f.read()
+        cache_bust = str(int(time.time()))
+        html = html.replace('assets/js/console.js', f'assets/js/console.js?v={cache_bust}')
+        html = html.replace('assets/css/console.css', f'assets/css/console.css?v={cache_bust}')
+        return html
 
 
 class ConfigHandler:
@@ -1537,6 +1582,135 @@ class SchedulerHandler:
             return json.dumps({"status": "success", "tasks": tasks}, ensure_ascii=False)
         except Exception as e:
             logger.error(f"[WebChannel] Scheduler API error: {e}")
+            return json.dumps({"status": "error", "message": str(e)})
+
+
+class SessionsHandler:
+    def GET(self):
+        _require_auth()
+        web.header('Content-Type', 'application/json; charset=utf-8')
+        try:
+            params = web.input(page='1', page_size='50')
+            from agent.memory import get_conversation_store
+            store = get_conversation_store()
+            result = store.list_sessions(
+                channel_type="web",
+                page=int(params.page),
+                page_size=int(params.page_size),
+            )
+            return json.dumps({"status": "success", **result}, ensure_ascii=False)
+        except Exception as e:
+            logger.error(f"[WebChannel] Sessions API error: {e}")
+            return json.dumps({"status": "error", "message": str(e)})
+
+
+class SessionDetailHandler:
+    def DELETE(self, session_id: str):
+        _require_auth()
+        web.header('Content-Type', 'application/json; charset=utf-8')
+        logger.info(f"[WebChannel] DELETE session request: {session_id}")
+        try:
+            if not session_id:
+                return json.dumps({"status": "error", "message": "session_id required"})
+
+            from agent.memory import get_conversation_store
+            store = get_conversation_store()
+            store.clear_session(session_id)
+
+            # Also remove the Agent instance from AgentBridge if exists
+            try:
+                from bridge.bridge import Bridge
+                ab = Bridge().get_agent_bridge()
+                if session_id in ab.agents:
+                    del ab.agents[session_id]
+                    logger.info(f"[WebChannel] Removed agent instance for session {session_id}")
+            except Exception:
+                pass
+
+            channel = WebChannel()
+            channel.session_queues.pop(session_id, None)
+
+            logger.info(f"[WebChannel] Session deleted: {session_id}")
+            return json.dumps({"status": "success"})
+        except Exception as e:
+            logger.error(f"[WebChannel] Session delete error: {e}")
+            return json.dumps({"status": "error", "message": str(e)})
+
+    def PUT(self, session_id: str):
+        _require_auth()
+        web.header('Content-Type', 'application/json; charset=utf-8')
+        try:
+            if not session_id:
+                return json.dumps({"status": "error", "message": "session_id required"})
+            body = json.loads(web.data())
+            title = body.get("title", "").strip()
+            if not title:
+                return json.dumps({"status": "error", "message": "title required"})
+
+            from agent.memory import get_conversation_store
+            store = get_conversation_store()
+            found = store.rename_session(session_id, title)
+            if not found:
+                return json.dumps({"status": "error", "message": "session not found"})
+            return json.dumps({"status": "success"})
+        except Exception as e:
+            logger.error(f"[WebChannel] Session rename error: {e}")
+            return json.dumps({"status": "error", "message": str(e)})
+
+
+class SessionTitleHandler:
+    def POST(self, session_id: str):
+        _require_auth()
+        web.header('Content-Type', 'application/json; charset=utf-8')
+        try:
+            if not session_id:
+                return json.dumps({"status": "error", "message": "session_id required"})
+
+            body = json.loads(web.data())
+            user_message = body.get("user_message", "")
+            assistant_reply = body.get("assistant_reply", "")
+            if not user_message:
+                return json.dumps({"status": "error", "message": "user_message required"})
+
+            title = _generate_session_title(user_message, assistant_reply)
+
+            from agent.memory import get_conversation_store
+            store = get_conversation_store()
+            updated = store.rename_session(session_id, title)
+            logger.info(f"[WebChannel] Session title set: sid={session_id}, title='{title}', db_updated={updated}")
+
+            return json.dumps({"status": "success", "title": title}, ensure_ascii=False)
+        except Exception as e:
+            logger.error(f"[WebChannel] Title generation error: {e}")
+            return json.dumps({"status": "error", "message": str(e)})
+
+
+class SessionClearContextHandler:
+    def POST(self, session_id: str):
+        _require_auth()
+        web.header('Content-Type', 'application/json; charset=utf-8')
+        try:
+            if not session_id:
+                return json.dumps({"status": "error", "message": "session_id required"})
+
+            from agent.memory import get_conversation_store
+            store = get_conversation_store()
+            new_seq = store.clear_context(session_id)
+
+            # Delete the agent instance so a fresh one is created on the next message
+            try:
+                from bridge.bridge import Bridge
+                bridge = Bridge()
+                ab = bridge.get_agent_bridge()
+                if session_id in ab.agents:
+                    del ab.agents[session_id]
+                    logger.info(f"[WebChannel] Cleared agent instance for session {session_id}")
+            except Exception:
+                pass
+
+            return json.dumps({"status": "success", "context_start_seq": new_seq})
+        except Exception as e:
+            logger.error(f"[WebChannel] Clear context error: {e}")
             return json.dumps({"status": "error", "message": str(e)})
 
 

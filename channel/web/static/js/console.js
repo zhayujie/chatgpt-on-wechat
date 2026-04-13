@@ -79,6 +79,18 @@ const I18N = {
         tasks_coming: '即将推出', tasks_coming_desc: '定时任务管理功能即将在此提供',
         logs_title: '日志', logs_desc: '实时日志输出 (run.log)',
         logs_live: '实时', logs_coming_msg: '日志流即将在此提供。将连接 run.log 实现类似 tail -f 的实时输出。',
+        new_chat: '新对话',
+        session_history: '历史会话',
+        today: '今天', yesterday: '昨天', earlier: '更早',
+        delete_session_confirm: '确认删除该会话？所有消息将被清除。',
+        delete_session_title: '删除会话',
+        untitled_session: '新对话',
+        context_cleared: '— 以上内容已从上下文中移除 —',
+        tip_new_chat: '新建对话',
+        tip_clear_context: '清除上下文',
+        tip_attach_file: '上传附件',
+        confirm_yes: '确认',
+        confirm_cancel: '取消',
         error_send: '发送失败，请稍后再试。', error_timeout: '请求超时，请再试一次。',
     },
     en: {
@@ -149,6 +161,18 @@ const I18N = {
         tasks_coming: 'Coming Soon', tasks_coming_desc: 'Scheduled task management will be available here',
         logs_title: 'Logs', logs_desc: 'Real-time log output (run.log)',
         logs_live: 'Live', logs_coming_msg: 'Log streaming will be available here. Connects to run.log for real-time output similar to tail -f.',
+        new_chat: 'New Chat',
+        session_history: 'History',
+        today: 'Today', yesterday: 'Yesterday', earlier: 'Earlier',
+        delete_session_confirm: 'Delete this session? All messages will be removed.',
+        delete_session_title: 'Delete Session',
+        untitled_session: 'New Chat',
+        context_cleared: '— Context above has been cleared —',
+        tip_new_chat: 'New Chat',
+        tip_clear_context: 'Clear Context',
+        tip_attach_file: 'Attach File',
+        confirm_yes: 'Confirm',
+        confirm_cancel: 'Cancel',
         error_send: 'Failed to send. Please try again.', error_timeout: 'Request timeout. Please try again.',
     }
 };
@@ -172,13 +196,15 @@ function applyI18n() {
     document.querySelectorAll('[data-tip-key]').forEach(el => {
         el.setAttribute('data-tooltip', t(el.dataset.tipKey));
     });
-    document.getElementById('lang-label').textContent = currentLang === 'zh' ? 'EN' : '中文';
+    const langLabel = document.getElementById('lang-label');
+    if (langLabel) langLabel.textContent = currentLang === 'zh' ? 'EN' : '中文';
 }
 
 function toggleLanguage() {
     currentLang = currentLang === 'zh' ? 'en' : 'zh';
     localStorage.setItem('cow_lang', currentLang);
     applyI18n();
+    _applyInputTooltips();
 }
 
 // =====================================================================
@@ -789,7 +815,10 @@ function sendMessage() {
     }
 
     const ws = document.getElementById('welcome-screen');
+    const isFirstMessage = !!ws;
     if (ws) ws.remove();
+
+    const titleInfo = (isFirstMessage && text) ? { sid: sessionId, userMsg: text } : null;
 
     const timestamp = new Date();
     const attachments = [...pendingAttachments];
@@ -826,7 +855,7 @@ function sendMessage() {
         .then(data => {
             if (data.status === 'success') {
                 if (data.stream) {
-                    startSSE(data.request_id, loadingEl, timestamp);
+                    startSSE(data.request_id, loadingEl, timestamp, titleInfo);
                 } else {
                     loadingContainers[data.request_id] = loadingEl;
                 }
@@ -854,7 +883,7 @@ function sendMessage() {
     postWithRetry(0);
 }
 
-function startSSE(requestId, loadingEl, timestamp) {
+function startSSE(requestId, loadingEl, timestamp, titleInfo) {
     let botEl = null;
     let stepsEl = null;    // .agent-steps  (thinking summaries + tool indicators)
     let contentEl = null;  // .answer-content (final streaming answer)
@@ -1072,6 +1101,13 @@ function startSSE(requestId, loadingEl, timestamp) {
                     applyHighlighting(botEl);
                 }
                 scrollChatToBottom();
+
+                if (titleInfo) {
+                    generateSessionTitle(titleInfo.sid, titleInfo.userMsg, '');
+                    titleInfo = null;
+                } else if (sessionPanelOpen) {
+                    loadSessionList();
+                }
 
             } else if (item.type === 'error') {
                 done = true;
@@ -1362,16 +1398,37 @@ function loadHistory(page) {
                 // Keep the "load more" sentinel in place (inserted below)
             }
 
+            const ctxStartSeq = data.context_start_seq || 0;
+            let dividerInserted = false;
+
             data.messages.forEach(msg => {
                 const hasContent = msg.content && msg.content.trim();
                 const hasToolCalls = msg.role === 'assistant' && msg.tool_calls && msg.tool_calls.length > 0;
                 if (!hasContent && !hasToolCalls) return;
+
+                // Insert context divider when transitioning from above to below boundary
+                if (ctxStartSeq > 0 && !dividerInserted && msg._seq !== undefined && msg._seq >= ctxStartSeq) {
+                    dividerInserted = true;
+                    const divider = document.createElement('div');
+                    divider.className = 'context-divider';
+                    divider.innerHTML = `<span>${t('context_cleared')}</span>`;
+                    fragment.appendChild(divider);
+                }
+
                 const ts = new Date(msg.created_at * 1000);
                 const el = msg.role === 'user'
                     ? createUserMessageEl(msg.content, ts)
                     : createBotMessageEl(msg.content || '', ts, null, msg);
                 fragment.appendChild(el);
             });
+
+            // If context was cleared but no new messages exist yet, append divider at the end
+            if (ctxStartSeq > 0 && !dividerInserted) {
+                const divider = document.createElement('div');
+                divider.className = 'context-divider';
+                divider.innerHTML = `<span>${t('context_cleared')}</span>`;
+                fragment.appendChild(divider);
+            }
 
             // Prepend history above any existing messages
             const sentinel = document.getElementById('history-load-more');
@@ -1521,13 +1578,345 @@ function newChat() {
         });
     });
     if (currentView !== 'chat') navigateTo('chat');
+
+    // Show panel and load full session list, then prepend the new session on top
+    const panel = document.getElementById('session-panel');
+    if (panel && !sessionPanelOpen) {
+        sessionPanelOpen = true;
+        panel.classList.remove('hidden');
+        _persistPanelState();
+    }
+    const newSid = sessionId;
+    loadSessionList(() => _addOptimisticSessionItem(newSid));
+}
+
+// =====================================================================
+// Session Panel
+// =====================================================================
+
+const SESSION_PANEL_KEY = 'cow_session_panel_open';
+let sessionPanelOpen = localStorage.getItem(SESSION_PANEL_KEY) === '1';
+
+function _persistPanelState() {
+    localStorage.setItem(SESSION_PANEL_KEY, sessionPanelOpen ? '1' : '0');
+}
+
+function toggleSessionPanel() {
+    const panel = document.getElementById('session-panel');
+    if (!panel) return;
+    sessionPanelOpen = !sessionPanelOpen;
+    panel.classList.toggle('hidden', !sessionPanelOpen);
+    _persistPanelState();
+    if (sessionPanelOpen) loadSessionList();
+}
+
+function openSessionPanel() {
+    const panel = document.getElementById('session-panel');
+    if (!panel || sessionPanelOpen) return;
+    sessionPanelOpen = true;
+    panel.classList.remove('hidden');
+    _persistPanelState();
+    loadSessionList();
+}
+
+function _restoreSessionPanel() {
+    const panel = document.getElementById('session-panel');
+    if (!panel) return;
+    if (sessionPanelOpen) {
+        panel.classList.remove('hidden');
+        loadSessionList();
+    } else {
+        panel.classList.add('hidden');
+    }
+}
+
+function _applyInputTooltips() {
+    const set = (id, key, pos) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.setAttribute('data-tooltip', t(key));
+        el.removeAttribute('title');
+        if (pos) el.setAttribute('data-tooltip-pos', pos);
+    };
+    set('new-chat-btn', 'tip_new_chat');
+    set('clear-context-btn', 'tip_clear_context');
+    set('attach-btn', 'tip_attach_file');
+    set('session-toggle-btn', 'session_history', 'bottom');
+}
+
+function _addOptimisticSessionItem(sid) {
+    const container = document.getElementById('session-list');
+    if (!container) return;
+
+    const emptyEl = container.querySelector('.session-empty');
+    if (emptyEl) emptyEl.remove();
+
+    document.querySelectorAll('.session-item.active').forEach(el => el.classList.remove('active'));
+
+    const todayLabel = t('today');
+    let firstGroup = container.querySelector('.session-group-label');
+    if (!firstGroup || firstGroup.textContent !== todayLabel) {
+        const header = document.createElement('div');
+        header.className = 'session-group-label';
+        header.textContent = todayLabel;
+        container.prepend(header);
+        firstGroup = header;
+    }
+
+    const title = t('new_chat');
+    const item = document.createElement('div');
+    item.className = 'session-item active';
+    item.dataset.sessionId = sid;
+    item.innerHTML = `
+        <i class="fas fa-message session-icon"></i>
+        <span class="session-title" title="${escapeHtml(title)}">${escapeHtml(title)}</span>
+        <button class="session-delete" onclick="event.stopPropagation(); deleteSession('${sid}')" title="Delete">
+            <i class="fas fa-trash-can"></i>
+        </button>
+    `;
+    item.addEventListener('click', () => switchSession(sid));
+    firstGroup.insertAdjacentElement('afterend', item);
+}
+
+function _sessionTimeGroup(ts) {
+    const now = new Date();
+    const d = new Date(ts * 1000);
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+    if (d >= today) return t('today');
+    if (d >= yesterday) return t('yesterday');
+    return t('earlier');
+}
+
+let _sessionPage = 1;
+let _sessionHasMore = false;
+let _sessionLoading = false;
+const _SESSION_PAGE_SIZE = 50;
+
+function loadSessionList(onDone) {
+    const container = document.getElementById('session-list');
+    if (!container) return;
+
+    _sessionPage = 1;
+    _sessionHasMore = false;
+
+    _fetchSessionPage(1, true, onDone);
+}
+
+function _fetchSessionPage(page, clear, onDone) {
+    if (_sessionLoading) return;
+    _sessionLoading = true;
+
+    const container = document.getElementById('session-list');
+    if (!container) { _sessionLoading = false; return; }
+
+    // Remove existing "load more" sentinel before fetching
+    const oldSentinel = container.querySelector('.session-load-more');
+    if (oldSentinel) oldSentinel.remove();
+
+    fetch(`/api/sessions?page=${page}&page_size=${_SESSION_PAGE_SIZE}`)
+        .then(r => r.json())
+        .then(data => {
+            _sessionLoading = false;
+            if (data.status !== 'success') return;
+
+            if (clear) container.innerHTML = '';
+
+            const sessions = data.sessions || [];
+            _sessionPage = page;
+            _sessionHasMore = !!data.has_more;
+
+            if (sessions.length === 0 && page === 1) {
+                container.innerHTML = '<div class="session-empty">' + t('untitled_session') + '</div>';
+                if (typeof onDone === 'function') onDone();
+                return;
+            }
+
+            // Track last group label already in the container
+            const existingLabels = container.querySelectorAll('.session-group-label');
+            let lastGroup = existingLabels.length > 0
+                ? existingLabels[existingLabels.length - 1].textContent
+                : '';
+
+            sessions.forEach(s => {
+                const group = _sessionTimeGroup(s.last_active);
+                if (group !== lastGroup) {
+                    lastGroup = group;
+                    const header = document.createElement('div');
+                    header.className = 'session-group-label';
+                    header.textContent = group;
+                    container.appendChild(header);
+                }
+
+                const item = document.createElement('div');
+                const isActive = s.session_id === sessionId;
+                item.className = 'session-item' + (isActive ? ' active' : '');
+                item.dataset.sessionId = s.session_id;
+
+                const title = s.title || t('untitled_session');
+                item.innerHTML = `
+                    <i class="fas fa-message session-icon"></i>
+                    <span class="session-title" title="${escapeHtml(title)}">${escapeHtml(title)}</span>
+                    <button class="session-delete" onclick="event.stopPropagation(); deleteSession('${s.session_id}')" title="Delete">
+                        <i class="fas fa-trash-can"></i>
+                    </button>
+                `;
+                item.addEventListener('click', () => switchSession(s.session_id));
+                container.appendChild(item);
+            });
+
+            if (typeof onDone === 'function') onDone();
+        })
+        .catch(() => { _sessionLoading = false; });
+}
+
+function _onSessionListScroll() {
+    if (!_sessionHasMore || _sessionLoading) return;
+    const container = document.getElementById('session-list');
+    if (!container) return;
+    // Trigger when scrolled near the bottom (within 60px)
+    if (container.scrollHeight - container.scrollTop - container.clientHeight < 60) {
+        _fetchSessionPage(_sessionPage + 1, false);
+    }
+}
+
+// Attach scroll listener once DOM is ready
+(function _initSessionScroll() {
+    const el = document.getElementById('session-list');
+    if (el) {
+        el.addEventListener('scroll', _onSessionListScroll);
+    } else {
+        document.addEventListener('DOMContentLoaded', () => {
+            const el2 = document.getElementById('session-list');
+            if (el2) el2.addEventListener('scroll', _onSessionListScroll);
+        });
+    }
+})();
+
+function switchSession(newSessionId) {
+    if (newSessionId === sessionId) {
+        if (currentView !== 'chat') navigateTo('chat');
+        return;
+    }
+
+    Object.values(activeStreams).forEach(es => { try { es.close(); } catch (_) {} });
+    activeStreams = {};
+    loadingContainers = {};
+
+    sessionId = newSessionId;
+    localStorage.setItem(SESSION_ID_KEY, sessionId);
+
+    historyPage = 0;
+    historyHasMore = false;
+    historyLoading = false;
+
+    messagesDiv.innerHTML = '';
+    loadHistory(1);
+    startPolling();
+
+    document.querySelectorAll('.session-item').forEach(el => {
+        el.classList.toggle('active', el.dataset.sessionId === sessionId);
+    });
+
+    if (currentView !== 'chat') navigateTo('chat');
+}
+
+function deleteSession(sid) {
+    showConfirmModal(t('delete_session_title'), t('delete_session_confirm'), () => {
+        fetch(`/api/sessions/${encodeURIComponent(sid)}`, { method: 'DELETE' })
+            .then(r => r.json())
+            .then(data => {
+                if (data.status !== 'success') return;
+                if (sid === sessionId) {
+                    newChat();
+                } else {
+                    loadSessionList();
+                }
+            })
+            .catch(() => {});
+    });
+}
+
+function showConfirmModal(title, message, onConfirm) {
+    let overlay = document.getElementById('confirm-modal-overlay');
+    if (overlay) overlay.remove();
+
+    overlay = document.createElement('div');
+    overlay.id = 'confirm-modal-overlay';
+    overlay.className = 'confirm-overlay';
+
+    const modal = document.createElement('div');
+    modal.className = 'confirm-modal';
+    modal.innerHTML = `
+        <div class="confirm-title">${escapeHtml(title)}</div>
+        <div class="confirm-message">${escapeHtml(message)}</div>
+        <div class="confirm-actions">
+            <button class="confirm-btn confirm-btn-cancel">${t('confirm_cancel')}</button>
+            <button class="confirm-btn confirm-btn-ok">${t('confirm_yes')}</button>
+        </div>
+    `;
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    requestAnimationFrame(() => overlay.classList.add('visible'));
+
+    const close = () => {
+        overlay.classList.remove('visible');
+        setTimeout(() => overlay.remove(), 200);
+    };
+
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+    modal.querySelector('.confirm-btn-cancel').addEventListener('click', close);
+    modal.querySelector('.confirm-btn-ok').addEventListener('click', () => {
+        close();
+        onConfirm();
+    });
+}
+
+function clearContext() {
+    fetch(`/api/sessions/${encodeURIComponent(sessionId)}/clear_context`, { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            if (data.status !== 'success') return;
+            // Insert a visual divider in the chat
+            const divider = document.createElement('div');
+            divider.className = 'context-divider';
+            divider.innerHTML = `<span>${t('context_cleared')}</span>`;
+            messagesDiv.appendChild(divider);
+            scrollChatToBottom();
+        })
+        .catch(() => {});
+}
+
+function generateSessionTitle(sid, userMsg, assistantReply) {
+    fetch(`/api/sessions/${encodeURIComponent(sid)}/generate_title`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_message: userMsg, assistant_reply: assistantReply }),
+    })
+        .then(r => r.json())
+        .then(data => {
+            if (data.status === 'success' && sessionPanelOpen) {
+                loadSessionList();
+            }
+        })
+        .catch(() => {});
 }
 
 // =====================================================================
 // Utilities
 // =====================================================================
 function formatTime(date) {
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const now = new Date();
+    const sameDay = date.getFullYear() === now.getFullYear()
+        && date.getMonth() === now.getMonth()
+        && date.getDate() === now.getDate();
+    const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    if (sameDay) return time;
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    if (date.getFullYear() === now.getFullYear()) return `${m}-${d} ${time}`;
+    return `${date.getFullYear()}-${m}-${d} ${time}`;
 }
 
 function escapeHtml(str) {
@@ -3563,6 +3952,10 @@ window.fetch = function(...args) {
 };
 
 function initApp() {
+    applyI18n();
+    _applyInputTooltips();
+    _restoreSessionPanel();
+
     fetch('/api/knowledge/list').then(r => r.json()).then(data => {
         if (data.status === 'success') _knowledgeTreeData = data.tree || [];
     }).catch(() => {});
