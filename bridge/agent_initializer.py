@@ -548,14 +548,17 @@ class AgentInitializer:
         import threading
 
         def _daily_flush_loop():
+            import random
             while True:
                 try:
                     now = datetime.datetime.now()
-                    target = now.replace(hour=23, minute=55, second=0, microsecond=0)
+                    jitter_min = random.randint(50, 55)
+                    jitter_sec = random.randint(0, 59)
+                    target = now.replace(hour=23, minute=jitter_min, second=jitter_sec, microsecond=0)
                     if target <= now:
                         target += datetime.timedelta(days=1)
                     wait_seconds = (target - now).total_seconds()
-                    logger.info(f"[DailyFlush] Next flush at {target.strftime('%Y-%m-%d %H:%M')} (in {wait_seconds/3600:.1f}h)")
+                    logger.info(f"[DailyFlush] Next flush at {target.strftime('%Y-%m-%d %H:%M:%S')} (in {wait_seconds/3600:.1f}h)")
                     time.sleep(wait_seconds)
 
                     self._flush_all_agents()
