@@ -39,20 +39,25 @@ Agent 通过以下机制自动将对话内容持久化为长期记忆：
 
 Agent 会在对话中根据需要自动触发记忆检索，将相关历史信息纳入上下文。检索结果按混合评分排序（默认向量权重 0.7、关键词权重 0.3），日级记忆会随时间衰减（半衰期 30 天），核心记忆不衰减。
 
-## 首次启动
+## 相关文件
 
-首次启动 Agent 时，Agent 会主动向用户询问关键信息，并记录至工作空间（默认 `~/cow`）中：
+工作空间（默认 `~/cow`）中与记忆相关的文件：
 
 | 文件 | 说明 |
 | --- | --- |
-| `system.md` | Agent 的系统提示词和行为设定 |
-| `user.md` | 用户身份信息和偏好 |
+| `AGENT.md` | Agent 的人格和行为设定 |
+| `USER.md` | 用户身份信息和偏好 |
+| `RULE.md` | 自定义规则和约束 |
 | `MEMORY.md` | 核心记忆（长期） |
 | `memory/YYYY-MM-DD.md` | 日级记忆（按需创建） |
 | `memory/dreams/YYYY-MM-DD.md` | 梦境日记（Deep Dream 自动生成） |
 
+## Web 控制台
+
+在 Web 控制台的记忆管理页面中，可浏览记忆文件和梦境日记，支持通过 Tab 切换查看：
+
 <Frame>
-  <img src="https://cdn.link-ai.tech/doc/20260203000455.png" width="800" />
+  <img src="https://cdn.link-ai.tech/doc/20260414171014.png" width="800" />
 </Frame>
 
 ## 相关配置
