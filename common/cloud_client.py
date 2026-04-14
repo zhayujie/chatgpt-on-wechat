@@ -56,6 +56,7 @@ class CloudClient(LinkAIClient):
         self._memory_service = None
         self._knowledge_service = None
         self._chat_service = None
+        self._session_service = None
 
     @property
     def skill_service(self):
@@ -117,6 +118,18 @@ class CloudClient(LinkAIClient):
             except Exception as e:
                 logger.error(f"[CloudClient] Failed to init ChatService: {e}")
         return self._chat_service
+
+    @property
+    def session_service(self):
+        """Lazy-init SessionService."""
+        if self._session_service is None:
+            try:
+                from agent.chat.session_service import SessionService
+                self._session_service = SessionService()
+                logger.debug("[CloudClient] SessionService initialised")
+            except Exception as e:
+                logger.error(f"[CloudClient] Failed to init SessionService: {e}")
+        return self._session_service
 
     # ------------------------------------------------------------------
     # message push callback
@@ -546,12 +559,23 @@ class CloudClient(LinkAIClient):
     # ------------------------------------------------------------------
     # history callback
     # ------------------------------------------------------------------
+    # Session-related actions handled via the HISTORY channel
+    _SESSION_ACTIONS = {
+        "list_sessions", "delete_session", "rename_session",
+        "clear_context", "generate_title",
+    }
+
     def on_history(self, data: dict) -> dict:
         """
         Handle HISTORY messages from the cloud console.
-        Returns paginated conversation history for a session.
 
-        :param data: message data with 'action' and 'payload' (session_id, page, page_size)
+        Supports both history query and session management actions
+        through a unified HISTORY message channel:
+          - query: paginated conversation history
+          - list_sessions / delete_session / rename_session /
+            clear_context / generate_title: session lifecycle
+
+        :param data: message data with 'action' and 'payload'
         :return: response dict
         """
         action = data.get("action", "query")
@@ -561,7 +585,18 @@ class CloudClient(LinkAIClient):
         if action == "query":
             return self._query_history(payload)
 
+        if action in self._SESSION_ACTIONS:
+            return self._dispatch_session(action, payload)
+
         return {"action": action, "code": 404, "message": f"unknown action: {action}", "payload": None}
+
+    def _dispatch_session(self, action: str, payload: dict) -> dict:
+        """Delegate session actions to SessionService."""
+        svc = self.session_service
+        if svc is None:
+            return {"action": action, "code": 500,
+                    "message": "SessionService not available", "payload": None}
+        return svc.dispatch(action, payload)
 
     def _query_history(self, payload: dict) -> dict:
         """Query paginated conversation history using ConversationStore."""
