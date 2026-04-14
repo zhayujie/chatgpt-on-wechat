@@ -427,6 +427,22 @@ const chatInput = document.getElementById('chat-input');
 const sendBtn = document.getElementById('send-btn');
 const messagesDiv = document.getElementById('chat-messages');
 const fileInput = document.getElementById('file-input');
+
+// Intercept internal navigation links in chat messages
+messagesDiv.addEventListener('click', (e) => {
+    const a = e.target.closest('a');
+    if (!a) return;
+    const href = a.getAttribute('href') || '';
+    if (href === '/memory/dreams') {
+        e.preventDefault();
+        navigateTo('memory');
+        setTimeout(() => switchMemoryTab('dreams'), 50);
+    } else if (href === '/memory/MEMORY.md') {
+        e.preventDefault();
+        navigateTo('memory');
+        setTimeout(() => { switchMemoryTab('files'); openMemoryFile('MEMORY.md', 'memory'); }, 50);
+    }
+});
 const attachmentPreview = document.getElementById('attachment-preview');
 
 // Pending attachments: [{file_path, file_name, file_type, preview_url}]
@@ -566,6 +582,7 @@ const SLASH_COMMANDS = [
     { cmd: '/skill info ',         desc: '查看技能详情' },
     { cmd: '/skill enable ',       desc: '启用技能' },
     { cmd: '/skill disable ',      desc: '禁用技能' },
+    { cmd: '/memory dream ',        desc: '手动触发记忆蒸馏 (可指定天数, 默认3)' },
     { cmd: '/knowledge',            desc: '查看知识库统计' },
     { cmd: '/knowledge list',      desc: '查看知识库文件树' },
     { cmd: '/knowledge on',        desc: '开启知识库' },

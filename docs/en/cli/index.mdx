@@ -40,7 +40,8 @@ Service:
 Skills:
   skill     Manage skills (list / search / install / uninstall ...)
 
-Knowledge:
+Memory & Knowledge:
+  memory    Memory distillation (dream)
   knowledge View knowledge base stats and structure
 
 Others:
@@ -58,6 +59,7 @@ In the Web console or any connected channel, type `/` to see command suggestions
 | `/status` | View service status and configuration |
 | `/config` | View or modify runtime configuration |
 | `/skill` | Manage skills (install, uninstall, enable, disable, etc.) |
+| `/memory dream [N]` | Manually trigger memory distillation (default 3 days, max 30) |
 | `/knowledge` | View knowledge base statistics |
 | `/knowledge list` | View knowledge base directory structure |
 | `/knowledge on\|off` | Enable or disable knowledge base |
@@ -80,6 +82,7 @@ In the Web console or any connected channel, type `/` to see command suggestions
 | logs | ✓ | ✓ |
 | config | ✗ | ✓ |
 | context | — | ✓ |
+| memory (subcommands) | ✗ | ✓ |
 | knowledge (subcommands) | ✓ | ✓ |
 | skill (subcommands) | ✓ | ✓ |
 | start / stop / restart | ✓ | ✗ |

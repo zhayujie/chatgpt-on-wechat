@@ -25,7 +25,7 @@ The Agent automatically persists conversation content to long-term memory throug
 
 - **On context trimming** — When conversation turns or tokens exceed the configured limit, the oldest half of the context is trimmed, and the discarded content is summarized by LLM into key information and written to the daily memory file. The summary is also asynchronously injected into the retained context for conversational continuity
 - **Daily scheduled summary** — A full summary is automatically triggered at 23:55 every day, ensuring memory is preserved even on low-activity days (skipped if content hasn't changed)
-- **Deep Dream (memory distillation)** — Runs automatically after the daily summary, reading recent daily files and current MEMORY.md, then using LLM to deduplicate, merge, and prune, producing a refined MEMORY.md and a dream diary
+- **[Deep Dream (memory distillation)](/en/memory/deep-dream)** — Runs automatically after the daily summary, distilling daily memories into MEMORY.md and generating a dream diary
 - **On API context overflow** — When the model API returns a context overflow error, the current conversation summary is saved as an emergency measure
 
 All memory writes run asynchronously in a background thread (LLM summarization + file writing), never blocking normal conversation replies.

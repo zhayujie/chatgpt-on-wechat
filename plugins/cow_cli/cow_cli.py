@@ -31,7 +31,7 @@ KNOWN_COMMANDS = {
     "help", "version", "status", "logs",
     "start", "stop", "restart",
     "skill", "context", "config",
-    "knowledge",
+    "knowledge", "memory",
     "install-browser",
 }
 
@@ -158,6 +158,7 @@ class CowCliPlugin(Plugin):
             "  /config              查看当前配置",
             "  /config <key>        查看某项配置",
             "  /config <key> <val>  修改配置",
+            "  /memory dream [N]    手动触发记忆蒸馏 (整理近N天, 默认3, 最多30)",
             "  /knowledge           查看知识库统计",
             "  /knowledge list      查看知识库文件树",
             "  /knowledge on|off    开启/关闭知识库",
@@ -855,6 +856,91 @@ class CowCliPlugin(Plugin):
         action = "启用" if enabled else "禁用"
         icon = "✅" if enabled else "⬚"
         return f"{icon} 技能 '{name}' 已{action}"
+
+    # ------------------------------------------------------------------
+    # memory
+    # ------------------------------------------------------------------
+
+    def _cmd_memory(self, args: str, e_context, session_id: str = "", **_) -> str:
+        parts = args.strip().split()
+        sub = parts[0].lower() if parts else ""
+
+        if sub == "dream":
+            days = 3
+            if len(parts) > 1 and parts[1].isdigit():
+                days = max(1, min(int(parts[1]), 30))
+            return self._memory_dream(days, e_context, session_id)
+        else:
+            return (
+                "用法: /memory <子命令>\n\n"
+                "子命令:\n"
+                "  dream [N]  手动触发记忆蒸馏 (整理近N天, 默认3, 最多30)"
+            )
+
+    def _memory_dream(self, days: int, e_context, session_id: str) -> str:
+        session_id = self._get_session_id(e_context, fallback=session_id)
+        agent = self._get_agent(session_id)
+
+        flush_mgr = None
+        if agent and agent.memory_manager:
+            flush_mgr = agent.memory_manager.flush_manager
+
+        # Fallback: construct a temporary MemoryFlushManager when agent is not yet initialized
+        if not flush_mgr:
+            try:
+                flush_mgr = self._create_standalone_flush_manager()
+            except Exception as e:
+                return f"⚠️ 无法初始化记忆蒸馏: {e}"
+
+        if not flush_mgr.llm_model:
+            return "⚠️ 未配置 LLM 模型，无法执行记忆蒸馏"
+
+        def _run():
+            try:
+                result = flush_mgr.deep_dream(lookback_days=days, force=True)
+                if result:
+                    self._notify(
+                        e_context,
+                        "✅ 记忆蒸馏完成\n\n[MEMORY.md](/memory/MEMORY.md) 已更新，[查看梦境日记](/memory/dreams)"
+                    )
+                else:
+                    self._notify(e_context, "💤 记忆蒸馏跳过 — 没有新的记忆内容需要整理")
+            except Exception as e:
+                logger.warning(f"[CowCli] /memory dream failed: {e}")
+                self._notify(e_context, f"❌ 记忆蒸馏失败: {e}")
+
+        thread = threading.Thread(target=_run, daemon=True)
+        thread.start()
+        return f"🌙 记忆蒸馏已启动 (整理近 {days} 天的记忆)\n\n整理在后台执行，完成后会通知你。"
+
+    @staticmethod
+    def _notify(e_context, text: str):
+        """Push a notification message back to the chat channel."""
+        if e_context is None:
+            logger.info(f"[CowCli] {text}")
+            return
+        try:
+            channel = e_context["channel"]
+            context = e_context["context"]
+            if channel and context:
+                channel.send(Reply(ReplyType.TEXT, text), context)
+        except Exception as e:
+            logger.warning(f"[CowCli] notify failed: {e}")
+
+    @staticmethod
+    def _create_standalone_flush_manager():
+        """Create a MemoryFlushManager without a running agent (for pre-init dream)."""
+        from pathlib import Path
+        from config import conf
+        from common.utils import expand_path
+        from agent.memory.summarizer import MemoryFlushManager
+        from bridge.bridge import Bridge
+        from bridge.agent_bridge import AgentLLMModel
+
+        workspace = Path(expand_path(conf().get("agent_workspace", "~/cow")))
+        flush_mgr = MemoryFlushManager(workspace_dir=workspace)
+        flush_mgr.llm_model = AgentLLMModel(Bridge())
+        return flush_mgr
 
     # ------------------------------------------------------------------
     # knowledge

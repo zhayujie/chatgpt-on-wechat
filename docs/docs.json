@@ -142,7 +142,8 @@
                 "group": "记忆系统",
                 "pages": [
                   "memory/index",
-                  "memory/context"
+                  "memory/context",
+                  "memory/deep-dream"
                 ]
               }
             ]
@@ -185,6 +186,7 @@
                   "cli/index",
                   "cli/process",
                   "cli/skill",
+                  "cli/memory-knowledge",
                   "cli/general"
                 ]
               }
@@ -314,7 +316,8 @@
                 "group": "Memory System",
                 "pages": [
                   "en/memory/index",
-                  "en/memory/context"
+                  "en/memory/context",
+                  "en/memory/deep-dream"
                 ]
               }
             ]
@@ -357,6 +360,7 @@
                   "en/cli/index",
                   "en/cli/process",
                   "en/cli/skill",
+                  "en/cli/memory-knowledge",
                   "en/cli/chat"
                 ]
               }
@@ -486,7 +490,8 @@
                 "group": "メモリシステム",
                 "pages": [
                   "ja/memory/index",
-                  "ja/memory/context"
+                  "ja/memory/context",
+                  "ja/memory/deep-dream"
                 ]
               }
             ]
@@ -529,6 +534,7 @@
                   "ja/cli/index",
                   "ja/cli/process",
                   "ja/cli/skill",
+                  "ja/cli/memory-knowledge",
                   "ja/cli/general"
                 ]
               }

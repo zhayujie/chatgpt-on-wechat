@@ -40,7 +40,8 @@ Service:
 Skills:
   skill     Manage skills (list / search / install / uninstall ...)
 
-Knowledge:
+Memory & Knowledge:
+  memory    Memory distillation (dream)
   knowledge View knowledge base stats and structure
 
 Others:
@@ -58,6 +59,7 @@ Others:
 | `/status` | 查看服务状态和配置 |
 | `/config` | 查看或修改运行时配置 |
 | `/skill` | 管理技能（安装、卸载、启用、禁用等） |
+| `/memory dream [N]` | 手动触发记忆蒸馏（默认 3 天，最大 30） |
 | `/knowledge` | 查看知识库统计信息 |
 | `/knowledge list` | 查看知识库目录结构 |
 | `/knowledge on\|off` | 开启或关闭知识库 |
@@ -82,6 +84,7 @@ Others:
 | logs | ✓ | ✓ |
 | config | ✗ | ✓ |
 | context | — | ✓ |
+| memory (子命令) | ✗ | ✓ |
 | knowledge (子命令) | ✓ | ✓ |
 | skill (子命令) | ✓ | ✓ |
 | start / stop / restart | ✓ | ✗ |
