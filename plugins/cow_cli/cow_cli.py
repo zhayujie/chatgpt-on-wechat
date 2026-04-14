@@ -895,14 +895,14 @@ class CowCliPlugin(Plugin):
         if not flush_mgr.llm_model:
             return "⚠️ 未配置 LLM 模型，无法执行记忆蒸馏"
 
+        is_web = self._is_web_channel(e_context)
+
         def _run():
             try:
                 result = flush_mgr.deep_dream(lookback_days=days, force=True)
                 if result:
-                    self._notify(
-                        e_context,
-                        "✅ 记忆蒸馏完成\n\n[MEMORY.md](/memory/MEMORY.md) 已更新，[查看梦境日记](/memory/dreams)"
-                    )
+                    msg = self._build_dream_result(flush_mgr, is_web)
+                    self._notify(e_context, msg)
                 else:
                     self._notify(e_context, "💤 记忆蒸馏跳过 — 没有新的记忆内容需要整理")
             except Exception as e:
@@ -926,6 +926,40 @@ class CowCliPlugin(Plugin):
                 channel.send(Reply(ReplyType.TEXT, text), context)
         except Exception as e:
             logger.warning(f"[CowCli] notify failed: {e}")
+
+    @staticmethod
+    def _is_web_channel(e_context) -> bool:
+        if e_context is None:
+            return False
+        try:
+            return e_context["context"].kwargs.get("channel_type") == "web"
+        except Exception:
+            return False
+
+    @staticmethod
+    def _build_dream_result(flush_mgr, is_web: bool) -> str:
+        """Build dream completion message with diary content."""
+        from datetime import datetime
+        lines = ["✅ 记忆蒸馏完成"]
+
+        # Read today's dream diary
+        today = datetime.now().strftime("%Y-%m-%d")
+        diary_file = flush_mgr.memory_dir / "dreams" / f"{today}.md"
+        if diary_file.exists():
+            diary = diary_file.read_text(encoding="utf-8").strip()
+            # Strip the "# Dream Diary: ..." header line
+            diary_lines = diary.split("\n")
+            if diary_lines and diary_lines[0].startswith("# "):
+                diary = "\n".join(diary_lines[1:]).strip()
+            if diary:
+                lines.append(f"\n{diary}")
+
+        if is_web:
+            lines.append("\n[MEMORY.md](/memory/MEMORY.md) | [梦境日记](/memory/dreams)")
+        else:
+            lines.append("\nMEMORY.md 已更新")
+
+        return "\n".join(lines)
 
     @staticmethod
     def _create_standalone_flush_manager():

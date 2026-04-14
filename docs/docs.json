@@ -199,6 +199,7 @@
                 "group": "发布记录",
                 "pages": [
                   "releases/overview",
+                  "releases/v2.0.6",
                   "releases/v2.0.5",
                   "releases/v2.0.4",
                   "releases/v2.0.3",

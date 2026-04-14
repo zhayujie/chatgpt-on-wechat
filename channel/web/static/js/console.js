@@ -203,7 +203,7 @@ function applyI18n() {
         el.setAttribute('data-tooltip', t(el.dataset.tipKey));
     });
     const langLabel = document.getElementById('lang-label');
-    if (langLabel) langLabel.textContent = currentLang === 'zh' ? 'EN' : '中文';
+    if (langLabel) langLabel.textContent = currentLang === 'zh' ? '中文' : 'EN';
 }
 
 function toggleLanguage() {
@@ -430,6 +430,20 @@ const fileInput = document.getElementById('file-input');
 
 // Intercept internal navigation links in chat messages
 messagesDiv.addEventListener('click', (e) => {
+    const copyBtn = e.target.closest('.copy-msg-btn');
+    if (copyBtn) {
+        e.preventDefault();
+        const msgRoot = copyBtn.closest('.flex.gap-3');
+        const answerEl = msgRoot && msgRoot.querySelector('.answer-content');
+        const rawMd = answerEl && answerEl.dataset.rawMd;
+        if (rawMd) {
+            navigator.clipboard.writeText(rawMd).then(() => {
+                const icon = copyBtn.querySelector('i');
+                if (icon) { icon.className = 'fas fa-check'; setTimeout(() => { icon.className = 'fas fa-copy'; }, 1500); }
+            });
+        }
+        return;
+    }
     const a = e.target.closest('a');
     if (!a) return;
     const href = a.getAttribute('href') || '';
@@ -936,7 +950,12 @@ function startSSE(requestId, loadingEl, timestamp, titleInfo) {
                     <div class="answer-content sse-streaming"></div>
                     <div class="media-content"></div>
                 </div>
-                <div class="text-xs text-slate-400 dark:text-slate-500 mt-1.5">${formatTime(timestamp)}</div>
+                <div class="flex items-center gap-2 mt-1.5">
+                    <span class="text-xs text-slate-400 dark:text-slate-500">${formatTime(timestamp)}</span>
+                    <button class="copy-msg-btn text-xs text-slate-300 dark:text-slate-600 hover:text-slate-500 dark:hover:text-slate-400 transition-colors cursor-pointer" title="${currentLang === 'zh' ? '复制' : 'Copy'}" style="display:none">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
             </div>
         `;
         messagesDiv.appendChild(botEl);
@@ -1116,8 +1135,10 @@ function startSSE(requestId, loadingEl, timestamp, titleInfo) {
                     addBotMessage(finalText, new Date((item.timestamp || Date.now() / 1000) * 1000), requestId);
                 } else if (botEl) {
                     contentEl.classList.remove('sse-streaming');
-                    // Only update text content when there is something new to show.
                     if (finalText) contentEl.innerHTML = renderMarkdown(finalText);
+                    contentEl.dataset.rawMd = finalText || '';
+                    const copyBtn = botEl.querySelector('.copy-msg-btn');
+                    if (copyBtn && finalText) copyBtn.style.display = '';
                     applyHighlighting(botEl);
                 }
                 scrollChatToBottom();
@@ -1366,9 +1387,15 @@ function createBotMessageEl(content, timestamp, requestId, msg) {
                 ${stepsHtml ? `<div class="agent-steps">${stepsHtml}</div>` : ''}
                 <div class="answer-content">${renderMarkdown(displayContent)}</div>
             </div>
-            <div class="text-xs text-slate-400 dark:text-slate-500 mt-1.5">${formatTime(timestamp)}</div>
+            <div class="flex items-center gap-2 mt-1.5">
+                <span class="text-xs text-slate-400 dark:text-slate-500">${formatTime(timestamp)}</span>
+                <button class="copy-msg-btn text-xs text-slate-300 dark:text-slate-600 hover:text-slate-500 dark:hover:text-slate-400 transition-colors cursor-pointer" title="${currentLang === 'zh' ? '复制' : 'Copy'}">
+                    <i class="fas fa-copy"></i>
+                </button>
+            </div>
         </div>
     `;
+    el.querySelector('.answer-content').dataset.rawMd = displayContent;
     applyHighlighting(el);
     bindChatKnowledgeLinks(el);
     return el;
