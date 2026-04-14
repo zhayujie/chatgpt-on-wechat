@@ -339,6 +339,23 @@
 }
 .confirm-btn-ok:hover { background: #dc2626; }
 
+/* Session panel overlay (mobile only, click to close) */
+.session-panel-overlay {
+    display: none;
+}
+@media (max-width: 768px) {
+    .session-panel-overlay {
+        display: block;
+        position: fixed;
+        inset: 0;
+        z-index: 44;
+        background: rgba(0, 0, 0, 0.3);
+    }
+    .session-panel-overlay.hidden {
+        display: none;
+    }
+}
+
 /* Mobile: session panel as overlay */
 @media (max-width: 768px) {
     .session-panel {

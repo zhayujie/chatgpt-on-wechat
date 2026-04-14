@@ -1626,6 +1626,7 @@ function newChat() {
     if (panel && !sessionPanelOpen) {
         sessionPanelOpen = true;
         panel.classList.remove('hidden');
+        _showSessionOverlay();
         _persistPanelState();
     }
     const newSid = sessionId;
@@ -1643,11 +1644,40 @@ function _persistPanelState() {
     localStorage.setItem(SESSION_PANEL_KEY, sessionPanelOpen ? '1' : '0');
 }
 
+function _isMobileView() {
+    return window.innerWidth <= 768;
+}
+
+function _showSessionOverlay() {
+    if (!_isMobileView()) return;
+    const overlay = document.getElementById('session-panel-overlay');
+    if (overlay) overlay.classList.remove('hidden');
+}
+
+function _hideSessionOverlay() {
+    const overlay = document.getElementById('session-panel-overlay');
+    if (overlay) overlay.classList.add('hidden');
+}
+
+function closeSessionPanel() {
+    const panel = document.getElementById('session-panel');
+    if (!panel || !sessionPanelOpen) return;
+    sessionPanelOpen = false;
+    panel.classList.add('hidden');
+    _hideSessionOverlay();
+    _persistPanelState();
+}
+
 function toggleSessionPanel() {
     const panel = document.getElementById('session-panel');
     if (!panel) return;
     sessionPanelOpen = !sessionPanelOpen;
     panel.classList.toggle('hidden', !sessionPanelOpen);
+    if (sessionPanelOpen) {
+        _showSessionOverlay();
+    } else {
+        _hideSessionOverlay();
+    }
     _persistPanelState();
     if (sessionPanelOpen) loadSessionList();
 }
@@ -1657,6 +1687,7 @@ function openSessionPanel() {
     if (!panel || sessionPanelOpen) return;
     sessionPanelOpen = true;
     panel.classList.remove('hidden');
+    _showSessionOverlay();
     _persistPanelState();
     loadSessionList();
 }
@@ -1664,11 +1695,13 @@ function openSessionPanel() {
 function _restoreSessionPanel() {
     const panel = document.getElementById('session-panel');
     if (!panel) return;
-    if (sessionPanelOpen) {
+    if (sessionPanelOpen && !_isMobileView()) {
         panel.classList.remove('hidden');
+        _showSessionOverlay();
         loadSessionList();
     } else {
         panel.classList.add('hidden');
+        _hideSessionOverlay();
     }
 }
 
@@ -1860,6 +1893,7 @@ function switchSession(newSessionId) {
         el.classList.toggle('active', el.dataset.sessionId === sessionId);
     });
 
+    if (_isMobileView()) closeSessionPanel();
     if (currentView !== 'chat') navigateTo('chat');
 }
 
