@@ -5,15 +5,17 @@ description: CowAgent long-term memory, task planning, skills system, CLI comman
 
 ## 1. Long-term Memory
 
-The memory system enables the Agent to remember important information over time. The Agent proactively stores information when users share preferences, decisions, or key facts, and automatically extracts summaries when conversations reach a certain length. Memory is divided into core memory and daily memory, with hybrid retrieval supporting both keyword search and vector search.
+The memory system enables the Agent to remember important information over time, using a three-tier memory flow: conversation context (short-term) → daily memory (mid-term) → MEMORY.md (long-term), forming a complete memory lifecycle.
 
 On first launch, the Agent proactively asks the user for key information and records it in the workspace (default `~/cow`) — including agent settings, user identity, and memory files.
 
-In subsequent long-term conversations, the Agent intelligently stores or retrieves memory as needed, continuously updating its own settings, user preferences, and memory files, summarizing experiences and lessons learned — truly achieving autonomous thinking and continuous growth.
+In subsequent long-term conversations, the Agent intelligently stores or retrieves memory as needed, continuously updating its own settings, user preferences, and memory files. **Deep Dream** distillation runs daily, consolidating scattered daily memories into refined long-term memory and generating a narrative-style dream diary.
 
 <Frame>
   <img src="https://cdn.link-ai.tech/doc/20260203000455.png" width="800" />
 </Frame>
+
+See [Long-term Memory](/en/memory) and [Deep Dream](/en/memory/deep-dream) for details.
 
 ## 2. Personal Knowledge Base
 
@@ -25,6 +27,10 @@ The Agent automatically organizes valuable information from conversations into k
 - **Knowledge graph**: Automatically builds a knowledge graph from cross-references between pages, with interactive graph visualization in the Web console
 - **Chat integration**: Knowledge document links referenced in Agent replies can be clicked directly in the Web console for viewing
 - **CLI management**: Use `/knowledge` commands to view stats, browse directory, and toggle the feature with `/knowledge on|off`
+
+<Frame>
+  <img src="https://cdn.link-ai.tech/doc/20260413105435.png" width="800" />
+</Frame>
 
 See [Personal Knowledge Base](/en/knowledge) for details.
 
@@ -47,7 +53,7 @@ Access to the OS terminal and file system is the most fundamental and core capab
 Combining programming and system access, the Agent can execute the complete **Vibecoding workflow** — from information search, asset generation, coding, testing, deployment, Nginx configuration, to publishing — all triggered by a single command from your phone:
 
 <Frame>
-  <img src="https://cdn.link-ai.tech/doc/20260203121008.png" width="800" />
+  <img src="https://cdn.link-ai.tech/doc/20260318211018.png" width="800" />
 </Frame>
 
 ### 3.3 Scheduled Tasks

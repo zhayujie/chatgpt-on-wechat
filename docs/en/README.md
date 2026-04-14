@@ -22,7 +22,7 @@
 > CowAgent is both an out-of-the-box AI super assistant and a highly extensible Agent framework. You can extend it with new model interfaces, channels, built-in tools, and the Skills system to flexibly implement various customization needs.
 
 - ✅ **Autonomous Task Planning**: Understands complex tasks and autonomously plans execution, continuously thinking and invoking tools until goals are achieved.
-- ✅ **Long-term Memory**: Automatically persists conversation memory to local files and databases, including core memory and daily memory, with keyword and vector retrieval support.
+- ✅ **Long-term Memory**: Automatically persists conversation memory to local files and databases, including core memory, daily memory, and Deep Dream distillation, with keyword and vector retrieval support.
 - ✅ **Personal Knowledge Base**: Automatically organizes structured knowledge with cross-references to build a knowledge graph, with web-based visualization and conversational management.
 - ✅ **Skills System**: Implements a Skills creation and execution engine, supports installing skills from [Skill Hub](https://skills.cowagent.ai), GitHub, etc., or creating custom Skills through conversation.
 - ✅ **Tool System**: Built-in tools for file I/O, terminal execution, browser automation, scheduled tasks, messaging, and more — autonomously invoked by the Agent.
@@ -42,6 +42,8 @@
 Try online (no deployment needed): [CowAgent](https://link-ai.tech/cowagent/create)
 
 ## Changelog
+
+> **2026.04.14:** [v2.0.6](https://github.com/zhayujie/CowAgent/releases/tag/2.0.6) — Knowledge Base, Deep Dream Memory Distillation, Smart Context Compression, Web Console upgrades.
 
 > **2026.04.01:** [v2.0.5](https://github.com/zhayujie/CowAgent/releases/tag/2.0.5) — Cow CLI, Skill Hub open source, Browser tool, WeCom Bot QR scan, and more.
 
