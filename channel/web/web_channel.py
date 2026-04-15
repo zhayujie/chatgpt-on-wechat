@@ -801,15 +801,22 @@ class ConfigHandler:
             "api_base_default": None,
             "models": _RECOMMENDED_MODELS,
         }),
+        ("custom", {
+            "label": "自定义",
+            "api_key_field": "custom_api_key",
+            "api_base_key": "custom_api_base",
+            "api_base_default": "",
+            "models": [],
+        }),
     ])
 
     EDITABLE_KEYS = {
         "model", "bot_type", "use_linkai",
         "open_ai_api_base", "deepseek_api_base", "claude_api_base", "gemini_api_base",
-        "zhipu_ai_api_base", "moonshot_base_url", "ark_base_url",
+        "zhipu_ai_api_base", "moonshot_base_url", "ark_base_url", "custom_api_base",
         "open_ai_api_key", "deepseek_api_key", "claude_api_key", "gemini_api_key",
         "zhipu_ai_api_key", "dashscope_api_key", "moonshot_api_key",
-        "ark_api_key", "minimax_api_key", "linkai_api_key",
+        "ark_api_key", "minimax_api_key", "linkai_api_key", "custom_api_key",
         "agent_max_context_tokens", "agent_max_context_turns", "agent_max_steps",
         "enable_thinking", "web_password",
     }

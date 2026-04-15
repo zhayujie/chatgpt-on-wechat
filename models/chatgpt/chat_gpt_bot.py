@@ -23,10 +23,15 @@ from models.baidu.baidu_wenxin_session import BaiduWenxinSession
 class ChatGPTBot(Bot, OpenAIImage, OpenAICompatibleBot):
     def __init__(self):
         super().__init__()
-        # set the default api_key
-        openai.api_key = conf().get("open_ai_api_key")
-        if conf().get("open_ai_api_base"):
-            openai.api_base = conf().get("open_ai_api_base")
+        # set the default api_key / api_base based on bot_type
+        if conf().get("bot_type") == "custom":
+            openai.api_key = conf().get("custom_api_key", "")
+            if conf().get("custom_api_base"):
+                openai.api_base = conf().get("custom_api_base")
+        else:
+            openai.api_key = conf().get("open_ai_api_key")
+            if conf().get("open_ai_api_base"):
+                openai.api_base = conf().get("open_ai_api_base")
         proxy = conf().get("proxy")
         if proxy:
             openai.proxy = proxy
@@ -56,9 +61,10 @@ class ChatGPTBot(Bot, OpenAIImage, OpenAICompatibleBot):
 
     def get_api_config(self):
         """Get API configuration for OpenAI-compatible base class"""
+        is_custom = conf().get("bot_type") == "custom"
         return {
-            'api_key': conf().get("open_ai_api_key"),
-            'api_base': conf().get("open_ai_api_base"),
+            'api_key': conf().get("custom_api_key") if is_custom else conf().get("open_ai_api_key"),
+            'api_base': conf().get("custom_api_base") if is_custom else conf().get("open_ai_api_base"),
             'model': conf().get("model", "gpt-3.5-turbo"),
             'default_temperature': conf().get("temperature", 0.9),
             'default_top_p': conf().get("top_p", 1.0),
@@ -166,9 +172,10 @@ class ChatGPTBot(Bot, OpenAIImage, OpenAICompatibleBot):
             mime_type = mime_type_map.get(extension, "image/jpeg")
             
             # Get model and API config
+            is_custom = conf().get("bot_type") == "custom"
             model = context.get("gpt_model") or conf().get("model", "gpt-4o")
-            api_key = context.get("openai_api_key") or conf().get("open_ai_api_key")
-            api_base = conf().get("open_ai_api_base")
+            api_key = context.get("openai_api_key") or (conf().get("custom_api_key") if is_custom else conf().get("open_ai_api_key"))
+            api_base = conf().get("custom_api_base") if is_custom else conf().get("open_ai_api_base")
             
             # Build vision request
             messages = [

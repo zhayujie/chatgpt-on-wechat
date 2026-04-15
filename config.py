@@ -17,10 +17,12 @@ available_setting = {
     "open_ai_api_base": "https://api.openai.com/v1",
     "claude_api_base": "https://api.anthropic.com/v1",  # claude api base
     "gemini_api_base": "https://generativelanguage.googleapis.com",  # gemini api base
+    "custom_api_key": "",  # custom OpenAI-compatible provider api key (used when bot_type is "custom")
+    "custom_api_base": "",  # custom OpenAI-compatible provider api base (used when bot_type is "custom")
     "proxy": "",  # openai使用的代理
     # chatgpt模型， 当use_azure_chatgpt为true时，其名称为Azure上model deployment名称
     "model": "gpt-3.5-turbo",  # 可选择: gpt-4o, pt-4o-mini, gpt-4-turbo, claude-3-sonnet, wenxin, moonshot, qwen-turbo, xunfei, glm-4, minimax, gemini等模型，全部可选模型详见common/const.py文件
-    "bot_type": "",  # 可选配置，使用兼容openai格式的三方服务时候，需填"openai"（历史值"chatGPT"仍兼容）。bot具体名称详见common/const.py文件，如不填根据model名称判断
+    "bot_type": "",  # 可选配置，使用兼容openai格式的三方服务时候，需填"openai"或"custom"（custom模式下切换模型不会自动切换bot_type）。bot具体名称详见common/const.py文件，如不填根据model名称判断
     "use_azure_chatgpt": False,  # 是否使用azure的chatgpt
     "azure_deployment_id": "",  # azure 模型部署名称
     "azure_api_version": "",  # azure api版本

@@ -21,7 +21,7 @@ def create_bot(bot_type):
         from models.deepseek.deepseek_bot import DeepSeekBot
         return DeepSeekBot()
 
-    elif bot_type in (const.OPENAI, const.CHATGPT):  # OpenAI-compatible API
+    elif bot_type in (const.OPENAI, const.CHATGPT, const.CUSTOM):  # OpenAI-compatible API
         from models.chatgpt.chat_gpt_bot import ChatGPTBot
         return ChatGPTBot()
 

@@ -45,6 +45,7 @@ const I18N = {
         config_save: '保存', config_saved: '已保存',
         config_save_error: '保存失败',
         config_custom_option: '自定义...',
+        config_custom_tip: '接口需遵循 OpenAI API 协议',
         config_security: '安全设置', config_password: '访问密码',
         config_password_hint: '留空则不启用密码保护',
         config_password_changed: '密码已更新，请重新登录',
@@ -130,6 +131,7 @@ const I18N = {
         config_save: 'Save', config_saved: 'Saved',
         config_save_error: 'Save failed',
         config_custom_option: 'Custom...',
+        config_custom_tip: 'API must follow OpenAI protocol.',
         config_security: 'Security', config_password: 'Password',
         config_password_hint: 'Leave empty to disable password protection',
         config_password_changed: 'Password updated, please re-login',
@@ -2157,6 +2159,9 @@ function onProviderChange(pid) {
     cfgProviderValue = pid || getDropdownValue(document.getElementById('cfg-provider'));
     const p = configProviders[cfgProviderValue];
     if (!p) return;
+
+    const customTip = document.getElementById('cfg-custom-tip');
+    if (customTip) customTip.classList.toggle('hidden', cfgProviderValue !== 'custom');
 
     const modelEl = document.getElementById('cfg-model-select');
     const modelOpts = (p.models || []).map(m => ({ value: m, label: m }));

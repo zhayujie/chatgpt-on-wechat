@@ -82,7 +82,8 @@
                   "models/openai",
                   "models/deepseek",
                   "models/linkai",
-                  "models/coding-plan"
+                  "models/coding-plan",
+                  "models/custom"
                 ]
               }
             ]
@@ -257,7 +258,8 @@
                   "en/models/openai",
                   "en/models/deepseek",
                   "en/models/linkai",
-                  "en/models/coding-plan"
+                  "en/models/coding-plan",
+                  "en/models/custom"
                 ]
               }
             ]
@@ -432,7 +434,8 @@
                   "ja/models/openai",
                   "ja/models/deepseek",
                   "ja/models/linkai",
-                  "ja/models/coding-plan"
+                  "ja/models/coding-plan",
+                  "ja/models/custom"
                 ]
               }
             ]

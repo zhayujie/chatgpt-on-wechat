@@ -381,9 +381,12 @@ class CowCliPlugin(Plugin):
         updates = {key: new_val}
 
         if key == "model" and conf().get("bot_type"):
-            resolved = self._resolve_bot_type_for_model(str(new_val))
-            if resolved:
-                updates["bot_type"] = resolved
+            from common import const
+            current_bot_type = conf().get("bot_type")
+            if current_bot_type not in (const.CUSTOM,):
+                resolved = self._resolve_bot_type_for_model(str(new_val))
+                if resolved:
+                    updates["bot_type"] = resolved
 
         project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         config_path = os.path.join(project_root, "config.json")

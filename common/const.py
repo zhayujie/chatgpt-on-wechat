@@ -14,6 +14,7 @@ ZHIPU_AI = "zhipu"
 MOONSHOT = "moonshot"
 MiniMax = "minimax"
 DEEPSEEK = "deepseek"
+CUSTOM = "custom"  # custom OpenAI-compatible API, bot_type won't auto-switch on model change
 MODELSCOPE = "modelscope"
 
 # 模型列表
