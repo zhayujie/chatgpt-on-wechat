@@ -8,7 +8,10 @@ Truncation is based on two independent limits - whichever is hit first wins:
 Never returns partial lines (except bash tail truncation edge case).
 """
 
-from typing import Dict, Any, Optional, Literal, Tuple
+from __future__ import annotations
+from typing import Dict, Any, Optional, Tuple, TYPE_CHECKING
+if TYPE_CHECKING:
+    from typing import Literal
 
 
 DEFAULT_MAX_LINES = 2000
