@@ -379,11 +379,11 @@ class CowCliPlugin(Plugin):
                 new_val = value_str
 
         updates = {key: new_val}
+        old_bot_type = conf().get("bot_type", "")
 
-        if key == "model" and conf().get("bot_type"):
+        if key == "model" and old_bot_type:
             from common import const
-            current_bot_type = conf().get("bot_type")
-            if current_bot_type not in (const.CUSTOM,):
+            if old_bot_type not in (const.CUSTOM,):
                 resolved = self._resolve_bot_type_for_model(str(new_val))
                 if resolved:
                     updates["bot_type"] = resolved
@@ -405,8 +405,8 @@ class CowCliPlugin(Plugin):
             logger.warning(f"[CowCli] config reload warning: {e}")
 
         result = f"✅ 配置已更新\n\n  {key}: {old_val} → {new_val}"
-        if "bot_type" in updates and updates["bot_type"] != conf().get("bot_type"):
-            result += f"\n  bot_type: → {updates['bot_type']}"
+        if "bot_type" in updates and updates["bot_type"] != old_bot_type:
+            result += f"\n  bot_type: {old_bot_type} → {updates['bot_type']}"
         return result
 
     @staticmethod
