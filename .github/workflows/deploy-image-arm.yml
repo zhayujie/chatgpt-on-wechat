@@ -51,7 +51,8 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+            ${{ env.REGISTRY }}/zhayujie/chatgpt-on-wechat
+            ${{ env.REGISTRY }}/zhayujie/cowagent
           tags: |
             type=raw,value=latest-arm64,enable={{is_default_branch}}
             type=ref,event=branch,suffix=-arm64

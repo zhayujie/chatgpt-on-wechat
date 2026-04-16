@@ -16,6 +16,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+  DOCKERHUB_IMAGE: zhayujie/chatgpt-on-wechat
 
 jobs:
   build-and-push-image:
@@ -47,8 +48,10 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
-            ${{ env.IMAGE_NAME }}
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+            zhayujie/chatgpt-on-wechat
+            zhayujie/cowagent
+            ${{ env.REGISTRY }}/zhayujie/chatgpt-on-wechat
+            ${{ env.REGISTRY }}/zhayujie/cowagent
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=ref,event=branch
