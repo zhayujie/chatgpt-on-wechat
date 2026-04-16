@@ -399,6 +399,13 @@ class CowCliPlugin(Plugin):
         except Exception as e:
             return f"写入 config.json 失败: {e}"
 
+        # Sync updated values to environment variables so that load_config()
+        # won't overwrite the new value with a stale env var (common in Docker).
+        from config import available_setting
+        for k, v in updates.items():
+            if k in available_setting and k.upper() in os.environ:
+                os.environ[k.upper()] = str(v)
+
         try:
             load_config()
         except Exception as e:
