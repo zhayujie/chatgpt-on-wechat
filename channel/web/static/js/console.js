@@ -3620,19 +3620,28 @@ function renderKnowledgeTree(tree, filter) {
     const container = document.getElementById('knowledge-tree');
     container.innerHTML = '';
     const lowerFilter = (filter || '').toLowerCase();
+    _renderKnowledgeGroups(container, tree, '', lowerFilter, 0);
+}
 
-    tree.forEach(group => {
-        const files = group.files.filter(f =>
+function _renderKnowledgeGroups(container, groups, parentPath, lowerFilter, depth) {
+    const indent = depth * 12;
+    groups.forEach(group => {
+        const groupPath = parentPath ? parentPath + '/' + group.dir : group.dir;
+        const files = (group.files || []).filter(f =>
             !lowerFilter || f.title.toLowerCase().includes(lowerFilter) || f.name.toLowerCase().includes(lowerFilter)
         );
-        if (files.length === 0 && lowerFilter) return;
+        const children = group.children || [];
+        const hasMatchingChildren = lowerFilter ? _hasFilterMatch(children, lowerFilter) : children.length > 0;
+        if (files.length === 0 && !hasMatchingChildren && lowerFilter) return;
 
         const div = document.createElement('div');
         div.className = 'knowledge-tree-group open';
 
+        const fileCount = _countFiles(group);
         const btn = document.createElement('button');
         btn.className = 'knowledge-tree-group-btn';
-        btn.innerHTML = `<i class="fas fa-chevron-right chevron"></i><i class="fas fa-folder text-amber-400 text-[11px]"></i><span>${escapeHtml(group.dir)}</span><span class="ml-auto text-[10px] text-slate-400">${files.length}</span>`;
+        btn.style.paddingLeft = (8 + indent) + 'px';
+        btn.innerHTML = `<i class="fas fa-chevron-right chevron"></i><i class="fas fa-folder text-amber-400 text-[11px]"></i><span>${escapeHtml(group.dir)}</span><span class="ml-auto text-[10px] text-slate-400">${fileCount}</span>`;
         btn.onclick = () => div.classList.toggle('open');
         div.appendChild(btn);
 
@@ -3640,16 +3649,38 @@ function renderKnowledgeTree(tree, filter) {
         items.className = 'knowledge-tree-group-items';
         files.forEach(f => {
             const fbtn = document.createElement('button');
-            const fpath = group.dir + '/' + f.name;
+            const fpath = groupPath + '/' + f.name;
             fbtn.className = 'knowledge-tree-file' + (_knowledgeCurrentFile === fpath ? ' active' : '');
             fbtn.dataset.path = fpath;
+            fbtn.style.paddingLeft = (24 + indent) + 'px';
             fbtn.innerHTML = `<i class="fas fa-file-lines text-[10px] text-slate-400"></i><span class="truncate">${escapeHtml(f.title)}</span>`;
             fbtn.onclick = () => openKnowledgeFile(fpath, f.title);
             items.appendChild(fbtn);
         });
+        if (children.length > 0) {
+            _renderKnowledgeGroups(items, children, groupPath, lowerFilter, depth + 1);
+        }
         div.appendChild(items);
         container.appendChild(div);
     });
+}
+
+function _hasFilterMatch(groups, lowerFilter) {
+    for (const g of groups) {
+        for (const f of (g.files || [])) {
+            if (f.title.toLowerCase().includes(lowerFilter) || f.name.toLowerCase().includes(lowerFilter)) return true;
+        }
+        if (_hasFilterMatch(g.children || [], lowerFilter)) return true;
+    }
+    return false;
+}
+
+function _countFiles(group) {
+    let count = (group.files || []).length;
+    for (const child of (group.children || [])) {
+        count += _countFiles(child);
+    }
+    return count;
 }
 
 function filterKnowledgeTree(query) {
@@ -3732,12 +3763,19 @@ function bindChatKnowledgeLinks(container) {
 }
 
 function _findKnowledgeFileByName(filename) {
-    for (const group of _knowledgeTreeData) {
-        for (const f of group.files) {
+    return _searchFileInGroups(_knowledgeTreeData, '', filename);
+}
+
+function _searchFileInGroups(groups, parentPath, filename) {
+    for (const group of groups) {
+        const groupPath = parentPath ? parentPath + '/' + group.dir : group.dir;
+        for (const f of (group.files || [])) {
             if (f.name === filename) {
-                return { path: group.dir + '/' + f.name, title: f.title };
+                return { path: groupPath + '/' + f.name, title: f.title };
             }
         }
+        const found = _searchFileInGroups(group.children || [], groupPath, filename);
+        if (found) return found;
     }
     return null;
 }

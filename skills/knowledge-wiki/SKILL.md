@@ -40,6 +40,8 @@ Maintain a persistent, structured knowledge base in the `knowledge/` directory.
 ```markdown
 # Page Title
 
+> Source: <URL or description of the original material>
+
 Content here. Cross-reference related pages with markdown links:
 [Related Page](../category/related-page.md)
 
@@ -52,6 +54,8 @@ Content here. Cross-reference related pages with markdown links:
 - [Page A](../category/page-a.md) — how it relates
 - [Page B](../category/page-b.md) — how it relates
 ```
+
+The `> Source:` line records where the knowledge came from (URL, document name, conversation, etc.). Always include it when the material originates from a specific source.
 
 Cross-references build a knowledge graph. When creating or updating a page, link to related pages and update those pages to link back. **Only link to pages that already exist** — if a concept deserves its own page, create it first, then add the link.
 

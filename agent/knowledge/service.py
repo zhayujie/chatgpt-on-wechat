@@ -34,7 +34,8 @@ class KnowledgeService:
     # ------------------------------------------------------------------
     def list_tree(self) -> dict:
         """
-        Return the knowledge directory tree grouped by category.
+        Return the knowledge directory tree grouped by category,
+        supporting arbitrarily nested sub-directories.
 
         Returns::
 
@@ -44,10 +45,20 @@ class KnowledgeService:
                         "dir": "concepts",
                         "files": [
                             {"name": "moe.md", "title": "MoE", "size": 1234},
-                            ...
+                        ],
+                        "children": []
+                    },
+                    {
+                        "dir": "platform",
+                        "files": [],
+                        "children": [
+                            {
+                                "dir": "analysis",
+                                "files": [{"name": "perf.md", ...}],
+                                "children": []
+                            }
                         ]
                     },
-                    ...
                 ],
                 "stats": {"pages": 15, "size": 32768},
                 "enabled": true
@@ -56,36 +67,42 @@ class KnowledgeService:
         if not os.path.isdir(self.knowledge_dir):
             return {"tree": [], "stats": {"pages": 0, "size": 0}, "enabled": conf().get("knowledge", True)}
 
-        tree = []
-        total_files = 0
-        total_bytes = 0
-        for name in sorted(os.listdir(self.knowledge_dir)):
-            full = os.path.join(self.knowledge_dir, name)
-            if not os.path.isdir(full) or name.startswith("."):
-                continue
-            files = []
-            for fname in sorted(os.listdir(full)):
-                if fname.endswith(".md") and not fname.startswith("."):
-                    fpath = os.path.join(full, fname)
-                    size = os.path.getsize(fpath)
-                    total_files += 1
-                    total_bytes += size
-                    title = fname.replace(".md", "")
-                    try:
-                        with open(fpath, "r", encoding="utf-8") as f:
-                            first_line = f.readline().strip()
-                        if first_line.startswith("# "):
-                            title = first_line[2:].strip()
-                    except Exception:
-                        pass
-                    files.append({"name": fname, "title": title, "size": size})
-            tree.append({"dir": name, "files": files})
+        stats = {"pages": 0, "size": 0}
+        tree = self._scan_dir(self.knowledge_dir, stats)
 
         return {
             "tree": tree,
-            "stats": {"pages": total_files, "size": total_bytes},
+            "stats": stats,
             "enabled": conf().get("knowledge", True),
         }
+
+    def _scan_dir(self, dir_path: str, stats: dict) -> list:
+        """Recursively scan a directory and return list of group nodes."""
+        result = []
+        for name in sorted(os.listdir(dir_path)):
+            if name.startswith("."):
+                continue
+            full = os.path.join(dir_path, name)
+            if os.path.isdir(full):
+                files = []
+                for fname in sorted(os.listdir(full)):
+                    fpath = os.path.join(full, fname)
+                    if os.path.isfile(fpath) and fname.endswith(".md") and not fname.startswith("."):
+                        size = os.path.getsize(fpath)
+                        stats["pages"] += 1
+                        stats["size"] += size
+                        title = fname.replace(".md", "")
+                        try:
+                            with open(fpath, "r", encoding="utf-8") as f:
+                                first_line = f.readline().strip()
+                            if first_line.startswith("# "):
+                                title = first_line[2:].strip()
+                        except Exception:
+                            pass
+                        files.append({"name": fname, "title": title, "size": size})
+                children = self._scan_dir(full, stats)
+                result.append({"dir": name, "files": files, "children": children})
+        return result
 
     # ------------------------------------------------------------------
     # read — single file content

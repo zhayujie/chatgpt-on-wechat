@@ -952,13 +952,13 @@
     font-size: 8px;
     transition: transform 0.15s;
 }
-.knowledge-tree-group.open .chevron {
+.knowledge-tree-group.open > .knowledge-tree-group-btn .chevron {
     transform: rotate(90deg);
 }
 .knowledge-tree-group-items {
     display: none;
 }
-.knowledge-tree-group.open .knowledge-tree-group-items {
+.knowledge-tree-group.open > .knowledge-tree-group-items {
     display: block;
 }
 
