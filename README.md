@@ -499,7 +499,7 @@ sudo docker logs -f chatgpt-on-wechat
     "claude_api_key": "YOUR_API_KEY"
 }
 ```
- - `model`: 参考 [官方模型ID](https://docs.anthropic.com/en/docs/about-claude/models/overview#model-aliases) ，支持 `claude-sonnet-4-6、claude-opus-4-6、claude-sonnet-4-5、claude-sonnet-4-0、claude-opus-4-0、claude-3-5-sonnet-latest` 等
+ - `model`: 参考 [官方模型ID](https://docs.anthropic.com/en/docs/about-claude/models/overview#model-aliases) ，支持 `claude-sonnet-4-6、claude-opus-4-7、claude-opus-4-6、claude-sonnet-4-5、claude-sonnet-4-0、claude-opus-4-0、claude-3-5-sonnet-latest` 等
 </details>
 
 <details>

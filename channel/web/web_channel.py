@@ -717,7 +717,7 @@ class ConfigHandler:
         const.QWEN36_PLUS, const.QWEN35_PLUS, const.QWEN3_MAX,
         const.KIMI_K2_5, const.KIMI_K2,
         const.DOUBAO_SEED_2_PRO, const.DOUBAO_SEED_2_CODE,
-        const.CLAUDE_4_6_SONNET, const.CLAUDE_4_6_OPUS, const.CLAUDE_4_5_SONNET,
+        const.CLAUDE_4_6_SONNET, const.CLAUDE_4_7_OPUS, const.CLAUDE_4_6_OPUS, const.CLAUDE_4_5_SONNET,
         const.GEMINI_31_FLASH_LITE_PRE, const.GEMINI_31_PRO_PRE, const.GEMINI_3_FLASH_PRE,
         const.GPT_54, const.GPT_54_MINI, const.GPT_54_NANO, const.GPT_5, const.GPT_41, const.GPT_4o,
         const.DEEPSEEK_CHAT, const.DEEPSEEK_REASONER,
@@ -764,7 +764,7 @@ class ConfigHandler:
             "api_key_field": "claude_api_key",
             "api_base_key": "claude_api_base",
             "api_base_default": "https://api.anthropic.com/v1",
-            "models": [const.CLAUDE_4_6_SONNET, const.CLAUDE_4_6_OPUS, const.CLAUDE_4_5_SONNET],
+            "models": [const.CLAUDE_4_6_SONNET, const.CLAUDE_4_7_OPUS, const.CLAUDE_4_6_OPUS, const.CLAUDE_4_5_SONNET],
         }),
         ("gemini", {
             "label": "Gemini",

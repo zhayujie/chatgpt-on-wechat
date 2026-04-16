@@ -314,7 +314,7 @@ select_model() {
     echo -e "${YELLOW}3) Kimi (kimi-k2.5, kimi-k2, etc.)${NC}"
     echo -e "${YELLOW}4) Doubao (doubao-seed-2-0-code-preview-260215, etc.)${NC}"
     echo -e "${YELLOW}5) Qwen (qwen3.6-plus, qwen3.5-plus, qwen3-max, qwq-plus, etc.)${NC}"
-    echo -e "${YELLOW}6) Claude (claude-sonnet-4-6, claude-opus-4-6, etc.)${NC}"
+    echo -e "${YELLOW}6) Claude (claude-sonnet-4-6, claude-opus-4-7, claude-opus-4-6, etc.)${NC}"
     echo -e "${YELLOW}7) Gemini (gemini-3.1-flash-lite-preview, gemini-3.1-pro-preview, etc.)${NC}"
     echo -e "${YELLOW}8) OpenAI GPT (gpt-5.4, gpt-5.2, gpt-4.1, etc.)${NC}"
     echo -e "${YELLOW}9) LinkAI (access multiple models via one API)${NC}"
