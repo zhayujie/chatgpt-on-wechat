@@ -68,7 +68,7 @@ class KnowledgeService:
             return {"tree": [], "stats": {"pages": 0, "size": 0}, "enabled": conf().get("knowledge", True)}
 
         stats = {"pages": 0, "size": 0}
-        root_files, tree = self._scan_dir(self.knowledge_dir, stats)
+        root_files, tree = self._scan_dir(self.knowledge_dir, stats, is_root=True)
 
         return {
             "root_files": root_files,
@@ -77,7 +77,7 @@ class KnowledgeService:
             "enabled": conf().get("knowledge", True),
         }
 
-    def _scan_dir(self, dir_path: str, stats: dict) -> tuple:
+    def _scan_dir(self, dir_path: str, stats: dict, is_root: bool = False) -> tuple:
         """
         Recursively scan a directory.
 
@@ -95,8 +95,9 @@ class KnowledgeService:
                 children.append({"dir": name, "files": sub_files, "children": sub_children})
             elif name.endswith(".md"):
                 size = os.path.getsize(full)
-                stats["pages"] += 1
-                stats["size"] += size
+                if not is_root:
+                    stats["pages"] += 1
+                    stats["size"] += size
                 title = name.replace(".md", "")
                 try:
                     with open(full, "r", encoding="utf-8") as f:
