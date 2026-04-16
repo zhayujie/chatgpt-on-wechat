@@ -19,7 +19,7 @@ env:
 
 jobs:
   build-and-push-image:
-    if: github.repository == 'zhayujie/chatgpt-on-wechat'
+    if: github.repository == 'zhayujie/CowAgent'
     runs-on: ubuntu-latest
     permissions:
       contents: read
