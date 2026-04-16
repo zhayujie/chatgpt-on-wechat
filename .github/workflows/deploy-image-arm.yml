@@ -52,6 +52,10 @@ jobs:
         with:
           images: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest-arm64,enable={{is_default_branch}}
+            type=ref,event=branch,suffix=-arm64
+            type=ref,event=tag,suffix=-arm64
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v3
@@ -60,7 +64,7 @@ jobs:
           push: true
           file: ./docker/Dockerfile.latest
           platforms: linux/arm64
-          tags: ${{ steps.meta.outputs.tags }}-arm64
+          tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
       - uses: actions/delete-package-versions@v4

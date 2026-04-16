@@ -68,41 +68,45 @@ class KnowledgeService:
             return {"tree": [], "stats": {"pages": 0, "size": 0}, "enabled": conf().get("knowledge", True)}
 
         stats = {"pages": 0, "size": 0}
-        tree = self._scan_dir(self.knowledge_dir, stats)
+        root_files, tree = self._scan_dir(self.knowledge_dir, stats)
 
         return {
+            "root_files": root_files,
             "tree": tree,
             "stats": stats,
             "enabled": conf().get("knowledge", True),
         }
 
-    def _scan_dir(self, dir_path: str, stats: dict) -> list:
-        """Recursively scan a directory and return list of group nodes."""
-        result = []
+    def _scan_dir(self, dir_path: str, stats: dict) -> tuple:
+        """
+        Recursively scan a directory.
+
+        :return: (files, children) where files is a list of .md file dicts
+                 in this directory and children is a list of sub-directory nodes.
+        """
+        files = []
+        children = []
         for name in sorted(os.listdir(dir_path)):
             if name.startswith("."):
                 continue
             full = os.path.join(dir_path, name)
             if os.path.isdir(full):
-                files = []
-                for fname in sorted(os.listdir(full)):
-                    fpath = os.path.join(full, fname)
-                    if os.path.isfile(fpath) and fname.endswith(".md") and not fname.startswith("."):
-                        size = os.path.getsize(fpath)
-                        stats["pages"] += 1
-                        stats["size"] += size
-                        title = fname.replace(".md", "")
-                        try:
-                            with open(fpath, "r", encoding="utf-8") as f:
-                                first_line = f.readline().strip()
-                            if first_line.startswith("# "):
-                                title = first_line[2:].strip()
-                        except Exception:
-                            pass
-                        files.append({"name": fname, "title": title, "size": size})
-                children = self._scan_dir(full, stats)
-                result.append({"dir": name, "files": files, "children": children})
-        return result
+                sub_files, sub_children = self._scan_dir(full, stats)
+                children.append({"dir": name, "files": sub_files, "children": sub_children})
+            elif name.endswith(".md"):
+                size = os.path.getsize(full)
+                stats["pages"] += 1
+                stats["size"] += size
+                title = name.replace(".md", "")
+                try:
+                    with open(full, "r", encoding="utf-8") as f:
+                        first_line = f.readline().strip()
+                    if first_line.startswith("# "):
+                        title = first_line[2:].strip()
+                except Exception:
+                    pass
+                files.append({"name": name, "title": title, "size": size})
+        return files, children
 
     # ------------------------------------------------------------------
     # read — single file content

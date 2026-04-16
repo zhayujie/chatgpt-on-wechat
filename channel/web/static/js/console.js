@@ -3565,6 +3565,7 @@ navigateTo = function(viewId) {
 // Knowledge View
 // =====================================================================
 let _knowledgeTreeData = [];
+let _knowledgeRootFiles = [];
 let _knowledgeCurrentFile = null;
 let _knowledgeGraphLoaded = false;
 
@@ -3582,7 +3583,9 @@ function loadKnowledgeView() {
         const statsEl = document.getElementById('knowledge-stats');
 
         const tree = data.tree || [];
+        const rootFiles = data.root_files || [];
         _knowledgeTreeData = tree;
+        _knowledgeRootFiles = rootFiles;
         const stats = data.stats || {};
         const totalPages = stats.pages || 0;
         const sizeStr = stats.size < 1024 ? stats.size + ' B' : (stats.size / 1024).toFixed(1) + ' KB';
@@ -3600,14 +3603,17 @@ function loadKnowledgeView() {
         emptyEl.classList.add('hidden');
         docsPanel.classList.remove('hidden');
 
-        renderKnowledgeTree(tree);
+        renderKnowledgeTree(tree, rootFiles);
 
         // Auto-select the first file (desktop only)
         if (window.innerWidth >= 768) {
-            const firstGroup = tree.find(g => g.files && g.files.length > 0);
-            if (firstGroup) {
-                const firstFile = firstGroup.files[0];
-                openKnowledgeFile(firstGroup.dir + '/' + firstFile.name, firstFile.title);
+            const firstFile = rootFiles.length > 0 ? rootFiles[0] : null;
+            const firstGroup = !firstFile ? tree.find(g => g.files && g.files.length > 0) : null;
+            if (firstFile) {
+                openKnowledgeFile(firstFile.name, firstFile.title);
+            } else if (firstGroup) {
+                const gf = firstGroup.files[0];
+                openKnowledgeFile(firstGroup.dir + '/' + gf.name, gf.title);
             }
         } else {
             document.getElementById('knowledge-content-placeholder').classList.add('hidden');
@@ -3616,10 +3622,26 @@ function loadKnowledgeView() {
     }).catch(() => {});
 }
 
-function renderKnowledgeTree(tree, filter) {
+function renderKnowledgeTree(tree, rootFilesOrFilter, filter) {
     const container = document.getElementById('knowledge-tree');
     container.innerHTML = '';
-    const lowerFilter = (filter || '').toLowerCase();
+    let rootFiles, lowerFilter;
+    if (typeof rootFilesOrFilter === 'string') {
+        rootFiles = _knowledgeRootFiles;
+        lowerFilter = (rootFilesOrFilter || '').toLowerCase();
+    } else {
+        rootFiles = rootFilesOrFilter || _knowledgeRootFiles;
+        lowerFilter = (filter || '').toLowerCase();
+    }
+    (rootFiles || []).forEach(f => {
+        if (lowerFilter && !f.title.toLowerCase().includes(lowerFilter) && !f.name.toLowerCase().includes(lowerFilter)) return;
+        const fbtn = document.createElement('button');
+        fbtn.className = 'knowledge-tree-file' + (_knowledgeCurrentFile === f.name ? ' active' : '');
+        fbtn.dataset.path = f.name;
+        fbtn.innerHTML = `<i class="fas fa-file-lines text-[10px] text-slate-400"></i><span class="truncate">${escapeHtml(f.title)}</span>`;
+        fbtn.onclick = () => openKnowledgeFile(f.name, f.title);
+        container.appendChild(fbtn);
+    });
     _renderKnowledgeGroups(container, tree, '', lowerFilter, 0);
 }
 
@@ -3684,7 +3706,7 @@ function _countFiles(group) {
 }
 
 function filterKnowledgeTree(query) {
-    renderKnowledgeTree(_knowledgeTreeData, query);
+    renderKnowledgeTree(_knowledgeTreeData, _knowledgeRootFiles, query);
 }
 
 function resolveKnowledgePath(currentFilePath, relativeHref) {
@@ -3763,6 +3785,9 @@ function bindChatKnowledgeLinks(container) {
 }
 
 function _findKnowledgeFileByName(filename) {
+    for (const f of _knowledgeRootFiles) {
+        if (f.name === filename) return { path: f.name, title: f.title };
+    }
     return _searchFileInGroups(_knowledgeTreeData, '', filename);
 }
 
@@ -4099,7 +4124,10 @@ function initApp() {
     _restoreSessionPanel();
 
     fetch('/api/knowledge/list').then(r => r.json()).then(data => {
-        if (data.status === 'success') _knowledgeTreeData = data.tree || [];
+        if (data.status === 'success') {
+            _knowledgeTreeData = data.tree || [];
+            _knowledgeRootFiles = data.root_files || [];
+        }
     }).catch(() => {});
 
     fetch('/api/version').then(r => r.json()).then(data => {
