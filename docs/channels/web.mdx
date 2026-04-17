@@ -12,7 +12,7 @@ Web 控制台是 CowAgent 的默认通道，启动后会自动运行，通过浏
   "channel_type": "web",
   "web_port": 9899,
   "web_password": "",
-  "enable_thinking": true
+  "enable_thinking": false
 }
 ```
 
@@ -22,7 +22,7 @@ Web 控制台是 CowAgent 的默认通道，启动后会自动运行，通过浏
 | `web_port` | Web 服务监听端口 | `9899` |
 | `web_password` | 访问密码，留空表示不启用密码保护 | `""` |
 | `web_session_expire_days` | 登录会话有效天数 | `30` |
-| `enable_thinking` | 是否启用深度思考，开启后 Web 端展示推理过程，关闭可加速响应 | `true` |
+| `enable_thinking` | 是否启用深度思考，开启后 Web 端展示推理过程，关闭可加速响应 | `false` |
 
 配置密码后，访问控制台时需先输入密码完成登录。登录状态默认保持 30 天，期间重启服务也无需重新登录。密码也支持在控制台的「配置」页面中在线修改。
 

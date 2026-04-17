@@ -2116,7 +2116,7 @@ function initConfigView(data) {
     document.getElementById('cfg-max-tokens').value = data.agent_max_context_tokens || 50000;
     document.getElementById('cfg-max-turns').value = data.agent_max_context_turns || 20;
     document.getElementById('cfg-max-steps').value = data.agent_max_steps || 20;
-    document.getElementById('cfg-enable-thinking').checked = data.enable_thinking !== false;
+    document.getElementById('cfg-enable-thinking').checked = data.enable_thinking === true;
 
     const pwdInput = document.getElementById('cfg-password');
     const maskedPwd = data.web_password_masked || '';

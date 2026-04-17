@@ -712,7 +712,7 @@ class ChatHandler:
 class ConfigHandler:
 
     _RECOMMENDED_MODELS = [
-        const.MINIMAX_M2_7, const.MINIMAX_M2_5, const.MINIMAX_M2_1, const.MINIMAX_M2_1_LIGHTNING,
+        const.MINIMAX_M2_7_HIGHSPEED, const.MINIMAX_M2_7, const.MINIMAX_M2_5, const.MINIMAX_M2_1, const.MINIMAX_M2_1_LIGHTNING,
         const.GLM_5_TURBO, const.GLM_5, const.GLM_4_7,
         const.QWEN36_PLUS, const.QWEN35_PLUS, const.QWEN3_MAX,
         const.KIMI_K2_5, const.KIMI_K2,
@@ -871,7 +871,7 @@ class ConfigHandler:
                 "agent_max_context_tokens": local_config.get("agent_max_context_tokens", 50000),
                 "agent_max_context_turns": local_config.get("agent_max_context_turns", 20),
                 "agent_max_steps": local_config.get("agent_max_steps", 20),
-                "enable_thinking": bool(local_config.get("enable_thinking", True)),
+                "enable_thinking": bool(local_config.get("enable_thinking", False)),
                 "api_bases": api_bases,
                 "api_keys": api_keys_masked,
                 "providers": providers,

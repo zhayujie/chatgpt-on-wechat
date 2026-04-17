@@ -81,20 +81,26 @@ class AgentStreamExecutor:
     def _is_thinking_enabled(self) -> bool:
         from config import conf
         channel_type = getattr(self.model, 'channel_type', '') or ''
-        return conf().get("enable_thinking", True) and channel_type == 'web'
+        return conf().get("enable_thinking", False) and channel_type == 'web'
 
     def _filter_think_tags(self, text: str) -> str:
         """
-        Remove <think> and </think> tags but keep the content inside.
-        Some LLM providers (e.g., MiniMax) may return thinking process wrapped in <think> tags.
-        We only remove the tags themselves, keeping the actual thinking content.
+        Handle <think>...</think> blocks in content returned by some LLM providers
+        (e.g., MiniMax).
+
+        - When thinking is enabled: remove the tags but keep the content inside.
+        - When thinking is disabled: remove both the tags and the content entirely.
         """
         if not text:
             return text
         import re
-        # Remove only the <think> and </think> tags, keep the content
-        text = re.sub(r'<think>', '', text)
-        text = re.sub(r'</think>', '', text)
+        if self._is_thinking_enabled():
+            text = re.sub(r'<think>', '', text)
+            text = re.sub(r'</think>', '', text)
+        else:
+            text = re.sub(r'<think>[\s\S]*?</think>', '', text)
+            # Also strip unclosed <think> tag at the end (streaming partial)
+            text = re.sub(r'<think>[\s\S]*$', '', text)
         return text
 
     def _hash_args(self, args: dict) -> str:

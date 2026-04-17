@@ -169,7 +169,7 @@ class AgentLLMModel(LLMModel):
 
                 # Determine thinking: respect global config, then channel_type
                 from config import conf
-                global_thinking = conf().get("enable_thinking", True)
+                global_thinking = conf().get("enable_thinking", False)
                 if not global_thinking:
                     kwargs['thinking'] = {"type": "disabled"}
                 else:
@@ -222,7 +222,7 @@ class AgentLLMModel(LLMModel):
 
                 # Determine thinking: respect global config, then channel_type
                 from config import conf
-                global_thinking = conf().get("enable_thinking", True)
+                global_thinking = conf().get("enable_thinking", False)
                 if not global_thinking:
                     kwargs['thinking'] = {"type": "disabled"}
                 else:

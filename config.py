@@ -204,7 +204,7 @@ available_setting = {
     "agent_max_context_tokens": 50000,  # Agent模式下最大上下文tokens
     "agent_max_context_turns": 20,  # Agent模式下最大上下文记忆轮次
     "agent_max_steps": 20,  # Agent模式下单次运行最大决策步数
-    "enable_thinking": True,  # Whether to enable deep thinking for web channel
+    "enable_thinking": False,  # Whether to enable deep thinking for web channel
     "knowledge": True,  # 是否开启知识库功能
 }
 
