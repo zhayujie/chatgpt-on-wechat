@@ -316,6 +316,7 @@ class CowCliPlugin(Plugin):
         "agent_max_context_turns",
         "agent_max_steps",
         "knowledge",
+        "enable_thinking",
     }
 
     _CONFIG_READABLE = _CONFIG_WRITABLE | {"channel_type"}
