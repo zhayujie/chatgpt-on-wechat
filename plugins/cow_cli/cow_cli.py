@@ -358,7 +358,7 @@ class CowCliPlugin(Plugin):
         return f"⚙️ {key}: {val}"
 
     def _config_set(self, key: str, value_str: str) -> str:
-        from config import conf, load_config
+        from config import conf, load_config, available_setting
         import json as _json
 
         if key not in self._CONFIG_WRITABLE:
@@ -402,10 +402,19 @@ class CowCliPlugin(Plugin):
 
         # Sync updated values to environment variables so that load_config()
         # won't overwrite the new value with a stale env var (common in Docker).
-        from config import available_setting
+        # Match env var keys case-insensitively (Docker compose typically uses
+        # upper-case like MODEL, but lower-case is also possible).
+        synced_envs = {}
         for k, v in updates.items():
-            if k in available_setting and k.upper() in os.environ:
-                os.environ[k.upper()] = str(v)
+            if k not in available_setting:
+                continue
+            str_val = str(v)
+            k_lower = k.lower()
+            for env_key in list(os.environ):
+                if env_key.lower() == k_lower:
+                    os.environ[env_key] = str_val
+                    synced_envs[env_key] = str_val
+        logger.info(f"[CowCli] config update: {updates}, synced envs: {synced_envs}")
 
         try:
             load_config()

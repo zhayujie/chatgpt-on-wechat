@@ -269,6 +269,25 @@ class WebChannel(ChatChannel):
                 if tool_calls:
                     q.put({"type": "message_end", "has_tool_calls": True})
 
+            elif event_type == "agent_end":
+                # Safety net: if the agent finishes with an empty final_response,
+                # chat_channel skips _send_reply (because reply.content is empty),
+                # which means no "done" event is ever emitted and the SSE stream
+                # would hang until the 10-min idle timeout. Push a fallback "done"
+                # here so the frontend always gets closure.
+                final_response = data.get("final_response", "")
+                if not final_response or not str(final_response).strip():
+                    logger.warning(
+                        f"[WebChannel] agent_end with empty final_response for "
+                        f"request {request_id}, sending fallback done"
+                    )
+                    q.put({
+                        "type": "done",
+                        "content": "(模型未返回任何内容，请重试或换一种方式描述你的需求)",
+                        "request_id": request_id,
+                        "timestamp": time.time(),
+                    })
+
             elif event_type == "file_to_send":
                 file_path = data.get("path", "")
                 file_name = data.get("file_name", os.path.basename(file_path))

@@ -653,6 +653,8 @@ class GoogleGeminiBot(Bot):
             chunk_count = 0
             last_finish_reason = None
             last_safety_ratings = None
+            raw_chunks = []  # Buffer raw chunks for diagnostics on empty response
+            non_text_part_keys = []  # Track non-text/functionCall part keys (e.g. thoughtSignature)
             
             for line in response.iter_lines():
                 if not line:
@@ -670,10 +672,16 @@ class GoogleGeminiBot(Bot):
                 try:
                     chunk_data = json.loads(line)
                     chunk_count += 1
+                    raw_chunks.append(chunk_data)
                     
                     candidates = chunk_data.get("candidates", [])
                     if not candidates:
-                        logger.debug("[Gemini] No candidates in chunk")
+                        # Could be a chunk with only usageMetadata / promptFeedback
+                        prompt_feedback = chunk_data.get("promptFeedback")
+                        if prompt_feedback:
+                            logger.warning(f"[Gemini] promptFeedback in chunk: {prompt_feedback}")
+                        else:
+                            logger.debug(f"[Gemini] No candidates in chunk: {chunk_data}")
                         continue
                     
                     candidate = candidates[0]
@@ -688,10 +696,16 @@ class GoogleGeminiBot(Bot):
                     parts = content.get("parts", [])
                     
                     if not parts:
-                        logger.debug("[Gemini] No parts in candidate content")
+                        logger.debug(f"[Gemini] No parts in candidate content, candidate={candidate}")
                     
                     # Stream text content
                     for part in parts:
+                        # Track unknown part types for diagnostics
+                        if "text" not in part and "functionCall" not in part:
+                            for k in part.keys():
+                                if k not in non_text_part_keys:
+                                    non_text_part_keys.append(k)
+
                         if "text" in part and part["text"]:
                             has_content = True
                             yield {
@@ -721,7 +735,7 @@ class GoogleGeminiBot(Bot):
                             })
                     
                 except json.JSONDecodeError as je:
-                    logger.debug(f"[Gemini] JSON decode error: {je}")
+                    logger.debug(f"[Gemini] JSON decode error: {je}, line={line[:500]}")
                     continue
             
             # Send tool calls if any were collected
@@ -739,9 +753,24 @@ class GoogleGeminiBot(Bot):
                 }
                 has_sent_tool_calls = True
             
-            # 如果返回空响应，记录详细警告
+            # 如果返回空响应，dump 完整原始 chunks 以便诊断
             if not has_content and not all_tool_calls:
-                logger.warning(f"[Gemini] ⚠️  Empty response detected!")
+                logger.warning(
+                    f"[Gemini] ⚠️  Empty response detected! "
+                    f"chunks={chunk_count}, finish_reason={last_finish_reason}, "
+                    f"non_text_part_keys={non_text_part_keys}"
+                )
+                if last_safety_ratings:
+                    logger.warning(f"[Gemini] safetyRatings: {last_safety_ratings}")
+                # Dump raw chunks (truncate each to avoid huge logs)
+                try:
+                    for i, ch in enumerate(raw_chunks):
+                        ch_str = json.dumps(ch, ensure_ascii=False)
+                        if len(ch_str) > 2000:
+                            ch_str = ch_str[:2000] + f"...[truncated, total {len(ch_str)} chars]"
+                        logger.warning(f"[Gemini] raw chunk[{i}]: {ch_str}")
+                except Exception as dump_err:
+                    logger.warning(f"[Gemini] Failed to dump raw chunks: {dump_err}")
             
             # Final chunk
             yield {

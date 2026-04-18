@@ -254,8 +254,15 @@ class AgentStreamExecutor:
                             assistant_msg, tool_calls = self._call_llm_stream(retry_on_empty=False)
                             final_response = assistant_msg
                             
-                            # 如果还是空，才使用 fallback
-                            if not assistant_msg and not tool_calls:
+                            # If LLM responded with tool_calls instead of text, fall through
+                            # to the tool execution path below (don't break the loop).
+                            if tool_calls:
+                                logger.info(
+                                    f"[Agent] LLM returned tool_calls in explicit-response retry, "
+                                    f"continuing to execute tools instead of breaking"
+                                )
+                            elif not assistant_msg:
+                                # Still empty (no text and no tool_calls): use fallback
                                 logger.warning(f"[Agent] Still empty after explicit request")
                                 final_response = (
                                     "抱歉，我暂时无法生成回复。请尝试换一种方式描述你的需求，或稍后再试。"
@@ -270,12 +277,15 @@ class AgentStreamExecutor:
                     else:
                         logger.info(f"💭 {assistant_msg[:150]}{'...' if len(assistant_msg) > 150 else ''}")
                     
-                    logger.debug(f"✅ 完成 (无工具调用)")
-                    self._emit_event("turn_end", {
-                        "turn": turn,
-                        "has_tool_calls": False
-                    })
-                    break
+                    # If the explicit-response retry produced tool_calls, skip the break
+                    # and continue down to the tool execution branch in this same iteration.
+                    if not tool_calls:
+                        logger.debug(f"✅ 完成 (无工具调用)")
+                        self._emit_event("turn_end", {
+                            "turn": turn,
+                            "has_tool_calls": False
+                        })
+                        break
 
                 # Log tool calls with arguments
                 tool_calls_str = []
