@@ -436,7 +436,6 @@ class GoogleGeminiBot(Bot):
                                 tool_result_data = {"result": tool_content}
                             
                             # Find the tool name from previous messages
-                            # Look for the corresponding tool_call in model's message
                             tool_name = None
                             for prev_msg in reversed(messages):
                                 if prev_msg.get("role") == "assistant":
@@ -450,13 +449,14 @@ class GoogleGeminiBot(Bot):
                                     if tool_name:
                                         break
                             
-                            # Gemini functionResponse format
-                            parts.append({
-                                "functionResponse": {
-                                    "name": tool_name or "unknown",
-                                    "response": tool_result_data
-                                }
-                            })
+                            # Gemini functionResponse format (Gemini 3 requires `id`)
+                            fn_response = {
+                                "name": tool_name or "unknown",
+                                "response": tool_result_data
+                            }
+                            if tool_use_id:
+                                fn_response["id"] = tool_use_id
+                            parts.append({"functionResponse": fn_response})
                             
                         elif "text" in block:
                             # Generic text field
@@ -624,10 +624,11 @@ class GoogleGeminiBot(Bot):
                 # Check for functionCall (per REST API docs)
                 if "functionCall" in part:
                     fc = part["functionCall"]
-                    logger.info(f"[Gemini] Function call detected: {fc.get('name')}")
+                    fc_id = fc.get("id") or f"call_{int(time.time() * 1000000)}"
+                    logger.info(f"[Gemini] Function call detected: {fc.get('name')} (id={fc_id})")
                     
                     tool_calls.append({
-                        "id": f"call_{int(time.time() * 1000000)}",
+                        "id": fc_id,
                         "type": "function",
                         "function": {
                             "name": fc.get("name"),
@@ -747,10 +748,12 @@ class GoogleGeminiBot(Bot):
                         # Collect function calls
                         if "functionCall" in part:
                             fc = part["functionCall"]
-                            logger.info(f"[Gemini] Function call: {fc.get('name')}")
+                            logger.info(f"[Gemini] Function call: {fc.get('name')} (id={fc.get('id')})")
+                            # Prefer Gemini's native id; fall back to generated one
+                            fc_id = fc.get("id") or f"call_{int(time.time() * 1000000)}_{len(all_tool_calls)}"
                             all_tool_calls.append({
-                                "index": len(all_tool_calls),  # Add index to differentiate multiple tool calls
-                                "id": f"call_{int(time.time() * 1000000)}_{len(all_tool_calls)}",
+                                "index": len(all_tool_calls),
+                                "id": fc_id,
                                 "type": "function",
                                 "function": {
                                     "name": fc.get("name"),

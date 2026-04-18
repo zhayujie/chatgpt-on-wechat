@@ -659,8 +659,11 @@ class AgentStreamExecutor:
                                     tool_calls_buffer[index]["arguments"] += func["arguments"]
 
                     # Preserve _gemini_raw_parts for Gemini thoughtSignature round-trip
+                    # (direct Gemini: list of parts; LinkAI proxy: base64 string of JSON parts)
                     if "_gemini_raw_parts" in delta:
                         gemini_raw_parts = delta["_gemini_raw_parts"]
+                    elif isinstance(choice, dict) and choice.get("_gemini_raw_parts"):
+                        gemini_raw_parts = choice["_gemini_raw_parts"]
 
         except Exception as e:
             error_str = str(e)

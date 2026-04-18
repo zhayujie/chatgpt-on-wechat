@@ -673,6 +673,9 @@ def _handle_linkai_stream_response(self, base_url, headers, body):
                         }
                         return
 
+                    # Forward SSE JSON as-is so extensions (e.g. delta._gemini_raw_parts
+                    # for Gemini via LinkAI) reach agent_stream and are stored on assistant
+                    # messages for the next request. Standard OpenAI fields are unchanged.
                     yield chunk
                         
     except Exception as e:

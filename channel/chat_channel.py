@@ -297,8 +297,12 @@ class ChatChannel(Channel):
                 logger.debug("[chat_channel] sending reply: {}, context: {}".format(reply, context))
                 
                 # 如果是文本回复，尝试提取并发送图片
-                if reply.type == ReplyType.TEXT:
+                # Web channel renders images/videos inline via renderMarkdown,
+                # so skip the extract-and-send step to avoid duplicate media.
+                if reply.type == ReplyType.TEXT and context.get("channel_type") != "web":
                     self._extract_and_send_images(reply, context)
+                elif reply.type == ReplyType.TEXT:
+                    self._send(reply, context)
                 # 如果是图片回复但带有文本内容，先发文本再发图片
                 elif reply.type == ReplyType.IMAGE_URL and hasattr(reply, 'text_content') and reply.text_content:
                     # 先发送文本
