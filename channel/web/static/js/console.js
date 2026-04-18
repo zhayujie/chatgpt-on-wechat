@@ -339,6 +339,7 @@ function createMd() {
 const md = createMd();
 
 const VIDEO_EXT_RE = /\.(?:mp4|webm|mov|avi|mkv)$/i;  // tested against URL without query string
+const IMAGE_EXT_RE = /\.(?:jpg|jpeg|png|gif|webp|bmp|svg)$/i;  // tested against URL without query string
 
 function _buildVideoHtml(url) {
     const fileName = url.split('/').pop().split('?')[0];
@@ -349,6 +350,15 @@ function _buildVideoHtml(url) {
         `<a href="${url}" target="_blank" ` +
         `style="display:inline-flex;align-items:center;gap:4px;margin-top:4px;font-size:12px;color:#8b8fa8;text-decoration:none;">` +
         `<i class="fas fa-download"></i> ${escapeHtml(fileName)}</a></div>`;
+}
+
+function _buildImageHtml(url) {
+    const safeUrl = url.replace(/"/g, '&quot;');
+    return `<div style="margin:10px 0;">` +
+        `<img src="${safeUrl}" alt="image" loading="lazy" ` +
+        `onclick="window.open('${safeUrl}','_blank')" ` +
+        `style="max-width:600px;width:100%;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.15);display:block;cursor:pointer;">` +
+        `</div>`;
 }
 
 function injectVideoPlayers(html) {
@@ -369,10 +379,32 @@ function injectVideoPlayers(html) {
     }).join('');
 }
 
+// Convert image URLs into inline <img> previews. Mirrors injectVideoPlayers but for images.
+// Handles three cases produced by markdown-it:
+//   1. <a href="...image.jpg">...</a>  (bare URL or autolink that linkify turned into an anchor)
+//   2. <img src="...">                  (markdown image syntax) — leave as-is, but normalize style
+//   3. raw URL still present in a text node                    — only as a safety net
+function injectImagePreviews(html) {
+    // Step 1: anchor whose href points to an image file -> replace with <img> preview.
+    const step1 = html.replace(
+        /<a\s+href="(https?:\/\/[^"]+)"[^>]*>[^<]*<\/a>/gi,
+        (match, url) => IMAGE_EXT_RE.test(url.split('?')[0]) ? _buildImageHtml(url) : match
+    );
+    // Step 2: bare image URLs left in text nodes (rare — markdown-it's linkify usually catches them).
+    return step1.split(/(<[^>]+>)/).map((chunk, idx) => {
+        if (idx % 2 !== 0) return chunk;
+        return chunk.replace(/https?:\/\/\S+/gi, (url) => {
+            const bare = url.replace(/[),.\s]+$/, '');
+            return IMAGE_EXT_RE.test(bare.split('?')[0]) ? _buildImageHtml(bare) : url;
+        });
+    }).join('');
+}
+
 function renderMarkdown(text) {
     try {
         const html = md.render(text);
-        return injectVideoPlayers(html);
+        // Order matters: video first (more specific), then image.
+        return injectImagePreviews(injectVideoPlayers(html));
     }
     catch (e) { return text.replace(/\n/g, '<br>'); }
 }

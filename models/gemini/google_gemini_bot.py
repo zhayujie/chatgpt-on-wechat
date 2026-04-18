@@ -335,6 +335,18 @@ class GoogleGeminiBot(Bot):
                 # Convert role
                 gemini_role = "user" if role in ["user", "tool"] else "model"
                 
+                # For model messages that carry original Gemini parts (with
+                # thoughtSignature etc.), use them directly instead of
+                # reconstructing from Claude-format tool_use blocks.
+                if gemini_role == "model" and "_gemini_raw_parts" in msg:
+                    raw_parts = msg["_gemini_raw_parts"]
+                    if raw_parts:
+                        payload["contents"].append({
+                            "role": "model",
+                            "parts": raw_parts
+                        })
+                        continue
+                
                 # Handle different content formats
                 parts = []
                 
@@ -398,6 +410,17 @@ class GoogleGeminiBot(Bot):
                             else:
                                 logger.warning(f"[Gemini] Skip invalid image block: {str(block)[:200]}")
                             
+                        elif block_type == "tool_use":
+                            # Convert Claude tool_use to Gemini functionCall
+                            fc_name = block.get("name", "unknown")
+                            fc_args = block.get("input") or {}
+                            parts.append({
+                                "functionCall": {
+                                    "name": fc_name,
+                                    "args": fc_args
+                                }
+                            })
+
                         elif block_type == "tool_result":
                             # Convert Claude tool_result to Gemini functionResponse
                             tool_use_id = block.get("tool_use_id")
@@ -648,6 +671,7 @@ class GoogleGeminiBot(Bot):
         """Handle Gemini REST API stream response"""
         try:
             all_tool_calls = []
+            all_raw_parts = []  # Preserve all Gemini parts (incl. thoughtSignature) for round-trip
             has_sent_tool_calls = False
             has_content = False  # Track if any content was sent
             chunk_count = 0
@@ -733,6 +757,9 @@ class GoogleGeminiBot(Bot):
                                     "arguments": json.dumps(fc.get("args", {}))
                                 }
                             })
+
+                    # Preserve all raw parts for round-trip (thoughtSignature, etc.)
+                    all_raw_parts.extend(parts)
                     
                 except json.JSONDecodeError as je:
                     logger.debug(f"[Gemini] JSON decode error: {je}, line={line[:500]}")
@@ -740,6 +767,9 @@ class GoogleGeminiBot(Bot):
             
             # Send tool calls if any were collected
             if all_tool_calls and not has_sent_tool_calls:
+                delta = {"tool_calls": all_tool_calls}
+                if all_raw_parts:
+                    delta["_gemini_raw_parts"] = all_raw_parts
                 yield {
                     "id": f"chatcmpl-{time.time()}",
                     "object": "chat.completion.chunk",
@@ -747,11 +777,25 @@ class GoogleGeminiBot(Bot):
                     "model": model_name,
                     "choices": [{
                         "index": 0,
-                        "delta": {"tool_calls": all_tool_calls},
+                        "delta": delta,
                         "finish_reason": None
                     }]
                 }
                 has_sent_tool_calls = True
+            elif not has_sent_tool_calls and all_raw_parts:
+                # No tool calls but we have raw parts (e.g. text-only response with
+                # thoughtSignature) — pass them through for round-trip fidelity.
+                yield {
+                    "id": f"chatcmpl-{time.time()}",
+                    "object": "chat.completion.chunk",
+                    "created": int(time.time()),
+                    "model": model_name,
+                    "choices": [{
+                        "index": 0,
+                        "delta": {"_gemini_raw_parts": all_raw_parts},
+                        "finish_reason": None
+                    }]
+                }
             
             # 如果返回空响应，dump 完整原始 chunks 以便诊断
             if not has_content and not all_tool_calls:
