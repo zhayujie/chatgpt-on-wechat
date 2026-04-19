@@ -540,8 +540,22 @@ class CowCliPlugin(Plugin):
                 "  disable <名称>   禁用技能"
             )
 
+    def _refresh_skill_manager(self):
+        """Re-scan skill directories so skills_config.json reflects disk state."""
+        try:
+            from bridge.bridge import Bridge
+            bridge = Bridge()
+            agent_bridge = bridge.get_agent_bridge()
+            for agent in [agent_bridge.default_agent] + list(agent_bridge.agents.values()):
+                if agent and hasattr(agent, 'skill_manager') and agent.skill_manager:
+                    agent.skill_manager.refresh_skills()
+                    break
+        except Exception as e:
+            logger.debug(f"[CowCli] skill refresh skipped: {e}")
+
     def _skill_list_local(self) -> str:
         from cli.utils import load_skills_config, get_skills_dir, get_builtin_skills_dir
+        self._refresh_skill_manager()
         config = load_skills_config()
 
         if not config:
