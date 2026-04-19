@@ -12,12 +12,30 @@ from typing import Optional
 from common.log import logger
 
 
+def _truncate_fallback_title(user_message: str, max_len: int = 30) -> str:
+    """Pick the first non-empty line of the user message and truncate it."""
+    if not user_message:
+        return "New Chat"
+    first_line = ""
+    for line in user_message.splitlines():
+        line = line.strip()
+        if line:
+            first_line = line
+            break
+    if not first_line:
+        return "New Chat"
+    if len(first_line) > max_len:
+        first_line = first_line[:max_len].rstrip() + "..."
+    return first_line
+
+
 def generate_session_title(user_message: str, assistant_reply: str = "") -> str:
     """
     Generate a short session title by calling the current bot's reply_text.
-    Falls back to a truncated user message if the LLM call fails.
+    Falls back to the first line of the user message if the LLM call fails
+    or returns an obvious error sentinel.
     """
-    fallback = user_message[:50].split("\n")[0].strip() or "New Chat"
+    fallback = _truncate_fallback_title(user_message)
     try:
         from bridge.bridge import Bridge
         from models.session_manager import Session
@@ -36,8 +54,19 @@ def generate_session_title(user_message: str, assistant_reply: str = "") -> str:
             )}
         ]
 
-        result = bot.reply_text(session)
+        result = bot.reply_text(session) or {}
+        # When bots fail (network error, auth error, rate limit, etc.) they
+        # typically return completion_tokens=0 with a sentinel content like
+        # "请再问我一次吧" / "我现在有点累了". Treat that as failure.
+        completion_tokens = result.get("completion_tokens", 0) or 0
         raw = (result.get("content") or "").strip()
+        if completion_tokens <= 0:
+            logger.warning(
+                f"[SessionService] Title generation got empty completion "
+                f"(completion_tokens={completion_tokens}, content='{raw[:50]}'), "
+                f"using fallback")
+            return fallback
+
         title = re.sub(r'<think>.*?</think>', '', raw, flags=re.DOTALL).strip().strip('"\'')
         logger.info(f"[SessionService] Title generation result: '{title}' (len={len(title)})")
         if title and len(title) <= 50:

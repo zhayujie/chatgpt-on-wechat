@@ -608,17 +608,54 @@ class AgentBridge:
             from config import conf
             if not conf().get("conversation_persistence", True):
                 return
+            # When deep-thinking display is disabled, strip "thinking" content
+            # blocks before persisting so they don't resurface on history reload.
+            # The in-memory message list keeps them intact for this run's
+            # multi-turn LLM context.
+            thinking_enabled = bool(conf().get("enable_thinking", False))
         except Exception:
-            pass
+            thinking_enabled = False
+
+        messages_to_store = new_messages
+        if not thinking_enabled:
+            messages_to_store = self._strip_thinking_blocks(new_messages)
+
         try:
             from agent.memory import get_conversation_store
             get_conversation_store().append_messages(
-                session_id, new_messages, channel_type=channel_type
+                session_id, messages_to_store, channel_type=channel_type
             )
         except Exception as e:
             logger.warning(
                 f"[AgentBridge] Failed to persist messages for session={session_id}: {e}"
             )
+
+    @staticmethod
+    def _strip_thinking_blocks(messages: list) -> list:
+        """Return a shallow copy of messages with assistant "thinking" blocks removed."""
+        cleaned = []
+        for msg in messages:
+            if not isinstance(msg, dict):
+                cleaned.append(msg)
+                continue
+            if msg.get("role") != "assistant":
+                cleaned.append(msg)
+                continue
+            content = msg.get("content")
+            if not isinstance(content, list):
+                cleaned.append(msg)
+                continue
+            filtered_blocks = [
+                b for b in content
+                if not (isinstance(b, dict) and b.get("type") == "thinking")
+            ]
+            if len(filtered_blocks) == len(content):
+                cleaned.append(msg)
+            else:
+                new_msg = dict(msg)
+                new_msg["content"] = filtered_blocks
+                cleaned.append(new_msg)
+        return cleaned
 
     def clear_session(self, session_id: str):
         """

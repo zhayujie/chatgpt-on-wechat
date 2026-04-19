@@ -936,6 +936,19 @@ class ConfigHandler:
                 json.dump(file_cfg, f, indent=4, ensure_ascii=False)
 
             logger.info(f"[WebChannel] Config updated: {list(applied.keys())}")
+
+            # Reset Bridge so that bot routing reflects the new config.
+            # Without this, Bridge keeps its cached bot instance (e.g. LinkAIBot)
+            # even after the user switches bot_type / use_linkai / model in UI.
+            bridge_routing_keys = {"bot_type", "use_linkai", "model"}
+            if any(k in applied for k in bridge_routing_keys):
+                try:
+                    from bridge.bridge import Bridge
+                    Bridge().reset_bot()
+                    logger.info("[WebChannel] Bridge bot routing reset due to config change")
+                except Exception as reset_err:
+                    logger.warning(f"[WebChannel] Failed to reset bridge: {reset_err}")
+
             return json.dumps({"status": "success", "applied": applied}, ensure_ascii=False)
         except Exception as e:
             logger.error(f"Error updating config: {e}")

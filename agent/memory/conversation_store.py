@@ -139,6 +139,7 @@ def _extract_tool_results(content: Any) -> Dict[str, str]:
 
 def _group_into_display_turns(
     rows: List[tuple],
+    include_thinking: bool = True,
 ) -> List[Dict[str, Any]]:
     """
     Convert raw (role, content_json, created_at) DB rows into display turns.
@@ -216,6 +217,8 @@ def _group_into_display_turns(
                             continue
                         btype = block.get("type")
                         if btype == "thinking":
+                            if not include_thinking:
+                                continue
                             txt = block.get("thinking", "").strip()
                             if txt:
                                 steps.append({"type": "thinking", "content": txt})
@@ -601,9 +604,17 @@ class ConversationStore:
             finally:
                 conn.close()
 
+        # Honour the current enable_thinking switch when building display turns
+        # so that toggling it off hides previously-saved thinking blocks too.
+        try:
+            from config import conf
+            include_thinking = bool(conf().get("enable_thinking", False))
+        except Exception:
+            include_thinking = False
+
         # Strip seq for display grouping, but record max seq per visible user group
         plain_rows = [(role, content, created_at) for _seq, role, content, created_at in rows]
-        visible = _group_into_display_turns(plain_rows)
+        visible = _group_into_display_turns(plain_rows, include_thinking=include_thinking)
 
         # Build a mapping: find the seq of each visible user message to annotate context boundary.
         # Walk through rows to find visible user message seqs in order.
