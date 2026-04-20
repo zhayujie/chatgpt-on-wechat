@@ -462,6 +462,16 @@ const sendBtn = document.getElementById('send-btn');
 const messagesDiv = document.getElementById('chat-messages');
 const fileInput = document.getElementById('file-input');
 
+// Smart auto-scroll: pause when user scrolls up, resume when near bottom
+let _autoScrollEnabled = true;
+const _SCROLL_THRESHOLD = 80; // px from bottom to re-enable auto-scroll
+
+messagesDiv.addEventListener('scroll', () => {
+    const distFromBottom = messagesDiv.scrollHeight - messagesDiv.scrollTop - messagesDiv.clientHeight;
+    _autoScrollEnabled = distFromBottom <= _SCROLL_THRESHOLD;
+    _updateScrollToBottomBtn();
+});
+
 // Intercept internal navigation links in chat messages
 messagesDiv.addEventListener('click', (e) => {
     const copyBtn = e.target.closest('.copy-msg-btn');
@@ -1438,7 +1448,8 @@ function createBotMessageEl(content, timestamp, requestId, msg) {
 function addUserMessage(content, timestamp, attachments) {
     const el = createUserMessageEl(content, timestamp, attachments);
     messagesDiv.appendChild(el);
-    scrollChatToBottom();
+    _autoScrollEnabled = true;
+    scrollChatToBottom(true);
 }
 
 function addBotMessage(content, timestamp, requestId) {
@@ -1531,7 +1542,7 @@ function loadHistory(page) {
             if (isFirstLoad) {
                 // Use requestAnimationFrame to ensure the DOM has fully rendered
                 // before scrolling, otherwise scrollHeight may not reflect new content.
-                requestAnimationFrame(() => scrollChatToBottom());
+                requestAnimationFrame(() => scrollChatToBottom(true));
             } else {
                 // Restore scroll position so loading older messages doesn't jump the view
                 messagesDiv.scrollTop = messagesDiv.scrollHeight - prevScrollHeight;
@@ -2049,8 +2060,17 @@ function formatToolArgs(args) {
     }
 }
 
-function scrollChatToBottom() {
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+function scrollChatToBottom(force) {
+    if (force || _autoScrollEnabled) {
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+}
+
+function _updateScrollToBottomBtn() {
+    const btn = document.getElementById('scroll-to-bottom-btn');
+    if (!btn) return;
+    const distFromBottom = messagesDiv.scrollHeight - messagesDiv.scrollTop - messagesDiv.clientHeight;
+    btn.classList.toggle('hidden', distFromBottom <= _SCROLL_THRESHOLD);
 }
 
 function applyHighlighting(container) {

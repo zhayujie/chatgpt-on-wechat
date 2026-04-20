@@ -191,8 +191,8 @@ class AgentStreamExecutor:
         # Log user message with model info
         
         thinking_enabled = self._is_thinking_enabled()
-        thinking_label = "💭 thinking" if thinking_enabled else "⚡ fast"
-        logger.info(f"🤖 {self.model.model} | {thinking_label} | 👤 {user_message}")        
+        thinking_label = " | 💭 thinking" if thinking_enabled else ""
+        logger.info(f"🤖 {self.model.model}{thinking_label} | 👤 {user_message}")        
         
         # Add user message (Claude format - use content blocks for consistency)
         self.messages.append({

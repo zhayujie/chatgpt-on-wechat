@@ -288,7 +288,7 @@
                 <!-- ====================================================== -->
                 <!-- VIEW: Chat                                              -->
                 <!-- ====================================================== -->
-                <div id="view-chat" class="view active">
+                <div id="view-chat" class="view active relative">
                     <!-- Messages -->
                     <div id="chat-messages" class="flex-1 overflow-y-auto">
                         <!-- Welcome Screen -->
@@ -363,6 +363,18 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Scroll-to-bottom FAB -->
+                    <button id="scroll-to-bottom-btn"
+                            class="hidden absolute right-5 bottom-[80px] z-10
+                                   w-9 h-9 rounded-full shadow-lg
+                                   bg-white dark:bg-[#2A2A2A] border border-slate-200 dark:border-white/15
+                                   text-slate-500 dark:text-slate-400 hover:text-primary-500 dark:hover:text-primary-400
+                                   flex items-center justify-center cursor-pointer transition-all duration-200
+                                   hover:shadow-xl hover:scale-105"
+                            onclick="_autoScrollEnabled = true; scrollChatToBottom(true);">
+                        <i class="fas fa-chevron-down text-sm"></i>
+                    </button>
 
                     <!-- Chat Input -->
                     <div class="flex-shrink-0 border-t border-slate-200 dark:border-white/10 bg-white dark:bg-[#1A1A1A] px-4 py-3">
