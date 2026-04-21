@@ -1026,17 +1026,60 @@ function startSSE(requestId, loadingEl, timestamp, titleInfo) {
                     reasoningStartTime = Date.now();
                     currentReasoningEl = document.createElement('div');
                     currentReasoningEl.className = 'agent-step agent-thinking-step';
+                    // During streaming, use a <pre> with a single text node and
+                    // append-only updates. This avoids re-parsing markdown and
+                    // re-setting innerHTML on every chunk, which is what causes
+                    // the page to crash on long chains-of-thought.
                     currentReasoningEl.innerHTML = `
                         <div class="thinking-header" onclick="this.parentElement.classList.toggle('expanded')">
                             <i class="fas fa-lightbulb text-amber-400 flex-shrink-0"></i>
                             <span class="thinking-summary">${t('thinking_in_progress')}</span>
                             <i class="fas fa-chevron-right thinking-chevron"></i>
                         </div>
-                        <div class="thinking-full"></div>`;
+                        <div class="thinking-full"><pre class="thinking-stream-pre"></pre></div>`;
                     stepsEl.appendChild(currentReasoningEl);
+                    const preEl = currentReasoningEl.querySelector('.thinking-stream-pre');
+                    preEl.appendChild(document.createTextNode(''));
+                    currentReasoningEl._streamTextNode = preEl.firstChild;
+                    currentReasoningEl._streamPendingText = '';
+                    currentReasoningEl._streamRafScheduled = false;
+                    currentReasoningEl._streamCharsRendered = 0;
+                    currentReasoningEl._streamCapped = false;
                 }
-                currentReasoningEl.querySelector('.thinking-full').innerHTML = renderMarkdown(reasoningText);
-                scrollChatToBottom();
+                // Hard cap: once REASONING_RENDER_CAP chars are in the DOM, stop
+                // appending further deltas. The full text is still kept in
+                // `reasoningText` for finalize-time head+tail rendering.
+                if (!currentReasoningEl._streamCapped) {
+                    currentReasoningEl._streamPendingText += item.content;
+                    if (!currentReasoningEl._streamRafScheduled) {
+                        currentReasoningEl._streamRafScheduled = true;
+                        const elRef = currentReasoningEl;
+                        requestAnimationFrame(() => {
+                            elRef._streamRafScheduled = false;
+                            if (!elRef.isConnected || !elRef._streamTextNode) return;
+                            let pending = elRef._streamPendingText;
+                            elRef._streamPendingText = '';
+                            if (!pending) return;
+                            const remaining = REASONING_RENDER_CAP - elRef._streamCharsRendered;
+                            if (remaining <= 0) {
+                                elRef._streamCapped = true;
+                            } else {
+                                if (pending.length > remaining) {
+                                    pending = pending.slice(0, remaining);
+                                    elRef._streamCapped = true;
+                                }
+                                elRef._streamTextNode.appendData(pending);
+                                elRef._streamCharsRendered += pending.length;
+                                if (elRef._streamCapped) {
+                                    elRef._streamTextNode.appendData(
+                                        '\n\n... [reasoning truncated for display] ...'
+                                    );
+                                }
+                            }
+                            scrollChatToBottom();
+                        });
+                    }
+                }
 
             } else if (item.type === 'delta') {
                 ensureBotEl();
@@ -1334,11 +1377,41 @@ function renderToolCallsHtml(toolCalls) {
     }).join('');
 }
 
+// Cap for rendering reasoning content in the bubble. Beyond this size,
+// we skip markdown rendering entirely and show plain text head + tail to
+// keep the page responsive (very long chains-of-thought can otherwise
+// stall or crash the browser when re-parsed by marked.js).
+// Keep this in sync with backend MAX_STORED_REASONING_CHARS and
+// MAX_REASONING_STREAM_CHARS so storage / SSE / display stay aligned.
+const REASONING_RENDER_CAP = 4 * 1024; // 4 KB
+
+function _truncateReasoningForDisplay(text) {
+    if (!text || text.length <= REASONING_RENDER_CAP) return { text, truncated: false, omitted: 0 };
+    const half = Math.floor(REASONING_RENDER_CAP / 2);
+    const head = text.slice(0, half);
+    const tail = text.slice(-half);
+    return {
+        text: head + '\n\n... [' + (text.length - head.length - tail.length) + ' chars omitted] ...\n\n' + tail,
+        truncated: true,
+        omitted: text.length - head.length - tail.length,
+    };
+}
+
+function _renderReasoningBody(text) {
+    // For short reasoning, render as markdown. For long ones, fall back to
+    // an escaped <pre> block to avoid expensive markdown parsing.
+    const { text: shown, truncated } = _truncateReasoningForDisplay(text);
+    if (truncated || shown.length > REASONING_RENDER_CAP) {
+        return '<pre class="thinking-stream-pre">' + escapeHtml(shown) + '</pre>';
+    }
+    return renderMarkdown(shown);
+}
+
 function finalizeThinking(el, startTime, text) {
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
     el.querySelector('.thinking-summary').textContent = t('thinking_done');
     const fullDiv = el.querySelector('.thinking-full');
-    fullDiv.innerHTML = `<div class="thinking-duration">${t('thinking_duration')} ${elapsed}s</div>` + renderMarkdown(text);
+    fullDiv.innerHTML = `<div class="thinking-duration">${t('thinking_duration')} ${elapsed}s</div>` + _renderReasoningBody(text);
 }
 
 function renderThinkingHtml(text) {
@@ -1351,7 +1424,7 @@ function renderThinkingHtml(text) {
         <span class="thinking-summary">${t('thinking_done')}</span>
         <i class="fas fa-chevron-right thinking-chevron"></i>
     </div>
-    <div class="thinking-full">${renderMarkdown(full)}</div>
+    <div class="thinking-full">${_renderReasoningBody(full)}</div>
 </div>`;
 }
 

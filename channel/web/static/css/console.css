@@ -509,6 +509,22 @@
     color: #b0b8c4;
     margin-bottom: 0.375rem;
 }
+/* Streaming reasoning: render as plain pre to avoid expensive markdown
+   re-parsing on every chunk. Wrap long lines so the bubble width is
+   respected and use the same font size/color as the rendered version. */
+.agent-thinking-step .thinking-stream-pre {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: 1.5;
+    color: inherit;
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
 
 /* Content step - real text output frozen before tool calls */
 .agent-content-step {

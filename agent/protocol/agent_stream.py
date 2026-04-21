@@ -13,6 +13,37 @@ from agent.tools.base_tool import BaseTool, ToolResult
 from common.log import logger
 
 
+# Maximum number of characters of model "reasoning / thinking" content to persist
+# in conversation history. The full reasoning is still streamed to the UI in real
+# time (subject to its own SSE / rendering limits); this bound only controls what
+# is stored in DB and replayed in history. Long reasoning is not useful for later
+# context (the LLM never sees thinking blocks anyway) and bloats DB.
+# Keep aligned with the frontend REASONING_RENDER_CAP and the SSE
+# MAX_REASONING_STREAM_CHARS so that storage / stream / display all match.
+MAX_STORED_REASONING_CHARS = 4 * 1024  # 4 KB
+
+# Marker inserted between head and tail when reasoning is truncated.
+_REASONING_TRUNCATE_MARKER = "\n\n... [reasoning truncated, {omitted} chars omitted] ...\n\n"
+
+
+def _truncate_reasoning_for_storage(text: str) -> str:
+    """Trim long reasoning to head + tail with an omission marker.
+
+    Keeps the first and last halves of MAX_STORED_REASONING_CHARS so both the
+    initial chain-of-thought and the final conclusions are preserved for UI
+    replay, without storing the entire (often very large) middle.
+    """
+    if not text:
+        return text
+    if len(text) <= MAX_STORED_REASONING_CHARS:
+        return text
+    half = MAX_STORED_REASONING_CHARS // 2
+    head = text[:half]
+    tail = text[-half:]
+    omitted = len(text) - len(head) - len(tail)
+    return head + _REASONING_TRUNCATE_MARKER.format(omitted=omitted) + tail
+
+
 class AgentStreamExecutor:
     """
     Agent Stream Executor
@@ -830,9 +861,15 @@ class AgentStreamExecutor:
         assistant_msg = {"role": "assistant", "content": []}
 
         if full_reasoning:
+            stored_reasoning = _truncate_reasoning_for_storage(full_reasoning)
+            if len(stored_reasoning) < len(full_reasoning):
+                logger.info(
+                    f"[reasoning] truncated for storage: "
+                    f"{len(full_reasoning)} -> {len(stored_reasoning)} chars"
+                )
             assistant_msg["content"].append({
                 "type": "thinking",
-                "thinking": full_reasoning
+                "thinking": stored_reasoning
             })
 
         if full_content:

@@ -225,6 +225,17 @@ class WebChannel(ChatChannel):
     def _make_sse_callback(self, request_id: str):
         """Build an on_event callback that pushes agent stream events into the SSE queue."""
 
+        # Cap reasoning bytes pushed to the frontend per request to avoid
+        # browser stalls / crashes on very long chains-of-thought. Anything
+        # beyond the cap is dropped from the stream (DB still persists a
+        # truncated copy via _truncate_reasoning_for_storage).
+        # Keep aligned with frontend REASONING_RENDER_CAP and backend
+        # MAX_STORED_REASONING_CHARS.
+        MAX_REASONING_STREAM_CHARS = 4 * 1024  # 4 KB
+        # Use a single-element list as a mutable counter accessible from closure.
+        reasoning_chars_sent = [0]
+        reasoning_capped_notified = [False]
+
         def on_event(event: dict):
             if request_id not in self.sse_queues:
                 return
@@ -234,8 +245,21 @@ class WebChannel(ChatChannel):
 
             if event_type == "reasoning_update":
                 delta = data.get("delta", "")
-                if delta:
-                    q.put({"type": "reasoning", "content": delta})
+                if not delta:
+                    return
+                remaining = MAX_REASONING_STREAM_CHARS - reasoning_chars_sent[0]
+                if remaining <= 0:
+                    if not reasoning_capped_notified[0]:
+                        reasoning_capped_notified[0] = True
+                        q.put({
+                            "type": "reasoning",
+                            "content": "\n\n... [reasoning truncated for display] ...",
+                        })
+                    return
+                if len(delta) > remaining:
+                    delta = delta[:remaining]
+                reasoning_chars_sent[0] += len(delta)
+                q.put({"type": "reasoning", "content": delta})
 
             elif event_type == "message_update":
                 delta = data.get("delta", "")
