@@ -330,13 +330,18 @@ class AgentStreamExecutor:
                         })
                         break
 
-                # Log tool calls with arguments
+                # Log tool calls with arguments (truncate long values like base64)
                 tool_calls_str = []
                 for tc in tool_calls:
-                    # Safely handle None or missing arguments
                     args = tc.get('arguments') or {}
                     if isinstance(args, dict):
-                        args_str = ', '.join([f"{k}={v}" for k, v in args.items()])
+                        parts = []
+                        for k, v in args.items():
+                            v_str = str(v)
+                            if len(v_str) > 200:
+                                v_str = v_str[:200] + f"...({len(v_str)} chars)"
+                            parts.append(f"{k}={v_str}")
+                        args_str = ', '.join(parts)
                         if args_str:
                             tool_calls_str.append(f"{tc['name']}({args_str})")
                         else:

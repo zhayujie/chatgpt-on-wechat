@@ -208,9 +208,24 @@ class WebChannel(ChatChannel):
 
             # Fallback: polling mode
             if session_id in self.session_queues:
+                content = reply.content if reply.content is not None else ""
+                # Skip file:// IMAGE_URL/FILE replies originating from an SSE-enabled
+                # request: they were already pushed via the `file_to_send` event during
+                # agent execution. By the time the chat_channel sends the IMAGE_URL reply,
+                # the SSE stream has typically closed (after the text "done") and the
+                # request_id is gone from sse_queues, so we'd otherwise duplicate the file
+                # as a polling bubble. Scheduler/push tasks have no on_event and must
+                # still go through polling normally.
+                if (
+                    reply.type in (ReplyType.IMAGE_URL, ReplyType.FILE)
+                    and content.startswith("file://")
+                    and context.get("on_event") is not None
+                ):
+                    logger.debug(f"Polling skipped duplicate file reply for session {session_id}")
+                    return
                 response_data = {
                     "type": str(reply.type),
-                    "content": reply.content,
+                    "content": content,
                     "timestamp": time.time(),
                     "request_id": request_id
                 }

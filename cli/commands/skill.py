@@ -644,30 +644,50 @@ def _list_local():
     skills_dir = get_skills_dir()
     builtin_dir = get_builtin_skills_dir()
 
+    # Merge builtin skills that are on disk but missing from config
+    _merge_builtin_into_config(config, builtin_dir, skills_dir)
+
     if not config:
-        # Fallback: scan directories directly
-        entries = []
-        for d in [builtin_dir, skills_dir]:
-            if not os.path.isdir(d):
-                continue
-            source = "builtin" if d == builtin_dir else "custom"
-            for name in sorted(os.listdir(d)):
-                skill_path = os.path.join(d, name)
-                if os.path.isdir(skill_path) and not name.startswith("."):
-                    has_skill_md = os.path.exists(os.path.join(skill_path, "SKILL.md"))
-                    if has_skill_md:
-                        entries.append({"name": name, "source": source, "enabled": True, "description": ""})
-        if not entries:
-            click.echo("No skills installed.")
-            return
-        _print_skill_table(entries)
+        click.echo("No skills installed.")
         return
 
     entries = sorted(config.values(), key=lambda x: x.get("name", ""))
-    if not entries:
-        click.echo("No skills installed.")
-        return
     _print_skill_table(entries)
+
+
+def _merge_builtin_into_config(config: dict, builtin_dir: str, skills_dir: str):
+    """Scan builtin and custom dirs, add any new skills into config dict."""
+    dirty = False
+    for d, source in [(builtin_dir, "builtin"), (skills_dir, "custom")]:
+        if not os.path.isdir(d):
+            continue
+        for name in os.listdir(d):
+            if name.startswith(".") or name in ("skills_config.json",):
+                continue
+            skill_path = os.path.join(d, name)
+            if not os.path.isdir(skill_path):
+                continue
+            if not os.path.isfile(os.path.join(skill_path, "SKILL.md")):
+                continue
+            if name in config:
+                continue
+            desc = _read_skill_description(skill_path)
+            config[name] = {
+                "name": name,
+                "description": desc,
+                "source": source,
+                "enabled": True,
+                "category": "skill",
+            }
+            dirty = True
+    if dirty:
+        config_path = os.path.join(skills_dir, "skills_config.json")
+        try:
+            os.makedirs(skills_dir, exist_ok=True)
+            with open(config_path, "w", encoding="utf-8") as f:
+                json.dump(config, f, indent=4, ensure_ascii=False)
+        except Exception:
+            pass
 
 
 def _print_skill_table(entries):

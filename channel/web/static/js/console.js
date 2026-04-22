@@ -341,23 +341,35 @@ const md = createMd();
 const VIDEO_EXT_RE = /\.(?:mp4|webm|mov|avi|mkv)$/i;  // tested against URL without query string
 const IMAGE_EXT_RE = /\.(?:jpg|jpeg|png|gif|webp|bmp|svg)$/i;  // tested against URL without query string
 
+function _toWebUrl(url) {
+    if (/^\/[A-Za-z]/.test(url) && !url.startsWith('/api/')) {
+        return '/api/file?path=' + encodeURIComponent(url);
+    }
+    if (/^file:\/\/\//i.test(url)) {
+        return '/api/file?path=' + encodeURIComponent(url.replace(/^file:\/\/\//i, '/'));
+    }
+    return url;
+}
+
 function _buildVideoHtml(url) {
+    const webUrl = _toWebUrl(url);
     const fileName = url.split('/').pop().split('?')[0];
     return `<div style="margin:10px 0;">` +
         `<video controls preload="metadata" ` +
         `style="max-width:100%;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.15);display:block;">` +
-        `<source src="${url}"></video>` +
-        `<a href="${url}" target="_blank" ` +
+        `<source src="${webUrl}"></video>` +
+        `<a href="${webUrl}" target="_blank" ` +
         `style="display:inline-flex;align-items:center;gap:4px;margin-top:4px;font-size:12px;color:#8b8fa8;text-decoration:none;">` +
         `<i class="fas fa-download"></i> ${escapeHtml(fileName)}</a></div>`;
 }
 
 function _buildImageHtml(url) {
-    const safeUrl = url.replace(/"/g, '&quot;');
+    const webUrl = _toWebUrl(url);
+    const safeUrl = webUrl.replace(/"/g, '&quot;');
     return `<div style="margin:10px 0;">` +
         `<img src="${safeUrl}" alt="image" loading="lazy" ` +
         `onclick="window.open('${safeUrl}','_blank')" ` +
-        `style="max-width:600px;width:100%;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.15);display:block;cursor:pointer;">` +
+        `style="max-width:520px;width:100%;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.15);display:block;cursor:pointer;">` +
         `</div>`;
 }
 
@@ -400,9 +412,20 @@ function injectImagePreviews(html) {
     }).join('');
 }
 
+function _rewriteLocalImgSrc(html) {
+    return html.replace(/<img\s([^>]*?)src="([^"]+)"/gi, (match, pre, src) => {
+        const webSrc = _toWebUrl(src);
+        if (webSrc !== src) {
+            return `<img ${pre}src="${webSrc.replace(/"/g, '&quot;')}"`;
+        }
+        return match;
+    });
+}
+
 function renderMarkdown(text) {
     try {
-        const html = md.render(text);
+        let html = md.render(text);
+        html = _rewriteLocalImgSrc(html);
         // Order matters: video first (more specific), then image.
         return injectImagePreviews(injectVideoPlayers(html));
     }
@@ -1471,9 +1494,38 @@ function renderStepsHtml(steps) {
         </div>` : ''}
     </div>
 </div>`;
+            // If this tool sent a file (send/read tool), render the media inline
+            // so it persists across page refreshes (SSE-only file events are not stored).
+            const mediaHtml = _renderSentFileFromToolResult(step);
+            if (mediaHtml) html += mediaHtml;
         }
     }
     return { stepsHtml: html, lastContentText };
+}
+
+// Extract file-to-send metadata from a tool's result and render an inline preview.
+// Returns '' if the result isn't a file_to_send payload.
+function _renderSentFileFromToolResult(step) {
+    if (!step || !step.result) return '';
+    let payload;
+    try {
+        payload = typeof step.result === 'string' ? JSON.parse(step.result) : step.result;
+    } catch (_) { return ''; }
+    if (!payload || payload.type !== 'file_to_send' || !payload.path) return '';
+    const webUrl = _toWebUrl(payload.path);
+    const fileType = payload.file_type || 'file';
+    const fileName = payload.file_name || payload.path.split('/').pop();
+    if (fileType === 'image') {
+        return `<div class="agent-step">${_buildImageHtml(webUrl)}</div>`;
+    }
+    if (fileType === 'video') {
+        return `<div class="agent-step">${_buildVideoHtml(webUrl)}</div>`;
+    }
+    return `<div class="agent-step"><a href="${webUrl}" download="${escapeHtml(fileName)}" target="_blank" ` +
+        `style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;margin:8px 0;border-radius:8px;` +
+        `background:var(--bg-secondary,#f3f4f6);color:var(--text-primary,#374151);text-decoration:none;font-size:14px;` +
+        `border:1px solid var(--border-color,#e5e7eb);">` +
+        `<i class="fas fa-file-download" style="color:#6b7280;"></i> ${escapeHtml(fileName)}</a></div>`;
 }
 
 function createBotMessageEl(content, timestamp, requestId, msg) {
