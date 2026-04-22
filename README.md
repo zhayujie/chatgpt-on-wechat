@@ -113,7 +113,7 @@ irm https://cdn.link-ai.tech/code/cow/run.ps1 | iex
 
 项目支持国内外主流厂商的模型接口，可选模型及配置说明参考：[模型说明](#模型说明)。
 
-> 注：Agent 模式下推荐使用以下模型，可根据效果及成本综合选择：MiniMax-M2.7、glm-5-turbo、kimi-k2.5、qwen3.5-plus、claude-sonnet-4-6、gemini-3.1-pro-preview、gpt-5.4、gpt-5.4-mini
+> 注：Agent 模式下推荐使用以下模型，可根据效果及成本综合选择：MiniMax-M2.7、glm-5-turbo、kimi-k2.6、qwen3.5-plus、claude-sonnet-4-6、gemini-3.1-pro-preview、gpt-5.4、gpt-5.4-mini
 
 同时支持使用 **LinkAI 平台** 接口，支持上述全部模型，并支持知识库、工作流、插件等 Agent 技能，参考 [接口文档](https://docs.link-ai.tech/platform/api)。
 
@@ -224,7 +224,7 @@ cow install-browser
 <details>
 <summary>2. 其他配置</summary>
 
-+ `model`: 模型名称，Agent 模式下推荐使用 `MiniMax-M2.7`、`glm-5-turbo`、`kimi-k2.5`、`qwen3.6-plus`、`claude-sonnet-4-6`、`gemini-3.1-pro-preview`，全部模型名称参考[common/const.py](https://github.com/zhayujie/CowAgent/blob/master/common/const.py)文件
++ `model`: 模型名称，Agent 模式下推荐使用 `MiniMax-M2.7`、`glm-5-turbo`、`kimi-k2.6`、`qwen3.6-plus`、`claude-sonnet-4-6`、`gemini-3.1-pro-preview`，全部模型名称参考[common/const.py](https://github.com/zhayujie/CowAgent/blob/master/common/const.py)文件
 + `character_desc`：普通对话模式下的机器人系统提示词。在 Agent 模式下该配置不生效，由工作空间中的文件内容构成。
 + `subscribe_msg`：订阅消息，公众号和企业微信 channel 中请填写，当被订阅时会自动回复， 可使用特殊占位符。目前支持的占位符有{trigger_prefix}，在程序中它会自动替换成 bot 的触发词。
 </details>
@@ -446,24 +446,24 @@ sudo docker logs -f chatgpt-on-wechat
 
 ```json
 {
-    "model": "kimi-k2.5",
+    "model": "kimi-k2.6",
     "moonshot_api_key": ""
 }
 ```
- - `model`: 可填写 `kimi-k2.5、kimi-k2、moonshot-v1-8k、moonshot-v1-32k、moonshot-v1-128k`
+ - `model`: 可填写 `kimi-k2.6、kimi-k2.5、kimi-k2、moonshot-v1-8k、moonshot-v1-32k、moonshot-v1-128k`
  - `moonshot_api_key`: Moonshot 的 API-KEY，在 [控制台](https://platform.moonshot.cn/console/api-keys) 创建
  
 方式二：OpenAI 兼容方式接入，配置如下：
 ```json
 {
   "bot_type": "openai",
-  "model": "kimi-k2.5",
+  "model": "kimi-k2.6",
   "open_ai_api_base": "https://api.moonshot.cn/v1",
   "open_ai_api_key": ""
 }
 ```
 - `bot_type`: OpenAI 兼容方式
-- `model`: 可填写 `kimi-k2.5、kimi-k2、moonshot-v1-8k、moonshot-v1-32k、moonshot-v1-128k`
+- `model`: 可填写 `kimi-k2.6、kimi-k2.5、kimi-k2、moonshot-v1-8k、moonshot-v1-32k、moonshot-v1-128k`
 - `open_ai_api_base`: Moonshot 的 BASE URL
 - `open_ai_api_key`: Moonshot 的 API-KEY
 </details>

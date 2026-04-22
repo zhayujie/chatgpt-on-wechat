@@ -101,8 +101,17 @@ class MoonshotBot(Bot):
                 "Content-Type": "application/json",
                 "Authorization": "Bearer " + self.api_key
             }
-            body = args
+            # Fallback to default args (e.g. when called by session title
+            # generation which passes only the session). Always copy to avoid
+            # mutating the shared self.args across calls.
+            body = dict(args) if args else dict(self.args)
             body["messages"] = session.messages
+            # K2.x series enforces fixed temperature/top_p; passing custom values
+            # makes the API reject the request. Strip them for kimi-k2 family.
+            model_name = str(body.get("model", ""))
+            if model_name.startswith("kimi-k2"):
+                body.pop("temperature", None)
+                body.pop("top_p", None)
             res = requests.post(
                 f"{self.base_url}/chat/completions",
                 headers=headers,
@@ -153,7 +162,7 @@ class MoonshotBot(Bot):
                     max_tokens: int = 1000) -> dict:
         """Analyze an image using Moonshot (Kimi) OpenAI-compatible API."""
         try:
-            vision_model = model or self.args.get("model", "kimi-k2.5")
+            vision_model = model or self.args.get("model", "kimi-k2.6")
             payload = {
                 "model": vision_model,
                 "max_tokens": max_tokens,

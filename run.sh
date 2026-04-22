@@ -311,7 +311,7 @@ select_model() {
     echo -e "${CYAN}${BOLD}=========================================${NC}"
     echo -e "${YELLOW}1) MiniMax (MiniMax-M2.7, MiniMax-M2.5, etc.)${NC}"
     echo -e "${YELLOW}2) Zhipu AI (glm-5-turbo, glm-5, etc.)${NC}"
-    echo -e "${YELLOW}3) Kimi (kimi-k2.5, kimi-k2, etc.)${NC}"
+    echo -e "${YELLOW}3) Kimi (kimi-k2.6, kimi-k2.5, kimi-k2, etc.)${NC}"
     echo -e "${YELLOW}4) Doubao (doubao-seed-2-0-code-preview-260215, etc.)${NC}"
     echo -e "${YELLOW}5) Qwen (qwen3.6-plus, qwen3.5-plus, qwen3-max, qwq-plus, etc.)${NC}"
     echo -e "${YELLOW}6) Claude (claude-sonnet-4-6, claude-opus-4-7, claude-opus-4-6, etc.)${NC}"
@@ -358,7 +358,7 @@ configure_model() {
     case "$model_choice" in
         1) read_model_config "MiniMax" "MiniMax-M2.7" "MINIMAX_KEY" ;;
         2) read_model_config "Zhipu AI" "glm-5-turbo" "ZHIPU_KEY" ;;
-        3) read_model_config "Kimi (Moonshot)" "kimi-k2.5" "MOONSHOT_KEY" ;;
+        3) read_model_config "Kimi (Moonshot)" "kimi-k2.6" "MOONSHOT_KEY" ;;
         4) read_model_config "Doubao (Volcengine Ark)" "doubao-seed-2-0-code-preview-260215" "ARK_KEY" ;;
         5) read_model_config "Qwen (DashScope)" "qwen3.6-plus" "DASHSCOPE_KEY" ;;
         6)

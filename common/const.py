@@ -119,6 +119,7 @@ GLM_4_7 = "glm-4.7"  # 智谱 GLM-4.7 - Agent推荐模型
 MOONSHOT = "moonshot"
 KIMI_K2 = "kimi-k2"
 KIMI_K2_5 = "kimi-k2.5"
+KIMI_K2_6 = "kimi-k2.6"  # Kimi K2.6 - Agent recommended model (default)
 
 # Doubao (Volcengine Ark)
 DOUBAO = "doubao"
@@ -186,7 +187,7 @@ MODEL_LIST = [
 
               # Kimi
               MOONSHOT, "moonshot-v1-8k", "moonshot-v1-32k", "moonshot-v1-128k",
-              KIMI_K2, KIMI_K2_5,
+              KIMI_K2_6, KIMI_K2_5, KIMI_K2,
 
               # Doubao
               DOUBAO, DOUBAO_SEED_2_CODE, DOUBAO_SEED_2_PRO, DOUBAO_SEED_2_LITE, DOUBAO_SEED_2_MINI,
