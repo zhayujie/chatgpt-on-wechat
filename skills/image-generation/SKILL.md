@@ -6,12 +6,24 @@ metadata:
     requires:
       anyEnv:
         - OPENAI_API_KEY
+        - GEMINI_API_KEY
+        - ARK_API_KEY
+        - DASHSCOPE_API_KEY
+        - MINIMAX_API_KEY
         - LINKAI_API_KEY
 ---
 
 # Image Generation
 
-Generate and edit images using AI models (GPT-Image-2, GPT-Image-1, etc.).
+Generate and edit images using AI models. The script automatically picks a backend based on which API keys are configured — **you don't need to specify a model unless the user explicitly names one**.
+
+Supported models (passed via `model` only when the user asks for a specific one):
+
+- **OpenAI** — `gpt-image-2`, `gpt-image-1`
+- **Gemini Nano Banana** — `nano-banana-2`, `nano-banana-pro`, `nano-banana`
+- **Seedream (Volcengine Ark)** — `seedream-5.0-lite`, `seedream-4.5`
+- **Qwen (DashScope)** — `qwen-image-2.0`, `qwen-image-2.0-pro`
+- **MiniMax** — `image-01`
 
 ## Usage
 
@@ -21,18 +33,19 @@ Run `scripts/generate.py` with a JSON argument. The path is relative to this ski
 python <base_dir>/scripts/generate.py '<json_args>'
 ```
 
-**Set bash timeout to at least 300 seconds**, as image generation can take 30–200s depending on quality/size.
+**Set bash timeout to at least 600 seconds**, as image generation can take 30–200s per provider, and the script may try multiple providers sequentially.
 
 ### Parameters
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
 | `prompt` | string | yes | — | Image description |
-| `model` | string | no | `gpt-image-2` | Model name (`gpt-image-2`, `gpt-image-1`) |
-| `image_url` | string / list | no | null | Input image(s) for editing: local file path or URL |
-| `quality` | string | no | auto | `low` / `medium` / `high`; omit to let the model choose |
-| `size` | string | no | auto | `1K`/`2K`/`4K`, pixel value (`1024x1024`), or omit to let the model choose |
-| `aspect_ratio` | string | no | null | `1:1` / `3:2` / `2:3` / `16:9` / `9:16` |
+| `image_url` | string / list | no | null | Input image(s) for editing: local file path or URL. Multi-image fusion is supported (pass a list) |
+| `quality` | string | no | auto | `low` / `medium` / `high` (only some backends honour this) |
+| `size` | string | no | auto | `512` / `1K` / `2K` / `3K` / `4K`, or pixel value (`1024x1024`) |
+| `aspect_ratio` | string | no | null | `1:1` / `3:2` / `2:3` / `16:9` / `9:16` / `21:9` (some backends also support extreme ratios like `1:4` / `8:1`) |
+
+**Higher `quality` and larger `size` cost more and run slower.** Default to omitting both (`auto`) so the model picks a balanced setting. Only raise them when the user explicitly asks for high quality / a poster / print-ready output. For quick previews or chat scenarios prefer `quality=low` + `size=1K`.
 
 ### Example — generate
 
@@ -40,28 +53,26 @@ python <base_dir>/scripts/generate.py '<json_args>'
 python <base_dir>/scripts/generate.py '{"prompt": "A corgi astronaut floating in space"}'
 ```
 
-With explicit quality/size:
+With aspect ratio:
 
 ```bash
-python <base_dir>/scripts/generate.py '{"prompt": "A corgi astronaut", "quality": "low", "size": "1K", "aspect_ratio": "1:1"}'
+python <base_dir>/scripts/generate.py '{"prompt": "Isometric miniature city of Shanghai at sunset", "size": "2K", "aspect_ratio": "16:9"}'
 ```
 
 ### Important: Editing vs Generating
 
-When the user asks to **edit, modify, or improve an existing image**, you need to pass the original image via `image_url`. Prefer passing **local file paths** directly — the script handles file reading internally. Without `image_url`, the script generates a brand-new image instead of editing.
+When the user asks to **edit, modify, or improve an existing image**, pass the original image via `image_url`. Prefer **local file paths** directly — the script handles file reading internally. Without `image_url`, the script generates a brand-new image instead of editing.
 
 ### Example — edit (image-to-image)
-
-Local file (preferred):
 
 ```bash
 python <base_dir>/scripts/generate.py '{"prompt": "Add a Santa hat to the dog", "image_url": "/path/to/dog.png"}'
 ```
 
-URL:
+Multi-image fusion — pass a list:
 
 ```bash
-python <base_dir>/scripts/generate.py '{"prompt": "Make the background blue", "image_url": "https://example.com/photo.png"}'
+python <base_dir>/scripts/generate.py '{"prompt": "Combine these characters into a group photo", "image_url": ["/path/a.png", "/path/b.png"]}'
 ```
 
 ### Output
@@ -70,6 +81,7 @@ Prints JSON to stdout:
 
 ```json
 {
+  "model": "doubao-seedream-5-0-260128",
   "images": [
     {"url": "/path/to/output.png"}
   ]
@@ -86,39 +98,20 @@ On error:
 }
 ```
 
-### Environment Variables
+### Setup
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `OPENAI_API_KEY` | yes (unless using LinkAI) | OpenAI API key |
-| `OPENAI_API_BASE` | no | Custom API base URL (default: `https://api.openai.com/v1`) |
-| `LINKAI_API_KEY` | alt | LinkAI API key (used when `OPENAI_API_KEY` is absent) |
-| `LINKAI_API_BASE` | no | LinkAI API base URL |
+The script needs **at least one** of these API keys (set via `env_config` or `config.json`):
 
-### Size + Aspect Ratio Resolution
+`OPENAI_API_KEY` / `GEMINI_API_KEY` / `ARK_API_KEY` / `DASHSCOPE_API_KEY` / `MINIMAX_API_KEY` / `LINKAI_API_KEY`
 
-`size` and `aspect_ratio` are combined to determine the actual pixel dimensions:
-
-| size | aspect_ratio | pixels |
-|------|-------------|--------|
-| `1K` | `1:1` | 1024×1024 |
-| `1K` | `3:2` | 1536×1024 |
-| `1K` | `2:3` | 1024×1536 |
-| `2K` | `1:1` | 2048×2048 |
-| `2K` | `16:9` | 2048×1152 |
-| `2K` | `9:16` | 1152×2048 |
-| `4K` | `16:9` | 3840×2160 |
-| `4K` | `9:16` | 2160×3840 |
-
-When an exact match isn't found, the script tries: exact match → upgrade to higher tier with same ratio → cross-tier match by ratio → tier default.
+Each also has an optional `*_API_BASE` for custom endpoints. The script automatically picks the first configured backend and falls back to the next if it fails — no need to specify a model.
 
 ### Error Handling
 
-The script internally tries all available providers (OpenAI → LinkAI) in sequence. If it returns an error, **do NOT retry with the same or similar parameters** — the failure is a configuration issue (wrong API key, unsupported API base, etc.), not a transient error. Instead, inform the user about the configuration problem and ask them to fix it (e.g. set the correct `OPENAI_API_KEY` / `OPENAI_API_BASE` via `env_config`), then retry after the configuration is updated.
+If the script returns an error after trying all configured backends, **do NOT retry with the same parameters** — the failure is almost always a configuration issue (wrong API key, unsupported API base). Tell the user to fix it via `env_config`, then retry.
 
 ### Notes
 
-- HTTP timeout is 300s — high-resolution + high-quality generation can take over 200s.
-- When `quality` and `size` are omitted, the API uses `auto` — the model picks the best quality/size based on the prompt.
-- `quality=low` + `size=1K` is the fastest combination (~20s). Use when speed matters more than fidelity.
+- HTTP timeout is 300s — high-resolution generation can take over 200s.
+- Omit `quality` / `size` to let the model pick automatically (`auto`).
 - Input images for editing are auto-compressed to ≤ 4MB / longest edge ≤ 4096px.

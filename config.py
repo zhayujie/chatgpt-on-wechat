@@ -206,6 +206,10 @@ available_setting = {
     "agent_max_steps": 20,  # Agent模式下单次运行最大决策步数
     "enable_thinking": False,  # Whether to enable deep thinking for web channel
     "knowledge": True,  # 是否开启知识库功能
+    # Per-skill runtime config. Nested keys are flattened to env vars at startup
+    # using the rule: skill[<name>][<key>] -> SKILL_<NAME>_<KEY>
+    # (e.g. skill["image-generation"].model -> SKILL_IMAGE_GENERATION_MODEL).
+    "skill": {},
 }
 
 
@@ -384,6 +388,8 @@ def load_config():
         "moonshot_api_base": "MOONSHOT_API_BASE",
         "ark_api_key": "ARK_API_KEY",
         "ark_api_base": "ARK_API_BASE",
+        "dashscope_api_key": "DASHSCOPE_API_KEY",
+        "dashscope_api_base": "DASHSCOPE_API_BASE",
         # Channel credentials (used by skills that check env vars)
         "feishu_app_id": "FEISHU_APP_ID",
         "feishu_app_secret": "FEISHU_APP_SECRET",
@@ -404,10 +410,43 @@ def load_config():
             if val:
                 os.environ[env_key] = str(val)
                 injected += 1
+
+    injected += _sync_skill_config_to_env(config.get("skill", {}))
+
     if injected:
         logger.info("[INIT] Synced {} config values to environment variables".format(injected))
 
     config.load_user_datas()
+
+
+def _sync_skill_config_to_env(skill_section) -> int:
+    """Flatten skill-namespaced config into environment variables.
+
+    Mapping rule: ``config["skill"][<name>][<key>]`` -> ``SKILL_<NAME>_<KEY>``
+    (e.g. ``skill["image-generation"].model`` -> ``SKILL_IMAGE_GENERATION_MODEL``).
+
+    This lets subprocess-based skill scripts read their own settings without
+    importing project code. Existing env vars are NOT overwritten so the
+    real environment always wins.
+
+    Returns the number of variables actually injected.
+    """
+    if not isinstance(skill_section, dict):
+        return 0
+    injected = 0
+    for skill_name, skill_conf in skill_section.items():
+        if not isinstance(skill_conf, dict):
+            continue
+        name_part = str(skill_name).replace("-", "_").upper()
+        for key, val in skill_conf.items():
+            if val is None or val == "":
+                continue
+            env_key = "SKILL_{}_{}".format(name_part, str(key).upper())
+            if env_key in os.environ:
+                continue
+            os.environ[env_key] = str(val)
+            injected += 1
+    return injected
 
 
 def get_root():

@@ -133,6 +133,14 @@
                   "skills/create",
                   "skills/hub"
                 ]
+              },
+              {
+                "group": "内置技能",
+                "pages": [
+                  "skills/skill-creator",
+                  "skills/knowledge-wiki",
+                  "skills/image-generation"
+                ]
               }
             ]
           },
@@ -306,8 +314,15 @@
                 "pages": [
                   "en/skills/index",
                   "en/skills/install",
-                  "en/skills/skill-creator",
                   "en/skills/hub"
+                ]
+              },
+              {
+                "group": "Built-in Skills",
+                "pages": [
+                  "en/skills/skill-creator",
+                  "en/skills/knowledge-wiki",
+                  "en/skills/image-generation"
                 ]
               }
             ]
@@ -484,6 +499,14 @@
                   "ja/skills/install",
                   "ja/skills/create",
                   "ja/skills/hub"
+                ]
+              },
+              {
+                "group": "内蔵スキル",
+                "pages": [
+                  "ja/skills/skill-creator",
+                  "ja/skills/knowledge-wiki",
+                  "ja/skills/image-generation"
                 ]
               }
             ]

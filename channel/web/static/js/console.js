@@ -363,13 +363,32 @@ function _buildVideoHtml(url) {
         `<i class="fas fa-download"></i> ${escapeHtml(fileName)}</a></div>`;
 }
 
+function _openImageLightbox(src) {
+    let overlay = document.getElementById('cow-lightbox');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'cow-lightbox';
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;cursor:zoom-out;opacity:0;transition:opacity .2s';
+        overlay.onclick = () => { overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 200); };
+        const img = document.createElement('img');
+        img.id = 'cow-lightbox-img';
+        img.style.cssText = 'max-width:92vw;max-height:92vh;border-radius:8px;box-shadow:0 4px 24px rgba(0,0,0,0.5);object-fit:contain;';
+        img.onclick = (e) => e.stopPropagation();
+        overlay.appendChild(img);
+        document.body.appendChild(overlay);
+    }
+    overlay.querySelector('#cow-lightbox-img').src = src;
+    overlay.style.display = 'flex';
+    requestAnimationFrame(() => overlay.style.opacity = '1');
+}
+
 function _buildImageHtml(url) {
     const webUrl = _toWebUrl(url);
     const safeUrl = webUrl.replace(/"/g, '&quot;');
     return `<div style="margin:10px 0;">` +
         `<img src="${safeUrl}" alt="image" loading="lazy" ` +
-        `onclick="window.open('${safeUrl}','_blank')" ` +
-        `style="max-width:520px;width:100%;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.15);display:block;cursor:pointer;">` +
+        `onclick="_openImageLightbox(this.src)" ` +
+        `style="max-width:520px;width:100%;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.15);display:block;cursor:zoom-in;">` +
         `</div>`;
 }
 
@@ -413,12 +432,12 @@ function injectImagePreviews(html) {
 }
 
 function _rewriteLocalImgSrc(html) {
-    return html.replace(/<img\s([^>]*?)src="([^"]+)"/gi, (match, pre, src) => {
+    return html.replace(/<img\s([^>]*?)src="([^"]+)"([^>]*?)>/gi, (match, pre, src, post) => {
         const webSrc = _toWebUrl(src);
-        if (webSrc !== src) {
-            return `<img ${pre}src="${webSrc.replace(/"/g, '&quot;')}"`;
-        }
-        return match;
+        const safeSrc = webSrc.replace(/"/g, '&quot;');
+        const hasClick = /onclick/i.test(pre + post);
+        const clickAttr = hasClick ? '' : ` onclick="_openImageLightbox(this.src)" style="cursor:zoom-in;"`;
+        return `<img ${pre}src="${safeSrc}"${post}${clickAttr}>`;
     });
 }
 
@@ -1189,8 +1208,8 @@ function startSSE(requestId, loadingEl, timestamp, titleInfo) {
                 const imgEl = document.createElement('img');
                 imgEl.src = item.content;
                 imgEl.alt = 'screenshot';
-                imgEl.style.cssText = 'max-width:600px;border-radius:8px;margin:8px 0;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,0.1);';
-                imgEl.onclick = () => window.open(item.content, '_blank');
+                imgEl.style.cssText = 'max-width:600px;border-radius:8px;margin:8px 0;cursor:zoom-in;box-shadow:0 1px 4px rgba(0,0,0,0.1);';
+                imgEl.onclick = () => _openImageLightbox(imgEl.src);
                 mediaEl.appendChild(imgEl);
                 scrollChatToBottom();
 
