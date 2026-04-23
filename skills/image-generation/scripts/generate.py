@@ -1095,7 +1095,9 @@ def main():
         sys.exit(1)
 
     try:
-        args = json.loads(sys.argv[1])
+        raw = sys.argv[1]
+        raw = raw.replace('\u201c', '"').replace('\u201d', '"').replace('\u2018', "'").replace('\u2019', "'")
+        args = json.loads(raw)
     except json.JSONDecodeError as e:
         print(json.dumps({"error": f"Invalid JSON: {e}"}))
         sys.exit(1)
