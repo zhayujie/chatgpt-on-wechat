@@ -165,7 +165,7 @@ Supports mainstream model providers. Recommended models for Agent mode:
 | Provider | Recommended Model |
 | --- | --- |
 | MiniMax | `MiniMax-M2.7` |
-| GLM | `glm-5-turbo` |
+| GLM | `glm-5.1` |
 | Kimi | `kimi-k2.6` |
 | Doubao | `doubao-seed-2-0-code-preview-260215` |
 | Qwen | `qwen3.6-plus` |

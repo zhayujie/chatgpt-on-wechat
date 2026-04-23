@@ -771,7 +771,7 @@ class ConfigHandler:
 
     _RECOMMENDED_MODELS = [
         const.MINIMAX_M2_7_HIGHSPEED, const.MINIMAX_M2_7, const.MINIMAX_M2_5, const.MINIMAX_M2_1, const.MINIMAX_M2_1_LIGHTNING,
-        const.GLM_5_TURBO, const.GLM_5, const.GLM_4_7,
+        const.GLM_5_1, const.GLM_5_TURBO, const.GLM_5, const.GLM_4_7,
         const.QWEN36_PLUS, const.QWEN35_PLUS, const.QWEN3_MAX,
         const.KIMI_K2_6, const.KIMI_K2_5, const.KIMI_K2,
         const.DOUBAO_SEED_2_PRO, const.DOUBAO_SEED_2_CODE,
@@ -794,7 +794,7 @@ class ConfigHandler:
             "api_key_field": "zhipu_ai_api_key",
             "api_base_key": "zhipu_ai_api_base",
             "api_base_default": "https://open.bigmodel.cn/api/paas/v4",
-            "models": [const.GLM_5_TURBO, const.GLM_5, const.GLM_4_7],
+            "models": [const.GLM_5_1, const.GLM_5_TURBO, const.GLM_5, const.GLM_4_7],
         }),
         ("dashscope", {
             "label": "通义千问",

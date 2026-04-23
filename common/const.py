@@ -103,7 +103,8 @@ MINIMAX_M2 = "MiniMax-M2"  # MiniMax M2
 MINIMAX_ABAB6_5 = "abab6.5-chat"  # MiniMax abab6.5
 
 # GLM (智谱AI)
-GLM_5_TURBO = "glm-5-turbo"  # 智谱 GLM-5-Turbo - Latest
+GLM_5_1 = "glm-5.1"  # 智谱 GLM-5.1 - Agent recommended model (default)
+GLM_5_TURBO = "glm-5-turbo"  # 智谱 GLM-5-Turbo
 GLM_5 = "glm-5"  # 智谱 GLM-5
 GLM_4 = "glm-4"
 GLM_4_PLUS = "glm-4-plus"
@@ -182,7 +183,7 @@ MODEL_LIST = [
               MiniMax, MINIMAX_M2_7, MINIMAX_M2_7_HIGHSPEED, MINIMAX_M2_5, MINIMAX_M2_1, MINIMAX_M2_1_LIGHTNING, MINIMAX_M2, MINIMAX_ABAB6_5,
 
               # GLM
-              ZHIPU_AI, GLM_5_TURBO, GLM_5, GLM_4, GLM_4_PLUS, GLM_4_flash, GLM_4_LONG, GLM_4_ALLTOOLS,
+              ZHIPU_AI, GLM_5_1, GLM_5_TURBO, GLM_5, GLM_4, GLM_4_PLUS, GLM_4_flash, GLM_4_LONG, GLM_4_ALLTOOLS,
               GLM_4_0520, GLM_4_AIR, GLM_4_AIRX, GLM_4_7,
 
               # Kimi
