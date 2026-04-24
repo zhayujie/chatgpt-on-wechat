@@ -686,7 +686,51 @@ def _handle_linkai_stream_response(self, base_url, headers, body):
             "status_code": 500
         }
 
+def _linkai_convert_messages_to_openai_format(self, messages):
+    """
+    Override the base OpenAI-compatible conversion to round-trip
+    ``reasoning_content`` on assistant messages.
+
+    Internally, the agent layer keeps the model's reasoning trace as a
+    Claude-style ``thinking`` content block on the assistant message. The
+    base converter drops that block. For thinking-capable models proxied via
+    LinkAI (DeepSeek V4, Kimi K2 thinking, …), the upstream API requires
+    the trace to be echoed back as a top-level ``reasoning_content`` field
+    on every assistant turn that contained tool calls — otherwise the next
+    request returns 400. We re-emit it for every assistant turn (it's
+    silently ignored on plain text turns).
+    """
+    openai_messages = OpenAICompatibleBot._convert_messages_to_openai_format(self, messages)
+    if not messages:
+        return openai_messages
+
+    # Walk the original Claude messages to collect each assistant turn's
+    # reasoning text, then attach it to the matching converted entry.
+    dst_idx = 0
+    for src in messages:
+        if src.get("role") != "assistant":
+            continue
+        content = src.get("content")
+        reasoning_parts = []
+        if isinstance(content, list):
+            reasoning_parts = [
+                b.get("thinking", "") for b in content
+                if isinstance(b, dict) and b.get("type") == "thinking"
+            ]
+        # Locate the corresponding assistant entry in the converted list.
+        while dst_idx < len(openai_messages) and openai_messages[dst_idx].get("role") != "assistant":
+            dst_idx += 1
+        if dst_idx >= len(openai_messages):
+            break
+        if reasoning_parts:
+            openai_messages[dst_idx]["reasoning_content"] = "\n".join(reasoning_parts)
+        dst_idx += 1
+
+    return openai_messages
+
+
 # Attach methods to LinkAIBot class
 LinkAIBot.call_with_tools = _linkai_call_with_tools
 LinkAIBot._handle_linkai_sync_response = _handle_linkai_sync_response
 LinkAIBot._handle_linkai_stream_response = _handle_linkai_stream_response
+LinkAIBot._convert_messages_to_openai_format = _linkai_convert_messages_to_openai_format

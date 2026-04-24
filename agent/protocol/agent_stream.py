@@ -110,6 +110,23 @@ class AgentStreamExecutor:
                 logger.error(f"Event callback error: {e}")
     
     def _is_thinking_enabled(self) -> bool:
+        """Whether deep-thinking mode is on at the model layer.
+
+        Mirrors the global toggle used by ``bridge.agent_bridge`` when deciding
+        whether to send ``thinking={"type": "enabled"}`` to the model. Used for
+        logging and reasoning-update event emission across all channels.
+        """
+        from config import conf
+        return bool(conf().get("enable_thinking", False))
+
+    def _should_render_thinking_inline(self) -> bool:
+        """Whether ``<think>...</think>`` blocks embedded directly in ``content``
+        (MiniMax, some third-party proxies) should be surfaced to the channel.
+
+        Only the Web console can render them in a collapsible panel. IM channels
+        (WeChat/WeCom/DingTalk/Feishu) must strip them, otherwise users see raw
+        XML tags in their chat.
+        """
         from config import conf
         channel_type = getattr(self.model, 'channel_type', '') or ''
         return conf().get("enable_thinking", False) and channel_type == 'web'
@@ -119,13 +136,15 @@ class AgentStreamExecutor:
         Handle <think>...</think> blocks in content returned by some LLM providers
         (e.g., MiniMax).
 
-        - When thinking is enabled: remove the tags but keep the content inside.
-        - When thinking is disabled: remove both the tags and the content entirely.
+        - When inline thinking rendering is allowed (Web + thinking enabled):
+          remove only the tags, keep the content inside.
+        - Otherwise (IM channels, or thinking disabled globally): remove both
+          the tags and the content entirely.
         """
         if not text:
             return text
         import re
-        if self._is_thinking_enabled():
+        if self._should_render_thinking_inline():
             text = re.sub(r'<think>', '', text)
             text = re.sub(r'</think>', '', text)
         else:

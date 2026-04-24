@@ -45,7 +45,7 @@ python <base_dir>/scripts/generate.py '<json_args>'
 | `size` | string | no | auto | `512` / `1K` / `2K` / `3K` / `4K`, or pixel value (`1024x1024`) |
 | `aspect_ratio` | string | no | null | `1:1` / `3:2` / `2:3` / `16:9` / `9:16` / `21:9` (some backends also support extreme ratios like `1:4` / `8:1`) |
 
-**Higher `quality` and larger `size` cost more and run slower.** Default to omitting both (`auto`) so the model picks a balanced setting. Only raise them when the user explicitly asks for high quality / a poster / print-ready output. For quick previews or chat scenarios prefer `quality=low` + `size=1K`.
+**Higher `quality` and larger `size` cost more and run slower.** In normal cases, when the user does not explicitly specify, `low` or `medium` is sufficient. Only use `high` when the user asks for it.
 
 ### Example — generate
 

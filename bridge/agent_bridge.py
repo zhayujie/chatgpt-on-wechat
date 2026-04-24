@@ -167,13 +167,15 @@ class AgentLLMModel(LLMModel):
                 if session_id:
                     kwargs['session_id'] = session_id
 
-                # Determine thinking: respect global config, then channel_type
+                # Thinking mode is a global toggle independent of the channel.
+                # IM channels (WeChat/WeCom/DingTalk/Feishu) won't render the
+                # reasoning trace, but still benefit from the higher answer
+                # quality the thinking pass produces.
                 from config import conf
-                global_thinking = conf().get("enable_thinking", False)
-                if not global_thinking:
-                    kwargs['thinking'] = {"type": "disabled"}
-                else:
-                    kwargs['thinking'] = {"type": "enabled"} if channel_type == "web" else {"type": "disabled"}
+                kwargs['thinking'] = (
+                    {"type": "enabled"} if conf().get("enable_thinking", False)
+                    else {"type": "disabled"}
+                )
 
                 response = self.bot.call_with_tools(**kwargs)
                 return self._format_response(response)
@@ -220,13 +222,15 @@ class AgentLLMModel(LLMModel):
                 if session_id:
                     kwargs['session_id'] = session_id
 
-                # Determine thinking: respect global config, then channel_type
+                # Thinking mode is a global toggle independent of the channel.
+                # IM channels (WeChat/WeCom/DingTalk/Feishu) won't render the
+                # reasoning trace, but still benefit from the higher answer
+                # quality the thinking pass produces.
                 from config import conf
-                global_thinking = conf().get("enable_thinking", False)
-                if not global_thinking:
-                    kwargs['thinking'] = {"type": "disabled"}
-                else:
-                    kwargs['thinking'] = {"type": "enabled"} if channel_type == "web" else {"type": "disabled"}
+                kwargs['thinking'] = (
+                    {"type": "enabled"} if conf().get("enable_thinking", False)
+                    else {"type": "disabled"}
+                )
 
                 stream = self.bot.call_with_tools(**kwargs)
                 
