@@ -3,7 +3,7 @@ from common.log import logger
 
 
 class DeepSeekSession(Session):
-    def __init__(self, session_id, system_prompt=None, model="deepseek-chat"):
+    def __init__(self, session_id, system_prompt=None, model="deepseek-v4-pro"):
         super().__init__(session_id, system_prompt)
         self.model = model
         self.reset()

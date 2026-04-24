@@ -7,22 +7,26 @@ description: DeepSeekモデルの設定
 
 ```json
 {
-  "model": "deepseek-chat",
+  "model": "deepseek-v4-pro",
   "deepseek_api_key": "YOUR_API_KEY"
 }
 ```
 
 | パラメータ | 説明 |
 | --- | --- |
-| `model` | `deepseek-chat`（DeepSeek-V3.2、非思考モード）、`deepseek-reasoner`（DeepSeek-R1、思考モード） |
+| `model` | `deepseek-v4-pro`（V4 Pro、思考モード + ツール呼び出し、Agent推奨）、`deepseek-v4-flash`（V4 Flash、思考モード + ツール呼び出し）、`deepseek-chat`（DeepSeek-V3.2、非思考モード）、`deepseek-reasoner`（DeepSeek-R1、思考モード） |
 | `deepseek_api_key` | [DeepSeek Platform](https://platform.deepseek.com/api_keys)で作成 |
 | `deepseek_api_base` | オプション、デフォルトは `https://api.deepseek.com/v1`。サードパーティプロキシに変更可能 |
+
+<Tip>
+  V4シリーズ（`deepseek-v4-pro`、`deepseek-v4-flash`）は思考モードとツール呼び出しに対応しており、Agentモードでの多段思考とツール連携が可能です。思考のオン/オフはグローバル設定 `enable_thinking` で制御され、ツール呼び出しのターンでは `reasoning_content` が自動的にAPIへ往復されます。
+</Tip>
 
 方法2：OpenAI互換方式：
 
 ```json
 {
-  "model": "deepseek-chat",
+  "model": "deepseek-v4-pro",
   "bot_type": "openai",
   "open_ai_api_key": "YOUR_API_KEY",
   "open_ai_api_base": "https://api.deepseek.com/v1"

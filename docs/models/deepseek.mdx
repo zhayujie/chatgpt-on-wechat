@@ -7,25 +7,28 @@ description: DeepSeek 模型配置
 
 ```json
 {
-  "model": "deepseek-chat",
+  "model": "deepseek-v4-pro",
   "deepseek_api_key": "YOUR_API_KEY"
 }
 ```
 
 | 参数 | 说明 |
 | --- | --- |
-| `model` | `deepseek-chat`（DeepSeek-V3.2，非思考模式）、`deepseek-reasoner`（DeepSeek-R1，思考模式） |
+| `model` | `deepseek-v4-pro`（V4 Pro，思考模式 + 工具调用，Agent 推荐）、`deepseek-v4-flash`（V4 Flash，思考模式 + 工具调用）、`deepseek-chat`（DeepSeek-V3.2，非思考模式）、`deepseek-reasoner`（DeepSeek-R1，思考模式） |
 | `deepseek_api_key` | 在 [DeepSeek 平台](https://platform.deepseek.com/api_keys) 创建 |
 | `deepseek_api_base` | 可选，默认为 `https://api.deepseek.com/v1`，可修改为第三方代理地址 |
+
+<Tip>
+  V4 系列模型（`deepseek-v4-pro`、`deepseek-v4-flash`）支持思考模式与工具调用，可在 Agent 模式下进行多轮思考与工具协同。思考开关由全局 `enable_thinking` 配置控制，工具调用轮次的 `reasoning_content` 会自动回传给 API。
+</Tip>
 
 方式二：OpenAI 兼容方式接入：
 
 ```json
 {
-  "model": "deepseek-chat",
+  "model": "deepseek-v4-pro",
   "bot_type": "openai",
   "open_ai_api_key": "YOUR_API_KEY",
   "open_ai_api_base": "https://api.deepseek.com/v1"
 }
 ```
-

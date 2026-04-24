@@ -310,25 +310,26 @@ select_model() {
     echo -e "${CYAN}${BOLD}   Select AI Model${NC}"
     echo -e "${CYAN}${BOLD}=========================================${NC}"
     echo -e "${YELLOW}1) MiniMax (MiniMax-M2.7, MiniMax-M2.5, etc.)${NC}"
-    echo -e "${YELLOW}2) Zhipu AI (glm-5.1, glm-5-turbo, glm-5, etc.)${NC}"
-    echo -e "${YELLOW}3) Kimi (kimi-k2.6, kimi-k2.5, kimi-k2, etc.)${NC}"
-    echo -e "${YELLOW}4) Doubao (doubao-seed-2-0-code-preview-260215, etc.)${NC}"
-    echo -e "${YELLOW}5) Qwen (qwen3.6-plus, qwen3.5-plus, qwen3-max, qwq-plus, etc.)${NC}"
-    echo -e "${YELLOW}6) Claude (claude-sonnet-4-6, claude-opus-4-7, claude-opus-4-6, etc.)${NC}"
-    echo -e "${YELLOW}7) Gemini (gemini-3.1-flash-lite-preview, gemini-3.1-pro-preview, etc.)${NC}"
-    echo -e "${YELLOW}8) OpenAI GPT (gpt-5.4, gpt-5.2, gpt-4.1, etc.)${NC}"
-    echo -e "${YELLOW}9) LinkAI (access multiple models via one API)${NC}"
+    echo -e "${YELLOW}2) DeepSeek (deepseek-v4-pro, deepseek-v4-flash, etc.)${NC}"
+    echo -e "${YELLOW}3) Claude (claude-sonnet-4-6, claude-opus-4-7, claude-opus-4-6, etc.)${NC}"
+    echo -e "${YELLOW}4) Gemini (gemini-3.1-flash-lite-preview, gemini-3.1-pro-preview, etc.)${NC}"
+    echo -e "${YELLOW}5) OpenAI GPT (gpt-5.4, gpt-5.2, gpt-4.1, etc.)${NC}"
+    echo -e "${YELLOW}6) Zhipu AI (glm-5.1, glm-5-turbo, glm-5, etc.)${NC}"
+    echo -e "${YELLOW}7) Qwen (qwen3.6-plus, qwen3.5-plus, qwen3-max, qwq-plus, etc.)${NC}"
+    echo -e "${YELLOW}8) Doubao (doubao-seed-2-0-code-preview-260215, etc.)${NC}"
+    echo -e "${YELLOW}9) Kimi (kimi-k2.6, kimi-k2.5, kimi-k2, etc.)${NC}"
+    echo -e "${YELLOW}10) LinkAI (access multiple models via one API)${NC}"
     echo ""
     
     while true; do
         read -p "Enter your choice [press Enter for default: 1 - MiniMax]: " model_choice
         model_choice=${model_choice:-1}
         case "$model_choice" in
-            1|2|3|4|5|6|7|8|9)
+            1|2|3|4|5|6|7|8|9|10)
                 break
                 ;;
             *)
-                echo -e "${RED}Invalid choice. Please enter 1-9.${NC}"
+                echo -e "${RED}Invalid choice. Please enter 1-10.${NC}"
                 ;;
         esac
     done
@@ -357,23 +358,27 @@ read_api_base() {
 configure_model() {
     case "$model_choice" in
         1) read_model_config "MiniMax" "MiniMax-M2.7" "MINIMAX_KEY" ;;
-        2) read_model_config "Zhipu AI" "glm-5.1" "ZHIPU_KEY" ;;
-        3) read_model_config "Kimi (Moonshot)" "kimi-k2.6" "MOONSHOT_KEY" ;;
-        4) read_model_config "Doubao (Volcengine Ark)" "doubao-seed-2-0-code-preview-260215" "ARK_KEY" ;;
-        5) read_model_config "Qwen (DashScope)" "qwen3.6-plus" "DASHSCOPE_KEY" ;;
-        6)
+        2)
+            read_model_config "DeepSeek" "deepseek-v4-pro" "DEEPSEEK_KEY"
+            read_api_base "DEEPSEEK_BASE" "https://api.deepseek.com/v1"
+            ;;
+        3)
             read_model_config "Claude" "claude-sonnet-4-6" "CLAUDE_KEY"
             read_api_base "CLAUDE_BASE" "https://api.anthropic.com/v1"
             ;;
-        7)
+        4)
             read_model_config "Gemini" "gemini-3.1-pro-preview" "GEMINI_KEY"
             read_api_base "GEMINI_BASE" "https://generativelanguage.googleapis.com"
             ;;
-        8)
+        5)
             read_model_config "OpenAI GPT" "gpt-5.4" "OPENAI_KEY"
             read_api_base "OPENAI_BASE" "https://api.openai.com/v1"
             ;;
-        9)
+        6) read_model_config "Zhipu AI" "glm-5.1" "ZHIPU_KEY" ;;
+        7) read_model_config "Qwen (DashScope)" "qwen3.6-plus" "DASHSCOPE_KEY" ;;
+        8) read_model_config "Doubao (Volcengine Ark)" "doubao-seed-2-0-code-preview-260215" "ARK_KEY" ;;
+        9) read_model_config "Kimi (Moonshot)" "kimi-k2.6" "MOONSHOT_KEY" ;;
+        10)
             read_model_config "LinkAI" "MiniMax-M2.7" "LINKAI_KEY"
             USE_LINKAI="true"
             ;;
@@ -511,6 +516,8 @@ create_config_file() {
     ARK_KEY="${ARK_KEY:-}" \
     DASHSCOPE_KEY="${DASHSCOPE_KEY:-}" \
     MINIMAX_KEY="${MINIMAX_KEY:-}" \
+    DEEPSEEK_KEY="${DEEPSEEK_KEY:-}" \
+    DEEPSEEK_BASE="${DEEPSEEK_BASE:-https://api.deepseek.com/v1}" \
     USE_LINKAI="${USE_LINKAI:-false}" \
     LINKAI_KEY="${LINKAI_KEY:-}" \
     FEISHU_APP_ID="${FEISHU_APP_ID:-}" \
@@ -545,6 +552,8 @@ base = {
     'ark_api_key': e('ARK_KEY', ''),
     'dashscope_api_key': e('DASHSCOPE_KEY', ''),
     'minimax_api_key': e('MINIMAX_KEY', ''),
+    'deepseek_api_key': e('DEEPSEEK_KEY', ''),
+    'deepseek_api_base': e('DEEPSEEK_BASE'),
     'voice_to_text': 'openai',
     'text_to_voice': 'openai',
     'voice_reply_voice': False,
