@@ -43,7 +43,7 @@ _MAIN_MODEL_PROVIDER_NAME = "MainModel"
 # Auto-discovered as fallback vision providers when their API key is configured.
 # OpenAI and LinkAI are handled separately (raw HTTP providers), so not listed here.
 _DISCOVERABLE_MODELS = [
-    ("moonshot_api_key", const.MOONSHOT, const.KIMI_K2_5, "Moonshot"),
+    ("moonshot_api_key", const.MOONSHOT, const.KIMI_K2_6, "Moonshot"),
     ("ark_api_key", const.DOUBAO, const.DOUBAO_SEED_2_PRO, "Doubao"),
     ("dashscope_api_key", const.QWEN_DASHSCOPE, const.QWEN36_PLUS, "DashScope"),
     ("claude_api_key", const.CLAUDEAPI, const.CLAUDE_4_6_SONNET, "Claude"),

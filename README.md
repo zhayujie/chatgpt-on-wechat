@@ -29,7 +29,7 @@
 -  ✅  **工具系统：** 内置文件读写、终端执行、浏览器操作、定时任务等工具，Agent 自主调用以完成复杂任务
 -  ✅  **CLI系统：** 提供终端命令和对话命令，支持进程管理、技能安装、配置修改等操作
 -  ✅  **多模态消息：** 支持对文本、图片、语音、文件等多类型消息进行解析、处理、生成、发送等操作
--  ✅  **多模型支持：** 支持 OpenAI, Claude, Gemini, DeepSeek, MiniMax、GLM、Qwen、Kimi、Doubao 等国内外主流模型厂商
+-  ✅  **多模型支持：** 支持 MiniMax、DeepSeek、Claude、Gemini、OpenAI、GLM、Qwen、Doubao、Kimi 等国内外主流模型厂商
 -  ✅  **多通道接入：** 支持运行在本地计算机或服务器，可集成到微信、飞书、钉钉、企业微信、QQ、微信公众号、网页中使用
 
 ## 声明
@@ -69,6 +69,8 @@
 <br/>
 
 # 🏷 更新日志
+
+>**2026.04.22：** [2.0.7版本](https://github.com/zhayujie/CowAgent/releases/tag/2.0.7)，图像生成内置技能（GPT Image 2、Nano Banana 等）、新模型支持（Kimi K2.6、Claude Opus 4.7、GLM 5.1）、知识库和记忆增强、Web 控制台优化
 
 >**2026.04.14：** [2.0.6版本](https://github.com/zhayujie/CowAgent/releases/tag/2.0.6)，知识库系统、梦境记忆模块、上下文智能压缩、Web 控制台多会话及多项优化。
 
@@ -113,7 +115,7 @@ irm https://cdn.link-ai.tech/code/cow/run.ps1 | iex
 
 项目支持国内外主流厂商的模型接口，可选模型及配置说明参考：[模型说明](#模型说明)。
 
-> 注：Agent 模式下推荐使用以下模型，可根据效果及成本综合选择：MiniMax-M2.7、glm-5-turbo、kimi-k2.5、qwen3.5-plus、claude-sonnet-4-6、gemini-3.1-pro-preview、gpt-5.4、gpt-5.4-mini
+> 注：Agent 模式下推荐使用以下模型，可根据效果及成本综合选择：MiniMax-M2.7、glm-5.1、kimi-k2.6、qwen3.5-plus、claude-sonnet-4-6、gemini-3.1-pro-preview、gpt-5.4、gpt-5.4-mini
 
 同时支持使用 **LinkAI 平台** 接口，支持上述全部模型，并支持知识库、工作流、插件等 Agent 技能，参考 [接口文档](https://docs.link-ai.tech/platform/api)。
 
@@ -206,7 +208,7 @@ cow install-browser
   "agent_max_context_tokens": 50000,                          # Agent 模式下最大上下文 tokens，超出将自动智能压缩处理
   "agent_max_context_turns": 20,                              # Agent 模式下最大上下文记忆轮次，一问一答为一轮，超出后智能压缩处理
   "agent_max_steps": 20,                                      # Agent 模式下单次任务的最大决策步数，超出后将停止继续调用工具
-  "enable_thinking": false                                    # 是否启用深度思考，开启后 Web 端展示模型推理过程，关闭后可加速响应
+  "enable_thinking": false                                    # 是否启用深度思考模式（适用于 deepseek-v4-pro/flash、deepseek-reasoner、kimi-k2-thinking 等思考型模型）。开启后模型在出最终回答前先进行推理，回答质量更高但首字延迟增加；Web 端会展示思考过程，IM 渠道（微信/企微/钉钉/飞书）虽不展示但同样获得更好答案
 }
 ```
 
@@ -224,7 +226,7 @@ cow install-browser
 <details>
 <summary>2. 其他配置</summary>
 
-+ `model`: 模型名称，Agent 模式下推荐使用 `MiniMax-M2.7`、`glm-5-turbo`、`kimi-k2.5`、`qwen3.6-plus`、`claude-sonnet-4-6`、`gemini-3.1-pro-preview`，全部模型名称参考[common/const.py](https://github.com/zhayujie/CowAgent/blob/master/common/const.py)文件
++ `model`: 模型名称，Agent 模式下推荐使用 `MiniMax-M2.7`、`glm-5.1`、`kimi-k2.6`、`qwen3.6-plus`、`claude-sonnet-4-6`、`gemini-3.1-pro-preview`，全部模型名称参考[common/const.py](https://github.com/zhayujie/CowAgent/blob/master/common/const.py)文件
 + `character_desc`：普通对话模式下的机器人系统提示词。在 Agent 模式下该配置不生效，由工作空间中的文件内容构成。
 + `subscribe_msg`：订阅消息，公众号和企业微信 channel 中请填写，当被订阅时会自动回复， 可使用特殊占位符。目前支持的占位符有{trigger_prefix}，在程序中它会自动替换成 bot 的触发词。
 </details>
@@ -312,47 +314,6 @@ sudo docker logs -f chatgpt-on-wechat
 推荐通过 Web 控制台在线管理模型配置，无需手动编辑文件，详见 [模型文档](https://docs.cowagent.ai/models)。以下是手动修改 `config.json` 配置模型的说明：
 
 <details>
-<summary>OpenAI</summary>
-
-1. API Key 创建：在 [OpenAI平台](https://platform.openai.com/api-keys) 创建 API Key
-
-2. 填写配置
-
-```json
-{
-    "model": "gpt-5.4",
-    "open_ai_api_key": "YOUR_API_KEY",
-    "open_ai_api_base": "https://api.openai.com/v1",
-    "bot_type": "openai"
-}
-```
-
- - `model`: 与 OpenAI 接口的 [model参数](https://platform.openai.com/docs/models) 一致，支持包括 gpt-5.4、gpt-5.4-mini、gpt-5.4-nano、o 系列、gpt-4.1 等模型，Agent 模式推荐使用  `gpt-5.4`、`gpt-5.4-mini`
- - `open_ai_api_base`: 如果需要接入第三方代理接口，可通过修改该参数进行接入
- - `bot_type`: 使用 OpenAI 相关模型时无需填写。当使用第三方代理接口接入 Claude 等非 OpenAI 官方模型时，该参数设为 `openai`
-</details>
-
-<details>
-<summary>LinkAI</summary>
-
-1. API Key 创建：在 [LinkAI平台](https://link-ai.tech/console/interface) 创建 API Key 
-
-2. 填写配置
-
-```json
-{
-    "model": "gpt-5.4-mini",
-    "use_linkai": true,
-    "linkai_api_key": "YOUR API KEY"
-}
-```
-
-+ `use_linkai`: 是否使用 LinkAI 接口，默认关闭，设置为 true 后可对接 LinkAI 平台的模型，并使用知识库、工作流、数据库、插件等丰富的 Agent 技能
-+ `linkai_api_key`: LinkAI 平台的 API Key，可在 [控制台](https://link-ai.tech/console/interface) 中创建
-+ `model`: [模型列表](https://link-ai.tech/console/models)中的全部模型均可使用
-</details>
-
-<details>
 <summary>MiniMax</summary>
 
 方式一：官方接入，配置如下(推荐)：
@@ -382,30 +343,113 @@ sudo docker logs -f chatgpt-on-wechat
 </details>
 
 <details>
+<summary>DeepSeek</summary>
+
+1. API Key 创建：在 [DeepSeek 平台](https://platform.deepseek.com/api_keys) 创建 API Key
+
+2. 填写配置
+
+方式一：官方接入（推荐）：
+
+```json
+{
+    "model": "deepseek-v4-pro",
+    "deepseek_api_key": "sk-xxxxxxxxxxx"
+}
+```
+
+ - `model`: 推荐填写 `deepseek-v4-pro`、`deepseek-v4-flash`
+ - `deepseek_api_key`: DeepSeek 平台的 API Key
+ - `deepseek_api_base`: 可选，默认为 `https://api.deepseek.com/v1`，可修改为第三方代理地址
+
+方式二：OpenAI 兼容方式接入：
+
+```json
+{
+    "model": "deepseek-v4-pro",
+    "bot_type": "openai",
+    "open_ai_api_key": "sk-xxxxxxxxxxx",
+    "open_ai_api_base": "https://api.deepseek.com/v1"
+}
+```
+
+</details>
+
+<details>
+<summary>Claude</summary>
+
+1. API Key 创建：在 [Claude控制台](https://console.anthropic.com/settings/keys) 创建 API Key
+
+2. 填写配置
+
+```json
+{
+    "model": "claude-sonnet-4-6",
+    "claude_api_key": "YOUR_API_KEY"
+}
+```
+ - `model`: 参考 [官方模型ID](https://docs.anthropic.com/en/docs/about-claude/models/overview#model-aliases) ，支持 `claude-sonnet-4-6、claude-opus-4-7、claude-opus-4-6、claude-sonnet-4-5、claude-sonnet-4-0、claude-opus-4-0、claude-3-5-sonnet-latest` 等
+</details>
+
+<details>
+<summary>Gemini</summary>
+
+API Key 创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn) 创建 API Key ，配置如下
+```json
+{
+    "model": "gemini-3.1-flash-lite-preview",
+    "gemini_api_key": ""
+}
+```
+ - `model`: 参考[官方文档-模型列表](https://ai.google.dev/gemini-api/docs/models?hl=zh-cn)，支持 `gemini-3.1-flash-lite-preview、gemini-3.1-pro-preview、gemini-3-flash-preview、gemini-3-pro-preview` 等
+</details>
+
+<details>
+<summary>OpenAI</summary>
+
+1. API Key 创建：在 [OpenAI平台](https://platform.openai.com/api-keys) 创建 API Key
+
+2. 填写配置
+
+```json
+{
+    "model": "gpt-5.4",
+    "open_ai_api_key": "YOUR_API_KEY",
+    "open_ai_api_base": "https://api.openai.com/v1",
+    "bot_type": "openai"
+}
+```
+
+ - `model`: 与 OpenAI 接口的 [model参数](https://platform.openai.com/docs/models) 一致，支持包括 gpt-5.4、gpt-5.4-mini、gpt-5.4-nano、o 系列、gpt-4.1 等模型，Agent 模式推荐使用  `gpt-5.4`、`gpt-5.4-mini`
+ - `open_ai_api_base`: 如果需要接入第三方代理接口，可通过修改该参数进行接入
+ - `bot_type`: 使用 OpenAI 相关模型时无需填写。当使用第三方代理接口接入 Claude 等非 OpenAI 官方模型时，该参数设为 `openai`
+</details>
+
+<details>
 <summary>智谱AI (GLM)</summary>
 
 方式一：官方接入，配置如下(推荐)：
 
 ```json
 {
-  "model": "glm-5-turbo",
+  "model": "glm-5.1",
   "zhipu_ai_api_key": ""
 }
 ```
- - `model`: 可填 `glm-5-turbo、glm-5、glm-4.7、glm-4-plus、glm-4-flash、glm-4-air、glm-4-airx、glm-4-long` 等, 参考 [glm 系列模型编码](https://bigmodel.cn/dev/api/normal-model/glm-4)
+ - `model`: 可填 `glm-5.1、glm-5-turbo、glm-5、glm-4.7、glm-4-plus、glm-4-flash、glm-4-air、glm-4-airx、glm-4-long` 等, 参考 [glm 系列模型编码](https://bigmodel.cn/dev/api/normal-model/glm-4)
  - `zhipu_ai_api_key`: 智谱AI 平台的 API KEY，在 [控制台](https://www.bigmodel.cn/usercenter/proj-mgmt/apikeys) 创建
 
 方式二：OpenAI 兼容方式接入，配置如下：
 ```json
 {
   "bot_type": "openai",
-  "model": "glm-5-turbo",
+  "model": "glm-5.1",
   "open_ai_api_base": "https://open.bigmodel.cn/api/paas/v4",
   "open_ai_api_key": ""
 }
 ```
 - `bot_type`: OpenAI 兼容方式
-- `model`: 可填 `glm-5-turbo、glm-5、glm-4.7、glm-4-plus、glm-4-flash、glm-4-air、glm-4-airx、glm-4-long` 等
+- `model`: 可填 `glm-5.1、glm-5-turbo、glm-5、glm-4.7、glm-4-plus、glm-4-flash、glm-4-air、glm-4-airx、glm-4-long` 等
 - `open_ai_api_base`: 智谱AI 平台的 BASE URL
 - `open_ai_api_key`: 智谱AI 平台的 API KEY
 </details>
@@ -440,35 +484,6 @@ sudo docker logs -f chatgpt-on-wechat
 </details>
 
 <details>
-<summary>Kimi (Moonshot)</summary>
-
-方式一：官方接入，配置如下：
-
-```json
-{
-    "model": "kimi-k2.5",
-    "moonshot_api_key": ""
-}
-```
- - `model`: 可填写 `kimi-k2.5、kimi-k2、moonshot-v1-8k、moonshot-v1-32k、moonshot-v1-128k`
- - `moonshot_api_key`: Moonshot 的 API-KEY，在 [控制台](https://platform.moonshot.cn/console/api-keys) 创建
- 
-方式二：OpenAI 兼容方式接入，配置如下：
-```json
-{
-  "bot_type": "openai",
-  "model": "kimi-k2.5",
-  "open_ai_api_base": "https://api.moonshot.cn/v1",
-  "open_ai_api_key": ""
-}
-```
-- `bot_type`: OpenAI 兼容方式
-- `model`: 可填写 `kimi-k2.5、kimi-k2、moonshot-v1-8k、moonshot-v1-32k、moonshot-v1-128k`
-- `open_ai_api_base`: Moonshot 的 BASE URL
-- `open_ai_api_key`: Moonshot 的 API-KEY
-</details>
-
-<details>
 <summary>豆包 (Doubao)</summary>
 
 1. API Key 创建：在 [火山方舟控制台](https://console.volcengine.com/ark/region:ark+cn-beijing/apikey) 创建API Key
@@ -487,66 +502,73 @@ sudo docker logs -f chatgpt-on-wechat
 </details>
 
 <details>
-<summary>Claude</summary>
+<summary>Kimi (Moonshot)</summary>
 
-1. API Key 创建：在 [Claude控制台](https://console.anthropic.com/settings/keys) 创建 API Key
+方式一：官方接入，配置如下：
+
+```json
+{
+    "model": "kimi-k2.6",
+    "moonshot_api_key": ""
+}
+```
+ - `model`: 可填写 `kimi-k2.6、kimi-k2.5、kimi-k2、moonshot-v1-8k、moonshot-v1-32k、moonshot-v1-128k`
+ - `moonshot_api_key`: Moonshot 的 API-KEY，在 [控制台](https://platform.moonshot.cn/console/api-keys) 创建
+
+方式二：OpenAI 兼容方式接入，配置如下：
+```json
+{
+  "bot_type": "openai",
+  "model": "kimi-k2.6",
+  "open_ai_api_base": "https://api.moonshot.cn/v1",
+  "open_ai_api_key": ""
+}
+```
+- `bot_type`: OpenAI 兼容方式
+- `model`: 可填写 `kimi-k2.6、kimi-k2.5、kimi-k2、moonshot-v1-8k、moonshot-v1-32k、moonshot-v1-128k`
+- `open_ai_api_base`: Moonshot 的 BASE URL
+- `open_ai_api_key`: Moonshot 的 API-KEY
+</details>
+
+<details>
+<summary>ModelScope</summary>
+
+```json
+{
+  "bot_type": "modelscope",
+  "model": "Qwen/QwQ-32B",
+  "modelscope_api_key": "your_api_key",
+  "modelscope_base_url": "https://api-inference.modelscope.cn/v1/chat/completions",
+  "text_to_image": "MusePublic/489_ckpt_FLUX_1"
+}
+```
+
+- `bot_type`: modelscope 接口格式
+- `model`: 参考[模型列表](https://www.modelscope.cn/models?filter=inference_type&page=1)
+- `modelscope_api_key`: 参考 [官方文档-访问令牌](https://modelscope.cn/docs/accounts/token) ，在 [控制台](https://modelscope.cn/my/myaccesstoken)
+- `modelscope_base_url`: modelscope 平台的 BASE URL
+- `text_to_image`: 图像生成模型，参考[模型列表](https://www.modelscope.cn/models?filter=inference_type&page=1)
+</details>
+
+<details>
+<summary>LinkAI</summary>
+
+1. API Key 创建：在 [LinkAI平台](https://link-ai.tech/console/interface) 创建 API Key
 
 2. 填写配置
 
 ```json
 {
-    "model": "claude-sonnet-4-6",
-    "claude_api_key": "YOUR_API_KEY"
+    "model": "gpt-5.4-mini",
+    "use_linkai": true,
+    "linkai_api_key": "YOUR API KEY"
 }
 ```
- - `model`: 参考 [官方模型ID](https://docs.anthropic.com/en/docs/about-claude/models/overview#model-aliases) ，支持 `claude-sonnet-4-6、claude-opus-4-7、claude-opus-4-6、claude-sonnet-4-5、claude-sonnet-4-0、claude-opus-4-0、claude-3-5-sonnet-latest` 等
+
++ `use_linkai`: 是否使用 LinkAI 接口，默认关闭，设置为 true 后可对接 LinkAI 平台的模型，并使用知识库、工作流、数据库、插件等丰富的 Agent 技能
++ `linkai_api_key`: LinkAI 平台的 API Key，可在 [控制台](https://link-ai.tech/console/interface) 中创建
++ `model`: [模型列表](https://link-ai.tech/console/models)中的全部模型均可使用
 </details>
-
-<details>
-<summary>Gemini</summary>
-
-API Key 创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn) 创建 API Key ，配置如下
-```json
-{
-    "model": "gemini-3.1-flash-lite-preview",
-    "gemini_api_key": ""
-}
-```
- - `model`: 参考[官方文档-模型列表](https://ai.google.dev/gemini-api/docs/models?hl=zh-cn)，支持 `gemini-3.1-flash-lite-preview、gemini-3.1-pro-preview、gemini-3-flash-preview、gemini-3-pro-preview` 等
-</details>
-
-<details>
-<summary>DeepSeek</summary>
-
-1. API Key 创建：在 [DeepSeek 平台](https://platform.deepseek.com/api_keys) 创建 API Key 
-
-2. 填写配置
-
-方式一：官方接入（推荐）：
-
-```json
-{
-    "model": "deepseek-chat",
-    "deepseek_api_key": "sk-xxxxxxxxxxx"
-}
-```
-
- - `model`: 可填 `deepseek-chat、deepseek-reasoner`，分别对应的是 DeepSeek-V3.2（非思考模式）和 DeepSeek-R1（思考模式）
- - `deepseek_api_key`: DeepSeek 平台的 API Key
- - `deepseek_api_base`: 可选，默认为 `https://api.deepseek.com/v1`，可修改为第三方代理地址
-
-方式二：OpenAI 兼容方式接入：
-
-```json
-{
-    "model": "deepseek-chat",
-    "bot_type": "openai",
-    "open_ai_api_key": "sk-xxxxxxxxxxx",
-    "open_ai_api_base": "https://api.deepseek.com/v1"
-}
-```
-
- </details>
 
 <details>
 <summary>Azure</summary>
@@ -638,26 +660,6 @@ API Key 创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn
 - `model`: 可填写 `4.0Ultra、generalv3.5、max-32k、generalv3、pro-128k、lite`
 - `open_ai_api_base`: 讯飞星火平台的 BASE URL
 - `open_ai_api_key`: 讯飞星火平台的[APIPassword](https://console.xfyun.cn/services/bm3) ，因模型而已
-</details>
-
-<details>
-<summary>ModelScope</summary>
-
-```json
-{
-  "bot_type": "modelscope",
-  "model": "Qwen/QwQ-32B",
-  "modelscope_api_key": "your_api_key",
-  "modelscope_base_url": "https://api-inference.modelscope.cn/v1/chat/completions",
-  "text_to_image": "MusePublic/489_ckpt_FLUX_1"
-}
-```
-
-- `bot_type`: modelscope 接口格式
-- `model`: 参考[模型列表](https://www.modelscope.cn/models?filter=inference_type&page=1)
-- `modelscope_api_key`: 参考 [官方文档-访问令牌](https://modelscope.cn/docs/accounts/token) ，在 [控制台](https://modelscope.cn/my/myaccesstoken) 
-- `modelscope_base_url`: modelscope 平台的 BASE URL
-- `text_to_image`: 图像生成模型，参考[模型列表](https://www.modelscope.cn/models?filter=inference_type&page=1)
 </details>
 
 <details>

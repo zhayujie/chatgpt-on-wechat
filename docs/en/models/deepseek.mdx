@@ -7,26 +7,28 @@ Option 1: Native integration (recommended):
 
 ```json
 {
-  "model": "deepseek-chat",
+  "model": "deepseek-v4-pro",
   "deepseek_api_key": "YOUR_API_KEY"
 }
 ```
 
 | Parameter | Description |
 | --- | --- |
-| `model` | `deepseek-chat` (DeepSeek-V3.2, non-thinking mode), `deepseek-reasoner` (DeepSeek-R1, thinking mode) |
+| `model` | `deepseek-v4-pro` (V4 Pro, thinking mode + tool calls, Agent recommended), `deepseek-v4-flash` (V4 Flash, thinking mode + tool calls), `deepseek-chat` (DeepSeek-V3.2, non-thinking), `deepseek-reasoner` (DeepSeek-R1, thinking mode) |
 | `deepseek_api_key` | Create at [DeepSeek Platform](https://platform.deepseek.com/api_keys) |
 | `deepseek_api_base` | Optional, defaults to `https://api.deepseek.com/v1`. Can be changed to a third-party proxy |
+
+<Tip>
+  The V4 series (`deepseek-v4-pro`, `deepseek-v4-flash`) supports thinking mode together with tool calls, enabling multi-round reasoning + tool orchestration in Agent mode. The thinking switch is controlled by the global `enable_thinking` setting, and `reasoning_content` is automatically round-tripped on tool-call turns.
+</Tip>
 
 Option 2: OpenAI-compatible configuration:
 
 ```json
 {
-  "model": "deepseek-chat",
+  "model": "deepseek-v4-pro",
   "bot_type": "openai",
   "open_ai_api_key": "YOUR_API_KEY",
   "open_ai_api_base": "https://api.deepseek.com/v1"
 }
 ```
-
-

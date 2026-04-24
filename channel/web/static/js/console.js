@@ -38,7 +38,7 @@ const I18N = {
         config_max_tokens: '最大上下文 Token', config_max_tokens_hint: '对话中 Agent 能输入的最大 Token 长度，超过后会智能压缩处理',
         config_max_turns: '最大记忆轮次', config_max_turns_hint: '一问一答为一轮，超过后会智能压缩处理',
         config_max_steps: '最大执行步数', config_max_steps_hint: '单次对话中 Agent 最多调用工具的次数',
-        config_enable_thinking: '深度思考', config_enable_thinking_hint: '启用后在 Web 端展示模型推理过程',
+        config_enable_thinking: '深度思考', config_enable_thinking_hint: '开启后模型启用思考模式，回答质量更高但首字延迟增加，Web 端可展示思考过程',
         config_channel_type: '通道类型',
         config_provider: '模型厂商', config_model_name: '模型',
         config_custom_model_hint: '输入自定义模型名称',
@@ -124,7 +124,7 @@ const I18N = {
         config_max_tokens: 'Max Context Tokens', config_max_tokens_hint: 'Max tokens the Agent can input per conversation, auto-compressed when exceeded',
         config_max_turns: 'Max Memory Turns', config_max_turns_hint: 'One Q&A pair = one turn, auto-compressed when exceeded',
         config_max_steps: 'Max Steps', config_max_steps_hint: 'Max tool calls the Agent can make in a single conversation',
-        config_enable_thinking: 'Deep Thinking', config_enable_thinking_hint: 'Show model reasoning on web console',
+        config_enable_thinking: 'Deep Thinking', config_enable_thinking_hint: 'Model reasons before answering for higher quality at the cost of first-token latency. Web console shows the reasoning trace.',
         config_channel_type: 'Channel Type',
         config_provider: 'Provider', config_model_name: 'Model',
         config_custom_model_hint: 'Enter custom model name',
@@ -204,6 +204,7 @@ function applyI18n() {
     document.querySelectorAll('[data-tip-key]').forEach(el => {
         el.setAttribute('data-tooltip', t(el.dataset.tipKey));
     });
+    installCfgTipPortal();
     const langLabel = document.getElementById('lang-label');
     if (langLabel) langLabel.textContent = currentLang === 'zh' ? '中文' : 'EN';
 }
@@ -213,6 +214,54 @@ function toggleLanguage() {
     localStorage.setItem('cow_lang', currentLang);
     applyI18n();
     _applyInputTooltips();
+}
+
+// Floating tooltip portal for [data-tip-key] elements. Tooltip nodes are
+// appended to <body> so they aren't clipped by overflow:hidden ancestors
+// (e.g. the config panel's scroll container).
+let _cfgTipPortalEl = null;
+let _cfgTipPortalInstalled = false;
+function installCfgTipPortal() {
+    if (_cfgTipPortalInstalled) return;
+    _cfgTipPortalInstalled = true;
+
+    const showTip = (target) => {
+        const text = target.getAttribute('data-tooltip');
+        if (!text) return;
+        if (!_cfgTipPortalEl) {
+            _cfgTipPortalEl = document.createElement('div');
+            _cfgTipPortalEl.className = 'cfg-tip-floating';
+            document.body.appendChild(_cfgTipPortalEl);
+        }
+        _cfgTipPortalEl.textContent = text;
+        const rect = target.getBoundingClientRect();
+        // Render once to measure, then position above the target, centered.
+        _cfgTipPortalEl.style.left = '0px';
+        _cfgTipPortalEl.style.top = '0px';
+        _cfgTipPortalEl.classList.add('show');
+        const tipRect = _cfgTipPortalEl.getBoundingClientRect();
+        let left = rect.left + rect.width / 2 - tipRect.width / 2;
+        // Clamp horizontally to the viewport with an 8px gutter.
+        left = Math.max(8, Math.min(left, window.innerWidth - tipRect.width - 8));
+        const top = rect.top - tipRect.height - 6;
+        _cfgTipPortalEl.style.left = left + 'px';
+        _cfgTipPortalEl.style.top = top + 'px';
+    };
+    const hideTip = () => {
+        if (_cfgTipPortalEl) _cfgTipPortalEl.classList.remove('show');
+    };
+
+    document.addEventListener('mouseover', (e) => {
+        const target = e.target.closest('[data-tip-key]');
+        if (target) showTip(target);
+    });
+    document.addEventListener('mouseout', (e) => {
+        const target = e.target.closest('[data-tip-key]');
+        if (target) hideTip();
+    });
+    // Hide on scroll/resize so the tooltip doesn't drift away from its anchor.
+    window.addEventListener('scroll', hideTip, true);
+    window.addEventListener('resize', hideTip);
 }
 
 // =====================================================================
@@ -341,23 +390,54 @@ const md = createMd();
 const VIDEO_EXT_RE = /\.(?:mp4|webm|mov|avi|mkv)$/i;  // tested against URL without query string
 const IMAGE_EXT_RE = /\.(?:jpg|jpeg|png|gif|webp|bmp|svg)$/i;  // tested against URL without query string
 
+function _toWebUrl(url) {
+    if (/^\/[A-Za-z]/.test(url) && !url.startsWith('/api/')) {
+        return '/api/file?path=' + encodeURIComponent(url);
+    }
+    if (/^file:\/\/\//i.test(url)) {
+        return '/api/file?path=' + encodeURIComponent(url.replace(/^file:\/\/\//i, '/'));
+    }
+    return url;
+}
+
 function _buildVideoHtml(url) {
+    const webUrl = _toWebUrl(url);
     const fileName = url.split('/').pop().split('?')[0];
     return `<div style="margin:10px 0;">` +
         `<video controls preload="metadata" ` +
         `style="max-width:100%;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.15);display:block;">` +
-        `<source src="${url}"></video>` +
-        `<a href="${url}" target="_blank" ` +
+        `<source src="${webUrl}"></video>` +
+        `<a href="${webUrl}" target="_blank" ` +
         `style="display:inline-flex;align-items:center;gap:4px;margin-top:4px;font-size:12px;color:#8b8fa8;text-decoration:none;">` +
         `<i class="fas fa-download"></i> ${escapeHtml(fileName)}</a></div>`;
 }
 
+function _openImageLightbox(src) {
+    let overlay = document.getElementById('cow-lightbox');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'cow-lightbox';
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;cursor:zoom-out;opacity:0;transition:opacity .2s';
+        overlay.onclick = () => { overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 200); };
+        const img = document.createElement('img');
+        img.id = 'cow-lightbox-img';
+        img.style.cssText = 'max-width:92vw;max-height:92vh;border-radius:8px;box-shadow:0 4px 24px rgba(0,0,0,0.5);object-fit:contain;';
+        img.onclick = (e) => e.stopPropagation();
+        overlay.appendChild(img);
+        document.body.appendChild(overlay);
+    }
+    overlay.querySelector('#cow-lightbox-img').src = src;
+    overlay.style.display = 'flex';
+    requestAnimationFrame(() => overlay.style.opacity = '1');
+}
+
 function _buildImageHtml(url) {
-    const safeUrl = url.replace(/"/g, '&quot;');
+    const webUrl = _toWebUrl(url);
+    const safeUrl = webUrl.replace(/"/g, '&quot;');
     return `<div style="margin:10px 0;">` +
         `<img src="${safeUrl}" alt="image" loading="lazy" ` +
-        `onclick="window.open('${safeUrl}','_blank')" ` +
-        `style="max-width:600px;width:100%;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.15);display:block;cursor:pointer;">` +
+        `onclick="_openImageLightbox(this.src)" ` +
+        `style="max-width:520px;width:100%;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.15);display:block;cursor:zoom-in;">` +
         `</div>`;
 }
 
@@ -400,9 +480,20 @@ function injectImagePreviews(html) {
     }).join('');
 }
 
+function _rewriteLocalImgSrc(html) {
+    return html.replace(/<img\s([^>]*?)src="([^"]+)"([^>]*?)>/gi, (match, pre, src, post) => {
+        const webSrc = _toWebUrl(src);
+        const safeSrc = webSrc.replace(/"/g, '&quot;');
+        const hasClick = /onclick/i.test(pre + post);
+        const clickAttr = hasClick ? '' : ` onclick="_openImageLightbox(this.src)" style="cursor:zoom-in;"`;
+        return `<img ${pre}src="${safeSrc}"${post}${clickAttr}>`;
+    });
+}
+
 function renderMarkdown(text) {
     try {
-        const html = md.render(text);
+        let html = md.render(text);
+        html = _rewriteLocalImgSrc(html);
         // Order matters: video first (more specific), then image.
         return injectImagePreviews(injectVideoPlayers(html));
     }
@@ -1166,8 +1257,8 @@ function startSSE(requestId, loadingEl, timestamp, titleInfo) {
                 const imgEl = document.createElement('img');
                 imgEl.src = item.content;
                 imgEl.alt = 'screenshot';
-                imgEl.style.cssText = 'max-width:600px;border-radius:8px;margin:8px 0;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,0.1);';
-                imgEl.onclick = () => window.open(item.content, '_blank');
+                imgEl.style.cssText = 'max-width:600px;border-radius:8px;margin:8px 0;cursor:zoom-in;box-shadow:0 1px 4px rgba(0,0,0,0.1);';
+                imgEl.onclick = () => _openImageLightbox(imgEl.src);
                 mediaEl.appendChild(imgEl);
                 scrollChatToBottom();
 
@@ -1471,9 +1562,38 @@ function renderStepsHtml(steps) {
         </div>` : ''}
     </div>
 </div>`;
+            // If this tool sent a file (send/read tool), render the media inline
+            // so it persists across page refreshes (SSE-only file events are not stored).
+            const mediaHtml = _renderSentFileFromToolResult(step);
+            if (mediaHtml) html += mediaHtml;
         }
     }
     return { stepsHtml: html, lastContentText };
+}
+
+// Extract file-to-send metadata from a tool's result and render an inline preview.
+// Returns '' if the result isn't a file_to_send payload.
+function _renderSentFileFromToolResult(step) {
+    if (!step || !step.result) return '';
+    let payload;
+    try {
+        payload = typeof step.result === 'string' ? JSON.parse(step.result) : step.result;
+    } catch (_) { return ''; }
+    if (!payload || payload.type !== 'file_to_send' || !payload.path) return '';
+    const webUrl = _toWebUrl(payload.path);
+    const fileType = payload.file_type || 'file';
+    const fileName = payload.file_name || payload.path.split('/').pop();
+    if (fileType === 'image') {
+        return `<div class="agent-step">${_buildImageHtml(webUrl)}</div>`;
+    }
+    if (fileType === 'video') {
+        return `<div class="agent-step">${_buildVideoHtml(webUrl)}</div>`;
+    }
+    return `<div class="agent-step"><a href="${webUrl}" download="${escapeHtml(fileName)}" target="_blank" ` +
+        `style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;margin:8px 0;border-radius:8px;` +
+        `background:var(--bg-secondary,#f3f4f6);color:var(--text-primary,#374151);text-decoration:none;font-size:14px;` +
+        `border:1px solid var(--border-color,#e5e7eb);">` +
+        `<i class="fas fa-file-download" style="color:#6b7280;"></i> ${escapeHtml(fileName)}</a></div>`;
 }
 
 function createBotMessageEl(content, timestamp, requestId, msg) {

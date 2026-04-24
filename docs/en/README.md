@@ -28,7 +28,7 @@
 - ✅ **Tool System**: Built-in tools for file I/O, terminal execution, browser automation, scheduled tasks, messaging, and more — autonomously invoked by the Agent.
 - ✅ **CLI System**: Provides terminal commands and in-chat commands for process management, skill installation, configuration, and more.
 - ✅ **Multimodal Messages**: Supports parsing, processing, generating, and sending text, images, voice, files, and other message types.
-- ✅ **Multiple Model Support**: Supports OpenAI, Claude, Gemini, DeepSeek, MiniMax, GLM, Qwen, Kimi, Doubao, and other mainstream model providers.
+- ✅ **Multiple Model Support**: Supports MiniMax, DeepSeek, Claude, Gemini, OpenAI, GLM, Qwen, Doubao, Kimi, and other mainstream model providers.
 - ✅ **Multi-platform Deployment**: Runs on local computers or servers, integrable into WeChat, Web, Feishu, DingTalk, WeChat Official Account, and WeCom applications.
 
 ## Disclaimer
@@ -165,14 +165,14 @@ Supports mainstream model providers. Recommended models for Agent mode:
 | Provider | Recommended Model |
 | --- | --- |
 | MiniMax | `MiniMax-M2.7` |
-| GLM | `glm-5-turbo` |
-| Kimi | `kimi-k2.5` |
-| Doubao | `doubao-seed-2-0-code-preview-260215` |
-| Qwen | `qwen3.6-plus` |
+| DeepSeek | `deepseek-v4-pro` |
 | Claude | `claude-sonnet-4-6` |
 | Gemini | `gemini-3.1-pro-preview` |
 | OpenAI | `gpt-5.4` |
-| DeepSeek | `deepseek-chat` |
+| GLM | `glm-5.1` |
+| Qwen | `qwen3.6-plus` |
+| Doubao | `doubao-seed-2-0-code-preview-260215` |
+| Kimi | `kimi-k2.6` |
 
 For detailed configuration of each model, see the [Models documentation](https://docs.cowagent.ai/en/models/index).
 

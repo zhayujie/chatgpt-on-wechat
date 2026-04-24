@@ -170,8 +170,8 @@ function Install-Dependencies {
 # ── model selection ──────────────────────────────────────────────
 $ModelChoices = @{
     "1" = @{ Provider = "MiniMax";                  Default = "MiniMax-M2.7";                           Key = "MINIMAX_KEY" }
-    "2" = @{ Provider = "Zhipu AI";                 Default = "glm-5-turbo";                            Key = "ZHIPU_KEY" }
-    "3" = @{ Provider = "Kimi (Moonshot)";          Default = "kimi-k2.5";                              Key = "MOONSHOT_KEY" }
+    "2" = @{ Provider = "Zhipu AI";                 Default = "glm-5.1";                                Key = "ZHIPU_KEY" }
+    "3" = @{ Provider = "Kimi (Moonshot)";          Default = "kimi-k2.6";                              Key = "MOONSHOT_KEY" }
     "4" = @{ Provider = "Doubao (Volcengine Ark)";  Default = "doubao-seed-2-0-code-preview-260215";    Key = "ARK_KEY" }
     "5" = @{ Provider = "Qwen (DashScope)";         Default = "qwen3.6-plus";                           Key = "DASHSCOPE_KEY" }
     "6" = @{ Provider = "Claude";                   Default = "claude-sonnet-4-6";                      Key = "CLAUDE_KEY";  Base = "https://api.anthropic.com/v1" }
@@ -185,8 +185,8 @@ function Select-Model {
     Write-Info "   Select AI Model"
     Write-Info "========================================="
     Write-Host "1) MiniMax (MiniMax-M2.7, MiniMax-M2.5, etc.)"
-    Write-Host "2) Zhipu AI (glm-5-turbo, glm-5, etc.)"
-    Write-Host "3) Kimi (kimi-k2.5, kimi-k2, etc.)"
+    Write-Host "2) Zhipu AI (glm-5.1, glm-5-turbo, glm-5, etc.)"
+    Write-Host "3) Kimi (kimi-k2.6, kimi-k2.5, kimi-k2, etc.)"
     Write-Host "4) Doubao (doubao-seed-2-0-code-preview-260215, etc.)"
     Write-Host "5) Qwen (qwen3.6-plus, qwen3.5-plus, qwen3-max, qwq-plus, etc.)"
     Write-Host "6) Claude (claude-sonnet-4-6, claude-opus-4-6, etc.)"

@@ -99,27 +99,6 @@ description: Coding Plan 模式模型配置
 
 ---
 
-## Kimi
-
-```json
-{
-  "bot_type": "openai",
-  "model": "kimi-for-coding",
-  "open_ai_api_base": "https://api.kimi.com/coding/v1",
-  "open_ai_api_key": "YOUR_API_KEY"
-}
-```
-
-| 参数 | 说明 |
-| --- | --- |
-| `model` | `kimi-for-coding` |
-| `open_ai_api_base` | `https://api.kimi.com/coding/v1` |
-| `open_ai_api_key` | Coding Plan 专用 Key（与按量计费接口不通用） |
-
-官方文档：[Key 获取](https://www.kimi.com/code/docs/)
-
----
-
 ## 火山引擎
 
 ```json
@@ -138,3 +117,24 @@ description: Coding Plan 模式模型配置
 | `open_ai_api_key` | API Key 与普通接口通用 |
 
 官方文档：[快速开始](https://www.volcengine.com/docs/82379/1928261?lang=zh)
+
+---
+
+## Kimi
+
+```json
+{
+  "bot_type": "moonshot",
+  "model": "kimi-for-coding",
+  "moonshot_base_url": "https://api.kimi.com/coding/v1",
+  "moonshot_api_key": "YOUR_API_KEY"
+}
+```
+
+| 参数 | 说明 |
+| --- | --- |
+| `model` | 填写 `kimi-for-coding` 会自动更新模型，或指定模型例如 `kimi-k2.6` |
+| `moonshot_base_url` | `https://api.kimi.com/coding/v1` |
+| `moonshot_api_key` | Coding Plan 专用 Key（与按量计费接口不通用） |
+
+官方文档：[Key 获取](https://www.kimi.com/code/docs/)

@@ -102,18 +102,18 @@ description: Coding Planモデルの設定
 
 ```json
 {
-  "bot_type": "openai",
+  "bot_type": "moonshot",
   "model": "kimi-for-coding",
-  "open_ai_api_base": "https://api.kimi.com/coding/v1",
-  "open_ai_api_key": "YOUR_API_KEY"
+  "moonshot_base_url": "https://api.kimi.com/coding/v1",
+  "moonshot_api_key": "YOUR_API_KEY"
 }
 ```
 
 | パラメータ | 説明 |
 | --- | --- |
-| `model` | `kimi-for-coding` |
-| `open_ai_api_base` | `https://api.kimi.com/coding/v1` |
-| `open_ai_api_key` | Coding Plan専用キー（従量課金とは共有不可） |
+| `model` | `kimi-for-coding`で自動更新モデル、または`kimi-k2.6`などのモデルを指定 |
+| `moonshot_base_url` | `https://api.kimi.com/coding/v1` |
+| `moonshot_api_key` | Coding Plan専用キー（従量課金とは共有不可） |
 
 参考: [キー & ドキュメント](https://www.kimi.com/code/docs/)
 
