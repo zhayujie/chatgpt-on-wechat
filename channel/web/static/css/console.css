@@ -1068,12 +1068,10 @@
 }
 .cfg-tip:hover { color: #64748b; }
 .dark .cfg-tip:hover { color: #cbd5e1; }
-.cfg-tip::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    left: 50%;
-    bottom: calc(100% + 6px);
-    transform: translateX(-50%);
+/* Floating tooltip portal — appended to <body> by JS so it isn't clipped
+   by overflow:hidden ancestors. */
+.cfg-tip-floating {
+    position: fixed;
     padding: 6px 10px;
     border-radius: 8px;
     font-size: 12px;
@@ -1086,13 +1084,13 @@
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.15s;
-    z-index: 50;
+    z-index: 9999;
 }
-.dark .cfg-tip::after {
+.dark .cfg-tip-floating {
     background: #334155;
     color: #f1f5f9;
 }
-.cfg-tip:hover::after {
+.cfg-tip-floating.show {
     opacity: 1;
 }
 

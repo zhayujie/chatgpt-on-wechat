@@ -38,7 +38,7 @@ const I18N = {
         config_max_tokens: '最大上下文 Token', config_max_tokens_hint: '对话中 Agent 能输入的最大 Token 长度，超过后会智能压缩处理',
         config_max_turns: '最大记忆轮次', config_max_turns_hint: '一问一答为一轮，超过后会智能压缩处理',
         config_max_steps: '最大执行步数', config_max_steps_hint: '单次对话中 Agent 最多调用工具的次数',
-        config_enable_thinking: '深度思考', config_enable_thinking_hint: '启用后在 Web 端展示模型推理过程',
+        config_enable_thinking: '深度思考', config_enable_thinking_hint: '开启后模型启用思考模式，回答质量更高但首字延迟增加，Web 端可展示思考过程',
         config_channel_type: '通道类型',
         config_provider: '模型厂商', config_model_name: '模型',
         config_custom_model_hint: '输入自定义模型名称',
@@ -124,7 +124,7 @@ const I18N = {
         config_max_tokens: 'Max Context Tokens', config_max_tokens_hint: 'Max tokens the Agent can input per conversation, auto-compressed when exceeded',
         config_max_turns: 'Max Memory Turns', config_max_turns_hint: 'One Q&A pair = one turn, auto-compressed when exceeded',
         config_max_steps: 'Max Steps', config_max_steps_hint: 'Max tool calls the Agent can make in a single conversation',
-        config_enable_thinking: 'Deep Thinking', config_enable_thinking_hint: 'Show model reasoning on web console',
+        config_enable_thinking: 'Deep Thinking', config_enable_thinking_hint: 'Model reasons before answering for higher quality at the cost of first-token latency. Web console shows the reasoning trace.',
         config_channel_type: 'Channel Type',
         config_provider: 'Provider', config_model_name: 'Model',
         config_custom_model_hint: 'Enter custom model name',
@@ -204,6 +204,7 @@ function applyI18n() {
     document.querySelectorAll('[data-tip-key]').forEach(el => {
         el.setAttribute('data-tooltip', t(el.dataset.tipKey));
     });
+    installCfgTipPortal();
     const langLabel = document.getElementById('lang-label');
     if (langLabel) langLabel.textContent = currentLang === 'zh' ? '中文' : 'EN';
 }
@@ -213,6 +214,54 @@ function toggleLanguage() {
     localStorage.setItem('cow_lang', currentLang);
     applyI18n();
     _applyInputTooltips();
+}
+
+// Floating tooltip portal for [data-tip-key] elements. Tooltip nodes are
+// appended to <body> so they aren't clipped by overflow:hidden ancestors
+// (e.g. the config panel's scroll container).
+let _cfgTipPortalEl = null;
+let _cfgTipPortalInstalled = false;
+function installCfgTipPortal() {
+    if (_cfgTipPortalInstalled) return;
+    _cfgTipPortalInstalled = true;
+
+    const showTip = (target) => {
+        const text = target.getAttribute('data-tooltip');
+        if (!text) return;
+        if (!_cfgTipPortalEl) {
+            _cfgTipPortalEl = document.createElement('div');
+            _cfgTipPortalEl.className = 'cfg-tip-floating';
+            document.body.appendChild(_cfgTipPortalEl);
+        }
+        _cfgTipPortalEl.textContent = text;
+        const rect = target.getBoundingClientRect();
+        // Render once to measure, then position above the target, centered.
+        _cfgTipPortalEl.style.left = '0px';
+        _cfgTipPortalEl.style.top = '0px';
+        _cfgTipPortalEl.classList.add('show');
+        const tipRect = _cfgTipPortalEl.getBoundingClientRect();
+        let left = rect.left + rect.width / 2 - tipRect.width / 2;
+        // Clamp horizontally to the viewport with an 8px gutter.
+        left = Math.max(8, Math.min(left, window.innerWidth - tipRect.width - 8));
+        const top = rect.top - tipRect.height - 6;
+        _cfgTipPortalEl.style.left = left + 'px';
+        _cfgTipPortalEl.style.top = top + 'px';
+    };
+    const hideTip = () => {
+        if (_cfgTipPortalEl) _cfgTipPortalEl.classList.remove('show');
+    };
+
+    document.addEventListener('mouseover', (e) => {
+        const target = e.target.closest('[data-tip-key]');
+        if (target) showTip(target);
+    });
+    document.addEventListener('mouseout', (e) => {
+        const target = e.target.closest('[data-tip-key]');
+        if (target) hideTip();
+    });
+    // Hide on scroll/resize so the tooltip doesn't drift away from its anchor.
+    window.addEventListener('scroll', hideTip, true);
+    window.addEventListener('resize', hideTip);
 }
 
 // =====================================================================
