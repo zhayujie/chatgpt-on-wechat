@@ -208,7 +208,7 @@ cow install-browser
   "agent_max_context_tokens": 50000,                          # Agent 模式下最大上下文 tokens，超出将自动智能压缩处理
   "agent_max_context_turns": 20,                              # Agent 模式下最大上下文记忆轮次，一问一答为一轮，超出后智能压缩处理
   "agent_max_steps": 20,                                      # Agent 模式下单次任务的最大决策步数，超出后将停止继续调用工具
-  "enable_thinking": false                                    # 是否启用深度思考模式（适用于 deepseek-v4-pro/flash、deepseek-reasoner、kimi-k2-thinking 等思考型模型）。开启后模型在出最终回答前先进行推理，回答质量更高但首字延迟增加；Web 端会展示思考过程，IM 渠道（微信/企微/钉钉/飞书）虽不展示但同样获得更好答案
+  "enable_thinking": false                                    # 是否启用深度思考模式
 }
 ```
 

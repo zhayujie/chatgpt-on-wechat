@@ -204,7 +204,7 @@ available_setting = {
     "agent_max_context_tokens": 50000,  # Agent模式下最大上下文tokens
     "agent_max_context_turns": 20,  # Agent模式下最大上下文记忆轮次
     "agent_max_steps": 20,  # Agent模式下单次运行最大决策步数
-    "enable_thinking": False,  # Toggle deep-thinking mode for thinking-capable models (e.g. deepseek-v4-pro/flash, deepseek-reasoner, kimi-k2-thinking). When enabled, the model produces a reasoning trace before the final answer; the Web console renders it in a collapsible panel, while IM channels (WeChat/WeCom/DingTalk/Feishu) still benefit from the improved answer quality but do not display the trace. Note: enabling thinking increases first-token latency.
+    "enable_thinking": False,  # Enable deep-thinking mode for thinking-capable models
     "knowledge": True,  # 是否开启知识库功能
     # Per-skill runtime config. Nested keys are flattened to env vars at startup
     # using the rule: skill[<name>][<key>] -> SKILL_<NAME>_<KEY>

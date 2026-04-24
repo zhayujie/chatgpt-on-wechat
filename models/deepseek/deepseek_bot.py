@@ -477,12 +477,33 @@ class DeepSeekBot(Bot, OpenAICompatibleBot):
         """
         Convert Claude-format messages (content blocks) to OpenAI format.
 
-        Crucially, for any assistant turn with tool_use, the accompanying `thinking`
-        block must be re-emitted as `reasoning_content` — DeepSeek returns 400 if
-        omitted on tool-call rounds.
+        Crucially, once any assistant turn in the history triggered a tool
+        call, DeepSeek requires `reasoning_content` on **every subsequent
+        assistant message** (not just the tool-call one) until the next user
+        turn — and in fact the API enforces this for the whole history when
+        thinking mode is enabled. Missing `reasoning_content` on any
+        assistant message returns 400. We back-fill an empty string when the
+        trace was not captured (e.g. history recorded while thinking was
+        disabled, or upstream proxy stripped the field).
         """
         if not messages:
             return []
+
+        # Determine whether the history contains any tool-call assistant turn.
+        # If so, every assistant message must carry `reasoning_content`.
+        has_tool_call_history = False
+        for msg in messages:
+            if msg.get("role") != "assistant":
+                continue
+            if msg.get("tool_calls"):
+                has_tool_call_history = True
+                break
+            content = msg.get("content")
+            if isinstance(content, list) and any(
+                isinstance(b, dict) and b.get("type") == "tool_use" for b in content
+            ):
+                has_tool_call_history = True
+                break
 
         converted = []
 
@@ -490,12 +511,21 @@ class DeepSeekBot(Bot, OpenAICompatibleBot):
             role = msg.get("role")
             content = msg.get("content")
 
-            if isinstance(content, str):
-                converted.append(msg)
-                continue
-
+            # Pass-through path for non-list content (e.g. plain string).
+            # Back-fill `reasoning_content` on assistant messages whenever the
+            # history contains any tool-call turn.
             if not isinstance(content, list):
-                converted.append(msg)
+                if (
+                    role == "assistant"
+                    and isinstance(msg, dict)
+                    and has_tool_call_history
+                    and "reasoning_content" not in msg
+                ):
+                    patched = dict(msg)
+                    patched["reasoning_content"] = ""
+                    converted.append(patched)
+                else:
+                    converted.append(msg)
                 continue
 
             if role == "user":
@@ -563,10 +593,15 @@ class DeepSeekBot(Bot, OpenAICompatibleBot):
                     if not text_parts:
                         openai_msg["content"] = None
 
-                # Round-trip reasoning_content: required for tool-call turns,
-                # harmless (server-ignored) for plain text turns.
+                # Round-trip reasoning_content: required for every assistant
+                # message once the history contains any tool-call turn (see
+                # outer comment). Use empty string as fallback when the trace
+                # was not captured — DeepSeek validates field presence, not
+                # value; non-thinking backends silently ignore it.
                 if reasoning_parts:
                     openai_msg["reasoning_content"] = "\n".join(reasoning_parts)
+                elif has_tool_call_history:
+                    openai_msg["reasoning_content"] = ""
 
                 converted.append(openai_msg)
             else:
