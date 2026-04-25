@@ -13,6 +13,8 @@ import os
 from datetime import datetime
 from typing import Dict, List, Optional
 from pathlib import Path
+from agent.memory.config import MemoryConfig
+from agent.memory.manager import MemoryManager
 from common.log import logger
 
 
@@ -28,6 +30,14 @@ class MemoryService:
         """
         self.workspace_root = workspace_root
         self.memory_dir = os.path.join(workspace_root, "memory")
+        self._memory_manager: Optional[MemoryManager] = None
+
+    @property
+    def memory_manager(self) -> MemoryManager:
+        """Lazy-init memory manager for index maintenance."""
+        if self._memory_manager is None:
+            self._memory_manager = MemoryManager(MemoryConfig(workspace_root=self.workspace_root))
+        return self._memory_manager
 
     # ------------------------------------------------------------------
     # list — paginated file metadata
@@ -117,6 +127,32 @@ class MemoryService:
             "content": content,
         }
 
+    def delete_file(self, filename: str, category: str = "memory") -> dict:
+        """
+        Delete a memory/dream file. MEMORY.md is truncated instead of removed.
+        """
+        path = self._resolve_path(filename, category)
+        if not os.path.isfile(path):
+            raise FileNotFoundError(f"Memory file not found: {filename}")
+
+        rel_path = self._to_workspace_relative(path)
+        if filename == "MEMORY.md":
+            with open(path, "w", encoding="utf-8") as f:
+                f.write("")
+            action = "cleared"
+        else:
+            os.remove(path)
+            action = "deleted"
+
+        self.memory_manager.storage.delete_by_path(rel_path)
+        self.memory_manager.storage.delete_file_record(rel_path)
+
+        return {
+            "filename": filename,
+            "path": rel_path,
+            "action": action,
+        }
+
     # ------------------------------------------------------------------
     # dispatch — single entry point for protocol messages
     # ------------------------------------------------------------------
@@ -143,6 +179,14 @@ class MemoryService:
                     return {"action": action, "code": 400, "message": "filename is required", "payload": None}
                 category = payload.get("category", "memory")
                 result_payload = self.get_content(filename, category=category)
+                return {"action": action, "code": 200, "message": "success", "payload": result_payload}
+
+            elif action == "delete":
+                filename = payload.get("filename")
+                if not filename:
+                    return {"action": action, "code": 400, "message": "filename is required", "payload": None}
+                category = payload.get("category", "memory")
+                result_payload = self.delete_file(filename, category=category)
                 return {"action": action, "code": 200, "message": "success", "payload": result_payload}
 
             else:
@@ -195,3 +239,6 @@ class MemoryService:
             "size": stat.st_size,
             "updated_at": updated_at,
         }
+
+    def _to_workspace_relative(self, path: str) -> str:
+        return str(Path(path).resolve().relative_to(Path(self.workspace_root).resolve())).replace("\\", "/")

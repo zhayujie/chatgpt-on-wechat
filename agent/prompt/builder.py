@@ -220,6 +220,16 @@ def _build_tooling_section(tools: List[Any], language: str) -> List[str]:
         "",
     ]
 
+    lines.extend([
+        "### RAG Retrieval Rules",
+        "",
+        "- For knowledge-base questions, do not stop after reading the first matching document.",
+        "- If `memory_search` returns multiple relevant knowledge files, you must inspect at least the top 2 distinct files with `memory_get` before answering.",
+        "- If the result list includes complementary documents such as a manual, checklist, FAQ, issue list, troubleshooting guide, or spec, compare them and synthesize the answer across sources.",
+        "- In the final answer, cite every source you actually relied on. Do not claim coverage from a single file when multiple relevant files were found.",
+        "",
+    ])
+
     return lines
 
 

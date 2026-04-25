@@ -726,6 +726,13 @@
                                     </button>
                                     <h2 id="memory-viewer-title"
                                         class="text-base font-semibold text-slate-800 dark:text-slate-100 font-mono truncate"></h2>
+                                    <button id="memory-delete-btn" onclick="deleteCurrentMemoryFile()"
+                                            class="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm
+                                                   text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20
+                                                   border border-red-200 dark:border-red-500/20 transition-colors cursor-pointer">
+                                        <i class="fas fa-trash text-xs"></i>
+                                        <span>Delete</span>
+                                    </button>
                                 </div>
                                 <div class="bg-white dark:bg-[#1A1A1A] rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden">
                                     <div id="memory-viewer-content"
@@ -753,6 +760,20 @@
                                 </div>
                                 <div class="flex items-center gap-2">
                                     <span id="knowledge-stats" class="text-xs text-slate-400 dark:text-slate-500 hidden sm:inline"></span>
+                                    <button onclick="createKnowledgePage()"
+                                            class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10
+                                                   text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5
+                                                   cursor-pointer transition-colors duration-150">
+                                        <i class="fas fa-plus text-[10px]"></i>
+                                        <span>Create</span>
+                                    </button>
+                                    <button onclick="reindexKnowledgeImports()"
+                                            class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10
+                                                   text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5
+                                                   cursor-pointer transition-colors duration-150">
+                                        <i class="fas fa-rotate text-[10px]"></i>
+                                        <span>重建导入索引</span>
+                                    </button>
                                     <div class="flex items-center bg-slate-100 dark:bg-white/10 rounded-lg p-0.5">
                                         <button id="knowledge-tab-docs" onclick="switchKnowledgeTab('docs')"
                                                 class="knowledge-tab px-3 py-1.5 rounded-md text-xs font-medium cursor-pointer transition-colors duration-150 active">
@@ -816,10 +837,32 @@
                                                     </button>
                                                     <i class="fas fa-file-lines text-slate-400 text-sm hidden md:inline"></i>
                                                     <span id="knowledge-viewer-title" class="text-sm font-medium text-slate-700 dark:text-slate-200 truncate"></span>
-                                                    <span id="knowledge-viewer-path" class="text-xs text-slate-400 dark:text-slate-500 ml-auto font-mono truncate hidden md:inline"></span>
+                                                    <button id="knowledge-delete-btn" onclick="deleteCurrentKnowledgeFile()"
+                                                            class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px]
+                                                                   text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20
+                                                                   border border-red-200 dark:border-red-500/20 transition-colors cursor-pointer">
+                                                        <i class="fas fa-trash text-[10px]"></i>
+                                                        <span>Delete</span>
+                                                    </button>
+                                                    <div class="ml-auto flex items-center gap-2">
+                                                        <div class="flex items-center bg-slate-100 dark:bg-white/10 rounded-lg p-0.5">
+                                                            <button id="knowledge-view-tab-content" onclick="switchKnowledgeViewerTab('content')"
+                                                                    class="knowledge-view-tab px-2.5 py-1 rounded-md text-[11px] font-medium cursor-pointer transition-colors duration-150 active bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm">
+                                                                内容
+                                                            </button>
+                                                            <button id="knowledge-view-tab-chunks" onclick="switchKnowledgeViewerTab('chunks')"
+                                                                    class="knowledge-view-tab px-2.5 py-1 rounded-md text-[11px] font-medium cursor-pointer transition-colors duration-150 text-slate-500 dark:text-slate-400">
+                                                                RAG切片
+                                                            </button>
+                                                        </div>
+                                                        <span id="knowledge-viewer-path" class="text-xs text-slate-400 dark:text-slate-500 font-mono truncate hidden md:inline max-w-[280px]"></span>
+                                                    </div>
                                                 </div>
                                                 <div id="knowledge-viewer-body"
                                                      class="p-4 md:p-5 overflow-y-auto text-sm msg-content text-slate-700 dark:text-slate-200"
+                                                     style="max-height: calc(100vh - 280px)"></div>
+                                                <div id="knowledge-viewer-chunks"
+                                                     class="hidden p-4 md:p-5 overflow-y-auto"
                                                      style="max-height: calc(100vh - 280px)"></div>
                                             </div>
                                         </div>

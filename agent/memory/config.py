@@ -47,6 +47,8 @@ class MemoryConfig:
     # Sync config
     enable_auto_sync: bool = True
     sync_on_search: bool = True
+    imports_watch_enabled: bool = True
+    imports_watch_interval_sec: int = 10
     
     
     def get_workspace(self) -> Path:

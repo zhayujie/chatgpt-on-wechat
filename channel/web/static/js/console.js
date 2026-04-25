@@ -38,7 +38,7 @@ const I18N = {
         config_max_tokens: '最大上下文 Token', config_max_tokens_hint: '对话中 Agent 能输入的最大 Token 长度，超过后会智能压缩处理',
         config_max_turns: '最大记忆轮次', config_max_turns_hint: '一问一答为一轮，超过后会智能压缩处理',
         config_max_steps: '最大执行步数', config_max_steps_hint: '单次对话中 Agent 最多调用工具的次数',
-        config_enable_thinking: '深度思考', config_enable_thinking_hint: '是否启用深度思考模式',
+        config_enable_thinking: '深度思考', config_enable_thinking_hint: '启用后在 Web 端展示模型推理过程',
         config_channel_type: '通道类型',
         config_provider: '模型厂商', config_model_name: '模型',
         config_custom_model_hint: '输入自定义模型名称',
@@ -124,7 +124,7 @@ const I18N = {
         config_max_tokens: 'Max Context Tokens', config_max_tokens_hint: 'Max tokens the Agent can input per conversation, auto-compressed when exceeded',
         config_max_turns: 'Max Memory Turns', config_max_turns_hint: 'One Q&A pair = one turn, auto-compressed when exceeded',
         config_max_steps: 'Max Steps', config_max_steps_hint: 'Max tool calls the Agent can make in a single conversation',
-        config_enable_thinking: 'Deep Thinking', config_enable_thinking_hint: 'Enable deep thinking mode',
+        config_enable_thinking: 'Deep Thinking', config_enable_thinking_hint: 'Show model reasoning on web console',
         config_channel_type: 'Channel Type',
         config_provider: 'Provider', config_model_name: 'Model',
         config_custom_model_hint: 'Enter custom model name',
@@ -204,7 +204,6 @@ function applyI18n() {
     document.querySelectorAll('[data-tip-key]').forEach(el => {
         el.setAttribute('data-tooltip', t(el.dataset.tipKey));
     });
-    installCfgTipPortal();
     const langLabel = document.getElementById('lang-label');
     if (langLabel) langLabel.textContent = currentLang === 'zh' ? '中文' : 'EN';
 }
@@ -214,54 +213,6 @@ function toggleLanguage() {
     localStorage.setItem('cow_lang', currentLang);
     applyI18n();
     _applyInputTooltips();
-}
-
-// Floating tooltip portal for [data-tip-key] elements. Tooltip nodes are
-// appended to <body> so they aren't clipped by overflow:hidden ancestors
-// (e.g. the config panel's scroll container).
-let _cfgTipPortalEl = null;
-let _cfgTipPortalInstalled = false;
-function installCfgTipPortal() {
-    if (_cfgTipPortalInstalled) return;
-    _cfgTipPortalInstalled = true;
-
-    const showTip = (target) => {
-        const text = target.getAttribute('data-tooltip');
-        if (!text) return;
-        if (!_cfgTipPortalEl) {
-            _cfgTipPortalEl = document.createElement('div');
-            _cfgTipPortalEl.className = 'cfg-tip-floating';
-            document.body.appendChild(_cfgTipPortalEl);
-        }
-        _cfgTipPortalEl.textContent = text;
-        const rect = target.getBoundingClientRect();
-        // Render once to measure, then position above the target, centered.
-        _cfgTipPortalEl.style.left = '0px';
-        _cfgTipPortalEl.style.top = '0px';
-        _cfgTipPortalEl.classList.add('show');
-        const tipRect = _cfgTipPortalEl.getBoundingClientRect();
-        let left = rect.left + rect.width / 2 - tipRect.width / 2;
-        // Clamp horizontally to the viewport with an 8px gutter.
-        left = Math.max(8, Math.min(left, window.innerWidth - tipRect.width - 8));
-        const top = rect.top - tipRect.height - 6;
-        _cfgTipPortalEl.style.left = left + 'px';
-        _cfgTipPortalEl.style.top = top + 'px';
-    };
-    const hideTip = () => {
-        if (_cfgTipPortalEl) _cfgTipPortalEl.classList.remove('show');
-    };
-
-    document.addEventListener('mouseover', (e) => {
-        const target = e.target.closest('[data-tip-key]');
-        if (target) showTip(target);
-    });
-    document.addEventListener('mouseout', (e) => {
-        const target = e.target.closest('[data-tip-key]');
-        if (target) hideTip();
-    });
-    // Hide on scroll/resize so the tooltip doesn't drift away from its anchor.
-    window.addEventListener('scroll', hideTip, true);
-    window.addEventListener('resize', hideTip);
 }
 
 // =====================================================================
@@ -412,32 +363,13 @@ function _buildVideoHtml(url) {
         `<i class="fas fa-download"></i> ${escapeHtml(fileName)}</a></div>`;
 }
 
-function _openImageLightbox(src) {
-    let overlay = document.getElementById('cow-lightbox');
-    if (!overlay) {
-        overlay = document.createElement('div');
-        overlay.id = 'cow-lightbox';
-        overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;cursor:zoom-out;opacity:0;transition:opacity .2s';
-        overlay.onclick = () => { overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 200); };
-        const img = document.createElement('img');
-        img.id = 'cow-lightbox-img';
-        img.style.cssText = 'max-width:92vw;max-height:92vh;border-radius:8px;box-shadow:0 4px 24px rgba(0,0,0,0.5);object-fit:contain;';
-        img.onclick = (e) => e.stopPropagation();
-        overlay.appendChild(img);
-        document.body.appendChild(overlay);
-    }
-    overlay.querySelector('#cow-lightbox-img').src = src;
-    overlay.style.display = 'flex';
-    requestAnimationFrame(() => overlay.style.opacity = '1');
-}
-
 function _buildImageHtml(url) {
     const webUrl = _toWebUrl(url);
     const safeUrl = webUrl.replace(/"/g, '&quot;');
     return `<div style="margin:10px 0;">` +
         `<img src="${safeUrl}" alt="image" loading="lazy" ` +
-        `onclick="_openImageLightbox(this.src)" ` +
-        `style="max-width:520px;width:100%;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.15);display:block;cursor:zoom-in;">` +
+        `onclick="window.open('${safeUrl}','_blank')" ` +
+        `style="max-width:520px;width:100%;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.15);display:block;cursor:pointer;">` +
         `</div>`;
 }
 
@@ -481,12 +413,12 @@ function injectImagePreviews(html) {
 }
 
 function _rewriteLocalImgSrc(html) {
-    return html.replace(/<img\s([^>]*?)src="([^"]+)"([^>]*?)>/gi, (match, pre, src, post) => {
+    return html.replace(/<img\s([^>]*?)src="([^"]+)"/gi, (match, pre, src) => {
         const webSrc = _toWebUrl(src);
-        const safeSrc = webSrc.replace(/"/g, '&quot;');
-        const hasClick = /onclick/i.test(pre + post);
-        const clickAttr = hasClick ? '' : ` onclick="_openImageLightbox(this.src)" style="cursor:zoom-in;"`;
-        return `<img ${pre}src="${safeSrc}"${post}${clickAttr}>`;
+        if (webSrc !== src) {
+            return `<img ${pre}src="${webSrc.replace(/"/g, '&quot;')}"`;
+        }
+        return match;
     });
 }
 
@@ -1257,8 +1189,8 @@ function startSSE(requestId, loadingEl, timestamp, titleInfo) {
                 const imgEl = document.createElement('img');
                 imgEl.src = item.content;
                 imgEl.alt = 'screenshot';
-                imgEl.style.cssText = 'max-width:600px;border-radius:8px;margin:8px 0;cursor:zoom-in;box-shadow:0 1px 4px rgba(0,0,0,0.1);';
-                imgEl.onclick = () => _openImageLightbox(imgEl.src);
+                imgEl.style.cssText = 'max-width:600px;border-radius:8px;margin:8px 0;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,0.1);';
+                imgEl.onclick = () => window.open(item.content, '_blank');
                 mediaEl.appendChild(imgEl);
                 scrollChatToBottom();
 
@@ -2827,6 +2759,8 @@ function toggleSkill(name, currentlyEnabled) {
 let memoryPage = 1;
 let memoryCategory = 'memory';   // 'memory' | 'dream'
 const memoryPageSize = 10;
+let _memoryCurrentFile = null;
+let _memoryCurrentCategory = 'memory';
 
 function switchMemoryTab(tab) {
     document.querySelectorAll('.memory-tab').forEach(el => el.classList.remove('active'));
@@ -2881,7 +2815,14 @@ function loadMemoryView(page) {
                 <td class="px-4 py-3 text-sm font-mono text-slate-700 dark:text-slate-200">${escapeHtml(f.filename)}</td>
                 <td class="px-4 py-3 text-sm">${typeLabel}</td>
                 <td class="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">${sizeStr}</td>
-                <td class="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">${escapeHtml(f.updated_at)}</td>`;
+                <td class="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">${escapeHtml(f.updated_at)}</td>
+                <td class="px-4 py-3 text-right">
+                    <button onclick='event.stopPropagation(); deleteMemoryFile(${JSON.stringify(f.filename)}, ${JSON.stringify(memoryCategory)})'
+                            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 border border-red-200 dark:border-red-500/20 transition-colors cursor-pointer">
+                        <i class="fas fa-trash text-[10px]"></i>
+                        <span>Delete</span>
+                    </button>
+                </td>`;
             tbody.appendChild(tr);
         });
 
@@ -2899,6 +2840,8 @@ function loadMemoryView(page) {
 
 function openMemoryFile(filename, category) {
     category = category || 'memory';
+    _memoryCurrentFile = filename;
+    _memoryCurrentCategory = category;
     fetch(`/api/memory/content?filename=${encodeURIComponent(filename)}&category=${category}`).then(r => r.json()).then(data => {
         if (data.status !== 'success') return;
         document.getElementById('memory-panel-list').classList.add('hidden');
@@ -2913,6 +2856,32 @@ function openMemoryFile(filename, category) {
 function closeMemoryViewer() {
     document.getElementById('memory-panel-viewer').classList.add('hidden');
     document.getElementById('memory-panel-list').classList.remove('hidden');
+}
+
+function deleteCurrentMemoryFile() {
+    if (!_memoryCurrentFile) return;
+    deleteMemoryFile(_memoryCurrentFile, _memoryCurrentCategory, true);
+}
+
+function deleteMemoryFile(filename, category, fromViewer) {
+    showConfirmDialog({
+        title: currentLang === 'zh' ? '删除记忆' : 'Delete Memory',
+        message: (currentLang === 'zh'
+            ? `确认删除 ${filename} 吗？此操作会同时移除对应索引。`
+            : `Delete ${filename}? This also removes its index entries.`),
+        okText: currentLang === 'zh' ? '删除' : 'Delete',
+        onConfirm: () => {
+            fetch('/api/memory/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename, category })
+            }).then(r => r.json()).then(data => {
+                if (data.status !== 'success') return;
+                if (fromViewer) closeMemoryViewer();
+                loadMemoryView(memoryPage);
+            }).catch(() => {});
+        }
+    });
 }
 
 // =====================================================================
@@ -3812,7 +3781,10 @@ navigateTo = function(viewId) {
 let _knowledgeTreeData = [];
 let _knowledgeRootFiles = [];
 let _knowledgeCurrentFile = null;
+let _knowledgeCurrentTitle = '';
 let _knowledgeGraphLoaded = false;
+let _knowledgeCurrentChunks = [];
+let _knowledgeViewerTab = 'content';
 
 function loadKnowledgeView() {
     // Reset to docs tab
@@ -4052,6 +4024,8 @@ function _searchFileInGroups(groups, parentPath, filename) {
 
 function openKnowledgeFile(path, title) {
     _knowledgeCurrentFile = path;
+    _knowledgeCurrentTitle = title || path;
+    _knowledgeViewerTab = 'content';
     // Update active state in tree via data-path
     document.querySelectorAll('.knowledge-tree-file').forEach(el => {
         el.classList.toggle('active', el.dataset.path === path);
@@ -4060,16 +4034,25 @@ function openKnowledgeFile(path, title) {
     // Immediately hide placeholder
     document.getElementById('knowledge-content-placeholder').classList.add('hidden');
 
-    fetch(`/api/knowledge/read?path=${encodeURIComponent(path)}`).then(r => r.json()).then(data => {
-        if (data.status !== 'success') return;
+    Promise.allSettled([
+        fetch(`/api/knowledge/read?path=${encodeURIComponent(path)}`).then(r => r.json()),
+        fetch(`/api/knowledge/chunks?path=${encodeURIComponent(path)}`).then(r => r.json())
+    ]).then(([docResult, chunkResult]) => {
+        const docData = docResult.status === 'fulfilled' ? docResult.value : null;
+        const chunkData = chunkResult.status === 'fulfilled' ? chunkResult.value : null;
+        if (!docData || docData.status !== 'success') return;
         const viewer = document.getElementById('knowledge-content-viewer');
         document.getElementById('knowledge-viewer-title').textContent = title;
         document.getElementById('knowledge-viewer-path').textContent = path;
         const bodyEl = document.getElementById('knowledge-viewer-body');
-        bodyEl.innerHTML = renderMarkdown(data.content || '');
+        bodyEl.innerHTML = renderMarkdown(docData.content || '');
         viewer.classList.remove('hidden');
         applyHighlighting(viewer);
         bindKnowledgeLinks(bodyEl, path);
+
+        _knowledgeCurrentChunks = chunkData && chunkData.status === 'success' ? (chunkData.chunks || []) : [];
+        renderKnowledgeChunks(_knowledgeCurrentChunks);
+        switchKnowledgeViewerTab('content');
 
         // Mobile: hide sidebar, show content
         if (window.innerWidth < 768) {
@@ -4078,9 +4061,133 @@ function openKnowledgeFile(path, title) {
     }).catch(() => {});
 }
 
+function createKnowledgePage() {
+    const title = window.prompt(currentLang === 'zh' ? '输入知识标题' : 'Enter knowledge title');
+    if (!title) return;
+    const relPath = window.prompt(
+        currentLang === 'zh'
+            ? '可选：输入相对路径（如 notes/my-note.md），留空自动生成'
+            : 'Optional: relative path (e.g. notes/my-note.md). Leave blank to auto-generate',
+        ''
+    );
+    const content = window.prompt(
+        currentLang === 'zh' ? '可选：输入初始内容' : 'Optional: initial content',
+        ''
+    );
+    fetch('/api/knowledge/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, path: relPath || '', content: content || '' })
+    }).then(r => r.json()).then(data => {
+        if (data.status !== 'success') return;
+        loadKnowledgeView();
+        setTimeout(() => openKnowledgeFile(data.path, title), 100);
+    }).catch(() => {});
+}
+
+function deleteCurrentKnowledgeFile() {
+    if (!_knowledgeCurrentFile) return;
+    showConfirmDialog({
+        title: currentLang === 'zh' ? '删除知识' : 'Delete Knowledge',
+        message: (currentLang === 'zh'
+            ? `确认删除 ${_knowledgeCurrentFile} 吗？此操作会同时移除对应索引和切片。`
+            : `Delete ${_knowledgeCurrentFile}? This also removes index entries and chunks.`),
+        okText: currentLang === 'zh' ? '删除' : 'Delete',
+        onConfirm: () => {
+            fetch('/api/knowledge/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ path: _knowledgeCurrentFile })
+            }).then(r => r.json()).then(data => {
+                if (data.status !== 'success') return;
+                _knowledgeCurrentFile = null;
+                _knowledgeCurrentTitle = '';
+                document.getElementById('knowledge-content-viewer').classList.add('hidden');
+                document.getElementById('knowledge-content-placeholder').classList.remove('hidden');
+                loadKnowledgeView();
+            }).catch(() => {});
+        }
+    });
+}
+
 function knowledgeMobileBack() {
     document.getElementById('knowledge-sidebar').classList.remove('hidden');
     document.getElementById('knowledge-content-viewer').classList.add('hidden');
+}
+
+function switchKnowledgeViewerTab(tab) {
+    _knowledgeViewerTab = tab;
+    document.querySelectorAll('.knowledge-view-tab').forEach(el => {
+        el.classList.remove('active', 'bg-white', 'dark:bg-slate-700', 'text-slate-800', 'dark:text-slate-100', 'shadow-sm');
+        el.classList.add('text-slate-500', 'dark:text-slate-400');
+    });
+    const activeTab = document.getElementById(`knowledge-view-tab-${tab}`);
+    if (activeTab) {
+        activeTab.classList.add('active', 'bg-white', 'dark:bg-slate-700', 'text-slate-800', 'dark:text-slate-100', 'shadow-sm');
+        activeTab.classList.remove('text-slate-500', 'dark:text-slate-400');
+    }
+
+    const bodyEl = document.getElementById('knowledge-viewer-body');
+    const chunksEl = document.getElementById('knowledge-viewer-chunks');
+    if (!bodyEl || !chunksEl) return;
+
+    if (tab === 'chunks') {
+        bodyEl.classList.add('hidden');
+        chunksEl.classList.remove('hidden');
+    } else {
+        chunksEl.classList.add('hidden');
+        bodyEl.classList.remove('hidden');
+    }
+}
+
+function renderKnowledgeChunks(chunks) {
+    const container = document.getElementById('knowledge-viewer-chunks');
+    if (!container) return;
+
+    if (!chunks || chunks.length === 0) {
+        container.innerHTML = `
+            <div class="flex flex-col items-center justify-center py-16 text-slate-400 dark:text-slate-500">
+                <i class="fas fa-layer-group text-3xl mb-3 opacity-40"></i>
+                <p class="text-sm">暂无可用切片</p>
+            </div>`;
+        return;
+    }
+
+    container.innerHTML = chunks.map(chunk => {
+        const meta = [];
+        if (chunk.page_number) meta.push(`页码 ${escapeHtml(String(chunk.page_number))}`);
+        if (chunk.section_title) meta.push(`章节 ${escapeHtml(chunk.section_title)}`);
+        meta.push(`行 ${escapeHtml(String(chunk.start_line))}-${escapeHtml(String(chunk.end_line))}`);
+        return `
+            <div class="mb-3 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/70 dark:bg-white/5 overflow-hidden">
+                <div class="px-4 py-3 border-b border-slate-200 dark:border-white/10 flex items-start gap-3">
+                    <div class="w-7 h-7 rounded-lg bg-primary-500/10 text-primary-600 dark:text-primary-300 flex items-center justify-center text-xs font-semibold flex-shrink-0">
+                        ${escapeHtml(String(chunk.index))}
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <div class="text-xs font-medium text-slate-700 dark:text-slate-200 break-all">${escapeHtml(chunk.citation || '')}</div>
+                        <div class="mt-1 text-[11px] text-slate-400 dark:text-slate-500">${meta.join(' · ')}</div>
+                    </div>
+                </div>
+                <div class="px-4 py-3">
+                    <pre class="whitespace-pre-wrap break-words text-xs leading-6 text-slate-700 dark:text-slate-200 font-mono">${escapeHtml(chunk.content || chunk.preview || '')}</pre>
+                </div>
+            </div>`;
+    }).join('');
+}
+
+function reindexKnowledgeImports() {
+    fetch('/api/knowledge/reindex_imports', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ force: true })
+    }).then(r => r.json()).then(data => {
+        if (data.status !== 'success') return;
+        loadKnowledgeView();
+        if (_knowledgeCurrentFile) {
+            setTimeout(() => openKnowledgeFile(_knowledgeCurrentFile, document.getElementById('knowledge-viewer-title').textContent || _knowledgeCurrentFile), 100);
+        }
+    }).catch(() => {});
 }
 
 function switchKnowledgeTab(tab) {

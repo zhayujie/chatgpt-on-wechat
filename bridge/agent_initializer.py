@@ -304,6 +304,8 @@ class AgentInitializer:
             
             # Sync memory
             self._sync_memory(memory_manager, session_id)
+            if session_id is None:
+                memory_manager.start_import_watcher()
             
             # Create memory tools
             memory_tools = [
@@ -366,7 +368,7 @@ class AgentInitializer:
 
                 if tool:
                     # Apply workspace config to file operation tools
-                    if tool_name in ['read', 'write', 'edit', 'bash', 'grep', 'find', 'ls', 'web_fetch', 'send', 'browser']:
+                    if tool_name in ['read', 'write', 'edit', 'bash', 'grep', 'find', 'ls', 'web_fetch', 'send', 'browser', 'knowledge_import']:
                         tool.config = file_config
                         tool.cwd = file_config.get("cwd", getattr(tool, 'cwd', None))
                         if 'memory_manager' in file_config:

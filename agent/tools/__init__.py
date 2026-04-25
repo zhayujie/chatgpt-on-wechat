@@ -9,6 +9,7 @@ from agent.tools.edit.edit import Edit
 from agent.tools.bash.bash import Bash
 from agent.tools.ls.ls import Ls
 from agent.tools.send.send import Send
+from agent.tools.knowledge_import.knowledge_import import KnowledgeImportTool
 
 # Import memory tools
 from agent.tools.memory.memory_search import MemorySearchTool
@@ -117,6 +118,7 @@ __all__ = [
     'Bash',
     'Ls',
     'Send',
+    'KnowledgeImportTool',
     'MemorySearchTool',
     'MemoryGetTool',
     'EnvConfig',

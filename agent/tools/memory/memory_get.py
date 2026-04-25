@@ -78,50 +78,35 @@ class MemoryGetTool(BaseTool):
             return ToolResult.fail("Error: path parameter is required")
         
         try:
-            workspace_dir = self.memory_manager.config.get_workspace()
-            
-            # Auto-prepend memory/ if not present and not absolute path
-            # Exceptions: MEMORY.md in root, knowledge/ files at workspace root
-            if not path.startswith('memory/') and not path.startswith('knowledge/') and not path.startswith('/') and path != 'MEMORY.md':
-                path = f'memory/{path}'
-            
-            file_path = (workspace_dir / path).resolve()
-            workspace_resolved = workspace_dir.resolve()
-            
-            if not str(file_path).startswith(str(workspace_resolved) + '/') and file_path != workspace_resolved:
-                return ToolResult.fail(f"Error: Access denied: path outside workspace")
-            
-            if not file_path.exists():
-                return ToolResult.fail(f"Error: File not found: {path}")
-            
-            content = file_path.read_text(encoding='utf-8')
-            lines = content.split('\n')
-            
-            # Handle line range
-            if start_line < 1:
-                start_line = 1
-            
-            start_idx = start_line - 1
-            
-            if num_lines:
-                end_idx = start_idx + num_lines
-                selected_lines = lines[start_idx:end_idx]
-            else:
-                selected_lines = lines[start_idx:]
-            
-            result = '\n'.join(selected_lines)
-            
-            # Add metadata
-            total_lines = len(lines)
-            shown_lines = len(selected_lines)
-            
+            result = self.memory_manager.read_document_range(
+                path=path,
+                start_line=start_line,
+                num_lines=num_lines,
+            )
+            metadata = result.get("metadata") or {}
+            section_title = metadata.get("section_title") or ""
+            section_path = metadata.get("section_path") or ""
+            page_number = metadata.get("page_number")
             output = [
-                f"File: {path}",
-                f"Lines: {start_line}-{start_line + shown_lines - 1} (total: {total_lines})",
+                f"File: {result['path']}",
+                f"Lines: {result['start_line']}-{result['end_line']} (total: {result['total_lines']})",
+                f"Citation: {result['citation']}",
                 "",
-                result
             ]
-            
+
+            if result.get("title"):
+                output.append(f"Title: {result['title']}")
+            if page_number is not None:
+                output.append(f"Page: {page_number}")
+            if section_path:
+                output.append(f"Section Path: {section_path}")
+            elif section_title:
+                output.append(f"Section: {section_title}")
+            output.extend([
+                "",
+                result["content"],
+            ])
+
             return ToolResult.success('\n'.join(output))
             
         except Exception as e:
