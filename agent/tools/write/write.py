@@ -66,8 +66,8 @@ class Write(BaseTool):
             # Get bytes written
             bytes_written = len(content.encode('utf-8'))
             
-            # Auto-sync to memory database if this is a memory file
-            if self.memory_manager and 'memory/' in path:
+            # Mark memory/knowledge indexes dirty after file writes.
+            if self.memory_manager and ('memory/' in path or 'knowledge/' in path):
                 self.memory_manager.mark_dirty()
             
             result = {

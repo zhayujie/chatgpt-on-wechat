@@ -95,13 +95,51 @@ class MemorySearchTool(BaseTool):
                     f"You can store new memories by writing to MEMORY.md or memory/YYYY-MM-DD.md files."
                 )
             
-            # Format results
-            output = [f"Found {len(results)} relevant memories:\n"]
-            
+            output = [
+                "[RAG_RESULTS]",
+                f"Query: {query}",
+                f"Hits: {len(results)}",
+                f"Distinct Sources: {len({result.path for result in results})}",
+                "",
+            ]
+
+            distinct_paths = []
+            for result in results:
+                if result.path not in distinct_paths:
+                    distinct_paths.append(result.path)
+
+            if len(distinct_paths) > 1:
+                output.append(
+                    "Next step: read at least the top 2 distinct relevant files with memory_get before answering."
+                )
+                output.append("")
+
             for i, result in enumerate(results, 1):
-                output.append(f"\n{i}. {result.path} (lines {result.start_line}-{result.end_line})")
-                output.append(f"   Score: {result.score:.3f}")
-                output.append(f"   Snippet: {result.snippet}")
+                metadata = result.metadata or {}
+                source_type = metadata.get("source_type", result.source)
+                title = metadata.get("title") or "Untitled"
+                section_title = metadata.get("section_title") or ""
+                category = metadata.get("category") or ""
+                citation = metadata.get("citation") or self.memory_manager.build_citation(
+                    result.path,
+                    result.start_line,
+                    result.end_line,
+                    metadata,
+                )
+
+                output.append(
+                    f"[{i}] score={result.score:.3f} source={result.path} "
+                    f"lines={result.start_line}-{result.end_line} type={source_type}"
+                )
+                output.append(f"citation: {citation}")
+                output.append(f"title: {title}")
+                if section_title:
+                    output.append(f"section: {section_title}")
+                if category:
+                    output.append(f"category: {category}")
+                output.append("content:")
+                output.append(result.snippet)
+                output.append("")
             
             return ToolResult.success("\n".join(output))
             

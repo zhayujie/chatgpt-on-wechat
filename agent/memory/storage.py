@@ -8,6 +8,7 @@ from __future__ import annotations
 import sqlite3
 import json
 import hashlib
+import re
 from typing import List, Dict, Optional, Any
 from pathlib import Path
 from dataclasses import dataclass
@@ -39,6 +40,7 @@ class SearchResult:
     snippet: str
     source: str
     user_id: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
 
 
 class MemoryStorage:
@@ -235,6 +237,17 @@ class MemoryStorage:
             for c in chunks
         ])
         self.conn.commit()
+
+    def rebuild_fts(self):
+        """Rebuild FTS index from the content table after schema-compatible updates."""
+        if not self.fts5_available:
+            return
+        try:
+            self.conn.execute("INSERT INTO chunks_fts(chunks_fts) VALUES('rebuild')")
+            self.conn.commit()
+        except Exception:
+            # Best-effort rebuild. Search still has LIKE fallback.
+            pass
     
     def get_chunk(self, chunk_id: str) -> Optional[MemoryChunk]:
         """Get a chunk by ID"""
@@ -305,7 +318,8 @@ class MemoryStorage:
                 score=score,
                 snippet=self._truncate_text(row['text'], 500),
                 source=row['source'],
-                user_id=row['user_id']
+                user_id=row['user_id'],
+                metadata=json.loads(row['metadata']) if row['metadata'] else None,
             )
             for score, row in results
         ]
@@ -328,18 +342,21 @@ class MemoryStorage:
             scopes = ["shared"]
             if user_id:
                 scopes.append("user")
+
+        metadata_results = self._search_metadata_path(query, user_id, scopes, limit)
         
         # Try FTS5 search first (if available)
         if self.fts5_available:
             fts_results = self._search_fts5(query, user_id, scopes, limit)
             if fts_results:
-                return fts_results
+                return self._merge_keyword_result_sets(metadata_results, fts_results, limit)
         
         # Fallback to LIKE search (always for CJK, or if FTS5 not available)
         if not self.fts5_available or MemoryStorage._contains_cjk(query):
-            return self._search_like(query, user_id, scopes, limit)
+            like_results = self._search_like(query, user_id, scopes, limit)
+            return self._merge_keyword_result_sets(metadata_results, like_results, limit)
         
-        return []
+        return metadata_results[:limit]
     
     def _search_fts5(
         self,
@@ -390,7 +407,8 @@ class MemoryStorage:
                     score=self._bm25_rank_to_score(row['rank']),
                     snippet=self._truncate_text(row['text'], 500),
                     source=row['source'],
-                    user_id=row['user_id']
+                    user_id=row['user_id'],
+                    metadata=json.loads(row['metadata']) if row['metadata'] else None,
                 )
                 for row in rows
             ]
@@ -451,12 +469,90 @@ class MemoryStorage:
                     score=0.5,  # Fixed score for LIKE search
                     snippet=self._truncate_text(row['text'], 500),
                     source=row['source'],
-                    user_id=row['user_id']
+                    user_id=row['user_id'],
+                    metadata=json.loads(row['metadata']) if row['metadata'] else None,
                 )
                 for row in rows
             ]
         except Exception:
             return []
+
+    def _search_metadata_path(
+        self,
+        query: str,
+        user_id: Optional[str],
+        scopes: List[str],
+        limit: int,
+    ) -> List[SearchResult]:
+        """Search chunk metadata and path for exact-lookups and title hits."""
+        terms = [term for term in re.findall(r"[\w\u4e00-\u9fff\-.\/]{2,}", query.lower()) if term]
+        if not terms:
+            return []
+
+        scope_placeholders = ",".join("?" * len(scopes))
+        conditions = []
+        params: List[Any] = []
+        for term in terms[:6]:
+            conditions.append("(LOWER(path) LIKE ? OR LOWER(COALESCE(metadata, '')) LIKE ?)")
+            like = f"%{term}%"
+            params.extend([like, like])
+
+        if not conditions:
+            return []
+
+        params.extend(scopes)
+        where_clause = " OR ".join(conditions)
+        if user_id:
+            sql_query = f"""
+                SELECT * FROM chunks
+                WHERE ({where_clause})
+                AND scope IN ({scope_placeholders})
+                AND (scope = 'shared' OR user_id = ?)
+                LIMIT ?
+            """
+            params.extend([user_id, limit])
+        else:
+            sql_query = f"""
+                SELECT * FROM chunks
+                WHERE ({where_clause})
+                AND scope IN ({scope_placeholders})
+                LIMIT ?
+            """
+            params.append(limit)
+
+        try:
+            rows = self.conn.execute(sql_query, params).fetchall()
+            return [
+                SearchResult(
+                    path=row["path"],
+                    start_line=row["start_line"],
+                    end_line=row["end_line"],
+                    score=0.65,
+                    snippet=self._truncate_text(row["text"], 500),
+                    source=row["source"],
+                    user_id=row["user_id"],
+                    metadata=json.loads(row["metadata"]) if row["metadata"] else None,
+                )
+                for row in rows
+            ]
+        except Exception:
+            return []
+
+    @staticmethod
+    def _merge_keyword_result_sets(
+        primary: List[SearchResult],
+        secondary: List[SearchResult],
+        limit: int,
+    ) -> List[SearchResult]:
+        """Deduplicate multiple keyword recall sets while preserving score ordering."""
+        merged: Dict[tuple, SearchResult] = {}
+        for result in primary + secondary:
+            key = (result.path, result.start_line, result.end_line)
+            existing = merged.get(key)
+            if existing is None or result.score > existing.score:
+                merged[key] = result
+        ordered = sorted(merged.values(), key=lambda item: item.score, reverse=True)
+        return ordered[:limit]
     
     def delete_by_path(self, path: str):
         """Delete all chunks from a file"""
@@ -464,6 +560,40 @@ class MemoryStorage:
             DELETE FROM chunks WHERE path = ?
         """, (path,))
         self.conn.commit()
+
+    def delete_file_record(self, path: str):
+        """Delete stored file metadata for a path."""
+        self.conn.execute("""
+            DELETE FROM files WHERE path = ?
+        """, (path,))
+        self.conn.commit()
+
+    def list_indexed_paths(self, prefix: Optional[str] = None, source: Optional[str] = None) -> List[str]:
+        """List indexed file paths, optionally filtered by prefix/source."""
+        conditions = []
+        params: List[Any] = []
+        if prefix:
+            conditions.append("path LIKE ?")
+            params.append(f"{prefix}%")
+        if source:
+            conditions.append("source = ?")
+            params.append(source)
+
+        where_clause = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+        rows = self.conn.execute(
+            f"SELECT path FROM files {where_clause} ORDER BY path ASC",
+            params,
+        ).fetchall()
+        return [row["path"] for row in rows]
+
+    def list_chunks_by_path(self, path: str) -> List[MemoryChunk]:
+        """List all chunks for a file ordered by line range."""
+        rows = self.conn.execute("""
+            SELECT * FROM chunks
+            WHERE path = ?
+            ORDER BY start_line ASC, end_line ASC
+        """, (path,)).fetchall()
+        return [self._row_to_chunk(row) for row in rows]
     
     def get_file_hash(self, path: str) -> Optional[str]:
         """Get stored file hash"""
@@ -548,7 +678,6 @@ class MemoryStorage:
     @staticmethod
     def _contains_cjk(text: str) -> bool:
         """Check if text contains CJK (Chinese/Japanese/Korean) characters"""
-        import re
         return bool(re.search(r'[\u4e00-\u9fff]', text))
     
     @staticmethod
@@ -559,7 +688,6 @@ class MemoryStorage:
         Works best for English and word-based languages.
         For CJK characters, LIKE search will be used as fallback.
         """
-        import re
         # Extract words (primarily English words and numbers)
         tokens = re.findall(r'[A-Za-z0-9_]+', raw_query)
         if not tokens:
