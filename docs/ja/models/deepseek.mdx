@@ -7,14 +7,14 @@ description: DeepSeekモデルの設定
 
 ```json
 {
-  "model": "deepseek-v4-pro",
+  "model": "deepseek-v4-flash",
   "deepseek_api_key": "YOUR_API_KEY"
 }
 ```
 
 | パラメータ | 説明 |
 | --- | --- |
-| `model` | `deepseek-v4-pro`、`deepseek-v4-flash` をサポート |
+| `model` | `deepseek-v4-flash`（デフォルト）、`deepseek-v4-pro` をサポート |
 | `deepseek_api_key` | [DeepSeek Platform](https://platform.deepseek.com/api_keys) で作成 |
 | `deepseek_api_base` | オプション、デフォルトは `https://api.deepseek.com/v1`。サードパーティプロキシに変更可能 |
 
@@ -22,12 +22,12 @@ description: DeepSeekモデルの設定
 
 | モデル | 適用シーン |
 | --- | --- |
-| `deepseek-v4-pro` | 複雑なタスクに最適 |
-| `deepseek-v4-flash` | 高速・低コスト |
+| `deepseek-v4-flash` | デフォルト推奨、高速・低コスト |
+| `deepseek-v4-pro` | 複雑なタスクでより強力 |
 
 ## 思考モード
 
-V4シリーズ（`deepseek-v4-pro` / `deepseek-v4-flash`）は明示的な「思考モード」をサポートします。最終回答の前に思考内容（`reasoning_content`）を出力することで、回答品質を高めます。
+V4シリーズ（`deepseek-v4-flash` / `deepseek-v4-pro`）は明示的な「思考モード」をサポートします。最終回答の前に思考内容（`reasoning_content`）を出力することで、回答品質を高めます。
 
 ### スイッチ
 
@@ -48,14 +48,14 @@ V4シリーズ（`deepseek-v4-pro` / `deepseek-v4-flash`）は明示的な「思
 - **マルチターンのツール呼び出し**：履歴にツール呼び出しが含まれる場合、DeepSeekはすべてのassistantメッセージに `reasoning_content` を返送するよう要求します。CowAgentが自動でラウンドトリップ処理を行うため、セッション途中で思考スイッチを切り替えてもエラーになりません。
 
 <Tip>
-  複雑なタスクには `deepseek-v4-pro` を、低レイテンシ・低コストを重視する場合は `deepseek-v4-flash` を選び、深い思考が必要な時は `enable_thinking` を有効にしてください。
+  通常は `deepseek-v4-flash` を使い、難しいタスクでは `deepseek-v4-pro` に切り替え、深い思考が必要な時は `enable_thinking` を有効にしてください。
 </Tip>
 
 方法2：OpenAI互換方式：
 
 ```json
 {
-  "model": "deepseek-v4-pro",
+  "model": "deepseek-v4-flash",
   "bot_type": "openai",
   "open_ai_api_key": "YOUR_API_KEY",
   "open_ai_api_base": "https://api.deepseek.com/v1"

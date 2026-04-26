@@ -309,8 +309,8 @@ select_model() {
     echo -e "${CYAN}${BOLD}=========================================${NC}"
     echo -e "${CYAN}${BOLD}   Select AI Model${NC}"
     echo -e "${CYAN}${BOLD}=========================================${NC}"
-    echo -e "${YELLOW}1) MiniMax (MiniMax-M2.7, MiniMax-M2.5, etc.)${NC}"
-    echo -e "${YELLOW}2) DeepSeek (deepseek-v4-pro, deepseek-v4-flash, etc.)${NC}"
+    echo -e "${YELLOW}1) DeepSeek (deepseek-v4-flash, deepseek-v4-pro, etc.)${NC}"
+    echo -e "${YELLOW}2) MiniMax (MiniMax-M2.7, MiniMax-M2.5, etc.)${NC}"
     echo -e "${YELLOW}3) Claude (claude-sonnet-4-6, claude-opus-4-7, claude-opus-4-6, etc.)${NC}"
     echo -e "${YELLOW}4) Gemini (gemini-3.1-flash-lite-preview, gemini-3.1-pro-preview, etc.)${NC}"
     echo -e "${YELLOW}5) OpenAI GPT (gpt-5.4, gpt-5.2, gpt-4.1, etc.)${NC}"
@@ -322,7 +322,7 @@ select_model() {
     echo ""
     
     while true; do
-        read -p "Enter your choice [press Enter for default: 1 - MiniMax]: " model_choice
+        read -p "Enter your choice [press Enter for default: 1 - DeepSeek]: " model_choice
         model_choice=${model_choice:-1}
         case "$model_choice" in
             1|2|3|4|5|6|7|8|9|10)
@@ -357,11 +357,11 @@ read_api_base() {
 # Configure model
 configure_model() {
     case "$model_choice" in
-        1) read_model_config "MiniMax" "MiniMax-M2.7" "MINIMAX_KEY" ;;
-        2)
-            read_model_config "DeepSeek" "deepseek-v4-pro" "DEEPSEEK_KEY"
+        1)
+            read_model_config "DeepSeek" "deepseek-v4-flash" "DEEPSEEK_KEY"
             read_api_base "DEEPSEEK_BASE" "https://api.deepseek.com/v1"
             ;;
+        2) read_model_config "MiniMax" "MiniMax-M2.7" "MINIMAX_KEY" ;;
         3)
             read_model_config "Claude" "claude-sonnet-4-6" "CLAUDE_KEY"
             read_api_base "CLAUDE_BASE" "https://api.anthropic.com/v1"
@@ -379,7 +379,7 @@ configure_model() {
         8) read_model_config "Doubao (Volcengine Ark)" "doubao-seed-2-0-code-preview-260215" "ARK_KEY" ;;
         9) read_model_config "Kimi (Moonshot)" "kimi-k2.6" "MOONSHOT_KEY" ;;
         10)
-            read_model_config "LinkAI" "MiniMax-M2.7" "LINKAI_KEY"
+            read_model_config "LinkAI" "deepseek-v4-flash" "LINKAI_KEY"
             USE_LINKAI="true"
             ;;
     esac

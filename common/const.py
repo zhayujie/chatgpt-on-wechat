@@ -82,8 +82,8 @@ TTS_1_HD = "tts-1-hd"
 # DeepSeek
 DEEPSEEK_CHAT = "deepseek-chat"  # DeepSeek-V3对话模型
 DEEPSEEK_REASONER = "deepseek-reasoner"  # DeepSeek-R1模型
-DEEPSEEK_V4_FLASH = "deepseek-v4-flash"  # DeepSeek V4 Flash - 思考模式 + 工具调用
-DEEPSEEK_V4_PRO = "deepseek-v4-pro"  # DeepSeek V4 Pro - Agent推荐模型 (思考模式 + 工具调用)
+DEEPSEEK_V4_FLASH = "deepseek-v4-flash"  # DeepSeek V4 Flash - 默认推荐 (思考模式 + 工具调用)
+DEEPSEEK_V4_PRO = "deepseek-v4-pro"  # DeepSeek V4 Pro - 复杂任务更强 (思考模式 + 工具调用)
 
 # Qwen (通义千问 - 阿里云 DashScope)
 QWEN_TURBO = "qwen-turbo"
@@ -156,11 +156,11 @@ MODELSCOPE_MODEL_LIST = ["deepseek-ai/DeepSeek-R1-0528", "deepseek-ai/DeepSeek-R
 
 
 MODEL_LIST = [
+              # DeepSeek
+              DEEPSEEK_V4_FLASH, DEEPSEEK_V4_PRO, DEEPSEEK_CHAT, DEEPSEEK_REASONER,
+
               # MiniMax
               MiniMax, MINIMAX_M2_7, MINIMAX_M2_7_HIGHSPEED, MINIMAX_M2_5, MINIMAX_M2_1, MINIMAX_M2_1_LIGHTNING, MINIMAX_M2, MINIMAX_ABAB6_5,
-
-              # DeepSeek
-              DEEPSEEK_V4_PRO, DEEPSEEK_V4_FLASH, DEEPSEEK_CHAT, DEEPSEEK_REASONER,
 
               # Claude
               CLAUDE3, CLAUDE_4_6_SONNET, CLAUDE_4_7_OPUS, CLAUDE_4_6_OPUS, CLAUDE_4_OPUS, CLAUDE_4_5_SONNET, CLAUDE_4_SONNET, CLAUDE_3_OPUS, CLAUDE_3_OPUS_0229,

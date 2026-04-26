@@ -9,7 +9,9 @@ services:
       - "9899:9899"
     environment:
       CHANNEL_TYPE: 'weixin'
-      MODEL: 'MiniMax-M2.7'
+      MODEL: 'deepseek-v4-flash'
+      DEEPSEEK_API_KEY: ''
+      DEEPSEEK_API_BASE: 'https://api.deepseek.com/v1'
       MINIMAX_API_KEY: ''
       ZHIPU_AI_API_KEY: ''
       ARK_API_KEY: ''

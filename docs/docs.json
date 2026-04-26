@@ -72,8 +72,8 @@
                 "group": "模型配置",
                 "pages": [
                   "models/index",
-                  "models/minimax",
                   "models/deepseek",
+                  "models/minimax",
                   "models/claude",
                   "models/gemini",
                   "models/openai",
@@ -257,8 +257,8 @@
                 "group": "Model Configuration",
                 "pages": [
                   "en/models/index",
-                  "en/models/minimax",
                   "en/models/deepseek",
+                  "en/models/minimax",
                   "en/models/claude",
                   "en/models/gemini",
                   "en/models/openai",
@@ -441,8 +441,8 @@
                 "group": "モデル設定",
                 "pages": [
                   "ja/models/index",
-                  "ja/models/minimax",
                   "ja/models/deepseek",
+                  "ja/models/minimax",
                   "ja/models/claude",
                   "ja/models/gemini",
                   "ja/models/openai",

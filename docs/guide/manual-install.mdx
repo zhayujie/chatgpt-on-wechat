@@ -139,7 +139,8 @@ sudo docker logs -f chatgpt-on-wechat
     ```json
     {
       "channel_type": "web",
-      "model": "MiniMax-M2.7",
+      "model": "deepseek-v4-flash",
+      "deepseek_api_key": "",
       "agent": true,
       "agent_workspace": "~/cow",
       "agent_max_context_tokens": 40000,
@@ -152,8 +153,9 @@ sudo docker logs -f chatgpt-on-wechat
     ```yaml
     environment:
       CHANNEL_TYPE: 'web'
-      MODEL: 'MiniMax-M2.7'
-      MINIMAX_API_KEY: 'your-api-key'
+      MODEL: 'deepseek-v4-flash'
+      DEEPSEEK_API_KEY: 'your-api-key'
+      DEEPSEEK_API_BASE: 'https://api.deepseek.com/v1'
       AGENT: 'True'
       AGENT_MAX_CONTEXT_TOKENS: 40000
       AGENT_MAX_CONTEXT_TURNS: 30
@@ -165,7 +167,7 @@ sudo docker logs -f chatgpt-on-wechat
 | 参数 | 环境变量 | 说明 | 默认值 |
 | --- | --- | --- | --- |
 | `channel_type` | `CHANNEL_TYPE` | 接入渠道类型 | `web` |
-| `model` | `MODEL` | 模型名称 | `MiniMax-M2.5` |
+| `model` | `MODEL` | 模型名称 | `deepseek-v4-flash` |
 | `agent` | `AGENT` | 是否启用 Agent 模式 | `true` |
 | `agent_workspace` | - | Agent 工作空间路径 | `~/cow` |
 | `agent_max_context_tokens` | `AGENT_MAX_CONTEXT_TOKENS` | 最大上下文 tokens | `40000` |

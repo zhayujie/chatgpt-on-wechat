@@ -7,7 +7,8 @@ Supported models:
 - deepseek-chat       (V3, no thinking)
 - deepseek-reasoner   (R1, built-in reasoning, no `thinking` switch)
 - deepseek-v4-flash   (V4, supports thinking mode + tool calls)
-- deepseek-v4-pro     (V4, supports thinking mode + tool calls, agent recommended)
+- deepseek-v4-flash   (V4 Flash, default; thinking mode + tool calls)
+- deepseek-v4-pro     (V4 Pro, stronger on complex tasks)
 
 Thinking mode notes (for V4 models):
 - Toggle: ``{"thinking": {"type": "enabled" | "disabled"}}`` (default: enabled)
@@ -42,9 +43,9 @@ class DeepSeekBot(Bot, OpenAICompatibleBot):
         super().__init__()
         self.sessions = SessionManager(
             DeepSeekSession,
-            model=conf().get("model") or const.DEEPSEEK_V4_PRO,
+            model=conf().get("model") or const.DEEPSEEK_V4_FLASH,
         )
-        conf_model = conf().get("model") or const.DEEPSEEK_V4_PRO
+        conf_model = conf().get("model") or const.DEEPSEEK_V4_FLASH
         self.args = {
             "model": conf_model,
             "temperature": conf().get("temperature", 0.7),
@@ -73,7 +74,7 @@ class DeepSeekBot(Bot, OpenAICompatibleBot):
         return {
             "api_key": self.api_key,
             "api_base": self.api_base,
-            "model": conf().get("model", const.DEEPSEEK_V4_PRO),
+            "model": conf().get("model", const.DEEPSEEK_V4_FLASH),
             "default_temperature": conf().get("temperature", 0.7),
             "default_top_p": conf().get("top_p", 1.0),
             "default_frequency_penalty": conf().get("frequency_penalty", 0.0),
@@ -641,7 +642,7 @@ class DeepSeekBot(Bot, OpenAICompatibleBot):
                     max_tokens: int = 1000) -> dict:
         """Analyse an image via DeepSeek's OpenAI-compatible /chat/completions endpoint."""
         try:
-            vision_model = model or self.args.get("model", const.DEEPSEEK_V4_PRO)
+            vision_model = model or self.args.get("model", const.DEEPSEEK_V4_FLASH)
             payload = {
                 "model": vision_model,
                 "max_tokens": max_tokens,

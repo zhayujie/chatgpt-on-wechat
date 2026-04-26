@@ -7,14 +7,14 @@ Option 1: Native integration (recommended):
 
 ```json
 {
-  "model": "deepseek-v4-pro",
+  "model": "deepseek-v4-flash",
   "deepseek_api_key": "YOUR_API_KEY"
 }
 ```
 
 | Parameter | Description |
 | --- | --- |
-| `model` | Supports `deepseek-v4-pro` and `deepseek-v4-flash` |
+| `model` | Supports `deepseek-v4-flash` (default) and `deepseek-v4-pro` |
 | `deepseek_api_key` | Create at [DeepSeek Platform](https://platform.deepseek.com/api_keys) |
 | `deepseek_api_base` | Optional, defaults to `https://api.deepseek.com/v1`. Can be changed to a third-party proxy |
 
@@ -22,12 +22,12 @@ Option 1: Native integration (recommended):
 
 | Model | Use Case |
 | --- | --- |
-| `deepseek-v4-pro` | Best on complex tasks |
-| `deepseek-v4-flash` | Faster and cheaper |
+| `deepseek-v4-flash` | Default: fast and cost-effective |
+| `deepseek-v4-pro` | Stronger on complex tasks |
 
 ## Thinking Mode
 
-The V4 series (`deepseek-v4-pro` / `deepseek-v4-flash`) supports an explicit "thinking mode": the model emits a chain-of-thought (`reasoning_content`) before the final answer to improve answer quality.
+The V4 series (`deepseek-v4-flash` / `deepseek-v4-pro`) supports an explicit "thinking mode": the model emits a chain-of-thought (`reasoning_content`) before the final answer to improve answer quality.
 
 ### Toggle
 
@@ -48,14 +48,14 @@ Controlled by the global `enable_thinking` setting:
 - **Multi-turn tool calls**: once the history contains any tool-call turn, DeepSeek requires `reasoning_content` on every assistant message. CowAgent handles the round-trip automatically, including across mid-session toggles of the thinking switch.
 
 <Tip>
-  Use `deepseek-v4-pro` for complex tasks; pick `deepseek-v4-flash` when low latency and low cost matter; enable `enable_thinking` when you want deeper reasoning.
+  Start with `deepseek-v4-flash`; switch to `deepseek-v4-pro` for harder tasks; enable `enable_thinking` when you want deeper reasoning.
 </Tip>
 
 Option 2: OpenAI-compatible configuration:
 
 ```json
 {
-  "model": "deepseek-v4-pro",
+  "model": "deepseek-v4-flash",
   "bot_type": "openai",
   "open_ai_api_key": "YOUR_API_KEY",
   "open_ai_api_base": "https://api.deepseek.com/v1"
