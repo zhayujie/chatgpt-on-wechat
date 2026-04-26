@@ -121,7 +121,8 @@ sudo docker logs -f chatgpt-on-wechat
 ```json
 {
   "channel_type": "web",
-  "model": "MiniMax-M2.5",
+  "model": "deepseek-v4-flash",
+  "deepseek_api_key": "",
   "agent": true,
   "agent_workspace": "~/cow",
   "agent_max_context_tokens": 40000,
@@ -133,7 +134,7 @@ sudo docker logs -f chatgpt-on-wechat
 | Parameter | Description | Default |
 | --- | --- | --- |
 | `channel_type` | Channel type | `web` |
-| `model` | Model name | `MiniMax-M2.5` |
+| `model` | Model name | `deepseek-v4-flash` |
 | `agent` | Enable Agent mode | `true` |
 | `agent_workspace` | Agent workspace path | `~/cow` |
 | `agent_max_context_tokens` | Max context tokens | `40000` |

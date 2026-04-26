@@ -169,36 +169,38 @@ function Install-Dependencies {
 
 # ── model selection ──────────────────────────────────────────────
 $ModelChoices = @{
-    "1" = @{ Provider = "MiniMax";                  Default = "MiniMax-M2.7";                           Key = "MINIMAX_KEY" }
-    "2" = @{ Provider = "Zhipu AI";                 Default = "glm-5.1";                                Key = "ZHIPU_KEY" }
-    "3" = @{ Provider = "Kimi (Moonshot)";          Default = "kimi-k2.6";                              Key = "MOONSHOT_KEY" }
-    "4" = @{ Provider = "Doubao (Volcengine Ark)";  Default = "doubao-seed-2-0-code-preview-260215";    Key = "ARK_KEY" }
-    "5" = @{ Provider = "Qwen (DashScope)";         Default = "qwen3.6-plus";                           Key = "DASHSCOPE_KEY" }
-    "6" = @{ Provider = "Claude";                   Default = "claude-sonnet-4-6";                      Key = "CLAUDE_KEY";  Base = "https://api.anthropic.com/v1" }
-    "7" = @{ Provider = "Gemini";                   Default = "gemini-3.1-pro-preview";                 Key = "GEMINI_KEY";  Base = "https://generativelanguage.googleapis.com" }
-    "8" = @{ Provider = "OpenAI GPT";               Default = "gpt-5.4";                                Key = "OPENAI_KEY";  Base = "https://api.openai.com/v1" }
-    "9" = @{ Provider = "LinkAI";                   Default = "MiniMax-M2.7";                           Key = "LINKAI_KEY" }
+    "1" = @{ Provider = "DeepSeek";                 Default = "deepseek-v4-flash";                      Key = "DEEPSEEK_KEY"; Base = "https://api.deepseek.com/v1" }
+    "2" = @{ Provider = "MiniMax";                  Default = "MiniMax-M2.7";                           Key = "MINIMAX_KEY" }
+    "3" = @{ Provider = "Zhipu AI";                 Default = "glm-5.1";                                Key = "ZHIPU_KEY" }
+    "4" = @{ Provider = "Kimi (Moonshot)";          Default = "kimi-k2.6";                              Key = "MOONSHOT_KEY" }
+    "5" = @{ Provider = "Doubao (Volcengine Ark)";  Default = "doubao-seed-2-0-code-preview-260215";    Key = "ARK_KEY" }
+    "6" = @{ Provider = "Qwen (DashScope)";         Default = "qwen3.6-plus";                           Key = "DASHSCOPE_KEY" }
+    "7" = @{ Provider = "Claude";                   Default = "claude-sonnet-4-6";                      Key = "CLAUDE_KEY";  Base = "https://api.anthropic.com/v1" }
+    "8" = @{ Provider = "Gemini";                   Default = "gemini-3.1-pro-preview";                 Key = "GEMINI_KEY";  Base = "https://generativelanguage.googleapis.com" }
+    "9" = @{ Provider = "OpenAI GPT";               Default = "gpt-5.4";                                Key = "OPENAI_KEY";  Base = "https://api.openai.com/v1" }
+    "10" = @{ Provider = "LinkAI";                  Default = "deepseek-v4-flash";                      Key = "LINKAI_KEY" }
 }
 
 function Select-Model {
     Write-Info "========================================="
     Write-Info "   Select AI Model"
     Write-Info "========================================="
-    Write-Host "1) MiniMax (MiniMax-M2.7, MiniMax-M2.5, etc.)"
-    Write-Host "2) Zhipu AI (glm-5.1, glm-5-turbo, glm-5, etc.)"
-    Write-Host "3) Kimi (kimi-k2.6, kimi-k2.5, kimi-k2, etc.)"
-    Write-Host "4) Doubao (doubao-seed-2-0-code-preview-260215, etc.)"
-    Write-Host "5) Qwen (qwen3.6-plus, qwen3.5-plus, qwen3-max, qwq-plus, etc.)"
-    Write-Host "6) Claude (claude-sonnet-4-6, claude-opus-4-6, etc.)"
-    Write-Host "7) Gemini (gemini-3.1-flash-lite-preview, gemini-3.1-pro-preview, etc.)"
-    Write-Host "8) OpenAI GPT (gpt-5.4, gpt-5.2, gpt-4.1, etc.)"
-    Write-Host "9) LinkAI (access multiple models via one API)"
+    Write-Host "1) DeepSeek (deepseek-v4-flash, deepseek-v4-pro, etc.)"
+    Write-Host "2) MiniMax (MiniMax-M2.7, MiniMax-M2.5, etc.)"
+    Write-Host "3) Zhipu AI (glm-5.1, glm-5-turbo, glm-5, etc.)"
+    Write-Host "4) Kimi (kimi-k2.6, kimi-k2.5, kimi-k2, etc.)"
+    Write-Host "5) Doubao (doubao-seed-2-0-code-preview-260215, etc.)"
+    Write-Host "6) Qwen (qwen3.6-plus, qwen3.5-plus, qwen3-max, qwq-plus, etc.)"
+    Write-Host "7) Claude (claude-sonnet-4-6, claude-opus-4-6, etc.)"
+    Write-Host "8) Gemini (gemini-3.1-flash-lite-preview, gemini-3.1-pro-preview, etc.)"
+    Write-Host "9) OpenAI GPT (gpt-5.4, gpt-5.2, gpt-4.1, etc.)"
+    Write-Host "10) LinkAI (access multiple models via one API)"
     Write-Host ""
 
     do {
-        $choice = Read-Host "Enter your choice [default: 1 - MiniMax]"
+        $choice = Read-Host "Enter your choice [default: 1 - DeepSeek]"
         if (-not $choice) { $choice = "1" }
-    } while ($choice -notmatch '^[1-9]$')
+    } while ($choice -notmatch '^([1-9]|10)$')
 
     $m = $ModelChoices[$choice]
     Write-Cow "Configuring $($m.Provider)..."
@@ -208,7 +210,7 @@ function Select-Model {
     if (-not $model) { $model = $m.Default }
     $script:ModelName = $model
     $script:KeyName   = $m.Key
-    $script:UseLinkai = ($choice -eq "9")
+    $script:UseLinkai = ($choice -eq "10")
 
     if ($m.Base) {
         $base = Read-Host "Enter API Base URL [default: $($m.Base)]"
@@ -302,6 +304,8 @@ function New-ConfigFile {
         ark_api_key               = ""
         dashscope_api_key         = ""
         minimax_api_key           = ""
+        deepseek_api_key          = ""
+        deepseek_api_base         = "https://api.deepseek.com/v1"
         voice_to_text             = "openai"
         text_to_voice             = "openai"
         voice_reply_voice         = $false
@@ -326,6 +330,7 @@ function New-ConfigFile {
         ARK_KEY      = "ark_api_key"
         DASHSCOPE_KEY = "dashscope_api_key"
         MINIMAX_KEY  = "minimax_api_key"
+        DEEPSEEK_KEY = "deepseek_api_key"
         LINKAI_KEY   = "linkai_api_key"
     }
     if ($keyMap.ContainsKey($KeyName)) {
@@ -334,9 +339,10 @@ function New-ConfigFile {
 
     # Set API base if provided
     $baseMap = @{
-        "6" = "claude_api_base"
-        "7" = "gemini_api_base"
-        "8" = "open_ai_api_base"
+        "1" = "deepseek_api_base"
+        "7" = "claude_api_base"
+        "8" = "gemini_api_base"
+        "9" = "open_ai_api_base"
     }
     if ($ApiBase -and $baseMap.ContainsKey($ModelChoice)) {
         $config[$baseMap[$ModelChoice]] = $ApiBase

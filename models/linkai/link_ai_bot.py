@@ -704,6 +704,23 @@ def _linkai_convert_messages_to_openai_format(self, messages):
     if not messages:
         return openai_messages
 
+    # DeepSeek (proxied via LinkAI) requires `reasoning_content` on EVERY
+    # assistant message once the history contains any tool-call turn — not
+    # just the tool-call turn itself. Detect that condition first.
+    has_tool_call_history = False
+    for src in messages:
+        if src.get("role") != "assistant":
+            continue
+        if src.get("tool_calls"):
+            has_tool_call_history = True
+            break
+        content = src.get("content")
+        if isinstance(content, list) and any(
+            isinstance(b, dict) and b.get("type") == "tool_use" for b in content
+        ):
+            has_tool_call_history = True
+            break
+
     # Walk the original Claude messages to collect each assistant turn's
     # reasoning text, then attach it to the matching converted entry.
     dst_idx = 0
@@ -722,8 +739,15 @@ def _linkai_convert_messages_to_openai_format(self, messages):
             dst_idx += 1
         if dst_idx >= len(openai_messages):
             break
+        dst_msg = openai_messages[dst_idx]
         if reasoning_parts:
-            openai_messages[dst_idx]["reasoning_content"] = "\n".join(reasoning_parts)
+            dst_msg["reasoning_content"] = "\n".join(reasoning_parts)
+        elif has_tool_call_history:
+            # Fallback when the trace was lost (proxy stripped it, model
+            # switched mid-session, thinking toggled on after tool calls).
+            # DeepSeek-style backends validate field presence, not value;
+            # non-thinking backends silently ignore the empty string.
+            dst_msg["reasoning_content"] = ""
         dst_idx += 1
 
     return openai_messages

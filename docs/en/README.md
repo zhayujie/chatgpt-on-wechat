@@ -28,7 +28,7 @@
 - ✅ **Tool System**: Built-in tools for file I/O, terminal execution, browser automation, scheduled tasks, messaging, and more — autonomously invoked by the Agent.
 - ✅ **CLI System**: Provides terminal commands and in-chat commands for process management, skill installation, configuration, and more.
 - ✅ **Multimodal Messages**: Supports parsing, processing, generating, and sending text, images, voice, files, and other message types.
-- ✅ **Multiple Model Support**: Supports MiniMax, DeepSeek, Claude, Gemini, OpenAI, GLM, Qwen, Doubao, Kimi, and other mainstream model providers.
+- ✅ **Multiple Model Support**: Supports DeepSeek, MiniMax, Claude, Gemini, OpenAI, GLM, Qwen, Doubao, Kimi, and other mainstream model providers.
 - ✅ **Multi-platform Deployment**: Runs on local computers or servers, integrable into WeChat, Web, Feishu, DingTalk, WeChat Official Account, and WeCom applications.
 
 ## Disclaimer
@@ -164,8 +164,8 @@ Supports mainstream model providers. Recommended models for Agent mode:
 
 | Provider | Recommended Model |
 | --- | --- |
+| DeepSeek | `deepseek-v4-flash` |
 | MiniMax | `MiniMax-M2.7` |
-| DeepSeek | `deepseek-v4-pro` |
 | Claude | `claude-sonnet-4-6` |
 | Gemini | `gemini-3.1-pro-preview` |
 | OpenAI | `gpt-5.4` |

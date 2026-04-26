@@ -29,7 +29,7 @@
 -  ✅  **工具系统：** 内置文件读写、终端执行、浏览器操作、定时任务等工具，Agent 自主调用以完成复杂任务
 -  ✅  **CLI系统：** 提供终端命令和对话命令，支持进程管理、技能安装、配置修改等操作
 -  ✅  **多模态消息：** 支持对文本、图片、语音、文件等多类型消息进行解析、处理、生成、发送等操作
--  ✅  **多模型支持：** 支持 MiniMax、DeepSeek、Claude、Gemini、OpenAI、GLM、Qwen、Doubao、Kimi 等国内外主流模型厂商
+-  ✅  **多模型支持：** 支持 DeepSeek、MiniMax、Claude、Gemini、OpenAI、GLM、Qwen、Doubao、Kimi 等国内外主流模型厂商
 -  ✅  **多通道接入：** 支持运行在本地计算机或服务器，可集成到微信、飞书、钉钉、企业微信、QQ、微信公众号、网页中使用
 
 ## 声明
@@ -115,7 +115,7 @@ irm https://cdn.link-ai.tech/code/cow/run.ps1 | iex
 
 项目支持国内外主流厂商的模型接口，可选模型及配置说明参考：[模型说明](#模型说明)。
 
-> 注：Agent 模式下推荐使用以下模型，可根据效果及成本综合选择：MiniMax-M2.7、glm-5.1、kimi-k2.6、qwen3.5-plus、claude-sonnet-4-6、gemini-3.1-pro-preview、gpt-5.4、gpt-5.4-mini
+> 注：Agent 模式下推荐使用以下模型，可根据效果及成本综合选择：deepseek-v4-flash、MiniMax-M2.7、glm-5.1、kimi-k2.6、qwen3.5-plus、claude-sonnet-4-6、gemini-3.1-pro-preview、gpt-5.4、gpt-5.4-mini
 
 同时支持使用 **LinkAI 平台** 接口，支持上述全部模型，并支持知识库、工作流、插件等 Agent 技能，参考 [接口文档](https://docs.link-ai.tech/platform/api)。
 
@@ -182,7 +182,9 @@ cow install-browser
 # config.json 文件内容示例
 {
   "channel_type": "weixin",                                   # 接入渠道类型，默认为 weixin, 支持修改为 feishu,dingtalk,wecom_bot,qq,wechatcom_app,wechatmp_service,wechatmp,terminal
-  "model": "MiniMax-M2.7",                                    # 模型名称
+  "model": "deepseek-v4-flash",                                # 模型名称
+  "deepseek_api_key": "",                                      # DeepSeek API Key
+  "deepseek_api_base": "https://api.deepseek.com/v1",         # DeepSeek API 地址
   "minimax_api_key": "",                                      # MiniMax API Key
   "zhipu_ai_api_key": "",                                     # 智谱 GLM API Key
   "moonshot_api_key": "",                                     # Kimi/Moonshot API Key
@@ -192,8 +194,6 @@ cow install-browser
   "claude_api_base": "https://api.anthropic.com/v1",          # Claude API 地址，修改可接入三方代理平台
   "gemini_api_key": "",                                       # Gemini API Key
   "gemini_api_base": "https://generativelanguage.googleapis.com", # Gemini API 地址
-  "deepseek_api_key": "",                                      # DeepSeek API Key
-  "deepseek_api_base": "https://api.deepseek.com/v1",         # DeepSeek API 地址，可修改为第三方代理
   "open_ai_api_key": "",                                      # OpenAI API Key
   "open_ai_api_base": "https://api.openai.com/v1",            # OpenAI API 地址
   "linkai_api_key": "",                                       # LinkAI API Key
@@ -208,7 +208,7 @@ cow install-browser
   "agent_max_context_tokens": 50000,                          # Agent 模式下最大上下文 tokens，超出将自动智能压缩处理
   "agent_max_context_turns": 20,                              # Agent 模式下最大上下文记忆轮次，一问一答为一轮，超出后智能压缩处理
   "agent_max_steps": 20,                                      # Agent 模式下单次任务的最大决策步数，超出后将停止继续调用工具
-  "enable_thinking": false                                    # 是否启用深度思考模式（适用于 deepseek-v4-pro/flash、deepseek-reasoner、kimi-k2-thinking 等思考型模型）。开启后模型在出最终回答前先进行推理，回答质量更高但首字延迟增加；Web 端会展示思考过程，IM 渠道（微信/企微/钉钉/飞书）虽不展示但同样获得更好答案
+  "enable_thinking": false                                    # 是否启用深度思考模式
 }
 ```
 
@@ -226,7 +226,7 @@ cow install-browser
 <details>
 <summary>2. 其他配置</summary>
 
-+ `model`: 模型名称，Agent 模式下推荐使用 `MiniMax-M2.7`、`glm-5.1`、`kimi-k2.6`、`qwen3.6-plus`、`claude-sonnet-4-6`、`gemini-3.1-pro-preview`，全部模型名称参考[common/const.py](https://github.com/zhayujie/CowAgent/blob/master/common/const.py)文件
++ `model`: 模型名称，Agent 模式下推荐使用 `deepseek-v4-flash`、`MiniMax-M2.7`、`glm-5.1`、`kimi-k2.6`、`qwen3.6-plus`、`claude-sonnet-4-6`、`gemini-3.1-pro-preview`，全部模型名称参考[common/const.py](https://github.com/zhayujie/CowAgent/blob/master/common/const.py)文件
 + `character_desc`：普通对话模式下的机器人系统提示词。在 Agent 模式下该配置不生效，由工作空间中的文件内容构成。
 + `subscribe_msg`：订阅消息，公众号和企业微信 channel 中请填写，当被订阅时会自动回复， 可使用特殊占位符。目前支持的占位符有{trigger_prefix}，在程序中它会自动替换成 bot 的触发词。
 </details>
@@ -314,6 +314,39 @@ sudo docker logs -f chatgpt-on-wechat
 推荐通过 Web 控制台在线管理模型配置，无需手动编辑文件，详见 [模型文档](https://docs.cowagent.ai/models)。以下是手动修改 `config.json` 配置模型的说明：
 
 <details>
+<summary>DeepSeek</summary>
+
+1. API Key 创建：在 [DeepSeek 平台](https://platform.deepseek.com/api_keys) 创建 API Key
+
+2. 填写配置
+
+方式一：官方接入（推荐）：
+
+```json
+{
+    "model": "deepseek-v4-flash",
+    "deepseek_api_key": "sk-xxxxxxxxxxx"
+}
+```
+
+ - `model`: 推荐填写 `deepseek-v4-flash`、`deepseek-v4-pro`
+ - `deepseek_api_key`: DeepSeek 平台的 API Key
+ - `deepseek_api_base`: 可选，默认为 `https://api.deepseek.com/v1`，可修改为第三方代理地址
+
+方式二：OpenAI 兼容方式接入：
+
+```json
+{
+    "model": "deepseek-v4-flash",
+    "bot_type": "openai",
+    "open_ai_api_key": "sk-xxxxxxxxxxx",
+    "open_ai_api_base": "https://api.deepseek.com/v1"
+}
+```
+
+</details>
+
+<details>
 <summary>MiniMax</summary>
 
 方式一：官方接入，配置如下(推荐)：
@@ -340,39 +373,6 @@ sudo docker logs -f chatgpt-on-wechat
 - `model`: 可填 `MiniMax-M2.7、MiniMax-M2.7-highspeed、MiniMax-M2.5、MiniMax-M2.1、MiniMax-M2.1-lightning、MiniMax-M2`，参考[API文档](https://platform.minimaxi.com/document/%E5%AF%B9%E8%AF%9D?key=66701d281d57f38758d581d0#QklxsNSbaf6kM4j6wjO5eEek)
 - `open_ai_api_base`: MiniMax 平台 API 的 BASE URL
 - `open_ai_api_key`: MiniMax 平台的 API-KEY
-</details>
-
-<details>
-<summary>DeepSeek</summary>
-
-1. API Key 创建：在 [DeepSeek 平台](https://platform.deepseek.com/api_keys) 创建 API Key
-
-2. 填写配置
-
-方式一：官方接入（推荐）：
-
-```json
-{
-    "model": "deepseek-v4-pro",
-    "deepseek_api_key": "sk-xxxxxxxxxxx"
-}
-```
-
- - `model`: 推荐填写 `deepseek-v4-pro`、`deepseek-v4-flash`
- - `deepseek_api_key`: DeepSeek 平台的 API Key
- - `deepseek_api_base`: 可选，默认为 `https://api.deepseek.com/v1`，可修改为第三方代理地址
-
-方式二：OpenAI 兼容方式接入：
-
-```json
-{
-    "model": "deepseek-v4-pro",
-    "bot_type": "openai",
-    "open_ai_api_key": "sk-xxxxxxxxxxx",
-    "open_ai_api_base": "https://api.deepseek.com/v1"
-}
-```
-
 </details>
 
 <details>

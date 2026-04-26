@@ -28,7 +28,7 @@
 - ✅ **ツールシステム**: ファイル読み書き、ターミナル実行、ブラウザ操作、スケジュールタスク、メッセージ送信などの組み込みツールを提供。Agentが自律的に呼び出して複雑なタスクを完了します。
 - ✅ **CLIシステム**: ターミナルコマンドとチャットコマンドを提供し、プロセス管理、Skillインストール、設定変更などの操作をサポートします。
 - ✅ **マルチモーダルメッセージ**: テキスト、画像、音声、ファイルなど、さまざまなメッセージタイプの解析・処理・生成・送信に対応しています。
-- ✅ **複数モデル対応**: MiniMax、DeepSeek、Claude、Gemini、OpenAI、GLM、Qwen、Doubao、Kimiなど、主要なモデルプロバイダーに対応しています。
+- ✅ **複数モデル対応**: DeepSeek、MiniMax、Claude、Gemini、OpenAI、GLM、Qwen、Doubao、Kimiなど、主要なモデルプロバイダーに対応しています。
 - ✅ **マルチプラットフォームデプロイ**: ローカルPCやサーバー上で実行でき、WeChat、Web、Feishu、DingTalk、WeChat公式アカウント、WeComアプリケーションに統合可能です。
 
 ## 免責事項
@@ -164,8 +164,8 @@ sudo docker logs -f chatgpt-on-wechat
 
 | プロバイダー | 推奨モデル |
 | --- | --- |
+| DeepSeek | `deepseek-v4-flash` |
 | MiniMax | `MiniMax-M2.7` |
-| DeepSeek | `deepseek-v4-pro` |
 | Claude | `claude-sonnet-4-6` |
 | Gemini | `gemini-3.1-pro-preview` |
 | OpenAI | `gpt-5.4` |

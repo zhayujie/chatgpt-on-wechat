@@ -199,6 +199,8 @@ available_setting = {
     # 七牛云 MaaS（OpenAI 兼容网关）
     "qiniu_api_key": "",
     "qiniu_api_base": "https://api.qnaigc.com/v1",
+    "deepseek_api_key": "",
+    "deepseek_api_base": "https://api.deepseek.com/v1",
     "web_port": 9899,
     "web_password": "",  # Web console password; empty means no authentication required
     "web_session_expire_days": 30,  # Auth session expiry in days
@@ -207,7 +209,7 @@ available_setting = {
     "agent_max_context_tokens": 50000,  # Agent模式下最大上下文tokens
     "agent_max_context_turns": 20,  # Agent模式下最大上下文记忆轮次
     "agent_max_steps": 20,  # Agent模式下单次运行最大决策步数
-    "enable_thinking": False,  # Toggle deep-thinking mode for thinking-capable models (e.g. deepseek-v4-pro/flash, deepseek-reasoner, kimi-k2-thinking). When enabled, the model produces a reasoning trace before the final answer; the Web console renders it in a collapsible panel, while IM channels (WeChat/WeCom/DingTalk/Feishu) still benefit from the improved answer quality but do not display the trace. Note: enabling thinking increases first-token latency.
+    "enable_thinking": False,  # Enable deep-thinking mode for thinking-capable models
     "knowledge": True,  # 是否开启知识库功能
     # Per-skill runtime config. Nested keys are flattened to env vars at startup
     # using the rule: skill[<name>][<key>] -> SKILL_<NAME>_<KEY>
@@ -387,6 +389,8 @@ def load_config():
         "minimax_api_base": "MINIMAX_API_BASE",
         "qiniu_api_key": "QINIU_API_KEY",
         "qiniu_api_base": "QINIU_API_BASE",
+        "deepseek_api_key": "DEEPSEEK_API_KEY",
+        "deepseek_api_base": "DEEPSEEK_API_BASE",
         "zhipu_ai_api_key": "ZHIPU_AI_API_KEY",
         "zhipu_ai_api_base": "ZHIPU_AI_API_BASE",
         "moonshot_api_key": "MOONSHOT_API_KEY",

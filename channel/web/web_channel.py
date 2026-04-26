@@ -770,8 +770,8 @@ class ChatHandler:
 class ConfigHandler:
 
     _RECOMMENDED_MODELS = [
+        const.DEEPSEEK_V4_FLASH, const.DEEPSEEK_V4_PRO, const.DEEPSEEK_CHAT, const.DEEPSEEK_REASONER,
         const.MINIMAX_M2_7_HIGHSPEED, const.MINIMAX_M2_7, const.MINIMAX_M2_5, const.MINIMAX_M2_1, const.MINIMAX_M2_1_LIGHTNING,
-        const.DEEPSEEK_V4_PRO, const.DEEPSEEK_V4_FLASH, const.DEEPSEEK_CHAT, const.DEEPSEEK_REASONER,
         const.CLAUDE_4_6_SONNET, const.CLAUDE_4_7_OPUS, const.CLAUDE_4_6_OPUS, const.CLAUDE_4_5_SONNET,
         const.GEMINI_31_FLASH_LITE_PRE, const.GEMINI_31_PRO_PRE, const.GEMINI_3_FLASH_PRE,
         const.GPT_54, const.GPT_54_MINI, const.GPT_54_NANO, const.GPT_5, const.GPT_41, const.GPT_4o,
@@ -782,19 +782,19 @@ class ConfigHandler:
     ]
 
     PROVIDER_MODELS = OrderedDict([
+        ("deepseek", {
+            "label": "DeepSeek",
+            "api_key_field": "deepseek_api_key",
+            "api_base_key": "deepseek_api_base",
+            "api_base_default": "https://api.deepseek.com/v1",
+            "models": [const.DEEPSEEK_V4_FLASH, const.DEEPSEEK_V4_PRO, const.DEEPSEEK_CHAT, const.DEEPSEEK_REASONER],
+        }),
         ("minimax", {
             "label": "MiniMax",
             "api_key_field": "minimax_api_key",
             "api_base_key": None,
             "api_base_default": None,
             "models": [const.MINIMAX_M2_7, const.MINIMAX_M2_7_HIGHSPEED, const.MINIMAX_M2_5, const.MINIMAX_M2_1, const.MINIMAX_M2_1_LIGHTNING],
-        }),
-        ("deepseek", {
-            "label": "DeepSeek",
-            "api_key_field": "deepseek_api_key",
-            "api_base_key": "deepseek_api_base",
-            "api_base_default": "https://api.deepseek.com/v1",
-            "models": [const.DEEPSEEK_V4_PRO, const.DEEPSEEK_V4_FLASH, const.DEEPSEEK_CHAT, const.DEEPSEEK_REASONER],
         }),
         ("claudeAPI", {
             "label": "Claude",
