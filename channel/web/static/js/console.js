@@ -2456,12 +2456,17 @@ function onProviderChange(pid) {
     }
 
     // API Base
+    const apiBaseInput = document.getElementById('cfg-api-base');
     if (p.api_base_key) {
         document.getElementById('cfg-api-base-wrap').classList.remove('hidden');
-        document.getElementById('cfg-api-base').value = configApiBases[p.api_base_key] || p.api_base_default || '';
+        apiBaseInput.value = configApiBases[p.api_base_key] || p.api_base_default || '';
+        // Hint the version-path tail (e.g. /v1) so users are reminded to
+        // include it themselves. We don't auto-rewrite anything server-side.
+        apiBaseInput.placeholder = p.api_base_placeholder || 'https://...';
     } else {
         document.getElementById('cfg-api-base-wrap').classList.add('hidden');
-        document.getElementById('cfg-api-base').value = '';
+        apiBaseInput.value = '';
+        apiBaseInput.placeholder = 'https://...';
     }
 
     onModelSelectChange(modelOpts[0] ? modelOpts[0].value : '');

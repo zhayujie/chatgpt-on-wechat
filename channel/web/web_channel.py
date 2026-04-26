@@ -781,12 +781,23 @@ class ConfigHandler:
         const.KIMI_K2_6, const.KIMI_K2_5, const.KIMI_K2,
     ]
 
+    # Generic placeholder hints surfaced in the web console. We deliberately
+    # show the version-path tail (e.g. "/v1") so users are reminded to type
+    # the full base URL. The form is intentionally vague (`...../v1`) so it
+    # never looks like a real default a user might paste verbatim — and we
+    # never auto-rewrite anything on the server side.
+    _PLACEHOLDER_V1 = "https://...../v1"
+    _PLACEHOLDER_ZHIPU = "https://...../api/paas/v4"
+    _PLACEHOLDER_DOUBAO = "https://...../api/v3"
+    _PLACEHOLDER_GEMINI = "https://....."
+
     PROVIDER_MODELS = OrderedDict([
         ("deepseek", {
             "label": "DeepSeek",
             "api_key_field": "deepseek_api_key",
             "api_base_key": "deepseek_api_base",
             "api_base_default": "https://api.deepseek.com/v1",
+            "api_base_placeholder": _PLACEHOLDER_V1,
             "models": [const.DEEPSEEK_V4_FLASH, const.DEEPSEEK_V4_PRO, const.DEEPSEEK_CHAT, const.DEEPSEEK_REASONER],
         }),
         ("minimax", {
@@ -794,6 +805,7 @@ class ConfigHandler:
             "api_key_field": "minimax_api_key",
             "api_base_key": None,
             "api_base_default": None,
+            "api_base_placeholder": "",
             "models": [const.MINIMAX_M2_7, const.MINIMAX_M2_7_HIGHSPEED, const.MINIMAX_M2_5, const.MINIMAX_M2_1, const.MINIMAX_M2_1_LIGHTNING],
         }),
         ("claudeAPI", {
@@ -801,6 +813,7 @@ class ConfigHandler:
             "api_key_field": "claude_api_key",
             "api_base_key": "claude_api_base",
             "api_base_default": "https://api.anthropic.com/v1",
+            "api_base_placeholder": _PLACEHOLDER_V1,
             "models": [const.CLAUDE_4_6_SONNET, const.CLAUDE_4_7_OPUS, const.CLAUDE_4_6_OPUS, const.CLAUDE_4_5_SONNET],
         }),
         ("gemini", {
@@ -808,6 +821,7 @@ class ConfigHandler:
             "api_key_field": "gemini_api_key",
             "api_base_key": "gemini_api_base",
             "api_base_default": "https://generativelanguage.googleapis.com",
+            "api_base_placeholder": _PLACEHOLDER_GEMINI,
             "models": [const.GEMINI_31_FLASH_LITE_PRE, const.GEMINI_31_PRO_PRE, const.GEMINI_3_FLASH_PRE],
         }),
         ("openai", {
@@ -815,6 +829,7 @@ class ConfigHandler:
             "api_key_field": "open_ai_api_key",
             "api_base_key": "open_ai_api_base",
             "api_base_default": "https://api.openai.com/v1",
+            "api_base_placeholder": _PLACEHOLDER_V1,
             "models": [const.GPT_54, const.GPT_54_MINI, const.GPT_54_NANO, const.GPT_5, const.GPT_41, const.GPT_4o],
         }),
         ("zhipu", {
@@ -822,6 +837,7 @@ class ConfigHandler:
             "api_key_field": "zhipu_ai_api_key",
             "api_base_key": "zhipu_ai_api_base",
             "api_base_default": "https://open.bigmodel.cn/api/paas/v4",
+            "api_base_placeholder": _PLACEHOLDER_ZHIPU,
             "models": [const.GLM_5_1, const.GLM_5_TURBO, const.GLM_5, const.GLM_4_7],
         }),
         ("dashscope", {
@@ -829,6 +845,7 @@ class ConfigHandler:
             "api_key_field": "dashscope_api_key",
             "api_base_key": None,
             "api_base_default": None,
+            "api_base_placeholder": "",
             "models": [const.QWEN36_PLUS, const.QWEN35_PLUS, const.QWEN3_MAX],
         }),
         ("doubao", {
@@ -836,6 +853,7 @@ class ConfigHandler:
             "api_key_field": "ark_api_key",
             "api_base_key": "ark_base_url",
             "api_base_default": "https://ark.cn-beijing.volces.com/api/v3",
+            "api_base_placeholder": _PLACEHOLDER_DOUBAO,
             "models": [const.DOUBAO_SEED_2_PRO, const.DOUBAO_SEED_2_CODE],
         }),
         ("moonshot", {
@@ -843,6 +861,7 @@ class ConfigHandler:
             "api_key_field": "moonshot_api_key",
             "api_base_key": "moonshot_base_url",
             "api_base_default": "https://api.moonshot.cn/v1",
+            "api_base_placeholder": _PLACEHOLDER_V1,
             "models": [const.KIMI_K2_6, const.KIMI_K2_5, const.KIMI_K2],
         }),
         ("modelscope", {
@@ -850,6 +869,7 @@ class ConfigHandler:
             "api_key_field": "modelscope_api_key",
             "api_base_key": None,
             "api_base_default": None,
+            "api_base_placeholder": "",
             "models": [const.QWEN3_5_27B, const.QWEN3_235B_A22B_INSTRUCT_2507],
         }),
         ("linkai", {
@@ -857,6 +877,7 @@ class ConfigHandler:
             "api_key_field": "linkai_api_key",
             "api_base_key": None,
             "api_base_default": None,
+            "api_base_placeholder": "",
             "models": _RECOMMENDED_MODELS,
         }),
         ("custom", {
@@ -864,6 +885,7 @@ class ConfigHandler:
             "api_key_field": "custom_api_key",
             "api_base_key": "custom_api_base",
             "api_base_default": "",
+            "api_base_placeholder": _PLACEHOLDER_V1,
             "models": [],
         }),
     ])
@@ -912,6 +934,7 @@ class ConfigHandler:
                     "models": p["models"],
                     "api_base_key": p["api_base_key"],
                     "api_base_default": p["api_base_default"],
+                    "api_base_placeholder": p.get("api_base_placeholder", ""),
                     "api_key_field": p.get("api_key_field"),
                 }
 
