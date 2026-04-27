@@ -3,8 +3,6 @@ google voice service
 """
 import json
 
-import openai
-
 from bridge.reply import Reply, ReplyType
 from common.log import logger
 from config import conf
@@ -15,7 +13,9 @@ import datetime, random
 
 class OpenaiVoice(Voice):
     def __init__(self):
-        openai.api_key = conf().get("open_ai_api_key")
+        # No-op: this implementation calls OpenAI HTTP endpoints directly via
+        # `requests`, so it does not need a global SDK to be configured.
+        pass
 
     def voiceToText(self, voice_file):
         logger.debug("[Openai] voice file name={}".format(voice_file))
