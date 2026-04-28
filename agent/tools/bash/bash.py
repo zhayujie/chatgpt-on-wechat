@@ -29,7 +29,7 @@ ENVIRONMENT: All API keys from env_config are auto-injected. Use $VAR_NAME direc
 
 SAFETY:
 - Freely create/modify/delete files within the workspace
-- For destructive and out-of-workspace commands, explain and confirm first"""
+- For destructive commands out of workspace, explain and confirm first"""
 
     params: dict = {
         "type": "object",
