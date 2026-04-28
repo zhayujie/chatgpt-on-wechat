@@ -115,7 +115,7 @@ class MemoryFlushManager:
         self.last_flush_timestamp: Optional[datetime] = None
         self._trim_flushed_hashes: set = set()  # Content hashes of already-flushed messages
         self._last_flushed_content_hash: str = ""  # Content hash at last flush, for daily dedup
-        self._last_dream_input_hash: str = ""  # Hash of dream input, for dedup
+        self._last_dream_input_hash: str = ""  # "{date}:{daily_hash}" of last dream, for dedup
         self._last_flush_thread: Optional[threading.Thread] = None
     
     def get_today_memory_file(self, user_id: Optional[str] = None, ensure_exists: bool = False) -> Path:
@@ -323,13 +323,18 @@ class MemoryFlushManager:
             logger.info("[DeepDream] No recent daily records, skipping to preserve existing MEMORY.md")
             return False
 
-        # Dedup: skip if input materials haven't changed since last dream
+        # Dedup: skip if same daily content already dreamed today.
+        # Note: only hash daily_content (not memory_content), because deep_dream
+        # itself rewrites MEMORY.md as a side effect, which would otherwise
+        # invalidate the hash on every subsequent call within the same window.
         import hashlib
-        input_hash = hashlib.md5((memory_content + daily_content).encode("utf-8")).hexdigest()
-        if not force and input_hash == self._last_dream_input_hash:
-            logger.debug("[DeepDream] Input unchanged since last dream, skipping")
+        daily_hash = hashlib.md5(daily_content.encode("utf-8")).hexdigest()
+        today_str = datetime.now().strftime("%Y-%m-%d")
+        dedup_key = f"{today_str}:{daily_hash}"
+        if not force and dedup_key == self._last_dream_input_hash:
+            logger.info("[DeepDream] Already dreamed today with same daily content, skipping")
             return False
-        self._last_dream_input_hash = input_hash
+        self._last_dream_input_hash = dedup_key
 
         logger.info(
             f"[DeepDream] Materials collected: "

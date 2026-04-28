@@ -549,19 +549,22 @@ class AgentInitializer:
 
         def _daily_flush_loop():
             import random
+            last_run_date = None  # Track last successful run date to prevent same-day re-trigger
             while True:
                 try:
                     now = datetime.datetime.now()
                     jitter_min = random.randint(50, 55)
                     jitter_sec = random.randint(0, 59)
                     target = now.replace(hour=23, minute=jitter_min, second=jitter_sec, microsecond=0)
-                    if target <= now:
+                    # Always schedule for tomorrow if we already ran today, or if target time has passed
+                    if target <= now or (last_run_date == now.date()):
                         target += datetime.timedelta(days=1)
                     wait_seconds = (target - now).total_seconds()
                     logger.info(f"[DailyFlush] Next flush at {target.strftime('%Y-%m-%d %H:%M:%S')} (in {wait_seconds/3600:.1f}h)")
                     time.sleep(wait_seconds)
 
                     self._flush_all_agents()
+                    last_run_date = datetime.datetime.now().date()
                 except Exception as e:
                     logger.warning(f"[DailyFlush] Error in daily flush loop: {e}")
                     time.sleep(3600)
