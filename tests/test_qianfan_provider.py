@@ -214,5 +214,34 @@ class TestQianfanBot(unittest.TestCase):
         post.assert_called_once()
 
 
+class TestQianfanSurfaces(unittest.TestCase):
+    def _read(self, relative_path):
+        root = os.path.join(os.path.dirname(__file__), "..")
+        with open(os.path.join(root, relative_path), encoding="utf-8") as f:
+            return f.read()
+
+    def test_web_console_registers_qianfan_provider(self):
+        source = self._read("channel/web/web_channel.py")
+
+        self.assertIn('("qianfan", {', source)
+        self.assertIn('"label": "百度千帆"', source)
+        self.assertIn('"api_key_field": "qianfan_api_key"', source)
+        self.assertIn('"api_base_key": "qianfan_api_base"', source)
+        self.assertIn('"api_base_default": "https://qianfan.baidubce.com/v2"', source)
+
+    def test_web_console_allows_qianfan_config_edits(self):
+        source = self._read("channel/web/web_channel.py")
+
+        self.assertIn('"qianfan_api_base"', source)
+        self.assertIn('"qianfan_api_key"', source)
+
+    def test_session_plugins_allow_qianfan(self):
+        role_source = self._read("plugins/role/role.py")
+        godcmd_source = self._read("plugins/godcmd/godcmd.py")
+
+        self.assertIn("const.QIANFAN", role_source)
+        self.assertIn("const.QIANFAN", godcmd_source)
+
+
 if __name__ == "__main__":
     unittest.main()
