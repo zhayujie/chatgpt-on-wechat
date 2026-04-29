@@ -57,6 +57,14 @@ class TestQianfanConstantsAndRouting(unittest.TestCase):
         import plugins
 
         old_plugin_path = plugins.instance.current_plugin_path
+        cow_cli_was_registered = "COW_CLI" in plugins.instance.plugins
+        old_cow_cli_plugin = plugins.instance.plugins.get("COW_CLI")
+        module_names = ("plugins.cow_cli", "plugins.cow_cli.cow_cli")
+        old_modules = {
+            name: sys.modules[name]
+            for name in module_names
+            if name in sys.modules
+        }
         plugins.instance.current_plugin_path = os.path.join(
             os.path.dirname(__file__), "..", "plugins", "cow_cli"
         )
@@ -65,6 +73,15 @@ class TestQianfanConstantsAndRouting(unittest.TestCase):
             cow_cli_plugin = plugins.instance.plugins["COW_CLI"]
         finally:
             plugins.instance.current_plugin_path = old_plugin_path
+            if cow_cli_was_registered:
+                plugins.instance.plugins["COW_CLI"] = old_cow_cli_plugin
+            else:
+                plugins.instance.plugins.pop("COW_CLI", None)
+            for name in module_names:
+                if name in old_modules:
+                    sys.modules[name] = old_modules[name]
+                else:
+                    sys.modules.pop(name, None)
 
         self.assertEqual(
             cow_cli_plugin._resolve_bot_type_for_model("ernie-4.5-turbo-128k"),

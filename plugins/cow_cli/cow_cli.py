@@ -428,7 +428,7 @@ class CowCliPlugin(Plugin):
 
     @staticmethod
     def _resolve_bot_type_for_model(model_name: str) -> str:
-        """Resolve bot_type from model name, reusing AgentBridge mapping."""
+        """Resolve bot_type from model name, matching AgentBridge mapping."""
         from common import const
         _EXACT = {
             "wenxin": const.BAIDU, "wenxin-4": const.BAIDU,
