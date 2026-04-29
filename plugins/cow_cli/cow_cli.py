@@ -42,6 +42,49 @@ CLI_ONLY_COMMANDS = {"start", "stop", "restart"}
 CHAT_ONLY_COMMANDS = set()  # context is allowed in both, but behaves differently
 
 
+_COW_CLI_SET_PLUGIN_PATH = plugins.instance.current_plugin_path is None
+if _COW_CLI_SET_PLUGIN_PATH:
+    plugins.instance.current_plugin_path = os.path.dirname(__file__)
+
+
+class CowCli:
+    @staticmethod
+    def _resolve_bot_type_for_model(model_name: str) -> str:
+        """Resolve bot_type from model name, reusing AgentBridge mapping."""
+        from common import const
+        _EXACT = {
+            "wenxin": const.BAIDU, "wenxin-4": const.BAIDU,
+            "xunfei": const.XUNFEI, const.QWEN: const.QWEN_DASHSCOPE,
+            const.QIANFAN: const.QIANFAN,
+            const.MODELSCOPE: const.MODELSCOPE,
+            const.MOONSHOT: const.MOONSHOT,
+            "moonshot-v1-8k": const.MOONSHOT, "moonshot-v1-32k": const.MOONSHOT,
+            "moonshot-v1-128k": const.MOONSHOT,
+        }
+        _PREFIX = [
+            ("qwen", const.QWEN_DASHSCOPE), ("qwq", const.QWEN_DASHSCOPE),
+            ("qvq", const.QWEN_DASHSCOPE),
+            ("gemini", const.GEMINI), ("glm", const.ZHIPU_AI),
+            ("claude", const.CLAUDEAPI),
+            ("moonshot", const.MOONSHOT), ("kimi", const.MOONSHOT),
+            ("doubao", const.DOUBAO), ("deepseek", const.DEEPSEEK),
+            ("ernie", const.QIANFAN),
+        ]
+        if not model_name:
+            return const.OPENAI
+        if model_name in _EXACT:
+            return _EXACT[model_name]
+        if model_name.lower().startswith("minimax") or model_name in ["abab6.5-chat"]:
+            return const.MiniMax
+        if model_name in [const.QWEN_TURBO, const.QWEN_PLUS, const.QWEN_MAX]:
+            return const.QWEN_DASHSCOPE
+        lowered_model = model_name.lower()
+        for prefix, btype in _PREFIX:
+            if lowered_model.startswith(prefix):
+                return btype
+        return const.OPENAI
+
+
 @plugins.register(
     name="cow_cli",
     desc="Handle cow/slash commands in chat messages",
@@ -428,36 +471,7 @@ class CowCliPlugin(Plugin):
 
     @staticmethod
     def _resolve_bot_type_for_model(model_name: str) -> str:
-        """Resolve bot_type from model name, reusing AgentBridge mapping."""
-        from common import const
-        _EXACT = {
-            "wenxin": const.BAIDU, "wenxin-4": const.BAIDU,
-            "xunfei": const.XUNFEI, const.QWEN: const.QWEN_DASHSCOPE,
-            const.MODELSCOPE: const.MODELSCOPE,
-            const.MOONSHOT: const.MOONSHOT,
-            "moonshot-v1-8k": const.MOONSHOT, "moonshot-v1-32k": const.MOONSHOT,
-            "moonshot-v1-128k": const.MOONSHOT,
-        }
-        _PREFIX = [
-            ("qwen", const.QWEN_DASHSCOPE), ("qwq", const.QWEN_DASHSCOPE),
-            ("qvq", const.QWEN_DASHSCOPE),
-            ("gemini", const.GEMINI), ("glm", const.ZHIPU_AI),
-            ("claude", const.CLAUDEAPI),
-            ("moonshot", const.MOONSHOT), ("kimi", const.MOONSHOT),
-            ("doubao", const.DOUBAO), ("deepseek", const.DEEPSEEK),
-        ]
-        if not model_name:
-            return const.OPENAI
-        if model_name in _EXACT:
-            return _EXACT[model_name]
-        if model_name.lower().startswith("minimax") or model_name in ["abab6.5-chat"]:
-            return const.MiniMax
-        if model_name in [const.QWEN_TURBO, const.QWEN_PLUS, const.QWEN_MAX]:
-            return const.QWEN_DASHSCOPE
-        for prefix, btype in _PREFIX:
-            if model_name.startswith(prefix):
-                return btype
-        return const.OPENAI
+        return CowCli._resolve_bot_type_for_model(model_name)
 
     # ------------------------------------------------------------------
     # install-browser (shared logic with cow install-browser CLI)
@@ -1172,3 +1186,7 @@ class CowCliPlugin(Plugin):
 
     def get_help_text(self, **kwargs):
         return "在对话中使用 /help 或 cow help 查看可用命令"
+
+
+if _COW_CLI_SET_PLUGIN_PATH:
+    plugins.instance.current_plugin_path = None
