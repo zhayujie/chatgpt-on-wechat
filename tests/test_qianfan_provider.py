@@ -54,14 +54,24 @@ class TestQianfanConstantsAndRouting(unittest.TestCase):
 
     def test_cow_cli_routes_ernie_models_to_qianfan(self):
         from common import const
-        from plugins.cow_cli.cow_cli import CowCli
+        import plugins
+
+        old_plugin_path = plugins.instance.current_plugin_path
+        plugins.instance.current_plugin_path = os.path.join(
+            os.path.dirname(__file__), "..", "plugins", "cow_cli"
+        )
+        try:
+            import plugins.cow_cli.cow_cli
+            cow_cli_plugin = plugins.instance.plugins["COW_CLI"]
+        finally:
+            plugins.instance.current_plugin_path = old_plugin_path
 
         self.assertEqual(
-            CowCli._resolve_bot_type_for_model("ernie-4.5-turbo-128k"),
+            cow_cli_plugin._resolve_bot_type_for_model("ernie-4.5-turbo-128k"),
             const.QIANFAN,
         )
         self.assertEqual(
-            CowCli._resolve_bot_type_for_model("qianfan"),
+            cow_cli_plugin._resolve_bot_type_for_model("qianfan"),
             const.QIANFAN,
         )
 
