@@ -243,5 +243,39 @@ class TestQianfanSurfaces(unittest.TestCase):
         self.assertIn("const.QIANFAN", godcmd_source)
 
 
+class TestQianfanDocs(unittest.TestCase):
+    def _read(self, relative_path):
+        root = os.path.join(os.path.dirname(__file__), "..")
+        with open(os.path.join(root, relative_path), encoding="utf-8") as f:
+            return f.read()
+
+    def test_qianfan_docs_exist_in_all_doc_locales(self):
+        for path in (
+            "docs/models/qianfan.mdx",
+            "docs/en/models/qianfan.mdx",
+            "docs/ja/models/qianfan.mdx",
+        ):
+            text = self._read(path)
+            self.assertIn("qianfan_api_key", text)
+            self.assertIn("https://qianfan.baidubce.com/v2", text)
+            self.assertIn("ernie-4.5-turbo-128k", text)
+
+    def test_model_indexes_link_qianfan(self):
+        for path in (
+            "docs/models/index.mdx",
+            "docs/en/models/index.mdx",
+            "docs/ja/models/index.mdx",
+        ):
+            text = self._read(path)
+            self.assertIn('/models/qianfan', text)
+
+    def test_readme_documents_native_qianfan_provider(self):
+        text = self._read("README.md")
+
+        self.assertIn('"model": "ernie-4.5-turbo-128k"', text)
+        self.assertIn('"qianfan_api_key": ""', text)
+        self.assertIn('"qianfan_api_base": "https://qianfan.baidubce.com/v2"', text)
+
+
 if __name__ == "__main__":
     unittest.main()
