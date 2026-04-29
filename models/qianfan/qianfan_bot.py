@@ -129,29 +129,47 @@ class QianfanBot(Bot, OpenAICompatibleBot):
                     "completion_tokens": data["usage"]["completion_tokens"],
                     "content": data["choices"][0]["message"]["content"],
                 }
-
-            error = response.json().get("error", {})
-            logger.error(
-                "[QIANFAN] chat failed, status_code={}, msg={}".format(
-                    response.status_code, error.get("message")
-                )
-            )
-            result = {"completion_tokens": 0, "content": "提问太快啦，请休息一下再问我吧"}
-            need_retry = False
-            if response.status_code >= 500:
-                need_retry = retry_count < 2
-            elif response.status_code == 401:
-                result["content"] = "授权失败，请检查 Qianfan API Key 是否正确"
-            elif response.status_code == 429:
-                result["content"] = "请求过于频繁，请稍后再试"
-                need_retry = retry_count < 2
-
-            if need_retry:
-                time.sleep(3)
-                return self.reply_text(session, args, retry_count + 1)
-            return result
+            return self._error_result(response, session, args, retry_count)
         except Exception as e:
             logger.exception(e)
             if retry_count < 2:
                 return self.reply_text(session, args, retry_count + 1)
             return {"completion_tokens": 0, "content": "我现在有点累了，等会再来吧"}
+
+    def _error_result(self, response, session, args=None, retry_count=0):
+        try:
+            body = response.json()
+        except ValueError:
+            body = {"raw": response.text}
+
+        error = body.get("error") if isinstance(body, dict) else None
+        if isinstance(error, dict):
+            message = error.get("message") or str(error)
+        elif error:
+            message = str(error)
+        elif isinstance(body, dict) and body.get("raw") is not None:
+            message = str(body.get("raw"))
+        else:
+            message = str(body)
+
+        logger.error(
+            "[QIANFAN] chat failed, status_code={}, msg={}".format(
+                response.status_code, message
+            )
+        )
+
+        if response.status_code >= 500 and retry_count < 2:
+            time.sleep(3)
+            return self.reply_text(session, args, retry_count + 1)
+
+        if response.status_code == 401:
+            content = "授权失败，请检查 Qianfan API Key 是否正确"
+        elif response.status_code == 429:
+            if retry_count < 2:
+                time.sleep(3)
+                return self.reply_text(session, args, retry_count + 1)
+            content = "请求过于频繁，请稍后再试"
+        else:
+            content = "请求失败：{}".format(message)
+
+        return {"completion_tokens": 0, "content": content}

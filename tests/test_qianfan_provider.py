@@ -192,6 +192,27 @@ class TestQianfanBot(unittest.TestCase):
         self.assertEqual(result["completion_tokens"], 0)
         self.assertEqual(result["content"], "授权失败，请检查 Qianfan API Key 是否正确")
 
+    def test_reply_text_returns_raw_message_for_non_json_error(self):
+        fake_conf = self._fake_conf()
+        fake_response = MagicMock()
+        fake_response.status_code = 400
+        fake_response.json.side_effect = ValueError
+        fake_response.text = "bad gateway text"
+        session = MagicMock()
+        session.messages = [{"role": "user", "content": "你好"}]
+
+        with patch("models.qianfan.qianfan_bot.conf", return_value=fake_conf):
+            with patch("models.qianfan.qianfan_bot.SessionManager"):
+                from models.qianfan.qianfan_bot import QianfanBot
+
+                bot = QianfanBot()
+                with patch("models.qianfan.qianfan_bot.requests.post", return_value=fake_response) as post:
+                    result = bot.reply_text(session)
+
+        self.assertEqual(result["completion_tokens"], 0)
+        self.assertEqual(result["content"], "请求失败：bad gateway text")
+        post.assert_called_once()
+
 
 if __name__ == "__main__":
     unittest.main()
