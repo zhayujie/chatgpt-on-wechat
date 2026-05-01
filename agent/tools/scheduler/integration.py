@@ -84,6 +84,31 @@ def get_scheduler_service():
     return _scheduler_service
 
 
+def _remember_delivered_output(
+    agent_bridge,
+    receiver: str,
+    channel_type: str,
+    content: str,
+    task_description: str = "",
+) -> None:
+    """Best-effort persistence of the message the scheduler sent to a user."""
+    if not receiver or not content:
+        return
+    try:
+        remember = getattr(agent_bridge, "remember_scheduled_output", None)
+        if remember:
+            remember(
+                receiver,
+                str(content),
+                channel_type=channel_type,
+                task_description=task_description,
+            )
+    except Exception as e:
+        logger.warning(
+            f"[Scheduler] Failed to remember delivered output for {receiver}: {e}"
+        )
+
+
 def _execute_agent_task(task: dict, agent_bridge):
     """
     Execute an agent_task action - let Agent handle the task
@@ -165,6 +190,13 @@ def _execute_agent_task(task: dict, agent_bridge):
                         
                         # Send the reply
                         channel.send(reply, context)
+                        _remember_delivered_output(
+                            agent_bridge,
+                            receiver,
+                            channel_type,
+                            reply.content,
+                            task_description,
+                        )
                         logger.info(f"[Scheduler] Task {task['id']} executed successfully, result sent to {receiver}")
                     else:
                         logger.error(f"[Scheduler] Failed to create channel: {channel_type}")
@@ -255,6 +287,13 @@ def _execute_send_message(task: dict, agent_bridge):
                     logger.debug(f"[Scheduler] Registered request_id {request_id} -> session {receiver}")
                 
                 channel.send(reply, context)
+                _remember_delivered_output(
+                    agent_bridge,
+                    receiver,
+                    channel_type,
+                    content,
+                    "send_message",
+                )
                 logger.info(f"[Scheduler] Task {task['id']} executed: sent message to {receiver}")
             else:
                 logger.error(f"[Scheduler] Failed to create channel: {channel_type}")
@@ -351,6 +390,13 @@ def _execute_tool_call(task: dict, agent_bridge):
                     logger.debug(f"[Scheduler] Registered request_id {request_id} -> session {receiver}")
 
                 channel.send(reply, context)
+                _remember_delivered_output(
+                    agent_bridge,
+                    receiver,
+                    channel_type,
+                    content,
+                    f"tool_call: {tool_name}",
+                )
                 logger.info(f"[Scheduler] Task {task['id']} executed: sent tool result to {receiver}")
             else:
                 logger.error(f"[Scheduler] Failed to create channel: {channel_type}")
