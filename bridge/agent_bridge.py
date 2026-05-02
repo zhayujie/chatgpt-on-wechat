@@ -634,6 +634,56 @@ class AgentBridge:
                 f"[AgentBridge] Failed to persist messages for session={session_id}: {e}"
             )
 
+    def remember_scheduled_output(
+        self,
+        session_id: str,
+        content: str,
+        channel_type: str = "",
+        task_description: str = "",
+    ) -> None:
+        """Add the visible output of a scheduled task to the receiver's session.
+
+        Scheduled task execution uses an isolated session so internal planning and
+        tool calls do not leak into the user's chat. The final message is still
+        part of the conversation from the user's point of view, so keep a small
+        visible turn in the receiver session for follow-up questions.
+
+        Controlled by config key `scheduler_inject_to_session` (default: True).
+        Content is truncated to 2000 chars to prevent session bloat from high-frequency tasks.
+        """
+        if not conf().get("scheduler_inject_to_session", True):
+            return
+        if not session_id or not content:
+            return
+
+        # Truncate to prevent high-frequency tasks from bloating the session
+        max_len = 2000
+        if len(content) > max_len:
+            content = content[:max_len] + "..."
+
+        user_text = "Scheduled task"
+        if task_description:
+            user_text = f"{user_text}: {task_description}"
+
+        messages = [
+            {"role": "user", "content": [{"type": "text", "text": user_text}]},
+            {"role": "assistant", "content": [{"type": "text", "text": content}]},
+        ]
+
+        # Update in-memory agent if it exists
+        agent = self.agents.get(session_id)
+        if agent:
+            try:
+                with agent.messages_lock:
+                    agent.messages.extend(messages)
+            except Exception as e:
+                logger.warning(
+                    f"[AgentBridge] Failed to update in-memory scheduled output "
+                    f"for session={session_id}: {e}"
+                )
+
+        self._persist_messages(session_id, messages, channel_type)
+
     @staticmethod
     def _strip_thinking_blocks(messages: list) -> list:
         """Return a shallow copy of messages with assistant "thinking" blocks removed."""
