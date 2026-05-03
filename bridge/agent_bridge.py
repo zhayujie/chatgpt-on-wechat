@@ -634,6 +634,13 @@ class AgentBridge:
                 f"[AgentBridge] Failed to persist messages for session={session_id}: {e}"
             )
 
+    # Marker used to identify scheduler-injected user messages so we can apply
+    # a sliding window without touching real user turns. The legacy prefix
+    # "Scheduled task" (written by the v2 PR) is also recognised when pruning,
+    # so old data can be aged out instead of leaking forever.
+    _SCHEDULED_MARKER = "[SCHEDULED]"
+    _SCHEDULED_LEGACY_MARKERS = ("Scheduled task",)
+
     def remember_scheduled_output(
         self,
         session_id: str,
@@ -648,41 +655,119 @@ class AgentBridge:
         part of the conversation from the user's point of view, so keep a small
         visible turn in the receiver session for follow-up questions.
 
-        Controlled by config key `scheduler_inject_to_session` (default: True).
-        Content is truncated to 2000 chars to prevent session bloat from high-frequency tasks.
+        Configuration:
+            scheduler_inject_to_session (bool, default True):
+                Master switch. When False, this method is a no-op.
+            scheduler_inject_max_per_session (int, default 3):
+                Maximum scheduler-injected user/assistant pairs retained per
+                session. Older injections are pruned automatically.
+
+        Content is truncated to 2000 chars to prevent a single high-volume task
+        from bloating one entry.
         """
+        from config import conf
         if not conf().get("scheduler_inject_to_session", True):
             return
         if not session_id or not content:
             return
 
-        # Truncate to prevent high-frequency tasks from bloating the session
         max_len = 2000
         if len(content) > max_len:
             content = content[:max_len] + "..."
 
-        user_text = "Scheduled task"
+        user_text = self._SCHEDULED_MARKER
         if task_description:
-            user_text = f"{user_text}: {task_description}"
+            user_text = f"{self._SCHEDULED_MARKER} {task_description}"
 
         messages = [
             {"role": "user", "content": [{"type": "text", "text": user_text}]},
             {"role": "assistant", "content": [{"type": "text", "text": content}]},
         ]
 
-        # Update in-memory agent if it exists
+        # Persist first so the new pair gets a stable seq, then prune old
+        # scheduler pairs in DB, then sync the in-memory agent.messages buffer.
+        self._persist_messages(session_id, messages, channel_type)
+
+        keep_last_n = max(int(conf().get("scheduler_inject_max_per_session", 3) or 0), 0)
+        try:
+            from agent.memory import get_conversation_store
+            deleted = get_conversation_store().prune_scheduled_messages(
+                session_id, keep_last_n=keep_last_n
+            )
+            if deleted:
+                logger.debug(
+                    f"[AgentBridge] Pruned {deleted} old scheduler messages "
+                    f"for session={session_id} (keep_last_n={keep_last_n})"
+                )
+        except Exception as e:
+            logger.warning(
+                f"[AgentBridge] Failed to prune scheduled messages "
+                f"for session={session_id}: {e}"
+            )
+
         agent = self.agents.get(session_id)
         if agent:
             try:
                 with agent.messages_lock:
                     agent.messages.extend(messages)
+                    self._prune_scheduled_in_memory(agent, keep_last_n)
             except Exception as e:
                 logger.warning(
                     f"[AgentBridge] Failed to update in-memory scheduled output "
                     f"for session={session_id}: {e}"
                 )
 
-        self._persist_messages(session_id, messages, channel_type)
+    @classmethod
+    def _prune_scheduled_in_memory(cls, agent, keep_last_n: int) -> None:
+        """Mirror conversation_store.prune_scheduled_messages on agent.messages.
+
+        Caller must hold ``agent.messages_lock``.
+        """
+        if keep_last_n < 0:
+            keep_last_n = 0
+
+        markers = (cls._SCHEDULED_MARKER,) + cls._SCHEDULED_LEGACY_MARKERS
+
+        def _is_marker_user(msg) -> bool:
+            if not isinstance(msg, dict) or msg.get("role") != "user":
+                return False
+            content = msg.get("content")
+            text = ""
+            if isinstance(content, str):
+                text = content
+            elif isinstance(content, list):
+                for block in content:
+                    if isinstance(block, dict) and block.get("type") == "text":
+                        text = block.get("text", "")
+                        break
+            return any(text.startswith(m) for m in markers)
+
+        msgs = agent.messages
+        pair_indices = []  # list of (user_idx, assistant_idx_or_None)
+        for idx, msg in enumerate(msgs):
+            if not _is_marker_user(msg):
+                continue
+            assistant_idx = None
+            if idx + 1 < len(msgs):
+                nxt = msgs[idx + 1]
+                if isinstance(nxt, dict) and nxt.get("role") == "assistant":
+                    assistant_idx = idx + 1
+            pair_indices.append((idx, assistant_idx))
+
+        if len(pair_indices) <= keep_last_n:
+            return
+
+        to_drop = pair_indices[: len(pair_indices) - keep_last_n]
+        drop_set = set()
+        for u_idx, a_idx in to_drop:
+            drop_set.add(u_idx)
+            if a_idx is not None:
+                drop_set.add(a_idx)
+
+        # Rebuild the list in place to keep external references stable.
+        kept = [m for i, m in enumerate(msgs) if i not in drop_set]
+        msgs.clear()
+        msgs.extend(kept)
 
     @staticmethod
     def _strip_thinking_blocks(messages: list) -> list:

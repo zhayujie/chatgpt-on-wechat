@@ -95,10 +95,24 @@ def _remember_delivered_output(
     Uses notify_session_id (the real chat session_id stored at task creation time)
     so that group chats correctly associate the output with the user's conversation.
     Falls back to receiver for backward compatibility with old tasks.
+
+    Per-action-type behaviour:
+        - agent_task / tool_call / skill_call: gated by ``scheduler_inject_to_session``
+          (default True). These produce AI-generated content worth remembering.
+        - send_message: additionally gated by ``scheduler_inject_send_message``
+          (default False). Fixed reminder text rarely benefits follow-up Q&A and
+          would just consume context tokens.
     """
     if not content:
         return
     action = task.get("action", {})
+    action_type = action.get("type", "")
+
+    # send_message defaults to NOT being injected; explicit opt-in via config.
+    if action_type == "send_message":
+        if not conf().get("scheduler_inject_send_message", False):
+            return
+
     session_id = action.get("notify_session_id") or action.get("receiver")
     if not session_id:
         return
