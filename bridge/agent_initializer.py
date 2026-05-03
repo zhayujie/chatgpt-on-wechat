@@ -144,7 +144,15 @@ class AgentInitializer:
             from agent.memory import get_conversation_store
             store = get_conversation_store()
             max_turns = conf().get("agent_max_context_turns", 20)
-            restore_turns = max(3, max_turns // 6)
+            # Scheduler tasks run on a stable isolated session per task and
+            # can fire many times a day; a smaller restore window keeps prompt
+            # cost bounded while still letting the agent see "last few" runs
+            # for trend / dedup style logic. Regular chat sessions keep the
+            # original heuristic so user dialogues feel continuous.
+            if session_id.startswith("scheduler_"):
+                restore_turns = max(1, max_turns // 5)
+            else:
+                restore_turns = max(3, max_turns // 6)
             saved = store.load_messages(session_id, max_turns=restore_turns)
             if saved:
                 filtered = self._filter_text_only_messages(saved)

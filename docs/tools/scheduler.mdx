@@ -65,6 +65,16 @@ description: 创建和管理定时任务
 }
 ```
 
+## 任务执行时的上下文
+
+定时任务的隔离 session 会保留最近几次执行的对话历史，便于做"对比上次"、"延续之前结论"等操作；但为了避免高频任务（如每 5 分钟监控）prompt 越积越长，会按公式自动裁剪：
+
+```
+scheduler_keep_turns = max(1, agent_max_context_turns / 5)
+```
+
+`agent_max_context_turns` 默认为 `20`，所以定时任务每次执行默认带最近 **4 轮**历史。需要更长记忆可调大 `agent_max_context_turns`。
+
 <Note>
 群聊场景（飞书 / 企微群机器人 / 钉钉等）下用户的真实 session_id 形如 `user_id:group_id`，与 receiver 不同。创建任务时会自动记录正确的 session_id；老的 `tasks.json` 缺该字段时回落到 receiver，行为与历史版本一致。
 </Note>

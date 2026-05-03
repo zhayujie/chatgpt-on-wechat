@@ -418,6 +418,18 @@ class AgentBridge:
             # Store session_id on agent so executor can clear DB on fatal errors
             agent._current_session_id = session_id
 
+            # Bound the in-memory context for scheduler sessions before each run.
+            # Scheduler sessions are stable per-task and append every trigger,
+            # so without trimming they would grow unbounded across runs and
+            # blow up prompt cost. Regular user chats are not touched here —
+            # the agent's own context manager handles that path.
+            if session_id and session_id.startswith("scheduler_"):
+                from config import conf
+                scheduler_keep_turns = max(
+                    1, int(conf().get("agent_max_context_turns", 20)) // 5
+                )
+                self._trim_in_memory_to_turns(agent, scheduler_keep_turns)
+
             try:
                 # Use agent's run_stream method with event handler
                 response = agent.run_stream(
@@ -716,6 +728,61 @@ class AgentBridge:
                     f"[AgentBridge] Failed to update in-memory scheduled output "
                     f"for session={session_id}: {e}"
                 )
+
+    @staticmethod
+    def _trim_in_memory_to_turns(agent, keep_turns: int) -> None:
+        """Bound ``agent.messages`` to the most recent ``keep_turns`` real
+        user/assistant turns, dropping older history together with any
+        intermediate tool_use/tool_result blocks that belonged to it.
+
+        A "real" user message is any user message whose content is not solely a
+        tool_result block — matches the heuristic used elsewhere when filtering
+        history (see ``AgentInitializer._filter_text_only_messages``).
+
+        No-op when the session is already within budget. Caller does not need
+        to hold the lock; this method acquires it itself.
+        """
+        if keep_turns <= 0:
+            return
+
+        def _is_real_user(msg) -> bool:
+            if not isinstance(msg, dict) or msg.get("role") != "user":
+                return False
+            content = msg.get("content")
+            if isinstance(content, list):
+                if any(
+                    isinstance(b, dict) and b.get("type") == "tool_result"
+                    for b in content
+                ):
+                    return False
+                return any(
+                    isinstance(b, dict) and b.get("type") == "text" and b.get("text")
+                    for b in content
+                )
+            if isinstance(content, str):
+                return bool(content.strip())
+            return False
+
+        with agent.messages_lock:
+            msgs = agent.messages
+            real_user_indices = [i for i, m in enumerate(msgs) if _is_real_user(m)]
+            if len(real_user_indices) <= keep_turns:
+                return
+
+            # Cut at the (k-th from the end) real user message; keep everything
+            # from there onwards so the surviving slice is still a valid
+            # user/assistant sequence.
+            cut_idx = real_user_indices[-keep_turns]
+            if cut_idx == 0:
+                return
+
+            kept = msgs[cut_idx:]
+            msgs.clear()
+            msgs.extend(kept)
+            logger.debug(
+                f"[AgentBridge] Trimmed in-memory messages to last "
+                f"{keep_turns} turns ({len(kept)} messages remain)"
+            )
 
     @classmethod
     def _prune_scheduled_in_memory(cls, agent, keep_last_n: int) -> None:
