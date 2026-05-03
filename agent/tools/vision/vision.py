@@ -2,12 +2,18 @@
 Vision tool - Analyze images using Vision API.
 Supports local files (auto base64-encoded) and HTTP URLs.
 
-Provider priority (default):
-  1. Main model via bot.call_vision — zero extra cost
-  2. Other models whose API key is configured — auto-discovered
-  3. OpenAI / LinkAI raw HTTP — reliable fallback
-  When use_linkai=true, LinkAI is promoted to #1.
-  When tool.vision.model is set, that model is used exclusively first.
+Provider resolution:
+  - tool.vision.model (if set) means "prefer this model first; fall back to
+    other configured providers if it fails". The model name is mapped to its
+    native provider (e.g. doubao-* → Doubao, kimi-* → Moonshot, gpt-* →
+    OpenAI/LinkAI). That provider is tried first, then the standard auto
+    chain runs as fallback (with the preferred provider de-duplicated).
+  - Auto chain priority:
+      1. Main model via bot.call_vision — only when the main bot is known
+         to actually support vision (not just expose a call_vision method).
+      2. Other models whose API key is configured.
+      3. OpenAI / LinkAI raw HTTP.
+    When use_linkai=true, LinkAI is promoted to #1.
 """
 
 import base64
@@ -51,6 +57,24 @@ _DISCOVERABLE_MODELS = [
     ("zhipu_ai_api_key", const.ZHIPU_AI, const.GLM_4_7, "ZhipuAI"),
     ("minimax_api_key", const.MiniMax, const.MINIMAX_M2_7, "MiniMax"),
 ]
+
+# Model name prefix → discoverable provider display_name.
+# Used to auto-route tool.vision.model to its native provider.
+# Matched case-insensitively; longest prefix wins.
+_MODEL_PREFIX_TO_PROVIDER = [
+    ("doubao-", "Doubao"),
+    ("kimi-", "Moonshot"),
+    ("moonshot-", "Moonshot"),
+    ("qwen", "DashScope"),       # qwen-*, qwen3-*, qwen3.6-*, etc.
+    ("claude-", "Claude"),
+    ("gemini-", "Gemini"),
+    ("glm-", "ZhipuAI"),
+    ("minimax-", "MiniMax"),
+    ("abab", "MiniMax"),
+]
+
+# Model prefixes that natively belong to OpenAI / LinkAI (raw HTTP providers).
+_OPENAI_MODEL_PREFIXES = ("gpt-", "o1-", "o3-", "o4-", "chatgpt-")
 
 
 @dataclass
@@ -126,6 +150,9 @@ class Vision(BaseTool):
         except Exception as e:
             return ToolResult.fail(f"Error: {e}")
 
+        # Default model is only used as a last-resort placeholder for providers
+        # whose VisionProvider.model_override is None (e.g. raw OpenAI provider
+        # when the user did not configure tool.vision.model).
         return self._call_with_fallback(providers, DEFAULT_MODEL, question, image_content)
 
     def _call_with_fallback(self, providers: List[VisionProvider], model: str,
@@ -162,29 +189,55 @@ class Vision(BaseTool):
 
     def _resolve_providers(self) -> List[VisionProvider]:
         """
-        Build an ordered list of available providers.
+        Build an ordered list of providers to try.
 
-        Priority:
-          - use_linkai=true  → [LinkAI, MainModel, OtherModels…, OpenAI]
-          - default          → [MainModel, OtherModels…, OpenAI, LinkAI]
+        Semantics of `tool.vision.model`:
+          "Prefer this model first; fall back to other configured providers
+           if it fails."
 
-        "OtherModels" are auto-discovered from configured API keys.
-        The main model's bot_type is excluded from OtherModels to avoid
-        duplicating the MainModel provider.
+        Order:
+          1. The provider that natively serves `tool.vision.model` (if any
+             and its API key is configured) — using the user-specified model
+             name verbatim.
+          2. Auto-discovery chain as fallback:
+               - use_linkai=true → [LinkAI, MainModel?, OtherModels…, OpenAI]
+               - default         → [MainModel?, OtherModels…, OpenAI, LinkAI]
+             MainModel is only included when the main bot is known to support
+             vision (see _main_bot_supports_vision).
+
+        Providers that share the same display name as the preferred provider
+        are de-duplicated to avoid retrying the same endpoint twice.
         """
-        use_linkai = conf().get("use_linkai", False) and conf().get("linkai_api_key")
+        user_model = self._resolve_user_vision_model()
         providers: List[VisionProvider] = []
 
+        # Step 1: preferred provider derived from tool.vision.model
+        if user_model:
+            preferred = self._route_by_model_name(user_model)
+            if preferred:
+                providers.extend(preferred)
+
+        # Step 2: auto-discovery chain as fallback
+        existing = {p.name for p in providers}
+        fallback: List[VisionProvider] = []
+        use_linkai = conf().get("use_linkai", False) and conf().get("linkai_api_key")
+
         if use_linkai:
-            self._append_provider(providers, self._build_linkai_provider)
-            self._append_provider(providers, self._build_main_model_provider)
-            self._append_other_model_providers(providers)
-            self._append_provider(providers, self._build_openai_provider)
+            self._append_provider(fallback, lambda: self._build_linkai_provider(user_model))
+            self._append_provider(fallback, self._build_main_model_provider)
+            self._append_other_model_providers(fallback, preferred_model=user_model)
+            self._append_provider(fallback, lambda: self._build_openai_provider(user_model))
         else:
-            self._append_provider(providers, self._build_main_model_provider)
-            self._append_other_model_providers(providers)
-            self._append_provider(providers, self._build_openai_provider)
-            self._append_provider(providers, self._build_linkai_provider)
+            self._append_provider(fallback, self._build_main_model_provider)
+            self._append_other_model_providers(fallback, preferred_model=user_model)
+            self._append_provider(fallback, lambda: self._build_openai_provider(user_model))
+            self._append_provider(fallback, lambda: self._build_linkai_provider(user_model))
+
+        for p in fallback:
+            if p.name in existing:
+                continue
+            providers.append(p)
+            existing.add(p.name)
 
         return providers
 
@@ -194,18 +247,115 @@ class Vision(BaseTool):
         if p:
             providers.append(p)
 
-    def _append_other_model_providers(self, providers: List[VisionProvider]) -> None:
+    @staticmethod
+    def _resolve_user_vision_model() -> Optional[str]:
+        """Read tool.vision.model from config; return None if unset/blank."""
+        tool_conf = conf().get("tool", {})
+        if not isinstance(tool_conf, dict):
+            return None
+        vision_conf = tool_conf.get("vision", {})
+        if not isinstance(vision_conf, dict):
+            return None
+        m = vision_conf.get("model")
+        if isinstance(m, str) and m.strip():
+            return m.strip()
+        return None
+
+    @staticmethod
+    def _infer_provider_from_model(model_name: str) -> Optional[str]:
+        """
+        Infer the provider display name from a model name's prefix.
+        Returns None when no rule matches (or for OpenAI-family names, which
+        are handled separately by the caller).
+        """
+        if not model_name:
+            return None
+        lower = model_name.lower()
+        # Sort by prefix length desc so e.g. "moonshot-" wins over hypothetical "moo-"
+        for prefix, display_name in sorted(_MODEL_PREFIX_TO_PROVIDER, key=lambda x: -len(x[0])):
+            if lower.startswith(prefix.lower()):
+                return display_name
+        return None
+
+    def _route_by_model_name(self, user_model: str) -> Optional[List[VisionProvider]]:
+        """
+        Try to build a provider list using the user-specified model name.
+        Returns:
+          - [provider]  : matched and the provider's key is configured
+          - []          : matched but key missing → tell caller to surface this
+                          as a hard error rather than silently falling back
+          - None        : no rule matches → caller should fall through to auto
+        """
+        lower = user_model.lower()
+
+        # OpenAI / LinkAI family
+        if lower.startswith(_OPENAI_MODEL_PREFIXES):
+            providers: List[VisionProvider] = []
+            # Prefer LinkAI when explicitly enabled, else OpenAI first
+            use_linkai = conf().get("use_linkai", False) and conf().get("linkai_api_key")
+            if use_linkai:
+                self._append_provider(providers, lambda: self._build_linkai_provider(user_model))
+                self._append_provider(providers, lambda: self._build_openai_provider(user_model))
+            else:
+                self._append_provider(providers, lambda: self._build_openai_provider(user_model))
+                self._append_provider(providers, lambda: self._build_linkai_provider(user_model))
+            if providers:
+                return providers
+            logger.warning(f"[Vision] tool.vision.model='{user_model}' looks like an OpenAI "
+                           f"model but neither OPENAI_API_KEY nor LINKAI_API_KEY is configured.")
+            return None  # fall through to auto
+
+        # Discoverable native providers (Doubao, Moonshot, etc.)
+        target_display = self._infer_provider_from_model(user_model)
+        if not target_display:
+            return None  # unknown prefix → auto
+
+        for config_key, bot_type, _default_model, display_name in _DISCOVERABLE_MODELS:
+            if display_name != target_display:
+                continue
+            api_key = conf().get(config_key, "")
+            if not api_key or not api_key.strip():
+                logger.warning(f"[Vision] tool.vision.model='{user_model}' routes to "
+                               f"'{display_name}' but '{config_key}' is not configured. "
+                               f"Falling back to auto-discovery.")
+                return None  # fall through to auto
+            try:
+                from models.bot_factory import create_bot
+                bot = create_bot(bot_type)
+                if not hasattr(bot, 'call_vision'):
+                    logger.warning(f"[Vision] '{display_name}' bot does not implement call_vision.")
+                    return None
+            except Exception as e:
+                logger.warning(f"[Vision] Failed to create '{display_name}' bot: {e}")
+                return None
+
+            return [VisionProvider(
+                name=display_name,
+                api_key="",
+                api_base="",
+                model_override=user_model,
+                use_bot=True,
+                fallback_bot=bot,
+            )]
+
+        return None
+
+    def _append_other_model_providers(self, providers: List[VisionProvider],
+                                       preferred_model: Optional[str] = None) -> None:
         """
         Auto-discover other models whose API key is configured.
         Skip the main model's own bot_type (already covered by MainModel provider).
         Skip bot_types that already have a provider in the list (e.g. OpenAI).
+
+        If preferred_model matches a provider's family (e.g. "doubao-*" matches
+        Doubao), use it instead of that provider's hard-coded default model.
         """
-        # Determine main model's bot_type so we can skip it
         main_bot_type = None
         if self.model and hasattr(self.model, '_resolve_bot_type'):
             main_bot_type = self.model._resolve_bot_type(conf().get("model", ""))
 
         existing_names = {p.name for p in providers}
+        preferred_provider = self._infer_provider_from_model(preferred_model) if preferred_model else None
 
         for config_key, bot_type, default_model, display_name in _DISCOVERABLE_MODELS:
             if display_name in existing_names:
@@ -216,7 +366,6 @@ class Vision(BaseTool):
             if not api_key or not api_key.strip():
                 continue
 
-            # Create a bot instance and check if it supports call_vision
             try:
                 from models.bot_factory import create_bot
                 bot = create_bot(bot_type)
@@ -225,62 +374,95 @@ class Vision(BaseTool):
             except Exception:
                 continue
 
+            model_for_provider = (preferred_model
+                                  if preferred_provider == display_name and preferred_model
+                                  else default_model)
+
             providers.append(VisionProvider(
                 name=display_name,
                 api_key="",
                 api_base="",
-                model_override=default_model,
+                model_override=model_for_provider,
                 use_bot=True,
                 fallback_bot=bot,
             ))
 
-    def _resolve_vision_model(self) -> Optional[str]:
+    def _main_bot_supports_vision(self, bot) -> bool:
         """
-        Determine which model to use for vision.
+        Whether the main bot is known to natively support vision.
 
-        1. User explicit config: tool.vision.model in config.json
-        2. Fallback to the main configured model name
+        Having a `call_vision` method is necessary but not sufficient — some
+        bots (e.g. DeepSeek) implement the method against an endpoint that
+        does not actually serve vision models, which causes silent failures
+        when a vendor-foreign model name (e.g. doubao-*) is forwarded.
+
+        We trust call_vision only when:
+          - The bot exposes a truthy `supports_vision` attribute, OR
+          - The configured main model name has a known multimodal prefix
+            handled by this bot's own vendor (claude-/gemini-/glm-/qwen-/
+            kimi-/doubao-/MiniMax-/abab*/gpt-*).
         """
-        tool_conf = conf().get("tool", {})
-        user_vision_model = tool_conf.get("vision", {}).get("model") if isinstance(tool_conf, dict) else None
-        if user_vision_model:
-            return user_vision_model
-        model_name = conf().get("model", "")
-        return model_name or None
+        if bot is None:
+            return False
+        if getattr(bot, "supports_vision", False):
+            return True
+        main_model = (conf().get("model") or "").lower()
+        if not main_model:
+            return False
+        if main_model.startswith(_OPENAI_MODEL_PREFIXES):
+            return True
+        return self._infer_provider_from_model(main_model) is not None
 
     def _build_main_model_provider(self) -> Optional[VisionProvider]:
         """
         Use the vendor's own model for vision via bot.call_vision.
-        Only available when the bot class has call_vision.
+        Gated by _main_bot_supports_vision so non-vision bots (DeepSeek, etc.)
+        do not get routed vendor-foreign model names.
         """
         if not (self.model and hasattr(self.model, 'bot')):
             return None
         try:
             bot = self.model.bot
-            if not hasattr(bot, 'call_vision'):
-                return None
         except Exception:
             return None
+        if not hasattr(bot, 'call_vision'):
+            return None
+        if not self._main_bot_supports_vision(bot):
+            return None
 
-        vision_model = self._resolve_vision_model()
+        # Use the configured main model name; do NOT inject tool.vision.model
+        # here, because by the time we reach this branch the tool.vision.model
+        # routing has already been attempted (and either matched the main bot
+        # or failed to find a provider).
+        main_model_name = conf().get("model") or None
 
         return VisionProvider(
             name=_MAIN_MODEL_PROVIDER_NAME,
             api_key="",
             api_base="",
-            model_override=vision_model,
+            model_override=main_model_name,
             use_bot=True,
         )
 
-    def _build_openai_provider(self) -> Optional[VisionProvider]:
+    def _build_openai_provider(self, preferred_model: Optional[str] = None) -> Optional[VisionProvider]:
         api_key = conf().get("open_ai_api_key") or os.environ.get("OPENAI_API_KEY")
         if not api_key:
             return None
         api_base = (conf().get("open_ai_api_base") or os.environ.get("OPENAI_API_BASE", "")).rstrip("/") \
             or "https://api.openai.com/v1"
-        return VisionProvider(name="OpenAI", api_key=api_key, api_base=self._ensure_v1(api_base))
+        # Only honor preferred_model when it looks like an OpenAI-family name;
+        # otherwise the OpenAI endpoint would 400 on a vendor-specific name.
+        model_override = preferred_model if (
+            preferred_model and preferred_model.lower().startswith(_OPENAI_MODEL_PREFIXES)
+        ) else None
+        return VisionProvider(
+            name="OpenAI",
+            api_key=api_key,
+            api_base=self._ensure_v1(api_base),
+            model_override=model_override,
+        )
 
-    def _build_linkai_provider(self) -> Optional[VisionProvider]:
+    def _build_linkai_provider(self, preferred_model: Optional[str] = None) -> Optional[VisionProvider]:
         api_key = conf().get("linkai_api_key") or os.environ.get("LINKAI_API_KEY")
         if not api_key:
             return None
@@ -290,8 +472,15 @@ class Vision(BaseTool):
         extra = get_cloud_headers(api_key)
         extra.pop("Authorization", None)
         extra.pop("Content-Type", None)
-        return VisionProvider(name="LinkAI", api_key=api_key, api_base=self._ensure_v1(api_base),
-                              extra_headers=extra)
+        # LinkAI is a multi-vendor proxy and accepts most model names, so we
+        # honor any user-configured model name here.
+        return VisionProvider(
+            name="LinkAI",
+            api_key=api_key,
+            api_base=self._ensure_v1(api_base),
+            extra_headers=extra,
+            model_override=preferred_model,
+        )
 
     def _call_via_bot(self, model: str, question: str, image_content: dict,
                       provider: Optional[VisionProvider] = None) -> ToolResult:
