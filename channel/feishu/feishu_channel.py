@@ -533,10 +533,12 @@ class FeiShuChanel(ChatChannel):
         import time as _time
 
         # 共享状态（受 lock 保护）
-        committed_text = [""]              # 已结束轮次的累积内容（含分隔符）
-        current_text = [""]                # 当前轮 LLM 输出的累积内容
-        card_id = [None]                   # 创建出来的卡片实体 ID
-        message_id = [None]                # 卡片发送后的消息 ID（仅日志用）
+        # 多轮 agent 模式下，每个"中间过场消息"会作为一张独立卡片发送。
+        # current_text 只承载当前正在流式渲染的那张卡片的内容；message_end / agent_end
+        # 时会把它定型并 reset。
+        current_text = [""]                # 当前卡片正在累加的 LLM 输出
+        card_id = [None]                   # 当前流式卡片的实体 ID（每段独立）
+        message_id = [None]                # 当前卡片发送后的消息 ID（仅日志用）
         last_update_time = [0.0]
         # 占位发送是同步进行的，但用一个 in-flight 标记防止并发的多条 message_update
         # 事件各自触发一次创建+发送，导致发出多张卡片。
@@ -549,9 +551,13 @@ class FeiShuChanel(ChatChannel):
         is_group = context.get("isgroup", False)
         receiver = context.get("receiver")
         receive_id_type = context.get("receive_id_type", "open_id")
-        # 后端推流间隔与客户端打字机渲染参数：飞书原生 streaming_config 默认值经验证
-        # 已能在大部分场景下取得平滑的打字机效果，无需暴露给用户配置。
-        interval_s = 0.3
+        # 后端推流节流：首个 chunk 立即推（最低首字延迟），之后每 200ms 一波。
+        # 客户端按 70ms/字 渲染（约 14 字/秒）是真正的速度瓶颈，再频繁推送也只会
+        # 在飞书云端排队，不会让用户感知更快，但会增加一倍以上的 PUT 请求。
+        # 飞书 streaming_mode 豁免 10qps 限制，但带宽和 CPU 成本仍是真实开销。
+        interval_s = 0.2
+        # 客户端打字机渲染参数：飞书默认 step=1（约 14 字/秒）实测偏慢，
+        # 调成 step=2（约 28 字/秒）更接近 ChatGPT 等同类产品的节奏。
         print_freq_ms = 70
         print_step = 2
         print_strategy = "fast"
@@ -753,7 +759,7 @@ class FeiShuChanel(ChatChannel):
                         if disabled[0]:
                             return
 
-                # 第二段：累加当前轮文本，按节流推送（锁内只读写状态）
+                # 第二段：累加当前卡片文本，按节流推送（锁内只读写状态）
                 should_push = False
                 snapshot = ""
                 with lock:
@@ -761,31 +767,69 @@ class FeiShuChanel(ChatChannel):
                     now = _time.time()
                     if card_id[0] and (now - last_update_time[0] >= interval_s):
                         last_update_time[0] = now
-                        snapshot = committed_text[0] + current_text[0]
+                        snapshot = current_text[0]
                         should_push = True
 
                 if should_push:
                     _stream_update_text(snapshot)
 
             elif event_type == "message_end":
-                # 一轮 LLM 输出结束。如果本轮触发了工具调用，把当前轮内容定型到 committed
-                # 并加分隔符；否则当前轮就是最终内容（agent_end 会处理）。
+                # 一轮 LLM 输出结束。如果本轮触发了工具调用，说明当前轮的文本是
+                # "中间过场消息"（如"来看看！"），应该作为独立卡片定型，然后为下一轮
+                # 重新创建一张新卡片。这样最终用户看到的是：
+                #   [卡片1: 中间过场1]
+                #   [卡片2: 中间过场2]
+                #   ...
+                #   [卡片N: 最终回复]
+                # 与 wecom_bot 的多消息流式体验对齐。
                 tool_calls = data.get("tool_calls", []) or []
-                if tool_calls:
-                    with lock:
-                        if current_text[0].strip():
-                            committed_text[0] += current_text[0].rstrip() + "\n\n---\n\n"
-                        current_text[0] = ""
+                if not tool_calls:
+                    # 没有工具调用：本轮即最终回复，留给 agent_end 统一处理。
+                    return
+
+                with lock:
+                    text_to_finalize = current_text[0].rstrip()
+                    current_text[0] = ""
+
+                if not text_to_finalize:
+                    return
+
+                # 用最终文本覆盖当前卡片并关闭流式模式（凝固成普通卡片）
+                _stream_update_text(text_to_finalize)
+                _close_streaming_mode()
+
+                # 重置卡片状态，下一段 message_update 会触发新卡片的创建
+                with lock:
+                    card_id[0] = None
+                    message_id[0] = None
+                    sequence[0] = 0
+                    last_update_time[0] = 0.0
 
             elif event_type == "agent_end":
-                # 用 final_response 强制覆盖整张卡片：丢弃中间累积，避免拼接错误。
+                # 最终回复：用 final_response 覆盖当前流式卡片，然后关闭流式模式。
                 final_response = data.get("final_response", "")
-                if final_response:
-                    final_text = str(final_response)
-                    # 标记 streamed 让 chat_channel 跳过 send()
-                    context["feishu_streamed"] = True
-                    _stream_update_text(final_text)
-                    _close_streaming_mode()
+                if not final_response:
+                    return
+                final_text = str(final_response)
+                # 标记 streamed 让 chat_channel 跳过 send()
+                context["feishu_streamed"] = True
+
+                with lock:
+                    has_card = card_id[0] is not None
+                    init_busy = init_in_flight[0]
+
+                # 罕见情况：agent_end 触发时还没创建过卡片（极快返回 / 没有
+                # message_update），主动创建一张承载 final_text。
+                if not has_card and not init_busy:
+                    with lock:
+                        init_in_flight[0] = True
+                    _create_and_send_card()
+                    with lock:
+                        if disabled[0]:
+                            return
+
+                _stream_update_text(final_text)
+                _close_streaming_mode()
 
         return on_event
 
