@@ -726,14 +726,14 @@ Coding Plan 是各厂商推出的编程包月套餐，所有厂商均可通过 O
 
 飞书支持两种事件接收模式：WebSocket 长连接（推荐）和 Webhook。
 
-**方式一：WebSocket 模式（推荐，无需公网 IP）**
+**方式一：WebSocket 模式（默认，无需公网 IP）**
 
 ```json
 {
     "channel_type": "feishu",
     "feishu_app_id": "APP_ID",
     "feishu_app_secret": "APP_SECRET",
-    "feishu_event_mode": "websocket"
+    "feishu_stream_reply": true
 }
 ```
 
@@ -746,11 +746,13 @@ Coding Plan 是各厂商推出的编程包月套餐，所有厂商均可通过 O
     "feishu_app_secret": "APP_SECRET",
     "feishu_token": "VERIFICATION_TOKEN",
     "feishu_event_mode": "webhook",
-    "feishu_port": 9891
+    "feishu_port": 9891,
+    "feishu_stream_reply": true
 }
 ```
 
 - `feishu_event_mode`: 事件接收模式，`websocket`（推荐）或 `webhook`
+- `feishu_stream_reply`: 是否开启流式打字机回复，需开通 `cardkit:card:write` 权限且飞书客户端 ≥ 7.20
 - WebSocket 模式需安装依赖：`pip3 install lark-oapi`
 
 详细步骤和参数说明参考 [飞书接入](https://docs.cowagent.ai/channels/feishu)

@@ -142,12 +142,13 @@ available_setting = {
     "wechatcomapp_agent_id": "",  # 企业微信app的agent_id
     "wechatcomapp_aes_key": "",  # 企业微信app的aes_key
     # 飞书配置
-    "feishu_port": 80,  # 飞书bot监听端口
+    "feishu_port": 80,  # 飞书bot监听端口，仅webhook模式需要
     "feishu_app_id": "",  # 飞书机器人应用APP Id
     "feishu_app_secret": "",  # 飞书机器人APP secret
-    "feishu_token": "",  # 飞书 verification token
-    "feishu_bot_name": "",  # 飞书机器人的名字
+    "feishu_token": "",  # 飞书 verification token，仅webhook模式需要
     "feishu_event_mode": "websocket",  # 飞书事件接收模式: webhook(HTTP服务器) 或 websocket(长连接)
+    # 飞书流式回复（基于官方 cardkit 流式卡片 API，需要机器人开通 cardkit:card:write 权限，且飞书客户端 7.20+）
+    "feishu_stream_reply": True,  # 是否开启流式回复（打字机效果）。失败/老客户端自动降级为非流式或升级提示
     # 钉钉配置
     "dingtalk_client_id": "",  # 钉钉机器人Client ID 
     "dingtalk_client_secret": "",  # 钉钉机器人Client Secret
@@ -228,13 +229,13 @@ class Config(dict):
     def __getitem__(self, key):
         # 跳过以下划线开头的注释字段
         if not key.startswith("_") and key not in available_setting:
-            logger.warning("[Config] key '{}' not in available_setting, may not take effect".format(key))
+            logger.debug("[Config] key '{}' not in available_setting, may not take effect".format(key))
         return super().__getitem__(key)
 
     def __setitem__(self, key, value):
         # 跳过以下划线开头的注释字段
         if not key.startswith("_") and key not in available_setting:
-            logger.warning("[Config] key '{}' not in available_setting, may not take effect".format(key))
+            logger.debug("[Config] key '{}' not in available_setting, may not take effect".format(key))
         return super().__setitem__(key, value)
 
     def get(self, key, default=None):

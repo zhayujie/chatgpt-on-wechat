@@ -35,10 +35,18 @@ class OpenaiVoice(Voice):
             }
             response = requests.post(url, headers=headers, files=files, data=data)
             response_data = response.json()
-            text = response_data['text']
-            reply = Reply(ReplyType.TEXT, text)
-            logger.info("[Openai] voiceToText text={} voice file name={}".format(text, voice_file))
+            if response.status_code != 200 or "text" not in response_data:
+                logger.error(
+                    f"[Openai] voiceToText failed: status={response.status_code}, "
+                    f"resp={response_data}"
+                )
+                reply = Reply(ReplyType.ERROR, "我暂时还无法听清您的语音，请稍后再试吧~")
+            else:
+                text = response_data["text"]
+                reply = Reply(ReplyType.TEXT, text)
+                logger.info("[Openai] voiceToText text={} voice file name={}".format(text, voice_file))
         except Exception as e:
+            logger.error(f"[Openai] voiceToText exception: {e}", exc_info=True)
             reply = Reply(ReplyType.ERROR, "我暂时还无法听清您的语音，请稍后再试吧~")
         finally:
             return reply

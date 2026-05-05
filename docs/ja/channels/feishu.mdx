@@ -24,8 +24,10 @@ description: CowAgent を Feishu アプリケーションに統合する
 **権限管理**をクリックし、**権限設定**の下の入力欄に以下の権限文字列を貼り付け、フィルタされたすべての権限を選択し、**一括有効化**をクリックして確認します：
 
 ```
-im:message,im:message.group_at_msg,im:message.group_at_msg:readonly,im:message.p2p_msg,im:message.p2p_msg:readonly,im:message:send_as_bot,im:resource
+im:message,im:message.group_at_msg,im:message.group_at_msg:readonly,im:message.p2p_msg,im:message.p2p_msg:readonly,im:message:send_as_bot,im:resource,cardkit:card:write
 ```
+
+`cardkit:card:write` はストリーミングタイプライター応答（ストリーミングカードの作成と更新）に使用されます。ストリーミングが不要な場合は省略できます。
 
 <img src="https://cdn.link-ai.tech/doc/feishu-hosting-add-auth2.png" width="800"/>
 
@@ -42,15 +44,17 @@ im:message,im:message.group_at_msg,im:message.group_at_msg:readonly,im:message.p
   "channel_type": "feishu",
   "feishu_app_id": "YOUR_APP_ID",
   "feishu_app_secret": "YOUR_APP_SECRET",
-  "feishu_bot_name": "YOUR_BOT_NAME"
+  "feishu_stream_reply": true
 }
 ```
 
-| パラメータ | 説明 |
-| --- | --- |
-| `feishu_app_id` | Feishu Bot の App ID |
-| `feishu_app_secret` | Feishu Bot の App Secret |
-| `feishu_bot_name` | Bot 名（アプリ作成時に設定）、グループチャットで使用する際に必要 |
+| パラメータ | 説明 | デフォルト値 |
+| --- | --- | --- |
+| `feishu_app_id` | Feishu Bot の App ID | - |
+| `feishu_app_secret` | Feishu Bot の App Secret | - |
+| `feishu_stream_reply` | ストリーミングタイプライター応答を有効にするか（Feishu 公式 cardkit ストリーミングカード API を使用）。無効化するとテキストを一括で返します。 | `true` |
+
+> **ストリーミングの要件**: Bot に `cardkit:card:write` 権限を付与する必要があり、受信者の Feishu クライアントバージョンが 7.20 以上である必要があります。古いバージョンのクライアントでは「クライアントをアップグレードしてください」というプレースホルダーが表示されます。権限が付与されていない場合は、自動的に通常のテキスト応答にフォールバックします。
 
 設定完了後、プロジェクトを起動します。
 
