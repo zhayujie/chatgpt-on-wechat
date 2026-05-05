@@ -392,7 +392,9 @@ class FeiShuChanel(ChatChannel):
             # 回调内部先发送一条占位消息获取 message_id，之后通过 PATCH 接口原地更新内容，
             # 实现打字机效果。回调结束时设置 context["feishu_streamed"]=True，
             # 让 send() 跳过重复发送，避免最终完整回复再被重复投递一次。
-            if conf().get("feishu_stream_reply", False):
+            # 默认开启流式打字机回复。需机器人开通 cardkit:card:write 权限且飞书客户端 7.20+，
+            # 任意环节失败会自动降级为非流式文本回复。
+            if conf().get("feishu_stream_reply", True):
                 context["on_event"] = self._make_feishu_stream_callback(context, feishu_msg.access_token)
             self.produce(context)
         logger.debug(f"[FeiShu] query={feishu_msg.content}, type={feishu_msg.ctype}")
