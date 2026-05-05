@@ -575,6 +575,7 @@ class WebChannel(ChatChannel):
             '/config', 'ConfigHandler',
             '/api/channels', 'ChannelsHandler',
             '/api/weixin/qrlogin', 'WeixinQrHandler',
+            '/api/feishu/register', 'FeishuRegisterHandler',
             '/api/tools', 'ToolsHandler',
             '/api/skills', 'SkillsHandler',
             '/api/memory', 'MemoryHandler',
@@ -1034,8 +1035,6 @@ class ChannelsHandler:
             "fields": [
                 {"key": "feishu_app_id", "label": "App ID", "type": "text"},
                 {"key": "feishu_app_secret", "label": "App Secret", "type": "secret"},
-                {"key": "feishu_token", "label": "Verification Token", "type": "secret"},
-                {"key": "feishu_bot_name", "label": "Bot Name", "type": "text"},
             ],
         }),
         ("dingtalk", {
@@ -1528,6 +1527,174 @@ class WeixinQrHandler:
             })
 
         return json.dumps({"status": "success", "qr_status": qr_status})
+
+
+class FeishuRegisterHandler:
+    """飞书智能体应用一键创建（OAuth 设备授权流，基于 lark.register_app SDK）。
+
+    GET  /api/feishu/register   → 启动注册：调用 SDK 生成二维码 URL，立即返回；
+                                   后台线程继续轮询飞书侧直到用户扫码授权。
+    POST /api/feishu/register   → 轮询当前会话状态（pending / done / error / expired）。
+                                   注册成功后不直接写 config，由前端再调
+                                   /api/channels {action:'connect'} 走标准启用流程。
+    """
+
+    # 进程内单例状态（{url, expire_in, status, app_id, app_secret, error, thread}）。
+    # 简单的本地自部署场景下不需要 session 隔离。
+    _state = {}
+    _lock = threading.Lock()
+
+    @staticmethod
+    def _qr_to_data_uri(data: str) -> str:
+        """复用 WeixinQrHandler 的二维码渲染。"""
+        return WeixinQrHandler._qr_to_data_uri(data)
+
+    @classmethod
+    def _reset_state(cls):
+        with cls._lock:
+            cls._state = {}
+
+    @classmethod
+    def _start_register_thread(cls):
+        """启动一次新的注册会话。如已有进行中的会话，先取消（通过 cancel_event）。"""
+        # 先取消可能存在的上一次会话，避免两个 SDK 线程并发 poll 同一个端点
+        with cls._lock:
+            old_cancel = cls._state.get("cancel_event") if cls._state else None
+            if old_cancel is not None:
+                old_cancel.set()
+            cancel_event = threading.Event()
+            cls._state = {"status": "starting", "cancel_event": cancel_event}
+
+        def _worker():
+            try:
+                import lark_oapi as lark
+            except ImportError:
+                with cls._lock:
+                    cls._state["status"] = "error"
+                    cls._state["error"] = "lark-oapi SDK 未安装，请执行 pip install -U lark-oapi"
+                return
+
+            def _on_qr(info):
+                # SDK 拿到二维码 URL 后立即回调；写入 state 让前端 GET 立刻能拿到
+                with cls._lock:
+                    cls._state["url"] = info.get("url", "")
+                    cls._state["expire_in"] = info.get("expire_in", 600)
+                    cls._state["qr_image"] = cls._qr_to_data_uri(info.get("url", ""))
+                    cls._state["status"] = "pending"
+                logger.info(f"[FeishuRegister] QR ready, expire_in={info.get('expire_in')}s")
+
+            def _on_status(info):
+                # 过滤掉 polling 心跳（每 5 秒一次，纯噪音）；
+                # 保留 slow_down / domain_switched 等真正的状态切换事件
+                status = info.get("status")
+                if status == "polling":
+                    return
+                logger.info(f"[FeishuRegister] SDK status: {info}")
+
+            try:
+                result = lark.register_app(
+                    on_qr_code=_on_qr,
+                    on_status_change=_on_status,
+                    source="cowagent",
+                    cancel_event=cancel_event,
+                )
+                with cls._lock:
+                    cls._state["status"] = "done"
+                    cls._state["app_id"] = result.get("client_id", "")
+                    cls._state["app_secret"] = result.get("client_secret", "")
+                logger.info(f"[FeishuRegister] App created: app_id={result.get('client_id')}")
+            except Exception as e:
+                err_msg = str(e)
+                err_cls = e.__class__.__name__
+                # 飞书 SDK 抛出的 AppExpiredError / AppAccessDeniedError / RegisterAppError
+                if "Expired" in err_cls:
+                    status = "expired"
+                elif "Denied" in err_cls:
+                    status = "denied"
+                elif "abort" in err_msg.lower() or "cancel" in err_msg.lower():
+                    # 被新一轮注册抢占，保持安静
+                    return
+                else:
+                    status = "error"
+                with cls._lock:
+                    # 仅当当前 state 仍属于本次 worker 时才写入，避免覆盖更新的会话
+                    if cls._state.get("cancel_event") is cancel_event:
+                        cls._state["status"] = status
+                        cls._state["error"] = err_msg
+                logger.warning(f"[FeishuRegister] Register failed ({err_cls}): {err_msg}")
+
+        threading.Thread(target=_worker, daemon=True, name="feishu-register").start()
+
+    def GET(self):
+        """启动一次新的注册会话。如果已有 pending/done 会话则覆盖。"""
+        _require_auth()
+        web.header('Content-Type', 'application/json; charset=utf-8')
+        try:
+            self._start_register_thread()
+            # 等待 SDK 拿到二维码 URL（最多 10s）。SDK 内部会马上回调 _on_qr。
+            import time as _t
+            for _ in range(100):
+                with self._lock:
+                    if self._state.get("url") or self._state.get("status") in ("error", "expired", "denied"):
+                        break
+                _t.sleep(0.1)
+            with self._lock:
+                if self._state.get("status") in ("error", "expired", "denied"):
+                    return json.dumps({
+                        "status": "error",
+                        "message": self._state.get("error", "register failed"),
+                    })
+                if not self._state.get("url"):
+                    return json.dumps({
+                        "status": "error",
+                        "message": "等待飞书二维码超时，请重试",
+                    })
+                return json.dumps({
+                    "status": "success",
+                    "qrcode_url": self._state["url"],
+                    "qr_image": self._state.get("qr_image", ""),
+                    "expire_in": self._state.get("expire_in", 600),
+                })
+        except Exception as e:
+            logger.error(f"[WebChannel] FeishuRegister GET error: {e}")
+            return json.dumps({"status": "error", "message": str(e)})
+
+    def POST(self):
+        """轮询注册结果。"""
+        _require_auth()
+        web.header('Content-Type', 'application/json; charset=utf-8')
+        try:
+            body = json.loads(web.data() or b"{}")
+            action = body.get("action", "poll")
+            if action != "poll":
+                return json.dumps({"status": "error", "message": f"unknown action: {action}"})
+
+            with self._lock:
+                status = self._state.get("status", "idle")
+                if status == "done":
+                    payload = {
+                        "status": "success",
+                        "register_status": "done",
+                        "app_id": self._state.get("app_id", ""),
+                        "app_secret": self._state.get("app_secret", ""),
+                    }
+                    # 一次性返回凭据后清掉，避免敏感信息长期驻留内存
+                    self._state = {}
+                    return json.dumps(payload)
+                if status in ("error", "expired", "denied"):
+                    return json.dumps({
+                        "status": "success",
+                        "register_status": status,
+                        "message": self._state.get("error", ""),
+                    })
+                # pending / starting：还在等用户扫码
+                return json.dumps({
+                    "status": "success",
+                    "register_status": "pending",
+                })
+        except Exception as e:
+            logger.error(f"[WebChannel] FeishuRegister POST error: {e}")
+            return json.dumps({"status": "error", "message": str(e)})
 
 
 def _get_workspace_root():

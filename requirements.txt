@@ -18,8 +18,8 @@ zai-sdk
 # tongyi qwen sdk
 dashscope
 
-# feishu websocket mode
-lark-oapi
+# feishu
+lark-oapi>=1.5.5
 # dingtalk
 dingtalk_stream
 # wecom bot websocket mode

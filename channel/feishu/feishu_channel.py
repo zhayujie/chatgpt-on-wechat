@@ -55,6 +55,176 @@ def _ensure_lark_imported():
     return lark
 
 
+def _print_qr_to_terminal(qr_url: str):
+    """Render a QR code as ASCII art and emit it via logger.
+
+    走 logger 而非 print 是为了避免 nohup/cow 后台启动场景下 stdout 块缓冲导致
+    二维码滞后输出（看起来像出现了两次）。logger 的 StreamHandler 是行缓冲，
+    既能在前台终端看到，也能进 run.log。
+    """
+    qr_lines = []
+    try:
+        import qrcode as qr_lib
+        import io
+        qr = qr_lib.QRCode(error_correction=qr_lib.constants.ERROR_CORRECT_L, box_size=1, border=1)
+        qr.add_data(qr_url)
+        qr.make(fit=True)
+        buf = io.StringIO()
+        qr.print_ascii(out=buf, invert=True)
+        qr_lines = buf.getvalue().splitlines()
+    except ImportError:
+        qr_lines = ["(未安装 qrcode 包，无法渲染 ASCII 二维码：pip install qrcode)"]
+    except Exception as e:
+        qr_lines = [f"(渲染二维码失败：{e})"]
+
+    header = "=" * 60
+    banner = [
+        "",
+        header,
+        "  飞书一键创建应用：请使用 飞书 App 扫描下方二维码",
+        "  （二维码 10 分钟内有效，仅供一次扫描）",
+        header,
+    ]
+    footer = [
+        f"  或点击链接创建: {qr_url}",
+        "  等待扫码...",
+        "",
+    ]
+    full = banner + qr_lines + footer
+    logger.info("[FeiShu] One-click 飞书应用创建二维码（请用飞书 App 扫码）：\n" + "\n".join(full))
+
+
+def _persist_feishu_credentials(app_id: str, app_secret: str) -> bool:
+    """Write feishu_app_id / feishu_app_secret + ensure feishu in channel_type into config.json.
+
+    Returns True on success, False on failure (e.g. config.json missing or unwritable).
+    """
+    try:
+        config_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+            "config.json",
+        )
+        if os.path.exists(config_path):
+            with open(config_path, "r", encoding="utf-8") as f:
+                file_cfg = json.load(f)
+        else:
+            file_cfg = {}
+
+        file_cfg["feishu_app_id"] = app_id
+        file_cfg["feishu_app_secret"] = app_secret
+
+        # 保证 channel_type 中包含 feishu（用户可能纯通过 CLI 启动单通道）
+        ch_type = file_cfg.get("channel_type", conf().get("channel_type", "")) or ""
+        existing = [s.strip() for s in ch_type.split(",") if s.strip()]
+        if "feishu" not in existing:
+            existing.append("feishu")
+            file_cfg["channel_type"] = ",".join(existing)
+
+        with open(config_path, "w", encoding="utf-8") as f:
+            json.dump(file_cfg, f, indent=4, ensure_ascii=False)
+
+        # 同步到内存中的 conf()，让本次启动直接生效
+        conf()["feishu_app_id"] = app_id
+        conf()["feishu_app_secret"] = app_secret
+        if "channel_type" in file_cfg:
+            conf()["channel_type"] = file_cfg["channel_type"]
+
+        try:
+            os.chmod(config_path, 0o600)
+        except Exception:
+            pass
+        return True
+    except Exception as e:
+        logger.error(f"[FeiShu] Failed to persist credentials to config.json: {e}")
+        return False
+
+
+def _register_via_qr_in_terminal() -> bool:
+    """CLI-side one-click app creation via lark_oapi.register_app.
+
+    Blocks the calling thread (typically the channel startup thread) until the user
+    finishes scanning, the QR code expires, or registration is cancelled.
+
+    Returns True if credentials were obtained AND persisted; False otherwise.
+    The caller should fall back to the original "missing credentials" error in that case.
+    """
+    if not LARK_SDK_AVAILABLE:
+        logger.error(
+            "[FeiShu] 缺少 feishu_app_id / feishu_app_secret。"
+            "未安装 lark-oapi SDK，无法在终端发起扫码创建。"
+            "请执行 pip install -U 'lark-oapi>=1.5.5' 后重试，或手动在 config.json 中填入凭据。"
+        )
+        return False
+
+    try:
+        lark_mod = _ensure_lark_imported()
+    except Exception as e:
+        logger.error(f"[FeiShu] Import lark_oapi failed: {e}")
+        return False
+
+    # register_app 是 lark-oapi 1.5.5 才引入的能力，旧版本调用会得到难以理解的
+    # AttributeError。提前显式检查，给出明确的升级提示。
+    if not hasattr(lark_mod, "register_app"):
+        try:
+            from importlib.metadata import version as _pkg_version
+            installed = _pkg_version("lark-oapi")
+        except Exception:
+            installed = "unknown"
+        logger.error(
+            f"[FeiShu] 当前 lark-oapi 版本 ({installed}) 不支持一键创建应用，需要 >= 1.5.5。"
+            "请执行 pip install -U 'lark-oapi>=1.5.5' 后重试，或手动在 config.json 中填入凭据。"
+        )
+        return False
+
+    logger.info("[FeiShu] 检测到尚未配置 feishu_app_id / feishu_app_secret，"
+                "正在向飞书申请一键创建应用...")
+
+    def _on_qr(info):
+        url = info.get("url", "")
+        if url:
+            _print_qr_to_terminal(url)
+
+    def _on_status(info):
+        # 过滤 polling 心跳（每 5 秒一次），保留 slow_down / domain_switched 等
+        status = info.get("status")
+        if status == "polling":
+            return
+        logger.info(f"[FeiShu] register_app status: {info}")
+
+    try:
+        result = lark_mod.register_app(
+            on_qr_code=_on_qr,
+            on_status_change=_on_status,
+            source="cowagent",
+        )
+    except Exception as e:
+        err_cls = e.__class__.__name__
+        if "Expired" in err_cls:
+            logger.error("[FeiShu] 二维码已过期，请重启程序后重试。")
+        elif "Denied" in err_cls:
+            logger.error("[FeiShu] 已取消授权。")
+        else:
+            logger.error(f"[FeiShu] 一键创建失败：{e}")
+        return False
+
+    app_id = result.get("client_id", "")
+    app_secret = result.get("client_secret", "")
+    if not app_id or not app_secret:
+        logger.error("[FeiShu] 创建结果缺少 app_id/app_secret，无法继续。")
+        return False
+
+    if not _persist_feishu_credentials(app_id, app_secret):
+        logger.error(
+            "[FeiShu] 应用创建成功但写入 config.json 失败，请手动复制以下值到配置文件：\n"
+            f"        feishu_app_id     = {app_id}\n"
+            f"        feishu_app_secret = {app_secret}"
+        )
+        return False
+
+    logger.info(f"[FeiShu] 应用创建成功，凭据已写入 config.json (app_id={app_id})。")
+    return True
+
+
 @singleton
 class FeiShuChanel(ChatChannel):
     feishu_app_id = conf().get('feishu_app_id')
@@ -90,6 +260,20 @@ class FeiShuChanel(ChatChannel):
         self.feishu_app_secret = conf().get('feishu_app_secret')
         self.feishu_token = conf().get('feishu_token')
         self.feishu_event_mode = conf().get('feishu_event_mode', 'websocket')
+
+        # 命令行启动场景：缺少凭据时尝试通过 lark.register_app 在终端弹二维码
+        # 引导用户扫码创建应用。Web 控制台启动同样会走到这里，但控制台用户通常
+        # 已经通过 /api/feishu/register 完成了创建并写回 config.json。
+        if not self.feishu_app_id or not self.feishu_app_secret:
+            if _register_via_qr_in_terminal():
+                self.feishu_app_id = conf().get('feishu_app_id')
+                self.feishu_app_secret = conf().get('feishu_app_secret')
+            else:
+                err = "[FeiShu] feishu_app_id 与 feishu_app_secret 缺失，无法启动通道"
+                logger.error(err)
+                self.report_startup_error(err)
+                return
+
         self._fetch_bot_open_id()
         if self.feishu_event_mode == 'websocket':
             self._startup_websocket()

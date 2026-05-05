@@ -724,9 +724,15 @@ Coding Plan 是各厂商推出的编程包月套餐，所有厂商均可通过 O
 <details>
 <summary>3. Feishu - 飞书</summary>
 
-飞书支持两种事件接收模式：WebSocket 长连接（推荐）和 Webhook。
+飞书使用 WebSocket 长连接模式，无需公网 IP。详细步骤参考 [飞书接入](https://docs.cowagent.ai/channels/feishu)。
 
-**方式一：WebSocket 模式（默认，无需公网 IP）**
+**方式一：扫码一键创建（推荐）**
+
+启动 Cow 后打开 Web 控制台，**通道** → **接入通道** → 选择 **飞书** → 扫码创建。也支持 CLI 启动时在终端打印二维码。
+
+**方式二：手动配置**
+
+在飞书开放平台创建自建应用并配置权限后，将凭据填入 `config.json`：
 
 ```json
 {
@@ -737,25 +743,7 @@ Coding Plan 是各厂商推出的编程包月套餐，所有厂商均可通过 O
 }
 ```
 
-**方式二：Webhook 模式（需要公网 IP）**
-
-```json
-{
-    "channel_type": "feishu",
-    "feishu_app_id": "APP_ID",
-    "feishu_app_secret": "APP_SECRET",
-    "feishu_token": "VERIFICATION_TOKEN",
-    "feishu_event_mode": "webhook",
-    "feishu_port": 9891,
-    "feishu_stream_reply": true
-}
-```
-
-- `feishu_event_mode`: 事件接收模式，`websocket`（推荐）或 `webhook`
-- `feishu_stream_reply`: 是否开启流式打字机回复，需开通 `cardkit:card:write` 权限且飞书客户端 ≥ 7.20
-- WebSocket 模式需安装依赖：`pip3 install lark-oapi`
-
-详细步骤和参数说明参考 [飞书接入](https://docs.cowagent.ai/channels/feishu)
+- `feishu_stream_reply`：是否开启流式打字机回复，默认开启（需 `cardkit:card:write` 权限 + 飞书客户端 ≥ 7.20）
 
 </details>
 
@@ -777,7 +765,15 @@ Coding Plan 是各厂商推出的编程包月套餐，所有厂商均可通过 O
 <details>
 <summary>5. WeCom Bot - 企微智能机器人</summary>
 
-企微智能机器人使用 WebSocket 长连接模式，无需公网 IP 和域名，配置简单：
+企微智能机器人使用 WebSocket 长连接模式，无需公网 IP 和域名。详细步骤参考 [企微智能机器人接入](https://docs.cowagent.ai/channels/wecom-bot)。
+
+**方式一：扫码一键创建（推荐）**
+
+启动 Cow 后打开 Web 控制台，**通道** → **接入通道** → 选择 **企微智能机器人** → 使用企业微信扫码创建。
+
+**方式二：手动配置**
+
+在企业微信中创建智能机器人并选择**长连接模式**，记录 Bot ID 和 Secret 后填入 `config.json`：
 
 ```json
 {
@@ -786,7 +782,6 @@ Coding Plan 是各厂商推出的编程包月套餐，所有厂商均可通过 O
     "wecom_bot_secret": "YOUR_SECRET"
 }
 ```
-详细步骤和参数说明参考 [企微智能机器人接入](https://docs.cowagent.ai/channels/wecom-bot)
 
 </details>
 
