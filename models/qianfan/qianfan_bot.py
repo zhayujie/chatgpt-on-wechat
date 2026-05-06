@@ -17,9 +17,21 @@ DEFAULT_API_BASE = "https://qianfan.baidubce.com/v2"
 DEFAULT_MODEL = const.ERNIE_5
 DEFAULT_VISION_MODEL = const.ERNIE_45_TURBO_VL
 
+# Qianfan models that natively understand images. Other ERNIE variants
+# are text-only and must not receive image payloads.
+_VISION_CAPABLE_MODELS = {
+    const.ERNIE_5,
+    const.ERNIE_X1_1,
+    const.ERNIE_45_TURBO_VL,
+    const.ERNIE_45_TURBO_VL_32K,
+}
+
 
 class QianfanBot(Bot, OpenAICompatibleBot):
-    supports_vision = True
+    @property
+    def supports_vision(self) -> bool:
+        """Whether the configured main model is multimodal."""
+        return (conf().get("model") or "").lower() in _VISION_CAPABLE_MODELS
 
     def __init__(self):
         super().__init__()

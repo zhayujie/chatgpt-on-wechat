@@ -780,7 +780,7 @@ class ConfigHandler:
         const.QWEN36_PLUS, const.QWEN35_PLUS, const.QWEN3_MAX,
         const.DOUBAO_SEED_2_PRO, const.DOUBAO_SEED_2_CODE,
         const.KIMI_K2_6, const.KIMI_K2_5, const.KIMI_K2,
-        const.ERNIE_5, const.ERNIE_45_TURBO_128K, const.ERNIE_45_TURBO_32K, const.ERNIE_X1_TURBO_32K,
+        const.ERNIE_5, const.ERNIE_X1_1, const.ERNIE_45_TURBO_128K, const.ERNIE_45_TURBO_32K,
     ]
 
     # Generic placeholder hints surfaced in the web console. We deliberately
@@ -873,7 +873,7 @@ class ConfigHandler:
             "api_base_key": "qianfan_api_base",
             "api_base_default": "https://qianfan.baidubce.com/v2",
             "api_base_placeholder": _PLACEHOLDER_QIANFAN,
-            "models": [const.ERNIE_5, const.ERNIE_45_TURBO_128K, const.ERNIE_45_TURBO_32K, const.ERNIE_X1_TURBO_32K],
+            "models": [const.ERNIE_5, const.ERNIE_X1_1, const.ERNIE_45_TURBO_128K, const.ERNIE_45_TURBO_32K],
         }),
         ("modelscope", {
             "label": "ModelScope",

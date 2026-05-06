@@ -15,7 +15,7 @@ description: Baidu Qianfan ERNIE モデル設定
 
 | パラメータ | 説明 |
 | --- | --- |
-| `model` | デフォルトの推奨は `ernie-5.0`。`ernie-4.5-turbo-128k`、`ernie-4.5-turbo-32k`、`ernie-x1-turbo-32k` も利用できます |
+| `model` | デフォルトの推奨は `ernie-5.0`。`ernie-x1.1`、`ernie-4.5-turbo-128k`、`ernie-4.5-turbo-32k` も利用できます |
 | `qianfan_api_key` | Qianfan API Key。通常は `bce-v3/` で始まります |
 | `qianfan_api_base` | 任意。デフォルトは `https://qianfan.baidubce.com/v2` |
 
@@ -24,13 +24,18 @@ description: Baidu Qianfan ERNIE モデル設定
 | モデル | 用途 |
 | --- | --- |
 | `ernie-5.0` | デフォルト推奨。文心の最新フラッグシップモデルで、総合性能が最も強い |
+| `ernie-x1.1` | 深層推論モデル。ハルシネーションが少なく、指示追従とツール呼び出しが強化 |
 | `ernie-4.5-turbo-128k` | 長いコンテキストと一般的なチャット向け |
 | `ernie-4.5-turbo-32k` | コンテキスト長とコストのバランスが良い一般チャット向け |
-| `ernie-x1-turbo-32k` | より強い推論が必要なタスク向け |
 
 ## Vision ツール
 
-`qianfan_api_key` を設定すると、Agent モードの Vision ツールは Qianfan を自動検出できます。推奨する Qianfan の視覚モデルは `ernie-4.5-turbo-vl` です：
+`qianfan_api_key` を設定すると、Agent モードの Vision ツールは Qianfan を自動検出します：
+
+- 主モデルが多モーダル（`ernie-5.0`、`ernie-x1.1`、`ernie-4.5-turbo-vl` など）の場合は、追加設定なしで主モデルがそのまま画像を処理します。
+- 主モデルがテキスト専用（`ernie-4.5-turbo-128k` など）の場合は、Vision ツールが自動的に `ernie-4.5-turbo-vl` にフォールバックします。
+
+特定の Vision モデルを強制したい場合は、`config.json` で明示的に指定できます：
 
 ```json
 {

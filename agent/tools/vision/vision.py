@@ -53,8 +53,8 @@ _DISCOVERABLE_MODELS = [
     ("ark_api_key", const.DOUBAO, const.DOUBAO_SEED_2_PRO, "Doubao"),
     ("dashscope_api_key", const.QWEN_DASHSCOPE, const.QWEN36_PLUS, "DashScope"),
     ("claude_api_key", const.CLAUDEAPI, const.CLAUDE_4_6_SONNET, "Claude"),
-    ("qianfan_api_key", const.QIANFAN, const.ERNIE_45_TURBO_VL, "Qianfan"),
     ("gemini_api_key", const.GEMINI, const.GEMINI_31_FLASH_LITE_PRE, "Gemini"),
+    ("qianfan_api_key", const.QIANFAN, const.ERNIE_45_TURBO_VL, "Qianfan"),
     ("zhipu_ai_api_key", const.ZHIPU_AI, const.GLM_4_7, "ZhipuAI"),
     ("minimax_api_key", const.MiniMax, const.MINIMAX_M2_7, "MiniMax"),
 ]
@@ -346,15 +346,21 @@ class Vision(BaseTool):
                                        preferred_model: Optional[str] = None) -> None:
         """
         Auto-discover other models whose API key is configured.
-        Skip the main model's own bot_type (already covered by MainModel provider).
-        Skip bot_types that already have a provider in the list (e.g. OpenAI).
+        Skip the main model's own bot_type (already covered by MainModel
+        provider), unless the main model itself does not support vision —
+        in that case we still want the vendor's dedicated vision model
+        as a fallback. Also skip bot_types that already appear in the
+        provider list.
 
-        If preferred_model matches a provider's family (e.g. "doubao-*" matches
-        Doubao), use it instead of that provider's hard-coded default model.
+        If preferred_model matches a provider's family, use it instead
+        of that provider's hard-coded default model.
         """
         main_bot_type = None
+        main_bot_supports_vision = False
         if self.model and hasattr(self.model, '_resolve_bot_type'):
             main_bot_type = self.model._resolve_bot_type(conf().get("model", ""))
+            main_bot = getattr(self.model, "bot", None)
+            main_bot_supports_vision = self._main_bot_supports_vision(main_bot)
 
         existing_names = {p.name for p in providers}
         preferred_provider = self._infer_provider_from_model(preferred_model) if preferred_model else None
@@ -362,7 +368,11 @@ class Vision(BaseTool):
         for config_key, bot_type, default_model, display_name in _DISCOVERABLE_MODELS:
             if display_name in existing_names:
                 continue
-            if bot_type == main_bot_type:
+            # Same bot_type as the main model is normally handled by the
+            # MainModel provider; only skip it here if the main model
+            # actually supports vision. Otherwise fall through and add
+            # the vendor's dedicated vision model as a fallback.
+            if bot_type == main_bot_type and main_bot_supports_vision:
                 continue
             api_key = conf().get(config_key, "")
             if not api_key or not api_key.strip():
@@ -380,34 +390,44 @@ class Vision(BaseTool):
                                   if preferred_provider == display_name and preferred_model
                                   else default_model)
 
-            providers.append(VisionProvider(
+            provider = VisionProvider(
                 name=display_name,
                 api_key="",
                 api_base="",
                 model_override=model_for_provider,
                 use_bot=True,
                 fallback_bot=bot,
-            ))
+            )
+
+            # Same vendor as the main bot is the most natural fallback when
+            # the main model itself does not support vision — promote it to
+            # the front of the list instead of relying on declaration order.
+            if bot_type == main_bot_type:
+                providers.insert(0, provider)
+            else:
+                providers.append(provider)
 
     def _main_bot_supports_vision(self, bot) -> bool:
         """
         Whether the main bot is known to natively support vision.
 
-        Having a `call_vision` method is necessary but not sufficient — some
-        bots (e.g. DeepSeek) implement the method against an endpoint that
-        does not actually serve vision models, which causes silent failures
-        when a vendor-foreign model name (e.g. doubao-*) is forwarded.
+        Having a `call_vision` method is necessary but not sufficient —
+        some bots implement the method against an endpoint that does not
+        actually serve vision models, which causes silent failures when a
+        vendor-foreign model name is forwarded.
 
-        We trust call_vision only when:
-          - The bot exposes a truthy `supports_vision` attribute, OR
-          - The configured main model name has a known multimodal prefix
-            handled by this bot's own vendor (claude-/gemini-/glm-/qwen-/
-            kimi-/doubao-/MiniMax-/abab*/gpt-*).
+        Resolution order:
+          1. If the bot explicitly declares `supports_vision`, trust it.
+             This lets bots opt in or out based on their own runtime
+             configuration (e.g. the currently selected model).
+          2. Otherwise, fall back to a model-name prefix heuristic: trust
+             call_vision when the main model looks like an OpenAI family
+             model or matches a known multimodal vendor prefix.
         """
         if bot is None:
             return False
-        if getattr(bot, "supports_vision", False):
-            return True
+        if hasattr(bot, "supports_vision"):
+            return bool(getattr(bot, "supports_vision"))
         main_model = (conf().get("model") or "").lower()
         if not main_model:
             return False

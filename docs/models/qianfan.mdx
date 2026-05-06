@@ -15,7 +15,7 @@ description: 百度千帆 ERNIE 模型配置
 
 | 参数 | 说明 |
 | --- | --- |
-| `model` | 默认推荐使用 `ernie-5.0`；也可使用 `ernie-4.5-turbo-128k`、`ernie-4.5-turbo-32k`、`ernie-x1-turbo-32k` |
+| `model` | 默认推荐使用 `ernie-5.0`；也可使用 `ernie-x1.1`、`ernie-4.5-turbo-128k`、`ernie-4.5-turbo-32k` |
 | `qianfan_api_key` | 千帆 API Key，格式通常以 `bce-v3/` 开头 |
 | `qianfan_api_base` | 可选，默认为 `https://qianfan.baidubce.com/v2` |
 
@@ -24,13 +24,18 @@ description: 百度千帆 ERNIE 模型配置
 | 模型 | 适用场景 |
 | --- | --- |
 | `ernie-5.0` | 默认推荐，文心新一代旗舰模型，综合能力最强 |
+| `ernie-x1.1` | 深度思考推理模型，幻觉更低、指令遵循与工具调用更强 |
 | `ernie-4.5-turbo-128k` | 长上下文和通用对话 |
 | `ernie-4.5-turbo-32k` | 通用对话，成本和上下文更均衡 |
-| `ernie-x1-turbo-32k` | 需要更强推理能力的任务 |
 
 ## Vision 工具
 
-配置 `qianfan_api_key` 后，Agent 的 Vision 工具可以自动使用千帆视觉模型。默认推荐使用 `ernie-4.5-turbo-vl`：
+配置 `qianfan_api_key` 后，Agent 的 Vision 工具可以自动使用千帆视觉模型：
+
+- 当主模型本身是多模态时（如 `ernie-5.0`、`ernie-x1.1`、`ernie-4.5-turbo-vl`），直接由主模型识别图像，无需额外配置
+- 当主模型是纯文本时（如 `ernie-4.5-turbo-128k`），Vision 工具会自动 fallback 到 `ernie-4.5-turbo-vl`
+
+如需手动指定 Vision 模型，可在 `config.json` 中显式配置：
 
 ```json
 {
