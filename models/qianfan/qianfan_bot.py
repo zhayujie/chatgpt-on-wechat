@@ -15,9 +15,12 @@ from .qianfan_session import QianfanSession
 
 DEFAULT_API_BASE = "https://qianfan.baidubce.com/v2"
 DEFAULT_MODEL = const.ERNIE_5
+DEFAULT_VISION_MODEL = const.ERNIE_45_TURBO_VL_PREVIEW
 
 
 class QianfanBot(Bot, OpenAICompatibleBot):
+    supports_vision = True
+
     def __init__(self):
         super().__init__()
         model = self._resolve_model()
@@ -135,6 +138,54 @@ class QianfanBot(Bot, OpenAICompatibleBot):
             if retry_count < 2:
                 return self.reply_text(session, args, retry_count + 1)
             return {"completion_tokens": 0, "content": "我现在有点累了，等会再来吧"}
+
+    def call_vision(self, image_url: str, question: str,
+                    model: str = None, max_tokens: int = 1000) -> dict:
+        vision_model = model or DEFAULT_VISION_MODEL
+        payload = {
+            "model": vision_model,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": question},
+                        {"type": "image_url", "image_url": {"url": image_url}},
+                    ],
+                }
+            ],
+            "max_tokens": max_tokens,
+        }
+
+        try:
+            response = requests.post(
+                "{}/chat/completions".format(self.api_base),
+                headers=self._build_headers(),
+                json=payload,
+                timeout=conf().get("request_timeout", 180),
+            )
+            if response.status_code != 200:
+                err = self._error_result(response, None)
+                return {
+                    "error": True,
+                    "message": err.get("content", "Qianfan vision request failed"),
+                }
+
+            data = response.json()
+            choices = data.get("choices", [])
+            content = choices[0].get("message", {}).get("content", "") if choices else ""
+            usage = data.get("usage", {}) or {}
+            return {
+                "content": content,
+                "model": data.get("model", vision_model),
+                "usage": {
+                    "prompt_tokens": usage.get("prompt_tokens", 0),
+                    "completion_tokens": usage.get("completion_tokens", 0),
+                    "total_tokens": usage.get("total_tokens", 0),
+                },
+            }
+        except Exception as e:
+            logger.exception(e)
+            return {"error": True, "message": str(e)}
 
     def _error_result(self, response, session, args=None, retry_count=0):
         try:
