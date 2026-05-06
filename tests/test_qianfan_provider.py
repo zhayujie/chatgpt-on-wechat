@@ -360,6 +360,82 @@ class TestQianfanSurfaces(unittest.TestCase):
         self.assertIn("const.QIANFAN", godcmd_source)
 
 
+class TestQianfanVisionTool(unittest.TestCase):
+    def _fake_conf(self, values=None):
+        data = {
+            "model": "deepseek-v4-flash",
+            "qianfan_api_key": "",
+            "qianfan_api_base": "https://qianfan.baidubce.com/v2",
+            "open_ai_api_key": "",
+            "linkai_api_key": "",
+            "use_linkai": False,
+            "tool": {},
+        }
+        if values:
+            data.update(values)
+        fake_conf = MagicMock()
+        fake_conf.get.side_effect = lambda key, default=None: data.get(key, default)
+        return fake_conf
+
+    def test_vision_auto_discovers_qianfan_when_key_configured(self):
+        fake_conf = self._fake_conf({"qianfan_api_key": "test-qianfan-key"})
+        fake_bot = MagicMock()
+        fake_bot.call_vision = MagicMock()
+
+        with patch("agent.tools.vision.vision.conf", return_value=fake_conf):
+            with patch("models.bot_factory.create_bot", return_value=fake_bot) as create_bot:
+                from agent.tools.vision.vision import Vision
+                from common import const
+
+                tool = Vision()
+                tool.model = None
+                providers = tool._resolve_providers()
+
+        self.assertEqual(providers[0].name, "Qianfan")
+        self.assertEqual(providers[0].model_override, const.ERNIE_45_TURBO_VL_PREVIEW)
+        self.assertTrue(providers[0].use_bot)
+        create_bot.assert_called_with(const.QIANFAN)
+
+    def test_vision_routes_ernie_model_override_to_qianfan(self):
+        fake_conf = self._fake_conf({
+            "qianfan_api_key": "test-qianfan-key",
+            "tool": {"vision": {"model": "ernie-4.5-vl-28b-a3b"}},
+        })
+        fake_bot = MagicMock()
+        fake_bot.call_vision = MagicMock()
+
+        with patch("agent.tools.vision.vision.conf", return_value=fake_conf):
+            with patch("models.bot_factory.create_bot", return_value=fake_bot):
+                from agent.tools.vision.vision import Vision
+
+                tool = Vision()
+                tool.model = None
+                providers = tool._resolve_providers()
+
+        self.assertEqual(providers[0].name, "Qianfan")
+        self.assertEqual(providers[0].model_override, "ernie-4.5-vl-28b-a3b")
+
+    def test_vision_main_model_uses_qianfan_when_configured_model_is_ernie(self):
+        fake_conf = self._fake_conf({"model": "ernie-4.5-vl-28b-a3b"})
+        from common import const
+
+        fake_model = MagicMock()
+        fake_model._resolve_bot_type.return_value = const.QIANFAN
+        fake_model.bot = MagicMock()
+        fake_model.bot.supports_vision = True
+        fake_model.bot.call_vision = MagicMock()
+
+        with patch("agent.tools.vision.vision.conf", return_value=fake_conf):
+            from agent.tools.vision.vision import Vision
+
+            tool = Vision()
+            tool.model = fake_model
+            providers = tool._resolve_providers()
+
+        self.assertEqual(providers[0].name, "MainModel")
+        self.assertEqual(providers[0].model_override, "ernie-4.5-vl-28b-a3b")
+
+
 class TestQianfanDocs(unittest.TestCase):
     def _read(self, relative_path):
         root = os.path.join(os.path.dirname(__file__), "..")
