@@ -28,6 +28,20 @@ description: Baidu Qianfan ERNIE モデル設定
 | `ernie-4.5-turbo-32k` | コンテキスト長とコストのバランスが良い一般チャット向け |
 | `ernie-x1-turbo-32k` | より強い推論が必要なタスク向け |
 
+## Vision ツール
+
+`qianfan_api_key` を設定すると、Agent モードの Vision ツールは Qianfan を自動検出できます。推奨する Qianfan の視覚モデルは `ernie-4.5-turbo-vl-preview` です：
+
+```json
+{
+  "tool": {
+    "vision": {
+      "model": "ernie-4.5-turbo-vl-preview"
+    }
+  }
+}
+```
+
 方法 2: OpenAI 互換接続:
 
 ```json

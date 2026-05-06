@@ -23,6 +23,7 @@ If the current provider fails, the tool automatically tries the next one until i
 | Vendor | Vision Model | Notes |
 | --- | --- | --- |
 | OpenAI / Compatible | Main model | All OpenAI-compatible multimodal models |
+| Baidu Qianfan | ernie-4.5-turbo-vl-preview | Auto-discovered when `qianfan_api_key` is configured; can also be selected via `tool.vision.model` |
 | Qwen (DashScope) | Main model | Via MultiModalConversation API |
 | Claude | Main model | Anthropic native image format |
 | Gemini | Main model | inlineData format |
@@ -52,7 +53,7 @@ To specify a particular model for the vision tool, add to `config.json`:
 {
     "tool": {
         "vision": {
-            "model": "gpt-4o"
+            "model": "ernie-4.5-turbo-vl-preview"
         }
     }
 }

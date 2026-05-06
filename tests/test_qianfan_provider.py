@@ -452,6 +452,7 @@ class TestQianfanDocs(unittest.TestCase):
             self.assertIn("qianfan_api_key", text)
             self.assertIn("https://qianfan.baidubce.com/v2", text)
             self.assertIn("ernie-4.5-turbo-128k", text)
+            self.assertIn("ernie-4.5-turbo-vl-preview", text)
 
     def test_model_indexes_link_qianfan(self):
         for path in (
@@ -468,6 +469,17 @@ class TestQianfanDocs(unittest.TestCase):
         self.assertIn('"model": "ernie-5.0"', text)
         self.assertIn('"qianfan_api_key": ""', text)
         self.assertIn('"qianfan_api_base": "https://qianfan.baidubce.com/v2"', text)
+
+    def test_vision_docs_document_qianfan_provider(self):
+        expected = {
+            "docs/tools/vision.mdx": "百度千帆",
+            "docs/en/tools/vision.mdx": "Baidu Qianfan",
+            "docs/ja/tools/vision.mdx": "Baidu Qianfan",
+        }
+        for path, label in expected.items():
+            text = self._read(path)
+            self.assertIn(label, text)
+            self.assertIn("ernie-4.5-turbo-vl-preview", text)
 
 
 if __name__ == "__main__":
