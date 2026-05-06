@@ -102,7 +102,7 @@ class TestQianfanConstantsAndRouting(unittest.TestCase):
 class TestQianfanBot(unittest.TestCase):
     def _fake_conf(self, values=None):
         data = {
-            "model": "ernie-4.5-turbo-128k",
+            "model": "ernie-5.0",
             "qianfan_api_key": "test-qianfan-key",
             "qianfan_api_base": "https://qianfan.baidubce.com/v2",
             "temperature": 0.7,
@@ -140,7 +140,7 @@ class TestQianfanBot(unittest.TestCase):
 
                 bot = QianfanBot()
 
-        self.assertEqual(bot.args["model"], "ernie-4.5-turbo-128k")
+        self.assertEqual(bot.args["model"], "ernie-5.0")
 
     def test_reply_text_posts_openai_compatible_payload(self):
         fake_conf = self._fake_conf()
@@ -169,7 +169,7 @@ class TestQianfanBot(unittest.TestCase):
         kwargs = post.call_args.kwargs
         self.assertEqual(url, "https://qianfan.baidubce.com/v2/chat/completions")
         self.assertEqual(kwargs["headers"]["Authorization"], "Bearer test-qianfan-key")
-        self.assertEqual(kwargs["json"]["model"], "ernie-4.5-turbo-128k")
+        self.assertEqual(kwargs["json"]["model"], "ernie-5.0")
         self.assertEqual(kwargs["json"]["messages"], [{"role": "user", "content": "你好"}])
 
     def test_reply_text_returns_auth_error_for_401(self):
@@ -272,7 +272,7 @@ class TestQianfanDocs(unittest.TestCase):
     def test_readme_documents_native_qianfan_provider(self):
         text = self._read("README.md")
 
-        self.assertIn('"model": "ernie-4.5-turbo-128k"', text)
+        self.assertIn('"model": "ernie-5.0"', text)
         self.assertIn('"qianfan_api_key": ""', text)
         self.assertIn('"qianfan_api_base": "https://qianfan.baidubce.com/v2"', text)
 

@@ -87,6 +87,7 @@ DEEPSEEK_V4_FLASH = "deepseek-v4-flash"  # DeepSeek V4 Flash - 默认推荐 (思
 DEEPSEEK_V4_PRO = "deepseek-v4-pro"  # DeepSeek V4 Pro - 复杂任务更强 (思考模式 + 工具调用)
 
 # Baidu Qianfan / ERNIE
+ERNIE_5 = "ernie-5.0"  # ERNIE 5.0 - default recommendation
 ERNIE_45_TURBO_128K = "ernie-4.5-turbo-128k"
 ERNIE_45_TURBO_32K = "ernie-4.5-turbo-32k"
 ERNIE_X1_TURBO_32K = "ernie-x1-turbo-32k"
@@ -167,7 +168,7 @@ MODEL_LIST = [
               DEEPSEEK_V4_FLASH, DEEPSEEK_V4_PRO, DEEPSEEK_CHAT, DEEPSEEK_REASONER,
 
               # Baidu Qianfan / ERNIE
-              QIANFAN, ERNIE_45_TURBO_128K, ERNIE_45_TURBO_32K, ERNIE_X1_TURBO_32K, ERNIE_4_TURBO_8K,
+              QIANFAN, ERNIE_5, ERNIE_45_TURBO_128K, ERNIE_45_TURBO_32K, ERNIE_X1_TURBO_32K, ERNIE_4_TURBO_8K,
 
               # MiniMax
               MiniMax, MINIMAX_M2_7, MINIMAX_M2_7_HIGHSPEED, MINIMAX_M2_5, MINIMAX_M2_1, MINIMAX_M2_1_LIGHTNING, MINIMAX_M2, MINIMAX_ABAB6_5,

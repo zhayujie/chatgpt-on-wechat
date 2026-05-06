@@ -7,7 +7,7 @@ Option 1: Native integration (recommended):
 
 ```json
 {
-  "model": "ernie-4.5-turbo-128k",
+  "model": "ernie-5.0",
   "qianfan_api_key": "",
   "qianfan_api_base": "https://qianfan.baidubce.com/v2"
 }
@@ -15,7 +15,7 @@ Option 1: Native integration (recommended):
 
 | Parameter | Description |
 | --- | --- |
-| `model` | Recommended: `ernie-4.5-turbo-128k`; also supports `ernie-4.5-turbo-32k` and `ernie-x1-turbo-32k` |
+| `model` | Default recommendation: `ernie-5.0`; also supports `ernie-4.5-turbo-128k`, `ernie-4.5-turbo-32k`, `ernie-x1-turbo-32k` |
 | `qianfan_api_key` | Qianfan API key, usually starting with `bce-v3/` |
 | `qianfan_api_base` | Optional, defaults to `https://qianfan.baidubce.com/v2` |
 
@@ -23,7 +23,8 @@ Option 1: Native integration (recommended):
 
 | Model | Use Case |
 | --- | --- |
-| `ernie-4.5-turbo-128k` | Default recommendation for long-context and general chat |
+| `ernie-5.0` | Default recommendation; latest ERNIE flagship with the strongest overall capability |
+| `ernie-4.5-turbo-128k` | Long-context and general chat |
 | `ernie-4.5-turbo-32k` | General chat with a balanced context window and cost |
 | `ernie-x1-turbo-32k` | Tasks that need stronger reasoning |
 
@@ -31,7 +32,7 @@ Option 2: OpenAI-compatible configuration:
 
 ```json
 {
-  "model": "ernie-4.5-turbo-128k",
+  "model": "ernie-5.0",
   "bot_type": "openai",
   "open_ai_api_key": "",
   "open_ai_api_base": "https://qianfan.baidubce.com/v2"

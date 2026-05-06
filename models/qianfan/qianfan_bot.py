@@ -14,7 +14,7 @@ from models.session_manager import SessionManager
 from .qianfan_session import QianfanSession
 
 DEFAULT_API_BASE = "https://qianfan.baidubce.com/v2"
-DEFAULT_MODEL = const.ERNIE_45_TURBO_128K
+DEFAULT_MODEL = const.ERNIE_5
 
 
 class QianfanBot(Bot, OpenAICompatibleBot):

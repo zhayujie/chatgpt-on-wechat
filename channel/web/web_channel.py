@@ -772,7 +772,6 @@ class ConfigHandler:
 
     _RECOMMENDED_MODELS = [
         const.DEEPSEEK_V4_FLASH, const.DEEPSEEK_V4_PRO, const.DEEPSEEK_CHAT, const.DEEPSEEK_REASONER,
-        const.ERNIE_45_TURBO_128K, const.ERNIE_45_TURBO_32K, const.ERNIE_X1_TURBO_32K,
         const.MINIMAX_M2_7_HIGHSPEED, const.MINIMAX_M2_7, const.MINIMAX_M2_5, const.MINIMAX_M2_1, const.MINIMAX_M2_1_LIGHTNING,
         const.CLAUDE_4_6_SONNET, const.CLAUDE_4_7_OPUS, const.CLAUDE_4_6_OPUS, const.CLAUDE_4_5_SONNET,
         const.GEMINI_31_FLASH_LITE_PRE, const.GEMINI_31_PRO_PRE, const.GEMINI_3_FLASH_PRE,
@@ -781,6 +780,7 @@ class ConfigHandler:
         const.QWEN36_PLUS, const.QWEN35_PLUS, const.QWEN3_MAX,
         const.DOUBAO_SEED_2_PRO, const.DOUBAO_SEED_2_CODE,
         const.KIMI_K2_6, const.KIMI_K2_5, const.KIMI_K2,
+        const.ERNIE_5, const.ERNIE_45_TURBO_128K, const.ERNIE_45_TURBO_32K, const.ERNIE_X1_TURBO_32K,
     ]
 
     # Generic placeholder hints surfaced in the web console. We deliberately
@@ -802,14 +802,6 @@ class ConfigHandler:
             "api_base_default": "https://api.deepseek.com/v1",
             "api_base_placeholder": _PLACEHOLDER_V1,
             "models": [const.DEEPSEEK_V4_FLASH, const.DEEPSEEK_V4_PRO, const.DEEPSEEK_CHAT, const.DEEPSEEK_REASONER],
-        }),
-        ("qianfan", {
-            "label": "百度千帆",
-            "api_key_field": "qianfan_api_key",
-            "api_base_key": "qianfan_api_base",
-            "api_base_default": "https://qianfan.baidubce.com/v2",
-            "api_base_placeholder": _PLACEHOLDER_QIANFAN,
-            "models": [const.ERNIE_45_TURBO_128K, const.ERNIE_45_TURBO_32K, const.ERNIE_X1_TURBO_32K],
         }),
         ("minimax", {
             "label": "MiniMax",
@@ -874,6 +866,14 @@ class ConfigHandler:
             "api_base_default": "https://api.moonshot.cn/v1",
             "api_base_placeholder": _PLACEHOLDER_V1,
             "models": [const.KIMI_K2_6, const.KIMI_K2_5, const.KIMI_K2],
+        }),
+        ("qianfan", {
+            "label": "百度千帆",
+            "api_key_field": "qianfan_api_key",
+            "api_base_key": "qianfan_api_base",
+            "api_base_default": "https://qianfan.baidubce.com/v2",
+            "api_base_placeholder": _PLACEHOLDER_QIANFAN,
+            "models": [const.ERNIE_5, const.ERNIE_45_TURBO_128K, const.ERNIE_45_TURBO_32K, const.ERNIE_X1_TURBO_32K],
         }),
         ("modelscope", {
             "label": "ModelScope",

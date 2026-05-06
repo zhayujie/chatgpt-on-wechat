@@ -115,7 +115,7 @@ irm https://cdn.link-ai.tech/code/cow/run.ps1 | iex
 
 项目支持国内外主流厂商的模型接口，可选模型及配置说明参考：[模型说明](#模型说明)。
 
-> 注：Agent 模式下推荐使用以下模型，可根据效果及成本综合选择：deepseek-v4-flash、MiniMax-M2.7、glm-5.1、kimi-k2.6、qwen3.5-plus、claude-sonnet-4-6、gemini-3.1-pro-preview、gpt-5.4、gpt-5.4-mini、ernie-4.5-turbo-128k
+> 注：Agent 模式下推荐使用以下模型，可根据效果及成本综合选择：deepseek-v4-flash、MiniMax-M2.7、glm-5.1、kimi-k2.6、qwen3.5-plus、claude-sonnet-4-6、gemini-3.1-pro-preview、gpt-5.4、gpt-5.4-mini、ernie-5.0
 
 同时支持使用 **LinkAI 平台** 接口，支持上述全部模型，并支持知识库、工作流、插件等 Agent 技能，参考 [接口文档](https://docs.link-ai.tech/platform/api)。
 
@@ -603,23 +603,20 @@ API Key 创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn
 
 ```json
 {
-  "model": "ernie-4.5-turbo-128k",
-  "qianfan_api_key": "",
-  "qianfan_api_base": "https://qianfan.baidubce.com/v2"
+  "model": "ernie-5.0",
+  "qianfan_api_key": ""
 }
 ```
 
- - `model`: 推荐填写 `ernie-4.5-turbo-128k`，也可填写 `ernie-4.5-turbo-32k`、`ernie-x1-turbo-32k`
+ - `model`: 默认推荐填写 `ernie-5.0`，也可填写 `ernie-4.5-turbo-128k`、`ernie-4.5-turbo-32k`、`ernie-x1-turbo-32k`
  - `qianfan_api_key`: 百度千帆 API Key，通常以 `bce-v3/` 开头，可在百度智能云控制台创建
  - `qianfan_api_base`: 可选，默认为 `https://qianfan.baidubce.com/v2`
-
-兼容说明：旧配置 `model: "wenxin"`、`model: "wenxin-4"`、`baidu_wenxin_api_key`、`baidu_wenxin_secret_key` 仍可继续使用。
 
 方式二：OpenAI 兼容方式接入，配置如下：
 ```json
 {
   "bot_type": "openai",
-  "model": "ernie-4.5-turbo-128k",
+  "model": "ernie-5.0",
   "open_ai_api_base": "https://qianfan.baidubce.com/v2",
   "open_ai_api_key": ""
 }
