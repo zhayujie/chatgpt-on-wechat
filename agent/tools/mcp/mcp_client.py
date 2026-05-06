@@ -6,6 +6,7 @@ MCP SDK dependency.
 """
 
 import json
+import os
 import subprocess
 import threading
 import urllib.request
@@ -119,7 +120,8 @@ class McpClient:
             return False
 
         args = self.config.get("args", [])
-        env = self.config.get("env", None)
+        extra_env = self.config.get("env", None)
+        env = {**os.environ, **extra_env} if extra_env else None
 
         self._proc = subprocess.Popen(
             [command] + list(args),
