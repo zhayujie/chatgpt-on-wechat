@@ -219,6 +219,19 @@ available_setting = {
     # using the rule: skill[<name>][<key>] -> SKILL_<NAME>_<KEY>
     # (e.g. skill["image-generation"].model -> SKILL_IMAGE_GENERATION_MODEL).
     "skill": {},
+    # MCP (Model Context Protocol) server list.
+    # Each entry describes one MCP server to connect at startup.
+    # Supported types:
+    #   stdio — launch a local process and communicate over stdin/stdout
+    #   sse   — connect to a remote server via HTTP + Server-Sent Events
+    #
+    # Example:
+    #   "mcp_servers": [
+    #     {"name": "filesystem", "type": "stdio", "command": "npx",
+    #      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"]},
+    #     {"name": "my-api", "type": "sse", "url": "http://localhost:8000/sse"}
+    #   ]
+    "mcp_servers": [],
 }
 
 

@@ -25,6 +25,10 @@ class ToolManager:
         # Initialize only once
         if not hasattr(self, 'tool_classes'):
             self.tool_classes = {}  # Dictionary to store tool classes
+        if not hasattr(self, '_mcp_registry'):
+            self._mcp_registry = None  # 懒初始化，有配置时才创建
+        if not hasattr(self, '_mcp_tool_instances'):
+            self._mcp_tool_instances: dict = {}  # tool_name -> McpTool instance
 
     def load_tools(self, tools_dir: str = "", config_dict=None):
         """
@@ -38,6 +42,8 @@ class ToolManager:
         else:
             self._load_tools_from_init()
             self._configure_tools_from_config(config_dict)
+
+        self._load_mcp_tools()
 
     def _load_tools_from_init(self) -> bool:
         """
@@ -70,9 +76,13 @@ class ToolManager:
                                     and cls != BaseTool
                             ):
                                 try:
-                                    # Skip memory tools (they need special initialization with memory_manager)
+                                    # Skip tools that need special initialization
                                     if class_name in ["MemorySearchTool", "MemoryGetTool"]:
                                         logger.debug(f"Skipped tool {class_name} (requires memory_manager)")
+                                        continue
+                                    # McpTool instances are registered dynamically via _load_mcp_tools()
+                                    if class_name == "McpTool":
+                                        logger.debug(f"Skipped tool {class_name} (registered dynamically via mcp_servers config)")
                                         continue
                                     
                                     # Create a temporary instance to get the name
@@ -212,6 +222,36 @@ class ToolManager:
         except Exception as e:
             logger.error(f"Error configuring tools from config: {e}")
 
+    def _load_mcp_tools(self):
+        """Load MCP tools from mcp_servers config. Failures are non-fatal."""
+        try:
+            mcp_servers_config = conf().get("mcp_servers", [])
+            if not mcp_servers_config:
+                return
+
+            from agent.tools.mcp.mcp_client import McpClientRegistry
+            from agent.tools.mcp.mcp_tool import McpTool
+
+            self._mcp_registry = McpClientRegistry()
+            self._mcp_registry.start_all(mcp_servers_config)
+
+            for server_name, client in self._mcp_registry.all_clients().items():
+                try:
+                    tool_schemas = client.list_tools()
+                    for schema in tool_schemas:
+                        tool_name = schema.get("name", "")
+                        if not tool_name:
+                            continue
+                        mcp_tool = McpTool(client, schema, server_name)
+                        self._mcp_tool_instances[tool_name] = mcp_tool
+                        logger.debug(f"[ToolManager] Loaded MCP tool: {tool_name} from server '{server_name}'")
+                except Exception as e:
+                    logger.warning(f"[ToolManager] Failed to list tools from MCP server '{server_name}': {e}")
+
+            logger.info(f"[ToolManager] Loaded {len(self._mcp_tool_instances)} MCP tool(s) in total")
+        except Exception as e:
+            logger.warning(f"[ToolManager] MCP tool loading failed, skipping: {e}")
+
     def create_tool(self, name: str) -> BaseTool:
         """
         Get a new instance of a tool by name.
@@ -229,6 +269,12 @@ class ToolManager:
                 tool_instance.config = self.tool_configs[name]
 
             return tool_instance
+
+        # Fall back to MCP tool instances
+        mcp_tool = self._mcp_tool_instances.get(name)
+        if mcp_tool:
+            return mcp_tool
+
         return None
 
     def list_tools(self) -> dict:
@@ -245,4 +291,17 @@ class ToolManager:
                 "description": temp_instance.description,
                 "parameters": temp_instance.get_json_schema()
             }
+
+        # Include MCP tool instances
+        for name, mcp_tool in self._mcp_tool_instances.items():
+            result[name] = {
+                "description": mcp_tool.description,
+                "parameters": mcp_tool.params,
+            }
+
         return result
+
+    def shutdown_mcp(self):
+        """Shut down all MCP server clients."""
+        if self._mcp_registry:
+            self._mcp_registry.shutdown_all()
