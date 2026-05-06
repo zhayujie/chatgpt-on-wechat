@@ -70,6 +70,8 @@
 
 # 🏷 更新日志
 
+>**2026.05.06：** [2.0.8版本](https://github.com/zhayujie/CowAgent/releases/tag/2.0.8)，飞书渠道全面升级（语音、流式输出和Markdown、一键扫码接入）、新模型支持（DeepSeek V4、百度千帆）、定时任务工具增强等
+
 >**2026.04.22：** [2.0.7版本](https://github.com/zhayujie/CowAgent/releases/tag/2.0.7)，图像生成内置技能（GPT Image 2、Nano Banana 等）、新模型支持（Kimi K2.6、Claude Opus 4.7、GLM 5.1）、知识库和记忆增强、Web 控制台优化
 
 >**2026.04.14：** [2.0.6版本](https://github.com/zhayujie/CowAgent/releases/tag/2.0.6)，知识库系统、梦境记忆模块、上下文智能压缩、Web 控制台多会话及多项优化。
