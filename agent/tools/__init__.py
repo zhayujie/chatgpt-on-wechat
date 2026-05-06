@@ -107,6 +107,22 @@ def _import_browser_tool():
 
 BrowserTool = _import_browser_tool()
 
+# MCP Tools (no extra dependencies, loaded on demand)
+def _import_mcp_tools():
+    """导入 MCP 工具模块（无额外依赖，按需加载）"""
+    from common.log import logger
+    try:
+        from agent.tools.mcp.mcp_tool import McpTool
+        from agent.tools.mcp.mcp_client import McpClientRegistry
+        return {'McpTool': McpTool, 'McpClientRegistry': McpClientRegistry}
+    except Exception as e:
+        logger.warning(f"[Tools] MCP tools not loaded: {e}")
+        return {}
+
+_mcp_tools = _import_mcp_tools()
+McpTool = _mcp_tools.get('McpTool')
+McpClientRegistry = _mcp_tools.get('McpClientRegistry')
+
 # Export all tools (including optional ones that might be None)
 __all__ = [
     'BaseTool',
@@ -125,6 +141,7 @@ __all__ = [
     'WebFetch',
     'Vision',
     'BrowserTool',
+    'McpTool',
 ]
 
 """
