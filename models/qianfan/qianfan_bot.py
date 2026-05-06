@@ -15,7 +15,7 @@ from .qianfan_session import QianfanSession
 
 DEFAULT_API_BASE = "https://qianfan.baidubce.com/v2"
 DEFAULT_MODEL = const.ERNIE_5
-DEFAULT_VISION_MODEL = const.ERNIE_45_TURBO_VL_PREVIEW
+DEFAULT_VISION_MODEL = const.ERNIE_45_TURBO_VL
 
 
 class QianfanBot(Bot, OpenAICompatibleBot):

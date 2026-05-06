@@ -20,19 +20,19 @@ class TestQianfanConstantsAndRouting(unittest.TestCase):
         self.assertEqual(const.ERNIE_45_TURBO_32K, "ernie-4.5-turbo-32k")
         self.assertEqual(const.ERNIE_X1_TURBO_32K, "ernie-x1-turbo-32k")
         self.assertEqual(
-            const.ERNIE_45_TURBO_VL_PREVIEW,
-            "ernie-4.5-turbo-vl-preview",
+            const.ERNIE_45_TURBO_VL,
+            "ernie-4.5-turbo-vl",
         )
         self.assertEqual(
-            const.ERNIE_45_VL_28B_A3B,
-            "ernie-4.5-vl-28b-a3b",
+            const.ERNIE_45_TURBO_VL_32K,
+            "ernie-4.5-turbo-vl-32k",
         )
         self.assertIn(const.QIANFAN, const.MODEL_LIST)
         self.assertIn(const.ERNIE_45_TURBO_128K, const.MODEL_LIST)
         self.assertIn(const.ERNIE_45_TURBO_32K, const.MODEL_LIST)
         self.assertIn(const.ERNIE_X1_TURBO_32K, const.MODEL_LIST)
-        self.assertIn(const.ERNIE_45_TURBO_VL_PREVIEW, const.MODEL_LIST)
-        self.assertIn(const.ERNIE_45_VL_28B_A3B, const.MODEL_LIST)
+        self.assertIn(const.ERNIE_45_TURBO_VL, const.MODEL_LIST)
+        self.assertIn(const.ERNIE_45_TURBO_VL_32K, const.MODEL_LIST)
 
     def test_qianfan_config_keys_are_available(self):
         import config
@@ -239,7 +239,7 @@ class TestQianfanBot(unittest.TestCase):
         fake_response.status_code = 200
         fake_response.json.return_value = {
             "id": "chatcmpl-test",
-            "model": "ernie-4.5-turbo-vl-preview",
+            "model": "ernie-4.5-turbo-vl",
             "choices": [{"message": {"content": "图中有一个红色方块。"}}],
             "usage": {
                 "prompt_tokens": 10,
@@ -260,14 +260,14 @@ class TestQianfanBot(unittest.TestCase):
                     )
 
         self.assertEqual(result["content"], "图中有一个红色方块。")
-        self.assertEqual(result["model"], "ernie-4.5-turbo-vl-preview")
+        self.assertEqual(result["model"], "ernie-4.5-turbo-vl")
         self.assertEqual(result["usage"]["total_tokens"], 18)
         post.assert_called_once()
         url = post.call_args.args[0]
         kwargs = post.call_args.kwargs
         self.assertEqual(url, "https://qianfan.baidubce.com/v2/chat/completions")
         self.assertEqual(kwargs["headers"]["Authorization"], "Bearer test-qianfan-key")
-        self.assertEqual(kwargs["json"]["model"], "ernie-4.5-turbo-vl-preview")
+        self.assertEqual(kwargs["json"]["model"], "ernie-4.5-turbo-vl")
         self.assertEqual(kwargs["json"]["max_tokens"], 1000)
         self.assertEqual(kwargs["json"]["messages"], [
             {
@@ -287,7 +287,7 @@ class TestQianfanBot(unittest.TestCase):
         fake_response = MagicMock()
         fake_response.status_code = 200
         fake_response.json.return_value = {
-            "model": "ernie-4.5-vl-28b-a3b",
+            "model": "ernie-4.5-turbo-vl-32k",
             "choices": [{"message": {"content": "有文字。"}}],
             "usage": {},
         }
@@ -301,12 +301,12 @@ class TestQianfanBot(unittest.TestCase):
                     result = bot.call_vision(
                         image_url="data:image/jpeg;base64,BBBB",
                         question="识别文字",
-                        model="ernie-4.5-vl-28b-a3b",
+                        model="ernie-4.5-turbo-vl-32k",
                         max_tokens=256,
                     )
 
-        self.assertEqual(result["model"], "ernie-4.5-vl-28b-a3b")
-        self.assertEqual(post.call_args.kwargs["json"]["model"], "ernie-4.5-vl-28b-a3b")
+        self.assertEqual(result["model"], "ernie-4.5-turbo-vl-32k")
+        self.assertEqual(post.call_args.kwargs["json"]["model"], "ernie-4.5-turbo-vl-32k")
         self.assertEqual(post.call_args.kwargs["json"]["max_tokens"], 256)
 
     def test_call_vision_returns_error_dict_for_api_error(self):
@@ -392,14 +392,14 @@ class TestQianfanVisionTool(unittest.TestCase):
                 providers = tool._resolve_providers()
 
         self.assertEqual(providers[0].name, "Qianfan")
-        self.assertEqual(providers[0].model_override, const.ERNIE_45_TURBO_VL_PREVIEW)
+        self.assertEqual(providers[0].model_override, const.ERNIE_45_TURBO_VL)
         self.assertTrue(providers[0].use_bot)
         create_bot.assert_called_with(const.QIANFAN)
 
     def test_vision_routes_ernie_model_override_to_qianfan(self):
         fake_conf = self._fake_conf({
             "qianfan_api_key": "test-qianfan-key",
-            "tool": {"vision": {"model": "ernie-4.5-vl-28b-a3b"}},
+            "tool": {"vision": {"model": "ernie-4.5-turbo-vl-32k"}},
         })
         fake_bot = MagicMock()
         fake_bot.call_vision = MagicMock()
@@ -413,10 +413,10 @@ class TestQianfanVisionTool(unittest.TestCase):
                 providers = tool._resolve_providers()
 
         self.assertEqual(providers[0].name, "Qianfan")
-        self.assertEqual(providers[0].model_override, "ernie-4.5-vl-28b-a3b")
+        self.assertEqual(providers[0].model_override, "ernie-4.5-turbo-vl-32k")
 
     def test_vision_main_model_uses_qianfan_when_configured_model_is_ernie(self):
-        fake_conf = self._fake_conf({"model": "ernie-4.5-vl-28b-a3b"})
+        fake_conf = self._fake_conf({"model": "ernie-4.5-turbo-vl-32k"})
         from common import const
 
         fake_model = MagicMock()
@@ -433,7 +433,7 @@ class TestQianfanVisionTool(unittest.TestCase):
             providers = tool._resolve_providers()
 
         self.assertEqual(providers[0].name, "MainModel")
-        self.assertEqual(providers[0].model_override, "ernie-4.5-vl-28b-a3b")
+        self.assertEqual(providers[0].model_override, "ernie-4.5-turbo-vl-32k")
 
 
 class TestQianfanDocs(unittest.TestCase):
@@ -452,7 +452,7 @@ class TestQianfanDocs(unittest.TestCase):
             self.assertIn("qianfan_api_key", text)
             self.assertIn("https://qianfan.baidubce.com/v2", text)
             self.assertIn("ernie-4.5-turbo-128k", text)
-            self.assertIn("ernie-4.5-turbo-vl-preview", text)
+            self.assertIn("ernie-4.5-turbo-vl", text)
 
     def test_model_indexes_link_qianfan(self):
         for path in (
@@ -479,7 +479,7 @@ class TestQianfanDocs(unittest.TestCase):
         for path, label in expected.items():
             text = self._read(path)
             self.assertIn(label, text)
-            self.assertIn("ernie-4.5-turbo-vl-preview", text)
+            self.assertIn("ernie-4.5-turbo-vl", text)
 
 
 if __name__ == "__main__":

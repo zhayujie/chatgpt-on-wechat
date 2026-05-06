@@ -609,7 +609,7 @@ API Key 创建：在 [控制台](https://aistudio.google.com/app/apikey?hl=zh-cn
 }
 ```
 
- - `model`: 默认推荐填写 `ernie-5.0`，也可填写 `ernie-4.5-turbo-128k`、`ernie-4.5-turbo-32k`、`ernie-x1-turbo-32k`；Vision 工具可使用 `ernie-4.5-turbo-vl-preview`
+ - `model`: 默认推荐填写 `ernie-5.0`，也可填写 `ernie-4.5-turbo-128k`、`ernie-4.5-turbo-32k`、`ernie-x1-turbo-32k`；Vision 工具可使用 `ernie-4.5-turbo-vl`
  - `qianfan_api_key`: 百度千帆 API Key，通常以 `bce-v3/` 开头，可在百度智能云控制台创建
  - `qianfan_api_base`: 可选，默认为 `https://qianfan.baidubce.com/v2`
 
