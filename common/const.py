@@ -92,6 +92,8 @@ ERNIE_45_TURBO_128K = "ernie-4.5-turbo-128k"
 ERNIE_45_TURBO_32K = "ernie-4.5-turbo-32k"
 ERNIE_X1_TURBO_32K = "ernie-x1-turbo-32k"
 ERNIE_4_TURBO_8K = "ERNIE-4.0-Turbo-8K"
+ERNIE_45_TURBO_VL_PREVIEW = "ernie-4.5-turbo-vl-preview"
+ERNIE_45_VL_28B_A3B = "ernie-4.5-vl-28b-a3b"
 
 # Qwen (通义千问 - 阿里云 DashScope)
 QWEN_TURBO = "qwen-turbo"
@@ -169,6 +171,7 @@ MODEL_LIST = [
 
               # Baidu Qianfan / ERNIE
               QIANFAN, ERNIE_5, ERNIE_45_TURBO_128K, ERNIE_45_TURBO_32K, ERNIE_X1_TURBO_32K, ERNIE_4_TURBO_8K,
+              ERNIE_45_TURBO_VL_PREVIEW, ERNIE_45_VL_28B_A3B,
 
               # MiniMax
               MiniMax, MINIMAX_M2_7, MINIMAX_M2_7_HIGHSPEED, MINIMAX_M2_5, MINIMAX_M2_1, MINIMAX_M2_1_LIGHTNING, MINIMAX_M2, MINIMAX_ABAB6_5,

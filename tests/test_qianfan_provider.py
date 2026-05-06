@@ -19,10 +19,20 @@ class TestQianfanConstantsAndRouting(unittest.TestCase):
         self.assertEqual(const.ERNIE_45_TURBO_128K, "ernie-4.5-turbo-128k")
         self.assertEqual(const.ERNIE_45_TURBO_32K, "ernie-4.5-turbo-32k")
         self.assertEqual(const.ERNIE_X1_TURBO_32K, "ernie-x1-turbo-32k")
+        self.assertEqual(
+            const.ERNIE_45_TURBO_VL_PREVIEW,
+            "ernie-4.5-turbo-vl-preview",
+        )
+        self.assertEqual(
+            const.ERNIE_45_VL_28B_A3B,
+            "ernie-4.5-vl-28b-a3b",
+        )
         self.assertIn(const.QIANFAN, const.MODEL_LIST)
         self.assertIn(const.ERNIE_45_TURBO_128K, const.MODEL_LIST)
         self.assertIn(const.ERNIE_45_TURBO_32K, const.MODEL_LIST)
         self.assertIn(const.ERNIE_X1_TURBO_32K, const.MODEL_LIST)
+        self.assertIn(const.ERNIE_45_TURBO_VL_PREVIEW, const.MODEL_LIST)
+        self.assertIn(const.ERNIE_45_VL_28B_A3B, const.MODEL_LIST)
 
     def test_qianfan_config_keys_are_available(self):
         import config
