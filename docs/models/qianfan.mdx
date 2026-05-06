@@ -28,6 +28,20 @@ description: 百度千帆 ERNIE 模型配置
 | `ernie-4.5-turbo-32k` | 通用对话，成本和上下文更均衡 |
 | `ernie-x1-turbo-32k` | 需要更强推理能力的任务 |
 
+## Vision 工具
+
+配置 `qianfan_api_key` 后，Agent 的 Vision 工具可以自动使用千帆视觉模型。默认推荐使用 `ernie-4.5-turbo-vl`：
+
+```json
+{
+  "tool": {
+    "vision": {
+      "model": "ernie-4.5-turbo-vl"
+    }
+  }
+}
+```
+
 方式二：OpenAI 兼容方式接入：
 
 ```json

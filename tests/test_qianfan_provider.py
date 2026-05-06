@@ -19,10 +19,20 @@ class TestQianfanConstantsAndRouting(unittest.TestCase):
         self.assertEqual(const.ERNIE_45_TURBO_128K, "ernie-4.5-turbo-128k")
         self.assertEqual(const.ERNIE_45_TURBO_32K, "ernie-4.5-turbo-32k")
         self.assertEqual(const.ERNIE_X1_TURBO_32K, "ernie-x1-turbo-32k")
+        self.assertEqual(
+            const.ERNIE_45_TURBO_VL,
+            "ernie-4.5-turbo-vl",
+        )
+        self.assertEqual(
+            const.ERNIE_45_TURBO_VL_32K,
+            "ernie-4.5-turbo-vl-32k",
+        )
         self.assertIn(const.QIANFAN, const.MODEL_LIST)
         self.assertIn(const.ERNIE_45_TURBO_128K, const.MODEL_LIST)
         self.assertIn(const.ERNIE_45_TURBO_32K, const.MODEL_LIST)
         self.assertIn(const.ERNIE_X1_TURBO_32K, const.MODEL_LIST)
+        self.assertIn(const.ERNIE_45_TURBO_VL, const.MODEL_LIST)
+        self.assertIn(const.ERNIE_45_TURBO_VL_32K, const.MODEL_LIST)
 
     def test_qianfan_config_keys_are_available(self):
         import config
@@ -213,6 +223,113 @@ class TestQianfanBot(unittest.TestCase):
         self.assertEqual(result["content"], "请求失败：bad gateway text")
         post.assert_called_once()
 
+    def test_qianfan_bot_supports_vision(self):
+        fake_conf = self._fake_conf()
+        with patch("models.qianfan.qianfan_bot.conf", return_value=fake_conf):
+            with patch("models.qianfan.qianfan_bot.SessionManager"):
+                from models.qianfan.qianfan_bot import QianfanBot
+
+                bot = QianfanBot()
+
+        self.assertTrue(bot.supports_vision)
+
+    def test_call_vision_posts_openai_compatible_multimodal_payload(self):
+        fake_conf = self._fake_conf()
+        fake_response = MagicMock()
+        fake_response.status_code = 200
+        fake_response.json.return_value = {
+            "id": "chatcmpl-test",
+            "model": "ernie-4.5-turbo-vl",
+            "choices": [{"message": {"content": "图中有一个红色方块。"}}],
+            "usage": {
+                "prompt_tokens": 10,
+                "completion_tokens": 8,
+                "total_tokens": 18,
+            },
+        }
+
+        with patch("models.qianfan.qianfan_bot.conf", return_value=fake_conf):
+            with patch("models.qianfan.qianfan_bot.SessionManager"):
+                from models.qianfan.qianfan_bot import QianfanBot
+
+                bot = QianfanBot()
+                with patch("models.qianfan.qianfan_bot.requests.post", return_value=fake_response) as post:
+                    result = bot.call_vision(
+                        image_url="data:image/png;base64,AAAA",
+                        question="这张图里有什么？",
+                    )
+
+        self.assertEqual(result["content"], "图中有一个红色方块。")
+        self.assertEqual(result["model"], "ernie-4.5-turbo-vl")
+        self.assertEqual(result["usage"]["total_tokens"], 18)
+        post.assert_called_once()
+        url = post.call_args.args[0]
+        kwargs = post.call_args.kwargs
+        self.assertEqual(url, "https://qianfan.baidubce.com/v2/chat/completions")
+        self.assertEqual(kwargs["headers"]["Authorization"], "Bearer test-qianfan-key")
+        self.assertEqual(kwargs["json"]["model"], "ernie-4.5-turbo-vl")
+        self.assertEqual(kwargs["json"]["max_tokens"], 1000)
+        self.assertEqual(kwargs["json"]["messages"], [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": "这张图里有什么？"},
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": "data:image/png;base64,AAAA"},
+                    },
+                ],
+            }
+        ])
+
+    def test_call_vision_allows_explicit_model_override(self):
+        fake_conf = self._fake_conf()
+        fake_response = MagicMock()
+        fake_response.status_code = 200
+        fake_response.json.return_value = {
+            "model": "ernie-4.5-turbo-vl-32k",
+            "choices": [{"message": {"content": "有文字。"}}],
+            "usage": {},
+        }
+
+        with patch("models.qianfan.qianfan_bot.conf", return_value=fake_conf):
+            with patch("models.qianfan.qianfan_bot.SessionManager"):
+                from models.qianfan.qianfan_bot import QianfanBot
+
+                bot = QianfanBot()
+                with patch("models.qianfan.qianfan_bot.requests.post", return_value=fake_response) as post:
+                    result = bot.call_vision(
+                        image_url="data:image/jpeg;base64,BBBB",
+                        question="识别文字",
+                        model="ernie-4.5-turbo-vl-32k",
+                        max_tokens=256,
+                    )
+
+        self.assertEqual(result["model"], "ernie-4.5-turbo-vl-32k")
+        self.assertEqual(post.call_args.kwargs["json"]["model"], "ernie-4.5-turbo-vl-32k")
+        self.assertEqual(post.call_args.kwargs["json"]["max_tokens"], 256)
+
+    def test_call_vision_returns_error_dict_for_api_error(self):
+        fake_conf = self._fake_conf()
+        fake_response = MagicMock()
+        fake_response.status_code = 400
+        fake_response.json.return_value = {"error": {"message": "bad image"}}
+        fake_response.text = '{"error":{"message":"bad image"}}'
+
+        with patch("models.qianfan.qianfan_bot.conf", return_value=fake_conf):
+            with patch("models.qianfan.qianfan_bot.SessionManager"):
+                from models.qianfan.qianfan_bot import QianfanBot
+
+                bot = QianfanBot()
+                with patch("models.qianfan.qianfan_bot.requests.post", return_value=fake_response):
+                    result = bot.call_vision(
+                        image_url="data:image/png;base64,AAAA",
+                        question="这张图里有什么？",
+                    )
+
+        self.assertTrue(result["error"])
+        self.assertEqual(result["message"], "请求失败：bad image")
+
 
 class TestQianfanSurfaces(unittest.TestCase):
     def _read(self, relative_path):
@@ -243,6 +360,82 @@ class TestQianfanSurfaces(unittest.TestCase):
         self.assertIn("const.QIANFAN", godcmd_source)
 
 
+class TestQianfanVisionTool(unittest.TestCase):
+    def _fake_conf(self, values=None):
+        data = {
+            "model": "deepseek-v4-flash",
+            "qianfan_api_key": "",
+            "qianfan_api_base": "https://qianfan.baidubce.com/v2",
+            "open_ai_api_key": "",
+            "linkai_api_key": "",
+            "use_linkai": False,
+            "tool": {},
+        }
+        if values:
+            data.update(values)
+        fake_conf = MagicMock()
+        fake_conf.get.side_effect = lambda key, default=None: data.get(key, default)
+        return fake_conf
+
+    def test_vision_auto_discovers_qianfan_when_key_configured(self):
+        fake_conf = self._fake_conf({"qianfan_api_key": "test-qianfan-key"})
+        fake_bot = MagicMock()
+        fake_bot.call_vision = MagicMock()
+
+        with patch("agent.tools.vision.vision.conf", return_value=fake_conf):
+            with patch("models.bot_factory.create_bot", return_value=fake_bot) as create_bot:
+                from agent.tools.vision.vision import Vision
+                from common import const
+
+                tool = Vision()
+                tool.model = None
+                providers = tool._resolve_providers()
+
+        self.assertEqual(providers[0].name, "Qianfan")
+        self.assertEqual(providers[0].model_override, const.ERNIE_45_TURBO_VL)
+        self.assertTrue(providers[0].use_bot)
+        create_bot.assert_called_with(const.QIANFAN)
+
+    def test_vision_routes_ernie_model_override_to_qianfan(self):
+        fake_conf = self._fake_conf({
+            "qianfan_api_key": "test-qianfan-key",
+            "tool": {"vision": {"model": "ernie-4.5-turbo-vl-32k"}},
+        })
+        fake_bot = MagicMock()
+        fake_bot.call_vision = MagicMock()
+
+        with patch("agent.tools.vision.vision.conf", return_value=fake_conf):
+            with patch("models.bot_factory.create_bot", return_value=fake_bot):
+                from agent.tools.vision.vision import Vision
+
+                tool = Vision()
+                tool.model = None
+                providers = tool._resolve_providers()
+
+        self.assertEqual(providers[0].name, "Qianfan")
+        self.assertEqual(providers[0].model_override, "ernie-4.5-turbo-vl-32k")
+
+    def test_vision_main_model_uses_qianfan_when_configured_model_is_ernie(self):
+        fake_conf = self._fake_conf({"model": "ernie-4.5-turbo-vl-32k"})
+        from common import const
+
+        fake_model = MagicMock()
+        fake_model._resolve_bot_type.return_value = const.QIANFAN
+        fake_model.bot = MagicMock()
+        fake_model.bot.supports_vision = True
+        fake_model.bot.call_vision = MagicMock()
+
+        with patch("agent.tools.vision.vision.conf", return_value=fake_conf):
+            from agent.tools.vision.vision import Vision
+
+            tool = Vision()
+            tool.model = fake_model
+            providers = tool._resolve_providers()
+
+        self.assertEqual(providers[0].name, "MainModel")
+        self.assertEqual(providers[0].model_override, "ernie-4.5-turbo-vl-32k")
+
+
 class TestQianfanDocs(unittest.TestCase):
     def _read(self, relative_path):
         root = os.path.join(os.path.dirname(__file__), "..")
@@ -259,6 +452,7 @@ class TestQianfanDocs(unittest.TestCase):
             self.assertIn("qianfan_api_key", text)
             self.assertIn("https://qianfan.baidubce.com/v2", text)
             self.assertIn("ernie-4.5-turbo-128k", text)
+            self.assertIn("ernie-4.5-turbo-vl", text)
 
     def test_model_indexes_link_qianfan(self):
         for path in (
@@ -275,6 +469,17 @@ class TestQianfanDocs(unittest.TestCase):
         self.assertIn('"model": "ernie-5.0"', text)
         self.assertIn('"qianfan_api_key": ""', text)
         self.assertIn('"qianfan_api_base": "https://qianfan.baidubce.com/v2"', text)
+
+    def test_vision_docs_document_qianfan_provider(self):
+        expected = {
+            "docs/tools/vision.mdx": "百度千帆",
+            "docs/en/tools/vision.mdx": "Baidu Qianfan",
+            "docs/ja/tools/vision.mdx": "Baidu Qianfan",
+        }
+        for path, label in expected.items():
+            text = self._read(path)
+            self.assertIn(label, text)
+            self.assertIn("ernie-4.5-turbo-vl", text)
 
 
 if __name__ == "__main__":

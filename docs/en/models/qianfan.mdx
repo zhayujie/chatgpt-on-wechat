@@ -28,6 +28,20 @@ Option 1: Native integration (recommended):
 | `ernie-4.5-turbo-32k` | General chat with a balanced context window and cost |
 | `ernie-x1-turbo-32k` | Tasks that need stronger reasoning |
 
+## Vision tool
+
+After `qianfan_api_key` is configured, Agent mode can auto-discover Qianfan for the Vision tool. The recommended Qianfan vision model is `ernie-4.5-turbo-vl`:
+
+```json
+{
+  "tool": {
+    "vision": {
+      "model": "ernie-4.5-turbo-vl"
+    }
+  }
+}
+```
+
 Option 2: OpenAI-compatible configuration:
 
 ```json
